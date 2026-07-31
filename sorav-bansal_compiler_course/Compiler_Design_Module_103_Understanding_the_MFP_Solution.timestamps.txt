@@ -1,0 +1,438 @@
+Title: Compiler Design Module 103  : Understanding the MFP Solution
+Video ID: rTT5hjJUeTU
+Detected language: en
+------------------------------------------------------------
+
+[00:00:00 -> 00:00:03] So we've been talking about the maximum fixed point or
+[00:00:03 -> 00:00:06] MFP solution of a data flow analysis,
+[00:00:06 -> 00:00:10] and let's try to understand how does the MFP solution
+[00:00:10 -> 00:00:14] compare to the best possible solution that we could have had.
+[00:00:14 -> 00:00:18] So recall that the maximum fixed point,
+[00:00:18 -> 00:00:22] MFP, represents the most precise maximum solution
+[00:00:22 -> 00:00:24] that satisfies the data flow equations.
+[00:00:24 -> 00:00:26] What are the data flow equations?
+[00:00:26 -> 00:00:28] Data flow equations are formed by
+[00:00:28 -> 00:00:30] the transfer functions and the meet operator.
+[00:00:31 -> 00:00:33] And so assuming that the meet operator
+[00:00:33 -> 00:00:35] is as it has been given,
+[00:00:35 -> 00:00:36] and the transfer functions are also
+[00:00:36 -> 00:00:37] as they have been given.
+[00:00:37 -> 00:00:40] So we're not allowed to change either the meet operator,
+[00:00:40 -> 00:00:44] or the set of values V, or the transfer function.
+[00:00:44 -> 00:00:46] Is this the best possible answer we could have got
+[00:00:46 -> 00:00:48] with the most powerful analysis
+[00:00:48 -> 00:00:51] that we could have had for our program?
+[00:00:51 -> 00:00:56] And if it is not, then how does it compare with that?
+[00:00:56 -> 00:00:59] And that's the question we're going to try and answer
+[00:00:59 -> 00:01:01] in this particular lecture module.
+[00:01:01 -> 00:01:05] So we want to ask, is that the best possible solution?
+[00:01:05 -> 00:01:06] Once again, I want to emphasize
+[00:01:06 -> 00:01:09] that we are not allowed to change the transfer functions.
+[00:01:09 -> 00:01:11] We are not allowed to change the set of values.
+[00:01:11 -> 00:01:13] We are not allowed to change the meet operator.
+[00:01:13 -> 00:01:15] But even with these constraints,
+[00:01:15 -> 00:01:18] can we do better than what MFP gives us?
+[00:01:18 -> 00:01:21] Recall that MFP is the maximum solution
+[00:01:21 -> 00:01:24] that satisfies the data flow equations.
+[00:01:24 -> 00:01:26] Okay, so let's call the best possible solution
+[00:01:26 -> 00:01:27] the ideal solution.
+[00:01:27 -> 00:01:31] And let's see what ideal could potentially look like.
+[00:01:31 -> 00:01:35] So given to be able to define an ideal solution
+[00:01:35 -> 00:01:38] in this setting, we are going to define
+[00:01:38 -> 00:01:41] the transfer function of a control flow graph path.
+[00:01:41 -> 00:01:44] So we already know what is the transfer function
+[00:01:44 -> 00:01:46] of a statement.
+[00:01:46 -> 00:01:48] We also know what is the transfer function
+[00:01:48 -> 00:01:50] of a basic block that's formed by composing
+[00:01:50 -> 00:01:52] the transfer functions of the individual statements
+[00:01:52 -> 00:01:54] in that basic block.
+[00:01:54 -> 00:01:56] But now we want to talk about the transfer function
+[00:01:56 -> 00:01:57] of a full path.
+[00:01:57 -> 00:01:59] So given the transfer functions of each statement
+[00:01:59 -> 00:02:03] or CFG node, we can construct the transfer function
+[00:02:03 -> 00:02:04] of a CFG path.
+[00:02:04 -> 00:02:07] So let's say this is my CFG.
+[00:02:07 -> 00:02:09] And let's say this purple line here is a CFG path.
+[00:02:09 -> 00:02:12] Notice that the CFG path is allowed to have cycles.
+[00:02:12 -> 00:02:16] So for example, I could go twice or 10 number of times
+[00:02:16 -> 00:02:18] around this loop and then come out.
+[00:02:18 -> 00:02:22] And that would also constitute a valid CFG path.
+[00:02:22 -> 00:02:25] And so we can talk about the transfer function
+[00:02:25 -> 00:02:26] of this whole path.
+[00:02:26 -> 00:02:29] So even if I have gone around the loop 10 times,
+[00:02:29 -> 00:02:31] what is the transfer function of this whole path?
+[00:02:31 -> 00:02:34] That is basically answering the question
+[00:02:34 -> 00:02:38] that if I have a value x in the beginning of this path,
+[00:02:38 -> 00:02:41] then what is the value fx that is coming out
+[00:02:41 -> 00:02:42] at the end of this path?
+[00:02:43 -> 00:02:47] And so to define the transfer function of a path,
+[00:02:47 -> 00:02:49] we're going to use this definition,
+[00:02:49 -> 00:02:52] which is the intuitive, obvious definition
+[00:02:52 -> 00:02:54] that the transfer function of an empty path
+[00:02:54 -> 00:02:56] and a path which has no nodes whatsoever
+[00:02:56 -> 00:02:58] is just the identity function.
+[00:02:58 -> 00:03:00] And recall that the identity function
+[00:03:00 -> 00:03:02] is supposed to be in our family of transfer functions.
+[00:03:02 -> 00:03:05] So f of epsilon x is just x.
+[00:03:05 -> 00:03:08] And then transfer function of any other path,
+[00:03:08 -> 00:03:12] which is formed by nodes or statements s1, s2,
+[00:03:12 -> 00:03:12] dot, dot, dot, sn.
+[00:03:12 -> 00:03:15] And notice that this path can have cycles.
+[00:03:15 -> 00:03:17] So for example, the same statement may repeat
+[00:03:17 -> 00:03:19] multiple times in this particular path.
+[00:03:19 -> 00:03:23] So it could be, for example, s1, s2, s3, s2, s3,
+[00:03:23 -> 00:03:25] dot, dot, dot, sn, and something like that.
+[00:03:25 -> 00:03:26] And so this path,
+[00:03:26 -> 00:03:28] what is the transfer function of this path?
+[00:03:28 -> 00:03:32] It's given by fp of x is first apply fs1 of x,
+[00:03:32 -> 00:03:35] so that's the first statement that got executed,
+[00:03:35 -> 00:03:38] then apply fs2, then apply fs3, and so on,
+[00:03:38 -> 00:03:42] and finally apply fsn-1 and fsn.
+[00:03:42 -> 00:03:45] In other words, the transfer function of a path fp
+[00:03:45 -> 00:03:49] is basically the composition of individual functions
+[00:03:50 -> 00:03:54] fs1 composed with fs2 composed with fsn.
+[00:03:54 -> 00:03:57] So this is the short way of writing composition.
+[00:03:57 -> 00:04:00] This is a slightly longer verbose notation
+[00:04:00 -> 00:04:02] of writing function composition,
+[00:04:02 -> 00:04:04] but both of these notations are basically saying
+[00:04:04 -> 00:04:05] that the transfer function of a path
+[00:04:05 -> 00:04:09] is formed by composition of the individual transfer
+[00:04:09 -> 00:04:11] functions that constitute that path.
+[00:04:12 -> 00:04:13] All right, so now with that,
+[00:04:13 -> 00:04:15] we are going to define the ideal solution.
+[00:04:15 -> 00:04:18] And the ideal solution in this setting is that
+[00:04:18 -> 00:04:20] what is the best possible answer we could have expected?
+[00:04:20 -> 00:04:24] The best possible answer is for a program point,
+[00:04:24 -> 00:04:25] take all the program paths
+[00:04:25 -> 00:04:27] that can reach that program point
+[00:04:27 -> 00:04:29] from the beginning of the program,
+[00:04:29 -> 00:04:30] assuming it's a forward DFA.
+[00:04:30 -> 00:04:31] If it was a backward DFA,
+[00:04:31 -> 00:04:34] then I would talk about from the exit
+[00:04:34 -> 00:04:37] to that program point, what are all the possible paths.
+[00:04:37 -> 00:04:39] But without loss of generality,
+[00:04:39 -> 00:04:41] let's talk about forward DFA.
+[00:04:41 -> 00:04:43] In a forward DFA, we are interested in all possible paths
+[00:04:43 -> 00:04:45] that may reach a program point
+[00:04:45 -> 00:04:50] starting from program entry.
+[00:04:50 -> 00:04:51] We are interested in those paths
+[00:04:51 -> 00:04:53] that are possible to execute.
+[00:04:53 -> 00:04:55] So for example, if there is some path
+[00:04:55 -> 00:04:57] which is never going to execute,
+[00:04:57 -> 00:04:59] we are not going to take that path, all right?
+[00:04:59 -> 00:05:01] So we are interested in all such paths
+[00:05:01 -> 00:05:04] and there can be infinitely many such paths,
+[00:05:04 -> 00:05:06] especially because there are cycles.
+[00:05:06 -> 00:05:09] But let's say we are able to basically compute
+[00:05:09 -> 00:05:11] the transfer function of all such paths.
+[00:05:11 -> 00:05:14] And then we meet over all such paths, the values,
+[00:05:14 -> 00:05:17] and that is the value that we get.
+[00:05:17 -> 00:05:20] So we take fv of n, at node n,
+[00:05:20 -> 00:05:22] we want to compute the value vn.
+[00:05:22 -> 00:05:24] And for a forward dataflow analysis,
+[00:05:24 -> 00:05:26] maybe you want to compute in of a basic log.
+[00:05:26 -> 00:05:28] For a backward dataflow analysis,
+[00:05:28 -> 00:05:30] maybe you want to compute the out of a basic log.
+[00:05:30 -> 00:05:32] Whatever it is, I'm representing it
+[00:05:32 -> 00:05:35] using this identifier called v.
+[00:05:35 -> 00:05:37] Then that is basically all the value.
+[00:05:37 -> 00:05:40] I mean, if I take the meet over all the possible values
+[00:05:40 -> 00:05:42] that may reach that program point,
+[00:05:42 -> 00:05:43] then that would be the right answer.
+[00:05:43 -> 00:05:45] That would be the best possible answer
+[00:05:45 -> 00:05:47] because after all, whatever value I decide
+[00:05:47 -> 00:05:48] for that particular program point,
+[00:05:48 -> 00:05:51] it has to be less than equal to all the other values
+[00:05:51 -> 00:05:52] that can reach there.
+[00:05:52 -> 00:05:55] And so what is the value that is less than equal
+[00:05:55 -> 00:05:57] to all the other values that can reach there?
+[00:05:57 -> 00:05:58] It's the meet of all those values.
+[00:05:58 -> 00:06:00] And so that's what this expression is showing.
+[00:06:00 -> 00:06:05] It's a meet over fpn where we meet over all,
+[00:06:05 -> 00:06:07] where p is basically an execution path
+[00:06:07 -> 00:06:10] that may reach n from the beginning,
+[00:06:10 -> 00:06:12] assuming it's a forward dataflow.
+[00:06:12 -> 00:06:15] Notice that the word execution here is important.
+[00:06:15 -> 00:06:16] So we are only interested in those paths
+[00:06:16 -> 00:06:18] that can potentially be executed.
+[00:06:18 -> 00:06:20] If there are some paths that may not be executed,
+[00:06:20 -> 00:06:22] we are not interested in capturing them.
+[00:06:23 -> 00:06:25] This is the best possible answer
+[00:06:25 -> 00:06:28] that I can expect with a given transfer function
+[00:06:28 -> 00:06:32] for every node and for a given meet operator.
+[00:06:32 -> 00:06:36] All right, so I'm gonna call this the ideal solution.
+[00:06:36 -> 00:06:37] So let's try to understand the ideal solution
+[00:06:37 -> 00:06:38] with an example.
+[00:06:38 -> 00:06:41] So let's use the constant propagation DFA example
+[00:06:41 -> 00:06:43] that we've been using all through the course.
+[00:06:43 -> 00:06:45] And let's say this is my program.
+[00:06:45 -> 00:06:48] It says y equals sqr of x,
+[00:06:48 -> 00:06:52] and then it checks y is greater than equal to zero or not.
+[00:06:52 -> 00:06:54] If this evaluates to true, then I set x to three.
+[00:06:54 -> 00:06:57] If it evaluates to false, then I set x to five.
+[00:06:59 -> 00:07:01] Now notice that the function sqr
+[00:07:01 -> 00:07:04] is actually intended to represent the square of a value.
+[00:07:04 -> 00:07:07] So it's going to take the square of x, right?
+[00:07:07 -> 00:07:08] So y is equal to x squared.
+[00:07:09 -> 00:07:13] Now, initially, we assume that the value is the empty set,
+[00:07:13 -> 00:07:16] which means we don't have any constant relationship
+[00:07:16 -> 00:07:17] that are known.
+[00:07:17 -> 00:07:19] And then we want to know what is the best possible
+[00:07:19 -> 00:07:21] solution that is possible in this case.
+[00:07:21 -> 00:07:24] Now the reason this example is interesting
+[00:07:24 -> 00:07:26] is because if y is x squared,
+[00:07:26 -> 00:07:28] then we know that y will always be greater
+[00:07:28 -> 00:07:29] than equal to zero.
+[00:07:29 -> 00:07:32] And that means that the false path is not executable.
+[00:07:32 -> 00:07:34] In other words, no execution of this program
+[00:07:34 -> 00:07:36] will ever take the false branch,
+[00:07:36 -> 00:07:38] in which case the only path that is possible
+[00:07:38 -> 00:07:40] is the true path.
+[00:07:40 -> 00:07:42] And so, you know, our ideal solution
+[00:07:42 -> 00:07:44] should take that into account.
+[00:07:44 -> 00:07:46] Recall that the ideal solution basically meets over
+[00:07:46 -> 00:07:49] all executable paths or all execution paths.
+[00:07:49 -> 00:07:52] And false branch is not an execution path.
+[00:07:53 -> 00:07:55] All right, so this is our solution.
+[00:07:55 -> 00:07:57] It starts with empty set.
+[00:07:57 -> 00:07:58] After y equals square zero,
+[00:07:58 -> 00:08:00] it still remains the empty set,
+[00:08:00 -> 00:08:02] the value for the constant propagation.
+[00:08:02 -> 00:08:04] It remains empty set here,
+[00:08:04 -> 00:08:05] remains empty set here.
+[00:08:05 -> 00:08:06] But after x equals three,
+[00:08:06 -> 00:08:08] we know that x is now three
+[00:08:08 -> 00:08:09] at this particular program point.
+[00:08:09 -> 00:08:13] So we have this particular value which maps x to three.
+[00:08:13 -> 00:08:14] Similarly on the false branch,
+[00:08:14 -> 00:08:16] we have five and then we have x equals five
+[00:08:16 -> 00:08:17] just after x equals five
+[00:08:17 -> 00:08:19] because this statement x equals five
+[00:08:19 -> 00:08:21] is generating a mapping x comma five.
+[00:08:22 -> 00:08:25] And then at this particular point,
+[00:08:25 -> 00:08:27] right at the beginning of this fourth basic block,
+[00:08:27 -> 00:08:29] we meet the two values,
+[00:08:29 -> 00:08:31] which is x equals three and x equals five.
+[00:08:31 -> 00:08:32] And there's nothing common here.
+[00:08:32 -> 00:08:34] The meet operator is intersection.
+[00:08:34 -> 00:08:37] And so we again get the empty set.
+[00:08:37 -> 00:08:39] Now let's look at the ideal solution.
+[00:08:39 -> 00:08:41] Recall that the ideal solution is basically
+[00:08:41 -> 00:08:43] look at all the paths that reach this point,
+[00:08:43 -> 00:08:46] all the execution paths and then meet the value.
+[00:08:46 -> 00:08:47] So what are all the execution paths?
+[00:08:47 -> 00:08:49] Well, in this particular example,
+[00:08:49 -> 00:08:51] there's only one execution path.
+[00:08:51 -> 00:08:52] And on that execution path,
+[00:08:52 -> 00:08:55] the value that will come here is three.
+[00:08:55 -> 00:08:58] And so the ideal solution should have been x equals three.
+[00:08:59 -> 00:09:01] So it's clear that the maximum fixed point solution
+[00:09:01 -> 00:09:05] is not equal to the ideal solution in this example.
+[00:09:05 -> 00:09:08] In fact, it is less than equal to the ideal solution
+[00:09:08 -> 00:09:12] where less than equal to is defined on the semi lattice.
+[00:09:12 -> 00:09:15] So why is this happening?
+[00:09:15 -> 00:09:15] Well, that's happening
+[00:09:15 -> 00:09:18] because we don't have any way of figuring out
+[00:09:18 -> 00:09:20] what are all the paths that have been taken
+[00:09:20 -> 00:09:21] in the program,
+[00:09:21 -> 00:09:23] what are all the execution paths
+[00:09:23 -> 00:09:25] and that seems like a difficult problem.
+[00:09:25 -> 00:09:27] In fact, you know, instead of SQR,
+[00:09:27 -> 00:09:30] if I had just some random function called foo,
+[00:09:30 -> 00:09:33] maybe that function foo had some very complicated
+[00:09:33 -> 00:09:34] and convoluted logic.
+[00:09:34 -> 00:09:36] And somehow it was true
+[00:09:36 -> 00:09:38] that it would only return positive numbers,
+[00:09:38 -> 00:09:42] but to be able to do that analysis is difficult.
+[00:09:42 -> 00:09:44] And in fact, it can be shown that
+[00:09:44 -> 00:09:46] in the Turing model of computation,
+[00:09:46 -> 00:09:49] identifying the whether y is greater than equal to zero
+[00:09:49 -> 00:09:52] or not for all possible values of x
+[00:09:52 -> 00:09:55] is undecidable in general.
+[00:09:55 -> 00:09:58] Okay, for an arbitrary function foo.
+[00:09:58 -> 00:09:59] And so identifying,
+[00:09:59 -> 00:10:00] and from that we can also figure out
+[00:10:00 -> 00:10:02] that identifying the ideal solution
+[00:10:02 -> 00:10:05] at any program point is undecidable.
+[00:10:05 -> 00:10:07] So that's why, you know,
+[00:10:07 -> 00:10:10] it seems like it's a very difficult problem to solve
+[00:10:10 -> 00:10:13] that is trying the ideal solution,
+[00:10:13 -> 00:10:14] even when the transfer functions
+[00:10:14 -> 00:10:16] and the meet operators are fixed,
+[00:10:16 -> 00:10:18] even when the transfer functions are monotonic,
+[00:10:18 -> 00:10:20] even when the semi lattice is finite height,
+[00:10:20 -> 00:10:23] finding the ideal solution is still undecidable
+[00:10:23 -> 00:10:26] because we don't know which paths may get executed
+[00:10:26 -> 00:10:27] in the program at runtime
+[00:10:27 -> 00:10:30] and which paths may never execute at runtime.
+[00:10:31 -> 00:10:36] Okay, so precisely identifying all the program paths
+[00:10:36 -> 00:10:39] that may reach a program point is undecidable in general.
+[00:10:39 -> 00:10:41] Identifying all the program paths
+[00:10:41 -> 00:10:43] that may reach through execution, right?
+[00:10:43 -> 00:10:46] So maybe I should be clearer here,
+[00:10:46 -> 00:10:48] may reach through execution.
+[00:10:49 -> 00:10:52] Okay, but ideal is still a good,
+[00:10:52 -> 00:10:53] nice theoretical concept
+[00:10:53 -> 00:10:55] because at least we should be able to look at a program
+[00:10:55 -> 00:10:58] and if we can reason about some things manually,
+[00:10:58 -> 00:10:59] we should basically say, okay, this is the ideal solution
+[00:10:59 -> 00:11:01] and this is the MFE solution
+[00:11:01 -> 00:11:04] and this is the gap between the two solutions, all right?
+[00:11:05 -> 00:11:09] So there is another approximation to ideal.
+[00:11:09 -> 00:11:11] So maybe ideal is very bad,
+[00:11:11 -> 00:11:12] it's very difficult to compute
+[00:11:12 -> 00:11:13] because we have to figure out
+[00:11:13 -> 00:11:15] what are the executable paths
+[00:11:15 -> 00:11:18] and we just showed that this is an undecidable problem,
+[00:11:18 -> 00:11:19] that what are the executable paths
+[00:11:19 -> 00:11:21] and what are paths that are not executable.
+[00:11:21 -> 00:11:24] But how about we just conservatively assume
+[00:11:24 -> 00:11:25] that all paths are executable,
+[00:11:26 -> 00:11:28] all paths that reach that program point are executable,
+[00:11:28 -> 00:11:30] in which case our ideal solution
+[00:11:30 -> 00:11:32] will be called a meet over path solution.
+[00:11:32 -> 00:11:35] So it's the same concept as ideal,
+[00:11:35 -> 00:11:36] which means I'm going to meet over
+[00:11:36 -> 00:11:38] all the paths that reach that program point,
+[00:11:38 -> 00:11:40] but now I'm not going to do that
+[00:11:40 -> 00:11:42] only for the paths that are executable,
+[00:11:42 -> 00:11:44] but for all possible paths that reach that program point.
+[00:11:44 -> 00:11:47] And so I'm going to define a meet over paths
+[00:11:47 -> 00:11:49] or MOP, MOP solution,
+[00:11:50 -> 00:11:52] such that at node end, the value Vn is
+[00:11:52 -> 00:11:56] meet over all paths that may reach n, all right?
+[00:11:56 -> 00:11:59] All paths P that may reach n
+[00:11:59 -> 00:12:03] and we meet and we basically apply the transfer function
+[00:12:03 -> 00:12:04] for that particular path.
+[00:12:04 -> 00:12:07] Once again, there's an infinite number of such paths.
+[00:12:07 -> 00:12:09] In fact, the set of all paths is of course greater,
+[00:12:09 -> 00:12:12] is a superset of all the execution paths.
+[00:12:12 -> 00:12:15] And so this expression should be,
+[00:12:15 -> 00:12:18] should be less than equal to the ideal solution.
+[00:12:18 -> 00:12:20] We're going to discuss that in a moment,
+[00:12:20 -> 00:12:24] but this seems like an easier quantity to compute
+[00:12:24 -> 00:12:25] because now we don't have to worry about
+[00:12:25 -> 00:12:28] what paths are executable and what paths are not executable.
+[00:12:28 -> 00:12:29] In our previous example, for example,
+[00:12:29 -> 00:12:32] we don't have to reason about whether square will,
+[00:12:32 -> 00:12:33] or whether foo will always return
+[00:12:33 -> 00:12:35] a positive number or not.
+[00:12:35 -> 00:12:36] We really don't care.
+[00:12:36 -> 00:12:37] In the meet over path,
+[00:12:37 -> 00:12:38] we're just going to conservatively assume
+[00:12:38 -> 00:12:41] that foo may return both positive and negative numbers.
+[00:12:41 -> 00:12:43] And so we have to meet over both the paths.
+[00:12:44 -> 00:12:47] So unlike ideal, MOP includes paths
+[00:12:47 -> 00:12:48] that may never be executed.
+[00:12:48 -> 00:12:50] And so it's a conservative solution.
+[00:12:50 -> 00:12:54] It's a more conservative solution than ideal.
+[00:12:54 -> 00:12:57] But is it, does it make our problem easier?
+[00:12:57 -> 00:12:59] Well, it does because MOP is no longer
+[00:12:59 -> 00:13:02] an undecidable problem, identifying the MOP solution.
+[00:13:02 -> 00:13:05] And so let's understand what is the MOP solution
+[00:13:05 -> 00:13:06] for this particular example
+[00:13:06 -> 00:13:08] that we saw in our previous slide.
+[00:13:08 -> 00:13:10] Here, once again, on one path,
+[00:13:10 -> 00:13:12] we are going to get x equals three.
+[00:13:12 -> 00:13:14] On the other path, we're going to get x equals five.
+[00:13:14 -> 00:13:17] The ideal solution should have been x equals three,
+[00:13:17 -> 00:13:21] but both MOP and MFP are going to give me the empty set
+[00:13:21 -> 00:13:23] because I'm going to conservatively assume
+[00:13:23 -> 00:13:25] that both paths may be taken.
+[00:13:25 -> 00:13:28] And so the solution here is going to be empty set
+[00:13:28 -> 00:13:30] for both MFP and MOP.
+[00:13:30 -> 00:13:33] Now, is it true that an MFP solution
+[00:13:33 -> 00:13:37] is always equal to the MOP solution as in this example?
+[00:13:37 -> 00:13:40] The answer is, let's wait and see.
+[00:13:40 -> 00:13:42] Okay, so here's another example.
+[00:13:44 -> 00:13:46] y equals square x, y is greater than equal to zero.
+[00:13:46 -> 00:13:49] Let's say, and this is, okay,
+[00:13:49 -> 00:13:52] even here I wanted to have greater than equal to zero.
+[00:13:52 -> 00:13:54] So y is greater than equal to, if it's true,
+[00:13:54 -> 00:13:57] then you basically take a equals three, b equals two.
+[00:13:57 -> 00:14:01] If it's false, then you take a equals two, b equals three.
+[00:14:01 -> 00:14:03] And at the end, you do z equals a plus b.
+[00:14:04 -> 00:14:06] Now, what's going to happen?
+[00:14:06 -> 00:14:08] So now let's assume that our transfer function
+[00:14:08 -> 00:14:09] for the constant propagation
+[00:14:09 -> 00:14:11] is that option two transfer function
+[00:14:11 -> 00:14:14] where we're going to do some nuanced analysis
+[00:14:14 -> 00:14:17] to identify what is constant and what is not.
+[00:14:17 -> 00:14:22] So in the case of MFP, let's look at this case.
+[00:14:22 -> 00:14:23] On this particular path,
+[00:14:23 -> 00:14:26] I'm going to get a equals three and b equals two.
+[00:14:26 -> 00:14:27] On the false path,
+[00:14:27 -> 00:14:30] I'm going to get a equals two and b equals three.
+[00:14:30 -> 00:14:31] And I'm going to meet them.
+[00:14:31 -> 00:14:34] And the meet here is going to give me a value here,
+[00:14:34 -> 00:14:36] which is five, the empty set.
+[00:14:36 -> 00:14:38] And this is something that we have seen
+[00:14:38 -> 00:14:40] in our previous modules as well.
+[00:14:40 -> 00:14:41] And so in the MFP,
+[00:14:41 -> 00:14:44] we are going to apply the transfer function
+[00:14:44 -> 00:14:46] of z equals a plus b on five.
+[00:14:46 -> 00:14:49] And that's also going to give me the answer five,
+[00:14:49 -> 00:14:50] which is the empty set.
+[00:14:50 -> 00:14:53] So the MFP solution for this particular program
+[00:14:53 -> 00:14:56] for constant propagation with the nuanced transfer function
+[00:14:56 -> 00:15:00] is the empty set at the end of the program.
+[00:15:00 -> 00:15:02] Now let's look at what's the ideal solution.
+[00:15:02 -> 00:15:04] The ideal solution would be able to figure out
+[00:15:04 -> 00:15:07] that square will always be greater than equal to zero.
+[00:15:07 -> 00:15:10] And so the false path will never be taken.
+[00:15:10 -> 00:15:12] And so only the true path will be taken.
+[00:15:12 -> 00:15:12] And on the true path,
+[00:15:12 -> 00:15:16] I will get that a equals three, b equals two,
+[00:15:16 -> 00:15:17] and z equals five.
+[00:15:17 -> 00:15:19] So the only possibilities for all executable paths
+[00:15:19 -> 00:15:21] that can reach this particular point,
+[00:15:21 -> 00:15:22] the end of the program,
+[00:15:22 -> 00:15:26] is a equals three, b equals two, and z equals five.
+[00:15:26 -> 00:15:28] Now let's look at the MOP solution,
+[00:15:28 -> 00:15:29] the meet over path solution.
+[00:15:29 -> 00:15:31] The meet over path solution says,
+[00:15:31 -> 00:15:32] let's look at all the paths
+[00:15:32 -> 00:15:33] that may reach that program point
+[00:15:33 -> 00:15:37] and then compute the transfer functions
+[00:15:37 -> 00:15:38] and then meet over them.
+[00:15:38 -> 00:15:42] So in one case, it's going to be this path here,
+[00:15:42 -> 00:15:43] all the way to the end.
+[00:15:43 -> 00:15:46] And here, the transfer function is going to say,
+[00:15:46 -> 00:15:51] a equals three, b equals two, and z equals five.
+[00:15:51 -> 00:15:52] All right, so on this path,
+[00:15:52 -> 00:15:55] I'm going to get the value a equals three,
+[00:15:55 -> 00:15:59] b equals two, z equals five.
+[00:15:59 -> 00:16:01] Similarly, on the other path,
+[00:16:02 -> 00:16:05] I'm going to get the value a equals two,
+[00:16:05 -> 00:16:08] b equals three, and z equals five.
+[00:16:08 -> 00:16:10] And what is our definition of MOP?
+[00:16:10 -> 00:16:12] Now I meet the two values.
+[00:16:12 -> 00:16:14] So I first compute the transfer functions
+[00:16:14 -> 00:16:15] on the full paths,
+[00:16:15 -> 00:16:17] and then at the very end, I meet those values.
+[00:16:17 -> 00:16:19] And so when I meet those values,
+[00:16:19 -> 00:16:21] what am I going to get?
+[00:16:21 -> 00:16:22] a and b are going to get canceled
+[00:16:22 -> 00:16:24] because they're holding different values,
+[00:16:24 -> 00:16:25] but z is going to remain.
+[00:16:25 -> 00:16:29] So the meet over path solution here is z equals five.
+[00:16:29 -> 00:16:30] And now in this particular example,
+[00:16:30 -> 00:16:34] the MFP is not equal to the MOP solution.
+[00:16:35 -> 00:16:39] And what we actually see is MFP is not equal to MOP,
+[00:16:39 -> 00:16:41] and MOP is not equal to ideal.
+[00:16:42 -> 00:16:45] In fact, it's not just not equal to,
+[00:16:45 -> 00:16:50] we can show that MFP is always less than equal to MOP,
+[00:16:50 -> 00:16:52] and MOP is always less than equal to ideal,
+[00:16:52 -> 00:16:53] where less than equal to
+[00:16:53 -> 00:16:57] is based on the semi-lattice partial order operator.
+[00:16:58 -> 00:17:01] So in this example, for constant propagation,
+[00:17:01 -> 00:17:03] it is easy to see that the empty set
+[00:17:03 -> 00:17:07] is less than equal to the singleton set,
+[00:17:07 -> 00:17:09] which just has z equals five,
+[00:17:09 -> 00:17:11] which is less than equal to this set,
+[00:17:11 -> 00:17:13] which has three elements in it,
+[00:17:13 -> 00:17:16] a equals two, b equals three, and z equals five.
+[00:17:16 -> 00:17:17] Why is this true?
+[00:17:17 -> 00:17:19] Because recall that the less than equal to
+[00:17:19 -> 00:17:22] is nothing but the subset operator
+[00:17:22 -> 00:17:24] for the constant propagation algorithm.

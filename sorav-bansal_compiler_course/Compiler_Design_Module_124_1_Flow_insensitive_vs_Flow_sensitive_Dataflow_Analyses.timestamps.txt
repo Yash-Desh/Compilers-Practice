@@ -1,0 +1,546 @@
+Title: Compiler Design Module 124 1: Flow insensitive vs  Flow sensitive Dataflow Analyses
+Video ID: fdu1rkDQcRE
+Detected language: en
+------------------------------------------------------------
+
+[00:00:00 -> 00:00:05] I'm going to now introduce a categorization of data flow analysis,
+[00:00:05 -> 00:00:09] and the categorization is flow-sensitive and flow-insensitive analysis.
+[00:00:09 -> 00:00:11] In a flow-sensitive analysis,
+[00:00:11 -> 00:00:13] the order of statements matters,
+[00:00:13 -> 00:00:16] and thus you need a control flow graph.
+[00:00:16 -> 00:00:20] Pretty much all the examples that we have discussed so far,
+[00:00:20 -> 00:00:21] most of them at least,
+[00:00:21 -> 00:00:25] were flow-sensitive data flow analysis.
+[00:00:25 -> 00:00:27] The other category of data flow analysis is
+[00:00:27 -> 00:00:30] flow-insensitive data flow analysis,
+[00:00:30 -> 00:00:32] where the order of statements does not matter,
+[00:00:32 -> 00:00:35] and thus you do not need a control flow graph.
+[00:00:35 -> 00:00:40] You only need a set of statements that occurs in the program.
+[00:00:40 -> 00:00:44] So the analysis is the same regardless of the statement order.
+[00:00:44 -> 00:00:46] You can change the statement order,
+[00:00:46 -> 00:00:48] and the results of the analysis are not going to change.
+[00:00:48 -> 00:00:50] So here are some examples
+[00:00:50 -> 00:00:53] of flow-sensitive and flow-insensitive analysis.
+[00:00:53 -> 00:00:56] So flow-sensitive, constant propagation,
+[00:00:56 -> 00:00:57] liveness.
+[00:00:57 -> 00:01:00] So constant propagation recall that depending
+[00:01:00 -> 00:01:05] on whether the last assignment was to a constant or not,
+[00:01:05 -> 00:01:10] it determines whether the variable is a constant or not.
+[00:01:10 -> 00:01:13] Now, the last assignment,
+[00:01:13 -> 00:01:15] it depends on where we are in the program,
+[00:01:15 -> 00:01:17] and it depends on the order of statements,
+[00:01:17 -> 00:01:19] and in general, the control flow graph.
+[00:01:19 -> 00:01:24] Similarly, liveness depends on what is the first use going downstream,
+[00:01:24 -> 00:01:27] and whether there's a def of that variable,
+[00:01:27 -> 00:01:31] a defined assignment to that variable before that use, and so on.
+[00:01:31 -> 00:01:34] So all these examples that we have discussed earlier,
+[00:01:34 -> 00:01:36] they're all flow-sensitive examples.
+[00:01:36 -> 00:01:39] What is an example of flow-insensitive analysis?
+[00:01:39 -> 00:01:42] So let's say I was interested in all the variables that
+[00:01:42 -> 00:01:46] are ever used or mentioned or modified in a program.
+[00:01:46 -> 00:01:48] Now, in this case,
+[00:01:48 -> 00:01:53] irrespective of whether I'm mentioning X and I'm
+[00:01:53 -> 00:01:56] mentioning Y, irrespective of where they are being mentioned,
+[00:01:56 -> 00:01:58] the result is going to be the same,
+[00:01:58 -> 00:02:00] and so even if I reorder the statements,
+[00:02:00 -> 00:02:01] we're going to get the same analysis,
+[00:02:01 -> 00:02:04] similarly of codes used in a program.
+[00:02:04 -> 00:02:09] So let us take this example of variables modified by a program.
+[00:02:09 -> 00:02:10] In this case, I'm going to define
+[00:02:10 -> 00:02:13] my transfer function and my meet operator.
+[00:02:13 -> 00:02:17] My transfer function is if there is an assignment of this form X colon equals E,
+[00:02:17 -> 00:02:21] then I basically say that this statement generates
+[00:02:22 -> 00:02:26] a modified variable, and in this case, it's X.
+[00:02:26 -> 00:02:31] The kill set is basically empty for every other instruction.
+[00:02:31 -> 00:02:32] So even for this instruction,
+[00:02:32 -> 00:02:35] nothing is getting killed because we are just interested in what
+[00:02:35 -> 00:02:38] all the variables that ever appear on the LHS of any assignment statement.
+[00:02:38 -> 00:02:40] That means they get modified ever.
+[00:02:40 -> 00:02:46] So the transfer function of any statement S is it takes the in,
+[00:02:46 -> 00:02:48] which is the value before the S,
+[00:02:49 -> 00:02:53] and then unions it with Gen S, which is defined as such.
+[00:02:53 -> 00:02:55] The meet operator is union.
+[00:02:55 -> 00:02:59] So for example, if there was an assignment to X and Y and Z,
+[00:02:59 -> 00:03:01] and this was the control flow graph,
+[00:03:01 -> 00:03:03] then the final solution will be X by Z.
+[00:03:03 -> 00:03:06] Notice that the order doesn't matter.
+[00:03:06 -> 00:03:07] I could have changed X,
+[00:03:07 -> 00:03:09] Y, I could have moved X here,
+[00:03:09 -> 00:03:11] or I could have moved Z up,
+[00:03:11 -> 00:03:13] the answer would have still been the same,
+[00:03:13 -> 00:03:16] and that's why we call it a flow insensitive analysis.
+[00:03:17 -> 00:03:21] So here is another example of a control flow graph,
+[00:03:21 -> 00:03:24] where there's a three-way fork,
+[00:03:24 -> 00:03:27] and each of them is basically assigning to the three different variables,
+[00:03:27 -> 00:03:29] and the answer is still going to be the same.
+[00:03:29 -> 00:03:33] In general, a flow sensitive analysis,
+[00:03:33 -> 00:03:37] basically you can identify a flow insensitive analysis
+[00:03:37 -> 00:03:41] if it is true that the solution you get for a sequence of statements S1,
+[00:03:41 -> 00:03:45] semicolon S2 is the same as what you would get for S2,
+[00:03:45 -> 00:03:50] semicolon S1, which is the same as if you take the solution for S1 individually,
+[00:03:50 -> 00:03:52] and take the solution for S2 individually,
+[00:03:52 -> 00:03:56] and then you have some commutative associative operator that relates them.
+[00:03:56 -> 00:03:57] In this case, this is union.
+[00:03:57 -> 00:04:00] Okay, in this example, that was union.
+[00:04:00 -> 00:04:03] Okay, now flow insensitive analysis is nice
+[00:04:03 -> 00:04:06] because now I don't need to bother about the control flow graph at all.
+[00:04:06 -> 00:04:09] I can just treat all the instructions in the control flow graph
+[00:04:09 -> 00:04:11] and kind of completely break the structure of the control flow graph
+[00:04:11 -> 00:04:14] and treat those instructions as a bag of instructions,
+[00:04:14 -> 00:04:18] and then I can just run my fixed point algorithm in any order
+[00:04:18 -> 00:04:23] on this bag of instructions, and I'm going to get the same answer.
+[00:04:23 -> 00:04:29] So, once again, what is the trade-off between flow insensitive and flow sensitive?
+[00:04:29 -> 00:04:35] Well, in a flow sensitive analysis, we require a DFA value at each program point
+[00:04:35 -> 00:04:39] because after all, the DFA value can be different at different program points,
+[00:04:39 -> 00:04:40] and we want to capture that,
+[00:04:40 -> 00:04:44] and that's what we have been doing in all our data flow analysis so far.
+[00:04:44 -> 00:04:49] So, for example, we would track the DFA value at in and out of every statement S.
+[00:04:49 -> 00:04:51] Whereas for a flow insensitive analysis,
+[00:04:51 -> 00:04:54] because the control flow graph can be completely dismantled,
+[00:04:54 -> 00:04:57] we only require a single global value,
+[00:04:57 -> 00:04:59] maybe in my bag of instructions,
+[00:04:59 -> 00:05:02] right at the beginning of that bag of instructions,
+[00:05:02 -> 00:05:07] and whenever I transfer across any instruction,
+[00:05:07 -> 00:05:08] any single instruction in the bag of instructions,
+[00:05:08 -> 00:05:11] I just update that single global value.
+[00:05:11 -> 00:05:14] So, for example, if I maintain the set of all variables modified,
+[00:05:14 -> 00:05:17] then if there's an assignment statement across which I transfer,
+[00:05:17 -> 00:05:18] I just say x colon equals E,
+[00:05:18 -> 00:05:22] then I say, okay, just take the variables modified by this instruction,
+[00:05:22 -> 00:05:25] which is x, and union it with this single global value.
+[00:05:25 -> 00:05:28] So, I don't need to maintain a value at every program point
+[00:05:28 -> 00:05:29] for flow insensitive analysis.
+[00:05:29 -> 00:05:32] I can convert, now here is the interesting fact,
+[00:05:32 -> 00:05:36] I can convert a flow sensitive analysis to a flow insensitive analysis
+[00:05:36 -> 00:05:39] by maintaining only a single global value
+[00:05:39 -> 00:05:41] and pretending that any of the program statements
+[00:05:41 -> 00:05:44] can execute non-deterministically and iteratively.
+[00:05:44 -> 00:05:47] So, let us say this was my original program control flow graph,
+[00:05:47 -> 00:05:49] which has this nice structure,
+[00:05:49 -> 00:05:52] it's a diamond-shaped structure A, B, C, D.
+[00:05:52 -> 00:05:55] I just pretend that I completely break this structure
+[00:05:55 -> 00:05:57] and I just pretend that any of these statements
+[00:05:57 -> 00:06:00] can execute non-deterministically after any other statement.
+[00:06:00 -> 00:06:02] So, maybe if the first time C can execute,
+[00:06:02 -> 00:06:05] the next time it goes back in the loop, maybe B can execute,
+[00:06:05 -> 00:06:07] the next time it goes back in the loop, maybe D can execute.
+[00:06:07 -> 00:06:09] And so, any of these instructions can be picked up
+[00:06:09 -> 00:06:12] non-deterministically and executed next.
+[00:06:12 -> 00:06:15] And so that, and I can use the same transfer function.
+[00:06:15 -> 00:06:17] So, let's say I'm doing constant propagation.
+[00:06:17 -> 00:06:20] I can do constant propagation in a flow sensitive way
+[00:06:20 -> 00:06:23] on the original graph when I maintain a value
+[00:06:23 -> 00:06:25] at every program point,
+[00:06:25 -> 00:06:28] or I can do the flow insensitive analysis
+[00:06:28 -> 00:06:30] for constant propagation where I just pretend
+[00:06:30 -> 00:06:33] that all these instructions are completely independent
+[00:06:33 -> 00:06:35] and they can be executed non-deterministically
+[00:06:35 -> 00:06:36] one after another in any order.
+[00:06:38 -> 00:06:40] Now, the only issue is that if I do this
+[00:06:40 -> 00:06:42] non-deterministic execution of the instructions,
+[00:06:42 -> 00:06:43] I can get less precise answer.
+[00:06:43 -> 00:06:45] So, let's see this through an example,
+[00:06:45 -> 00:06:47] and I'm going to take the example of liveness.
+[00:06:47 -> 00:06:51] So, let's say my original program was,
+[00:06:51 -> 00:06:52] the control for graph was shown on,
+[00:06:52 -> 00:06:54] is as it is shown on the left.
+[00:06:54 -> 00:06:57] I am assigning to Y, Y colon equals Y plus Z,
+[00:06:57 -> 00:07:00] then I'm assigning to V, V colon equals W plus something,
+[00:07:00 -> 00:07:02] and then I'm assigning to X,
+[00:07:02 -> 00:07:04] X colon equals V plus something.
+[00:07:04 -> 00:07:07] Now, if I was interested in identifying the lie values
+[00:07:07 -> 00:07:10] at entry, then clearly V is not a lie value
+[00:07:10 -> 00:07:12] because before the use of a V,
+[00:07:12 -> 00:07:15] there's a definition of a V.
+[00:07:15 -> 00:07:17] And so, at this point, the value of V
+[00:07:17 -> 00:07:20] is not consequential to the program's execution
+[00:07:20 -> 00:07:21] and thus it's not live.
+[00:07:21 -> 00:07:25] In fact, a simple use def based liveness analysis,
+[00:07:25 -> 00:07:28] flow sensitive, will capture that.
+[00:07:28 -> 00:07:30] But if I, and so the flow sensitive solution is
+[00:07:30 -> 00:07:34] that at the entry, the live registers are W, Y, and Z.
+[00:07:34 -> 00:07:37] Whereas if I take the flow insensitive solution,
+[00:07:37 -> 00:07:39] I basically break this entire program
+[00:07:39 -> 00:07:42] into separate statements and pretend that any of them
+[00:07:42 -> 00:07:44] can execute non-determined studies.
+[00:07:44 -> 00:07:47] So now in this case, the third statement,
+[00:07:47 -> 00:07:48] which was X colon equals V plus something,
+[00:07:48 -> 00:07:51] can execute right in the beginning.
+[00:07:51 -> 00:07:54] And so, V appears to be live at entry.
+[00:07:54 -> 00:07:56] So in the flow insensitive solution,
+[00:07:56 -> 00:07:59] it's a less precise solution because I'm also saying
+[00:07:59 -> 00:08:02] that V may be live at entry.
+[00:08:02 -> 00:08:05] So in general, the, so first of all,
+[00:08:05 -> 00:08:10] I can always convert any data flow analysis,
+[00:08:10 -> 00:08:14] which was originally formulated as a flow sensitive analysis
+[00:08:14 -> 00:08:15] to a flow insensitive analysis.
+[00:08:15 -> 00:08:18] All I need to do is I basically need to pretend
+[00:08:18 -> 00:08:22] that my control flow graph is just a bunch of statements
+[00:08:22 -> 00:08:24] which can be executed non-deterministically
+[00:08:24 -> 00:08:25] one after another.
+[00:08:25 -> 00:08:27] And this can be done by pretending
+[00:08:27 -> 00:08:29] that your control flow graph basically has this
+[00:08:29 -> 00:08:31] fork at entry to all these statements.
+[00:08:31 -> 00:08:34] And any of these statements can execute non-deterministically.
+[00:08:34 -> 00:08:36] So there's a choice operator with basically saying
+[00:08:36 -> 00:08:37] which one gets chosen.
+[00:08:37 -> 00:08:40] And then, and they all get meet here
+[00:08:40 -> 00:08:41] and then they do loop back.
+[00:08:41 -> 00:08:44] So it basically represents that any of these instructions
+[00:08:44 -> 00:08:47] can execute after any other of these instructions.
+[00:08:48 -> 00:08:53] And this, and so once you change this control flow graph
+[00:08:53 -> 00:08:55] to this one, then you can just run your original
+[00:08:55 -> 00:08:58] maximum fixed point iteration algorithm
+[00:08:58 -> 00:09:02] for data flow analysis on the collapsed graph.
+[00:09:02 -> 00:09:04] And then you will get some solution.
+[00:09:04 -> 00:09:08] And let me call that the MFP flow insensitive or MFP-FI.
+[00:09:08 -> 00:09:11] That's the maximum fixed point flow insensitive solution.
+[00:09:11 -> 00:09:13] And the claim is that the precision
+[00:09:13 -> 00:09:15] of the maximum flow point,
+[00:09:15 -> 00:09:18] the maximum fixed point flow insensitive solution
+[00:09:18 -> 00:09:20] will always be less than equal to the precision
+[00:09:20 -> 00:09:23] of MFP of the flow sensitive solution.
+[00:09:23 -> 00:09:25] And here the less than equal to is based
+[00:09:25 -> 00:09:30] on the partial order operator of the semi-lattice.
+[00:09:30 -> 00:09:34] So recall that we also had in the previous module said
+[00:09:34 -> 00:09:39] that MFP-FS is less than equal to MOP-FS and so on,
+[00:09:41 -> 00:09:42] and ideal and so on.
+[00:09:42 -> 00:09:46] But so, you know, MFP-FI is even less precise
+[00:09:46 -> 00:09:50] than MFP-FS, but it is going to be more efficient.
+[00:09:51 -> 00:09:54] Okay, let's also look at our other example.
+[00:09:54 -> 00:09:56] So this is the example of constant propagation
+[00:09:56 -> 00:09:59] and this example, I am basically, you know,
+[00:09:59 -> 00:10:01] I have this variable called step,
+[00:10:01 -> 00:10:03] which I initialize to two in the beginning.
+[00:10:03 -> 00:10:06] Then I have, I initialize sum to zero, i to zero.
+[00:10:06 -> 00:10:08] And then this is like a for loop,
+[00:10:08 -> 00:10:11] which increments i by step on every iteration
+[00:10:11 -> 00:10:14] and sum by i on every iteration
+[00:10:14 -> 00:10:15] and then goes back to the loop.
+[00:10:15 -> 00:10:18] And if i becomes greater than n, where n is a parameter,
+[00:10:18 -> 00:10:20] then I exit the loop and return sum.
+[00:10:21 -> 00:10:24] Now I'm assuming here that these variables step,
+[00:10:24 -> 00:10:26] sum and i are freshly allocated variables.
+[00:10:26 -> 00:10:30] That means they don't exist at the entry of the function.
+[00:10:30 -> 00:10:32] They've been allocated here and then used
+[00:10:32 -> 00:10:33] and the body of the loop
+[00:10:33 -> 00:10:36] and then de-allocated at the very end of the program.
+[00:10:36 -> 00:10:40] Okay, so now if I run my constant propagation algorithm
+[00:10:40 -> 00:10:43] on this program in a flow sensitive manner,
+[00:10:43 -> 00:10:46] then I'm going to get some solution.
+[00:10:46 -> 00:10:50] And so, and the solution,
+[00:10:50 -> 00:10:53] so if I run my constant propagation algorithm
+[00:10:53 -> 00:10:56] on this original CFG in a flow sensitive manner,
+[00:10:56 -> 00:10:59] I'm going to say that at this point, for example,
+[00:10:59 -> 00:11:02] step will be equal to two and sum will be equal to zero
+[00:11:02 -> 00:11:04] and i will be equal to zero.
+[00:11:04 -> 00:11:06] But at this time, at this point here,
+[00:11:06 -> 00:11:08] i and sum are no longer constants.
+[00:11:08 -> 00:11:10] And at this point, step is a constant
+[00:11:10 -> 00:11:13] but i and sum are not constants and so on.
+[00:11:13 -> 00:11:16] But let's see what happens if I convert this program
+[00:11:16 -> 00:11:18] and this analysis into a flow insensitive analysis,
+[00:11:18 -> 00:11:20] in which case I'm going to break down
+[00:11:20 -> 00:11:23] this entire control flow graph into a bag of statements.
+[00:11:23 -> 00:11:26] And I do this by showing this kind of bag of statements
+[00:11:26 -> 00:11:27] where all these statements occur
+[00:11:27 -> 00:11:28] and any of these statements
+[00:11:28 -> 00:11:31] can execute non-deterministically.
+[00:11:31 -> 00:11:34] And then I pretend that there's a loop,
+[00:11:34 -> 00:11:35] there's a meet point and there's a loop,
+[00:11:35 -> 00:11:37] just like I'd shown you in the previous slide.
+[00:11:37 -> 00:11:42] And then I run my fixed point iteration algorithm
+[00:11:42 -> 00:11:45] on this collapsed program.
+[00:11:45 -> 00:11:47] And if I run this fixed point algorithm,
+[00:11:47 -> 00:11:49] then notice that all the variables,
+[00:11:50 -> 00:11:55] like for example, sum, i, sum and i, I guess,
+[00:11:55 -> 00:11:56] they are being assigned twice.
+[00:11:56 -> 00:11:58] And so they are not constants
+[00:11:58 -> 00:12:00] but step is only being assigned once
+[00:12:00 -> 00:12:02] and it's being assigned to the value two.
+[00:12:02 -> 00:12:03] And so the solution that I'll get
+[00:12:03 -> 00:12:06] with the flow insensitive analysis
+[00:12:06 -> 00:12:08] is that step equals two.
+[00:12:08 -> 00:12:12] And that's a fixed point solution
+[00:12:12 -> 00:12:16] for the flow insensitive formulation of the problem
+[00:12:16 -> 00:12:18] where the whole control flow graph has been collapsed.
+[00:12:18 -> 00:12:20] Recall that the flow sensitive algorithm
+[00:12:20 -> 00:12:21] was much more precise.
+[00:12:21 -> 00:12:23] For example, the flow sensitive algorithm said
+[00:12:23 -> 00:12:25] that at this point, all three,
+[00:12:25 -> 00:12:28] step, sum and i, are all constants.
+[00:12:28 -> 00:12:30] But in the flow insensitive solution,
+[00:12:30 -> 00:12:31] I'm just saying that step is a constant
+[00:12:31 -> 00:12:33] but I'm saying that both sum and i
+[00:12:33 -> 00:12:35] are not constants anywhere.
+[00:12:36 -> 00:12:38] Okay, so, but let's say
+[00:12:38 -> 00:12:42] that I convert this program into SSA form.
+[00:12:42 -> 00:12:43] And you already know what SSA means.
+[00:12:43 -> 00:12:45] It's a single static assignment form
+[00:12:45 -> 00:12:49] where every variable is assigned exactly once.
+[00:12:49 -> 00:12:51] And you have five nodes to basically represent the fact
+[00:12:51 -> 00:12:53] that two versions of the same variable
+[00:12:53 -> 00:12:55] are flowing at that node.
+[00:12:55 -> 00:12:57] So for example, in this program,
+[00:12:57 -> 00:12:58] I get step zero equals two.
+[00:12:58 -> 00:13:01] So I get zeroed version of step,
+[00:13:01 -> 00:13:02] sum zero equals zero,
+[00:13:02 -> 00:13:03] that's zeroed version of sum,
+[00:13:03 -> 00:13:05] i zero equals zero,
+[00:13:05 -> 00:13:07] zeroed version of i and so on.
+[00:13:07 -> 00:13:09] Similarly, I create a five node
+[00:13:09 -> 00:13:10] because there's a loop edge.
+[00:13:10 -> 00:13:14] So there are two incoming edges to this loop head.
+[00:13:14 -> 00:13:17] One from the initial entry
+[00:13:17 -> 00:13:19] and one from the back edge.
+[00:13:19 -> 00:13:21] And I'm flowing in two values,
+[00:13:21 -> 00:13:22] zero and one for i.
+[00:13:22 -> 00:13:24] And similarly, I'm flowing in two values for sum,
+[00:13:24 -> 00:13:25] sum zero and sum one.
+[00:13:25 -> 00:13:28] And so I say i two equals five of i zero i one,
+[00:13:28 -> 00:13:31] sum two equals five of sum zero sum one.
+[00:13:31 -> 00:13:32] And then I say,
+[00:13:32 -> 00:13:34] I check the condition,
+[00:13:34 -> 00:13:35] the current version is i two.
+[00:13:35 -> 00:13:36] So I say if i two is greater than n,
+[00:13:36 -> 00:13:38] then go to n.
+[00:13:38 -> 00:13:41] I say i one is equal to i two plus step zero.
+[00:13:41 -> 00:13:42] So because this is a new assignment,
+[00:13:42 -> 00:13:43] I cannot,
+[00:13:43 -> 00:13:46] the questions I have for i are zero and two so far.
+[00:13:46 -> 00:13:47] So I use a different version.
+[00:13:47 -> 00:13:49] In this case, I use one.
+[00:13:49 -> 00:13:51] So the i one equals i two plus step zero.
+[00:13:51 -> 00:13:53] Similarly, sum one equals sum,
+[00:13:53 -> 00:13:58] I should say sum one equals sum zero,
+[00:13:58 -> 00:14:03] sum two plus i one.
+[00:14:06 -> 00:14:08] And then I say go to loop, right?
+[00:14:08 -> 00:14:09] And then finally,
+[00:14:09 -> 00:14:11] when I exit the loop,
+[00:14:11 -> 00:14:12] I just return,
+[00:14:12 -> 00:14:17] I just return sum two,
+[00:14:17 -> 00:14:19] because that's the final that's flowing into that.
+[00:14:19 -> 00:14:20] That's last assignment to sum
+[00:14:20 -> 00:14:22] that's flowing into the return statement.
+[00:14:22 -> 00:14:24] I'm sorry for the errors.
+[00:14:24 -> 00:14:25] Okay.
+[00:14:25 -> 00:14:27] So, you know,
+[00:14:27 -> 00:14:29] there are these errors that need to be fixed here.
+[00:14:29 -> 00:14:32] So I'm just erasing the ones that have an error.
+[00:14:32 -> 00:14:35] So if I run this,
+[00:14:35 -> 00:14:38] then the solution to my DFA analysis
+[00:14:38 -> 00:14:41] for the flow insensitive case is step zero is two,
+[00:14:41 -> 00:14:44] because if I just consider this as a bag of statements,
+[00:14:44 -> 00:14:46] then step zero has exactly one assignment,
+[00:14:46 -> 00:14:47] just like it wasn't before.
+[00:14:47 -> 00:14:49] And step zero doesn't have any other assignment.
+[00:14:49 -> 00:14:52] Sum zero also has only one assignment.
+[00:14:52 -> 00:14:54] The other assignments are to sum one and sum two,
+[00:14:54 -> 00:14:55] which is a final,
+[00:14:55 -> 00:14:57] which I've kind of just encapsulated
+[00:14:57 -> 00:14:59] in this category called finals.
+[00:14:59 -> 00:15:02] Similarly, i zero has only one assignment,
+[00:15:02 -> 00:15:04] i one has exactly one assignment
+[00:15:04 -> 00:15:08] and i two also has one assignment,
+[00:15:08 -> 00:15:10] which is a final and so on.
+[00:15:10 -> 00:15:14] And if I run the flow insensitive analysis on this graph,
+[00:15:14 -> 00:15:16] pretending that all these instructions,
+[00:15:16 -> 00:15:17] including the five nodes,
+[00:15:17 -> 00:15:18] are independent instructions
+[00:15:18 -> 00:15:20] and can be executed non-deterministically
+[00:15:20 -> 00:15:21] one after another,
+[00:15:21 -> 00:15:23] then the solution I get is step zero is two,
+[00:15:23 -> 00:15:27] i zero is zero, sum zero is zero,
+[00:15:27 -> 00:15:29] and you cannot say anything about the other variables.
+[00:15:29 -> 00:15:34] For example, sum one, i one, sum two, i two, et cetera,
+[00:15:34 -> 00:15:35] they are basically,
+[00:15:36 -> 00:15:39] we determine them to be not a constant.
+[00:15:39 -> 00:15:42] Now, the interesting thing I want to point out here
+[00:15:42 -> 00:15:43] is that the precision of the solution
+[00:15:43 -> 00:15:47] of this flow insensitive analysis after I did the SSA
+[00:15:47 -> 00:15:51] is identical to the precision of the solution
+[00:15:51 -> 00:15:53] that I had with the flow sensitive analysis.
+[00:15:53 -> 00:15:56] In the flow sensitive analysis,
+[00:15:56 -> 00:15:59] I wanted to say that at these points here
+[00:15:59 -> 00:16:02] where sum zero and i zero were active,
+[00:16:02 -> 00:16:05] then sum and i are also constants.
+[00:16:05 -> 00:16:08] And that is being captured by the fact that the versions,
+[00:16:08 -> 00:16:10] the respective versions, i zero and sum zero
+[00:16:10 -> 00:16:13] of the variables i and sum are zero,
+[00:16:13 -> 00:16:14] but then the other versions,
+[00:16:14 -> 00:16:17] i one and sum one are not a constant.
+[00:16:17 -> 00:16:19] And so that's an interesting observation
+[00:16:19 -> 00:16:21] and we're going to carry that forward.
+[00:16:21 -> 00:16:23] But before that, I want to say
+[00:16:23 -> 00:16:25] that what is the transfer function of a phi node?
+[00:16:25 -> 00:16:27] So if there's a phi node, for example,
+[00:16:27 -> 00:16:29] i two equals phi of i zero, i one,
+[00:16:29 -> 00:16:30] then I just take the meat
+[00:16:30 -> 00:16:34] of whatever is the value of i zero in the in
+[00:16:34 -> 00:16:36] and whatever is the value of i one in the in
+[00:16:36 -> 00:16:38] and then meet them to assign
+[00:16:38 -> 00:16:39] and assign it to value of i two.
+[00:16:39 -> 00:16:42] So just like I have a transfer function
+[00:16:42 -> 00:16:44] for every normal program statement,
+[00:16:44 -> 00:16:46] once I'm doing it on SSA,
+[00:16:46 -> 00:16:47] I also need to say,
+[00:16:47 -> 00:16:49] what is the transfer function on a phi node?
+[00:16:49 -> 00:16:51] And this is how I define the transfer function
+[00:16:51 -> 00:16:52] on a phi node.
+[00:16:52 -> 00:16:53] I just take the individual values
+[00:16:53 -> 00:16:55] on the RHS of that phi node
+[00:16:55 -> 00:16:57] and meet them using my meet operator
+[00:16:57 -> 00:17:00] to obtain the value for the LHS of the phi node.
+[00:17:01 -> 00:17:05] So the important observation here
+[00:17:05 -> 00:17:07] is that the precision
+[00:17:07 -> 00:17:10] of the flow insensitive plus SSA algorithm
+[00:17:10 -> 00:17:12] is identical to the precision
+[00:17:12 -> 00:17:14] of the flow sensitive analysis,
+[00:17:14 -> 00:17:15] which I've shown in purple here.
+[00:17:15 -> 00:17:17] So the purple values here
+[00:17:17 -> 00:17:19] are the precision of the flow sensitive analysis
+[00:17:19 -> 00:17:22] where I'm copying the value at every program point.
+[00:17:22 -> 00:17:24] But on the right in the blue,
+[00:17:24 -> 00:17:26] I'm showing the solution
+[00:17:26 -> 00:17:30] for flow insensitive plus SSA solution.
+[00:17:30 -> 00:17:33] And the amount of information carried in both
+[00:17:33 -> 00:17:34] is exactly equal,
+[00:17:34 -> 00:17:36] because when I say step zero is two,
+[00:17:36 -> 00:17:37] then I basically mean
+[00:17:37 -> 00:17:41] that wherever the zero-eth version of step
+[00:17:41 -> 00:17:43] which is active,
+[00:17:44 -> 00:17:45] which is reaching,
+[00:17:45 -> 00:17:49] then at that point step is two.
+[00:17:49 -> 00:17:50] I zero is zero, same thing.
+[00:17:50 -> 00:17:52] Wherever it's a zero-eth version of I
+[00:17:52 -> 00:17:53] that is reaching,
+[00:17:53 -> 00:17:55] then I zero is zero.
+[00:17:55 -> 00:17:58] And similarly, sum zero is zero.
+[00:17:58 -> 00:17:59] But I cannot say anything
+[00:17:59 -> 00:18:01] about all the other examples.
+[00:18:02 -> 00:18:03] So this is great
+[00:18:03 -> 00:18:08] because I would like to generalize this from the example.
+[00:18:08 -> 00:18:11] If the track program values are SSA eyes,
+[00:18:11 -> 00:18:15] which means the program is converted to SSA,
+[00:18:15 -> 00:18:18] then the maximum fixed point solution obtained
+[00:18:18 -> 00:18:21] by running the fixed point iteration algorithm
+[00:18:21 -> 00:18:24] on the SSA program
+[00:18:24 -> 00:18:27] with flow insensitive setting,
+[00:18:27 -> 00:18:30] which means I completely collapse the control flow graph
+[00:18:30 -> 00:18:32] is the same as the precision of the solution
+[00:18:32 -> 00:18:33] that you're going to get
+[00:18:33 -> 00:18:35] without collapsing the control flow graph,
+[00:18:35 -> 00:18:38] which is represented by MFP flow sensitive.
+[00:18:38 -> 00:18:40] So precision of SSA plus flow insensitive
+[00:18:40 -> 00:18:43] is equal to the precision of flow sensitive.
+[00:18:43 -> 00:18:45] Whereas the speed and the space
+[00:18:45 -> 00:18:48] of flow insensitive plus SSA is significantly better
+[00:18:50 -> 00:18:52] than the speed and the space of flow sensitive.
+[00:18:52 -> 00:18:54] Because in flow sensitive,
+[00:18:54 -> 00:18:56] I have to copy the value at every program point,
+[00:18:56 -> 00:18:57] but in flow insensitive,
+[00:18:57 -> 00:18:59] I can keep a single global value
+[00:19:00 -> 00:19:01] for the entire program.
+[00:19:01 -> 00:19:04] And so the speed of flow insensitive plus SSA
+[00:19:04 -> 00:19:06] is significantly higher than the speed of flow sensitive
+[00:19:06 -> 00:19:08] and the space of flow insensitive plus SSA
+[00:19:08 -> 00:19:12] is significantly lower than the space of flow sensitive,
+[00:19:12 -> 00:19:16] space requirement of flow sensitive analysis.
+[00:19:16 -> 00:19:19] So this is a great improvement.
+[00:19:19 -> 00:19:21] So far we've been discussing our data flow analysis
+[00:19:21 -> 00:19:22] as a flow sensitive analysis,
+[00:19:22 -> 00:19:27] but for improving its running time and space complexity,
+[00:19:27 -> 00:19:29] I can first convert it into SSA
+[00:19:29 -> 00:19:32] and then use a flow insensitive analysis
+[00:19:32 -> 00:19:35] to get much better speed and much better space
+[00:19:35 -> 00:19:37] without losing any precision.
+[00:19:37 -> 00:19:39] And the typical implementation
+[00:19:39 -> 00:19:42] for this kind of an algorithm
+[00:19:42 -> 00:19:44] is that you use a single global value
+[00:19:44 -> 00:19:46] for the entire program.
+[00:19:47 -> 00:19:48] You convert the program into SSA,
+[00:19:48 -> 00:19:51] which means that the value size can increase slightly
+[00:19:51 -> 00:19:53] because when you convert it into SSA,
+[00:19:53 -> 00:19:55] you create more variables because they're more,
+[00:19:55 -> 00:19:56] each variable can have multiple versions.
+[00:19:56 -> 00:20:01] So the value increases as value size by some degree,
+[00:20:02 -> 00:20:04] depending on the shape of the program.
+[00:20:04 -> 00:20:07] But now you don't have to copy the value
+[00:20:07 -> 00:20:08] at every program point.
+[00:20:08 -> 00:20:10] You can have a single global value.
+[00:20:10 -> 00:20:12] It's a larger value, but it's a single global value.
+[00:20:12 -> 00:20:15] And then you run the DFA fixed point procedure
+[00:20:15 -> 00:20:18] just like the Kildal's algorithm that we have discussed
+[00:20:18 -> 00:20:21] on the original CFG, just like before, okay?
+[00:20:21 -> 00:20:25] So you don't actually dismantle the CFG
+[00:20:25 -> 00:20:27] as I've been saying in the previous slides,
+[00:20:27 -> 00:20:30] you run the fixed point procedure on the original CFG
+[00:20:30 -> 00:20:33] in the reverse post order,
+[00:20:33 -> 00:20:34] if it's a forward DFA,
+[00:20:34 -> 00:20:37] or in the post order, if it's a backward DFA,
+[00:20:37 -> 00:20:39] or you can use regions,
+[00:20:39 -> 00:20:41] as we have discussed in a region-based analysis.
+[00:20:41 -> 00:20:43] And on a transfer,
+[00:20:43 -> 00:20:46] you just transfer the value across a statement S
+[00:20:46 -> 00:20:49] by just saying out equals FS of in,
+[00:20:49 -> 00:20:51] and in this case, recall that this is
+[00:20:51 -> 00:20:52] just one global value.
+[00:20:52 -> 00:20:54] So I say in global to say that
+[00:20:54 -> 00:20:55] this is one global value.
+[00:20:55 -> 00:20:58] So whenever I create an out value,
+[00:20:58 -> 00:21:00] I just apply the transfer function on in global
+[00:21:00 -> 00:21:02] to obtain an out value.
+[00:21:02 -> 00:21:05] And then I meet the out value with the in global
+[00:21:05 -> 00:21:07] to update that global value.
+[00:21:08 -> 00:21:10] And on meet, I don't need to do anything, okay?
+[00:21:10 -> 00:21:14] So on transfer, this is what I do on the original CFG.
+[00:21:14 -> 00:21:17] So whenever I go across a statement,
+[00:21:17 -> 00:21:19] I transfer across that statement
+[00:21:19 -> 00:21:23] and eagerly meet with the global value.
+[00:21:23 -> 00:21:24] So on every statement,
+[00:21:24 -> 00:21:26] irrespective of whether it's a meet point or not,
+[00:21:26 -> 00:21:28] after transferring across every statement,
+[00:21:28 -> 00:21:30] I meet with the global value.
+[00:21:30 -> 00:21:31] And which also means that
+[00:21:31 -> 00:21:33] there's an actual meet in the control flow graph,
+[00:21:33 -> 00:21:34] for example,
+[00:21:34 -> 00:21:35] there was a meet in the control flow graph,
+[00:21:35 -> 00:21:37] then I don't really need to do anything
+[00:21:37 -> 00:21:38] because actually I don't really care
+[00:21:38 -> 00:21:39] about the control flow graph structure
+[00:21:39 -> 00:21:41] in the flow in sensitive analysis.
+[00:21:42 -> 00:21:44] And this is a typical implementation.
+[00:21:44 -> 00:21:46] And what is the advantage of this implementation
+[00:21:46 -> 00:21:49] over just completely collapsing the control flow graph?
+[00:21:49 -> 00:21:52] Well, if I run the DFA fixed point procedure
+[00:21:52 -> 00:21:54] or the original CFG in some kind of order,
+[00:21:54 -> 00:21:56] for example, reverse post order,
+[00:21:56 -> 00:21:59] then I am keeping track of what are the likely places
+[00:21:59 -> 00:22:02] which I need to transfer next.
+[00:22:02 -> 00:22:03] Just like the reverse post order
+[00:22:03 -> 00:22:05] gives you better running time
+[00:22:05 -> 00:22:07] because it just tells you what is my work list
+[00:22:07 -> 00:22:09] and what should I look at next.
+[00:22:09 -> 00:22:11] This method, even for flow sensitive,
+[00:22:11 -> 00:22:14] flow in sensitive gives you a better running time
+[00:22:14 -> 00:22:16] because it allows you to keep track
+[00:22:16 -> 00:22:18] of what you should be looking at next.
+[00:22:19 -> 00:22:22] It allows you to order the inspection
+[00:22:22 -> 00:22:23] of different statements,
+[00:22:23 -> 00:22:26] even though from a precision point of view,
+[00:22:26 -> 00:22:28] the statements are completely unordered,
+[00:22:28 -> 00:22:31] but from an algorithmic inspection point of view,
+[00:22:31 -> 00:22:33] you order them in reverse post order or post order,
+[00:22:33 -> 00:22:34] depending on whether it's a forward
+[00:22:34 -> 00:22:36] or a backward analysis.
+[00:22:36 -> 00:22:37] And that gives you better,
+[00:22:37 -> 00:22:38] even better run time
+[00:22:38 -> 00:22:40] than if you completely disregard the order
+[00:22:40 -> 00:22:43] and you try to randomly pick a statement
+[00:22:43 -> 00:22:44] from anywhere in the program.
+[00:22:44 -> 00:22:48] So instead of picking a random statement every time,
+[00:22:48 -> 00:22:50] you only pick the things that are likely to,
+[00:22:50 -> 00:22:52] whose end values have likely to change,
+[00:22:52 -> 00:22:55] have changed because of fixed point algorithm
+[00:22:55 -> 00:22:58] and the RPO or the PO helps in determining that.
+[00:22:58 -> 00:23:01] And that's why we call this a typical implementation.

@@ -1,0 +1,244 @@
+Title: Compiler Design Module 190 : Weakest Liberal Precondition for a While Loop
+Video ID: PDHzrEorXYs
+Detected language: en
+------------------------------------------------------------
+
+[00:00:00 -> 00:00:07] So now we are ready to talk about the weakest liberal precondition for a loop.
+[00:00:07 -> 00:00:13] So in our toy language, we are basically using the while construct to construct a loop.
+[00:00:13 -> 00:00:19] So let's say my construct is while some condition e and some statement capital S. This is
+[00:00:19 -> 00:00:24] my statement for which I want to compute my weakest liberal precondition across which
+[00:00:24 -> 00:00:29] I want to compute my weakest liberal precondition for the post condition r and the question
+[00:00:29 -> 00:00:36] is what should be what should be my algorithm to identify WLP. Recall that unlike whole triple
+[00:00:36 -> 00:00:41] or whole logic where things were specified in a declarative form and constructive way,
+[00:00:41 -> 00:00:47] WLP is more of an algorithmic form where we basically say, okay, given a post condition
+[00:00:47 -> 00:00:53] and given a statement, what should be the weakest liberal precondition?
+[00:00:53 -> 00:00:58] And we also said that weakest liberal precondition is different from weakest precondition because
+[00:00:58 -> 00:01:04] the weakest liberal precondition only says that the post condition should hold if the
+[00:01:04 -> 00:01:10] program terminates. And now here is a very, we have already seen one example where the
+[00:01:10 -> 00:01:14] program may not reach the end point, for example, because of the abort statement,
+[00:01:14 -> 00:01:19] but even here because of a loop, it may not, the loop may never terminate and
+[00:01:19 -> 00:01:24] this is the famous halting problem and we can't release no, we may not be able
+[00:01:24 -> 00:01:30] to figure out whether the loop is terminated or not, will terminate or not and if it does
+[00:01:30 -> 00:01:38] not terminate, then WLP of any non-terminating program is always true because you know
+[00:01:38 -> 00:01:47] for any r, but WP is not true because WP also expects the, also encodes the condition
+[00:01:47 -> 00:01:52] for the program to terminate. We are not going to discuss WP, we are only going
+[00:01:52 -> 00:01:58] to discuss WLP in this module for a loop. We have already discussed WP for all the
+[00:01:58 -> 00:02:04] non-loop constructs already, but for a loop we need to kind of do special treatments to
+[00:02:04 -> 00:02:11] be able to figure out whether a loop terminates or not. In general, both WLP and WP are
+[00:02:11 -> 00:02:17] undecidable problems, figuring out what is the weakest liberal precondition or weakest
+[00:02:17 -> 00:02:21] precondition are both undecidable problem. It's easy to see why weakest precondition
+[00:02:21 -> 00:02:25] is an undecidable problem because the halting problem is undecidable and the weakest precondition
+[00:02:25 -> 00:02:31] needs to encode the fact that something halts and so that is undecidable. Weakest liberal
+[00:02:31 -> 00:02:36] precondition once again because we have to find the weakest such condition which
+[00:02:36 -> 00:02:41] involves identifying the loop invariant as we are going to see next and because
+[00:02:41 -> 00:02:46] identifying the loop invariant is an undecidable problem, this problem is again an undecidable
+[00:02:46 -> 00:02:51] problem. Alright, so the problem, you know, how do we figure out what is the weakest
+[00:02:51 -> 00:02:59] liberal precondition for a loop for a postcondition R and the answer is we need a loop invariant
+[00:02:59 -> 00:03:06] I such that I should hold in the beginning that means you know let's say I is basically
+[00:03:06 -> 00:03:12] being should hold at this point so it's like you know every after every iteration
+[00:03:12 -> 00:03:18] after executing S I come back here so irrespective of whether the loop executes even once or
+[00:03:18 -> 00:03:24] not I should hold for the input just before the loop starts even starts executing the
+[00:03:24 -> 00:03:29] first iteration so I should hold in the beginning that's condition number one and
+[00:03:29 -> 00:03:38] that basically represents the initial condition but also I should hold if I hold at the
+[00:03:38 -> 00:03:44] beginning of any iteration then I let's say the ith iteration then I should also hold at the
+[00:03:44 -> 00:03:51] end of that iteration or at the beginning of the i plus 1th iteration so if I am at the
+[00:03:51 -> 00:03:57] ith iteration and the loop was executed for one more iteration which means E was evaluated
+[00:03:57 -> 00:04:05] to true in that particular iteration then you execute S and I should also hold after S has
+[00:04:05 -> 00:04:12] executed so in other words this whole triple should hold and notice that I'm using the curly
+[00:04:12 -> 00:04:17] braces variant of the whole triple to represent partial correctness and this is by design because
+[00:04:17 -> 00:04:21] that's what I really care about because I'm talking about the weakest liberal precondition
+[00:04:21 -> 00:04:30] so if I and E hold and S terminates then I should also hold so I need to find such an
+[00:04:30 -> 00:04:36] the unknown here is I and we need to find an I such that if I and E holds at the beginning
+[00:04:36 -> 00:04:41] and I execute S then I also hold at the end and this is exactly the loop invariant
+[00:04:41 -> 00:04:46] property that's why we call it a loop invariant because the I remains invariant across the
+[00:04:46 -> 00:04:52] iteration of a loop this can also be thought of as an inductive hypothesis and an inductive
+[00:04:52 -> 00:05:01] step in an induction proof and finally if I whenever I exit from the loop then R should
+[00:05:01 -> 00:05:07] hold so and I should ensure that R holds so for in other words if I is true at the
+[00:05:07 -> 00:05:13] beginning of the loop and E is false because that's why for that particular iteration
+[00:05:13 -> 00:05:20] then then I should then basically R should hold and I'm using skip as a no op instruction
+[00:05:20 -> 00:05:25] because S is not going to get executed in that case it's a while loop so first I check
+[00:05:25 -> 00:05:30] the condition and if the condition is false I don't even execute S I just go to the end
+[00:05:30 -> 00:05:34] and at the end R should hold and that's basically you know that's where R comes in
+[00:05:34 -> 00:05:41] and that's why we that's why we call it the WLP of R across this program and so
+[00:05:41 -> 00:05:48] these are the three conditions on the WLP so it should it needs to be an I such
+[00:05:48 -> 00:05:55] that it holds in the beginning it holds it is a loop invariant which means it if it holds
+[00:05:55 -> 00:06:02] at ith iteration it also holds at ith iteration and whenever I exit the loop I should ensure
+[00:06:02 -> 00:06:08] R and if all these three properties are satisfied then that I would basically act
+[00:06:08 -> 00:06:15] as my weakest liberal precondition so notice that I is basically the first constraint here
+[00:06:15 -> 00:06:20] is basically saying that I should hold in the beginning which means if I is represented
+[00:06:20 -> 00:06:25] as a predicate which is a function over the state at the beginning of the program that's what
+[00:06:25 -> 00:06:30] that's what a precondition is supposed to be then I is the first condition is basically
+[00:06:30 -> 00:06:35] constraining what you know is basically applying I on the initial state and let's call that
+[00:06:35 -> 00:06:41] initial state some state x and the other two constraints are basically saying that this should
+[00:06:41 -> 00:06:46] hold for all possible states they do not need not be the initial state for example
+[00:06:46 -> 00:06:52] the inductive step says that whenever I hold in the beginning and the loop iteration is executed
+[00:06:52 -> 00:06:57] which means E also evaluates the truth then I hold at the end here I'm not necessarily talking
+[00:06:57 -> 00:07:01] about the initial state or the first state at the beginning of the first iteration I'm talking
+[00:07:01 -> 00:07:10] about any state that can occur during the execution of my loop and so the second statement
+[00:07:10 -> 00:07:14] which is the iteration statement and the third statement which is the exit statement says that
+[00:07:14 -> 00:07:20] whenever if I is true and I exit the loop then R should hold they should hold this these should
+[00:07:20 -> 00:07:25] be true for all possible states y right so that's a big difference between the first
+[00:07:25 -> 00:07:29] requirement which basically says that it should that's a requirement on the initial state
+[00:07:29 -> 00:07:35] and the second two other two requirements which are requirements for all possible states y
+[00:07:35 -> 00:07:40] and they have not and the second two the little the second and the third requirements have
+[00:07:40 -> 00:07:46] nothing to do with the initial state of the program so in other words the second and the
+[00:07:46 -> 00:07:50] third requirements are actually just constraints on I they are not really constraints on the
+[00:07:50 -> 00:07:55] initial state on the other hand the first requirement is basically a constraint on the
+[00:07:55 -> 00:07:59] initial state and that's why we will call and that constraint is exactly the constraint
+[00:07:59 -> 00:08:04] which says that I is a precondition all right so let's try to encode these constraints
+[00:08:05 -> 00:08:10] in a more predicate like form so far I've expressed these constraints either in English
+[00:08:10 -> 00:08:14] or using code triples but if I was to you know encode these constraints using first
+[00:08:14 -> 00:08:23] order logic then I want to say oh WLP of this is I and for some I I don't know what I is
+[00:08:23 -> 00:08:28] but as you know I have been able to find an I which satisfies some constraints then the
+[00:08:28 -> 00:08:33] weakest linear liberal precondition is I so what are the constraints that I need on I I'm going to
+[00:08:34 -> 00:08:40] specify them using the amp the logical AND operator the first constraint says that for all
+[00:08:40 -> 00:08:47] states y that's for all possible states y if I hold at the beginning of the loop iteration
+[00:08:48 -> 00:08:55] and the loop is taken which is E also holds for that particular y then I hold at the end of
+[00:08:55 -> 00:09:00] the iteration that's basically this whole triple being encoded using WLP which means
+[00:09:00 -> 00:09:06] I and E should imply WLP of S comma I and this should be true for all possible states y
+[00:09:06 -> 00:09:13] and so the way to write this is for all y I and E implies WLP si assuming all these
+[00:09:14 -> 00:09:20] predicates are basically using x as the variable of the unknown variable or the argument
+[00:09:20 -> 00:09:26] variable of the lambda parameter then I just replace x with y everywhere and then quantify over
+[00:09:26 -> 00:09:33] y I'm going to show an example what this means but this here x x y for x basically represents a
+[00:09:33 -> 00:09:41] substitution map I'm assuming that I E S etc are basically represented as functions or statements
+[00:09:41 -> 00:09:47] or programmed over x and because I am not interested in x anymore I'm interested in all
+[00:09:47 -> 00:09:52] possible states y which is distinct from the initial state x I just have to replace x with y
+[00:09:52 -> 00:09:58] that's just a textual replacement for x to y similarly the third requirement is that if the
+[00:09:58 -> 00:10:06] loop exists then R holds and that's exactly you know that's similarly represented as this once
+[00:10:06 -> 00:10:11] again this is true this needs to be true for all possible y if I was true in the beginning
+[00:10:11 -> 00:10:18] and the loop was not taken then R should hold and once again because these these predicates
+[00:10:18 -> 00:10:24] and programs are basically represented in terms of some machine state x I need to replace x with
+[00:10:24 -> 00:10:32] y and then quantify over y all right so to summarize the weakest liberal precondition of
+[00:10:32 -> 00:10:40] while E S R is I and I'm not I mean implicitly I is basically a predicate that is on
+[00:10:40 -> 00:10:46] the initial machine state which is which I'm calling x I'm not I mean I'm using the light
+[00:10:46 -> 00:10:51] gray font to represent x because I is just a predicate on some machine state which is
+[00:10:51 -> 00:10:56] represented using x and that's exactly the state x which is right at the beginning of the
+[00:10:56 -> 00:11:00] program that's what WLP is supposed to be it's supposed to be a constraint on the
+[00:11:00 -> 00:11:06] state at the beginning of the program but the other constraints are not related to
+[00:11:06 -> 00:11:11] the constraints to the state or the beginning of the program they're supposed to hold for
+[00:11:11 -> 00:11:16] all possible states and that's why these constraints have nothing to do with x in fact
+[00:11:16 -> 00:11:22] I basically can you know use a bound variable y and quantify it with for all operator and then
+[00:11:22 -> 00:11:31] say okay it should be true that for all possible by I and E implies WLP S I and you know because
+[00:11:31 -> 00:11:39] I and E and S basically use x I need to textually replace x with y everywhere similarly for all
+[00:11:39 -> 00:11:44] y I and not E implies R and once again I textually replace x with y in this formula
+[00:11:44 -> 00:11:51] and so this is my formula for WLP and notice that this is very different from the kind of
+[00:11:51 -> 00:11:57] WLP algorithmic formula that we had earlier and that's because earlier we basically had a clear way
+[00:11:57 -> 00:12:02] of identifying WLP now we have this unknown I and I really don't have an algorithm on how
+[00:12:02 -> 00:12:08] to figure out I and that's why I say that the problem is undecidable if I had given you an
+[00:12:08 -> 00:12:13] algorithm to figure out I then the problem wouldn't have been undecidable I need to find
+[00:12:13 -> 00:12:20] some what I've done is I've specified the constraints on I using these kind of clauses
+[00:12:20 -> 00:12:26] these conjunctive clauses and any I that satisfies these conjunctive clauses would
+[00:12:26 -> 00:12:32] be a precondition so I'm interested in finding some I does there exist an I there must exist
+[00:12:32 -> 00:12:38] some I after all false would be an easy way easy kind of precondition perhaps
+[00:12:40 -> 00:12:47] still be some precondition that would hold here and if we are interested in
+[00:12:48 -> 00:12:53] no we are interested in the weakest such I and that's why it's the weakest liberal
+[00:12:53 -> 00:12:58] preconditions we have interested there could be multiple I's that basically satisfy these
+[00:12:58 -> 00:13:04] constraints on I which are the inductive step and the exit condition but we are interested
+[00:13:04 -> 00:13:09] in the weakest such I and that that would form our weakest liberal precondition to
+[00:13:09 -> 00:13:14] understand this difference between weakest and maybe not the weakest and maybe what are some
+[00:13:14 -> 00:13:20] other options let's look at an example so let's look at our familiar example which is why
+[00:13:20 -> 00:13:26] x is greater than zero x minus minus now this is my program that just keeps decrementing x
+[00:13:26 -> 00:13:35] until it is strictly greater than zero until it is positive and we are interested in finding
+[00:13:35 -> 00:13:41] the WLP weakest liberal precondition across this program for the post condition x equals zero
+[00:13:42 -> 00:13:48] now it is easy to see that you know if x was initially greater than equal to zero then
+[00:13:48 -> 00:13:52] if you execute this program then x equals zero so x is greater than equal to zero
+[00:13:52 -> 00:13:58] is indeed a weakest liberal precondition for x equals zero but how do we figure this out
+[00:13:58 -> 00:14:06] using the method that we have just discussed in our previous slide so notice that we need
+[00:14:06 -> 00:14:10] to find some I that satisfies those conditions so I'm going to basically pick some candidate
+[00:14:10 -> 00:14:14] I's of course I'm not going to give you an algorithm on how to find this I because after
+[00:14:14 -> 00:14:18] all this is an undecidable problem there does not exist any algorithm for the general case
+[00:14:18 -> 00:14:22] I could design an algorithm that handles some special cases like this one but that's not
+[00:14:22 -> 00:14:27] going to be very meaningful so what I'm going to do is I'm going to pick some candidate I's
+[00:14:27 -> 00:14:33] and figure out whether that candidate I matches our requirement or not and if not then
+[00:14:33 -> 00:14:36] we're going to and that's we're going to throw it away and if it does then we're going
+[00:14:36 -> 00:14:41] to keep it around and then we're going to try to find the weakest such I and this exercise
+[00:14:41 -> 00:14:46] will give us some understanding of the formula that I had in the previous slide so our first
+[00:14:46 -> 00:14:51] candidate I is let's say x equals minus one so if x equals minus one at the beginning
+[00:14:52 -> 00:14:59] does it you know does it act as a precondition so the answer is no because if I
+[00:14:59 -> 00:15:05] you know if I just use my formula that I had on the previous slide then one of the formulas
+[00:15:05 -> 00:15:13] was that for all y I and not E should imply R which means if the loop is not even taken once
+[00:15:14 -> 00:15:21] then R should hold and if I just kind of you know expand this I is just x equals minus one
+[00:15:21 -> 00:15:26] so now that becomes y equals minus one because we are substituting x by y so
+[00:15:26 -> 00:15:32] I becomes y equals minus one and E is just x is greater than zero so not E is x is less
+[00:15:32 -> 00:15:37] than equal to zero and I replace x with y so that becomes and y is less than equal to zero
+[00:15:38 -> 00:15:45] implies R is x equals zero and so that becomes y equals zero so overall my formula here becomes
+[00:15:45 -> 00:15:51] for all y y equals minus one and y is less than equal to zero should imply y equals zero
+[00:15:51 -> 00:15:56] but this is not provable because if y equals minus one and y is less than equal to zero
+[00:15:56 -> 00:16:01] that does not mean y equals zero and though this is not provable and so this is this
+[00:16:01 -> 00:16:07] candidate i is not even a precondition and so it doesn't, it's not a WLP, it cannot be
+[00:16:07 -> 00:16:13] a WLP candidate. Here is another candidate, let's say x is less than 0, so once again
+[00:16:13 -> 00:16:16] the only change I have made is instead of x equals minus 1 I have made it x less
+[00:16:16 -> 00:16:22] than 0 and so once again if I look at this exit condition it becomes for all y, if
+[00:16:22 -> 00:16:28] y is less than 0 and y is less than equal to 0 which is not of e, which is x not
+[00:16:28 -> 00:16:34] of x y greater than 0 then does it imply that post condition is y equals 0 and
+[00:16:34 -> 00:16:38] once again you can see that this is not true if y is less than 0 and y is less
+[00:16:38 -> 00:16:41] than equal to 0 so that just means y is less than 0 but that does not imply y
+[00:16:41 -> 00:16:45] equals 0 because if y is strictly less than 0 then that does not mean that y
+[00:16:45 -> 00:16:50] equals 0 and so this is not provable again and so once again x is less than
+[00:16:50 -> 00:16:57] 0 is not a valid candidate precondition or candidate WLP. All right
+[00:16:57 -> 00:17:04] let's look at another candidate say x equals 1, now it turns out that x equals
+[00:17:04 -> 00:17:10] 1 satisfies the exit condition because if I just look at i and not e so i and
+[00:17:10 -> 00:17:15] not e is y equals 1 which is just coming from the candidate i and not e
+[00:17:15 -> 00:17:21] is y is less than equal to 0 implies y equals 0 so y equals 1 and y is
+[00:17:21 -> 00:17:25] less than equal to 0 implies y equals 0. Now notice that the LHS here is
+[00:17:26 -> 00:17:32] actually unsatisfiable because y equals 1 and y is less than equal to 0 this is
+[00:17:32 -> 00:17:36] not possible because 1 is not less than equal to 0 and so because the LHS
+[00:17:36 -> 00:17:42] of an implication is not satisfiable this whole formula is vacuously true
+[00:17:42 -> 00:17:47] and so this whole formula is actually provable because you know if you just
+[00:17:47 -> 00:17:51] expand the meaning of implication if the LHS of an implication is false
+[00:17:51 -> 00:17:55] then the whole formula is vacuously true and so this formula is actually
+[00:17:55 -> 00:18:00] provable because LHS evaluates to false. But now that's not the only
+[00:18:00 -> 00:18:03] requirement I had on the candidate i the other requirement was the induction
+[00:18:03 -> 00:18:08] step or the iteration and if I look at that then that let's look at that
+[00:18:08 -> 00:18:15] so it says for all y i and e should imply WLP of s comma i right and so
+[00:18:15 -> 00:18:20] if I substitute that at basic equivalence y equals 1 and e is just
+[00:18:20 -> 00:18:27] y is greater than 0 implies WLP of s comma i so that's just i is just x
+[00:18:27 -> 00:18:33] equals 1 that becomes y equal and if I do WLP that becomes x minus 1
+[00:18:33 -> 00:18:37] equals 1 because I'm doing x minus minus and then I replace x with y that
+[00:18:37 -> 00:18:41] becomes y minus 1 equals 1 so my formula for the iteration becomes y
+[00:18:41 -> 00:18:46] equals 1 and y is greater than 0 should imply y minus 1 equals 1 once
+[00:18:46 -> 00:18:51] again this is not provable and so x equals 1 is also not a valid
+[00:18:51 -> 00:18:56] candidate for my weakest liberal precondition. Let's look at another
+[00:18:56 -> 00:19:02] example let's say x is greater than 1 so let's say x is greater than 1
+[00:19:02 -> 00:19:06] once again I just replaced equal to with greater than here and you would
+[00:19:06 -> 00:19:11] find that this formula is again not provable y is greater than 1 and y is
+[00:19:11 -> 00:19:15] greater than 0 does not imply that y is greater than 2 you know it's
+[00:19:16 -> 00:19:25] it could still be equal to 2 or something like that so this is not provable right
+[00:19:25 -> 00:19:28] because y is greater than 1 and y is greater than 0 so y equals 2 satisfies
+[00:19:28 -> 00:19:34] this condition but y is so that does not and 2 is not greater than 2 so I
+[00:19:34 -> 00:19:39] cannot I mean this exists an example of y where this whole formula does
+[00:19:39 -> 00:19:45] not evaluate to true and so this is not provable all right finally let's
+[00:19:45 -> 00:19:49] look at another candidate I which is x is greater than equal to 0 notice that
+[00:19:49 -> 00:19:52] that's exactly the solution that we intuitively got right in the
+[00:19:52 -> 00:19:56] beginning and we'll find that this actually satisfies both the exit
+[00:19:56 -> 00:20:02] condition and the iteration condition so I'm not showing the exit condition
+[00:20:02 -> 00:20:06] it's easy to see that if x is greater than equal to 0 and x is less
+[00:20:06 -> 00:20:09] than equal to 0 that just basically means x is equal to 0 and then that
+[00:20:09 -> 00:20:13] would be the exit condition not E would be x is less than equal to 0
+[00:20:13 -> 00:20:16] candidate I is x is greater than equal to 0 and both of them would imply the
+[00:20:16 -> 00:20:21] post condition which is x is equal to 0 if I'm showing the iteration condition
+[00:20:21 -> 00:20:26] here which is if it holds in the beginning of an iteration and E holds
+[00:20:26 -> 00:20:31] then WLPSI holds so that basically evaluates to if y is greater than
+[00:20:31 -> 00:20:34] equal to 0 that's coming from candidate I and y is greater than 0
+[00:20:34 -> 00:20:38] that's coming from E then that should imply y minus 1 is greater than
+[00:20:38 -> 00:20:44] equal to 0 now this actually is provable and this is something that we
+[00:20:44 -> 00:20:47] have also seen in the past when discussing the same example using whole
+[00:20:47 -> 00:20:50] logic but this time we are doing it using the weakest liberal precondition
+[00:20:50 -> 00:20:54] so see if y is greater than equal to 0 and y is greater than 0 basically means
+[00:20:54 -> 00:20:58] y is strictly greater than 0 and that basically implies that y minus 1
+[00:20:58 -> 00:21:03] is either 0 or strictly greater than 0 and so this is provable and indeed
+[00:21:03 -> 00:21:09] this is a valid precondition for this program in fact it turns out this is
+[00:21:09 -> 00:21:13] also the weakest liberal precondition now what we are interested in finding is
+[00:21:13 -> 00:21:18] the weakest such I that satisfies these constraints it turns out here in
+[00:21:18 -> 00:21:22] this particular example it turns out that this is indeed the weakest such
+[00:21:22 -> 00:21:26] predicate and so it is indeed it fits the bill for the weakest liberal
+[00:21:26 -> 00:21:30] precondition but it's not necessarily the case that you know only the
+[00:21:30 -> 00:21:35] weakest would satisfy these constraints here is another example so for example I
+[00:21:35 -> 00:21:39] just say x is greater than equal to 0 and let's say some other constraint
+[00:21:39 -> 00:21:42] with let's say some there was some other program variable a as a and a
+[00:21:42 -> 00:21:48] equals 1 that still satisfies both the conditions the iteration condition
+[00:21:48 -> 00:21:55] and the exit condition but this is not a weakest possible predicate that I
+[00:21:55 -> 00:21:59] can have for this post condition x equals 0 and so while this is a
+[00:21:59 -> 00:22:06] precondition for valid precondition for this post condition that ensures this
+[00:22:06 -> 00:22:10] post condition it is not the weakest such precondition and the weakest
+[00:22:10 -> 00:22:14] liberal precondition in this example would be just x is greater than equal to 0

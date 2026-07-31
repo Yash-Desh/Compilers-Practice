@@ -1,0 +1,317 @@
+Title: Compiler Design Module 121 : Composing Transfer Functions for Region based Analysis
+Video ID: 40wv3twEhe0
+Detected language: en
+------------------------------------------------------------
+
+[00:00:00 -> 00:00:07] Recall that for region-based analysis we have a bottom-up pass that composes multiple transfer
+[00:00:07 -> 00:00:11] functions into a single transfer function for the entire region.
+[00:00:11 -> 00:00:15] And so this is, you know, this is the topic of composing transfer functions and here
+[00:00:15 -> 00:00:22] are some, you know, potential graphs, for example, F1 could be composed with F2 in
+[00:00:22 -> 00:00:28] sequence to compute a summary function, I'm calling it F summary, or F1 and F2 could
+[00:00:28 -> 00:00:34] be composed in parallel, in which case there's a summary function for the entire thing, for
+[00:00:34 -> 00:00:39] the entire graph or the entire region and that's the summary function here.
+[00:00:39 -> 00:00:46] Or F could be, you know, the body of a loop and then there is a back edge and then we
+[00:00:46 -> 00:00:50] compute the summary of the entire loop, including the back edge.
+[00:00:50 -> 00:00:55] And so the summary functions for larger regions are based on the transfer functions
+[00:00:55 -> 00:01:01] of the smaller sub-regions and we have seen this in detail before.
+[00:01:01 -> 00:01:08] Now the summary functions further may involve sophisticated symbolic analysis, right?
+[00:01:08 -> 00:01:12] So summary functions could be either the fallback functions, the trivial summaries
+[00:01:12 -> 00:01:17] which are formed by the DFA fixed point iteration or it could involve more sophisticated
+[00:01:17 -> 00:01:20] symbolic analysis.
+[00:01:20 -> 00:01:25] Now the first thing I want to point out here is that the fallback or the trivial
+[00:01:25 -> 00:01:30] summary function can be described using three operators on the transfer functions.
+[00:01:30 -> 00:01:36] One is the composition operator, one is the meet operator and one is the closure operator
+[00:01:36 -> 00:01:39] on transfer functions and this is for reducible graphs.
+[00:01:39 -> 00:01:43] So the point I'm making is, recall that when we discuss a data flow analysis, we
+[00:01:43 -> 00:01:49] basically talk about composing transfer functions and how the family of transfer
+[00:01:49 -> 00:01:51] functions is closed under composition.
+[00:01:51 -> 00:01:55] We also talk about a meet operator and then we talk about how fixed point
+[00:01:55 -> 00:02:00] iteration can potentially have loops and so that's why we start from the top
+[00:02:00 -> 00:02:06] and get the most optimistic fixed point in our algorithm.
+[00:02:06 -> 00:02:12] Now in reducible graphs, all cycles are natural loops and so because they are
+[00:02:12 -> 00:02:18] reducible graphs, loops can be captured by this structure where there is a cycle
+[00:02:18 -> 00:02:20] and there is a loop body.
+[00:02:20 -> 00:02:24] There's a back edge and there's a loop body and so that is being captured by
+[00:02:24 -> 00:02:29] closure and so what I'm saying here is not very different, I'm just saying it
+[00:02:29 -> 00:02:32] in different words but it's not very different from what we have already
+[00:02:32 -> 00:02:36] discussed about data flow analysis and transfer functions that you can
+[00:02:36 -> 00:02:41] compose the transfer functions, they can be met and they need to have a
+[00:02:41 -> 00:02:42] closure operator.
+[00:02:42 -> 00:02:44] So what do I mean by closure?
+[00:02:44 -> 00:02:45] Well, what do I mean by composition?
+[00:02:45 -> 00:02:49] Composition is a series composition, F1 followed by F2.
+[00:02:49 -> 00:02:55] Meet is this if-then-else type of diamond shape where F1 result and F2
+[00:02:55 -> 00:03:02] results need to be met and then closure is basically the task of applying F
+[00:03:02 -> 00:03:08] potentially infinite number of times to obtain a final value.
+[00:03:08 -> 00:03:13] Now, so by closure I mean I can apply F repeatedly one or more number of
+[00:03:13 -> 00:03:16] times and potentially unbounded number of times.
+[00:03:16 -> 00:03:21] Now, the important thing here, however, the important difference between what
+[00:03:21 -> 00:03:24] I have discussed earlier and what I'm discussing now is that I'm now
+[00:03:24 -> 00:03:29] trying to define composition, meet and closure on the transfer functions
+[00:03:29 -> 00:03:31] to obtain a new transfer function.
+[00:03:31 -> 00:03:34] So given two transfer functions, I would be able to obtain a summary
+[00:03:34 -> 00:03:39] transfer function based on one of these operators or a combination of
+[00:03:39 -> 00:03:41] one or more of these operators.
+[00:03:41 -> 00:03:45] For example, here, F summary is based on the composition of F1 and F2.
+[00:03:45 -> 00:03:48] Here, F summary is based on the meet of F1 and F2.
+[00:03:48 -> 00:03:53] And here, F summary is based on the closure of F1 and F2.
+[00:03:53 -> 00:03:58] Now, I'm going to say that in region-based analysis when we are
+[00:03:58 -> 00:04:02] computing the transfer functions of regions in a bottom-up pass,
+[00:04:02 -> 00:04:04] then I can use these operators.
+[00:04:04 -> 00:04:08] So if I'm able to define these operators, composition, meet and
+[00:04:08 -> 00:04:11] closure, then while computing the bottom-up pass where I'm trying to
+[00:04:11 -> 00:04:14] get a transfer function for every region, I can use these operators
+[00:04:14 -> 00:04:19] to be easily able to compute the transfer functions of the regions
+[00:04:19 -> 00:04:23] when I'm doing the bottom-up pass in my region-based analysis.
+[00:04:23 -> 00:04:29] In fact, it's not just limited to fallback transfer functions or
+[00:04:29 -> 00:04:30] fallback summary functions.
+[00:04:30 -> 00:04:34] It's also true for sophisticated summary functions many oftentimes,
+[00:04:34 -> 00:04:35] right?
+[00:04:35 -> 00:04:38] Not always, but oftentimes it is also possible to represent
+[00:04:38 -> 00:04:43] sophisticated symbolic analysis when we are doing the bottom-up analysis
+[00:04:43 -> 00:04:47] to summarize transfer functions of entire regions based on transfer
+[00:04:47 -> 00:04:49] functions of subregions.
+[00:04:49 -> 00:04:53] It is often possible to do this summarization based on these
+[00:04:53 -> 00:04:57] operators, composition, meet and closure, all right?
+[00:04:57 -> 00:05:01] So we're going to see an example in the future modules on how this
+[00:05:01 -> 00:05:04] kind of thing can happen and also in this particular module.
+[00:05:04 -> 00:05:06] So what is composition?
+[00:05:06 -> 00:05:11] If f1 is followed by f2, then f1 composed f2, right?
+[00:05:11 -> 00:05:14] So I need to define a composition operator which was going to say
+[00:05:14 -> 00:05:18] how f1 composes with f2, given two functions f1 and f2.
+[00:05:18 -> 00:05:24] Now, a trivial composition could be just compose the output of f1
+[00:05:24 -> 00:05:29] and put it in f2 and that's a very valid way of doing the
+[00:05:29 -> 00:05:32] composition, but you could do more sophisticated compositions.
+[00:05:32 -> 00:05:36] Similarly, f1 meet f2, so you have two functions.
+[00:05:36 -> 00:05:40] I want to define what is the meet of f1 and f2 and I can basically
+[00:05:40 -> 00:05:45] use that to get the transfer function of this particular subgraph,
+[00:05:45 -> 00:05:46] all right?
+[00:05:46 -> 00:05:49] So I'm just showing you different subgraphs and how composition,
+[00:05:49 -> 00:05:52] meet and closure can get you the summary transfer functions
+[00:05:52 -> 00:05:53] for those subgraphs.
+[00:05:53 -> 00:05:57] Finally, this is the subgraph for which the closure operator
+[00:05:57 -> 00:06:04] which is represented using the asterisk operator as a superscript on f,
+[00:06:04 -> 00:06:07] the closure operator gives me the summary transfer function
+[00:06:07 -> 00:06:08] for this subgraph.
+[00:06:08 -> 00:06:12] And these are required because we need to compute,
+[00:06:12 -> 00:06:15] so we could have an arbitrary subgraph in my region,
+[00:06:15 -> 00:06:19] but I would be able to divide that arbitrary subgraph into
+[00:06:19 -> 00:06:24] compositions, meet and closure for a reducible subgraph, right?
+[00:06:24 -> 00:06:29] Any reducible subgraph can be divided into subparts
+[00:06:29 -> 00:06:32] which are either represented by the composition operator
+[00:06:32 -> 00:06:38] or by the parallel meet or the closure which is the baggage.
+[00:06:38 -> 00:06:40] Okay, so here is an example.
+[00:06:40 -> 00:06:43] Let me take the example of constant propagation
+[00:06:43 -> 00:06:47] and let's say I'm talking about composition here, right?
+[00:06:47 -> 00:06:49] So f1, f2 and I'm interested in the summary.
+[00:06:49 -> 00:06:51] Now let's say this is my program.
+[00:06:51 -> 00:06:55] The first block is x equals 2, the second block is y equals 3.
+[00:06:55 -> 00:06:59] Now f1 which is the transfer function of the first block
+[00:06:59 -> 00:07:05] is just whatever is in, just union that with x, 2 or x colon 2
+[00:07:05 -> 00:07:08] which means x is going to have the constant value 2
+[00:07:08 -> 00:07:10] and that's the constant propagation value
+[00:07:10 -> 00:07:13] and you just add that, union that with the set A
+[00:07:13 -> 00:07:14] and that's the transfer function.
+[00:07:14 -> 00:07:17] So I'm not deriding return, but this is a function that returns
+[00:07:17 -> 00:07:20] this value in union with x colon 2.
+[00:07:20 -> 00:07:22] So this is the transfer function f1.
+[00:07:22 -> 00:07:25] Similarly, this is the transfer function f2 for y equals 3
+[00:07:25 -> 00:07:27] which is in union y colon 3.
+[00:07:27 -> 00:07:29] And now based on any two transfer functions
+[00:07:29 -> 00:07:31] I need to define a composition operator
+[00:07:31 -> 00:07:34] and in this case I define my composition operator for f1 and f2
+[00:07:34 -> 00:07:38] to be just composed, whatever is being composed here
+[00:07:38 -> 00:07:40] plus whatever is being composed here
+[00:07:40 -> 00:07:45] and that's in union x colon 2, y colon 3.
+[00:07:45 -> 00:07:48] So x is given 2 and y is given 3.
+[00:07:48 -> 00:07:52] You know, said differently f1 composed f2 of x here
+[00:07:52 -> 00:07:57] and that's the general definition also, it's just f2 of f1 of x
+[00:07:57 -> 00:07:59] and if you just use this then you're going to get
+[00:07:59 -> 00:08:03] this particular answer for your composition operator.
+[00:08:03 -> 00:08:07] Now let's look at the meet operator for constant propagation.
+[00:08:07 -> 00:08:10] So let's say on one branch I have x equals 2, y equals 3
+[00:08:10 -> 00:08:14] on the other branch I have y equals 2 and x equals 3
+[00:08:14 -> 00:08:16] and so for the first branch I have f1
+[00:08:16 -> 00:08:19] which just says in union x comma 2, y comma 3.
+[00:08:19 -> 00:08:21] I'm using comma here instead of colon
+[00:08:21 -> 00:08:24] which I was using in the previous slide, that's okay, I hope.
+[00:08:24 -> 00:08:30] And so in union x comma 2, y comma 3 is for f1
+[00:08:30 -> 00:08:35] and similarly for f2 I have in union y comma 2, x comma 3.
+[00:08:35 -> 00:08:38] And now I want to define what is the meet
+[00:08:38 -> 00:08:40] of these two transfer functions
+[00:08:40 -> 00:08:44] and notice that this meet is not on values
+[00:08:44 -> 00:08:48] unlike a traditional DFA where I was defining meet on the values of the DFA.
+[00:08:48 -> 00:08:51] I was defining the meet operator on the set V.
+[00:08:51 -> 00:08:54] Here I'm defining the meet operator on the transfer functions
+[00:08:54 -> 00:08:57] and so I want to say what is f1 meet f2
+[00:08:57 -> 00:09:00] and f1 meet f2 should give me a new transfer function.
+[00:09:00 -> 00:09:03] And so I say f1 meet f2 of n
+[00:09:03 -> 00:09:06] and in this case I just use a trivial definition
+[00:09:06 -> 00:09:10] which is f1 in meet of f2 in.
+[00:09:10 -> 00:09:14] Alright, and so in this case because it's constant propagation
+[00:09:14 -> 00:09:15] what is the meet operator?
+[00:09:15 -> 00:09:18] Because it's constant propagation the meet operator is intersection
+[00:09:18 -> 00:09:22] and f1 in meet of f2 in is just going to give me in back
+[00:09:22 -> 00:09:25] because there is nothing that is common between x comma 2, y comma 3
+[00:09:25 -> 00:09:27] and y comma 2, x comma 3
+[00:09:27 -> 00:09:31] and so this is just going to be in.
+[00:09:31 -> 00:09:36] Alright, now let's take another example
+[00:09:36 -> 00:09:39] where we are going to do the closure operator.
+[00:09:39 -> 00:09:42] Alright, so this is my sub graph and I have the transfer function f
+[00:09:42 -> 00:09:45] and let's say f has some body
+[00:09:45 -> 00:09:50] and the body let's say basically increments x by 1
+[00:09:50 -> 00:09:54] and then there is a condition that says
+[00:09:54 -> 00:10:00] if x is not equal to n then repeat it
+[00:10:00 -> 00:10:03] or otherwise just return whatever is n.
+[00:10:03 -> 00:10:06] So I increment x by 1
+[00:10:06 -> 00:10:09] so think about it, the graph looks something like this.
+[00:10:09 -> 00:10:14] It says if, alright let me just write the program
+[00:10:14 -> 00:10:20] it says if x is not equal to n, x equals x plus 1.
+[00:10:20 -> 00:10:23] So let's say this is my code for f
+[00:10:23 -> 00:10:26] and so the corresponding transfer function is if in x
+[00:10:26 -> 00:10:29] which is the, so in the case of available expressions
+[00:10:29 -> 00:10:31] the input is the map.
+[00:10:31 -> 00:10:35] So if the input map maps x to a value
+[00:10:35 -> 00:10:38] which is not equal to n, then I just increment x
+[00:10:38 -> 00:10:40] and so I am using this.
+[00:10:40 -> 00:10:44] x becomes in x plus 1 and I update this mapping
+[00:10:44 -> 00:10:48] so this is the updation on n.
+[00:10:48 -> 00:10:55] Alright, so I get a new map on in
+[00:10:55 -> 00:10:57] and I get a new map, this is my new map
+[00:10:57 -> 00:10:59] which has everything that in had
+[00:10:59 -> 00:11:01] plus this extra mapping
+[00:11:01 -> 00:11:04] replacing any previous mappings for x
+[00:11:04 -> 00:11:07] which has x getting in x plus 1.
+[00:11:07 -> 00:11:10] So whatever was in x plus 1 is basically the new mapping
+[00:11:10 -> 00:11:12] and if in x was not equal to n
+[00:11:12 -> 00:11:14] I just return the original mapping.
+[00:11:14 -> 00:11:16] And so this is how I will define the transfer function
+[00:11:16 -> 00:11:19] for a available expression pass.
+[00:11:19 -> 00:11:21] Now if I want to define the closure
+[00:11:21 -> 00:11:23] of this particular transfer function
+[00:11:23 -> 00:11:25] you know I have multiple options
+[00:11:25 -> 00:11:27] so when I am defining closures or meets
+[00:11:27 -> 00:11:30] I have some freedom in what I want to do.
+[00:11:30 -> 00:11:32] In this case I could do the fallback closure
+[00:11:32 -> 00:11:34] in which case I could just say
+[00:11:34 -> 00:11:36] oh if I see this and then I have to apply
+[00:11:36 -> 00:11:38] this multiple times that's almost like saying
+[00:11:38 -> 00:11:40] I don't really know what x is going to be
+[00:11:40 -> 00:11:43] after an arbitrary number of
+[00:11:43 -> 00:11:47] iterations of the loop
+[00:11:47 -> 00:11:49] or you know until the loop exits
+[00:11:49 -> 00:11:51] and so I am just going to say in
+[00:11:51 -> 00:11:53] updated with x to bottom.
+[00:11:53 -> 00:11:55] So this is basically just going to set
+[00:11:55 -> 00:11:57] x to bottom in in
+[00:11:57 -> 00:11:59] and return the corresponding map.
+[00:11:59 -> 00:12:01] So this is the fallback closure.
+[00:12:01 -> 00:12:04] Now I could have made this more precise
+[00:12:04 -> 00:12:06] if I wanted to have a symbolic analysis
+[00:12:06 -> 00:12:08] and that's what we really started
+[00:12:08 -> 00:12:10] as a motivation for region based analysis.
+[00:12:10 -> 00:12:13] I could do a more precise
+[00:12:13 -> 00:12:16] symbolic closure for f which is f star
+[00:12:16 -> 00:12:18] in which case I would update x to
+[00:12:18 -> 00:12:21] max of in x, n.
+[00:12:21 -> 00:12:23] So it's basically saying that look
+[00:12:23 -> 00:12:25] whatever was the input value of x
+[00:12:25 -> 00:12:27] before the first iteration of loop
+[00:12:27 -> 00:12:30] if that was less than n
+[00:12:30 -> 00:12:32] then I am going to come out
+[00:12:32 -> 00:12:34] with a value equal to n
+[00:12:34 -> 00:12:36] because I am going to keep incrementing until I reach n.
+[00:12:36 -> 00:12:38] But if it was greater than n
+[00:12:38 -> 00:12:40] then I am not going to enter the loop even once
+[00:12:40 -> 00:12:42] and so I am going to return that value in x.
+[00:12:42 -> 00:12:44] And so for doing this kind of analysis
+[00:12:44 -> 00:12:46] I would probably have a symbolic analysis
+[00:12:46 -> 00:12:48] and so that's how my closure
+[00:12:48 -> 00:12:50] would be defined in this case.
+[00:12:50 -> 00:12:52] And so this is my symbolic closure function for f
+[00:12:52 -> 00:12:54] and that just says that I return in
+[00:12:54 -> 00:12:56] updated such that
+[00:12:56 -> 00:12:58] x is now mapped to
+[00:12:58 -> 00:13:00] max of in x, n.
+[00:13:00 -> 00:13:02] Because this is where the value of
+[00:13:02 -> 00:13:04] actually having region based analysis
+[00:13:04 -> 00:13:06] for loop regions is
+[00:13:06 -> 00:13:08] helping out and giving you more precise
+[00:13:08 -> 00:13:10] answers than your fall back
+[00:13:10 -> 00:13:12] analysis which is the
+[00:13:12 -> 00:13:14] vanilla data flow
+[00:13:14 -> 00:13:16] analysis.
+[00:13:16 -> 00:13:18] And the important point I am making here
+[00:13:18 -> 00:13:20] is that I can encode
+[00:13:20 -> 00:13:22] this symbolic information
+[00:13:22 -> 00:13:24] or these symbolic operations
+[00:13:24 -> 00:13:29] by defining what the closure should be.
+[00:13:29 -> 00:13:31] So I would define how the
+[00:13:31 -> 00:13:33] given a function f, how the closure should
+[00:13:33 -> 00:13:35] be constructed. I would have some
+[00:13:35 -> 00:13:37] way of doing that and based on that
+[00:13:37 -> 00:13:39] I would be able to implement my
+[00:13:39 -> 00:13:41] symbolic analysis.
+[00:13:41 -> 00:13:43] Now let's take one last
+[00:13:43 -> 00:13:45] example of how we would do
+[00:13:45 -> 00:13:47] you know
+[00:13:47 -> 00:13:49] a composition of
+[00:13:49 -> 00:13:51] transfer function for another
+[00:13:51 -> 00:13:53] data flow analysis that has been
+[00:13:53 -> 00:13:55] expressed using the gen and kill states.
+[00:13:55 -> 00:13:57] And in this example
+[00:13:57 -> 00:13:59] I am using the example of reaching definitions.
+[00:13:59 -> 00:14:01] Recall that in reaching definitions
+[00:14:01 -> 00:14:03] we say you know transfer function of
+[00:14:03 -> 00:14:05] an input where input is the set
+[00:14:05 -> 00:14:07] of reaching definitions is nothing but
+[00:14:07 -> 00:14:09] the definitions that have been generated
+[00:14:09 -> 00:14:11] union in minus definitions
+[00:14:11 -> 00:14:13] that have been killed. So gen union
+[00:14:13 -> 00:14:15] in minus kill. And so for
+[00:14:15 -> 00:14:17] f1, for statement 1 I may have
+[00:14:17 -> 00:14:19] gen 1 union in minus kill 1
+[00:14:19 -> 00:14:21] and for f2 I may have
+[00:14:21 -> 00:14:23] gen 2 union in minus kill 2.
+[00:14:23 -> 00:14:25] Now composition
+[00:14:25 -> 00:14:27] f1 composed with f2 is nothing
+[00:14:27 -> 00:14:29] but we have seen this before. It's a
+[00:14:29 -> 00:14:31] gen 2 union, gen 1 union in
+[00:14:31 -> 00:14:33] minus kill 1 minus kill 2 and we can even
+[00:14:33 -> 00:14:35] simplify this to basically bring
+[00:14:35 -> 00:14:37] this into a gen union in minus
+[00:14:37 -> 00:14:39] kill form as well.
+[00:14:39 -> 00:14:41] Similarly f1 meet f2.
+[00:14:41 -> 00:14:43] Recall that for reaching definitions the meet operator
+[00:14:43 -> 00:14:45] is union and that's just gen 1 union
+[00:14:45 -> 00:14:47] in minus kill 1 union gen 2
+[00:14:47 -> 00:14:49] union in minus kill 2. So notice
+[00:14:49 -> 00:14:51] that I am basically defining the composition
+[00:14:51 -> 00:14:53] operator on transfer functions.
+[00:14:53 -> 00:14:55] Now I have defined the meet operator
+[00:14:55 -> 00:14:57] on the transfer functions and finally
+[00:14:57 -> 00:14:59] I need to define the closure operator
+[00:14:59 -> 00:15:01] on the transfer function. And so
+[00:15:01 -> 00:15:03] for any transfer function
+[00:15:03 -> 00:15:05] f1 which has gen 1 union
+[00:15:05 -> 00:15:07] in minus kill 1, the closure
+[00:15:07 -> 00:15:09] is also the same, gen 1 union
+[00:15:09 -> 00:15:11] in minus kill 1 and this can
+[00:15:11 -> 00:15:13] be, you know, this is
+[00:15:13 -> 00:15:15] true because if you notice
+[00:15:15 -> 00:15:17] reapplying f1
+[00:15:17 -> 00:15:19] or any f to
+[00:15:19 -> 00:15:21] the output of the previous f or composing
+[00:15:21 -> 00:15:23] f with itself just gives me f
+[00:15:23 -> 00:15:25] and so any number of, any
+[00:15:25 -> 00:15:27] arbitrary number of applications
+[00:15:27 -> 00:15:29] of f, so f1 star is also
+[00:15:29 -> 00:15:31] going to give me the same f
+[00:15:31 -> 00:15:33] back. And so
+[00:15:33 -> 00:15:35] in this case also I have defined
+[00:15:35 -> 00:15:37] the composition operator, the meet operator
+[00:15:37 -> 00:15:39] and the closure operator on the transfer
+[00:15:39 -> 00:15:41] functions and based on this I can do
+[00:15:41 -> 00:15:43] my region based analysis. In particular
+[00:15:43 -> 00:15:45] I can do my bottom up pass in my region
+[00:15:45 -> 00:15:47] based analysis.

@@ -1,0 +1,586 @@
+Title: Compiler Design Module 86 : Register Spilling
+Video ID: eU0YUZo6k6c
+Detected language: en
+------------------------------------------------------------
+
+[00:00:00 -> 00:00:07] So, last time we talked about how we could do resistor allocation by creating a many-to-one
+[00:00:07 -> 00:00:13] mapping from temporaries to resistors and the idea was that if a pair of temporaries
+[00:00:13 -> 00:00:21] is simultaneously lying at some program location, then they cannot be assigned the same resistor.
+[00:00:21 -> 00:00:25] But that may not always be possible, so let's say my machine has only 8 resistors
+[00:00:25 -> 00:00:31] and I have let's say 20 temporaries, then it may not be possible to find such a many-to-one
+[00:00:31 -> 00:00:36] mapping where such a property is satisfied, which is that if two temporaries are simultaneously
+[00:00:36 -> 00:00:39] lying, then they are mapped to different resistors.
+[00:00:39 -> 00:00:47] Now, if that is the case, then we need to spill some of the temporaries to memory
+[00:00:47 -> 00:00:51] and that is called resistor spilling and that would be our topic of discussion today.
+[00:00:51 -> 00:00:56] So, the question is what if the graph cannot be colored with the available number of colors
+[00:00:56 -> 00:00:58] or resistors, right?
+[00:00:58 -> 00:01:02] For example, in the example that we have been discussing, let's assume that the machine
+[00:01:02 -> 00:01:08] had only 3 resistors while the rig, the resistor interference graph was 4 colorable,
+[00:01:08 -> 00:01:13] so it was 4 colorable but not 3 colorable, so it's possible to color that rig with
+[00:01:13 -> 00:01:18] 4 colors but it is not possible to color that rig with 3 colors, but our machine
+[00:01:18 -> 00:01:19] has only 3 resistors.
+[00:01:19 -> 00:01:20] So what is the answer?
+[00:01:20 -> 00:01:24] Well, we'll have to choose some temporary that we would have to spill to memory.
+[00:01:24 -> 00:01:30] Now, I would like to point out here that here we are assuming that we are finding
+[00:01:30 -> 00:01:36] whether the rig is 4 colorable or not using a full algorithm with optimal solution and
+[00:01:36 -> 00:01:37] things like that.
+[00:01:37 -> 00:01:41] But as I pointed out last time, graph coloring is actually an NP-hard problem
+[00:01:41 -> 00:01:48] and so finding the optimal or precise solution, whether something is 4 colorable or not,
+[00:01:48 -> 00:01:51] whether something is 3 colorable or not may not always be feasible.
+[00:01:51 -> 00:01:56] In fact, we are usually using heuristics to figure out whether I can color it in 3
+[00:01:56 -> 00:02:01] colors or 4 colors or not and if the heuristic fails, even then we can say, okay, it's not
+[00:02:01 -> 00:02:02] colorable.
+[00:02:02 -> 00:02:05] So maybe the graph was 3 colorable but our heuristic was not able to find a
+[00:02:05 -> 00:02:10] coloring which has only 3 colors, in which case also we are going to do spilling,
+[00:02:10 -> 00:02:11] alright?
+[00:02:11 -> 00:02:16] It may be suboptimal but then there's a trade-off between how long the algorithm
+[00:02:16 -> 00:02:22] runs, which means how long the compiler runs and what is the quality of code that is generated.
+[00:02:22 -> 00:02:27] So in any case, if whatever algorithm we are using is not able to color the graph
+[00:02:27 -> 00:02:34] with the number of registers which are equal to the number of machine registers,
+[00:02:34 -> 00:02:39] that many colors, then we are going to have to spill some temporary.
+[00:02:39 -> 00:02:43] And so we need to choose a temporary that would be spilled to memory and how will
+[00:02:43 -> 00:02:44] this work?
+[00:02:44 -> 00:02:49] So this is the topic of discussion today and we are going to pick a node in the graph
+[00:02:49 -> 00:02:55] and recall that a node in the register interference graph is nothing but a temporary register.
+[00:02:55 -> 00:03:00] So pick a node in the graph as a candidate for spilling.
+[00:03:00 -> 00:03:02] This temporary will live in memory.
+[00:03:02 -> 00:03:06] So we are going to make sure that this temporary will live in memory from here
+[00:03:06 -> 00:03:12] on and we remove the pig node and all its incident edges from the rig, alright?
+[00:03:12 -> 00:03:16] So we basically say that, okay, this temporary is going to live in the memory.
+[00:03:16 -> 00:03:22] So we remove all the incident edges in the rig to that node.
+[00:03:22 -> 00:03:28] Now there's slight complexity here which I'm going to discuss here.
+[00:03:28 -> 00:03:32] Can we remove all the edges or do we need to be more careful when I'm going to
+[00:03:32 -> 00:03:37] discuss the code generation strategy for spilling, this will become clearer.
+[00:03:38 -> 00:03:42] Basically, the idea is when we remove the pig node and at least some of its incident
+[00:03:42 -> 00:03:46] edges, if not all, we are going to make the rig sparser, alright?
+[00:03:46 -> 00:03:50] We are going to reduce the number of edges in the rig and also the number of nodes
+[00:03:50 -> 00:03:51] in the rig.
+[00:03:51 -> 00:03:57] And so when that happens, then the rig will now start becoming colorable with
+[00:03:57 -> 00:03:59] less number of colors, hopefully, right?
+[00:03:59 -> 00:04:04] And so we're going to keep doing this until the rig actually becomes K-colorable.
+[00:04:04 -> 00:04:09] And the way our algorithm is going to work, there's a guarantee that eventually,
+[00:04:09 -> 00:04:14] for some value, if the K is greater than equal to, let's say, at least one,
+[00:04:14 -> 00:04:19] then eventually, of course, I could spill everything to memory.
+[00:04:19 -> 00:04:23] And of course, I'm going to get a one-colorable graph at the very end
+[00:04:23 -> 00:04:25] because it's going to be only one node.
+[00:04:26 -> 00:04:28] So in general, K is going to be the number of machine registers,
+[00:04:28 -> 00:04:31] say 8, 16, 32, or something like that.
+[00:04:31 -> 00:04:35] And so I'm going to keep doing this until my graph becomes K-colorable.
+[00:04:35 -> 00:04:39] And when it becomes K-colorable, then I would have reached a solution.
+[00:04:39 -> 00:04:43] But hold on, we're going to discuss some more interesting twists here.
+[00:04:43 -> 00:04:47] So firstly, the question is, what node to pick, right?
+[00:04:47 -> 00:04:49] I mean, that is itself a difficult question.
+[00:04:50 -> 00:04:53] Picking one node may be better than picking another node.
+[00:04:53 -> 00:05:00] And a question that comes to mind is,
+[00:05:00 -> 00:05:03] what should be the criteria for picking a node, all right?
+[00:05:03 -> 00:05:06] So let's first figure out what the criteria is.
+[00:05:06 -> 00:05:11] And the answer is, first of all, we're going to use heuristics to try to recover from,
+[00:05:11 -> 00:05:14] we're going to pick something based on some criteria.
+[00:05:14 -> 00:05:20] And if that node choice was actually a bad choice, maybe,
+[00:05:20 -> 00:05:23] then you're going to use heuristics to try to recover from that bad choice, all right?
+[00:05:23 -> 00:05:26] So that's going to be our guiding principle, all right?
+[00:05:26 -> 00:05:29] So firstly, let's discuss what should be our example criteria
+[00:05:29 -> 00:05:31] to pick a node, all right?
+[00:05:31 -> 00:05:36] So I should say example criteria, all right?
+[00:05:36 -> 00:05:38] Not heuristics, but example criteria.
+[00:05:40 -> 00:05:43] And these are just heuristic criteria, so that's why heuristics is a good word.
+[00:05:43 -> 00:05:46] But what should be the example criteria?
+[00:05:47 -> 00:05:48] Well, one idea would be,
+[00:05:48 -> 00:05:52] let's pick the node with the maximum degree in the rig, right?
+[00:05:52 -> 00:05:53] What's the idea?
+[00:05:53 -> 00:05:55] Well, if I pick the node which has the maximum degree,
+[00:05:55 -> 00:05:59] by degree, I mean number of incident edges to that particular node.
+[00:05:59 -> 00:06:03] So if I pick a node which has the maximum number of incident edges to that node,
+[00:06:03 -> 00:06:08] then removing it is making the graph most sparse, right?
+[00:06:08 -> 00:06:12] Removing that node is going to remove most number of edges from the graph,
+[00:06:12 -> 00:06:17] and so that's going to give me the highest likelihood of making the graph color.
+[00:06:17 -> 00:06:22] Well, while this approach is good for the algorithm that just pick up the node
+[00:06:22 -> 00:06:25] which basically has the maximum number of incident edges,
+[00:06:26 -> 00:06:29] it makes the algorithm faster, converges faster
+[00:06:29 -> 00:06:32] because you're kind of removing most number of edges every step.
+[00:06:32 -> 00:06:34] It's not clear that it's the best possible choice
+[00:06:34 -> 00:06:38] because maybe that particular temporary that represents that node
+[00:06:38 -> 00:06:39] was in the hot region of the code.
+[00:06:39 -> 00:06:43] And now if you're picking a node, picking that temporary,
+[00:06:43 -> 00:06:45] you're allocating it to memory,
+[00:06:45 -> 00:06:50] and the cost in terms of runtime for the generated code
+[00:06:50 -> 00:06:52] would be higher than if you had picked something else.
+[00:06:52 -> 00:06:54] So here are some other ideas.
+[00:06:54 -> 00:06:57] Pick the temporary whose live range is minimum, all right?
+[00:06:57 -> 00:06:59] So what is the live range?
+[00:06:59 -> 00:07:02] Live range is the size of the code,
+[00:07:02 -> 00:07:06] static size of the code during which that particular temporary is live.
+[00:07:06 -> 00:07:10] So recall that we talked about liveness and we said that
+[00:07:10 -> 00:07:13] at this program point temporary A is live,
+[00:07:13 -> 00:07:16] at this program point temporary B is live,
+[00:07:16 -> 00:07:18] and C is live and so on, right?
+[00:07:18 -> 00:07:23] So if I count all the program points at which B is live, let's say,
+[00:07:23 -> 00:07:25] so that would be the live range of B.
+[00:07:25 -> 00:07:29] Similarly, if I count all the program points at which A is live,
+[00:07:29 -> 00:07:31] that would be the live range of A.
+[00:07:31 -> 00:07:33] And one idea is that you pick that temporary
+[00:07:33 -> 00:07:34] whose live range is the smallest.
+[00:07:34 -> 00:07:37] So if A is being used only in, let's say,
+[00:07:37 -> 00:07:39] three or four program points,
+[00:07:39 -> 00:07:41] it's being live at only three or four program points,
+[00:07:41 -> 00:07:46] then if I pick that, then I'm going to spill it to memory
+[00:07:46 -> 00:07:48] for those three or four program points.
+[00:07:48 -> 00:07:50] But for other program points, it won't even matter.
+[00:07:50 -> 00:07:54] And the idea again here is that you want to reduce the effect,
+[00:07:54 -> 00:07:55] the downside of spilling.
+[00:07:55 -> 00:07:57] Recall that if you spill to memory,
+[00:07:57 -> 00:07:59] then you're going to have to do memory accesses
+[00:07:59 -> 00:08:01] and they're going to be more expensive.
+[00:08:01 -> 00:08:04] And so you want to make sure that these expensive accesses
+[00:08:04 -> 00:08:07] are confined to a small part of your code.
+[00:08:07 -> 00:08:10] And so this heuristic of picking a temporary
+[00:08:10 -> 00:08:12] whose live range is minimum is going to ensure
+[00:08:12 -> 00:08:15] that you are spilling those registers
+[00:08:15 -> 00:08:19] whose, you know, where the spill effect is going,
+[00:08:19 -> 00:08:21] the performance effects of the spilling
+[00:08:21 -> 00:08:24] are going to be confined to a small region of the code.
+[00:08:24 -> 00:08:28] But then, you know, just because a region of code,
+[00:08:28 -> 00:08:30] statically speaking, is small,
+[00:08:30 -> 00:08:35] doesn't mean that it is not very consequential to performance.
+[00:08:35 -> 00:08:38] For example, if I have an inner loop in my program
+[00:08:38 -> 00:08:40] and that's a small body of the inner loop
+[00:08:40 -> 00:08:43] in which, let's say, register B is live,
+[00:08:43 -> 00:08:46] but that inner loop is going to be executing,
+[00:08:46 -> 00:08:47] let's say, 99% of the time.
+[00:08:47 -> 00:08:50] So even though it's a small static region of the code,
+[00:08:50 -> 00:08:53] it's being executed 99% of the time.
+[00:08:53 -> 00:08:56] And so that's a bad candidate for spilling.
+[00:08:56 -> 00:08:57] And so even this heuristic
+[00:08:57 -> 00:08:59] doesn't seem very satisfactory.
+[00:08:59 -> 00:09:02] Here's a third heuristic which says,
+[00:09:02 -> 00:09:03] you know, spill that temporary,
+[00:09:03 -> 00:09:07] which is used only in cold code regions, right?
+[00:09:07 -> 00:09:10] So basically you have some way of determining
+[00:09:10 -> 00:09:12] what are the cold regions of the code
+[00:09:12 -> 00:09:14] and what are the hot regions of the code.
+[00:09:14 -> 00:09:16] For example, any code that is executing
+[00:09:16 -> 00:09:18] only in the initialization step,
+[00:09:18 -> 00:09:21] maybe, you know, the first instruction of the main function
+[00:09:21 -> 00:09:23] or the last instruction of the exit,
+[00:09:23 -> 00:09:24] place where the exit is called.
+[00:09:24 -> 00:09:26] These are cold regions of the code.
+[00:09:26 -> 00:09:28] You know that this is only going to execute once
+[00:09:28 -> 00:09:29] and then it's going to exit
+[00:09:29 -> 00:09:32] or it's going to be only execute once at entry.
+[00:09:32 -> 00:09:34] But then code that is living in loops
+[00:09:34 -> 00:09:36] and then you can do some kind of graph analysis
+[00:09:36 -> 00:09:38] and you're going to talk about some kinds of ways
+[00:09:38 -> 00:09:40] to figure out, you know, what are loops
+[00:09:40 -> 00:09:43] what are parts of loops and not parts of loops later on.
+[00:09:43 -> 00:09:45] But if you can figure out that this is a loop
+[00:09:45 -> 00:09:48] and this particular instruction lives inside the loop,
+[00:09:48 -> 00:09:51] then you know that this instruction is hotter
+[00:09:51 -> 00:09:52] than the instruction that was present
+[00:09:52 -> 00:09:55] just at the entry of the program, right?
+[00:09:55 -> 00:09:56] Because the entry of the program
+[00:09:56 -> 00:09:58] is going to be executed only once
+[00:09:58 -> 00:10:00] in the entire lifetime of an execution.
+[00:10:00 -> 00:10:03] Whereas the instruction that's present inside a loop
+[00:10:03 -> 00:10:07] will probably, could potentially execute multiple times,
+[00:10:07 -> 00:10:09] even potentially thousands, millions
+[00:10:09 -> 00:10:10] or even billions of times.
+[00:10:10 -> 00:10:14] And so, you know, you use heuristics,
+[00:10:14 -> 00:10:16] you use estimates to identify what is cold code
+[00:10:16 -> 00:10:18] and what is hot code.
+[00:10:18 -> 00:10:20] And then the registers which are being used
+[00:10:20 -> 00:10:22] only in the cold regions of the code,
+[00:10:22 -> 00:10:25] you select them for spilling.
+[00:10:26 -> 00:10:30] Now this is a good idea in general,
+[00:10:30 -> 00:10:31] but then as I said,
+[00:10:31 -> 00:10:33] determining what is hot and what is cold
+[00:10:33 -> 00:10:35] just by statically looking at the program
+[00:10:35 -> 00:10:37] may not always be possible.
+[00:10:37 -> 00:10:39] And sometimes your guesses
+[00:10:39 -> 00:10:41] about what is hot and what is cold could be wrong,
+[00:10:41 -> 00:10:44] in which case you would be making wrong choices.
+[00:10:44 -> 00:10:47] So often what happens is that the second and the third,
+[00:10:47 -> 00:10:50] a combination of the second and the third criteria is used.
+[00:10:50 -> 00:10:55] So you pick nodes which are live only in cold regions
+[00:10:55 -> 00:10:58] and whose live ranges are relatively smaller.
+[00:10:58 -> 00:11:01] And some kind of combination of these two
+[00:11:01 -> 00:11:02] is a good idea
+[00:11:02 -> 00:11:04] and those nodes are the nodes that you're going to pick.
+[00:11:05 -> 00:11:07] I mean, our algorithm should be independent
+[00:11:07 -> 00:11:09] of what node we pick, right?
+[00:11:09 -> 00:11:11] So our algorithm that is going to do
+[00:11:11 -> 00:11:14] this register spilling and then code generation
+[00:11:14 -> 00:11:17] should be independent of what the criteria was
+[00:11:17 -> 00:11:19] or what was the actual node
+[00:11:19 -> 00:11:21] that was selected by the criteria.
+[00:11:21 -> 00:11:25] And so, we already discussed
+[00:11:25 -> 00:11:28] what are the three different ideas that come to mind
+[00:11:28 -> 00:11:30] and kind of discussed what are the relative merits
+[00:11:30 -> 00:11:32] and demerits of each of those ideas.
+[00:11:32 -> 00:11:34] And in practice, it's the live range
+[00:11:34 -> 00:11:36] or coldness of a region
+[00:11:36 -> 00:11:41] at which the register being discussed is live.
+[00:11:45 -> 00:11:48] Those are the areas where we were going to try to spill.
+[00:11:48 -> 00:11:50] I would like to point out here that we are,
+[00:11:50 -> 00:11:54] once again, we are assuming that either
+[00:11:54 -> 00:11:56] a register is completely spilled to memory
+[00:11:56 -> 00:11:58] throughout the duration of the program
+[00:11:58 -> 00:12:01] or the register is retained in a machine register,
+[00:12:01 -> 00:12:03] the temporary register is retained in a machine register
+[00:12:03 -> 00:12:05] throughout the duration of the program.
+[00:12:05 -> 00:12:06] Later on, we are also going to discuss schemes
+[00:12:06 -> 00:12:11] where you can kind of divide the program into segments
+[00:12:11 -> 00:12:13] and say that, okay, in this segment,
+[00:12:13 -> 00:12:16] this particular temporary is going to live in memory
+[00:12:16 -> 00:12:18] and in this segment, it is going to live in registers.
+[00:12:18 -> 00:12:22] So we're going to just kind of approach the solution
+[00:12:22 -> 00:12:23] in a step-by-step manner.
+[00:12:24 -> 00:12:27] All right, so which node to pick?
+[00:12:27 -> 00:12:30] We have these example criteria.
+[00:12:30 -> 00:12:32] And then once we know what node to pick,
+[00:12:32 -> 00:12:36] if we pick the wrong node in the sense that it was,
+[00:12:36 -> 00:12:37] maybe I could have picked something else
+[00:12:37 -> 00:12:40] and still gotten better coloring.
+[00:12:40 -> 00:12:43] So the idea is also the node that I pick
+[00:12:43 -> 00:12:47] should be in a path such that
+[00:12:47 -> 00:12:49] I can have a coloring of the graph
+[00:12:49 -> 00:12:51] with the minimum number of spillings.
+[00:12:51 -> 00:12:53] That's also a criterion, right?
+[00:12:53 -> 00:12:57] That I don't want to spill 10 nodes.
+[00:12:57 -> 00:13:00] Probably if I can get away by just spilling five nodes,
+[00:13:00 -> 00:13:01] that's great, right?
+[00:13:01 -> 00:13:04] So I would like to spill minimum number of nodes.
+[00:13:04 -> 00:13:05] But notice that our criteria
+[00:13:05 -> 00:13:08] for selecting the node to spill
+[00:13:08 -> 00:13:12] is kind of different from what is the optimal solution
+[00:13:12 -> 00:13:15] in terms of the smallest number of nodes to spill
+[00:13:15 -> 00:13:16] because we're also worried about
+[00:13:16 -> 00:13:18] whether it's being used in cold regions,
+[00:13:18 -> 00:13:19] hot regions, and stuff like that,
+[00:13:19 -> 00:13:22] whereas the rig doesn't care about cold or hot
+[00:13:22 -> 00:13:24] or things like that.
+[00:13:24 -> 00:13:28] So if it turns out that I can actually color it back,
+[00:13:28 -> 00:13:30] then I'm going to use heuristics to again
+[00:13:30 -> 00:13:35] try to recover from a bad choice of the picked node.
+[00:13:37 -> 00:13:40] And I'm going to show that in my next slide.
+[00:13:40 -> 00:13:43] And so the solution here is called optimistic coloring.
+[00:13:43 -> 00:13:45] So we pick a node to spill,
+[00:13:45 -> 00:13:48] say the node I picked was N,
+[00:13:48 -> 00:13:49] and remove it from the rig,
+[00:13:49 -> 00:13:52] including the incident edges, all right?
+[00:13:52 -> 00:13:55] So this is something that we have discussed already.
+[00:13:55 -> 00:13:57] Then we color the remaining graph with K colors,
+[00:13:57 -> 00:13:59] because K is the number of machine registers.
+[00:13:59 -> 00:14:02] So we try to color the remaining graph with K colors.
+[00:14:02 -> 00:14:06] And it's possible that it's still not possible
+[00:14:06 -> 00:14:07] to color the remaining graph with K colors,
+[00:14:07 -> 00:14:10] in which case we could spill more nodes
+[00:14:10 -> 00:14:12] until it is possible to color it with K nodes.
+[00:14:12 -> 00:14:15] So it's a recursive algorithm.
+[00:14:15 -> 00:14:17] I pick a node, then I basically say,
+[00:14:17 -> 00:14:21] okay, now color the rest of the graph with K colors.
+[00:14:21 -> 00:14:23] Again, maybe it's not colorable,
+[00:14:23 -> 00:14:25] in which case I'm allowed to spill.
+[00:14:25 -> 00:14:28] But when I return from that solution,
+[00:14:28 -> 00:14:33] I would have a K colorable graph with some potential spillings.
+[00:14:34 -> 00:14:37] Now, after the remaining graph is colored,
+[00:14:37 -> 00:14:40] so this is the inductive step, right?
+[00:14:40 -> 00:14:41] So we are basically approaching it as an induction.
+[00:14:41 -> 00:14:44] We removed some node, we made the graph shorter,
+[00:14:44 -> 00:14:47] then we solved that shorter graph, smaller graph.
+[00:14:47 -> 00:14:49] And then once it is solved,
+[00:14:49 -> 00:14:52] then we try to add this node back in.
+[00:14:52 -> 00:14:54] So after the remaining graph is colored,
+[00:14:54 -> 00:14:56] try adding N back into the graph.
+[00:14:56 -> 00:14:59] So notice that I haven't really committed
+[00:14:59 -> 00:15:02] that I'm going to spill N, I just removed it.
+[00:15:02 -> 00:15:04] And now once the rest of the graph has been colored,
+[00:15:04 -> 00:15:07] then I try to add it back.
+[00:15:07 -> 00:15:11] And if it is possible to find the color for N,
+[00:15:11 -> 00:15:14] such that the coloring principle is followed,
+[00:15:14 -> 00:15:18] which means even if I add N and its incident edges,
+[00:15:18 -> 00:15:21] then the graph still remains K colorable, right?
+[00:15:21 -> 00:15:23] So it's possible to find a color for N
+[00:15:23 -> 00:15:26] such that all the neighbors of N
+[00:15:26 -> 00:15:29] are colored with a different color from the color of N.
+[00:15:29 -> 00:15:31] If we can do that, then that's great.
+[00:15:31 -> 00:15:34] And we didn't have to spill N, right?
+[00:15:34 -> 00:15:37] So even though we kind of made a choice for N,
+[00:15:38 -> 00:15:40] after we kind of went and did the coloring
+[00:15:40 -> 00:15:43] of the rest of the graph, when we came back,
+[00:15:43 -> 00:15:45] we kind of tried to add N back in,
+[00:15:45 -> 00:15:46] we were able to add N,
+[00:15:46 -> 00:15:49] which means we didn't actually have to spill N at all.
+[00:15:49 -> 00:15:50] It was just that we made a choice
+[00:15:50 -> 00:15:53] and then we kind of said, okay, but that's not,
+[00:15:54 -> 00:15:55] it wasn't really a good choice to spill,
+[00:15:55 -> 00:15:57] let's add it back, because I can now see
+[00:15:57 -> 00:15:59] that it's being added back.
+[00:15:59 -> 00:16:01] Now I should point out these are all heuristics.
+[00:16:01 -> 00:16:04] I mean, these are not optimal algorithms to do this,
+[00:16:04 -> 00:16:06] but this is a very efficient algorithm
+[00:16:06 -> 00:16:08] and actually works very well in practice.
+[00:16:08 -> 00:16:09] So I'm going to show you an example.
+[00:16:09 -> 00:16:12] So let's say this is the rig
+[00:16:12 -> 00:16:14] that we actually had for our example
+[00:16:14 -> 00:16:16] from our previous module.
+[00:16:16 -> 00:16:19] There are, let's say, six temporaries.
+[00:16:19 -> 00:16:22] And let's say my machine has three registers.
+[00:16:22 -> 00:16:24] So I need a three color.
+[00:16:24 -> 00:16:25] As we discussed last time,
+[00:16:25 -> 00:16:27] this graph is not three colorable.
+[00:16:27 -> 00:16:31] It is four colorable, but it is not three colorable.
+[00:16:31 -> 00:16:31] So what do I do?
+[00:16:31 -> 00:16:33] I need to pick a node to spill.
+[00:16:33 -> 00:16:37] So let's say I pick the node A.
+[00:16:37 -> 00:16:39] Now, once again, this node,
+[00:16:39 -> 00:16:40] the choice of node is kind of coming
+[00:16:40 -> 00:16:42] from some other criteria
+[00:16:42 -> 00:16:44] that is not even captured in the rig.
+[00:16:44 -> 00:16:47] And so let's say maybe A was being appearing
+[00:16:47 -> 00:16:49] in colder regions of the code or whatever.
+[00:16:49 -> 00:16:51] And so we decided that we pick A.
+[00:16:51 -> 00:16:52] So what do we do?
+[00:16:52 -> 00:16:55] We remove A and we remove all the incident edges of A.
+[00:16:55 -> 00:16:57] Now we have this remaining graph here.
+[00:16:59 -> 00:17:00] And we try to color it.
+[00:17:00 -> 00:17:02] Now it turns out that even this graph
+[00:17:02 -> 00:17:04] is not three colorable.
+[00:17:04 -> 00:17:07] So we need to, again, spill something.
+[00:17:07 -> 00:17:08] And what do we pick to spill?
+[00:17:08 -> 00:17:11] Well, let's say that we pick F to spill.
+[00:17:11 -> 00:17:13] So now we pick F to spill.
+[00:17:13 -> 00:17:17] And now we are left with this graph of B, E, C, and D
+[00:17:17 -> 00:17:19] because we removed F
+[00:17:19 -> 00:17:21] and we removed all the incident edges of F.
+[00:17:21 -> 00:17:22] Now, once we have this,
+[00:17:22 -> 00:17:27] then we can now color these, the nodes of this graph.
+[00:17:28 -> 00:17:30] Can we find a three coloring for this graph?
+[00:17:30 -> 00:17:32] The answer is yes.
+[00:17:32 -> 00:17:33] And here is the coloring.
+[00:17:33 -> 00:17:37] So let's say my colors are green, blue, and purple.
+[00:17:37 -> 00:17:41] So I just need to ensure that B and D are colored
+[00:17:41 -> 00:17:44] with the same color in this example, purple.
+[00:17:44 -> 00:17:46] And then C and E can be colored
+[00:17:46 -> 00:17:47] with the other two colors.
+[00:17:47 -> 00:17:49] And so this is a solution.
+[00:17:49 -> 00:17:51] And now my graph is three colorable.
+[00:17:51 -> 00:17:54] Now, once I'm done with this, I want to be optimistic.
+[00:17:54 -> 00:17:56] So that's why it's called optimistic coloring.
+[00:17:56 -> 00:17:59] I try to add the nodes that I had picked
+[00:17:59 -> 00:18:01] in the reverse order back to the graph.
+[00:18:01 -> 00:18:03] So for example, I had picked F,
+[00:18:03 -> 00:18:06] so let's try to add F back to the graph.
+[00:18:06 -> 00:18:08] And let's try adding F.
+[00:18:08 -> 00:18:11] But if I add F, then the problem is
+[00:18:11 -> 00:18:12] I cannot find a color for F
+[00:18:12 -> 00:18:15] such that the coloring principle is followed.
+[00:18:15 -> 00:18:17] Because if I pick purple,
+[00:18:17 -> 00:18:20] but there is an incident edge with a purple node,
+[00:18:20 -> 00:18:21] if I pick blue, there's an incident edge
+[00:18:21 -> 00:18:23] with a blue node, if I pick green,
+[00:18:23 -> 00:18:25] there's an incident edge with a green node.
+[00:18:25 -> 00:18:27] So I cannot find a color for F.
+[00:18:27 -> 00:18:30] So basically that means now we have kind of committed
+[00:18:30 -> 00:18:32] that F needs to be spilled.
+[00:18:32 -> 00:18:33] All right, so we are going to spill F
+[00:18:33 -> 00:18:35] and we're going to see later on
+[00:18:35 -> 00:18:37] how we're going to generate the code for spilling F.
+[00:18:38 -> 00:18:41] But then we try to add A back.
+[00:18:41 -> 00:18:45] So we didn't add F back because if I add F back,
+[00:18:45 -> 00:18:48] then we don't have the coloring principle followed.
+[00:18:48 -> 00:18:50] But then if I try to add A back,
+[00:18:50 -> 00:18:52] now recall that A basically had two edges,
+[00:18:52 -> 00:18:55] one was going to F and the other was going to C.
+[00:18:55 -> 00:18:56] F is no longer present,
+[00:18:56 -> 00:19:00] so now the only incident edge to A is C.
+[00:19:00 -> 00:19:03] And now it is possible to find a color for A.
+[00:19:03 -> 00:19:06] And for example, I could either use
+[00:19:06 -> 00:19:08] the purple color for A or the green color for A.
+[00:19:08 -> 00:19:11] So let's say I chose the green color for A
+[00:19:11 -> 00:19:13] and I can find a color for A,
+[00:19:13 -> 00:19:16] which means now I don't need to spill A.
+[00:19:16 -> 00:19:20] So, you know, basically,
+[00:19:20 -> 00:19:22] although we picked two nodes in this example,
+[00:19:22 -> 00:19:25] eventually our solution basically had to spill
+[00:19:25 -> 00:19:27] only one node and that's why it's called
+[00:19:27 -> 00:19:29] optimistic coloring because, you know,
+[00:19:29 -> 00:19:32] while we kind of pick things heuristically,
+[00:19:32 -> 00:19:34] we also optimistically try to see
+[00:19:34 -> 00:19:35] whether we can add them back in
+[00:19:35 -> 00:19:37] so that our solution is still valid.
+[00:19:39 -> 00:19:42] So final solution, we need to spill F
+[00:19:42 -> 00:19:44] and we do not need to spill A or any other node.
+[00:19:45 -> 00:19:47] Now the question is how to spill F
+[00:19:47 -> 00:19:49] and how to do the code generation
+[00:19:49 -> 00:19:51] for a spill temporary register.
+[00:19:52 -> 00:19:54] So here's the question, how to spill?
+[00:19:54 -> 00:19:56] Well, the idea is we're going to allocate
+[00:19:56 -> 00:19:58] a memory location for F,
+[00:19:58 -> 00:20:00] typically in the current activation record
+[00:20:00 -> 00:20:03] or also called the stack frame,
+[00:20:03 -> 00:20:04] and call its address FA, right?
+[00:20:04 -> 00:20:07] So just like we discussed
+[00:20:07 -> 00:20:08] when we were talking about code generation,
+[00:20:08 -> 00:20:12] we discussed how we need to create stack slots
+[00:20:12 -> 00:20:16] or temporary spaces in the activation record,
+[00:20:16 -> 00:20:20] we can create a temporary space for F in this case, right?
+[00:20:20 -> 00:20:24] And let's call its address be FA.
+[00:20:24 -> 00:20:25] And this FA could be, you know,
+[00:20:25 -> 00:20:28] stack pointer relative or something like that.
+[00:20:28 -> 00:20:29] It doesn't really matter.
+[00:20:29 -> 00:20:32] It doesn't need to be an absolute address.
+[00:20:32 -> 00:20:35] And then before each operation that reads F,
+[00:20:35 -> 00:20:38] we are going to say F equals load FA
+[00:20:38 -> 00:20:40] and then after each operation that writes F,
+[00:20:40 -> 00:20:45] we are going to insert store F to FA, right?
+[00:20:45 -> 00:20:46] So everything that reads,
+[00:20:46 -> 00:20:47] we are just going to,
+[00:20:47 -> 00:20:48] before that we're going to say, okay,
+[00:20:48 -> 00:20:50] let's load it in, you know,
+[00:20:50 -> 00:20:51] because it's in memory,
+[00:20:51 -> 00:20:54] we need to load it into some temporary register
+[00:20:54 -> 00:20:55] and then operate on it.
+[00:20:55 -> 00:20:58] And then once we are done, we can kind of,
+[00:20:59 -> 00:21:02] you know, if you want to write something,
+[00:21:02 -> 00:21:05] then if we don't write to the temporary register,
+[00:21:05 -> 00:21:07] let's say F, then we don't really care
+[00:21:07 -> 00:21:10] because already the FA is the right value
+[00:21:10 -> 00:21:13] and so we can just throw the temporary register value.
+[00:21:13 -> 00:21:14] We don't really care.
+[00:21:14 -> 00:21:16] But if there is an operation that writes to F
+[00:21:16 -> 00:21:18] in the original IR,
+[00:21:18 -> 00:21:21] then we are going to add another instruction later on.
+[00:21:21 -> 00:21:23] It's going to say store F comma FA,
+[00:21:23 -> 00:21:25] which means just store the result,
+[00:21:25 -> 00:21:27] the return result back to the address.
+[00:21:27 -> 00:21:29] So basically anytime there's a read,
+[00:21:29 -> 00:21:30] before that put a load,
+[00:21:30 -> 00:21:31] anytime there's a write,
+[00:21:31 -> 00:21:34] after that put a store to FA,
+[00:21:34 -> 00:21:36] which is the address of A.
+[00:21:36 -> 00:21:37] And I'm assuming here
+[00:21:37 -> 00:21:39] that there is a temporary register available,
+[00:21:39 -> 00:21:40] which is F,
+[00:21:40 -> 00:21:41] and I can find,
+[00:21:41 -> 00:21:44] maybe I can reserve one register just for this business
+[00:21:44 -> 00:21:45] or there are other ways to do it.
+[00:21:45 -> 00:21:46] For example,
+[00:21:46 -> 00:21:48] we may not remove all the edges in the rig.
+[00:21:48 -> 00:21:51] You know, we can kind of couple these solutions together
+[00:21:51 -> 00:21:52] and so on.
+[00:21:52 -> 00:21:53] But for simplicity,
+[00:21:53 -> 00:21:56] let's assume that there is an extra register available
+[00:21:56 -> 00:21:58] for this temporary,
+[00:21:58 -> 00:22:00] to hold this temporary value
+[00:22:00 -> 00:22:03] for the duration of the operation on F.
+[00:22:03 -> 00:22:04] We can even,
+[00:22:04 -> 00:22:08] you know, we can at will keep storing it back to,
+[00:22:08 -> 00:22:09] so whenever we feel that,
+[00:22:09 -> 00:22:10] you know, I need another temporary,
+[00:22:10 -> 00:22:11] I can just store it back to FA
+[00:22:11 -> 00:22:12] and things like that.
+[00:22:12 -> 00:22:14] So it,
+[00:22:14 -> 00:22:15] you know,
+[00:22:15 -> 00:22:17] one can always find ways to do this.
+[00:22:17 -> 00:22:18] Of course,
+[00:22:18 -> 00:22:20] you know, there are no optimality guarantees there.
+[00:22:20 -> 00:22:21] We're just using heuristics
+[00:22:21 -> 00:22:24] to find a reasonable solution.
+[00:22:24 -> 00:22:26] Optimal solutions are going to be too expensive
+[00:22:26 -> 00:22:27] to compute here.
+[00:22:28 -> 00:22:32] Also rename each use of F to F1, F2, F3, all right?
+[00:22:32 -> 00:22:34] So in this new program,
+[00:22:34 -> 00:22:36] we're going to have this temporary register,
+[00:22:36 -> 00:22:37] let's call it F.
+[00:22:37 -> 00:22:40] And now when we actually going to do the live,
+[00:22:41 -> 00:22:42] live-ness analysis,
+[00:22:42 -> 00:22:44] then F is going to appear in many places
+[00:22:44 -> 00:22:46] because anywhere FA is being loaded from,
+[00:22:46 -> 00:22:47] we're going to say F
+[00:22:47 -> 00:22:49] and then anywhere which F is going to be stored,
+[00:22:49 -> 00:22:50] write it into,
+[00:22:50 -> 00:22:51] then we're going to say F again
+[00:22:51 -> 00:22:54] because then we're going to write it back to FA.
+[00:22:54 -> 00:22:55] Now,
+[00:22:55 -> 00:22:56] now that,
+[00:22:56 -> 00:22:58] let's say I want to do more register allocation
+[00:22:58 -> 00:23:00] or more analysis on the new code
+[00:23:00 -> 00:23:02] in which I've spilled F,
+[00:23:02 -> 00:23:04] then it will appear like F is appearing in many places.
+[00:23:04 -> 00:23:05] But actually,
+[00:23:05 -> 00:23:06] these are all different Fs
+[00:23:06 -> 00:23:08] because every time I load,
+[00:23:08 -> 00:23:09] I'm actually getting a new value, right?
+[00:23:09 -> 00:23:14] So it's a good idea to also rename each use of F
+[00:23:14 -> 00:23:15] to a separate temporary name,
+[00:23:15 -> 00:23:18] for example, F1, F2, F3, and so on,
+[00:23:18 -> 00:23:19] so that it's very clear
+[00:23:19 -> 00:23:22] that these Fs are completely different and independent.
+[00:23:22 -> 00:23:24] And so,
+[00:23:24 -> 00:23:29] if I now draw a register interference graph,
+[00:23:29 -> 00:23:30] each of these F1, F2, F3
+[00:23:30 -> 00:23:32] are going to appear as different nodes.
+[00:23:32 -> 00:23:34] And so we are guaranteed
+[00:23:34 -> 00:23:36] that the new graph will be sparser
+[00:23:36 -> 00:23:37] than the original graph.
+[00:23:37 -> 00:23:40] And it would be an easier,
+[00:23:40 -> 00:23:41] much easier problem to solve
+[00:23:41 -> 00:23:44] than if I didn't have different versions of F
+[00:23:44 -> 00:23:48] present in my register interference graph.
+[00:23:48 -> 00:23:51] Okay, so what is the effect of spilling on rig?
+[00:23:51 -> 00:23:53] Well, because F has been broken
+[00:23:53 -> 00:23:54] into several different variables
+[00:23:54 -> 00:23:56] with short live ranges,
+[00:23:56 -> 00:23:59] the rig becomes sparser and easier to color.
+[00:23:59 -> 00:24:01] And that's basically,
+[00:24:01 -> 00:24:02] you know, what we have achieved
+[00:24:02 -> 00:24:04] using the optimistic coloring algorithm.
+[00:24:04 -> 00:24:06] So once again,
+[00:24:06 -> 00:24:07] let me summarize.
+[00:24:07 -> 00:24:09] We first form a register interference graph
+[00:24:09 -> 00:24:11] based on likeness information.
+[00:24:11 -> 00:24:13] We try to color it with K colors.
+[00:24:13 -> 00:24:15] If we can color it, we are done.
+[00:24:15 -> 00:24:17] If we cannot color it,
+[00:24:17 -> 00:24:20] we iteratively pick some node to spill
+[00:24:20 -> 00:24:22] and we try to color the remaining graph
+[00:24:22 -> 00:24:23] and we keep doing this.
+[00:24:23 -> 00:24:25] At the end, we are able to find a rig
+[00:24:25 -> 00:24:28] that is colorable, K colorable.
+[00:24:28 -> 00:24:30] Now, all the nodes that we have picked,
+[00:24:30 -> 00:24:33] we kind of try to add them one by one back in.
+[00:24:33 -> 00:24:35] If we are able to add them, we do add them.
+[00:24:35 -> 00:24:36] If we are not able to add them,
+[00:24:36 -> 00:24:37] we keep them with us.
+[00:24:37 -> 00:24:40] And those, in the end,
+[00:24:40 -> 00:24:43] the temporary registers that we are left with,
+[00:24:43 -> 00:24:45] they are the ones that need to be spilt.
+[00:24:45 -> 00:24:46] This whole algorithm
+[00:24:46 -> 00:24:48] is called the optimistic coloring algorithm
+[00:24:48 -> 00:24:51] because we are optimistically trying to add them back in
+[00:24:51 -> 00:24:52] when we are done with the coloring.
+[00:24:52 -> 00:24:55] So that's why it's called optimistic coloring.
+[00:24:55 -> 00:24:57] Now, all the registers that need to be spilt,
+[00:24:57 -> 00:24:59] we basically,
+[00:24:59 -> 00:25:01] anywhere they are being read,
+[00:25:01 -> 00:25:02] we basically add,
+[00:25:02 -> 00:25:05] so add a load instruction before the read
+[00:25:05 -> 00:25:06] and anytime they're being written,
+[00:25:07 -> 00:25:09] we add a store instruction after the write.
+[00:25:09 -> 00:25:10] Also, when we load,
+[00:25:10 -> 00:25:12] we don't load to the same register.
+[00:25:12 -> 00:25:15] In fact, we rename it to new temporary registers,
+[00:25:15 -> 00:25:17] which are very short live ranges
+[00:25:17 -> 00:25:19] because they're only going to be used
+[00:25:19 -> 00:25:21] for that instruction that's going to read it.
+[00:25:21 -> 00:25:23] And similarly, that instruction that's going to write it.
+[00:25:23 -> 00:25:26] And so because of those short ranges,
+[00:25:27 -> 00:25:30] the resulting rig has become much sparser.
+[00:25:30 -> 00:25:33] And that's why it is now still K colorable,
+[00:25:33 -> 00:25:36] whereas earlier it was not K colorable.
+[00:25:36 -> 00:25:38] One way to do this is, for example,
+[00:25:38 -> 00:25:40] having a dedicated register
+[00:25:40 -> 00:25:41] just for doing the loading and storing
+[00:25:41 -> 00:25:43] for the spilt registers
+[00:25:43 -> 00:25:45] so that that register will not interfere
+[00:25:45 -> 00:25:48] with all the other registers in my program.

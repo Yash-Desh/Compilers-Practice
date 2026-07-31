@@ -1,0 +1,538 @@
+Title: Compiler Design Module 124 8: Aliasing and Pointer Analysis
+Video ID: SYsKGmDK4qk
+Detected language: en
+------------------------------------------------------------
+
+[00:00:00 -> 00:00:01] In the next few lecture modules,
+[00:00:01 -> 00:00:05] I'm gonna discuss an important topic
+[00:00:05 -> 00:00:07] called memory objects and pointers
+[00:00:07 -> 00:00:09] and how to deal with them.
+[00:00:09 -> 00:00:12] And this is one of the most consequential things
+[00:00:12 -> 00:00:14] about compiler optimizations
+[00:00:14 -> 00:00:16] when we do compiler optimizations
+[00:00:16 -> 00:00:17] on imperative languages,
+[00:00:17 -> 00:00:19] which involve memory allocations
+[00:00:19 -> 00:00:22] like C, C++, Java, et cetera.
+[00:00:22 -> 00:00:24] So memory objects and pointers.
+[00:00:24 -> 00:00:27] So let's say we declare a variable in C,
+[00:00:27 -> 00:00:29] like int x.
+[00:00:29 -> 00:00:31] Then what we are actually doing
+[00:00:31 -> 00:00:33] is we are allocating memory.
+[00:00:33 -> 00:00:36] And this memory starts at some address,
+[00:00:36 -> 00:00:37] let's say adder,
+[00:00:37 -> 00:00:39] and goes up to some size,
+[00:00:39 -> 00:00:41] depends on this type.
+[00:00:41 -> 00:00:43] Let's assume that the size of an integer
+[00:00:43 -> 00:00:45] on a particular machine is four bytes.
+[00:00:45 -> 00:00:48] Then this region, memory region,
+[00:00:48 -> 00:00:50] is from adder to adder plus four,
+[00:00:50 -> 00:00:52] where adder plus four is not included.
+[00:00:52 -> 00:00:54] So four bytes, adder, adder plus one,
+[00:00:54 -> 00:00:56] adder plus two, and adder plus three.
+[00:00:56 -> 00:00:58] And the address of x is pointing
+[00:00:58 -> 00:01:01] to the beginning of this region,
+[00:01:01 -> 00:01:04] which means the address of x and adder are the same value.
+[00:01:05 -> 00:01:08] Similarly, so this region of memory
+[00:01:08 -> 00:01:10] is also called an object.
+[00:01:10 -> 00:01:13] So any region of memory is also called an object.
+[00:01:13 -> 00:01:17] Similarly, if I allocate a variable
+[00:01:17 -> 00:01:19] using the new construct in these languages
+[00:01:19 -> 00:01:21] like C, C++, Java,
+[00:01:21 -> 00:01:24] which basically allows dynamic allocation,
+[00:01:24 -> 00:01:28] then it returns a pointer p to an object of type x.
+[00:01:28 -> 00:01:32] So if the type x is of size of x,
+[00:01:32 -> 00:01:34] then we have allocated a new memory object
+[00:01:34 -> 00:01:37] from some address adder till some end address,
+[00:01:37 -> 00:01:39] adder plus size of x.
+[00:01:39 -> 00:01:42] And the pointer p, the return value,
+[00:01:42 -> 00:01:45] is now pointing to the beginning of this adder.
+[00:01:45 -> 00:01:47] So p and adder are the same value.
+[00:01:48 -> 00:01:51] So this is the common memory allocation
+[00:01:51 -> 00:01:53] that we are aware of.
+[00:01:54 -> 00:01:56] I just want to point out that when we say an object,
+[00:01:56 -> 00:01:59] it does not need to be a contiguous region of memory.
+[00:01:59 -> 00:02:01] It could be made up of
+[00:02:01 -> 00:02:03] discontinuous regions of memory as well.
+[00:02:03 -> 00:02:04] For example, when I do new x,
+[00:02:04 -> 00:02:06] and if x was a compound type,
+[00:02:06 -> 00:02:08] for example, it was a class or a struct,
+[00:02:08 -> 00:02:12] then p may point to the root node
+[00:02:12 -> 00:02:14] that represents that struct, that memory object,
+[00:02:14 -> 00:02:16] and that may have pointers of its own.
+[00:02:16 -> 00:02:19] And collectively, all these memory regions
+[00:02:19 -> 00:02:21] will be called a single object, right?
+[00:02:21 -> 00:02:23] So that's what the terminology is.
+[00:02:23 -> 00:02:25] An object is nothing but a region
+[00:02:25 -> 00:02:27] or a set of regions of memory.
+[00:02:29 -> 00:02:33] Now, when we talk about a region of memory,
+[00:02:33 -> 00:02:37] then we also talk about aliasing of those regions.
+[00:02:37 -> 00:02:41] So for example, let x represent an object of four bytes,
+[00:02:41 -> 00:02:43] starting from adder to adder plus four.
+[00:02:43 -> 00:02:48] And let star p represent an object of one byte.
+[00:02:48 -> 00:02:52] So p is pointing to this location here.
+[00:02:53 -> 00:02:54] So in other words,
+[00:02:54 -> 00:02:57] when I say x represents an object of four bytes,
+[00:02:57 -> 00:02:59] I'm actually saying that ampersand,
+[00:02:59 -> 00:03:02] I'm actually saying that ampersand x
+[00:03:02 -> 00:03:04] points to this location.
+[00:03:04 -> 00:03:09] And so when I say x represents an object of four bytes,
+[00:03:09 -> 00:03:10] it basically means ampersand x
+[00:03:10 -> 00:03:14] is pointing to an object x.
+[00:03:14 -> 00:03:16] And the x, object x itself
+[00:03:16 -> 00:03:17] is the actual region of memory.
+[00:03:17 -> 00:03:22] Similarly, p is pointing to a region or an object,
+[00:03:22 -> 00:03:24] and the actual object is star p,
+[00:03:24 -> 00:03:26] which is basically representing,
+[00:03:26 -> 00:03:30] or char star p to represent the size of that region.
+[00:03:30 -> 00:03:32] And that region is basically represented
+[00:03:32 -> 00:03:33] by this one byte here.
+[00:03:33 -> 00:03:35] And notice that in this case,
+[00:03:35 -> 00:03:37] char star p and x alias.
+[00:03:37 -> 00:03:39] Why do we say that they're alias?
+[00:03:39 -> 00:03:43] Because the regions of memory that they occupy
+[00:03:43 -> 00:03:44] are overlapping.
+[00:03:44 -> 00:03:45] And this is true
+[00:03:45 -> 00:03:48] for both discontinuous and contiguous objects.
+[00:03:48 -> 00:03:50] Two objects are alias
+[00:03:50 -> 00:03:54] if the regions of memory represented by the two objects
+[00:03:54 -> 00:03:56] are, the intersection of them is non-empty
+[00:03:56 -> 00:03:58] or they're overlapping.
+[00:03:58 -> 00:04:01] In this example, star p and x alias.
+[00:04:03 -> 00:04:06] Now, so let's define what aliasing means.
+[00:04:06 -> 00:04:09] Two or more names for the same region of memory.
+[00:04:09 -> 00:04:11] That's what we mean by aliasing.
+[00:04:11 -> 00:04:13] So in this example,
+[00:04:13 -> 00:04:14] the region, this region of memory,
+[00:04:14 -> 00:04:16] this one byte here has two names.
+[00:04:16 -> 00:04:19] One is the name which is given,
+[00:04:19 -> 00:04:20] derived from the variable x.
+[00:04:20 -> 00:04:24] For example, you could say ampersand x plus one
+[00:04:24 -> 00:04:26] and treat it as a character pointer
+[00:04:26 -> 00:04:28] and then, you know, dereference it.
+[00:04:28 -> 00:04:30] And that would be one name for this region
+[00:04:30 -> 00:04:32] and another name would be star p.
+[00:04:32 -> 00:04:33] So aliasing basically means two or more names
+[00:04:33 -> 00:04:35] for the same region of memory.
+[00:04:35 -> 00:04:38] And in this example, star p and x alias,
+[00:04:38 -> 00:04:40] if and only if the memory regions
+[00:04:40 -> 00:04:42] named by them overlap.
+[00:04:42 -> 00:04:44] And that's what we mean when we say
+[00:04:44 -> 00:04:46] that two objects overlap.
+[00:04:46 -> 00:04:51] Now, there's an important terminology subtlety here
+[00:04:51 -> 00:04:54] that I want to be very explicit about.
+[00:04:54 -> 00:04:57] We talk about aliasing of objects, not pointers.
+[00:04:57 -> 00:05:01] So notice that we say that star p1 aliases with star p2.
+[00:05:01 -> 00:05:04] For example, star p aliases with x.
+[00:05:04 -> 00:05:07] We don't say p aliases with ampersand x.
+[00:05:07 -> 00:05:10] So if pointers p1 and p2 point to the same object,
+[00:05:10 -> 00:05:15] then we say that the values star p1 and star p2
+[00:05:15 -> 00:05:17] which represents the object alias.
+[00:05:17 -> 00:05:19] Notice that when we use star p1,
+[00:05:19 -> 00:05:22] we also encode the size of that object
+[00:05:22 -> 00:05:24] because p1 is just an address.
+[00:05:24 -> 00:05:27] But when we say star p1, depending on the type of p1,
+[00:05:27 -> 00:05:29] star p1 represents not just an address,
+[00:05:29 -> 00:05:31] but also a size.
+[00:05:31 -> 00:05:33] And so star p1 can encode more information.
+[00:05:33 -> 00:05:35] Similarly, star p2 is also a region
+[00:05:35 -> 00:05:37] which includes both the starting address and the size.
+[00:05:37 -> 00:05:39] And if it's a discontinuous object,
+[00:05:39 -> 00:05:41] then all the regions that are pointed to
+[00:05:41 -> 00:05:43] by that particular object.
+[00:05:43 -> 00:05:44] And the two objects alias,
+[00:05:44 -> 00:05:47] if the regions basically overlap.
+[00:05:47 -> 00:05:52] And this is an important and subtle terminology quirk
+[00:05:52 -> 00:05:53] that we should always remember
+[00:05:53 -> 00:05:56] because it's a common mistake
+[00:05:56 -> 00:05:58] to start talking about aliasing of pointers
+[00:05:58 -> 00:05:58] and not of objects.
+[00:05:58 -> 00:06:00] And I want to make this clear
+[00:06:00 -> 00:06:01] that whenever we say aliasing,
+[00:06:01 -> 00:06:04] we're talking about aliasing of objects.
+[00:06:04 -> 00:06:06] Okay, so let's take an example.
+[00:06:06 -> 00:06:09] So let's say I have a program x equals new,
+[00:06:09 -> 00:06:11] some capital X.
+[00:06:11 -> 00:06:15] I set up field of x to let's say a value 42.
+[00:06:15 -> 00:06:17] I read y equals x.f
+[00:06:17 -> 00:06:20] and then I assert whether y is equal to 42 or not.
+[00:06:20 -> 00:06:22] Now in this example, it is indeed true
+[00:06:22 -> 00:06:24] and you can use a standard data flow analysis
+[00:06:24 -> 00:06:27] to confirm that this assertion will always be true,
+[00:06:27 -> 00:06:30] which means y will always be equal to 42.
+[00:06:30 -> 00:06:32] However, let's take another example
+[00:06:32 -> 00:06:35] where we do x equals new again,
+[00:06:35 -> 00:06:37] we allocate a memory object
+[00:06:37 -> 00:06:39] and x is a pointer to that.
+[00:06:39 -> 00:06:41] And we have some other pointer p,
+[00:06:41 -> 00:06:45] which is some complicated function on x
+[00:06:45 -> 00:06:46] and or maybe the address of x.
+[00:06:46 -> 00:06:49] And eventually it is possible
+[00:06:49 -> 00:06:53] that p actually may be the start,
+[00:06:53 -> 00:06:55] the value pointed to by star p
+[00:06:55 -> 00:07:00] can alias with the value represented by star x.
+[00:07:01 -> 00:07:03] So let's say I do x.f equals 42
+[00:07:03 -> 00:07:06] and then I do p.f equals zero
+[00:07:06 -> 00:07:09] and then I do y equals x.f.
+[00:07:09 -> 00:07:11] Now, is it okay to assert y equals 42?
+[00:07:11 -> 00:07:12] The answer is no,
+[00:07:12 -> 00:07:14] because we are not sure
+[00:07:14 -> 00:07:16] whether y is definitely equal to 42
+[00:07:16 -> 00:07:18] or maybe it has become zero
+[00:07:18 -> 00:07:22] because if star p was aliasing with star x,
+[00:07:22 -> 00:07:23] then it could have become zero.
+[00:07:23 -> 00:07:25] But if it was not aliasing with star p
+[00:07:25 -> 00:07:26] was not aliasing with star x,
+[00:07:26 -> 00:07:28] then this would have been 42.
+[00:07:28 -> 00:07:31] And so because of aliasing,
+[00:07:31 -> 00:07:32] many compiler analysis
+[00:07:32 -> 00:07:34] that would have been otherwise straightforward
+[00:07:34 -> 00:07:36] become more complicated
+[00:07:36 -> 00:07:37] because you have to make the conservative assumption
+[00:07:37 -> 00:07:38] in this example.
+[00:07:38 -> 00:07:40] I will make the conservative assumption
+[00:07:40 -> 00:07:42] that star p may alias with star x,
+[00:07:42 -> 00:07:45] in which case it's not true that y equals 42.
+[00:07:45 -> 00:07:46] For example,
+[00:07:46 -> 00:07:48] if I was doing a constant propagation analysis,
+[00:07:48 -> 00:07:50] then while in this example,
+[00:07:50 -> 00:07:54] it's okay to replace all subsequent uses of y with 42.
+[00:07:54 -> 00:07:55] In this example,
+[00:07:55 -> 00:07:57] it is not okay to do that
+[00:07:57 -> 00:07:58] because we have not been able to reason
+[00:07:58 -> 00:08:02] about the fact that star p and star x do not alias.
+[00:08:02 -> 00:08:04] For this reason, it is very important
+[00:08:04 -> 00:08:07] for a compiler to do some kind of alias analysis
+[00:08:07 -> 00:08:10] to identify in a best effort way
+[00:08:10 -> 00:08:12] as many non-alias relationships as possible.
+[00:08:12 -> 00:08:15] For example, a compiler, a good compiler,
+[00:08:15 -> 00:08:18] a robust compiler should be able to say
+[00:08:18 -> 00:08:20] that star p will never alias with star x
+[00:08:20 -> 00:08:22] if that is indeed true about the program.
+[00:08:22 -> 00:08:23] And this space is,
+[00:08:23 -> 00:08:25] this comes under the white space
+[00:08:25 -> 00:08:28] of what's called pointer analysis within a compiler.
+[00:08:29 -> 00:08:33] So in this example, p.f and x.f may alias.
+[00:08:33 -> 00:08:33] And for this reason,
+[00:08:33 -> 00:08:36] it's not okay to assert y equals 42 here
+[00:08:36 -> 00:08:39] and it's not okay to do constant propagation optimization
+[00:08:39 -> 00:08:40] in this example.
+[00:08:42 -> 00:08:43] Let's take another example.
+[00:08:43 -> 00:08:44] Let's say in this example,
+[00:08:44 -> 00:08:47] p was directly assigned to x.
+[00:08:47 -> 00:08:50] And now I do x.f equals 42
+[00:08:50 -> 00:08:52] and then I do p.f equals zero.
+[00:08:52 -> 00:08:54] And then I do y equals x.f.
+[00:08:54 -> 00:08:57] Now, is it okay to assert that y equals zero?
+[00:08:57 -> 00:08:57] The answer is yes,
+[00:08:57 -> 00:08:59] because here we are sure
+[00:08:59 -> 00:09:02] that p and x point to the same object.
+[00:09:02 -> 00:09:05] In other words, star p and star x
+[00:09:05 -> 00:09:06] are definitely aliasing
+[00:09:07 -> 00:09:09] and they're fully overlapping.
+[00:09:09 -> 00:09:11] They actually represent the same object.
+[00:09:11 -> 00:09:14] And hence, when you do p.f equals zero,
+[00:09:14 -> 00:09:16] you're actually also doing x.f equals zero.
+[00:09:16 -> 00:09:19] And so when you read x.f into y,
+[00:09:19 -> 00:09:21] you're sure that you're going to get the value zero.
+[00:09:21 -> 00:09:23] So in this example,
+[00:09:23 -> 00:09:25] once again, if the compiler
+[00:09:25 -> 00:09:27] to be able to reason that y equals zero,
+[00:09:27 -> 00:09:29] let's say for constant propagation,
+[00:09:29 -> 00:09:33] it needs this information that star p or p.f and x.f
+[00:09:33 -> 00:09:36] are definitely aliasing objects.
+[00:09:37 -> 00:09:39] In other words, p.f and x.f must alias.
+[00:09:39 -> 00:09:42] And this is a must alias relationship
+[00:09:42 -> 00:09:44] between the objects star p and star x,
+[00:09:44 -> 00:09:46] or p.f and x.f.
+[00:09:48 -> 00:09:50] All right, so we have discussed
+[00:09:50 -> 00:09:52] two types of analysis so far.
+[00:09:52 -> 00:09:53] One is may alias,
+[00:09:53 -> 00:09:56] which is whether two objects,
+[00:09:56 -> 00:09:58] let's say star p and star x,
+[00:09:59 -> 00:10:00] can they potentially alias,
+[00:10:00 -> 00:10:02] which we call may alias?
+[00:10:02 -> 00:10:03] And the other is,
+[00:10:03 -> 00:10:04] will they definitely alias,
+[00:10:04 -> 00:10:05] which we call must alias?
+[00:10:07 -> 00:10:08] In both cases,
+[00:10:08 -> 00:10:11] whether it is may alias or must alias,
+[00:10:11 -> 00:10:12] the problem of identifying
+[00:10:12 -> 00:10:14] whether two pointers or two objects
+[00:10:14 -> 00:10:15] definitely alias is undecidable.
+[00:10:15 -> 00:10:17] Similarly, it's undecidable to say
+[00:10:17 -> 00:10:20] that the two objects definitely do not alias,
+[00:10:20 -> 00:10:21] because that's the may alias analysis.
+[00:10:21 -> 00:10:22] And so both of these problems
+[00:10:22 -> 00:10:24] are undecidable in general,
+[00:10:24 -> 00:10:27] and we can only hope for a best effort analysis.
+[00:10:27 -> 00:10:28] In a best effort analysis,
+[00:10:28 -> 00:10:31] you allow spurious may alias pairs.
+[00:10:31 -> 00:10:32] For example, it's always safe
+[00:10:32 -> 00:10:34] to say that two things may alias.
+[00:10:34 -> 00:10:35] If you don't want to,
+[00:10:35 -> 00:10:36] you're not sure,
+[00:10:36 -> 00:10:37] you can always safely say that,
+[00:10:37 -> 00:10:39] yes, star x and star y may alias,
+[00:10:39 -> 00:10:41] or x and y may alias or whatever.
+[00:10:41 -> 00:10:43] And for example,
+[00:10:43 -> 00:10:46] if your program contains two new statements,
+[00:10:46 -> 00:10:50] x equals new capital X and y equals new capital X,
+[00:10:50 -> 00:10:51] then here it's very clear
+[00:10:51 -> 00:10:53] that star x and star y do not alias,
+[00:10:53 -> 00:10:56] because they are two separate memory allocations.
+[00:10:56 -> 00:10:59] And the semantics of the programming language
+[00:10:59 -> 00:11:01] ensure that the second memory allocation
+[00:11:01 -> 00:11:04] cannot overlap with the first memory allocation.
+[00:11:04 -> 00:11:08] But maybe your may alias analysis is not so precise,
+[00:11:08 -> 00:11:12] in which case it's okay for the star x comma star y pair
+[00:11:12 -> 00:11:14] to belong to the may alias set.
+[00:11:14 -> 00:11:16] So it is okay for spurious pairs,
+[00:11:16 -> 00:11:18] for example, star x and star y,
+[00:11:18 -> 00:11:19] to belong to your may alias set
+[00:11:19 -> 00:11:22] through your alias analysis.
+[00:11:22 -> 00:11:27] However, an analysis is sound if there are no,
+[00:11:27 -> 00:11:28] if two things may alias,
+[00:11:28 -> 00:11:32] then it should always belong to the may alias set.
+[00:11:32 -> 00:11:34] So any things that may alias
+[00:11:34 -> 00:11:35] must belong to the may alias set,
+[00:11:35 -> 00:11:38] but any things that may not alias
+[00:11:38 -> 00:11:39] may also belong to the may alias set.
+[00:11:39 -> 00:11:41] And that's what it means to say that
+[00:11:41 -> 00:11:44] it is imprecise, but sound.
+[00:11:44 -> 00:11:46] An unsound analysis would incorrectly say
+[00:11:46 -> 00:11:50] that two things may not alias,
+[00:11:50 -> 00:11:52] even though at runtime they may alias.
+[00:11:52 -> 00:11:54] So a sound analysis captures
+[00:11:54 -> 00:11:56] all the possible may alias relationships,
+[00:11:56 -> 00:11:58] but it may have some more,
+[00:11:58 -> 00:12:00] and some more spurious may alias relationship.
+[00:12:00 -> 00:12:03] Similarly, a sound must alias analysis
+[00:12:03 -> 00:12:08] may miss some of the must alias relationships,
+[00:12:08 -> 00:12:11] but whatever it captures are definitely must alias.
+[00:12:11 -> 00:12:14] So for example, if I say x equals new x
+[00:12:14 -> 00:12:15] and y equals x,
+[00:12:15 -> 00:12:20] we are clear that star y and star x must alias.
+[00:12:20 -> 00:12:23] However, maybe because your analysis is imprecise,
+[00:12:23 -> 00:12:26] star x and star y may not belong
+[00:12:26 -> 00:12:29] to the must alias set that you computed,
+[00:12:29 -> 00:12:34] which is okay, which is still sound, but imprecise.
+[00:12:34 -> 00:12:35] An unsound analysis would have had
+[00:12:35 -> 00:12:38] wrong entries into the must alias set.
+[00:12:38 -> 00:12:43] So a sound may alias analysis may have extra pairs,
+[00:12:43 -> 00:12:45] which may not have alias,
+[00:12:45 -> 00:12:47] but it should capture all the pairs
+[00:12:47 -> 00:12:49] that actually may alias.
+[00:12:49 -> 00:12:52] A must alias analysis may leave out
+[00:12:52 -> 00:12:54] some pairs that must alias,
+[00:12:54 -> 00:12:56] but whatever it captures
+[00:12:56 -> 00:13:00] should actually alias at runtime for sure.
+[00:13:00 -> 00:13:02] And so for example, a trivial solution
+[00:13:02 -> 00:13:04] for a may alias analysis could be
+[00:13:04 -> 00:13:07] that everything may alias with everything else.
+[00:13:07 -> 00:13:09] A trivial solution for a must alias analysis
+[00:13:09 -> 00:13:12] could be that nothing must alias with anything else.
+[00:13:12 -> 00:13:14] And both of these solutions are sound solutions,
+[00:13:14 -> 00:13:16] but they are completely useless solutions.
+[00:13:16 -> 00:13:18] They're completely imprecise solutions.
+[00:13:18 -> 00:13:19] In any case, we are interested
+[00:13:19 -> 00:13:21] in finding a sound solution.
+[00:13:21 -> 00:13:22] So we're not going to compromise soundness
+[00:13:22 -> 00:13:25] in a compiler, because if the solution is unsound,
+[00:13:25 -> 00:13:28] then the compiler can produce wrong optimizations.
+[00:13:28 -> 00:13:32] But we cannot hope for a fully precise analysis
+[00:13:32 -> 00:13:34] because the problem is undecidable.
+[00:13:34 -> 00:13:37] But we want to have as high precision as possible.
+[00:13:39 -> 00:13:40] What is, how is precision defined?
+[00:13:40 -> 00:13:42] Well, in the case of may alias,
+[00:13:42 -> 00:13:44] we want to minimize this number of spurious pairs
+[00:13:44 -> 00:13:47] that we identify as may aliasing.
+[00:13:47 -> 00:13:49] And in the case of must alias,
+[00:13:49 -> 00:13:51] we want to minimize the number of missing pairs
+[00:13:51 -> 00:13:53] in the must alias set.
+[00:13:53 -> 00:13:58] Usually, this is a common trade-off in compilers
+[00:13:59 -> 00:14:00] where there's a trade-off
+[00:14:00 -> 00:14:03] between running time and precision.
+[00:14:03 -> 00:14:06] If you want a fast, imprecise analysis,
+[00:14:06 -> 00:14:08] then you get low running time and low precision.
+[00:14:08 -> 00:14:11] There are algorithms that will give you low precision
+[00:14:11 -> 00:14:12] and low running time.
+[00:14:12 -> 00:14:14] They're fast and imprecise.
+[00:14:14 -> 00:14:17] If your application cares a lot about precision
+[00:14:17 -> 00:14:19] and can have the budget of a longer runtime,
+[00:14:19 -> 00:14:21] then you can have a high running time and high precision.
+[00:14:21 -> 00:14:23] That's a slow and more precise analysis.
+[00:14:25 -> 00:14:28] So here's an example that this demonstrates the value
+[00:14:28 -> 00:14:33] or the importance of such alias or pointer analysis.
+[00:14:33 -> 00:14:35] You may be familiar with the memcpy function
+[00:14:35 -> 00:14:37] in the C library, which basically takes two pointers,
+[00:14:37 -> 00:14:39] the destination pointer and the source pointer
+[00:14:39 -> 00:14:41] and a size n.
+[00:14:41 -> 00:14:44] And it copies n bytes or n characters
+[00:14:44 -> 00:14:47] starting from source into dest.
+[00:14:47 -> 00:14:49] And so, for example, it copies source to source
+[00:14:49 -> 00:14:50] plus n to dest to dest plus n.
+[00:14:51 -> 00:14:55] This is a rough pseudocode that shows what it does.
+[00:14:55 -> 00:14:58] However, what if source and dest,
+[00:14:58 -> 00:15:00] these regions, source to source plus n
+[00:15:00 -> 00:15:03] and dest to dest plus n overlap or alias?
+[00:15:03 -> 00:15:07] In that case, some of the optimizations
+[00:15:07 -> 00:15:10] that were possible in this implementation
+[00:15:10 -> 00:15:12] of this function would become incorrect.
+[00:15:12 -> 00:15:14] So first of all, I want to say
+[00:15:14 -> 00:15:16] that the memcpy function is one of the most common
+[00:15:16 -> 00:15:19] and performance critical functions that is used
+[00:15:19 -> 00:15:22] in the software system stack.
+[00:15:22 -> 00:15:24] This implementation that I've shown you here
+[00:15:24 -> 00:15:25] is the most basic implementation
+[00:15:25 -> 00:15:27] that you could possibly have for memcpy.
+[00:15:27 -> 00:15:30] But the actual implementations are typically
+[00:15:30 -> 00:15:32] an order of hundreds of lines of code
+[00:15:32 -> 00:15:34] where you do vectorization,
+[00:15:34 -> 00:15:37] you do all kinds of special code generation
+[00:15:37 -> 00:15:39] for special cases and so on.
+[00:15:39 -> 00:15:41] So imagine if source and destination
+[00:15:41 -> 00:15:43] could have overlap or alias,
+[00:15:43 -> 00:15:46] then vectorization, which copies four or eight bytes
+[00:15:46 -> 00:15:48] in one go from source to destination
+[00:15:48 -> 00:15:50] may become incorrect because now
+[00:15:50 -> 00:15:53] when you copy four bytes in a chunk,
+[00:15:53 -> 00:15:55] maybe some of those bytes were actually belonging
+[00:15:55 -> 00:15:57] to the dest and so on.
+[00:15:57 -> 00:15:59] And in fact, because this function is so important
+[00:15:59 -> 00:16:02] and because so many libraries use this function,
+[00:16:02 -> 00:16:04] just because of this corner case situation
+[00:16:04 -> 00:16:07] where the two regions overlap,
+[00:16:07 -> 00:16:09] we don't want to end up with a slow implementation.
+[00:16:09 -> 00:16:10] And for this reason,
+[00:16:10 -> 00:16:14] the designers of this C library basically state
+[00:16:14 -> 00:16:17] that this function should only be called
+[00:16:17 -> 00:16:19] for regions that do not overlap.
+[00:16:19 -> 00:16:20] The source and dest regions should not overlap.
+[00:16:20 -> 00:16:22] In other words, it's undefined behavior
+[00:16:22 -> 00:16:26] to call this function with inputs
+[00:16:26 -> 00:16:28] such that these regions dest to dest plus n
+[00:16:28 -> 00:16:31] and source to source plus n alias.
+[00:16:31 -> 00:16:35] And this example shows the importance of aliasing
+[00:16:35 -> 00:16:37] and how aliasing pervades the system stack,
+[00:16:37 -> 00:16:38] not just within a compiler,
+[00:16:38 -> 00:16:41] but also when we're doing library design.
+[00:16:42 -> 00:16:45] Here's another example that's more compiler-like.
+[00:16:45 -> 00:16:46] So let's say I have a program
+[00:16:46 -> 00:16:48] that accumulates the content,
+[00:16:48 -> 00:16:52] the values in an array A into a variable sum.
+[00:16:52 -> 00:16:55] And so it says for i equals zero to n i++,
+[00:16:55 -> 00:16:58] you just do star sum plus equals ai.
+[00:16:58 -> 00:17:00] Now it's possible to make this very fast
+[00:17:00 -> 00:17:03] by faster than this naive implementation
+[00:17:03 -> 00:17:06] by, for example, register allocating star sum
+[00:17:06 -> 00:17:08] and then writing it at the very end,
+[00:17:08 -> 00:17:11] vectorizing this loop by doing,
+[00:17:12 -> 00:17:14] by taking eight,
+[00:17:14 -> 00:17:16] reading eight values from the memory in one go
+[00:17:17 -> 00:17:18] and then summing them using a vector instruction
+[00:17:18 -> 00:17:19] and so on.
+[00:17:19 -> 00:17:22] But all that is not possible to do
+[00:17:22 -> 00:17:25] unless we are sure that star sum cannot alias
+[00:17:25 -> 00:17:28] with some location in A.
+[00:17:30 -> 00:17:34] In the absence of other information,
+[00:17:34 -> 00:17:37] a compiler is conservatively forced
+[00:17:37 -> 00:17:38] to make the conservative assumption
+[00:17:38 -> 00:17:40] that star sum may alias with ai
+[00:17:40 -> 00:17:42] and all these optimizations,
+[00:17:42 -> 00:17:44] including register allocation and vectorization
+[00:17:45 -> 00:17:47] are illegal if star sum may alias with ai.
+[00:17:47 -> 00:17:49] So this also is an example that shows
+[00:17:49 -> 00:17:53] how much difference may alias information,
+[00:17:53 -> 00:17:55] good may alias information can make
+[00:17:55 -> 00:17:58] to compiler optimization.
+[00:17:58 -> 00:18:01] So here are some basic rules for may aliasing.
+[00:18:01 -> 00:18:02] If there are two separate variables,
+[00:18:02 -> 00:18:04] x and y, that have been declared
+[00:18:04 -> 00:18:05] in your C program, for example,
+[00:18:05 -> 00:18:07] then you know that the regions represented
+[00:18:07 -> 00:18:09] by x and y definitely do not alias
+[00:18:09 -> 00:18:11] because they are two separate variables
+[00:18:11 -> 00:18:12] and by language semantics,
+[00:18:12 -> 00:18:14] the two separate declarations
+[00:18:14 -> 00:18:16] will be given to two different objects
+[00:18:16 -> 00:18:17] or regions of memory.
+[00:18:17 -> 00:18:19] Similarly, if there are two separate allocations,
+[00:18:19 -> 00:18:21] for example, x equals new something
+[00:18:21 -> 00:18:23] or y equals new and y equals new something,
+[00:18:23 -> 00:18:25] then star x and star y must not alias.
+[00:18:25 -> 00:18:27] In other words, star x and star y
+[00:18:27 -> 00:18:28] does not belong to may alias.
+[00:18:28 -> 00:18:30] And these are the kind of rules
+[00:18:30 -> 00:18:33] or transfer functions that can be used
+[00:18:33 -> 00:18:36] to develop such a pointer analysis.
+[00:18:36 -> 00:18:38] We are going to discuss how such pointer analysis
+[00:18:38 -> 00:18:40] are implemented in the subsequent modules.
+[00:18:40 -> 00:18:42] This is just a very basic introduction
+[00:18:42 -> 00:18:44] on how this is done.
+[00:18:44 -> 00:18:48] So one way of identifying what objects
+[00:18:48 -> 00:18:52] may or may not alias is using a points to information.
+[00:18:52 -> 00:18:54] What is points to information?
+[00:18:54 -> 00:18:56] We want to figure out what are the memory objects
+[00:18:56 -> 00:18:59] that a pointer P may point to.
+[00:18:59 -> 00:19:02] For example, P1 may point to a bunch,
+[00:19:02 -> 00:19:04] possibly point to one of the objects,
+[00:19:04 -> 00:19:07] O1, O2, dot, dot, dot, O, K1,
+[00:19:07 -> 00:19:09] and maybe another pointer P2 may point to
+[00:19:09 -> 00:19:12] one of the objects, Q1, Q2, dot, dot, dot, Q, K2.
+[00:19:14 -> 00:19:18] Now, this information is obtained
+[00:19:18 -> 00:19:20] using a points to analysis.
+[00:19:20 -> 00:19:22] For example, if in your program,
+[00:19:22 -> 00:19:25] we have a statement like P equals ampersand x,
+[00:19:25 -> 00:19:29] then we know that P may point to the object x.
+[00:19:29 -> 00:19:31] Further, if we have another statement
+[00:19:31 -> 00:19:33] that says x equals ampersand y,
+[00:19:33 -> 00:19:37] then we know that x may point to y.
+[00:19:37 -> 00:19:40] And overall, this is what the points relationship looks like.
+[00:19:40 -> 00:19:42] P may point to x,
+[00:19:42 -> 00:19:45] and x in turn may point to y.
+[00:19:45 -> 00:19:48] In other words, these objects O1, O2, et cetera,
+[00:19:48 -> 00:19:51] can also be the LHS of this points to relationship.
+[00:19:51 -> 00:19:53] So for example, just like P1 can point to O1,
+[00:19:53 -> 00:19:54] et cetera, et cetera,
+[00:19:54 -> 00:19:57] O1 may point to another set of objects,
+[00:19:57 -> 00:19:59] R1, R2, R3, et cetera.
+[00:19:59 -> 00:20:01] And of course, these sets of objects
+[00:20:01 -> 00:20:05] that these pointers may point to may overlap,
+[00:20:05 -> 00:20:10] or may intersect, may have a non-empty intersection.
+[00:20:10 -> 00:20:13] One way of approximating the may alias information,
+[00:20:13 -> 00:20:18] so may alias is one of the more important kind of information
+[00:20:18 -> 00:20:20] that a compiler needs to be able to perform transformations.
+[00:20:20 -> 00:20:22] That's just like we saw in a couple of examples
+[00:20:22 -> 00:20:26] that we saw, like memcpy or the accumulate functions.
+[00:20:26 -> 00:20:29] And one way that is typically used in compilers
+[00:20:29 -> 00:20:33] is to first compute the points to information.
+[00:20:33 -> 00:20:35] For each pointer, identify all the objects
+[00:20:35 -> 00:20:37] that that pointer may point to.
+[00:20:37 -> 00:20:38] Similarly, so for example,
+[00:20:38 -> 00:20:41] you identify that P1 may point to all these objects,
+[00:20:41 -> 00:20:43] and we call that the points to function,
+[00:20:43 -> 00:20:45] that's encoded to the points to function,
+[00:20:45 -> 00:20:47] it says points to of P1.
+[00:20:47 -> 00:20:49] Similarly, this represents points to of P2.
+[00:20:49 -> 00:20:53] And we say that star P1 and star P2 may alias,
+[00:20:53 -> 00:20:57] if and only if the intersection of the two points to sets
+[00:20:57 -> 00:20:59] of P1 and P2 is non-empty.
+[00:20:59 -> 00:21:02] And this is just one way
+[00:21:02 -> 00:21:04] of approximating the may alias information.
+[00:21:04 -> 00:21:06] And this is a sound approximation of may alias information.
+[00:21:06 -> 00:21:09] Assuming that the points to set is sound,
+[00:21:09 -> 00:21:12] which means that this set includes all the objects
+[00:21:12 -> 00:21:14] that P1 may potentially point to,
+[00:21:14 -> 00:21:18] then this definition of a may alias set is also sound,
+[00:21:18 -> 00:21:22] which means that anything that is left out
+[00:21:22 -> 00:21:24] in the may alias set will definitely not alias,
+[00:21:24 -> 00:21:27] because the only things we leave out in the may alias
+[00:21:27 -> 00:21:31] set are things that point to distinct objects,
+[00:21:31 -> 00:21:35] whose the set of objects of the two points to sets
+[00:21:35 -> 00:21:39] are non-overlapping.
+[00:21:40 -> 00:21:41] And only then we say that they don't alias,
+[00:21:41 -> 00:21:45] in which case we are sure that the two objects
+[00:21:45 -> 00:21:47] cannot alias.
+[00:21:47 -> 00:21:49] So this is one way of approximating may alias
+[00:21:49 -> 00:21:52] that two objects may alias if and only if
+[00:21:52 -> 00:21:54] their points to sets intersect.

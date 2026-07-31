@@ -1,0 +1,405 @@
+Title: Compiler Design Module 84 : More DFA Examples
+Video ID: g3msUTH45Hg
+Detected language: en
+------------------------------------------------------------
+
+[00:00:00 -> 00:00:03] So now that we have looked at two different data flow analyses,
+[00:00:03 -> 00:00:06] namely constant propagation and liveness analysis,
+[00:00:06 -> 00:00:08] let's look at a couple more
+[00:00:08 -> 00:00:12] analyses which are based on data flow analysis.
+[00:00:12 -> 00:00:15] We are familiar with these analyses,
+[00:00:15 -> 00:00:19] but in the context of local transformations,
+[00:00:19 -> 00:00:21] these are common sub-expression elimination
+[00:00:21 -> 00:00:23] and copy propagation.
+[00:00:23 -> 00:00:26] So I'm going to very quickly go through
+[00:00:26 -> 00:00:30] these two analyses and show how they may be expressed as DFA's,
+[00:00:30 -> 00:00:33] but I'm not going to actually go into details or formalisms,
+[00:00:33 -> 00:00:38] and that will be something that we'll discuss in later lecture modules.
+[00:00:38 -> 00:00:40] So common sub-expression elimination.
+[00:00:40 -> 00:00:43] The idea is that if we have a program,
+[00:00:43 -> 00:00:45] so let's look at this particular example.
+[00:00:45 -> 00:00:47] Let's say this has x is equal to y plus z,
+[00:00:47 -> 00:00:49] w is equal to a plus b,
+[00:00:49 -> 00:00:51] and then there's a condition.
+[00:00:51 -> 00:00:53] If it's false, then it comes here,
+[00:00:53 -> 00:00:55] and again it says c equals a plus b,
+[00:00:55 -> 00:00:57] d equals y plus z. But if it's true,
+[00:00:57 -> 00:00:59] then it also does w equals w plus one.
+[00:00:59 -> 00:01:02] Now, notice that there are some common sub-expressions here.
+[00:01:02 -> 00:01:06] One is y plus z is common between x and d.
+[00:01:06 -> 00:01:11] So perhaps the computation here can be avoided,
+[00:01:11 -> 00:01:14] and a y plus z can be just replaced by x.
+[00:01:14 -> 00:01:18] Also, w equals a plus b and c equals a plus b.
+[00:01:18 -> 00:01:21] Even this looks like a common sub-expression,
+[00:01:21 -> 00:01:23] but we're going to see whether it is
+[00:01:23 -> 00:01:27] okay to actually consider this a common sub-expression or not,
+[00:01:27 -> 00:01:34] and can we replace it with w or something like that.
+[00:01:34 -> 00:01:36] To be able to answer these questions,
+[00:01:36 -> 00:01:39] what we can do is we can maintain a set of
+[00:01:39 -> 00:01:42] available expressions at every program point.
+[00:01:42 -> 00:01:45] So notice that I'm introducing a new term,
+[00:01:45 -> 00:01:48] and the term is available expressions.
+[00:01:48 -> 00:01:51] Basically, it means that the expressions that are
+[00:01:51 -> 00:01:57] available at that particular program point in some existing temporary registers.
+[00:01:57 -> 00:01:59] So for example,
+[00:01:59 -> 00:02:02] we're going to take some example to understand what are available expressions.
+[00:02:02 -> 00:02:04] So for example, we can say that,
+[00:02:04 -> 00:02:05] let's say at the beginning of the program,
+[00:02:05 -> 00:02:08] so let's assume this is the beginning of the program.
+[00:02:08 -> 00:02:10] Then let's assume that at the beginning of the program,
+[00:02:10 -> 00:02:12] there are no available expressions,
+[00:02:12 -> 00:02:14] and that's represented by the empty set phi.
+[00:02:14 -> 00:02:17] So this phi is basically representing the empty set.
+[00:02:17 -> 00:02:21] But then as soon as I execute the first statement,
+[00:02:21 -> 00:02:24] first instruction, x is colon equal to y plus z,
+[00:02:24 -> 00:02:27] I have one available expression in my set,
+[00:02:27 -> 00:02:29] and that available expression is y plus z,
+[00:02:29 -> 00:02:31] and where is it available?
+[00:02:31 -> 00:02:36] It is available in the register x or in the temporary x,
+[00:02:36 -> 00:02:39] or more generally in the variable x.
+[00:02:39 -> 00:02:43] So y plus z is available in the variable x,
+[00:02:43 -> 00:02:45] and that's what this tuple means.
+[00:02:45 -> 00:02:47] So it's a two-tuple.
+[00:02:47 -> 00:02:48] The first one is the variable name,
+[00:02:49 -> 00:02:52] and the second element is the expression
+[00:02:52 -> 00:02:55] that is available in that variable name.
+[00:02:55 -> 00:02:57] And notice the curly braces represents
+[00:02:57 -> 00:03:02] that there could be multiple such tuples in the same set,
+[00:03:02 -> 00:03:04] and so we're going to see more examples.
+[00:03:04 -> 00:03:06] So now let's look at what happens at this program point
+[00:03:06 -> 00:03:11] just after the statement w colon equals a plus b.
+[00:03:11 -> 00:03:14] Now my set of available expression has two elements.
+[00:03:14 -> 00:03:16] One is the element coming from before,
+[00:03:16 -> 00:03:19] which is y plus z is available in x.
+[00:03:19 -> 00:03:21] It is still available in x,
+[00:03:21 -> 00:03:23] but then there is an expression a plus b
+[00:03:23 -> 00:03:25] that is now available in w.
+[00:03:27 -> 00:03:30] And so that's how we're going to do this.
+[00:03:30 -> 00:03:32] Now let's look at this particular program point,
+[00:03:32 -> 00:03:35] which is just after the check of n greater than zero,
+[00:03:35 -> 00:03:39] and here we say y plus z is available in x,
+[00:03:39 -> 00:03:41] and a plus b is available in w.
+[00:03:41 -> 00:03:43] So nothing has really changed
+[00:03:43 -> 00:03:44] between the previous program point
+[00:03:44 -> 00:03:46] and the next program point.
+[00:03:46 -> 00:03:48] And we can continue this,
+[00:03:48 -> 00:03:51] and so far we have looked at available expressions
+[00:03:51 -> 00:03:52] inside a single basic block,
+[00:03:52 -> 00:03:56] but if I wanted to do this across the next basic block,
+[00:03:56 -> 00:03:57] then at this particular point,
+[00:03:57 -> 00:04:01] just before the statement w is colon equal to w plus one,
+[00:04:01 -> 00:04:03] what are all the available expressions?
+[00:04:03 -> 00:04:05] Well, everything that was available
+[00:04:05 -> 00:04:07] after n is greater than zero is also available here,
+[00:04:07 -> 00:04:10] which is y plus z is available in x,
+[00:04:10 -> 00:04:13] and a plus b is available in w.
+[00:04:14 -> 00:04:19] But what about after w is colon equal to w plus one?
+[00:04:19 -> 00:04:20] Now, after this,
+[00:04:20 -> 00:04:23] notice that a plus b was available in w,
+[00:04:23 -> 00:04:25] but now w has been changed,
+[00:04:25 -> 00:04:29] and now maybe a plus b plus one is available in w,
+[00:04:29 -> 00:04:32] but we don't know, our analysis has limitations,
+[00:04:32 -> 00:04:36] it cannot kind of do this transitive computation,
+[00:04:36 -> 00:04:37] so it's, you know,
+[00:04:37 -> 00:04:39] because the program basically says a plus b
+[00:04:39 -> 00:04:41] and then w plus one.
+[00:04:41 -> 00:04:42] And so, you know, let's say that,
+[00:04:42 -> 00:04:43] let's assume that our analysis
+[00:04:43 -> 00:04:45] cannot actually combine them to say,
+[00:04:45 -> 00:04:47] oh, it's a plus b plus one.
+[00:04:47 -> 00:04:50] At this point, basically, we can say that,
+[00:04:50 -> 00:04:53] we could either have said w plus one is available in w,
+[00:04:53 -> 00:04:54] but that doesn't make sense
+[00:04:54 -> 00:04:56] because w has just been overwritten.
+[00:04:56 -> 00:05:00] So actually, no expression is available in w,
+[00:05:00 -> 00:05:01] just after the statement,
+[00:05:01 -> 00:05:05] because I cannot say that a plus b is available in w,
+[00:05:05 -> 00:05:07] I cannot also say that w plus one is available in w,
+[00:05:07 -> 00:05:09] because w has been overwritten
+[00:05:09 -> 00:05:11] after the computation of w plus one.
+[00:05:11 -> 00:05:14] And so, at this point,
+[00:05:14 -> 00:05:18] I'll just say that y plus z is available in x,
+[00:05:18 -> 00:05:22] but the entry for w has been eliminated
+[00:05:22 -> 00:05:25] from my set of available expressions.
+[00:05:25 -> 00:05:26] And so the set of available expressions
+[00:05:26 -> 00:05:29] at this particular point is just x is,
+[00:05:29 -> 00:05:31] y plus z is available in x.
+[00:05:32 -> 00:05:34] Now let's look at this particular program point.
+[00:05:34 -> 00:05:37] Now notice that on one path,
+[00:05:37 -> 00:05:39] the set of available expressions has two elements,
+[00:05:39 -> 00:05:40] y plus z is available in x
+[00:05:41 -> 00:05:43] and a plus b is available in w.
+[00:05:43 -> 00:05:44] Whereas on the other path,
+[00:05:44 -> 00:05:46] there's only one element in my available set,
+[00:05:46 -> 00:05:48] which is five plus z is available in x.
+[00:05:48 -> 00:05:50] So what do you think should be available
+[00:05:50 -> 00:05:52] at the entry of this basic block
+[00:05:52 -> 00:05:54] before c is colon equal to a plus b?
+[00:05:54 -> 00:05:56] What should come here?
+[00:05:56 -> 00:05:59] And the answer is that it should be an intersection
+[00:05:59 -> 00:06:02] of these two available set, expression set,
+[00:06:02 -> 00:06:06] because a value is available at a particular program point
+[00:06:06 -> 00:06:09] if it is available in all possible paths
+[00:06:09 -> 00:06:10] to that program point.
+[00:06:10 -> 00:06:15] And so while a plus b is available in w,
+[00:06:16 -> 00:06:17] on one program path,
+[00:06:17 -> 00:06:20] it is not available on the second program path.
+[00:06:20 -> 00:06:21] On the other hand,
+[00:06:21 -> 00:06:25] x, y plus z is available in x on both program paths.
+[00:06:25 -> 00:06:29] And so the value here is going to be x, y plus z.
+[00:06:29 -> 00:06:32] And just continuing that,
+[00:06:32 -> 00:06:35] after doing c colon equals a plus b,
+[00:06:35 -> 00:06:37] we retain x, y plus z,
+[00:06:37 -> 00:06:39] and after d colon y plus z,
+[00:06:39 -> 00:06:41] we also retain x colon y plus z.
+[00:06:41 -> 00:06:43] Actually, to be more precise,
+[00:06:43 -> 00:06:46] I should have also added more elements there.
+[00:06:46 -> 00:06:48] So for example, I should have said,
+[00:06:48 -> 00:06:49] at this particular point,
+[00:06:49 -> 00:06:52] so this is fine, but at this particular point,
+[00:06:52 -> 00:06:54] a plus b is available in c,
+[00:06:54 -> 00:07:03] and at this point, y plus z is available in b, okay?
+[00:07:03 -> 00:07:06] All right, so this is the correct computation
+[00:07:06 -> 00:07:08] of available expressions.
+[00:07:08 -> 00:07:10] And now how do I do common sub-expression
+[00:07:10 -> 00:07:12] elimination based on available expressions?
+[00:07:12 -> 00:07:13] Well, the idea is pretty simple.
+[00:07:13 -> 00:07:17] If an expression is available just before a computation
+[00:07:17 -> 00:07:21] which recomputes that expression,
+[00:07:21 -> 00:07:23] then I can just replace that expression
+[00:07:23 -> 00:07:25] by the corresponding variable.
+[00:07:25 -> 00:07:30] So for example, this statement is computing a plus b,
+[00:07:30 -> 00:07:31] and what is available?
+[00:07:31 -> 00:07:32] y plus z.
+[00:07:32 -> 00:07:33] a plus b is not available,
+[00:07:33 -> 00:07:34] so I cannot really do anything.
+[00:07:34 -> 00:07:35] But let's look at this expression,
+[00:07:35 -> 00:07:38] and then d is colon equal to y plus z,
+[00:07:38 -> 00:07:40] and what is available?
+[00:07:41 -> 00:07:42] Well, y plus z is available in x,
+[00:07:42 -> 00:07:45] and so that means that I'm just repeating the computation,
+[00:07:45 -> 00:07:50] and I can actually now replace y plus z with x,
+[00:07:50 -> 00:07:51] and I can replace the statement
+[00:07:51 -> 00:07:54] with d is colon equal to x, right?
+[00:07:54 -> 00:07:56] So this is the way that I could extend
+[00:07:56 -> 00:07:58] common sub-expression elimination
+[00:07:58 -> 00:07:59] from a single basic block,
+[00:07:59 -> 00:08:01] something that we had seen earlier
+[00:08:01 -> 00:08:02] as a local optimization,
+[00:08:02 -> 00:08:05] to multiple basic blocks within a method body
+[00:08:05 -> 00:08:07] or a global optimization.
+[00:08:07 -> 00:08:09] And to do that, we basically implement
+[00:08:09 -> 00:08:11] this available expressions DFA
+[00:08:11 -> 00:08:15] that I'm going to explain more in the coming slides,
+[00:08:15 -> 00:08:17] and based on the values computing using the DFA,
+[00:08:17 -> 00:08:20] we can replace some of the expression computations
+[00:08:20 -> 00:08:23] with variable names, just like we did here.
+[00:08:23 -> 00:08:25] We replaced y plus z with x,
+[00:08:25 -> 00:08:28] and so now this becomes a copy from x to d.
+[00:08:29 -> 00:08:32] All right, so yeah, that's the second step.
+[00:08:32 -> 00:08:34] If the expression being computed is already available
+[00:08:34 -> 00:08:36] at the start of that statement,
+[00:08:37 -> 00:08:39] of the statement which is computing that expression,
+[00:08:39 -> 00:08:41] then we replace it with the pre-computed value,
+[00:08:41 -> 00:08:45] and so that's what this particular change is doing for us.
+[00:08:46 -> 00:08:50] All right, so what are some characteristics
+[00:08:50 -> 00:08:52] of the available expressions DFA?
+[00:08:52 -> 00:08:56] Well, the values are the set of available expressions.
+[00:08:56 -> 00:08:58] Okay, we have already seen that.
+[00:08:58 -> 00:09:01] For example, and every available expression is a tuple,
+[00:09:01 -> 00:09:04] a variable name and an expression,
+[00:09:04 -> 00:09:06] and we basically maintain a set of such tuples,
+[00:09:06 -> 00:09:10] and that's the value, and at every program point,
+[00:09:10 -> 00:09:11] so every program point has a set
+[00:09:11 -> 00:09:14] of available expressions as a value,
+[00:09:14 -> 00:09:16] and what is the partial order?
+[00:09:16 -> 00:09:18] What is the ordering, right?
+[00:09:18 -> 00:09:21] Well, as we say, set one is less than equal to set two,
+[00:09:21 -> 00:09:24] so recall that a value in this case is a set,
+[00:09:24 -> 00:09:26] so I'm saying that a value one
+[00:09:26 -> 00:09:27] is less than equal to value two,
+[00:09:27 -> 00:09:29] or set one is less than equal to set two.
+[00:09:29 -> 00:09:31] I basically want to define the less than equal to operator,
+[00:09:31 -> 00:09:33] and I'm defining it as such,
+[00:09:33 -> 00:09:36] if and only if set one is a subset of set two.
+[00:09:36 -> 00:09:40] So the ordering is basically that if there is a set S1,
+[00:09:40 -> 00:09:43] and there is another set S2,
+[00:09:43 -> 00:09:47] then S2 must be, if S2 is a subset of S1,
+[00:09:47 -> 00:09:50] then S2 is less than equal to S1,
+[00:09:50 -> 00:09:53] so we're just defining less than equal to in this way,
+[00:09:53 -> 00:09:56] and we're going to see why this makes sense
+[00:09:58 -> 00:10:00] very, very quick, very soon.
+[00:10:00 -> 00:10:04] Basically, if you look at our previous example,
+[00:10:04 -> 00:10:08] then the value that is basically coming
+[00:10:08 -> 00:10:13] in the two branches, incoming branches here,
+[00:10:13 -> 00:10:15] is one of them has only one element,
+[00:10:15 -> 00:10:17] the other has two elements,
+[00:10:17 -> 00:10:18] and what are we choosing?
+[00:10:18 -> 00:10:21] We are choosing, you know,
+[00:10:21 -> 00:10:24] we're basically taking the intersection of the two sets,
+[00:10:24 -> 00:10:26] and so we want to choose the less than equal to
+[00:10:26 -> 00:10:28] operator in such a way such that
+[00:10:28 -> 00:10:30] my greatest lower bound operator
+[00:10:30 -> 00:10:33] is the same as the intersection operator,
+[00:10:33 -> 00:10:35] just by looking at this example, all right?
+[00:10:35 -> 00:10:38] I'm not proving it formally or anything like that,
+[00:10:38 -> 00:10:40] but just by looking at this example,
+[00:10:40 -> 00:10:43] we want to say that the greatest lower bound operator
+[00:10:43 -> 00:10:44] should be the intersection operator,
+[00:10:44 -> 00:10:46] because for these cases,
+[00:10:46 -> 00:10:47] we want to have a single rule that says
+[00:10:47 -> 00:10:48] that if there are multiple values
+[00:10:48 -> 00:10:50] flowing in from multiple predecessors,
+[00:10:50 -> 00:10:52] then the value at the beginning of the successor
+[00:10:52 -> 00:10:55] should be the greatest lower bound of all those values.
+[00:10:55 -> 00:10:55] That's what we have done
+[00:10:55 -> 00:10:57] in the previous two dataflow analyses,
+[00:10:57 -> 00:10:59] namely constant propagation and liveness.
+[00:10:59 -> 00:11:02] In liveness, it was a backward dataflow analysis,
+[00:11:02 -> 00:11:04] and so it was about successors' values
+[00:11:04 -> 00:11:07] flowing into the predecessors' outs.
+[00:11:07 -> 00:11:09] Here it is, in this example
+[00:11:09 -> 00:11:10] and in the constant propagation,
+[00:11:10 -> 00:11:12] it's a forward dataflow analysis,
+[00:11:12 -> 00:11:13] and in both cases,
+[00:11:13 -> 00:11:16] we are interested in the GLB,
+[00:11:16 -> 00:11:17] greatest lower bound, right?
+[00:11:17 -> 00:11:20] And I claim that with this interpretation
+[00:11:20 -> 00:11:22] of less than equal to,
+[00:11:22 -> 00:11:25] we are going to find that the GLB of two sets
+[00:11:25 -> 00:11:27] is going to be the intersection of the two sets, all right?
+[00:11:27 -> 00:11:30] And we're going to see that very quickly.
+[00:11:30 -> 00:11:32] Before we discuss that,
+[00:11:32 -> 00:11:34] what is the conservative value here, all right?
+[00:11:34 -> 00:11:37] In my ordering, what is the conservative value?
+[00:11:37 -> 00:11:40] The conservative value is the empty set,
+[00:11:40 -> 00:11:42] because if I say that nothing is available,
+[00:11:42 -> 00:11:44] that basically giving me no information whatsoever,
+[00:11:44 -> 00:11:46] and that's not going to enable
+[00:11:46 -> 00:11:47] any transformation whatsoever,
+[00:11:47 -> 00:11:51] and so that is the conservative value here, all right?
+[00:11:52 -> 00:11:53] Okay, all right,
+[00:11:53 -> 00:11:55] so now we discuss the greatest lower bound,
+[00:11:55 -> 00:11:58] and it turns out that if we have this ordering,
+[00:11:58 -> 00:12:00] then if I want to say that there are two sets,
+[00:12:00 -> 00:12:03] let's say S1 and S2,
+[00:12:03 -> 00:12:05] and we want to find some S3,
+[00:12:05 -> 00:12:08] such that S3 is less than equal to S1,
+[00:12:08 -> 00:12:11] and S3 is less than equal to S2,
+[00:12:11 -> 00:12:14] then that such S3 is actually going to be nothing.
+[00:12:14 -> 00:12:15] I mean, the best such S3
+[00:12:15 -> 00:12:19] is going to be an intersection of S1 and S2,
+[00:12:19 -> 00:12:22] and that's exactly the greatest lower bound operator
+[00:12:22 -> 00:12:24] that we were going to compute, right?
+[00:12:24 -> 00:12:25] So once again, what is the greatest lower bound?
+[00:12:26 -> 00:12:28] The greatest lower bound is basically an element S3,
+[00:12:28 -> 00:12:32] such that it is less than equal to both S1 and S2,
+[00:12:32 -> 00:12:33] which means that S3,
+[00:12:33 -> 00:12:36] notice that less than equal to is the subset operator,
+[00:12:36 -> 00:12:39] so that means S3 should be a subset of S1,
+[00:12:39 -> 00:12:42] and S3 should be a subset of S2.
+[00:12:42 -> 00:12:44] So what could be an S3
+[00:12:44 -> 00:12:47] that is a subset of both S1 and S2?
+[00:12:47 -> 00:12:50] Well, the biggest such S3 is going to be
+[00:12:51 -> 00:12:54] the S1 intersection S2.
+[00:12:54 -> 00:12:55] So why do I consider the biggest?
+[00:12:55 -> 00:12:58] Because I'm interested in the greatest lower bound,
+[00:12:58 -> 00:12:59] and so that's what greatest lower bound
+[00:12:59 -> 00:13:01] actually evaluates to.
+[00:13:01 -> 00:13:03] Now, once again, I am not showing this formally
+[00:13:03 -> 00:13:05] or anything, just giving you an intuition,
+[00:13:05 -> 00:13:07] and we're going to discuss the formal foundations
+[00:13:07 -> 00:13:10] of data flow analysis in our subsequent modules.
+[00:13:11 -> 00:13:13] What should be the transfer function?
+[00:13:13 -> 00:13:16] So we have already discussed transfer functions
+[00:13:16 -> 00:13:20] when there is an S and there are multiple PIs,
+[00:13:20 -> 00:13:23] so let's say P1, P2, and so on,
+[00:13:23 -> 00:13:25] and then they are meeting here,
+[00:13:25 -> 00:13:27] then we basically say that the value here
+[00:13:27 -> 00:13:30] is basically computed using the GLB.
+[00:13:30 -> 00:13:32] And this is something that is common between
+[00:13:32 -> 00:13:36] this analysis and constant propagation analysis.
+[00:13:36 -> 00:13:38] The value that is computed at the beginning
+[00:13:38 -> 00:13:41] of the successor is basically the GLB
+[00:13:41 -> 00:13:42] of the values that are computed
+[00:13:42 -> 00:13:44] at the end of the predecessors.
+[00:13:47 -> 00:13:51] So that rule is exactly identical in both cases,
+[00:13:51 -> 00:13:53] just that the meaning of GLB has changed
+[00:13:53 -> 00:13:56] and the meaning of values has changed in this analysis.
+[00:13:57 -> 00:13:59] The other part of the transfer function
+[00:13:59 -> 00:14:01] is what happens across a statement.
+[00:14:01 -> 00:14:04] So if there is a set in that is coming in
+[00:14:04 -> 00:14:08] at the statement, then what is the set out?
+[00:14:08 -> 00:14:10] And that will depend on the characteristics
+[00:14:10 -> 00:14:11] of the statement.
+[00:14:11 -> 00:14:15] And so here are some intuition
+[00:14:15 -> 00:14:16] on how this is going to work.
+[00:14:16 -> 00:14:19] Well, F will return set in,
+[00:14:19 -> 00:14:22] so set out is, so we want to define this function F,
+[00:14:22 -> 00:14:23] which is the transfer function,
+[00:14:23 -> 00:14:26] so that set out equals F of set in.
+[00:14:26 -> 00:14:28] And F is just going to return set in,
+[00:14:28 -> 00:14:31] but it's going to modify it as follows.
+[00:14:31 -> 00:14:33] If S is modifying X,
+[00:14:33 -> 00:14:38] where X is the variable and Y is an expression,
+[00:14:39 -> 00:14:42] and if S is X colon equals Y plus Z,
+[00:14:42 -> 00:14:45] then we remove all the set elements that refer to X.
+[00:14:45 -> 00:14:48] So anything that has X as a variable,
+[00:14:48 -> 00:14:53] so for example, if I have something called X comma A plus B,
+[00:14:55 -> 00:14:57] then I'm going to remove that.
+[00:14:57 -> 00:15:02] Also, if I have, let's say D comma X plus C,
+[00:15:02 -> 00:15:04] even that I'm going to remove.
+[00:15:04 -> 00:15:05] Why am I going to remove that?
+[00:15:05 -> 00:15:06] Because X has now changed,
+[00:15:06 -> 00:15:08] and so it's no longer true
+[00:15:08 -> 00:15:10] that X plus C is available in D,
+[00:15:10 -> 00:15:11] because now X has changed,
+[00:15:11 -> 00:15:13] so X plus C has no longer available in D.
+[00:15:13 -> 00:15:15] Why did I remove the first one?
+[00:15:15 -> 00:15:18] Because X is no longer holding the value A plus B,
+[00:15:18 -> 00:15:21] it's actually now holding the value Y plus Z.
+[00:15:21 -> 00:15:23] So any set element that refers to X,
+[00:15:23 -> 00:15:26] either as a variable or as a part of an expression,
+[00:15:26 -> 00:15:29] is going to get eliminated in the set.
+[00:15:29 -> 00:15:32] And we are going to add X comma Y plus Z
+[00:15:32 -> 00:15:35] to the set of available expressions.
+[00:15:35 -> 00:15:37] And we'll discuss this in more detail later,
+[00:15:37 -> 00:15:39] but I just wanted to share some intuition.
+[00:15:41 -> 00:15:43] Okay, now the other data flow analysis
+[00:15:43 -> 00:15:45] that I mentioned at the beginning of this lecture module
+[00:15:45 -> 00:15:46] was copy propagation.
+[00:15:46 -> 00:15:50] And this actually I'm going to leave as an exercise,
+[00:15:50 -> 00:15:54] but you will find that this is actually very similar.
+[00:15:54 -> 00:15:55] The analysis will be very similar
+[00:15:55 -> 00:15:58] to the analysis of available expressions,
+[00:15:58 -> 00:16:00] except that now we limit ourselves
+[00:16:00 -> 00:16:03] to the statements of the form X is equal to Y.
+[00:16:03 -> 00:16:06] So in other words, expressions are basically just,
+[00:16:06 -> 00:16:07] the expression that we're going to consider
+[00:16:07 -> 00:16:09] for copy propagation are just going to be
+[00:16:09 -> 00:16:10] single variables.
+[00:16:11 -> 00:16:14] And the transformation logic based on analysis information
+[00:16:14 -> 00:16:15] is also going to be similar.
+[00:16:15 -> 00:16:17] So once we have computed the DFA
+[00:16:18 -> 00:16:20] based on our fixed point iteration algorithm,
+[00:16:20 -> 00:16:22] notice that I didn't really talk about
+[00:16:22 -> 00:16:24] the fixed point iteration because it's exactly the same
+[00:16:24 -> 00:16:27] as we have discussed for constant propagation
+[00:16:27 -> 00:16:29] and liveness, and that's the common structure
+[00:16:29 -> 00:16:32] of all these global optimization problems.
+[00:16:32 -> 00:16:35] And so once we compute the DFA values,
+[00:16:35 -> 00:16:37] then transformation logic is pretty simple.
+[00:16:37 -> 00:16:42] We basically say, for example, if it is a copy,
+[00:16:42 -> 00:16:43] if we know that it is a copy,
+[00:16:43 -> 00:16:46] then we can just replace the users of that variable
+[00:16:46 -> 00:16:47] with the copy variable.
+[00:16:47 -> 00:16:52] So for example, if I have A is colon equal to B available
+[00:16:52 -> 00:16:56] and I have some expression which says X equals A plus Y,
+[00:16:56 -> 00:16:57] then I can replace A with B
+[00:16:57 -> 00:17:00] and that would be my copy propagation.
+[00:17:00 -> 00:17:02] And later on, I can do liveness analysis
+[00:17:02 -> 00:17:04] to actually eliminate A is colon equal to B
+[00:17:04 -> 00:17:07] because once I replace all users of A with B,
+[00:17:07 -> 00:17:08] A will no longer be live
+[00:17:08 -> 00:17:11] and then I would be able to replace A colon,
+[00:17:11 -> 00:17:13] eliminate A is colon equal to B.

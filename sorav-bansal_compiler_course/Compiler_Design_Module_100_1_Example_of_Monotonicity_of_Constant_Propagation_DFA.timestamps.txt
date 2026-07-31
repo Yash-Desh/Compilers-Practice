@@ -1,0 +1,128 @@
+Title: Compiler Design Module 100 1: Example of Monotonicity of Constant Propagation DFA
+Video ID: 7-93Iwn4sho
+Detected language: en
+------------------------------------------------------------
+
+[00:00:00 -> 00:00:05] So now we're going to look at the constant propagation example and its transfer functions
+[00:00:05 -> 00:00:08] to check whether they are monotonic or not.
+[00:00:08 -> 00:00:14] So if you recall, for the constant propagation example, one of the formulations of transfer
+[00:00:14 -> 00:00:17] functions involved four transfer functions.
+[00:00:17 -> 00:00:21] The first one was across the statement which was assigning a constant to the variable
+[00:00:21 -> 00:00:26] x, in which case the transfer function was, if the input value is top, then the output
+[00:00:26 -> 00:00:31] value is also top, otherwise it is the constant c which is being assigned.
+[00:00:31 -> 00:00:37] For the case where the x is not assigned to, we just use the identity transfer function
+[00:00:37 -> 00:00:42] fx equals x, the out is just a copy of n.
+[00:00:42 -> 00:00:49] For the case where x is assigned to something else, which is not a constant and neither
+[00:00:49 -> 00:00:55] a function of only x, so maybe x colon equals y plus z or something like that.
+[00:00:55 -> 00:00:59] In this case, we just say that if the input value is top, then the output value is also
+[00:00:59 -> 00:01:04] top, otherwise the output value is bottom.
+[00:01:04 -> 00:01:09] And for this case, the special case where we wanted to cater for things like x colon
+[00:01:09 -> 00:01:14] equals x plus one or something like that, if the RHS of the assignment is purely a
+[00:01:14 -> 00:01:20] function of x, then if the input value is a constant, then we want that the output
+[00:01:20 -> 00:01:25] value should be this expression E evaluated on that particular constant.
+[00:01:25 -> 00:01:28] So the corresponding transfer function is this fourth transfer function, which is if
+[00:01:28 -> 00:01:31] the input value is top, then the output value is top.
+[00:01:31 -> 00:01:34] If the input value is bottom, then the output value is bottom.
+[00:01:34 -> 00:01:43] But if the input value is a constant c and the expression on the right is of the
+[00:01:43 -> 00:01:50] form x plus k for some k greater than equal to zero, then the output value is EC.
+[00:01:50 -> 00:01:55] If the expression is not of the form x plus k, then we just say we fall back to the second
+[00:01:55 -> 00:01:59] transfer function, which is going to give bottom for a non-top input value.
+[00:01:59 -> 00:02:07] Okay, so this is a review, I mean, I just quickly reviewed the transfer functions
+[00:02:07 -> 00:02:11] for the constant propagation example for a single variable x, but now we want to
+[00:02:11 -> 00:02:16] check whether all these transfer functions follow the monotonicity property or not.
+[00:02:16 -> 00:02:20] So we can take each transfer function one by one and see whether it follows the
+[00:02:20 -> 00:02:24] monotonicity property, which means that for all x1, x2 in the domain of the
+[00:02:24 -> 00:02:30] transfer function, if x1 is less than equal to x2, does that also imply that fx1
+[00:02:30 -> 00:02:32] is less than equal to fx2.
+[00:02:32 -> 00:02:36] Now if I look at this transfer function, it is either going to return a top value
+[00:02:36 -> 00:02:38] or a constant value.
+[00:02:38 -> 00:02:44] So I need to do case analysis and say, okay, what if x1 is top and x2 is top
+[00:02:44 -> 00:02:45] and so on.
+[00:02:45 -> 00:02:52] And so I can build some kind of a truth table that says, okay, if x2 is top and x1
+[00:02:52 -> 00:02:56] could be anything, which I'm representing with this underlined x, which means x1
+[00:02:56 -> 00:03:02] could be either top or it could be bottom or it could be some constant c,
+[00:03:02 -> 00:03:08] then fx2 will definitely be top, right, because x2 is top, so fx2 will be top.
+[00:03:08 -> 00:03:10] That's what the transfer function says.
+[00:03:10 -> 00:03:12] And fx1 could be some arbitrary value.
+[00:03:12 -> 00:03:19] It could be another constant, which could be the same constant x or it could be the
+[00:03:19 -> 00:03:20] bottom value or whatever.
+[00:03:20 -> 00:03:25] Irrespective, the fact that fx2 is top and everything is less than equal to top,
+[00:03:25 -> 00:03:28] we know that whatever comes here in fx1 is definitely going to be less than
+[00:03:28 -> 00:03:29] equal to top.
+[00:03:29 -> 00:03:34] So for the case where x2 is top, it's clear that the monotonicity property
+[00:03:34 -> 00:03:37] holds because fx1 is going to be less than equal to fx2 because fx2 is also
+[00:03:37 -> 00:03:38] going to be top.
+[00:03:38 -> 00:03:39] Okay.
+[00:03:39 -> 00:03:41] Now let's look at the other example case.
+[00:03:41 -> 00:03:44] Well, the other case is what if x1 is bottom?
+[00:03:44 -> 00:03:52] If x1 is bottom and x2 is some constant k, then fx1 and fx2 both are going to
+[00:03:52 -> 00:03:57] evaluate to c because we just substitute bottom, you just get c or if you
+[00:03:57 -> 00:04:01] substitute some constant k for x, then also you get c.
+[00:04:01 -> 00:04:05] And so again, c is less than equal to c, it's actually equal to c, so it's
+[00:04:05 -> 00:04:06] also less than equal to c.
+[00:04:06 -> 00:04:13] So again, for this case where x1 is bottom and x2 is some constant k, this
+[00:04:13 -> 00:04:15] monotonicity property is satisfied.
+[00:04:15 -> 00:04:21] And the only kind of remaining case is when both x1 and x2 are equal, so
+[00:04:21 -> 00:04:25] let me say that they are both x, then both fx1 and fx2 will also be
+[00:04:25 -> 00:04:29] equal, they could be different from the original input value x, but
+[00:04:29 -> 00:04:32] they're going to be equal and that also means that fx1 will be less
+[00:04:32 -> 00:04:36] than equal to fx2 because it's actually equal to fx2.
+[00:04:36 -> 00:04:40] And I'm claiming that this truth table that I've drawn with these kind of
+[00:04:40 -> 00:04:46] placeholders called x kind of represents all possible inputs that x1
+[00:04:46 -> 00:04:50] or x2 could hold, all possible cases, you can check that for yourself.
+[00:04:50 -> 00:04:54] Okay, so similarly, we need to check all the other three functions and
+[00:04:54 -> 00:04:59] that's how I'm going to check whether this DFA framework is monotonic or not.
+[00:04:59 -> 00:05:02] So for example, I'm going to check the second function and the second
+[00:05:02 -> 00:05:04] function is not very different.
+[00:05:04 -> 00:05:10] The only difference here is that instead of c, I'm getting bottom here.
+[00:05:10 -> 00:05:14] So just fix this, okay?
+[00:05:14 -> 00:05:16] So instead of saying that if x is not equal to top,
+[00:05:16 -> 00:05:18] then the output value should be c.
+[00:05:18 -> 00:05:22] Now the output value is bottom and the truth table basically remains
+[00:05:22 -> 00:05:25] similar except that instead of c here, I get bottom.
+[00:05:25 -> 00:05:28] And once again, you can check that the transfer function remains monotonic
+[00:05:28 -> 00:05:32] because for all possible inputs which are related or
+[00:05:33 -> 00:05:35] all possible pair of inputs which are related by the less than equal to
+[00:05:35 -> 00:05:38] operator in our semi lattice, the outputs are also related by
+[00:05:38 -> 00:05:40] the same less than equal to operator.
+[00:05:41 -> 00:05:43] Okay, now let's look at the third function.
+[00:05:43 -> 00:05:45] This is actually the easiest one.
+[00:05:45 -> 00:05:47] It's just the identity function and we need to show that if x1 is less
+[00:05:47 -> 00:05:50] than equal to x2, then is fx1 less than equal to fx2?
+[00:05:50 -> 00:05:54] Recall that fx1 is just x1 and fx2 is just x2.
+[00:05:54 -> 00:05:57] So indeed, if x1 is less than equal to x2, then x1 is less than equal to x2.
+[00:05:57 -> 00:06:02] So this is just a trivial proof.
+[00:06:03 -> 00:06:05] Indeed, the third function is also monotonic.
+[00:06:05 -> 00:06:08] Now, we come to the last and the most complicated function,
+[00:06:08 -> 00:06:09] which is the fourth function.
+[00:06:09 -> 00:06:13] And we need to check whether the fourth function satisfies the
+[00:06:13 -> 00:06:14] monotonicity property.
+[00:06:14 -> 00:06:16] And once again, I'm going to do a case analysis.
+[00:06:17 -> 00:06:19] And once again, I'm going to draw a truth table.
+[00:06:19 -> 00:06:22] And the first, I mean, once again, I've drawn a condensed truth table
+[00:06:22 -> 00:06:27] where I'm using these placeholders called x underlined x.
+[00:06:27 -> 00:06:31] And the cases that I consider are if x2 is top and
+[00:06:31 -> 00:06:37] x1 is some arbitrary value, which could be either k or bottom or top,
+[00:06:37 -> 00:06:41] then fx2 is also top.
+[00:06:41 -> 00:06:44] That's just coming from the first condition here.
+[00:06:44 -> 00:06:47] So because fx2 is top, irrespective of what fx1 is,
+[00:06:47 -> 00:06:50] it will always be less than equal to fx2.
+[00:06:50 -> 00:06:54] And so in this, the first row basically is indeed satisfying our
+[00:06:54 -> 00:06:55] monotonicity condition.
+[00:06:55 -> 00:06:59] Let's look at the second case where x1 is bottom and x2 is some arbitrary
+[00:06:59 -> 00:07:02] value, which could be bottom, k or top.
+[00:07:02 -> 00:07:04] In this case, fx1 will always be bottom.
+[00:07:04 -> 00:07:06] And that's coming from the second condition.
+[00:07:06 -> 00:07:08] And because bottom is less than equal to everything, so
+[00:07:08 -> 00:07:11] it doesn't matter what comes here, this is, again,
+[00:07:11 -> 00:07:14] going to satisfy our monotonicity condition.
+[00:07:14 -> 00:07:17] Finally, if both x1 and x2 are equal, then fx1 and
+[00:07:17 -> 00:07:19] fx2 are also going to be equal.
+[00:07:19 -> 00:07:24] And so that's going to also satisfy our monotonicity property.
+[00:07:24 -> 00:07:26] Now, you can check for yourself whether this condensed truth table
+[00:07:26 -> 00:07:30] actually covers all the possible cases for pairs of inputs where
+[00:07:30 -> 00:07:32] the inputs are related by the less than equal to operation and
+[00:07:32 -> 00:07:36] whether the corresponding outputs are related by the less than equal
+[00:07:36 -> 00:07:37] to operator as well.
+[00:07:37 -> 00:07:42] And this is how you would want to check the monotonicity property of
+[00:07:42 -> 00:07:44] the DFA framework that you are defining for yourself.

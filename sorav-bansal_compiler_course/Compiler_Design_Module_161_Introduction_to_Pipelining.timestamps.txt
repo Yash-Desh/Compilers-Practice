@@ -1,0 +1,218 @@
+Title: Compiler Design Module 161 : Introduction to Pipelining
+Video ID: di_kFnEhSS4
+Detected language: en
+------------------------------------------------------------
+
+[00:00:00 -> 00:00:05] Today I'm going to talk about a different parallelization scheme for a loop nest,
+[00:00:05 -> 00:00:10] program with a fine loop nest, which is very different from all the synchronization-free
+[00:00:10 -> 00:00:16] and synchronization-based parallelization that we have seen so far. Recall that when we talked
+[00:00:16 -> 00:00:20] about synchronization-based parallelization, we were talking about a constant amount of
+[00:00:20 -> 00:00:25] synchronization and we used barrier synchronization in that case. And barrier is a very tight form
+[00:00:25 -> 00:00:31] of synchronization because it requires that all the threads of the program synchronize at that
+[00:00:31 -> 00:00:37] particular barrier point before they start on the next segment of the other partition, the other
+[00:00:37 -> 00:00:43] side of the barrier. I'm going to talk about pipelining and you may have come across pipelining
+[00:00:43 -> 00:00:49] in your other courses such as computer architecture where we talk about a five-stage
+[00:00:49 -> 00:00:55] pipeline in a processor and the idea that we're going to use is similar except that
+[00:00:55 -> 00:01:01] we are going to do this at the software level, at the compiler level and the trade-offs and the
+[00:01:01 -> 00:01:07] kind of improvement that you can get by pipelining at the compiler level are very
+[00:01:07 -> 00:01:12] different from the kind of improvements that you get by pipelining at the hardware level but
+[00:01:12 -> 00:01:17] fundamentally speaking, theoretically speaking, it's the same concept. So let's look at an example
+[00:01:17 -> 00:01:34] to understand pipelining. Now this loop, I mean if I just basically use my synchronization-free
+[00:01:34 -> 00:01:39] algorithm, it is a synchronization-free parallelization algorithm, then it's very
+[00:01:39 -> 00:01:45] clear that the outer loop is already parallel and so I can pretty much parallelize the outer
+[00:01:45 -> 00:01:50] loop, different iterations of the outer loop can be executed in parallel on different processors
+[00:01:51 -> 00:01:56] but for a single iteration of the outer loop, the inner loop is data dependent because
+[00:01:56 -> 00:02:03] it is reading and writing to the same x i element. Now this is parallelizable except that
+[00:02:03 -> 00:02:10] if y is laid out in a row major order, so notice that the access to y is not i comma j
+[00:02:10 -> 00:02:15] but j comma i and this is deliberately done because the inner loop is iterating on j
+[00:02:16 -> 00:02:20] and it's not the innermost dimension of the array access for y which is j, so
+[00:02:20 -> 00:02:26] j is actually the outer access which basically means that if y is laid out in row major form
+[00:02:26 -> 00:02:34] then at every access of y in the inner loop, I'm going to have access a different cache line
+[00:02:34 -> 00:02:39] because the first time I'm going to access let's say y 0 comma 0, the second time I'm
+[00:02:39 -> 00:02:46] going to access y 1 comma 0, so y 0 comma 0 and y 1 comma 0 are significant distance apart in a
+[00:02:46 -> 00:02:54] row major layout of the array, 0 comma 0 and 0 comma 1 are adjacent but 0 comma 0 and 1 comma 0
+[00:02:54 -> 00:02:59] are not adjacent, in fact they have a distance of order n and n assuming is a big number that
+[00:02:59 -> 00:03:04] basically means that they are actually very far apart and if 0 comma 0 and 1 comma 0 are very
+[00:03:04 -> 00:03:10] far apart basically both of them are going to cause cache misses because they cannot belong to
+[00:03:10 -> 00:03:17] the same cache line and so what happens is that every processor on every execution of the statement
+[00:03:18 -> 00:03:24] basically incurs a cache miss because of the access to y j i because j is the inner loop
+[00:03:24 -> 00:03:30] and yet j is the outer dimension of the array access and so there's a cache miss on every
+[00:03:30 -> 00:03:37] access for every processor and while it seems you know that we have parallelized the outer loop
+[00:03:37 -> 00:03:42] and you know we should be able to get order m speed up because we can create m different number
+[00:03:42 -> 00:03:47] of threads for the outer loop basically because of cache misses what can happen is there can be
+[00:03:47 -> 00:03:51] serialization at the memory because there are accesses to a different cache line on the each
+[00:03:51 -> 00:03:56] inner loop iteration they are cache misses and because there's no spatial locality and
+[00:03:57 -> 00:04:00] because their cache misses they're going all the way to memory and even though the processors are
+[00:04:00 -> 00:04:06] executing in parallel because all the requests from all the m different processors are get going
+[00:04:06 -> 00:04:12] to memory the memory get get overwhelmed another way to say this is that each of these different
+[00:04:12 -> 00:04:18] m processors had their own caches for example l1 cache l2 cache and so on let's just call that
+[00:04:18 -> 00:04:23] the l1 cache so each processor has the l1 cache but that cache has not been utilized
+[00:04:23 -> 00:04:28] because those caches are basically giving a miss on every iteration of the loop that each
+[00:04:28 -> 00:04:33] processor is executing ideally i would have lied that all those caches are also getting
+[00:04:33 -> 00:04:39] used and this depends on what is the cache miss cost so if the cache is you know if the
+[00:04:39 -> 00:04:43] memory and the cache are very close together then maybe it doesn't matter or if the memory
+[00:04:43 -> 00:04:47] already has a lot of parallelism maybe it doesn't matter but imagine a scenario where
+[00:04:47 -> 00:04:53] the memory is actually remote maybe the memories through a very thin link over the internet
+[00:04:53 -> 00:04:59] and so every cache miss is going to actually become really expensive and what i've done is
+[00:04:59 -> 00:05:04] basically every processor is going to make cache misses and i have actually increased the
+[00:05:04 -> 00:05:10] number of cache misses potentially because i have each processor basically has less
+[00:05:11 -> 00:05:16] has greater use distance and so if a cache miss is very expensive then parallelization
+[00:05:16 -> 00:05:21] may be counterproductive because consider this case where cpu 0 and cpu 1 are accessing
+[00:05:21 -> 00:05:29] and cpu 0 basically is accessing yji for different values of j then each time cpu 0 access yji
+[00:05:29 -> 00:05:34] then it causes a cache miss and similarly whenever cpu 1 accesses yji for another value
+[00:05:34 -> 00:05:39] of j then again it causes a cache miss and so all these cache misses are going to memory
+[00:05:39 -> 00:05:43] and the memory can get overwhelmed and all the computation get get bottlenecked by the
+[00:05:43 -> 00:05:49] memory speed and get serialized at the memory and once again it really depends on the
+[00:05:49 -> 00:05:54] underlying architecture and the hardware and the environment that we are working on
+[00:05:54 -> 00:05:58] but maybe you know on some machines outer loop parallelization would be better
+[00:05:58 -> 00:06:04] on other machines outer loop parallelization would be counterproductive and as a compiler
+[00:06:04 -> 00:06:10] developer our job is to basically come up with algorithms that given a cost function
+[00:06:10 -> 00:06:14] for the underlying architecture we are able to identify what is the best possible
+[00:06:15 -> 00:06:20] transformation for the program all right i'm not going to really worry too much about the
+[00:06:20 -> 00:06:24] cost function i'm going to assume that the cost function is given i'm also not going to worry
+[00:06:24 -> 00:06:29] about how to use the cost function to choose which algorithm to use but for now i'm just
+[00:06:29 -> 00:06:33] going to worry about what are the different algorithms so we have already seen one algorithm
+[00:06:33 -> 00:06:40] which is parallelizes as much as possible without any without paying without paying any
+[00:06:40 -> 00:06:45] heed to locality without paying any heed to how many cache misses each process is going to have
+[00:06:45 -> 00:06:50] but now we basically are going to try and see assuming that the cost function is such that
+[00:06:50 -> 00:06:55] you know cache misses are expensive then how else can i transform the program so that its
+[00:06:55 -> 00:06:59] parallelization is not counterproductive but parallelization is actually beneficial
+[00:06:59 -> 00:07:03] and the scheme that i'm going to discuss that the solution to this is going to be
+[00:07:03 -> 00:07:09] pipelining as i'm going to talk next so the question i want to really ask is is it possible
+[00:07:09 -> 00:07:14] that the jth processor where you know for let's say i just basically
+[00:07:17 -> 00:07:22] parallelized my program across k different processors and among them the you know
+[00:07:22 -> 00:07:28] the some jth processor accesses consecutive elements for example it accesses yj comma 0
+[00:07:28 -> 00:07:34] yj comma 1 yj comma 2 and so on in which case i have very high spatial locality because
+[00:07:34 -> 00:07:40] yj comma 0 and yj comma 1 they are going to be belong to the same cache line assuming row major
+[00:07:40 -> 00:07:46] layout so and similarly yj2 so i'm going to basically be using my cache in a much better
+[00:07:46 -> 00:07:52] way my caches were designed to exploit spatial locality and if i am able to basically organize
+[00:07:52 -> 00:07:57] my program such that each cpu is basically accessing consecutive elements then i am
+[00:07:57 -> 00:08:04] basically utilizing the cache caching hardware available to me by increasing spatial locality
+[00:08:04 -> 00:08:10] whatever possibly the jth processor can access x0 x1 x2 x3 and so on across different iterations of
+[00:08:10 -> 00:08:17] the loop that is execute for example it can access it can read x yj0 and write to x0 on
+[00:08:17 -> 00:08:23] the 0th iteration read yj1 write to x1 on the 1th iteration and so on and overall if this
+[00:08:23 -> 00:08:27] was possible then i would have better cache usage for each cpu because i would have better
+[00:08:27 -> 00:08:34] spatial locality but there is an obvious problem here and the problem is that there
+[00:08:34 -> 00:08:40] are dependencies so there are dependencies for example from x0 to itself right so x0 to x0
+[00:08:40 -> 00:08:47] so you know one iteration of x0 so cpu j is also accessing writing to x0 and cpu
+[00:08:47 -> 00:08:53] j plus one is also accessing writing to x0 and cpu j plus two is also accessing writing
+[00:08:53 -> 00:08:58] to x0 and so on and so you know it can't be completely synchronization free but the good
+[00:08:58 -> 00:09:06] thing is that you know after cpu 0 has written to x0 it doesn't really care i mean after
+[00:09:06 -> 00:09:12] that it doesn't really touch x0 after that you know cpu j plus one can write to x0 and
+[00:09:12 -> 00:09:17] after that cpu j plus two can write to x0 anytime it likes right so so that's the idea
+[00:09:17 -> 00:09:24] i'm going to basically pipeline these accesses to x0 by different processors so here's the
+[00:09:24 -> 00:09:30] here's the scheme let's say cpu 0 says x0 plus equals y00 now i want to point out that you know
+[00:09:30 -> 00:09:36] i'm using the plus operator and the equality operator and the you know xi these are i mean
+[00:09:37 -> 00:09:41] this particular program can be parallelized using other ways as well for example like you
+[00:09:41 -> 00:09:46] know i can exploit the commutativity and associativity property of the plus operator
+[00:09:46 -> 00:09:52] or i can basically exploit the fact that xi can be privatized and things like that but
+[00:09:52 -> 00:09:57] this is just you know i i mean this is just a placeholder so plus is just a placeholder
+[00:09:57 -> 00:10:02] for any operator right it could be some complicated operator and xi is just a
+[00:10:02 -> 00:10:07] placeholder for some memory access which is basically being accessed but in the which
+[00:10:07 -> 00:10:14] basically whose whose address depends on the index outer index and not the inner loop index
+[00:10:14 -> 00:10:21] okay so cpu 0 is going to access x0 plus equals y00 the second iteration of cpu 0 is
+[00:10:21 -> 00:10:28] going to do x1 plus equals y01 x2 plus equals y02 and so on notice that for cpu 0 there's very
+[00:10:28 -> 00:10:35] high cache locality because when i access y00 i bring the entire cache line in and now y01
+[00:10:35 -> 00:10:40] would be present in the cache because y00 and y01 are adjacent elements similarly y02 would
+[00:10:40 -> 00:10:45] also likely be present in the cache and similarly if i look at x0 x1 x2 they are
+[00:10:45 -> 00:10:50] also adjacent elements and so they also exhibit high spatial locality but now the
+[00:10:50 -> 00:10:56] only problem is synchronization because if cpu 0 is touching all the elements of x then cpu 1
+[00:10:56 -> 00:11:02] will also touch all the elements of x and and so i need to basically make sure that things remain
+[00:11:02 -> 00:11:11] consistent and and so cpu 1 will also do let's say x0 plus equals y10 instead of y00
+[00:11:11 -> 00:11:18] x1 plus equals y11 x2 plus equals y12 and the only thing i require in this so this
+[00:11:18 -> 00:11:22] basically gives me better spatial locality but the only thing i require is that the first
+[00:11:22 -> 00:11:30] iteration of cpu 1 must execute after the first iteration of cpu 0 similarly the second iteration
+[00:11:30 -> 00:11:36] of cpu 1 should execute after the second iteration of cpu 0 and similarly the third
+[00:11:36 -> 00:11:41] iteration of cpu 1 should execute after the third iteration of cpu 0 and other than that i
+[00:11:41 -> 00:11:45] don't have any constraints and to basically represent these dependencies i have drawn these
+[00:11:45 -> 00:11:51] lines which basically say that this i mean x0 plus y0 must execute before
+[00:11:52 -> 00:11:59] x0 plus equals y00 must execute before x0 plus equals y10 and once again i want to
+[00:11:59 -> 00:12:03] emphasize that plus is not your you know your addition operator is just a placeholder for some
+[00:12:03 -> 00:12:09] operator which may not be commutative and associated and similarly cpu 2 would basically
+[00:12:09 -> 00:12:14] be similar except that it would be accessing just like this was accessing y00 one was
+[00:12:14 -> 00:12:20] accessing y10 so 2 would access y20 2122 all right and x0 x1 x2 so each of these
+[00:12:20 -> 00:12:26] processes is accessing both x and y but they are accessing it in a spatially local manner
+[00:12:27 -> 00:12:32] all right so this is pipelining right because what i have done is i have basically said
+[00:12:32 -> 00:12:37] that okay let's divide so let's say that the outer loop was one task right so the
+[00:12:37 -> 00:12:43] one iteration of the outer loop was basically one task and so i have divided the task
+[00:12:43 -> 00:12:57] into stages so x0 x1 x2 x0 plus equals y00 is x0 plus equals y10 x0 plus equals y20 and basically
+[00:12:57 -> 00:13:02] what i have done is so this whole thing is this is one outer loop iteration right so this
+[00:13:02 -> 00:13:13] whole thing here is one outer loop iteration and this is one outer loop iteration and what
+[00:13:13 -> 00:13:20] i've done is i have staged this outer loop iteration so the first inner loop iteration
+[00:13:20 -> 00:13:25] of the this outer loop iteration would execute on cpu 0 the first inner loop iteration the
+[00:13:25 -> 00:13:29] second inner loop iteration of the first outer loop iteration would execute on cpu 1
+[00:13:29 -> 00:13:35] the third inner loop iteration of the first outer loop iteration would execute on cpu 2 and so
+[00:13:35 -> 00:13:41] on okay and so this is basically saying that let's assume that you know this whole thing
+[00:13:41 -> 00:13:46] was one task, I'm saying that the first stage of the task would execute on CPU 0, the second
+[00:13:46 -> 00:13:51] stage of the task would execute on CPU 1, the third stage of the task would execute on CPU 2
+[00:13:51 -> 00:13:57] and so on. Similarly, the first stage of the second task would execute on CPU 0, the second
+[00:13:57 -> 00:14:02] stage of the second task would execute on CPU 1 and the third stage of the second task would
+[00:14:02 -> 00:14:07] execute on CPU 2. So what I'm doing is I'm basically dividing the whole task into different
+[00:14:07 -> 00:14:14] stages and basically saying that you know let's specialize CPU 0 for stage 1 let's specialize CPU
+[00:14:14 -> 00:14:23] 1 for stage 2 let's specialize CPU 2 for stage 3 and so on right and so basically CPU 0 is going
+[00:14:23 -> 00:14:32] to execute stage 0 of task 0 stage 1 or stage 0 of task 1 stage 0 of task 2 stage 0 of task 3
+[00:14:33 -> 00:14:38] and so on and so CPU 0 is basically a stage 0 specialist which means it is it's a specialist
+[00:14:38 -> 00:14:45] for the case when j equals 0 similarly CPU 1 is a specialist for the case when j equals 1
+[00:14:45 -> 00:14:49] and when I say specialist I'm basically talking about the fact that I've been able to bring
+[00:14:49 -> 00:14:54] that particular cache line into my CPU and so now I'm able to run with it in a faster manner
+[00:14:55 -> 00:14:59] and this first of all I want to point out that this requires order n synchronization
+[00:14:59 -> 00:15:04] because the number of these gray lines that I have drawn are order n and so that's the amount
+[00:15:04 -> 00:15:08] of synchronization I need although this is a loose form of synchronization unlike barrier I
+[00:15:08 -> 00:15:15] wanted all the threads to synchronize simultaneously here I'm basically saying okay CPU 0 signaling CPU
+[00:15:15 -> 00:15:20] 1 so that CPU 1 can execute any time later so if CPU 1 was slower then you know it can also
+[00:15:20 -> 00:15:24] execute later it doesn't really matter so it's a loser form of synchronization it's not
+[00:15:24 -> 00:15:29] like everything has to execute in lockstep things can happen in a more like a wave front
+[00:15:29 -> 00:15:35] so I can just say it's like passing the baton in a relay race as a CPU 0 said okay I'm done
+[00:15:35 -> 00:15:40] with stage one stage zero you can execute stage one whenever you like and so on so we're going
+[00:15:40 -> 00:15:46] to see how we're going to do this synchronization using weight signal primitives signal and weight
+[00:15:46 -> 00:15:51] condition variables if you were aware of them and but the point is that these this order n
+[00:15:51 -> 00:15:58] synchronization and the idea here is that I have one task which is basically this you know one
+[00:15:58 -> 00:16:06] task is basically it's computing x0 and it has n stages and I execute each stage on each processor
+[00:16:06 -> 00:16:09] and by executing each stage on each sub processor I'm specializing each processor
+[00:16:09 -> 00:16:15] for that particular stage and in some cases that specialization helps in this case the
+[00:16:15 -> 00:16:21] specialization makes better use of the locality available locality optimization available in the
+[00:16:21 -> 00:16:28] cache and this is no different from how a five stage pipeline works in a machine architecture
+[00:16:28 -> 00:16:32] so recall that in a machine architecture you have different instructions so each instruction
+[00:16:32 -> 00:16:36] can be thought of as a task and so each instruction can be thought of as the outer
+[00:16:36 -> 00:16:40] loop so maybe there are n instructions I first execute the zero instruction then the first
+[00:16:40 -> 00:16:45] instructions the second instruction and so on and in the architecture one way to organize
+[00:16:45 -> 00:16:51] things would have been okay I have m different processors and you know instruction one I have
+[00:16:51 -> 00:16:58] one CPU which basically does fetch decode execute memory and write back for the first instruction
+[00:16:58 -> 00:17:02] the second processor does everything for the second instruction and so on but that's not
+[00:17:02 -> 00:17:08] what we choose to do we instead choose to pipeline because that may give us better
+[00:17:08 -> 00:17:13] specialization because you know one part of the hardware is just specialized to do fetch the
+[00:17:13 -> 00:17:17] other part of the hardware is just specialized to do decode the third part of the hardware
+[00:17:17 -> 00:17:22] is just specialized to do execute and they do it in the fastest possible way and then what we do is
+[00:17:22 -> 00:17:28] we so these are the stages so for every task so every instruction is a task and every operation
+[00:17:28 -> 00:17:33] that needs to be executed for every instruction is a stage and so what I do is I basically
+[00:17:33 -> 00:17:39] pipeline the stages so for example for the first instruction fetch is executing on cpu0
+[00:17:39 -> 00:17:44] decode is executing on cpu1 execute is executing on cpu2 and so on just as a metaphor
+[00:17:44 -> 00:17:50] right so when I say fetch I'm basically saying oh x0 is updated you know y00 is
+[00:17:50 -> 00:18:01] basically read in x0 y10 is read in d0 and y20 is read in e0 but basically you know each of
+[00:18:01 -> 00:18:07] these kind of cpus are specialized in that particular job for example cpu1 is specialized in
+[00:18:07 -> 00:18:14] the row that's at y1 cpu0 is specialized in the row that's y0 and so on and so this is
+[00:18:14 -> 00:18:20] you know it's a very similar kind of pattern fetch you know in the hardware pipeline is fetch
+[00:18:20 -> 00:18:26] decode execute in the compiler pipeline it's y00 y10 y20 because these are different tasks
+[00:18:26 -> 00:18:30] in terms of spatial locality different kind of specialization in terms of spatial locality
+[00:18:31 -> 00:18:34] you know basically we give them to different processors in this case
+[00:18:36 -> 00:18:45] and similarly for other things right so f1 d1 e1 f2 d2 e2 and so on this kind of
+[00:18:45 -> 00:18:51] specialization or for stages helps if you know stage specialization is going to give you better
+[00:18:52 -> 00:18:57] better answer and this is actually how also humans work if you go to a factory assembly line
+[00:18:57 -> 00:19:06] one human is a specialist in let's say bottling of let's say soda drink another human is
+[00:19:06 -> 00:19:12] specialized in packaging another so that is a better approach and that's the pipeline approach
+[00:19:12 -> 00:19:17] as opposed to i tell every human to do everything from beginning to end so that would be an
+[00:19:17 -> 00:19:21] you know that would require every human to learn a lot of things whereas humans basically prefer
+[00:19:21 -> 00:19:27] to be specialized even super specialized in one particular job and then that way that
+[00:19:27 -> 00:19:34] particular human is using his or her hardware which is you know his brain is the best
+[00:19:34 -> 00:19:39] possible way because you know he or she becomes an expert in that particular thing
+[00:19:39 -> 00:19:44] and so that's exactly what's happening here here expertise is basically based on spatial ability
+[00:19:45 -> 00:19:50] all right so the last thing i want to point out is this pipelining requires a loop depth of at
+[00:19:50 -> 00:19:54] least greater than equal to two so whenever i have a loop depth of greater than equal to two
+[00:19:55 -> 00:20:00] the iterations of the outer loop can be counted as tasks and the iteration of the inner loop
+[00:20:00 -> 00:20:06] can be counted as stages and now what i can do is i can pipeline based on stages and say
+[00:20:06 -> 00:20:12] okay this particular processor will specialize on stage zero this processor will specialize on
+[00:20:12 -> 00:20:17] stage one and so on and once again you know i'm not really talking about how to decide whether
+[00:20:17 -> 00:20:23] to pipeline or parallelize but let's say you know i wanted to figure out i wanted to try both
+[00:20:23 -> 00:20:27] options and just run the program and figure out which one is faster and choose that one
+[00:20:27 -> 00:20:32] but how does the compiler actually you know does it do this transformation that is going
+[00:20:32 -> 00:20:36] to be the subject of our discussion in the next few modules

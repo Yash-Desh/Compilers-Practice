@@ -1,0 +1,126 @@
+Title: Compiler Design Module 97 : Product of Semilattices
+Video ID: pbaceICaPrA
+Detected language: en
+------------------------------------------------------------
+
+[00:00:00 -> 00:00:06] We've been talking about semi-lattices and what are the different ways of representing a semi-lattice.
+[00:00:06 -> 00:00:11] And to summarize, there are three ways to represent or define a semi-lattice.
+[00:00:12 -> 00:00:16] One of them is basically using a set of values v and a meet operator.
+[00:00:16 -> 00:00:24] So the meet operator is represented using the carrot symbol and it needs to be idempotent,
+[00:00:24 -> 00:00:29] which means x meet x should give you x. It needs to be commutative and associative.
+[00:00:29 -> 00:00:35] Alright, now the second way of defining a semi-lattice is using a partial order or
+[00:00:35 -> 00:00:39] the less than equal to operator. So once again we have a set of values and a partial order.
+[00:00:40 -> 00:00:44] The requirements on the less than equal to operator or the ordering operator is that it
+[00:00:44 -> 00:00:49] needs to be reflexive, which is x is less than equal to x. It needs to be anti-symmetric,
+[00:00:49 -> 00:00:54] which means if x is less than equal to y and y is less than equal to x that must mean that
+[00:00:54 -> 00:01:00] x and y are equal. And transitive, x is less than equal to y and y is less than equal to z
+[00:01:00 -> 00:01:07] should imply that x is less than equal to z. Now there was a third way of specifying a semi-lattice
+[00:01:07 -> 00:01:12] and that's through using a graph with nodes and edges. And you can also draw a picture
+[00:01:12 -> 00:01:16] of this graph. And so this is a directed graph or digraph with nodes and edges.
+[00:01:17 -> 00:01:25] It should have no cycles, so it's a directed acyclic graph or a dig. And it can have top and bottom
+[00:01:25 -> 00:01:30] nodes, which are basically every node is nothing but a value. And edges are basically
+[00:01:32 -> 00:01:37] representing the partial ordering relationship where something is less than x is less than
+[00:01:37 -> 00:01:45] equal to y if there is a path from x to y in this graph. So one thing to notice here is
+[00:01:45 -> 00:01:51] that top and bottom may not necessarily exist. Maybe there is no top element or maybe there are
+[00:01:51 -> 00:01:57] multiple top elements or similarly maybe there is multiple bottom elements or maybe there is
+[00:01:57 -> 00:02:01] nothing like top or nothing like bottom. And why could this happen? For example,
+[00:02:01 -> 00:02:07] if v was a set of integers and let's say the meet operator was max, then the top is
+[00:02:07 -> 00:02:11] actually, you know, basically if the meet operator is max, it basically means that less
+[00:02:11 -> 00:02:16] than equal to is nothing but greater than, you know, the integer greater than equal to relation.
+[00:02:16 -> 00:02:22] So my semi lattice for something like this set of integers and max is going to look like the
+[00:02:22 -> 00:02:27] following. This is a semi lattice diagram, the graphical representation. We'll have integers
+[00:02:27 -> 00:02:35] arranged in a straight line with edges being drawn from every integer to its successor.
+[00:02:35 -> 00:02:43] So 0 to 1, 1 to 2. In other words, in this particular semi lattice, 2 is less than equal
+[00:02:43 -> 00:02:47] to 1. Although in integer theory, 2 will be called greater than equal to 1. In this
+[00:02:47 -> 00:02:52] particular semi lattice where the meet operator is max, the less than equal to
+[00:02:54 -> 00:02:58] definition for the semi lattice is actually the greater than equal to definition for
+[00:02:58 -> 00:03:03] actual integers. But the point I'm making here is that in this particular semi lattice,
+[00:03:03 -> 00:03:08] there is no top and there is no bottom because it basically goes on all the way
+[00:03:08 -> 00:03:13] till minus infinity on the top and it goes all the way to plus infinity on the bottom.
+[00:03:13 -> 00:03:18] And, you know, in plus infinity and minus infinity are not actually actual values.
+[00:03:18 -> 00:03:20] It basically means that it just keeps going on forever.
+[00:03:22 -> 00:03:26] Alright, so, you know, this is a valid semi lattice formed by int comma max where
+[00:03:26 -> 00:03:31] max is the meet operator. And, you know, we also discussed how you can easily derive
+[00:03:31 -> 00:03:35] the partial order from the meet operator. And I'll leave it as an exercise. But you
+[00:03:35 -> 00:03:42] may be interested in deriving the fact that the less than equal to operator for the semi
+[00:03:42 -> 00:03:46] lattice is nothing but the greater than equal to operator in integer theory.
+[00:03:47 -> 00:03:53] Alright, so semi lattices for DFA problems can often become large, right? So we,
+[00:03:53 -> 00:03:57] in our previous slide, we looked at a semi lattice that actually had an infinite number
+[00:03:57 -> 00:04:03] of values from minus infinity to plus infinity. But what about actual semi
+[00:04:03 -> 00:04:08] lattices that appear in data flow analysis problems? And so we have already seen some
+[00:04:08 -> 00:04:12] data flow analysis semi lattices which involve sets of values. So, for example,
+[00:04:12 -> 00:04:19] we had sets of variables or sets of definitions. And in these semi lattices,
+[00:04:19 -> 00:04:25] the set of values is basically sets of, so a value is nothing but a set of variables,
+[00:04:25 -> 00:04:30] right? So how many different values are possible? Well, if there are n variables
+[00:04:30 -> 00:04:36] in my program, then there are two to the power n different sets, distinct sets that I can
+[00:04:36 -> 00:04:40] create out of those n variables. And so what is the size of V, which is a set of values in
+[00:04:40 -> 00:04:45] my semi lattice? It's actually two to the power n, right? And so because n can be pretty
+[00:04:45 -> 00:04:50] large for a reasonably large program, maybe, you know, maybe a hundred lines of code or
+[00:04:50 -> 00:04:54] thousand lines of code or even 10,000 or million lines of code, the number of variables
+[00:04:54 -> 00:04:59] can be proportional to that. So let's say 100,000 or 10,000. And so two to the power
+[00:04:59 -> 00:05:03] 100,000 is a very, very large number. And that's actually the size of the semi lattice
+[00:05:03 -> 00:05:08] on which we are computing our data flow analysis. So the point is that the semi
+[00:05:08 -> 00:05:15] lattices for DFA problems can often become very large, all right? And so one idea here
+[00:05:15 -> 00:05:23] is to represent semi lattices using product of smaller semi lattices, all right? So we
+[00:05:23 -> 00:05:28] can take a product of semi lattices to obtain larger semi lattices and to see how that
+[00:05:28 -> 00:05:35] may work. Let's say you have two semi lattices. One has set of values V1 and its own
+[00:05:35 -> 00:05:39] partial order, let's say less than equal to one. And then another semi lattice has
+[00:05:39 -> 00:05:44] set of values V2, which may or may not overlap with V1. And another set of another
+[00:05:44 -> 00:05:49] partial order relation called less than equal to two. Now I can take a product of
+[00:05:49 -> 00:05:54] these semi lattices and I'm going to call it, the set of values will be formed by the
+[00:05:54 -> 00:06:01] Cartesian product of the two sets V1 and V2, right? So for every element x1 in V1
+[00:06:01 -> 00:06:09] and x2 in V2, there exists an element x1, x2 in V1 cross V2. So if V1 has m elements
+[00:06:09 -> 00:06:15] and V2 has n elements, then the number of elements in V1 cross V2 is m into n.
+[00:06:16 -> 00:06:20] And also we need to define a less than equal to operator on this product semi lattice.
+[00:06:20 -> 00:06:25] And we define it as follows. We say x1, x2, which is a value in V1 cross V2, is less than
+[00:06:25 -> 00:06:33] equal to y1, y2, if and only if x1 is less than equal to y1 and x2 is less than equal
+[00:06:33 -> 00:06:38] to y2. So we can define a product in this way. And using products, we can basically
+[00:06:39 -> 00:06:45] construct larger semi lattices and it would still be a valid partial order with this
+[00:06:45 -> 00:06:50] definition in the sense that it would still obey our properties of reflexivity,
+[00:06:50 -> 00:07:00] anti-symmetry and transitivity. Another way to say the same thing would have been to
+[00:07:00 -> 00:07:06] basically represent the semi lattice using a meet operator. So I could have said that
+[00:07:06 -> 00:07:16] V1, meet 1 and V2, meet 2. So here I am trying to define a product using the individual meet
+[00:07:16 -> 00:07:21] operators. So let's say my semi lattices were defined using the meet operator,
+[00:07:21 -> 00:07:33] then I can say that x1, x2 meet of y1, y2. I want to define this and where meet is for the
+[00:07:33 -> 00:07:39] product lattice. So I can subscript it using 1 cross 2. So this is meet 1, this is meet 2
+[00:07:39 -> 00:07:46] and this is meet 1 cross 2. So what is x1, x2 meet of y1, y2? Well, we can derive from
+[00:07:46 -> 00:08:00] this definition that x1, x2 meet of y1, y2 would be nothing but x1 meet 1, y1, x2 meet 2,
+[00:08:01 -> 00:08:10] y2. And that's another interesting kind of duality between the less than equal to operator and the
+[00:08:10 -> 00:08:19] meet operator. So if the meet operator is defined as this, then if the partial order is defined as
+[00:08:19 -> 00:08:23] this, then the meet operator turns out to be this and vice versa. So I could have actually
+[00:08:23 -> 00:08:29] specified the product lattice, product semi lattice as using the meet operators by defining
+[00:08:29 -> 00:08:33] the meet operator of the product semi lattice in terms of the meet operators of the individual
+[00:08:33 -> 00:08:38] lattices and I would have and I could derive this definition from that. So all these definitions
+[00:08:38 -> 00:08:44] are equivalent and that's a very interesting fact about semi lattices and I'll kind of
+[00:08:44 -> 00:08:50] leave this again as exercise for you to derive this on your own. All right, so here is an
+[00:08:50 -> 00:08:54] example of product of semi lattices. So let's say I was interested in doing reaching
+[00:08:54 -> 00:09:01] definitions and here my set of values is basically sets of definitions. So a single value is
+[00:09:01 -> 00:09:08] a single set of definitions. So what I could do is I could create different semi lattices for
+[00:09:09 -> 00:09:14] different definitions. For example, definition D1, I create a semi lattice with two values.
+[00:09:14 -> 00:09:19] One is the empty set and one is the full set which is the set that contains the only
+[00:09:19 -> 00:09:24] definition D1. Similarly, I could create another semi lattice for D2 which is also going to have
+[00:09:24 -> 00:09:29] two values the empty set and the full set which is the singleton set that contains D2.
+[00:09:30 -> 00:09:34] And for each of these semi lattices, I would define the less than equal to operator.
+[00:09:34 -> 00:09:38] In case of reaching definitions, recall that the less than equal to is nothing but superset
+[00:09:38 -> 00:09:44] and so the arrow will be drawn from the empty set to the full set and that's true for
+[00:09:44 -> 00:09:50] both cases. Now if I take the product of these two semi lattices, I get the following
+[00:09:50 -> 00:09:57] My product lattice is going to have four elements, Cartesian product. So the first element is going
+[00:09:57 -> 00:10:03] to be empty comma empty, the second is going to be empty comma D2, the third is going to be D1
+[00:10:03 -> 00:10:09] comma empty and the fourth is going to be D1 comma D2. Moreover, I can also draw edges for
+[00:10:09 -> 00:10:17] my less than equal to operator and basically I draw an edge only if each of the elements
+[00:10:17 -> 00:10:23] in the tuple are individually obeying the less than equal to operation in their respective semi
+[00:10:23 -> 00:10:28] lattice. So because empty set is less than equal to empty set and D2 is less than equal
+[00:10:28 -> 00:10:32] to empty set, I can draw this edge. Similarly, I can draw this edge to D1 comma
+[00:10:34 -> 00:10:38] empty set and similarly I could draw these edges at the bottom.
+[00:10:38 -> 00:10:43] And once again, I avoid drawing edges that are already covered by transitive parts in this
+[00:10:43 -> 00:10:50] semi lattice diagram. But we know that D1 comma D2, this semi lattice diagram implies the fact
+[00:10:50 -> 00:10:56] that D1 comma D2 is less than equal to empty comma empty. Moreover, we can interpret these
+[00:10:56 -> 00:11:01] values which are actually ordered tuples as just sets and basically we could just say okay,
+[00:11:01 -> 00:11:06] we just take the union of these ordered values and kind of treat them like that.
+[00:11:06 -> 00:11:10] This really depends on the particular problem that you're interested in and whether it is
+[00:11:10 -> 00:11:15] okay to do this or not. But if it's okay to do this, then I could just take the union of the
+[00:11:15 -> 00:11:20] two parts of this ordered tuple and again, this would give me empty, this would give me just D2,
+[00:11:20 -> 00:11:26] D1 and D1 comma D2. And so this is one example where I have composed or taken a product of
+[00:11:26 -> 00:11:31] two individual semi lattices, each of which had was basically a semi lattice for a single
+[00:11:31 -> 00:11:35] definition to create a larger semi lattice that has two definitions. Then I could keep
+[00:11:35 -> 00:11:40] doing this and generalize this to N different definitions.

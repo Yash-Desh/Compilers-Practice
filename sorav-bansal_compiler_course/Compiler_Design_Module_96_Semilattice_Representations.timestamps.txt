@@ -1,0 +1,261 @@
+Title: Compiler Design Module 96 : Semilattice Representations
+Video ID: F0uvkORrTTg
+Detected language: en
+------------------------------------------------------------
+
+[00:00:00 -> 00:00:05] So, we've been talking about the dataflow analysis framework and we said that the semi-lattice
+[00:00:05 -> 00:00:11] which is formed by the set of values v and the meet operator forms the semi-lattice and
+[00:00:11 -> 00:00:16] then we talked about what are some properties of the meet operator that must be true for
+[00:00:16 -> 00:00:21] it to be a semi-lattice, a valid semi-lattice that can be part of the dataflow analysis
+[00:00:21 -> 00:00:22] framework.
+[00:00:22 -> 00:00:30] So, the semi-lattice is represented by two symbols capital V which is the set of values
+[00:00:30 -> 00:00:36] and the carrot operator which is the meet operator and this and together they basically can be
+[00:00:36 -> 00:00:37] called a semi-lattice.
+[00:00:37 -> 00:00:42] We also discussed how a semi-lattice can be expressed using a semi-lattice diagram.
+[00:00:42 -> 00:00:49] So here basically I show values which are formed by a tuple, a true tuple of true
+[00:00:50 -> 00:00:58] so that four values the set V is true, true, false, true, true, false and false, false
+[00:00:58 -> 00:01:03] and the meet operator is basically logical and for both the bits so think about it
+[00:01:03 -> 00:01:08] as and of each of the two ordered elements in the ordered tuple.
+[00:01:08 -> 00:01:15] So, if I use this then the semi-lattice diagram that appears is basically something
+[00:01:15 -> 00:01:19] like the following, true, true, false, true is less than equal to true, true because
+[00:01:20 -> 00:01:26] false is going to be less than equal to true if the meet operator is and similarly true,
+[00:01:26 -> 00:01:31] false is less than equal to true, true that's just symmetrical but there is no relationship
+[00:01:31 -> 00:01:35] between false, true and true, false because one of the elements is less but the other
+[00:01:35 -> 00:01:39] element is greater and so they are kind of not comparable but then there's a false
+[00:01:39 -> 00:01:43] element false, false which is the bottom element here because it's less than equal
+[00:01:43 -> 00:01:46] to all the other elements in the set V.
+[00:01:46 -> 00:01:51] Now the question here is you know if I know that the meet operator is logical and then
+[00:01:51 -> 00:01:57] how do I get this diagram automatically or another way to put this question is from
+[00:01:57 -> 00:02:01] the meet operator how do I derive the partial order which is the less than equal
+[00:02:01 -> 00:02:05] to operator and so here is the answer we can define the partial order through
+[00:02:05 -> 00:02:12] the meet operator using the following definition we say that a is less than equal to b
+[00:02:12 -> 00:02:22] if and only if a meet b equals a for all a and b right so if a is less than equal
+[00:02:22 -> 00:02:28] to b if and only if a meet b equals a now in our example that we had on our previous
+[00:02:28 -> 00:02:34] slide and also on this slide meet is basically nothing but logical and so a is less than
+[00:02:34 -> 00:02:40] equal to b if a meet b equals a so now if I want to ask whether false, true is less
+[00:02:40 -> 00:02:45] than equal to true, true what do I want to ask I want to ask whether the and of false,
+[00:02:45 -> 00:02:52] true with true, true does it give me false, true back and the answer is yes and so we
+[00:02:52 -> 00:02:58] can say that false, true is less than equal to true, true right so once again I want
+[00:02:58 -> 00:03:07] I'm going to check whether false, true and meet with true, true what does it give
+[00:03:07 -> 00:03:12] me and in this case it actually gives me false, true back and if that's true that basically
+[00:03:12 -> 00:03:20] means that a meet b equals a and so false, true is less than equal to true, true because
+[00:03:20 -> 00:03:25] a meet b gives me a back so a is less than equal to b so false, true is less than equal
+[00:03:25 -> 00:03:29] or true, true so from the meet operator we can derive the less than equal to operator
+[00:03:29 -> 00:03:34] using this definition that a is less than equal to b if and only if a meet b equals
+[00:03:34 -> 00:03:39] a so I just need to check whether a meet b equals a if it is then a is less than equal to b if it
+[00:03:39 -> 00:03:45] is not then we can't say that a is less than equal to b all right and so all these relations
+[00:03:45 -> 00:03:50] I can so from the meet operator logical and I was able to derive the less than equal to
+[00:03:50 -> 00:03:53] relation and that's how I am drawing this diagram and I've been doing this in the
+[00:03:53 -> 00:04:00] past few lecture modules also but now we have clarity on what exactly is the method
+[00:04:00 -> 00:04:06] to arrive at these less than equal to relationships which define the partial order among the set of
+[00:04:06 -> 00:04:12] values v so it's also true for all the other values for example true comma false is less than
+[00:04:12 -> 00:04:17] equal to true comma true because the and of the two gives me true comma false similarly false
+[00:04:17 -> 00:04:21] comma false is less than equal to everything else because anything that is anded with false
+[00:04:21 -> 00:04:27] comma false gives me false comma false back and so I can use this method to basically determine
+[00:04:27 -> 00:04:33] what is less than equal to what all right or in other words I can determine the partial order
+[00:04:33 -> 00:04:40] from the meet operator now so in the important point I'm making here is that the meet operator
+[00:04:40 -> 00:04:46] also defines the partial order so it is enough to justify the meet operator from that the
+[00:04:46 -> 00:04:51] partial order just follows because the definition of the partial for order is exactly this that a
+[00:04:51 -> 00:04:56] is less than equal to b if and only if a meet b equals a so if I know the meet operator
+[00:04:56 -> 00:05:00] I can derive the partial order from that and that's why when we talk about a semi lattice
+[00:05:00 -> 00:05:04] it's just v comma meet operator we don't we don't have to specify the less than equal to operator
+[00:05:04 -> 00:05:11] separately now the other interesting question is that is the converse true so can I derive the
+[00:05:11 -> 00:05:15] meet operator from the less than equal to operator and the answer is again yes so it is
+[00:05:15 -> 00:05:19] okay to not define the meet operator but instead define the partial order operator less
+[00:05:19 -> 00:05:23] than equal to and if you know if you do that then meet operator follows from that all right so
+[00:05:23 -> 00:05:29] here is how you can do that so you can define meet from less than equal to so let's say somebody
+[00:05:29 -> 00:05:34] gives you a partial order less than equal to relation and a set of values v then you can
+[00:05:34 -> 00:05:39] derive the meet operator from that and how do you derive that well you will say that
+[00:05:39 -> 00:05:42] aim you won't basically you know how do you define the meet operator you want to
+[00:05:42 -> 00:05:46] so this is the meet operator a meet b and you want to know what is the value c
+[00:05:46 -> 00:05:51] which it results in so for every pair of values a and b in set v I want to know what
+[00:05:51 -> 00:05:58] is a meet b right and so I and what I'm given is I'm giving less than equal to so a meet b will
+[00:05:58 -> 00:06:05] be equal to c if and only if c is less than equal to a and b so c is less than equal to both
+[00:06:05 -> 00:06:12] a and b c is less than equal to a and c is less than equal to b and there does not exist d
+[00:06:14 -> 00:06:23] such that d is less than equal to a d is less than equal to b and c is less than equal to d
+[00:06:23 -> 00:06:26] So it's the greatest lower bound, right, so that's what the meet operator is.
+[00:06:26 -> 00:06:33] So basically c should be such that there does not exist another d such that d is also less
+[00:06:33 -> 00:06:37] than equal to both a and b, yet d is greater than equal to c, right.
+[00:06:37 -> 00:06:42] So actually this should be not greater than equal to but less, I should say strictly
+[00:06:42 -> 00:06:43] greater than.
+[00:06:43 -> 00:06:50] So it shouldn't be that there exists a d which is not equal to c and yet d is greater
+[00:06:50 -> 00:06:56] less than equal to both a and b and so then I won't say that c is the result, c should
+[00:06:56 -> 00:06:57] be the greatest lower bound.
+[00:06:57 -> 00:07:00] So the first two conditions basically say that it should be a lower bound and the third
+[00:07:00 -> 00:07:04] condition says it should be the greatest such lower bound, there should not be any
+[00:07:04 -> 00:07:10] other element that is greater than c which is also a lower bound of both a and b.
+[00:07:10 -> 00:07:14] So for example if I know, you know, if my set of values is false and true and
+[00:07:14 -> 00:07:19] let's say my partial order operator says that false is less than equal to true, then
+[00:07:19 -> 00:07:20] what is the meet operator?
+[00:07:20 -> 00:07:25] Well, you're going to say, okay, so there are only two values, so basically want to
+[00:07:25 -> 00:07:34] check what is true meet true and what is false meet true and that's it, right, because
+[00:07:34 -> 00:07:40] meet is a commutative operator, so I don't need to and then what is false meet false.
+[00:07:40 -> 00:07:48] If I define these three relations, then basically I know my meet operator and how
+[00:07:48 -> 00:07:50] do I identify what are these relations?
+[00:07:50 -> 00:07:55] So when I say what is true meet true, I want to identify a value which is less than
+[00:07:55 -> 00:07:59] equal to both true and true, so which is less than equal to true pretty much and
+[00:07:59 -> 00:08:01] it is the greater such value.
+[00:08:01 -> 00:08:04] So what is the greater such value which is less than equal to true?
+[00:08:04 -> 00:08:08] It is true itself, so the answer is actually true.
+[00:08:08 -> 00:08:09] What about false meet true?
+[00:08:09 -> 00:08:12] Well, what is the greater such value which is less than equal to both false
+[00:08:12 -> 00:08:13] and true?
+[00:08:13 -> 00:08:17] Notice that false is less than equal to true, so the greater such value which
+[00:08:17 -> 00:08:21] is less than equal to false and true is the greatest value that is less than
+[00:08:21 -> 00:08:24] equal to false because false is less than equal to true and so here it's
+[00:08:24 -> 00:08:30] going to be false and similarly false meet false is also false and so from
+[00:08:30 -> 00:08:36] this information of the less than equal to relation I was able to derive the
+[00:08:36 -> 00:08:40] meet operator in other words I can define the meet operator from less
+[00:08:40 -> 00:08:43] than equal to using this particular definition that I have shown on this
+[00:08:43 -> 00:08:49] particular slide so what does it tell us it tells us that I can either define the
+[00:08:49 -> 00:08:52] meet operator or I define the less than equal to operator it's one and the same
+[00:08:52 -> 00:08:55] thing because there I can derive one from the other I can derive the partial
+[00:08:55 -> 00:08:59] order from the meet operator and vice versa all right I can derive the meet
+[00:08:59 -> 00:09:03] operator from the partial order and so a semi lattice can be defined either
+[00:09:03 -> 00:09:09] using the meet operator or using the less than equal to operator now
+[00:09:09 -> 00:09:12] there's a third way to basically represent a semi lattice and we have
+[00:09:12 -> 00:09:16] been doing this all along and that is a graphical way of representing the
+[00:09:16 -> 00:09:21] semi lattice and and in the graphical way we basically draw a diagram in
+[00:09:21 -> 00:09:26] which we basically have nodes as all the values in V and then we have
+[00:09:26 -> 00:09:31] edges if the if there is a less than equal to relation but what is the
+[00:09:31 -> 00:09:36] how do we basically decide when to draw an edge in the diagram X less
+[00:09:36 -> 00:09:42] than equal to indicates that there is a path from X to Y so if X is less
+[00:09:42 -> 00:09:47] than equal to Y in this diagram then there must be a path from X to Y and
+[00:09:47 -> 00:09:50] vice versa so there should be X would be less than equal to Y in the
+[00:09:50 -> 00:09:55] diagram if and only if there exists a path from X to Y in the semi lattice
+[00:09:55 -> 00:10:00] diagram and notice that I'm saying path and not edge for example false
+[00:10:00 -> 00:10:03] comma false is less than equal to true comma true but there is no edge
+[00:10:03 -> 00:10:08] from true comma true to false comma false but there is a path which goes
+[00:10:08 -> 00:10:13] through false comma true which basically from true comma true to false
+[00:10:13 -> 00:10:17] comma false and so I can I can infer that false comma false is less than
+[00:10:17 -> 00:10:21] equal to true comma true right and actually there are two such paths
+[00:10:21 -> 00:10:27] but even if there is one such path I should be able to say that A is less
+[00:10:27 -> 00:10:29] than equal to B so that's the correspondence between the semi lattice
+[00:10:29 -> 00:10:34] diagram and the less than equal to operator now once again it's a vice
+[00:10:34 -> 00:10:40] versa it's an if and only if relation so X is less than equal to Y if and only
+[00:10:40 -> 00:10:45] if there exists a path in the semi lattice diagram from X to Y and and so
+[00:10:45 -> 00:10:49] I could instead of using the less than equal to operator to define the
+[00:10:49 -> 00:10:54] semi lattice I could actually just have the graphical representation of
+[00:10:54 -> 00:10:58] the semi lattice as I've drawn in this particular example and that would
+[00:10:58 -> 00:11:02] be equivalent right because from the semi lattice I can derive the less
+[00:11:02 -> 00:11:06] than equal to I just need to check whether there is a path or not from
+[00:11:06 -> 00:11:10] between X and Y and from the less than equal to operator I can derive the
+[00:11:10 -> 00:11:14] semi lattice I just need to draw edges from such that you know between
+[00:11:14 -> 00:11:17] things that are not that are that are the less than equal to operation
+[00:11:17 -> 00:11:21] but but I do worry about transitivity so we're going to talk about that
+[00:11:21 -> 00:11:25] next alright so before we talk about that what are some properties of the
+[00:11:25 -> 00:11:30] partial order so it is not okay to for the partial order to be any such
+[00:11:31 -> 00:11:35] relation it needs to have some properties for it to be a valid semi lattice recall
+[00:11:35 -> 00:11:39] that we define some properties on the meet operator for the semi lattice to be
+[00:11:39 -> 00:11:43] a valid semi lattice what were those properties idempotence commutativity
+[00:11:43 -> 00:11:47] associativity and I said if the meet operator has these properties then it
+[00:11:47 -> 00:11:50] is a semi lattice and we also discussed some examples of operators
+[00:11:50 -> 00:11:54] such as add for example that is not a meet operator and so anything which
+[00:11:54 -> 00:11:58] has add as a meet operator is not a semi lattice so similarly I need some
+[00:11:58 -> 00:12:01] properties on the less than equal to operator and the less than or equal to
+[00:12:01 -> 00:12:05] operator properties are that it should be reflexive which means X should be
+[00:12:05 -> 00:12:09] less than equal to X so X and X should be related through that relation it
+[00:12:09 -> 00:12:13] should be anti-symmetric which means if X is less than equal to Y and Y is
+[00:12:13 -> 00:12:18] less than equal to X this both these statements imply that X must be equal
+[00:12:18 -> 00:12:23] to Y so the only reason why X you know both X is less than equal to Y
+[00:12:23 -> 00:12:27] and Y is less than equal to X hold is that if both of them are the same
+[00:12:27 -> 00:12:34] element related to the equality relation and then transitive if X is less than
+[00:12:34 -> 00:12:38] equal to Y and Y is less than equal to Z then that should imply that X is less
+[00:12:38 -> 00:12:42] than equal to them so these are some properties of any ordering relation
+[00:12:42 -> 00:12:46] that we take for granted and that's why it's being represented using the
+[00:12:46 -> 00:12:49] less than equal to operator but it's important to spell them out and the
+[00:12:49 -> 00:12:54] properties once again are reflexive anti-symmetric and transitive and the
+[00:12:54 -> 00:12:58] less than or equal to operator should be all three of them for this to be a
+[00:12:58 -> 00:13:02] valid semi lattice and this is these are both necessary and sufficient
+[00:13:02 -> 00:13:06] conditions so which means and this is the interesting property that the
+[00:13:06 -> 00:13:11] properties of the meet operator that we discussed for it to be semi lattice
+[00:13:11 -> 00:13:14] which was anti-idempotence commutativity and associativity
+[00:13:14 -> 00:13:18] guarantee these properties of the partial order by the definition so we
+[00:13:18 -> 00:13:22] call that in the previous slides we defined meet using less than equal to
+[00:13:22 -> 00:13:26] and vice versa and using those definitions we can prove that if the less than
+[00:13:26 -> 00:13:30] equal to operator is reflexive anti-symmetric and transitive then the
+[00:13:30 -> 00:13:33] meet operator must be idempotent commutative and associative and vice
+[00:13:33 -> 00:13:37] versa so in other words if we know that the meet operator is idempotent
+[00:13:37 -> 00:13:40] commutative and associative then the less than equal to operator as
+[00:13:40 -> 00:13:45] defined previously must be reflexive anti-symmetric and transitive so this
+[00:13:45 -> 00:13:48] is an interesting property I'm not doing the proof but you know you can
+[00:13:48 -> 00:13:55] take that as a take home exercise it will be easy for you to see that if one
+[00:13:55 -> 00:13:58] of these operators satisfies all these three properties the other operators
+[00:13:58 -> 00:14:04] that satisfy its properties in for example as we have discussed alright
+[00:14:04 -> 00:14:08] so we typically talk about the partial order using the less than equal to
+[00:14:08 -> 00:14:11] operator but sometimes it is also convenient to talk about the less
+[00:14:11 -> 00:14:15] than operator without the equal to all right and the definition is very
+[00:14:15 -> 00:14:21] simple A is less than B if and only if A is less than equal to B and B is not
+[00:14:21 -> 00:14:26] less than equal to A in other words based on our anti-symmetric property we
+[00:14:26 -> 00:14:29] are basically saying that A is less than equal to B and A is not equal to
+[00:14:29 -> 00:14:33] B and that's exactly what we usually mean by the less than operator was
+[00:14:33 -> 00:14:37] with a V the less than equal to operator it should be less than equal
+[00:14:37 -> 00:14:41] to B and A should not be equal to B one way to represent not equal to is
+[00:14:41 -> 00:14:47] to say that B is not less than equal to A and if these two relations hold then A
+[00:14:47 -> 00:14:51] is less than B and that's the definition of A is less than B so it's
+[00:14:51 -> 00:14:58] an if and only if all right so finally we we have two different represent
+[00:14:58 -> 00:15:01] ways of representing a semi lattice one is using the meet operator and
+[00:15:01 -> 00:15:05] others using the less than equal to operator and that we have a third way
+[00:15:05 -> 00:15:08] which I said is the semi lattice diagram where we basically check for
+[00:15:08 -> 00:15:14] paths between two values to see whether you know to decide the ordering relation
+[00:15:14 -> 00:15:18] the partial ordering relation but the question is given a less than equal to
+[00:15:18 -> 00:15:24] operator how do I obtain the semi lattice diagram the other side we have
+[00:15:24 -> 00:15:27] already done so if we have the semi lattice diagram it's very easy to
+[00:15:27 -> 00:15:29] figure out the less than equal to operator right we just figure out
+[00:15:29 -> 00:15:33] whether there's a path and the semi lattice diagram if there is then it
+[00:15:33 -> 00:15:37] is less than then the less than equal to is holds and but what about the
+[00:15:37 -> 00:15:42] other way the other way is also easy if I have the less than equal to operator
+[00:15:42 -> 00:15:46] then I basically have can draw a semi lattice diagram as follows for the set
+[00:15:46 -> 00:15:49] of nodes it will be the set of values for every value I will have a node
+[00:15:49 -> 00:15:55] and for the set of edges I'm going to draw an edge from Y to X if I know
+[00:15:55 -> 00:15:59] that X is less than Y strictly less than Y not equal to right I'm not
+[00:15:59 -> 00:16:03] going to draw edges between equal elements so X is less than Y and
+[00:16:03 -> 00:16:09] there does not exist Z such that X is less than Z and Z is less than Y so there
+[00:16:09 -> 00:16:14] should not be any transitive way of expressing this relationship X is less
+[00:16:14 -> 00:16:18] than Y so there should not be any middle node Z such that X is less than
+[00:16:18 -> 00:16:22] Z and Z is less than Y and if there is such a Z then I don't need to draw
+[00:16:22 -> 00:16:27] an edge from X to Y because I already will have a path from X to Z and
+[00:16:27 -> 00:16:33] then Z to Y so so basically the set of edges basically are kind of the you
+[00:16:33 -> 00:16:37] know filtered out versions of the less than equal to relationship because I
+[00:16:37 -> 00:16:41] basically don't want to catch I want to capture transitivity using paths and
+[00:16:41 -> 00:16:47] not necessarily direct edges so what does it tell us that less than equal
+[00:16:47 -> 00:16:52] to and semi lattice diagram are kind of equivalent we can switch between
+[00:16:52 -> 00:16:55] the two representations at will like we have already discussed how to go
+[00:16:55 -> 00:16:59] from semi lattice diagram to less than equal to on this slide we have discussed
+[00:16:59 -> 00:17:02] how to go from the semi lattice from the less than equal to operator to the
+[00:17:02 -> 00:17:08] semi lattice diagram okay let's take some examples so let's say that I
+[00:17:08 -> 00:17:14] have I'm given the meet operator and the meet operator is set union and I
+[00:17:14 -> 00:17:18] want to know what is the partial order right now we know how do I
+[00:17:18 -> 00:17:22] figure out how do I figure out the partial order from the meet operator I'm
+[00:17:22 -> 00:17:27] going to check so I'm going to say that you know if I want to say whether A is
+[00:17:27 -> 00:17:31] less than equal to B I'm going to that is equivalent to saying whether A meet
+[00:17:31 -> 00:17:37] B equals A or not right so in this case the meet operator is the union
+[00:17:37 -> 00:17:41] and so I'm going to check X is less than equal to Y is nothing but
+[00:17:41 -> 00:17:46] checking X union Y because union is the meet operator if whether X union Y
+[00:17:46 -> 00:17:51] equals X or not and when will X union Y be equal to X well that's
+[00:17:51 -> 00:17:57] exactly the when that will happen exactly if X was a superset of Y because
+[00:17:57 -> 00:18:00] you know if you add unioning all the elements in Y into X and you're still
+[00:18:00 -> 00:18:04] getting X that basically means that X is a superset of Y and so that
+[00:18:04 -> 00:18:07] basically tells us that X is less than equal to Y is same as saying
+[00:18:07 -> 00:18:11] that X is a superset of Y in other words less than equal to is
+[00:18:11 -> 00:18:14] nothing but the superset operator right so if we know that the meet
+[00:18:14 -> 00:18:19] operator is the union set union then we also know that the partial order is
+[00:18:19 -> 00:18:23] the superset operator we have been saying this informally so far but here is a
+[00:18:23 -> 00:18:28] formal way of deriving this partial order from the meet operator here is
+[00:18:28 -> 00:18:32] another example let's say the meet operator is set intersection so once
+[00:18:32 -> 00:18:36] again I could just say that X is less than equal to Y is the same as
+[00:18:36 -> 00:18:41] saying that X intersection Y in this case equals X which is the same as
+[00:18:41 -> 00:18:45] saying that X is a subset of Y because if X intersection Y is X that
+[00:18:45 -> 00:18:51] basically means that Y has all the elements that X has in other words X is
+[00:18:51 -> 00:18:55] a subset of Y and here is a way of representing the same information using
+[00:18:55 -> 00:19:01] a semi lattice diagram so you know I already know that less than equal to
+[00:19:01 -> 00:19:06] is the subset relation and so I basically say you know I have let's
+[00:19:06 -> 00:19:11] say my set of values were four values empty set singleton sets D1
+[00:19:11 -> 00:19:16] and D2 and the full set D1 comma D2 then I basically want to draw edges I know
+[00:19:16 -> 00:19:20] that D1 is less than equal to D1 comma D2 and there it does not exist
+[00:19:20 -> 00:19:24] anything in the middle so I'm going to draw an edge from D1 comma D2 to D1
+[00:19:24 -> 00:19:28] similarly D1 comma D2 to D2 and similarly these two edges from D1
+[00:19:28 -> 00:19:34] and D2 to the empty set notice that I kind of didn't draw this edge from
+[00:19:34 -> 00:19:40] D1 comma D2 to the empty set I didn't draw this because I don't want
+[00:19:40 -> 00:19:45] to draw edges where the transitive relations already imply the less than
+[00:19:45 -> 00:19:50] equal to operator relation

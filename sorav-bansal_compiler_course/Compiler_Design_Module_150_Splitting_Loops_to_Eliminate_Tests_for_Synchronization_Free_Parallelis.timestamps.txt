@@ -1,0 +1,308 @@
+Title: Compiler Design Module 150  : Splitting Loops to Eliminate Tests for Synchronization Free Parallelis
+Video ID: apbvyVVYPpA
+Detected language: en
+------------------------------------------------------------
+
+[00:00:00 -> 00:00:05] Last time we were talking about how we could remove the empty iterations or tighten the loop bounds.
+[00:00:05 -> 00:00:09] And this is the solution that we have after tightening the loop bounds
+[00:00:09 -> 00:00:15] for the running example that we've been using. So for p from minus 101 to 100,
+[00:00:15 -> 00:00:23] for i from max of 0, p to min of 100, 101 plus p, for j equals max of 0, i minus p minus 1
+[00:00:24 -> 00:00:29] to min of 100, i minus p. So notice that the maximum number of iterations of the inner most
+[00:00:29 -> 00:00:38] loop is actually going to be only 2. And if p equals i minus j minus 1, s1. If p equals i minus j, s2.
+[00:00:39 -> 00:00:48] Now this is almost as good as it can get except that we have a lot of unnecessary tests or
+[00:00:48 -> 00:00:54] comparisons or predicate checks. For example, when we have different values of j, we are
+[00:00:54 -> 00:00:59] basically checking whether p equals i minus j minus 1 repeatedly. And similarly, we are
+[00:00:59 -> 00:01:04] checking if p equals i minus j repeatedly. And the reason these checks need to be here,
+[00:01:04 -> 00:01:12] for example, is because s1 and s2 have distinct polyhedrons, polyhedra and represent distinct
+[00:01:12 -> 00:01:17] polyhedra. The iteration spaces of s1 and s2 represent distinct polyhedra. And when I take
+[00:01:17 -> 00:01:22] the union, I get a non-convex space. And then when I actually create the loop nest,
+[00:01:22 -> 00:01:29] I basically identify the tight polyhedron that encloses both the individual polyhedra
+[00:01:31 -> 00:01:35] such that it encloses it in the tightest possible way. And now when I do that,
+[00:01:35 -> 00:01:41] I need to have these predicates. And once again, the problem is occurring because there were
+[00:01:41 -> 00:01:45] two different polyhedra because of two different statements, two or more different statements
+[00:01:45 -> 00:01:50] that had to be enclosed in a larger polyhedra. And when you do that, you get some extra
+[00:01:50 -> 00:01:55] iterations for each statement, which you didn't really want. And so you had to do these tests.
+[00:01:56 -> 00:02:02] Now, one way to get rid of these tests. Now, one question is, does it matter if there are these
+[00:02:02 -> 00:02:07] extra tests? You may say, oh, it's only order one extra computation. But as a compiler,
+[00:02:07 -> 00:02:15] we would ideally like to also remove these extra order one tests that we have in our code.
+[00:02:15 -> 00:02:20] And you're going to do that at the cost of potentially duplicating some of the code.
+[00:02:20 -> 00:02:25] So first of all, what is the problem? The problem is that there are these tests that are
+[00:02:25 -> 00:02:30] happening on every iteration. And these are meant to be there so that you can remove
+[00:02:30 -> 00:02:34] the extra iterations that are being caused because of the larger
+[00:02:34 -> 00:02:38] enclosing polyhedron that we have created through the loop nest.
+[00:02:39 -> 00:02:43] So for example, for the statement one, I need to check if P equals I minus J minus one.
+[00:02:43 -> 00:02:47] This test is going to evaluate to true for most of the iterations,
+[00:02:47 -> 00:02:52] except for certain corner case iterations for which it was only S2 that had to run.
+[00:02:52 -> 00:02:58] Similarly, the test for S2 is going to evaluate to true for most of the iterations,
+[00:02:58 -> 00:03:01] except for those corner case iterations for which S1 had to run.
+[00:03:01 -> 00:03:06] And so can we do better? Can we eliminate these tests on every iteration
+[00:03:06 -> 00:03:10] and specialize the code such that we don't have to do these tests on every iteration?
+[00:03:10 -> 00:03:12] So that's the topic of discussion today.
+[00:03:13 -> 00:03:18] So the idea is the following that we are going to split the partition space and duplicate code.
+[00:03:18 -> 00:03:24] So for example, I'm going to split the partition space of the topmost loop or on P.
+[00:03:24 -> 00:03:30] So for example, I can say, oh, let's divide minus 101 to 100 between two or three or four parts,
+[00:03:30 -> 00:03:34] such that for each part, I'm sure that either only S1 is going to execute
+[00:03:34 -> 00:03:39] or both S1 and S2 are going to execute or only S2 is going to execute.
+[00:03:40 -> 00:03:45] And keep doing this for each inner loop. And when I split, I basically create two
+[00:03:45 -> 00:03:50] different versions of the same loop. And so that's why I say that it amounts to code
+[00:03:50 -> 00:03:55] duplication. If code size is not an issue, this actually saves time because it removes
+[00:03:55 -> 00:03:59] some unnecessary tests on every iteration. So the algorithm that we're going to follow to
+[00:03:59 -> 00:04:03] do this is we're going to start with the outermost loop. For example, in this case,
+[00:04:03 -> 00:04:08] that's P and split the iteration space of the outermost loop such that each partition
+[00:04:08 -> 00:04:13] enables a different set of statements. It's different from the neighboring partitions.
+[00:04:13 -> 00:04:17] So for example, if there were N different statements, then the first partition may
+[00:04:17 -> 00:04:21] be enabling the first N minus one statement. The second maybe the second N minus one and
+[00:04:21 -> 00:04:26] so on and so forth, or some other kind of different partition. But the partition should
+[00:04:26 -> 00:04:31] be such that the neighboring partitions enable different statements from the current
+[00:04:31 -> 00:04:35] partition because otherwise you could have merged the two partitions into a single partition.
+[00:04:36 -> 00:04:41] And so we split such that each partition enables a different set of statements,
+[00:04:41 -> 00:04:45] different from neighboring partitions. And once we do that, then we generate the
+[00:04:45 -> 00:04:51] code accordingly. And once we are done with the outermost loop, then we basically see
+[00:04:51 -> 00:04:55] now we get multiple versions of the outermost loop. And maybe some of those versions of
+[00:04:55 -> 00:04:59] the outermost loop, we want to specialize further, we want to split further. And then
+[00:04:59 -> 00:05:03] we can split it on the inner loop. For example, in this case, it could be the I loop.
+[00:05:04 -> 00:05:08] And finally, we may want to split on the innermost loop in this example, that is
+[00:05:08 -> 00:05:13] the J loop. So let's look at an example on how this can be done. I'm not going to show
+[00:05:13 -> 00:05:18] the entire example, but basically show how a compiler may go about doing this in an
+[00:05:18 -> 00:05:24] automated fashion such that it is also methodical and meaningful. So if I look at
+[00:05:26 -> 00:05:30] the polyhedral space, so I'm going to first try and split on the outermost loop,
+[00:05:30 -> 00:05:36] which is iterating on the variable P. And so if I look at the polyhedron space of S1,
+[00:05:36 -> 00:05:39] recall that the whole problem is occurring because there are two statements which have
+[00:05:39 -> 00:05:44] different polyhedra and the loopness is basically an enclosing larger polyhedra that
+[00:05:44 -> 00:05:49] encloses the union of the two polyhedra. And so if I look at individual polyhedrons,
+[00:05:49 -> 00:05:53] so example, I look at the polyhedron formed by the iteration space of S1,
+[00:05:53 -> 00:05:58] I basically have these set of constraints. I say I is greater than equal to zero and I
+[00:05:58 -> 00:06:04] is less than equal to 100. J is greater than equal to zero and J is less than equal to 100.
+[00:06:04 -> 00:06:09] And then I also have the constraint that P equals I minus J minus one. Now once I use the Fourier
+[00:06:09 -> 00:06:14] Modescale method to project on P, this basically gives me the constraints that P should be
+[00:06:14 -> 00:06:22] between minus 101 and 99. Notice that these constraints of minus 101 and 99 are only for
+[00:06:22 -> 00:06:28] S1 polyhedron and it is for this reason that these constraints are different from my original
+[00:06:28 -> 00:06:34] solution which is from minus 101 to 100. So minus 101 to 100 actually has one extra iteration
+[00:06:34 -> 00:06:39] which is P equals 100 from the polyhedron of S1 and recall that P equals 100 is meaningful
+[00:06:39 -> 00:06:44] for S2 but not for S1 where S1 doesn't execute when P equals 100.
+[00:06:45 -> 00:06:50] So in any case, for S1 we get this projection on P from minus 101 to 99,
+[00:06:50 -> 00:06:57] which is actually a subset of the entire projection of both S1 and S2 on P. Similarly,
+[00:06:57 -> 00:07:02] I can do the same exercise for S2 and once again I have the same set of constraints,
+[00:07:02 -> 00:07:08] I between zero and 100, J between zero and 100 and P equals I minus J. So this is the difference
+[00:07:08 -> 00:07:13] between the previous S1 and S2 where it was I minus J minus one and here it is I minus J
+[00:07:14 -> 00:07:17] and when I project this polyhedron using the Fourier Modescale method,
+[00:07:17 -> 00:07:23] I get P is between minus 100 and 100. Once again, notice that minus 100 to 100 is
+[00:07:23 -> 00:07:29] different from minus 101 to 100 because there's one less iteration in this projection
+[00:07:29 -> 00:07:35] which is P equals minus 101. So these are the two projections, one for S1, one for S2
+[00:07:35 -> 00:07:41] on P. What does it tell us? How can I partition my space of P such that each
+[00:07:41 -> 00:07:45] partition basically executes a different number of, enables a different number of statements.
+[00:07:45 -> 00:07:53] So clearly for iteration, for value of P equals minus 101, it is only S1 that
+[00:07:53 -> 00:08:02] gets executed. For everything between minus 100 and 99, both S1 and S2 are getting executed
+[00:08:02 -> 00:08:09] and for P equals 100, only S2 is getting executed. So that naturally gives us three
+[00:08:09 -> 00:08:13] partitions and the compiler can use an automatic method to basically use these two
+[00:08:13 -> 00:08:17] projections and basically divide it into intervals such that each interval basically
+[00:08:17 -> 00:08:22] enables a different set of statements. So from this, we get three partitions.
+[00:08:22 -> 00:08:28] The first partition is just the point minus 101. So I'm just representing as a closed range,
+[00:08:28 -> 00:08:34] minus 101 to minus 101. The second partition is from minus 100 to 99 where both S1 and
+[00:08:34 -> 00:08:38] S2 are going to execute. In the previous partition, only S1 was going to execute
+[00:08:38 -> 00:08:42] and then we have a third partition which is plus 100 to plus 100 where only S2 is going
+[00:08:42 -> 00:08:48] to execute. And now once we have divided the topmost loop into these three partitions,
+[00:08:48 -> 00:08:54] we can specialise the code for each partition because now we don't need to actually do
+[00:08:54 -> 00:08:59] testing. We are sure that for this partition, it's only S1, for this partition, it's both S1
+[00:08:59 -> 00:09:03] and S2 and for this partition, it's only S2. And because we don't need to do any testing now,
+[00:09:03 -> 00:09:09] we can actually make the code faster because we can remove the if statements because of that.
+[00:09:09 -> 00:09:13] So I'm going to show you how we could generate the code for each of these partitions.
+[00:09:13 -> 00:09:18] So partition 1 which I'm going to call this partition 1 which is minus 101, partition 2
+[00:09:18 -> 00:09:24] which is everything between minus 100 and 99 and partition 3 which is plus 100 to plus 100.
+[00:09:25 -> 00:09:31] So here is the code for partition 1 on P. Notice that it's a singleton partition,
+[00:09:31 -> 00:09:35] so I can just say P equals minus 101. I don't even need a for loop for this partition
+[00:09:36 -> 00:09:41] and I'm going to find out that when P equals minus 101, I can only take one value which
+[00:09:41 -> 00:09:47] is 0. When I project the polyhedron of S1 at P equals minus 101, I'm going to find that it's
+[00:09:47 -> 00:09:53] only one value that I can take which is 0. Actually, there's only one value that J can take
+[00:09:53 -> 00:09:58] which is 100. Once again, I'm just using the Fourier Modeskin method to project the
+[00:09:58 -> 00:10:05] S1's polyhedron at the point when P equals minus 101. And this is the code for my S1's
+[00:10:05 -> 00:10:11] body which is Xij plus equals Yi minus 1j. And so this is the code. This is a simplified specialized
+[00:10:11 -> 00:10:16] code for partition 1 which looks much faster than the code that we had earlier but this is just
+[00:10:16 -> 00:10:21] for partition 1. In fact, I can also do constant propagation here to basically replace
+[00:10:21 -> 00:10:27] i with 0 and j with 100 and so on. So that's the code for partition 1 in which case it was
+[00:10:27 -> 00:10:31] a singleton partition so I could completely get rid of the loop but this is only the
+[00:10:31 -> 00:10:36] outer loop and then also the inner loops basically projected to singleton elements
+[00:10:36 -> 00:10:39] as well in this particular example. It is not necessary that if the outer loop is a
+[00:10:39 -> 00:10:43] singleton element then the inner loops will also project to singleton elements but in this case
+[00:10:43 -> 00:10:49] it just happened to be like that. Now let's look at the second partition which is this
+[00:10:49 -> 00:10:54] partition from minus 100 to 99. And here it is not a singleton partition so I basically
+[00:10:54 -> 00:11:01] have a loop just like before and say for p equals minus 100 to 99. Notice that the bounds
+[00:11:01 -> 00:11:08] are different. In my original code it was minus 101 to 99. This time I have minus 100 to 99
+[00:11:08 -> 00:11:14] and everything else remains identical. What have I gained? What I have gained is that I'm pretty
+[00:11:14 -> 00:11:22] sure that for these values of p I can be sure that I don't need to I mean you know maybe I
+[00:11:22 -> 00:11:27] don't need to check for if p equals i minus j minus 1 because these conditions are always going
+[00:11:27 -> 00:11:35] to be true. And finally there is the partition 3 which is p equals 100 comma 100 so I say p
+[00:11:35 -> 00:11:41] equals 100 and if I project on p equals 100 I get i equals 100 project on i and then when
+[00:11:41 -> 00:11:47] I project on j for p equals 100 and i equals 100 I get j equals 0 and this is the body of
+[00:11:47 -> 00:11:55] s2. So this is the body of s2 and that's my partition 3. So partition 1 and partition 3
+[00:11:55 -> 00:12:01] are really simple. Now let's look at partition 2 in more detail and maybe we want to specialize
+[00:12:01 -> 00:12:06] it further. We are making progress in the sense that we are removing the tests,
+[00:12:06 -> 00:12:10] eliminate the predicates on these statements and making the and that's hopefully making the
+[00:12:10 -> 00:12:20] code faster at the cost of increased code size. Okay so this is partition 2 on p and notice that
+[00:12:20 -> 00:12:26] we had p equals minus 100 to 99 and then everything else was identical to my original
+[00:12:26 -> 00:12:35] loop nest. Now I can do the same thing same trick on i so this time I want to project on
+[00:12:35 -> 00:12:41] this particular loop which is on i and once again I'm going to look at to the two different
+[00:12:41 -> 00:12:48] polyhedra one is because of s1 and one is because of s2. If I look at the polyhedron due to s1
+[00:12:48 -> 00:12:54] I have p is between minus 100 and 99. Notice that these are the new revised bounds that
+[00:12:54 -> 00:12:59] are caused by partition 2. For example it doesn't include minus 101 it doesn't include
+[00:12:59 -> 00:13:06] plus 100 all right i is greater than equal to 0 and i is greater than equal to p that's coming
+[00:13:06 -> 00:13:11] from i equals max of 0 comma p i is less than equal to 100 and i is less than equal to 101
+[00:13:11 -> 00:13:18] plus p that's coming from min of 100 comma 101 plus p j is greater than equal to 0 and j is
+[00:13:18 -> 00:13:23] greater than equal to i minus p minus 1 that's coming from this the innermost loops lower
+[00:13:23 -> 00:13:29] bound and j is less than equal to 100 and j is less than equal to i minus p that's coming
+[00:13:29 -> 00:13:35] from the upper bound of the innermost loop and finally for S1 we also have the relation
+[00:13:35 -> 00:13:39] that p equals i minus j minus 1.
+[00:13:39 -> 00:13:40] So what do I want to do?
+[00:13:40 -> 00:13:46] I want to project this polyhedron on i for a given value of p so you know because
+[00:13:46 -> 00:13:51] i is the inner loop not the outermost loop it's a second outermost loop I can
+[00:13:51 -> 00:13:57] assume that p value is available it is the value of p is available and now the
+[00:13:57 -> 00:14:02] remaining polyhedron after I take out p is a two-dimensional polyhedron on i and
+[00:14:02 -> 00:14:06] j and I want to project this remaining polyhedron on i and j on the
+[00:14:06 -> 00:14:11] dimension of i and I can just use the Fourier Modeskin method to do that
+[00:14:11 -> 00:14:14] and I claim that this is what these are the constraints that I'm going to
+[00:14:14 -> 00:14:17] get I'm going to say i is greater than equal to 0 i is greater than
+[00:14:17 -> 00:14:22] equal to p plus 1 notice that this is tighter than what we had earlier we had
+[00:14:22 -> 00:14:25] i is greater than equal to p but now I'm going to be able to say i is greater
+[00:14:25 -> 00:14:28] than equal to p plus 1 that's actually coming from this constraint that p
+[00:14:28 -> 00:14:33] equals i minus j minus 1 which is true only for S1 right so the reason
+[00:14:33 -> 00:14:38] I'm getting tighter bounds for i is because I'm only considering S1 and not
+[00:14:38 -> 00:14:42] S2 similarly i is less than equal to 100 and i is less than equal to
+[00:14:42 -> 00:14:48] 101 plus p so the upper bound actually remains similar as before but the lower
+[00:14:48 -> 00:14:53] bound has become tighter it's gone from p to p plus 1 so this is the new
+[00:14:53 -> 00:14:59] range for i when I only consider S1 now I can do the same exercise for S2
+[00:14:59 -> 00:15:04] so this is the this is the range of the polyhedron for S1 now I do a
+[00:15:04 -> 00:15:08] similar exercise for S2 and once again I'm going to end up with three
+[00:15:08 -> 00:15:12] intervals one where only S1 executes one where both S1 and S2 execute and
+[00:15:12 -> 00:15:18] one where only S2 executes just like we had done for the outermost variable p
+[00:15:18 -> 00:15:23] and we are going to specialize the code for each of these partitions so for S1
+[00:15:23 -> 00:15:27] we have basically identified this range i is greater than equal to
+[00:15:27 -> 00:15:32] max of 0 comma p plus 1 notice that this is different from max of 0 comma
+[00:15:32 -> 00:15:36] p it's tighter and less than equal to min of 100 comma 101 plus p this is
+[00:15:36 -> 00:15:41] for S1 now I do the same thing for S2 and I'm not going to show you the
+[00:15:41 -> 00:15:44] working but I claim that you're going to get something like the following that
+[00:15:44 -> 00:15:49] for S2 to execute it must be true that i is greater than equal to max of 0
+[00:15:49 -> 00:15:53] comma p notice that that's actually similar to the original loop but
+[00:15:53 -> 00:15:58] different from S1's lower bound and min and less than equal to min of
+[00:15:58 -> 00:16:04] hundred comma hundred plus p now I want to point out that unlike when when
+[00:16:04 -> 00:16:08] we were talking about p where we just had greater than equal to and less
+[00:16:08 -> 00:16:14] than equal to here we also have max and min because we have this variable this
+[00:16:14 -> 00:16:18] this quantity called p which is kind of can be different across different
+[00:16:18 -> 00:16:23] iterations of the outer loop now once I do that I mean one way to write i is
+[00:16:23 -> 00:16:26] greater than equal to max of 0 comma p plus 1 is basically write it as two
+[00:16:26 -> 00:16:30] different inequalities i is greater than equal to 0 and i is greater than
+[00:16:30 -> 00:16:34] equal to p plus 1 similarly i is less than equal to min of some x y a
+[00:16:34 -> 00:16:38] comma b is i is less than equal to a and i is less than equal to b this
+[00:16:38 -> 00:16:42] is just shorthand for writing a conjunction of multiple inequalities
+[00:16:42 -> 00:16:46] notice that this this this kind of shorthand only works when you have
+[00:16:46 -> 00:16:51] max with greater than equal to and min with less than equal to you can't kind
+[00:16:51 -> 00:16:54] of have min with greater than equal to in which case it would no longer
+[00:16:54 -> 00:17:01] remain a conjunction of inequalities here are the partitions that are
+[00:17:01 -> 00:17:09] created one is from max of 0 comma p to p so if I just look at all the
+[00:17:09 -> 00:17:12] inequalities that are created I basically get three partitions one is
+[00:17:12 -> 00:17:19] from max of 0 comma p to p including both max and 0 comma p and p so in
+[00:17:19 -> 00:17:22] other words I should be greater than equal to 0 and I should be greater
+[00:17:22 -> 00:17:26] than equal to p and I should be less than equal to p so you know once
+[00:17:26 -> 00:17:29] again I'm just using max as a shorthand for the fact that there are
+[00:17:29 -> 00:17:32] two conjunctions here one is i is greater than equal to 0 and i is
+[00:17:32 -> 00:17:36] greater than equal to p and the other upper bound is i is less than
+[00:17:36 -> 00:17:41] equal to p similarly on the on the right hand so in the middle I have from
+[00:17:41 -> 00:17:47] max of 0 comma p plus 1 so that's coming from the lower bound of s1 to
+[00:17:47 -> 00:17:52] min of 100 comma 100 plus p that's coming from the upper bound of s2 so
+[00:17:52 -> 00:17:55] this is the range this middle range is going is the range where both s1
+[00:17:55 -> 00:18:00] and s2 is going to execute the first one is where only max of 0 comma p to
+[00:18:00 -> 00:18:05] p is the one which only s2 will execute and not s1 because s1 is
+[00:18:05 -> 00:18:08] actually needs to be also greater than equal to p plus 1 and not just p and
+[00:18:08 -> 00:18:14] finally we have a third partition which is 101 plus p to min of 100 to 101 plus
+[00:18:14 -> 00:18:19] p so once again I'm using min as a shorthand for saying that whenever i
+[00:18:19 -> 00:18:23] is greater than equal to 101 plus p and i is less than equal to 100 and i
+[00:18:23 -> 00:18:27] is less than equal to 101 plus p so these are the three partitions I have
+[00:18:27 -> 00:18:32] created and I claim that the first and the third partition can have at
+[00:18:32 -> 00:18:37] most one element and sometimes they will have zero elements depending on the
+[00:18:37 -> 00:18:41] value of p and the middle range would have more than could potentially have
+[00:18:41 -> 00:18:45] one or more elements and so I need a for loop so this is very similar to
+[00:18:45 -> 00:18:49] what we had seen when we were partitioning on the outer loop of p
+[00:18:49 -> 00:18:53] as well and I'm not going to show you the entire code generation I mean
+[00:18:53 -> 00:18:57] it becomes I mean it is pretty evident from here on I hope but
+[00:18:57 -> 00:19:00] basically the way it works is you have the outer loop for partition 2
+[00:19:00 -> 00:19:06] which is from p from minus 100 to 99 is the partition 2 on p and now we are
+[00:19:06 -> 00:19:11] going to generate code for partition 1 on i of partition 2 on p right because
+[00:19:11 -> 00:19:15] we first partitioned on p and then we took the partition 2 which was the
+[00:19:15 -> 00:19:20] complicated one and then partitioned on i for that particular partition on
+[00:19:20 -> 00:19:25] p and so here we basically have this partition which is the first
+[00:19:25 -> 00:19:29] partition which goes from max of zero comma p to p and in fact if you
+[00:19:29 -> 00:19:33] look at this expression for i equals max of zero comma p and i less than
+[00:19:33 -> 00:19:38] equal to p it basically means that i if p was greater than equal to zero then i
+[00:19:38 -> 00:19:43] equals p if p is not greater than equal to zero then basically this
+[00:19:43 -> 00:19:48] loop is not even executed in other words if p was less than zero this
+[00:19:48 -> 00:19:52] loop is never executed okay so so I can actually replace this with just a
+[00:19:52 -> 00:19:56] if statement if p is greater than equal to zero then execute one
+[00:19:56 -> 00:20:01] iteration in which i can be just equal to p and then I basically you know do
+[00:20:01 -> 00:20:05] the substitution for the projection of the remaining elements of the
+[00:20:05 -> 00:20:09] polyhedron which are j on on j and basically find the values and then
+[00:20:09 -> 00:20:14] print the statement s2 just like we had done when we were projecting for
+[00:20:14 -> 00:20:18] the outermost variable p so that's what you know that's that's what my
+[00:20:18 -> 00:20:23] projection is going to look like for partition 1 on i of partition 2 on p
+[00:20:23 -> 00:20:28] notice that there is no loop in this particular partition on i I mean there's
+[00:20:28 -> 00:20:32] a loop on p but there's no loop on i we just have an if condition and the if
+[00:20:32 -> 00:20:35] condition is actually on p and not on i and if p is greater than equal to
+[00:20:35 -> 00:20:40] zero then we execute one iteration of s2 in that iteration i should be
+[00:20:40 -> 00:20:45] equal to p now there's the second one which is the more complicated one
+[00:20:45 -> 00:20:53] which is the second partition on i on but so this is actually partition 2 okay
+[00:20:53 -> 00:20:58] so I'm just showing the original code again and now this time I want to look
+[00:20:58 -> 00:21:03] at the second partition which is max of 0 comma p plus 1 to min of 100 comma
+[00:21:03 -> 00:21:06] 100 plus p and this is the original partition 2 on p which was actually
+[00:21:06 -> 00:21:11] from max of 0 comma p which notice that actually loser than max of 0
+[00:21:11 -> 00:21:16] comma p plus 1 and it goes to 100 comma 101 plus p whereas we want to have stop
+[00:21:16 -> 00:21:21] it at 100 comma 100 plus p and for this particular partition we know that both
+[00:21:21 -> 00:21:26] s1 and s2 will execute and so what I can do is I can just tighten the
+[00:21:26 -> 00:21:35] partition so now it becomes partition 2 on i partition 2 on i of partition
+[00:21:35 -> 00:21:44] of p and and so what I get is max of 0 comma p plus 1 so I just tightened the
+[00:21:44 -> 00:21:48] lower bound and I also tightened the upper bound from 101 plus p to 100
+[00:21:48 -> 00:21:53] plus p and now everything else in the inner loop remains the same what have
+[00:21:53 -> 00:21:59] I gained in this process well because I know that the inner loop these
+[00:21:59 -> 00:22:03] exec both s1 and s2 are guaranteed to execute maybe I also want to you
+[00:22:03 -> 00:22:07] know do a similar analysis on J but after all this what I'm going to get is
+[00:22:07 -> 00:22:13] that this these conditions are always going to evaluate to true for some
+[00:22:13 -> 00:22:17] values of J once I do that I'm not going actually going to do this on J
+[00:22:17 -> 00:22:20] as well I think you get the idea of what the algorithm that can be
+[00:22:20 -> 00:22:24] implemented in a compiler in an automatic way but basically what's going
+[00:22:24 -> 00:22:27] to happen eventually is that you're going to be able to get rid of
+[00:22:27 -> 00:22:31] these tests even for the middle partitions where you have a loop anyway
+[00:22:31 -> 00:22:36] on this one the first and the third partitions or every loop we are
+[00:22:36 -> 00:22:39] anyway able to get rid of the condition because it's only a singleton
+[00:22:39 -> 00:22:44] there but element there iteration there but even in the middle one we
+[00:22:44 -> 00:22:48] will be eventually able to get rid of these checks and we would be able to
+[00:22:48 -> 00:22:54] simply substitute J with the corresponding expression in terms of i
+[00:22:54 -> 00:23:01] and p for example I could say xii comma i minus p minus 1 and xyi minus 1
+[00:23:01 -> 00:23:06] comma i minus p minus 1 and so on and I can actually get rid of the inner
+[00:23:06 -> 00:23:10] loop after I have done all this kind of specialization so what I'm
+[00:23:10 -> 00:23:14] basically doing with all this thing is basically getting rid of loops
+[00:23:14 -> 00:23:19] wherever possible getting rid of if conditions which are predicates and
+[00:23:20 -> 00:23:26] finally just representing J in terms of i and p and overall that's going to
+[00:23:26 -> 00:23:30] basically eventually give me a two loop depth we're not going to have the
+[00:23:30 -> 00:23:34] inner loop anyway the inner loop in our original solution was only had two
+[00:23:34 -> 00:23:37] iterations but even you know aesthetically speaking you will only
+[00:23:37 -> 00:23:41] see not a triple loop nest but a double loop nest only just like the
+[00:23:41 -> 00:23:44] original program except that it would be better optimized for locality and
+[00:23:44 -> 00:23:53] parallelism on the outer loop iterations finally so this is what so
+[00:23:53 -> 00:23:58] finally basically we need to do the code generation for partition 3 on i
+[00:23:58 -> 00:24:04] which is this partition from 101 plus p to min of 100 comma 101 plus p this
+[00:24:04 -> 00:24:09] is what the code looks like so this is partition 3 on i and this is what
+[00:24:09 -> 00:24:12] the code looks like once again I can simplify this because this basically
+[00:24:12 -> 00:24:20] means if 101 plus p is less than equal to 100 then it execute one
+[00:24:20 -> 00:24:25] iteration otherwise it executes zero iteration and so I can actually
+[00:24:25 -> 00:24:30] simplify this to saying if p is less than equal to minus 1 I should set i
+[00:24:30 -> 00:24:35] to be 101 plus p and then execute s1 with these values of i and j just
+[00:24:35 -> 00:24:39] project on i and j using Fourier mode scan and then execute the
+[00:24:39 -> 00:24:45] corresponding iteration for s1 in this case so for the third iteration
+[00:24:45 -> 00:24:49] partition it was s1 for the first partition it was s2 and for the middle
+[00:24:49 -> 00:24:55] partition it was both s1 and s2 by doing this code specialization and
+[00:24:55 -> 00:24:59] elimination of tests I have been able to remove some unnecessary tests I
+[00:24:59 -> 00:25:03] have been able to remove some unnecessary for loops which were
+[00:25:03 -> 00:25:07] anyway going to be executing on very small iteration space example the
+[00:25:07 -> 00:25:12] innermost loop on j and I have been able to you know improve the
+[00:25:12 -> 00:25:16] readability of the code perhaps actually readability should not matter
+[00:25:16 -> 00:25:19] because it's a compiler generated code so hopefully you don't want to read
+[00:25:19 -> 00:25:24] it importantly this is coming at some cost the cost is the increase in the
+[00:25:24 -> 00:25:29] code size caused by specialization of the code across each level of the
+[00:25:29 -> 00:25:32] loop iteration nest

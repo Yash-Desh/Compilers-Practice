@@ -1,0 +1,301 @@
+Title: Compiler Design Module 111 : Introduction to Natural Loops and Dominators
+Video ID: XxTe5hTtnFQ
+Detected language: en
+------------------------------------------------------------
+
+[00:00:00 -> 00:00:03] So we've been discussing how loop transformations
+[00:00:03 -> 00:00:07] are very important for compiler optimization.
+[00:00:07 -> 00:00:09] But before we even talk about optimization of a loop,
+[00:00:09 -> 00:00:12] we need to define what is a loop, right?
+[00:00:12 -> 00:00:15] And we want to define a loop in graph theoretic terms
+[00:00:15 -> 00:00:17] on the control flow graph.
+[00:00:17 -> 00:00:18] And why do we want to do that?
+[00:00:18 -> 00:00:20] Because we want to have as canonical
+[00:00:20 -> 00:00:23] a representation of the loop as possible.
+[00:00:23 -> 00:00:26] So we don't want to be sensitive to input syntax,
+[00:00:26 -> 00:00:29] such as whether it's a for loop or a while loop
+[00:00:29 -> 00:00:32] or a repeat until loop or a do while loop.
+[00:00:32 -> 00:00:35] We don't want algorithms that work differently
+[00:00:35 -> 00:00:37] on different types of loops, right?
+[00:00:37 -> 00:00:40] We don't want a special algorithm for for loop.
+[00:00:40 -> 00:00:42] We don't want another special algorithm for while loop
+[00:00:42 -> 00:00:43] and so on.
+[00:00:43 -> 00:00:46] That would increase the complexity
+[00:00:46 -> 00:00:47] of the compiler further.
+[00:00:47 -> 00:00:52] And one of the very fundamental ideas
+[00:00:52 -> 00:00:56] in trying to reduce the complexity of a compiler
+[00:00:56 -> 00:00:57] is canonicalization.
+[00:00:57 -> 00:01:02] You want to canonicalize the structure of the program
+[00:01:02 -> 00:01:06] so that there's many different types of programs,
+[00:01:06 -> 00:01:09] many different source level structures of the program
+[00:01:09 -> 00:01:11] map to the same canonical structure.
+[00:01:11 -> 00:01:14] And so you can have a single algorithm
+[00:01:14 -> 00:01:15] for that canonical structure.
+[00:01:15 -> 00:01:18] In fact, the whole idea of intermediate representation
+[00:01:18 -> 00:01:20] is also a sort of canonicalization.
+[00:01:20 -> 00:01:23] There can be multiple languages with different syntaxes,
+[00:01:23 -> 00:01:25] but you have one single IR that,
+[00:01:25 -> 00:01:27] or at least a few different IRs,
+[00:01:27 -> 00:01:30] fewer than the number of source languages
+[00:01:30 -> 00:01:35] that capture the essence of the program,
+[00:01:35 -> 00:01:37] but maybe lose some information,
+[00:01:37 -> 00:01:40] but give you a canonical representation of the program.
+[00:01:40 -> 00:01:41] So similarly, we are interested
+[00:01:41 -> 00:01:43] in a canonical representation of the loop,
+[00:01:43 -> 00:01:46] which is not sensitive to the input syntax.
+[00:01:46 -> 00:01:48] So we can have a uniform treatment for all loops
+[00:01:48 -> 00:01:51] and don't have to worry about exact syntax
+[00:01:51 -> 00:01:54] of the original loop, okay?
+[00:01:54 -> 00:01:58] So informally, we are going to define a loop.
+[00:01:58 -> 00:02:03] It's not just to basically distinguish a loop from a cycle.
+[00:02:04 -> 00:02:07] We are going to actually call it a natural loop, all right?
+[00:02:07 -> 00:02:09] So it will become clear.
+[00:02:09 -> 00:02:13] A natural loop has edges that form at least one cycle.
+[00:02:13 -> 00:02:15] So typically when we say a loop,
+[00:02:15 -> 00:02:17] we basically mean that,
+[00:02:17 -> 00:02:19] we are basically using the word loop
+[00:02:19 -> 00:02:21] and cycle interchangeably, right?
+[00:02:21 -> 00:02:23] But a natural loop,
+[00:02:23 -> 00:02:26] which is what we mean by a loop actually,
+[00:02:27 -> 00:02:29] for doing compiler optimization,
+[00:02:29 -> 00:02:33] is that it should also have a single entry point, okay?
+[00:02:33 -> 00:02:36] So there are two requirements for it to be a natural loop
+[00:02:36 -> 00:02:38] or even, I mean, I can also just call it a loop,
+[00:02:38 -> 00:02:41] but typically loop and cycle are confused.
+[00:02:41 -> 00:02:43] So I'm using the word natural loop.
+[00:02:43 -> 00:02:45] So there are two requirements.
+[00:02:45 -> 00:02:46] A, the set of edges.
+[00:02:46 -> 00:02:47] So what is a loop?
+[00:02:47 -> 00:02:50] A loop is a set of nodes and edges.
+[00:02:50 -> 00:02:53] And the requirements are that the edges
+[00:02:53 -> 00:02:55] should form at least one cycle.
+[00:02:55 -> 00:02:57] And there should be a single entry node.
+[00:02:57 -> 00:02:59] There should be a single entry point
+[00:02:59 -> 00:03:03] from which we can kind of get into the loop
+[00:03:03 -> 00:03:06] from the larger program.
+[00:03:06 -> 00:03:07] So let's see that with an example.
+[00:03:07 -> 00:03:10] So let's try to identify the natural loops
+[00:03:10 -> 00:03:12] in this particular control flow graph.
+[00:03:12 -> 00:03:16] So we can see that there are,
+[00:03:16 -> 00:03:20] and also this is, in general, in this diagram,
+[00:03:20 -> 00:03:23] the control is flowing from top to bottom,
+[00:03:23 -> 00:03:24] but there are a couple of places
+[00:03:24 -> 00:03:26] where the control is flowing from bottom to top.
+[00:03:26 -> 00:03:29] And that is where we expect a cycle.
+[00:03:29 -> 00:03:33] And so that is where we also expect a loop potentially.
+[00:03:33 -> 00:03:35] And so one of the cycles is this one.
+[00:03:35 -> 00:03:38] And so it's made by these two basic blocks, right?
+[00:03:38 -> 00:03:40] So these two basic blocks.
+[00:03:40 -> 00:03:43] So if I call these, let me just label them.
+[00:03:43 -> 00:03:47] So let's say B1, B2, B3, B4, and B5.
+[00:03:47 -> 00:03:51] Then the loop is formed by B4,
+[00:03:51 -> 00:03:53] the edge from B4 to B5, B5,
+[00:03:53 -> 00:03:55] and then the edge from B5 to B4.
+[00:03:55 -> 00:03:58] And then there are some other incoming edges of the loop
+[00:03:58 -> 00:04:00] and then there's some other outgoing edges of the loop.
+[00:04:00 -> 00:04:01] That's also okay.
+[00:04:01 -> 00:04:05] But we are only, for our definition of a loop,
+[00:04:05 -> 00:04:06] we are counting those edges
+[00:04:06 -> 00:04:08] which are contained completely within the loop, right?
+[00:04:08 -> 00:04:12] So the edges are B4 to B5 and B5 to B4.
+[00:04:12 -> 00:04:14] And the nodes are B4 and B5.
+[00:04:14 -> 00:04:17] Okay, so this is one cycle.
+[00:04:17 -> 00:04:18] Is there any other cycle?
+[00:04:18 -> 00:04:22] Yes, there is the cycle B2, B4, B5, B2, B4, B5, right?
+[00:04:22 -> 00:04:27] So this is another cycle in the program.
+[00:04:27 -> 00:04:28] And you can say that there are more cycles.
+[00:04:28 -> 00:04:30] You can say B2, B4, B5, B4.
+[00:04:30 -> 00:04:33] You can kind of have more cycles here.
+[00:04:33 -> 00:04:35] And so there are actually many cycles in this program,
+[00:04:35 -> 00:04:39] but if I just look at kind of the most obvious cycle,
+[00:04:39 -> 00:04:42] there are like two cycles.
+[00:04:42 -> 00:04:44] And let's try to identify
+[00:04:44 -> 00:04:46] which of these are actually natural loops, okay?
+[00:04:46 -> 00:04:49] So if I look at the first cycle,
+[00:04:49 -> 00:04:52] which is this cycle, B4 and B5,
+[00:04:52 -> 00:04:54] then it has how many entries?
+[00:04:54 -> 00:04:59] By entries, I mean from how many different nodes
+[00:04:59 -> 00:05:03] can the loop start executing?
+[00:05:03 -> 00:05:05] And you would see that the only node that,
+[00:05:05 -> 00:05:06] so let me just label this again.
+[00:05:06 -> 00:05:10] B1, B2, B3, B4, B5.
+[00:05:10 -> 00:05:15] So basically the loop basically enters from B4.
+[00:05:15 -> 00:05:17] So either it can enter on this edge
+[00:05:17 -> 00:05:19] or it can enter on this edge,
+[00:05:19 -> 00:05:21] but there's only one entry node.
+[00:05:21 -> 00:05:23] It cannot enter from B5, right?
+[00:05:23 -> 00:05:26] So there is no incoming edge into B5
+[00:05:26 -> 00:05:28] except from the internal edges of the loop,
+[00:05:28 -> 00:05:29] which is from B4, right?
+[00:05:29 -> 00:05:32] So there's no external edge coming into B5.
+[00:05:32 -> 00:05:36] And so this actually satisfies
+[00:05:36 -> 00:05:37] our informal requirement of a loop,
+[00:05:37 -> 00:05:41] which is that there is a cycle
+[00:05:41 -> 00:05:44] and there is a single entry point, all right?
+[00:05:44 -> 00:05:48] So this is actually a natural loop, all right?
+[00:05:48 -> 00:05:52] Now let's try to see, so the answer is yes.
+[00:05:52 -> 00:05:54] Cycle one is a natural loop
+[00:05:54 -> 00:05:56] because there is a single entry point.
+[00:05:57 -> 00:05:59] Now let's look at the other cycle.
+[00:05:59 -> 00:06:02] Now this cycle, does it have a single entry point?
+[00:06:02 -> 00:06:05] So what is this cycle made of?
+[00:06:05 -> 00:06:06] Once again, let me just label this.
+[00:06:06 -> 00:06:10] B1, B2, B3, B4, B5.
+[00:06:10 -> 00:06:15] So the second cycle is made up of B2, B4, B5.
+[00:06:15 -> 00:06:18] And what are the entry nodes?
+[00:06:18 -> 00:06:19] Okay, so you would see that
+[00:06:19 -> 00:06:22] there are actually two entry nodes.
+[00:06:22 -> 00:06:26] One is B2 because there's an external edge
+[00:06:26 -> 00:06:29] coming into B2, an edge that is not part of the loop.
+[00:06:29 -> 00:06:32] And then there is an entry edge from B4, right?
+[00:06:32 -> 00:06:34] Because there's an entry edge from B4
+[00:06:34 -> 00:06:36] coming into the loop.
+[00:06:36 -> 00:06:40] And so this particular cycle has two entry points, okay?
+[00:06:40 -> 00:06:44] And if I consider this to be the first entry point,
+[00:06:44 -> 00:06:46] then this seems like it's jumping
+[00:06:46 -> 00:06:47] into the middle of the loop.
+[00:06:47 -> 00:06:51] So B2 is the entry point that I consider.
+[00:06:51 -> 00:06:52] So there are two entry points, first of all.
+[00:06:52 -> 00:06:55] But if I say that B2 is kind of the main entry point
+[00:06:55 -> 00:06:56] or the first entry point,
+[00:06:56 -> 00:07:00] then the entry into B4 seems like somebody
+[00:07:00 -> 00:07:02] can jump into the middle of the loop.
+[00:07:02 -> 00:07:04] And so that's what we want to avoid in a natural loop.
+[00:07:04 -> 00:07:06] We don't want people to be able to jump
+[00:07:06 -> 00:07:08] into the middle of a loop.
+[00:07:08 -> 00:07:10] Because just like we don't want people to,
+[00:07:10 -> 00:07:13] other blocks to jump into the middle of a basic block,
+[00:07:13 -> 00:07:16] we also don't want other parts of the program
+[00:07:16 -> 00:07:18] to be able to jump into the middle of a loop.
+[00:07:18 -> 00:07:22] And we don't want this because if we maintain
+[00:07:22 -> 00:07:25] this property that nobody can jump
+[00:07:25 -> 00:07:26] into the middle of a loop,
+[00:07:26 -> 00:07:27] then that gives a nice structure to the loop
+[00:07:27 -> 00:07:30] and we can analyze the loop in isolation
+[00:07:30 -> 00:07:32] and do transformations on it.
+[00:07:32 -> 00:07:34] So the answer here is no.
+[00:07:34 -> 00:07:36] Cycle two is not a natural loop
+[00:07:36 -> 00:07:39] because if we consider this as the first entry,
+[00:07:39 -> 00:07:40] then this looks like it's jumping
+[00:07:40 -> 00:07:41] to the middle of the loop.
+[00:07:41 -> 00:07:44] I could have also considered this as the first entry,
+[00:07:44 -> 00:07:46] in which case this would have looked
+[00:07:46 -> 00:07:48] like jumping into the middle of the loop.
+[00:07:48 -> 00:07:51] In either case, there are more than one entries
+[00:07:51 -> 00:07:54] and so it is not a natural loop.
+[00:07:56 -> 00:07:58] So here is the good news.
+[00:07:58 -> 00:08:01] Most loops in common programs are natural loops
+[00:08:01 -> 00:08:03] and that's why we are so interested
+[00:08:03 -> 00:08:06] in defining natural loops and then analyzing them
+[00:08:06 -> 00:08:08] and transforming them because most loops
+[00:08:08 -> 00:08:12] in common programs are actually natural loops.
+[00:08:12 -> 00:08:14] All constructs without using go to
+[00:08:14 -> 00:08:19] in a language like C, like for, while, do while,
+[00:08:19 -> 00:08:21] or other languages include repeat, untill,
+[00:08:21 -> 00:08:22] things like that.
+[00:08:22 -> 00:08:25] These are all constructs that only create natural loops.
+[00:08:25 -> 00:08:27] Notice that if you construct a for loop,
+[00:08:27 -> 00:08:32] you only enter the loop from the header of the for loop.
+[00:08:32 -> 00:08:34] You cannot just jump into the middle
+[00:08:34 -> 00:08:35] unless you're using go to.
+[00:08:35 -> 00:08:38] And that's one of the reasons why go to usage
+[00:08:38 -> 00:08:42] is discouraged because it kind of breaks
+[00:08:42 -> 00:08:43] the structure of the program,
+[00:08:43 -> 00:08:45] makes it much harder to reason about both
+[00:08:45 -> 00:08:48] the correctness and optimization possibilities
+[00:08:48 -> 00:08:49] of the program.
+[00:08:49 -> 00:08:51] So this is good news because the single entry property
+[00:08:51 -> 00:08:53] lends a nice structure to the natural loop.
+[00:08:55 -> 00:08:59] Now I have defined a natural loop very informally so far.
+[00:08:59 -> 00:09:01] I'm saying it should be recycled
+[00:09:01 -> 00:09:05] and then there should be a single entry point.
+[00:09:05 -> 00:09:07] But I think we need to have more formal definition
+[00:09:07 -> 00:09:09] so that we can algorithmically identify
+[00:09:09 -> 00:09:11] all the natural loops in the program.
+[00:09:11 -> 00:09:13] I also want to point out in the example
+[00:09:13 -> 00:09:15] that I had shown earlier,
+[00:09:15 -> 00:09:16] there were more than two cycles.
+[00:09:16 -> 00:09:18] We also discussed there were other cycles
+[00:09:18 -> 00:09:19] like maybe I can go around this
+[00:09:19 -> 00:09:21] and then I go around that and so on.
+[00:09:21 -> 00:09:23] And so there are more cycles in that program,
+[00:09:23 -> 00:09:28] but all those cycles will have greater than one entries
+[00:09:29 -> 00:09:32] and so none of them would also be natural loops.
+[00:09:32 -> 00:09:33] Okay.
+[00:09:33 -> 00:09:37] Now to be able to define what is a natural loop,
+[00:09:37 -> 00:09:40] I need to define another relation
+[00:09:40 -> 00:09:41] which is called the domination relation
+[00:09:41 -> 00:09:43] or dominate relation.
+[00:09:43 -> 00:09:48] And all the corresponding kind of relationship
+[00:09:49 -> 00:09:51] is also called dominators.
+[00:09:51 -> 00:09:56] So node D, so first of all dominate
+[00:09:56 -> 00:09:58] is a relationship between two nodes
+[00:09:58 -> 00:09:59] in the control flow graph.
+[00:09:59 -> 00:10:03] And one node D dominates another node N
+[00:10:03 -> 00:10:05] in the control flow graph.
+[00:10:05 -> 00:10:10] If D also, this is also written as D dom N,
+[00:10:10 -> 00:10:14] if and only if every part from the start node
+[00:10:14 -> 00:10:18] of the graph or of the CFG to node N goes through D.
+[00:10:18 -> 00:10:20] All right, so every path, every possible path
+[00:10:20 -> 00:10:22] including paths that have loops and stuff
+[00:10:22 -> 00:10:27] that reaches N from the start node has to go through D
+[00:10:27 -> 00:10:30] in which case I would say that node D dominates node N.
+[00:10:31 -> 00:10:34] And also I'm going to assume that a node dominates itself.
+[00:10:34 -> 00:10:38] So dominator relation is actually a reflexive relation.
+[00:10:39 -> 00:10:41] All right, so let's look at an example.
+[00:10:41 -> 00:10:43] Here is a control flow graph.
+[00:10:43 -> 00:10:46] It has B1, B2, B3, B4, N
+[00:10:46 -> 00:10:49] and then there is a loop and then there's a cycle here.
+[00:10:49 -> 00:10:50] Right, so this is a natural loop
+[00:10:50 -> 00:10:52] and this is not a natural loop.
+[00:10:52 -> 00:10:53] This is the same example
+[00:10:53 -> 00:10:55] that we've seen in the previous slide.
+[00:10:55 -> 00:10:58] Now, what are the dominators of N?
+[00:10:58 -> 00:11:00] Which one of these basic blocks,
+[00:11:00 -> 00:11:03] B1, B2, B3, B4 dominates N?
+[00:11:03 -> 00:11:05] So we want to ask the question,
+[00:11:05 -> 00:11:06] so this is the start of the program.
+[00:11:06 -> 00:11:07] So we want to ask the question,
+[00:11:07 -> 00:11:08] from the start of the program,
+[00:11:08 -> 00:11:12] what are the nodes that must be traversed
+[00:11:12 -> 00:11:14] before being able to reach N?
+[00:11:14 -> 00:11:16] And so one more thing is very clear,
+[00:11:16 -> 00:11:18] actually anything that you want to reach
+[00:11:18 -> 00:11:19] has to go through B1.
+[00:11:19 -> 00:11:21] So B1 will pretty much dominate everything, right?
+[00:11:21 -> 00:11:23] Including N.
+[00:11:24 -> 00:11:27] Okay, what about B1, B4?
+[00:11:27 -> 00:11:28] So let's look at this, right?
+[00:11:28 -> 00:11:30] So B1 dominates N.
+[00:11:31 -> 00:11:32] Can B2 dominate N?
+[00:11:32 -> 00:11:34] The answer is actually no,
+[00:11:34 -> 00:11:36] because here is one path that does not go through B2.
+[00:11:36 -> 00:11:38] B1, B3, B4, N.
+[00:11:38 -> 00:11:40] So it is possible to reach N from the start node
+[00:11:40 -> 00:11:44] without going through B2 and this is this path.
+[00:11:46 -> 00:11:47] Similarly, does B3 dominate N?
+[00:11:47 -> 00:11:48] The answer is no,
+[00:11:48 -> 00:11:51] because there is a path like this one,
+[00:11:51 -> 00:11:54] which does not go through B3 and still reaches N.
+[00:11:54 -> 00:11:57] Actually, there are potentially infinite number of paths,
+[00:11:57 -> 00:12:00] because I can go around cycle
+[00:12:00 -> 00:12:02] without going through B3 at all
+[00:12:02 -> 00:12:04] and still be able to reach N.
+[00:12:04 -> 00:12:07] But even if there was one such path,
+[00:12:07 -> 00:12:09] I say that it does not dominate.
+[00:12:09 -> 00:12:11] So B3 does not dominate N.
+[00:12:11 -> 00:12:13] Does B4 dominate N?
+[00:12:13 -> 00:12:15] The answer is yes,
+[00:12:15 -> 00:12:19] because I cannot create a path from the start node to N
+[00:12:19 -> 00:12:21] that does not go through B4, right?
+[00:12:21 -> 00:12:24] I have to go through B4 to be able to reach N.
+[00:12:24 -> 00:12:27] And finally, N dominates N.
+[00:12:27 -> 00:12:29] This is just by our definition of domination
+[00:12:29 -> 00:12:31] that we are going to also assume
+[00:12:31 -> 00:12:33] that the node dominates itself.
+[00:12:33 -> 00:12:35] Intuitively, you cannot reach a node
+[00:12:35 -> 00:12:38] without actually visiting that node, right?
+[00:12:38 -> 00:12:40] So that's one way to think about it,
+[00:12:40 -> 00:12:43] but this reflexivity property is also easier
+[00:12:43 -> 00:12:46] to kind of reason about
+[00:12:46 -> 00:12:48] when we discuss our algorithms, et cetera.

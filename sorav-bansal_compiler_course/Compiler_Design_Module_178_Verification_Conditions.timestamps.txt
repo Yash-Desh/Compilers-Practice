@@ -1,0 +1,228 @@
+Title: Compiler Design Module 178 : Verification Conditions
+Video ID: YZ0MKwNGo3s
+Detected language: en
+------------------------------------------------------------
+
+[00:00:00 -> 00:00:05] When we were discussing invariant inference or identifying what are invariants, we basically
+[00:00:06 -> 00:00:11] used this idea of induction. We said there's a base case where we have to show that the
+[00:00:11 -> 00:00:17] precondition followed by the program path from entry to the loop head ensures that the
+[00:00:17 -> 00:00:22] invariant at the loop is satisfied. And then we showed that if the invariant is satisfied at
+[00:00:22 -> 00:00:28] any kth iteration, then it is also satisfied after one more iteration of the loop, which
+[00:00:28 -> 00:00:35] means at the beginning of the k plus 1th iteration. And so all these kind of proof obligations,
+[00:00:36 -> 00:00:41] including the proof obligation for the base case, which is from the precondition to the loop head
+[00:00:42 -> 00:00:46] and for the inductive case, which is from the kth iteration to the k plus 1th iteration
+[00:00:46 -> 00:00:52] are basically called verification conditions or these are once again a verification condition
+[00:00:52 -> 00:00:57] is a proof obligation that is generated as a part of a larger proof.
+[00:00:57 -> 00:01:04] So let's take this familiar example of the Euclid integer division. We have the precondition,
+[00:01:04 -> 00:01:08] which is x greater than equal to zero, y greater than zero, x is going to serve as our
+[00:01:09 -> 00:01:17] dividend and y is going to serve as a divisor and q and r are going to maintain the
+[00:01:17 -> 00:01:23] quotient and the remainder respectively. And at this loop head, the invariant that we're
+[00:01:23 -> 00:01:29] interested in proving is that x equals q y plus r and in fact, at this point, r is greater than
+[00:01:29 -> 00:01:35] equal to y. And the post condition that we are interested in proving is that x equals q y plus
+[00:01:35 -> 00:01:41] r, q comma r are greater than equal to zero and r, which is the remainder is less than y,
+[00:01:41 -> 00:01:46] which is the divisor. And so we want to prove this and we are going to generate some
+[00:01:46 -> 00:01:50] verification conditions. In this module, I'm going to show what are those verification
+[00:01:50 -> 00:01:57] conditions and what is the encoding of those verification conditions as whole triples and then
+[00:01:57 -> 00:02:04] as logical statements. All right, so let's look at the first proof obligation, which is the
+[00:02:04 -> 00:02:09] proof obligation associated with the base case of our invariant checking algorithm.
+[00:02:09 -> 00:02:14] And so the base case recall is basically saying that if you start at the beginning of
+[00:02:14 -> 00:02:18] the program and you assume that at the beginning of the program, the precondition is
+[00:02:18 -> 00:02:26] true, then when you reach the loop head by traversing this path from the beginning of the
+[00:02:26 -> 00:02:31] program till the loop head, then the post condition is whatever is the invariant that
+[00:02:31 -> 00:02:36] you have identified. So I can write this verification condition as a whole triple.
+[00:02:37 -> 00:02:41] The precondition is x is greater than equal to zero, y is greater than zero,
+[00:02:41 -> 00:02:46] that's coming straight away from the precondition at the entry of the program.
+[00:02:46 -> 00:02:52] Also can be thought of as the invariant at the entry of the program. And then the program itself,
+[00:02:52 -> 00:02:57] in this case, when I say a program, it's not the full program, but a snippet of the program.
+[00:02:57 -> 00:03:02] The snippet of the program here that we are interested in is these three statements,
+[00:03:02 -> 00:03:08] q equals zero, it's an assignment, r equals x, another assignment and while r is greater
+[00:03:08 -> 00:03:13] than equal to y, which is a branch condition. So when I say while it's really like,
+[00:03:13 -> 00:03:19] because I'm just executing the while check only once, I'm going to basically check if r is
+[00:03:19 -> 00:03:26] greater than equal to y. So basically this is the program, q equals zero, r equals x,
+[00:03:26 -> 00:03:30] if r is greater than equal to y. And the post condition that we are interested in proving is
+[00:03:30 -> 00:03:36] whatever we had as our candidate invariant, which is x equals q y plus r and r is greater
+[00:03:36 -> 00:03:42] than equal to y. So this is the verification condition itself can be written, can be
+[00:03:42 -> 00:03:45] expressed as a whole triple. And that's a good thing. And that's one of the good,
+[00:03:46 -> 00:03:50] that's one of the powerful features of this abstraction of a whole triple,
+[00:03:50 -> 00:03:54] which involves three components, the precondition, the post condition,
+[00:03:54 -> 00:03:59] and a program or a snippet of the program and many proof obligations are so much easier to
+[00:03:59 -> 00:04:05] express and understand using these whole triple notations. All right, so once again,
+[00:04:05 -> 00:04:11] this is a whole triple notation that represents the proof obligation for the base case.
+[00:04:12 -> 00:04:17] Similarly, I have a proof obligation for the inductive case. And it's going to be similar,
+[00:04:17 -> 00:04:22] you know, assuming that this holds, this invariant holds at the beginning of the
+[00:04:22 -> 00:04:30] kth iteration. So I just write that as the precondition. Then after you execute one
+[00:04:30 -> 00:04:35] iteration of the loop, so one iteration, the loop is going to execute r equals r minus y,
+[00:04:36 -> 00:04:41] q equals q plus one, and if r is greater than equal to y's check because of the while loop,
+[00:04:41 -> 00:04:48] is going to succeed, then x equals q y plus r and r greater than equal to y still hold.
+[00:04:48 -> 00:04:53] I have deliberately used q prime and r prime here just to distinguish them from the original
+[00:04:53 -> 00:04:58] q and r because after this execution, the program, the values of q and r would have
+[00:04:58 -> 00:05:03] changed. You know, depending on how you want to represent it, you may prime the variables or
+[00:05:03 -> 00:05:08] you may not prime the variables. Irrespective, the precondition is supposed to represent an
+[00:05:08 -> 00:05:14] assertion on the state of the machine before the program was executed. And the post condition is
+[00:05:14 -> 00:05:20] supposed to represent the assertion on the state of the machine after the program has finished
+[00:05:20 -> 00:05:24] executing or exited. And in this case, again, this is a snippet of the program,
+[00:05:24 -> 00:05:28] which represents one iteration of the loop. And this forms our verification condition two.
+[00:05:30 -> 00:05:35] Finally, we have, you know, we are also interested in proving that this whole program
+[00:05:35 -> 00:05:40] has this post condition which says x equals q y plus r and r is less than y.
+[00:05:40 -> 00:05:46] And so this will, you know, to basically prove this, we are going to say that if I move from
+[00:05:46 -> 00:05:51] the loop head and kind of go back and do this check and the check fails, which means r is
+[00:05:51 -> 00:05:56] not greater than equal to y, then I go back, go to the exit of the loop. And I want to show
+[00:05:56 -> 00:06:03] that at the exit of the loop, the post condition holds. So the corresponding
+[00:06:03 -> 00:06:08] verification condition again can be expressed as a whole triple. The precondition is again the
+[00:06:08 -> 00:06:13] invariant, which is x equals q y plus r and r is greater than equal to y. The program is now
+[00:06:13 -> 00:06:18] again the one body of the loop, which is r gets r minus y, q gets q plus one.
+[00:06:19 -> 00:06:23] And we check whether if r is greater than equal to y, but this time the check
+[00:06:23 -> 00:06:28] fails, which means if not of r greater than equal to y, if all these statements are executed
+[00:06:28 -> 00:06:32] and I reach this point, then it must, the post condition should be that, you know,
+[00:06:32 -> 00:06:38] whatever is the post condition of the program, x equals q y plus r and r is less than y.
+[00:06:38 -> 00:06:42] And additionally, I could have also said q and r are greater than equal to zero.
+[00:06:42 -> 00:06:46] Notice again, I am basically using the primed version just to say that, you know,
+[00:06:46 -> 00:06:52] this q and this q can potentially be different. In fact, I mean, if I want to be more
+[00:06:52 -> 00:06:57] precise, I should have probably even said, you know, times in the program description
+[00:06:57 -> 00:07:02] itself. It doesn't really matter, it's a matter of notation. As long as the meaning is clear,
+[00:07:02 -> 00:07:06] the post condition is always on the state of the machine at the end of the program
+[00:07:06 -> 00:07:10] and the precondition is always on the state of the machine at the beginning of the program.
+[00:07:10 -> 00:07:15] And so if the states are different, for example, r versus r prime, then of course,
+[00:07:15 -> 00:07:18] you know, they're going to be talking about different values.
+[00:07:20 -> 00:07:24] Finally, these were the three verification conditions that we generated and using these
+[00:07:24 -> 00:07:32] three verification conditions, we can show that this whole program basically obeys this
+[00:07:32 -> 00:07:37] precondition and post condition. So we can have a whole triple that relates the precondition
+[00:07:37 -> 00:07:42] to its post condition for the whole program C, where C is the program that is,
+[00:07:42 -> 00:07:48] that contains the loop. All right. So if I'm able to show VC1, VC2 and VC3,
+[00:07:48 -> 00:07:51] which are the three verification conditions that are showed on the previous slides,
+[00:07:52 -> 00:07:56] then I can show, I mean, I've pretty much shown that if I start with the precondition
+[00:07:56 -> 00:08:01] and I execute the program, and if the program terminates, that's a partial correctness condition,
+[00:08:02 -> 00:08:07] then it must be true that the post condition holds, which in this case is x equals q i plus
+[00:08:07 -> 00:08:12] r and r is less than y. And maybe a couple more other things such as q and r are greater
+[00:08:12 -> 00:08:17] than or equal to zero. So this is what a typical proof methodology looks like.
+[00:08:18 -> 00:08:25] You have a program and you also have a precondition. You are interested in finding
+[00:08:26 -> 00:08:33] a relevant post condition and you basically identify loop invariance, generate the corresponding
+[00:08:33 -> 00:08:38] verification conditions, just like VC1, VC2 and VC3. Using these verification conditions,
+[00:08:38 -> 00:08:44] you can show that the larger higher level theorem for the entire program holds, which
+[00:08:44 -> 00:08:49] can also be expressed as a board triple. Once again, I want to emphasize that this
+[00:08:49 -> 00:08:55] higher level theorem is actually a partial correctness condition. It actually is saying
+[00:08:55 -> 00:09:01] that only if C terminates, then post condition holds. In this example, I can also, for
+[00:09:01 -> 00:09:06] example, show that C will always terminate, but that is not what is being imported by
+[00:09:06 -> 00:09:13] this particular theorem that I have stated as a board triple. All right, so now that we have
+[00:09:13 -> 00:09:19] seen how we can kind of break a bigger proof effort into smaller proof efforts, especially
+[00:09:19 -> 00:09:24] when the proof effort involves loops in the program, just like the while loop that I showed
+[00:09:24 -> 00:09:30] in the Euclidean integer division example. Then you can kind of break them down into
+[00:09:30 -> 00:09:37] smaller snippets of programs, which are all acyclic and then kind of do smaller
+[00:09:37 -> 00:09:43] verification conditions, use induction and based on that, generate some verification
+[00:09:43 -> 00:09:47] conditions and if you are able to show all those verification conditions are true,
+[00:09:47 -> 00:09:51] then you have been able to show that the larger bigger proof obligation or the
+[00:09:51 -> 00:09:57] theorem is true, which is for the whole program that may involve loops. But when we look at
+[00:09:57 -> 00:10:01] each snippet of the program, we kind of break it down such that each snippet of the
+[00:10:01 -> 00:10:09] program is acyclic. If it had cycles, then we need to break it down even further, for example,
+[00:10:09 -> 00:10:15] by having an invariant at the head of a loop. But even when a program snippet is acyclic,
+[00:10:15 -> 00:10:19] or it's a straight line piece of code, how do you identify whether a certain proof
+[00:10:19 -> 00:10:24] obligation is correct or not? So here is an example and I'm going to start with the
+[00:10:24 -> 00:10:30] assignment statement. Recall that in our integer division program, one of the kind
+[00:10:30 -> 00:10:36] of common statements was the assignment statement. For example, we assign Q to zero or R to X.
+[00:10:40 -> 00:10:44] So that's the assignment statement and let's say the snippet of the program that I'm considering
+[00:10:44 -> 00:10:49] is only a single statement, which is the assignment statement and we're going to start
+[00:10:49 -> 00:10:54] look at each separate kind of small statement individually and from there we can kind of
+[00:10:54 -> 00:10:59] generalize to larger snippets of programs, larger acyclic snippets of programs.
+[00:10:59 -> 00:11:03] So let's look at this snippet of the program, which is a single assignment statement, which says
+[00:11:03 -> 00:11:10] X colon equals some expression E on X, Y, and dot dot dot. Here X, I mean, the reason I have
+[00:11:10 -> 00:11:15] X here is just to say that it's possible that whatever I'm assigning is also on the RHS of
+[00:11:15 -> 00:11:21] the expression. And this is common for imperative languages like C, et cetera, and even the toy
+[00:11:21 -> 00:11:26] language that we use to implement the integer division program that we had on the previous
+[00:11:26 -> 00:11:31] slide. Further, Y here represents some other variable in the program, which is, which may
+[00:11:31 -> 00:11:36] or may not be related to X, and then dot dot dot. So whatever are the other variables,
+[00:11:36 -> 00:11:40] and this is just some arbitrary assignment statement present in the program.
+[00:11:41 -> 00:11:45] And let's say I have a proof obligation, which has a precondition, which uses X, Y,
+[00:11:45 -> 00:11:50] et cetera, in its formula, in its logical statement. Let's call that precondition P.
+[00:11:51 -> 00:11:57] So P of X, Y, dot dot dot, which means P is a function of the values of X, Y, et cetera,
+[00:11:57 -> 00:12:01] at the beginning of this assignment statement. And at the end of the assignment statement,
+[00:12:01 -> 00:12:04] the post condition I'm interested in proving is, let's say Q. And once again,
+[00:12:04 -> 00:12:11] Q could be a function of X, Y, dot dot dot. Now this is a whole triple, but the question
+[00:12:11 -> 00:12:16] is, how do I discharge this proof obligation? How can I kind of bring this proof obligation
+[00:12:16 -> 00:12:22] into a form where I don't have to worry about the programming language, its semantics,
+[00:12:22 -> 00:12:26] and things like that. One of the problems with this representation is that there is the C
+[00:12:26 -> 00:12:33] component, the program component, for which I need to understand what the program really means.
+[00:12:33 -> 00:12:36] And I want to bring it to a form which is more like a functional
+[00:12:36 -> 00:12:41] expression representation, where I can kind of apply my logical theories,
+[00:12:41 -> 00:12:46] like propositional logic, or first-order logic, or higher-order logic, such that
+[00:12:46 -> 00:12:53] I can kind of reason about them in those logics. And so in this case, the other way to
+[00:12:54 -> 00:12:59] state the problem that I'm interested in addressing is what should be the encoding.
+[00:12:59 -> 00:13:04] So this is a whole triple that is given to me. What should be the logical encoding of this
+[00:13:04 -> 00:13:09] whole triple, such that this whole triple evaluates to true, if and only if that
+[00:13:09 -> 00:13:16] logical encoding evaluates to true. And one of the logical encodings was given by Robert Floyd,
+[00:13:16 -> 00:13:21] and the logical encoding for this statement, this whole triple is, for all x, y dot dot dot,
+[00:13:23 -> 00:13:26] if there exists x prime, such that the precondition
+[00:13:27 -> 00:13:35] p holds for x prime y dot dot dot, and x equals e of x prime y dot dot dot,
+[00:13:35 -> 00:13:41] then the postcondition holds. So I'm saying that these two statements are kind of equivalent.
+[00:13:42 -> 00:13:49] This is a whole triple representation, and this is a logical representation
+[00:13:49 -> 00:13:53] in first-order logic, where I'm using the for all and there exists operators.
+[00:13:53 -> 00:13:59] Now, if you read this carefully, basically what I'm saying is that x prime represents the state,
+[00:13:59 -> 00:14:06] x prime y represents the state of the machine before this assignment has been executed.
+[00:14:06 -> 00:14:12] Notice that y hasn't changed, so I don't have a y prime here. So only x prime has changed
+[00:14:12 -> 00:14:18] across the assignment statement. So x prime y dot dot dot represents the state of the machine
+[00:14:18 -> 00:14:23] before the assignment statement. If there exists a state of the machine, such that
+[00:14:23 -> 00:14:33] the precondition holds and when I evaluate the expression e on that state, on the input state,
+[00:14:33 -> 00:14:40] so the argument of e is x prime, then I get capital X. So capital X is basically supposed
+[00:14:40 -> 00:14:45] to be the state of the machine after the execution. Then it must be true that q
+[00:14:46 -> 00:14:52] evaluates to true for x, y, and actually this should be x, y, and then dot dot dot to be more
+[00:14:52 -> 00:14:59] precise. So this is one kind of encoding for this whole triple using first-order logic,
+[00:14:59 -> 00:15:07] and this was contributed by Floyd. It uses the for all operator, the universal quantifier
+[00:15:07 -> 00:15:14] and the existential quantifier. And then there's an implication. The existential quantifier is
+[00:15:14 -> 00:15:22] on the beginning state at the input or the start of the program, and the universal quantifier is
+[00:15:22 -> 00:15:27] on the state or the exit of the program. And here the program that I'm interested in is
+[00:15:27 -> 00:15:38] a single assignment instruction. There's a simpler encoding for this same statement,
+[00:15:38 -> 00:15:42] which is the whole triple, which uses substitution as an operator, and this was
+[00:15:42 -> 00:15:52] contributed by Moore, which is for all x, y, if the precondition holds for x, y, dot dot dot,
+[00:15:52 -> 00:15:59] then the post-condition holds for x, y, dot dot dot, except that you substitute,
+[00:15:59 -> 00:16:07] you know, the post-condition holds for the substitution of x with y, x with e into q.
+[00:16:07 -> 00:16:10] So first of all, let's understand this substitution operator. The substitution operator
+[00:16:10 -> 00:16:17] is written as some formula, square brackets, and then the variable and the corresponding
+[00:16:17 -> 00:16:23] expression to which it substitutes. For example, if the formula is b, then b square brackets x
+[00:16:23 -> 00:16:31] colon equals a is the substitution of a for x. So wherever x appears in b, we replace it with a
+[00:16:31 -> 00:16:38] in b. And so q, x, y, dot dot dot, square brackets x colon equals y,
+[00:16:38 -> 00:16:49] e is read as q with e substituted for x. So for example, if q was x plus 1 equals 0,
+[00:16:50 -> 00:16:56] then this would become e plus 1 equals 0. This whole expression would become e plus 1
+[00:16:56 -> 00:17:03] equals 0. And so let's try to read this logical statement. It says for all x, y, dot dot dot,
+[00:17:03 -> 00:17:09] if the precondition holds on x, y, dot dot dot, so here x, y, and the other dot dot dot
+[00:17:09 -> 00:17:13] represents the state of the machine at the beginning of the program, and that's where we
+[00:17:13 -> 00:17:21] want the precondition to hold, then q holds on the new machine state. And the new machine
+[00:17:21 -> 00:17:27] state can be obtained by using the original machine state, which is x, y, dot dot dot,
+[00:17:27 -> 00:17:32] but also replacing x with e, and that's exactly what the assignment operator is supposed to do,
+[00:17:32 -> 00:17:37] and that's what our substitution operation is giving us in our logical statement.
+[00:17:38 -> 00:17:45] So assuming you can have the substitution operator built in into your logical statements,
+[00:17:45 -> 00:17:50] then you can avoid that complexity of having the existential quantifier and other things,
+[00:17:50 -> 00:17:55] and it becomes an easier thing to read. We're saying that if the precondition holds on the
+[00:17:55 -> 00:18:00] input state, then the postcondition holds on the output state. And how do I say that the
+[00:18:00 -> 00:18:06] postcondition holds on the output state? I basically just replace x with e, and then
+[00:18:06 -> 00:18:13] kind of assert q on the resulting state. And that's what the RHS of this implication operator
+[00:18:13 -> 00:18:18] says. Let's look at an example for understanding this assignment verification
+[00:18:18 -> 00:18:24] condition in more detail. So let's say the whole triple that I'm interested in proving is,
+[00:18:24 -> 00:18:29] if x is greater than or equal to zero at the start of the program, and if I execute x colon
+[00:18:29 -> 00:18:34] equals x plus one, then x must be greater than zero at the end of the program. Once again,
+[00:18:34 -> 00:18:39] I'm assuming that here x is a mathematical integer. It can go up till infinity in this
+[00:18:39 -> 00:18:44] particular programming language that I'm using. So if I want to encode this, first of all,
+[00:18:44 -> 00:18:48] it's easy to see that this is true, because if x is greater than or equal to zero,
+[00:18:48 -> 00:18:51] and then I increment it by one, then it will be strictly greater than zero.
+[00:18:51 -> 00:18:59] Now, if I encode this using Floyd's formula, I'm basically saying for all x, there exists
+[00:18:59 -> 00:19:05] x prime. So for all x, there exists x prime. x is supposed to be the state at the end of
+[00:19:05 -> 00:19:10] the program. x prime is the state at the beginning of the program. If there exists x
+[00:19:10 -> 00:19:16] prime such that x prime is greater than or equal to zero, that's a precondition, and x
+[00:19:16 -> 00:19:21] equals x prime plus one. That's basically coming from the assignment relation. So the
+[00:19:21 -> 00:19:27] assignment operator is causing a relation to be formed between the end state and the
+[00:19:27 -> 00:19:32] beginning state. The end state is capital X, the beginning state was x prime, and so the
+[00:19:32 -> 00:19:37] corresponding relation is this equality relation x equals x prime plus one. Then x must be
+[00:19:37 -> 00:19:42] greater than zero, which means at the end, the end state should be greater than zero.
+[00:19:42 -> 00:19:46] So if this whole thing is true, if there exists such an x prime, then x must be greater than
+[00:19:46 -> 00:19:50] zero, and this should be true for all possible x. So this is the Floyd encoding for this
+[00:19:50 -> 00:19:54] particular Hoare triple. Let's look at the Hoare encoding for this particular triple.
+[00:19:56 -> 00:20:02] Once again, I say for all x, this time I'm going to use x to represent the state at the
+[00:20:02 -> 00:20:07] beginning of the program. If x is greater than or equal to zero, so that's a precondition,
+[00:20:07 -> 00:20:14] then I want to say x is greater than zero substituted with x plus one for x.
+[00:20:14 -> 00:20:23] And so that becomes x is greater than zero substituted with x colon equals x plus one,
+[00:20:24 -> 00:20:31] and that just becomes x plus one greater than zero. And so the second one is both of these
+[00:20:31 -> 00:20:37] are all these three representations are actually equivalent. And you can kind of see that these
+[00:20:37 -> 00:20:43] are all evaluating to true or these are all tautologies. For example, if x is greater than
+[00:20:43 -> 00:20:46] equal to zero, then obviously x plus one is greater than zero. That's the Hoare triple.
+[00:20:47 -> 00:20:55] If there exists x prime such that x prime is greater than equal to zero and x is
+[00:20:55 -> 00:20:58] greater equal to x prime plus one, then x must be greater than zero and that should
+[00:20:58 -> 00:21:01] hold for all possible x. So all these statements are basically tautologies.
+[00:21:01 -> 00:21:05] And in other words, this Hoare triple is also a tautology.

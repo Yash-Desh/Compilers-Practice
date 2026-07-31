@@ -1,0 +1,235 @@
+Title: Compiler Design Module 75 : Global Optimization
+Video ID: EI56VONzCcc
+Detected language: en
+------------------------------------------------------------
+
+[00:00:00 -> 00:00:03] So now we'll start discussing global optimizations.
+[00:00:03 -> 00:00:06] Recall that global optimizations are optimizations
+[00:00:06 -> 00:00:10] that go beyond the scope of a single basic block.
+[00:00:10 -> 00:00:13] They need reasoning of the whole control flow graph,
+[00:00:13 -> 00:00:17] which may be within the body of a method.
+[00:00:17 -> 00:00:19] So here is an example.
+[00:00:22 -> 00:00:25] There are four basic blocks in this example.
+[00:00:25 -> 00:00:29] The first basic block basically assigns x to three,
+[00:00:29 -> 00:00:31] and then checks whether b is greater than zero,
+[00:00:31 -> 00:00:34] and depending on whether b is greater than zero,
+[00:00:34 -> 00:00:38] it assigns z plus w to y, or assigns zero to y.
+[00:00:38 -> 00:00:43] And then there is a join point to the fourth basic block
+[00:00:43 -> 00:00:47] where we have a is assigned two into x.
+[00:00:47 -> 00:00:49] Now the question I want to ask here is,
+[00:00:49 -> 00:00:54] can we replace a equals two into x with a equals six?
+[00:00:56 -> 00:00:59] So instead of actually doing the computation two into x,
+[00:00:59 -> 00:01:02] can I be sure that at this point x will always be three,
+[00:01:02 -> 00:01:04] and so I can just do constant propagation
+[00:01:04 -> 00:01:09] and replace this x by three and then two into three by six,
+[00:01:09 -> 00:01:11] and that would be constant folding.
+[00:01:11 -> 00:01:15] So if I look at this program,
+[00:01:15 -> 00:01:19] it seems like irrespective of what path the program takes,
+[00:01:19 -> 00:01:20] x would always be three,
+[00:01:20 -> 00:01:25] and so maybe it should be okay to replace x by three.
+[00:01:25 -> 00:01:27] But then let's change the example a little bit.
+[00:01:27 -> 00:01:30] What if I have x assigned to four
+[00:01:30 -> 00:01:32] on one of the branches, all right?
+[00:01:32 -> 00:01:36] So here on this branch now x is four,
+[00:01:36 -> 00:01:38] whereas on the other branch, x is three.
+[00:01:38 -> 00:01:43] And now can we replace a equals two into x with a equals six?
+[00:01:44 -> 00:01:46] And the answer obviously looks like it's a no,
+[00:01:46 -> 00:01:48] because if we're coming on this branch,
+[00:01:48 -> 00:01:50] then it is not going to be assigned six,
+[00:01:50 -> 00:01:53] but it's going to be assigned eight.
+[00:01:53 -> 00:01:56] So when can we replace the use of variable x
+[00:01:56 -> 00:01:58] with a constant k?
+[00:01:58 -> 00:02:00] And this is basically the problem
+[00:02:00 -> 00:02:02] of global constant propagation.
+[00:02:02 -> 00:02:04] So you've already seen constant propagation
+[00:02:04 -> 00:02:06] in the context of a single basic block
+[00:02:06 -> 00:02:08] in the context of local optimization,
+[00:02:08 -> 00:02:11] but now we want to talk about global optimizations,
+[00:02:11 -> 00:02:14] and in this we want to know whether it's okay
+[00:02:14 -> 00:02:16] to replace x with a constant k.
+[00:02:16 -> 00:02:18] In this case, in the example that we're looking at,
+[00:02:18 -> 00:02:20] the value of k was three.
+[00:02:22 -> 00:02:25] So the answer is, well, it is okay to do this
+[00:02:25 -> 00:02:27] if on every path to the use of x,
+[00:02:27 -> 00:02:32] the last assignment to x is x equals k, right?
+[00:02:32 -> 00:02:35] So x has been assigned the value k,
+[00:02:35 -> 00:02:37] the constant k on every path
+[00:02:37 -> 00:02:41] that is reaching that use of x.
+[00:02:41 -> 00:02:43] So let's look at this example again.
+[00:02:44 -> 00:02:46] Is this condition true?
+[00:02:46 -> 00:02:47] Well, how many paths are there?
+[00:02:47 -> 00:02:50] So we can also say that maybe the program
+[00:02:50 -> 00:02:55] has more things above these four basic blocks,
+[00:02:55 -> 00:02:58] and it may have more things below the last basic block,
+[00:02:58 -> 00:03:00] but there's no other incoming edges
+[00:03:00 -> 00:03:04] to this basic block and this basic block, right?
+[00:03:04 -> 00:03:06] There may be other incoming edges
+[00:03:06 -> 00:03:07] to the top and the bottom basic blocks,
+[00:03:07 -> 00:03:10] but none to the left and right.
+[00:03:10 -> 00:03:14] So irrespective of what paths the program takes,
+[00:03:14 -> 00:03:19] it seems like the last assignment to x
+[00:03:19 -> 00:03:22] would always be x equals three, right?
+[00:03:22 -> 00:03:24] I could have come through any paths
+[00:03:24 -> 00:03:26] to the first basic block,
+[00:03:26 -> 00:03:27] and I could have gone on any path
+[00:03:27 -> 00:03:29] after the last basic block,
+[00:03:29 -> 00:03:33] but irrespective, I'm always going to have x equals three
+[00:03:33 -> 00:03:35] on any path that the program takes.
+[00:03:35 -> 00:03:39] By the time it reaches this fourth basic block,
+[00:03:39 -> 00:03:43] then we are guaranteed that x is going to be three.
+[00:03:43 -> 00:03:46] And so in this particular example, the answer is yes.
+[00:03:46 -> 00:03:50] It is okay to replace a equals two to x with a equals six.
+[00:03:50 -> 00:03:52] But in this example, the answer is no,
+[00:03:52 -> 00:03:55] because on one of the paths,
+[00:03:55 -> 00:03:56] or not one, maybe many more,
+[00:03:56 -> 00:03:58] because there could be multiple paths
+[00:03:58 -> 00:04:03] that are coming in to the first basic block.
+[00:04:03 -> 00:04:04] And so some of the paths
+[00:04:04 -> 00:04:07] that basically take this true branch,
+[00:04:07 -> 00:04:09] x is equal to four,
+[00:04:09 -> 00:04:12] and so the k value is four here,
+[00:04:12 -> 00:04:14] but then on the other branch, it is three.
+[00:04:14 -> 00:04:16] And so it's not the same k value
+[00:04:16 -> 00:04:18] that is being assigned to x
+[00:04:18 -> 00:04:20] on all the paths that are reaching
+[00:04:20 -> 00:04:21] the fourth basic block,
+[00:04:21 -> 00:04:23] which contains a equals two into x.
+[00:04:23 -> 00:04:24] So the answer is no.
+[00:04:25 -> 00:04:28] So the question is, how do we design an algorithm
+[00:04:28 -> 00:04:30] that's going to do this for us?
+[00:04:30 -> 00:04:32] And such an algorithm will be called
+[00:04:32 -> 00:04:34] a global constant propagation algorithm.
+[00:04:34 -> 00:04:37] And now I just make it a little bit more interesting.
+[00:04:37 -> 00:04:41] So I have the same basic block diagram,
+[00:04:41 -> 00:04:43] but I just made another loop.
+[00:04:43 -> 00:04:45] So maybe there's a loop which checks y is greater than zero.
+[00:04:45 -> 00:04:49] If true, then loop back to this basic block.
+[00:04:49 -> 00:04:51] And if y is greater than zero is false,
+[00:04:51 -> 00:04:53] then come back to the fourth basic block.
+[00:04:53 -> 00:04:57] And now is it okay to replace a equals two into x
+[00:04:57 -> 00:04:58] with a equals six?
+[00:04:58 -> 00:04:59] Well, once again,
+[00:04:59 -> 00:05:01] there could be multiple incoming paths
+[00:05:01 -> 00:05:02] to the first basic block.
+[00:05:02 -> 00:05:05] There could be multiple outgoing paths
+[00:05:05 -> 00:05:07] from the last basic block.
+[00:05:07 -> 00:05:09] But irrespective of what path it is,
+[00:05:09 -> 00:05:11] there could be multiple paths.
+[00:05:11 -> 00:05:15] Either I could just come in here and come here,
+[00:05:15 -> 00:05:17] or I could come on the false branch
+[00:05:17 -> 00:05:19] and come to the last basic block.
+[00:05:19 -> 00:05:21] Or I could come on the true branch,
+[00:05:23 -> 00:05:24] go around the loop a few times
+[00:05:24 -> 00:05:27] and then come to the last basic block.
+[00:05:27 -> 00:05:30] Irrespective of what path the program takes,
+[00:05:30 -> 00:05:34] I'm confident that x would always be three
+[00:05:34 -> 00:05:37] because on this loop,
+[00:05:37 -> 00:05:38] x is not getting assigned.
+[00:05:38 -> 00:05:41] And on the false branch also,
+[00:05:41 -> 00:05:42] x is not getting assigned.
+[00:05:42 -> 00:05:45] So the last assignment to x on all these paths,
+[00:05:45 -> 00:05:47] which is actually an infinite number of paths,
+[00:05:47 -> 00:05:51] because the loop could be taken any number of times.
+[00:05:51 -> 00:05:54] We are sure that the last assignment to x is x equals three.
+[00:05:54 -> 00:05:57] And so it's okay to change it.
+[00:05:57 -> 00:05:58] And the answer here is also yes.
+[00:06:00 -> 00:06:05] So this algorithm of global constant propagation
+[00:06:05 -> 00:06:08] requires a class of algorithms
+[00:06:08 -> 00:06:12] which are called global data and flow analysis.
+[00:06:12 -> 00:06:16] So basically this kind of reasoning is required
+[00:06:16 -> 00:06:18] for many different types of optimization problems
+[00:06:18 -> 00:06:19] in compilers.
+[00:06:19 -> 00:06:24] And so it helps to basically create a common framework
+[00:06:24 -> 00:06:28] in which we can implement the same logic,
+[00:06:28 -> 00:06:30] but with different kind of properties
+[00:06:30 -> 00:06:34] so that there's reuse of the same idea.
+[00:06:35 -> 00:06:37] So in general,
+[00:06:37 -> 00:06:40] global optimization tasks share several traits.
+[00:06:40 -> 00:06:42] Just like we saw global constant propagation,
+[00:06:42 -> 00:06:44] there are some other algorithms that we're going to see
+[00:06:44 -> 00:06:47] which are going to have different properties,
+[00:06:47 -> 00:06:49] but similar traits.
+[00:06:49 -> 00:06:50] And what are those traits?
+[00:06:50 -> 00:06:53] Optimization depends on knowing property x
+[00:06:53 -> 00:06:56] at a certain program point P, right?
+[00:06:56 -> 00:06:58] So for example, we were interested in knowing
+[00:06:58 -> 00:07:01] whether x equals k is the last assignment
+[00:07:01 -> 00:07:04] on all possible paths
+[00:07:04 -> 00:07:07] at the program point of the last basic block, right?
+[00:07:07 -> 00:07:10] So that is the property x in this case is,
+[00:07:10 -> 00:07:14] is x equals k the last assignment to x
+[00:07:14 -> 00:07:16] on all possible paths?
+[00:07:16 -> 00:07:18] And the program point P is the fourth basic block
+[00:07:18 -> 00:07:21] which contained the statement A equals two into x.
+[00:07:23 -> 00:07:26] Further proving x at P requires knowledge
+[00:07:26 -> 00:07:28] of entire program.
+[00:07:28 -> 00:07:31] So to be able to say that x equals k
+[00:07:31 -> 00:07:34] is the last instruction on all possible paths
+[00:07:34 -> 00:07:36] that can reach program point P,
+[00:07:36 -> 00:07:39] I need to know the characteristics of the entire program
+[00:07:39 -> 00:07:41] because I'm to be able to reason about,
+[00:07:41 -> 00:07:42] all possible paths,
+[00:07:42 -> 00:07:44] I need to be able to know the entire program.
+[00:07:44 -> 00:07:47] So that's another kind of common property,
+[00:07:47 -> 00:07:49] common kind of trait of these global optimization
+[00:07:49 -> 00:07:50] problems.
+[00:07:51 -> 00:07:55] Proving x at P requires knowledge of the entire program.
+[00:07:55 -> 00:07:57] Unlike local optimization where we didn't require
+[00:07:57 -> 00:07:59] the knowledge of the entire program,
+[00:07:59 -> 00:08:01] we were only looking at the current basic block.
+[00:08:01 -> 00:08:04] Here, although the transformation is being made
+[00:08:04 -> 00:08:05] in the basic block,
+[00:08:06 -> 00:08:08] the transformation relies on a property
+[00:08:08 -> 00:08:13] that relies on the characteristics of the entire program.
+[00:08:14 -> 00:08:18] And finally, it is okay to be conservative.
+[00:08:18 -> 00:08:19] So it's okay to be,
+[00:08:19 -> 00:08:22] so the kind of answers that these algorithms give
+[00:08:22 -> 00:08:24] is either it says x,
+[00:08:24 -> 00:08:26] the property x is definitely true,
+[00:08:26 -> 00:08:27] or it can say,
+[00:08:27 -> 00:08:30] I don't know whether x is true or not.
+[00:08:30 -> 00:08:32] And if the algorithm says I don't know,
+[00:08:32 -> 00:08:34] that's a conservative answer.
+[00:08:35 -> 00:08:35] So that's like saying,
+[00:08:35 -> 00:08:36] okay, I can't really say,
+[00:08:36 -> 00:08:39] so please don't do the optimization, all right?
+[00:08:39 -> 00:08:41] So that's the conservative answer, all right?
+[00:08:41 -> 00:08:43] So don't know is the conservative answer.
+[00:08:43 -> 00:08:46] And it's always okay to be conservative, right?
+[00:08:46 -> 00:08:48] I mean, because if you're conservative,
+[00:08:48 -> 00:08:50] then you're not going to do the optimization
+[00:08:50 -> 00:08:50] and that's okay.
+[00:08:50 -> 00:08:53] I mean, at least you didn't make the program incorrect.
+[00:08:53 -> 00:08:54] Of course, you would want to be
+[00:08:54 -> 00:08:57] as non-conservative as possible.
+[00:08:57 -> 00:08:59] You would want this answer as much as possible,
+[00:08:59 -> 00:09:01] x is definitely true.
+[00:09:01 -> 00:09:03] But sometimes you may not be able to,
+[00:09:03 -> 00:09:04] for sure say,
+[00:09:04 -> 00:09:05] and then in that case,
+[00:09:05 -> 00:09:06] you can just say that, okay,
+[00:09:06 -> 00:09:09] I don't know whether x is true or not.
+[00:09:09 -> 00:09:10] There could be a third possibility of an answer,
+[00:09:10 -> 00:09:13] which says I know that x is definitely not true,
+[00:09:13 -> 00:09:15] but that's not really interesting to us.
+[00:09:15 -> 00:09:16] That's as good as saying
+[00:09:16 -> 00:09:18] that I don't know whether x is true or not.
+[00:09:18 -> 00:09:20] Because if x is not true,
+[00:09:20 -> 00:09:23] then how does it matter to my optimization algorithm?
+[00:09:23 -> 00:09:25] Let's look at the example of constant propagation.
+[00:09:25 -> 00:09:29] Even if I know that the x is equal to three
+[00:09:29 -> 00:09:32] is not the last assignment on some parts,
+[00:09:32 -> 00:09:34] that doesn't really help me with anything.
+[00:09:34 -> 00:09:35] So I could just say that, okay,
+[00:09:35 -> 00:09:38] I really don't know whether x is a constant or not.
+[00:09:38 -> 00:09:40] So I really cared about only two answers.
+[00:09:40 -> 00:09:44] One is, are you sure that x is equal to k at all parts?
+[00:09:44 -> 00:09:48] And the other answer is no, I'm not sure.
+[00:09:48 -> 00:09:49] So that's all, right?
+[00:09:50 -> 00:09:52] Okay, so it's okay to be conservative
+[00:09:52 -> 00:09:55] and you can either say x is definitely true
+[00:09:55 -> 00:09:57] or say don't know if x is true.
+[00:09:57 -> 00:09:58] And this is a common trait
+[00:09:58 -> 00:10:02] shared by many global optimization algorithms.
+[00:10:03 -> 00:10:05] Including the global constant propagation example
+[00:10:05 -> 00:10:06] that we just saw.

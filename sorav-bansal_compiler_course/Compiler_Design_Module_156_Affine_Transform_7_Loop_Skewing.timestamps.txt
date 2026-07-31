@@ -1,0 +1,320 @@
+Title: Compiler Design Module 156 : Affine Transform #7   Loop Skewing
+Video ID: gPAjUHeX0BI
+Detected language: en
+------------------------------------------------------------
+
+[00:00:00 -> 00:00:03] Today we are going to talk about our last and 7th
+[00:00:04 -> 00:00:11] primitive or fine transform which is called skewing and let's look at this example to understand skewing for
+[00:00:11 -> 00:00:17] i equals 0 to n i plus plus or j equals 0 to m j plus plus so this is a two-dimensional loop
+[00:00:18 -> 00:00:23] z i j equals z i minus 1 j minus 1 so it is once again
+[00:00:23 -> 00:00:26] we are making an axis into a two-dimensional array
+[00:00:26 -> 00:00:31] but this time the dependency order is different in our previous example when we were talking about permutation
+[00:00:32 -> 00:00:37] there was dependencies only on one of the dimensions for example the dependency was on the outer dimension i
+[00:00:38 -> 00:00:47] here the dependencies are basically on both dimensions in the sense that z i comma j equals z i minus 1 comma j minus 1
+[00:00:47 -> 00:00:49] if I look at what
+[00:00:49 -> 00:00:51] iterations are dependent on which ones
+[00:00:52 -> 00:00:59] If I take the iteration 0 comma 0, 0 comma 0 is going to write z 0 0 and it's going to read
+[00:00:59 -> 00:01:06] z minus 1 comma minus 1 so let's look at the element that it wrote which is z 0 0 now
+[00:01:06 -> 00:01:11] let's look at which iteration is going to read z 0 0 and the answer actually is
+[00:01:12 -> 00:01:18] the iteration which is going to read z 0 0 is the iteration which will evaluate i minus 1 comma j minus 1 to
+[00:01:18 -> 00:01:25] 0 comma 0 in other words i and j should have been 1 right so the iteration 1 comma 1 will read 0 comma 0 and
+[00:01:25 -> 00:01:34] iteration 0 comma 0 would write z 0 comma 0 and so there is a data dependency from the 0 comma 0th
+[00:01:34 -> 00:01:38] iteration to the 1 comma 1th iteration and this is a read after write dependency because
+[00:01:38 -> 00:01:43] 1 comma 1 is going to read and 0 comma 0 is going to write and
+[00:01:43 -> 00:01:51] So I draw an edge from 0 comma 0 to 1 comma 1 and notice that the angle of this dependency edge is 45 degrees because
+[00:01:51 -> 00:01:56] you know both i and j are incremented by 1 and so basically we have an
+[00:01:56 -> 00:02:02] 45 degree angle and I can kind of generalize this for example 1 comma 1 will have a dependency on
+[00:02:03 -> 00:02:07] dependency 2 comma 2 similarly 3 comma 3
+[00:02:07 -> 00:02:09] similarly the other
+[00:02:09 -> 00:02:11] elements in this row for example
+[00:02:12 -> 00:02:19] 0 comma 1 would have a dependency on 1 comma 2 on 2 comma 3 and so on and so I basically get a
+[00:02:19 -> 00:02:22] pictorial representation as I've shown in this figure
+[00:02:23 -> 00:02:25] with all the dependency edges and I would like to remind you that
+[00:02:26 -> 00:02:29] the order of execution of this
+[00:02:29 -> 00:02:34] this loop is basically ascending lexicographic that means first the first row is
+[00:02:35 -> 00:02:36] it
+[00:02:36 -> 00:02:40] Explode then the second row then the third row and so on okay
+[00:02:41 -> 00:02:44] Another because the inner loop is on J and J is the x-axis
+[00:02:45 -> 00:02:47] all right now I
+[00:02:48 -> 00:02:51] basically implement my space partitioning
+[00:02:52 -> 00:02:59] Constraints algorithm to basically find synchronization free parallelism on this particular loop and so what do I
+[00:02:59 -> 00:03:03] What do I expect before I even start with the mathematics?
+[00:03:03 -> 00:03:08] I would probably expect that all these data dependent iterations are basically grouped into
+[00:03:09 -> 00:03:11] separate processors and
+[00:03:11 -> 00:03:17] Across these kind of line, which is you know if I draw a 135 degrees line then all these strands that are kind of
+[00:03:18 -> 00:03:25] Touching this 135 degree line. They are all data independent for example this strand here that starts at 0 comma 0 is
+[00:03:26 -> 00:03:30] Independent of this strand here which stands starts at 0 comma 1 right and so
+[00:03:31 -> 00:03:35] We each of these strands can be paralyzed but within a strand
+[00:03:35 -> 00:03:39] They must be mapped to the same processor and executed sequentially now
+[00:03:39 -> 00:03:44] We're going to try and obtain a solution using our space partitioning constraints
+[00:03:44 -> 00:03:48] and the first thing we do is we represent the program in the polyhedron model and
+[00:03:48 -> 00:03:54] There is only one statement in this program and that's the statement z ij equals z i minus 1 j minus 1
+[00:03:55 -> 00:03:58] And its iteration space is a two-dimensional iteration space
+[00:03:58 -> 00:04:04] 0 comma n for i and 0 comma m for j and so I take a Cartesian product between the two
+[00:04:05 -> 00:04:11] Spaces and so, you know, I have iterations like 0 0 0 1 1 0 0 2 2 and so on and so forth
+[00:04:11 -> 00:04:17] It's a total of n plus m 1 into m plus 1 points in my iteration space
+[00:04:18 -> 00:04:19] now I
+[00:04:19 -> 00:04:26] Specify my space partitioning constraint would say that if there is a data dependency between any two iterations
+[00:04:26 -> 00:04:31] Then the two iteration points must be mapped to the same processor and so that basically
+[00:04:32 -> 00:04:34] Boils down to saying that if the two iterations
+[00:04:35 -> 00:04:40] Points were i comma j and i prime comma j prime then for there to be a data dependence
+[00:04:40 -> 00:04:46] It must be true that i comma j equals i prime minus 1 comma j prime minus 1 in other words
+[00:04:46 -> 00:04:50] I prime comma j primeth iteration is reading the element
+[00:04:51 -> 00:04:54] That is being written by the i comma j
+[00:04:56 -> 00:05:01] Iteration and this is you know this this this constraint this data dependence constraints is coming from
+[00:05:01 -> 00:05:08] Looking at accesses across these two static accesses the one z ij and z i minus 1 j minus 1
+[00:05:08 -> 00:05:12] There are actually two more pairs that have to be considered for example z ij with itself
+[00:05:12 -> 00:05:18] But there we are going to find that there is no data dependency and similarly z i minus 1 comma j minus 1 with
+[00:05:18 -> 00:05:21] Itself where again we are going to find that there is no data dependencies
+[00:05:21 -> 00:05:28] The only data dependencies are across these two static accesses and so and and the condition for data dependency is that
+[00:05:28 -> 00:05:33] the the iteration for the first axis which is i comma j should be equal to the
+[00:05:34 -> 00:05:41] I prime minus 1 comma j prime 1 minus 1 iteration of the second axis where i prime and j prime is the iteration
+[00:05:41 -> 00:05:48] Number of the second axis which is conflicting with i comma j and so whenever i comma j equals i prime minus j 1 comma j
+[00:05:48 -> 00:05:53] Minus 1 it must be true that they map to the same processor in other words
+[00:05:53 -> 00:06:01] P of i comma j should be equal to P of i prime minus minus 1 j prime minus 1 and notice that these functions
+[00:06:01 -> 00:06:09] P are actually I'm assuming that there's the same function in this because you know s1 is going to be totally mapped
+[00:06:09 -> 00:06:17] Together so whatever is the function the mapping function from iteration space to processor space for this static access is also the
+[00:06:18 -> 00:06:22] Mapping function for the other static access so we can assume that the P's are same
+[00:06:23 -> 00:06:28] Now if I solve for the maximum rank solution for these space partitioning constraints
+[00:06:28 -> 00:06:30] So these are my space partitioning constraints
+[00:06:30 -> 00:06:34] I want to find what is the function P then if I solve for the maximum rank solution
+[00:06:34 -> 00:06:40] I want to point out again that you know one trivial solution is that P ij equals 0 for all possible i comma j
+[00:06:40 -> 00:06:45] But that's not a maximum rank solution because that basically means everything is mapped to one processor
+[00:06:45 -> 00:06:49] So if I look at the maximum rank solution for this these space partitioning constraints
+[00:06:49 -> 00:06:56] I'm going to get the solution P equals i minus j and you can verify this for yourself that if P equals i minus j then
+[00:06:56 -> 00:07:01] i minus j equals i prime minus 1 minus
+[00:07:01 -> 00:07:07] Brackets j prime minus 1 and the ones would cancel out and so both i minus j and i prime minus j prime
+[00:07:07 -> 00:07:13] Would be identical and so P equals i minus j actually satisfies our space partitioning constraints
+[00:07:14 -> 00:07:16] now
+[00:07:16 -> 00:07:18] So
+[00:07:18 -> 00:07:24] So basically we have the solution which is the maximum rank solution and if I look at it pictorially it actually makes sense because
+[00:07:25 -> 00:07:30] What is the processor for this particular strand that starts at 0 comma 0?
+[00:07:30 -> 00:07:35] It is just 0 minus 0 or 1 minus 1 or 2 minus 2 or 3 minus 3
+[00:07:35 -> 00:07:41] So all these points in this strand actually evaluate P to 0 because 0 minus 0 is also 0
+[00:07:41 -> 00:07:46] 1 minus 1 is also 0 2 minus 2 is also 0 and so on similarly if I look at this strand
+[00:07:47 -> 00:07:49] 0 comma 1 evaluates to minus 1
+[00:07:51 -> 00:07:54] 1 comma 2 also evaluates to minus 1
+[00:07:54 -> 00:07:59] 2 comma 3 also evaluates to minus 1 and so on so each of these strands is basically
+[00:07:59 -> 00:08:06] Mapping to the same all the points in a single strand are mapping to the same processor with this mapping function and so
+[00:08:07 -> 00:08:08] But but different
+[00:08:08 -> 00:08:13] Strands for example this strand is mapping to processor number 0 the one that starts at 0 comma 0
+[00:08:13 -> 00:08:20] But this strand which starts at 0 comma 1 is mapping at 2 processor number minus 1 in other words the two process
+[00:08:20 -> 00:08:25] The two strands are being mapped to different processors and that's coming from a maximum rank solution
+[00:08:25 -> 00:08:31] So to get the maximum possible range of my P function so that I get the maximum amount of parallelism
+[00:08:32 -> 00:08:39] Now I look at what is the you know what is the minimum and the maximum value that P can take I already know that the
+[00:08:39 -> 00:08:44] Minimum value that I can take is 0 and the maximum value I can take is n
+[00:08:44 -> 00:08:48] Similarly for J the minimum and maximum are 0 and M respectively
+[00:08:48 -> 00:08:52] And so if I look at what is the minimum that I minus J can take well
+[00:08:52 -> 00:08:57] I minus J would be minimum and I is minimum and J is maximum so I is minimum
+[00:08:57 -> 00:09:04] It means 0 and then J is maximum. It's M. So the minimum value of I minus J is 0 minus M, which is minus M
+[00:09:04 -> 00:09:05] similarly
+[00:09:05 -> 00:09:12] What's the maximum value of I minus J when I is capital N and J is 0 because I is maximum and J is minimum
+[00:09:12 -> 00:09:19] Then the maximum value of P is capital N and so now I have the lower bound and upper bound of P
+[00:09:20 -> 00:09:23] In terms of M and N and now I can do my code generation
+[00:09:23 -> 00:09:30] My first attempt is going to be a naive code generation where I basically use an outer loop for P
+[00:09:30 -> 00:09:35] which goes from the lower bound of P which is minus M and to the upper bound of P which is capital N and
+[00:09:36 -> 00:09:43] Then I just paste the original program as it is except that I prefix or I predicate the statement S1
+[00:09:43 -> 00:09:48] With the mapping function which which says if P equals I minus J
+[00:09:48 -> 00:09:51] So I should only execute the statement if I am on the correct processor
+[00:09:51 -> 00:09:55] And so this is my naive code generation strategy
+[00:09:55 -> 00:09:57] I
+[00:09:57 -> 00:10:01] Claim that in this code generation strategy the outer loop which is on P is data independent
+[00:10:01 -> 00:10:04] Which means different iterations of P are don't have
+[00:10:05 -> 00:10:10] Data dependencies among each other for example when P equals minus M and when P equals minus M plus 1
+[00:10:11 -> 00:10:17] The two you know the two the sets of locations that the two iterations will access would be completely disjoint
+[00:10:18 -> 00:10:20] If one was a right, okay, so
+[00:10:22 -> 00:10:26] So this is my naive code generation strategy and my next step is to
+[00:10:27 -> 00:10:31] Tighten the loop bounds or eliminate the empty iterations. I'm going to do this in two steps
+[00:10:32 -> 00:10:36] My first step is going to be a tightening the loop bound for the innermost loop
+[00:10:36 -> 00:10:40] Which is the loop on J and if you look at the loop on J
+[00:10:40 -> 00:10:42] It basically says J equals 0 to M
+[00:10:42 -> 00:10:46] But it only looks at one value which satisfies P equals I minus J
+[00:10:46 -> 00:10:54] So actually I can just replace this whole loop from J to M by just saying that J should be equal to I minus P
+[00:10:54 -> 00:10:56] Right so instead of you know
+[00:10:56 -> 00:10:59] I just kind of rearrange the terms here with P equals I minus J
+[00:10:59 -> 00:11:02] Then it must be true that J equals I minus P
+[00:11:02 -> 00:11:08] So the only non empty iteration happens when J equals I minus P all the other iterations are empty
+[00:11:08 -> 00:11:14] Iterations and so I can just say that oh J equals I minus P and and then basically do it
+[00:11:14 -> 00:11:18] But even there it's not that you know for every value of I minus P
+[00:11:18 -> 00:11:25] This is empty because also I need the constraint and J should be greater than equal to 0 and J should be less than equal to M
+[00:11:25 -> 00:11:30] so not only is J equal to I minus P so I get these constraints if I look at my
+[00:11:30 -> 00:11:32] constraints I get J is
+[00:11:34 -> 00:11:36] Equal to I minus P
+[00:11:36 -> 00:11:38] J is
+[00:11:38 -> 00:11:45] Greater than equal to 0 and J is less than equal to M and now if I solve for these constraints
+[00:11:45 -> 00:11:46] I basically get that
+[00:11:46 -> 00:11:53] You know if I eliminate J using my Fourier mode scan method then I basically get that using my projection basically
+[00:11:54 -> 00:11:56] then what I get if is
+[00:11:56 -> 00:12:00] J should be greater than equal to 0 which basically means I minus P should be greater than equal to 0
+[00:12:00 -> 00:12:06] J should be less than equal to M which means I minus P should be less than equal to M and there's only one
+[00:12:06 -> 00:12:09] Iteration that executes which is when P J equals I minus P
+[00:12:09 -> 00:12:16] So I just check whether I minus P is greater than equal to 0 and I minus P is less than equal to M in which case
+[00:12:16 -> 00:12:22] I just execute one iteration for J which is the iteration when I minus P equals J
+[00:12:22 -> 00:12:26] And I can just replace J with I minus P because I know that J equals I minus P
+[00:12:26 -> 00:12:29] I don't even need to have the variable J any longer
+[00:12:29 -> 00:12:34] And so if I look if you know by tightening the loop bounds of the innermost loop
+[00:12:34 -> 00:12:37] I get this if condition in other words if
+[00:12:37 -> 00:12:41] I minus P was greater than equal to 0 and I minus P was less than equal to M
+[00:12:41 -> 00:12:48] then one iteration will be executed of S1 if this condition is not met then zero iterations of
+[00:12:49 -> 00:12:51] S1 would get executed in other words
+[00:12:51 -> 00:12:59] There are still some empty iterations and those empty iterations are coming from the outer loop outer loop on I and my next
+[00:12:59 -> 00:13:05] step is going to be to tighten the loop bounds of the outer loop which is the for I equals 0 I is less than equal to
+[00:13:05 -> 00:13:07] N loop and
+[00:13:07 -> 00:13:13] basically I need to figure out that for what values of I is this condition going to get enabled and it's you know
+[00:13:13 -> 00:13:18] What are the minimum and the maximum values of I for which this condition I minus P is greater than equal to 0 and I
+[00:13:18 -> 00:13:24] minus P is less than equal to M is going to get enabled and I can actually see from here that only for those
+[00:13:25 -> 00:13:29] Conditions where I is greater than equal to P because only if I is greater than equal to P only then
+[00:13:30 -> 00:13:35] if and only if I is greater than equal to P would I minus P would be greater than equal to 0 and
+[00:13:35 -> 00:13:41] similarly the second constraint I minus P is less than equal to M can be reduced to I is less than equal to
+[00:13:41 -> 00:13:47] P plus M and so I have new lower bounds and upper bounds on I for which
+[00:13:47 -> 00:13:51] the iteration is going to be non-empty the lower bound is I is
+[00:13:51 -> 00:13:53] greater than equal to P
+[00:13:54 -> 00:13:58] and the upper bound is I is less than equal to M plus P
+[00:13:59 -> 00:14:01] and so now I can just you know
+[00:14:01 -> 00:14:04] Use my you know tighten my bounds using these lower bounds and upper bounds
+[00:14:04 -> 00:14:07] so instead of going from 0 to N I go from
+[00:14:08 -> 00:14:11] maximum of 0 comma P because P was my new lower bound of I
+[00:14:12 -> 00:14:19] to minimum of N comma P plus M because P plus M was an other upper bound for I so in other words
+[00:14:19 -> 00:14:23] I just incorporate the new lower bound and the new upper bound and once I do that
+[00:14:23 -> 00:14:30] I don't need the if condition anymore, and I can just have my statement as it is so my new program
+[00:14:30 -> 00:14:37] basically looks like for P equals minus M to N P plus plus for I equals maximum of 0 comma P
+[00:14:37 -> 00:14:40] to minimum of N comma P plus M I plus plus
+[00:14:41 -> 00:14:45] Z I comma I minus P so I minus P is just a replacement of J
+[00:14:45 -> 00:14:51] Equals Z I minus 1 comma I minus P minus 1 now
+[00:14:51 -> 00:14:55] I claim that this this new loop basically has
+[00:14:56 -> 00:15:03] better locality also if I it is possible to parallelize the outer loop because the iterations of the outer loop are data
+[00:15:04 -> 00:15:06] independent to see this pictorially
+[00:15:06 -> 00:15:10] Let's look at the two dependence graphs or the iteration spaces
+[00:15:10 -> 00:15:15] Recall that this was our original iteration space J is on the x-axis and I on the y-axis
+[00:15:15 -> 00:15:19] And there were these dependency edges that were going at 45 degree angles
+[00:15:20 -> 00:15:22] In my new
+[00:15:22 -> 00:15:28] Program the outer loop is on P and the inner loop is on I so now I becomes the x-axis and P becomes the y-axis
+[00:15:29 -> 00:15:33] Moreover the values of P go from minus M to N
+[00:15:33 -> 00:15:36] So they don't no longer go from 0 to N
+[00:15:36 -> 00:15:40] But they go from minus M to N and so this you know
+[00:15:40 -> 00:15:42] Let's say this point is somewhere near minus M
+[00:15:42 -> 00:15:49] And let's say the upper point is somewhere near plus 10 and so all these points are all these kind of our values that P
+[00:15:49 -> 00:15:53] Takes and then let's look at what are the values that I takes I takes
+[00:15:53 -> 00:15:58] Values from maximum of 0 comma P to minimum of N comma P plus M
+[00:15:58 -> 00:16:04] So notice that when P equals minus M then this becomes maximum of 0 comma
+[00:16:05 -> 00:16:06] minus M
+[00:16:06 -> 00:16:11] Minus M and assuming M is a positive number because we started with M to be kind of the upper bound
+[00:16:11 -> 00:16:16] So M must be a positive number so maximum of 0 comma minus M would be just 0 and
+[00:16:17 -> 00:16:22] Minimum of N comma minus M plus M because P I'm considering the case when P equals minus M
+[00:16:22 -> 00:16:28] So minimum of N comma minus M plus M is just minimum of N comma 0 and once again N is a positive number
+[00:16:28 -> 00:16:30] So minimum of N comma 0 is just 0
+[00:16:30 -> 00:16:37] So the maximum the minimum value is also 0 the maximum value is also 0 for the first iteration of the inner loop
+[00:16:38 -> 00:16:40] For the first iteration space of the inner loop
+[00:16:40 -> 00:16:45] But if I as I increase M for example as I increase P for example when P equals somewhere in the middle
+[00:16:45 -> 00:16:50] Let's say P equals 0 then this becomes I equals max of 0 comma 0
+[00:16:50 -> 00:16:55] So that's a 0 to min of N comma 0 plus M. So min of N comma M
+[00:16:55 -> 00:16:58] and so this now this iteration space has increased to
+[00:16:59 -> 00:17:06] From just one point which was 0 comma 0 for when P was equal to minus M to the iteration space from 0 to
+[00:17:07 -> 00:17:09] Min of N comma M
+[00:17:09 -> 00:17:14] So basically what I'm saying is that for different values of P the iteration space for I
+[00:17:15 -> 00:17:21] Has different lengths for example when P is minus M, then the iteration space of I is probably very small
+[00:17:21 -> 00:17:24] Maybe just one element. I'm just showing a strand of three elements here
+[00:17:24 -> 00:17:28] Just just as a no not to scale pictorial representation
+[00:17:28 -> 00:17:34] But as I increase P the value of this iteration space of I starts increasing
+[00:17:35 -> 00:17:40] Somewhere in the middle it becomes very large. For example, it becomes as large as either M or N
+[00:17:41 -> 00:17:46] And then it starts decreasing again because if I look at you know P as very high value
+[00:17:46 -> 00:17:53] So now if I look at P equals plus N then I equals max of 0 comma P becomes
+[00:17:54 -> 00:18:00] Max of 0 comma capital N which is just capital N because N is a positive number and then min of N comma
+[00:18:00 -> 00:18:08] P plus M just becomes min of N comma N plus M and that's just N because N plus M would always be greater than
+[00:18:08 -> 00:18:13] Equal to N assuming M is a positive number. So then again, we basically have a single
+[00:18:13 -> 00:18:18] Iteration single point iteration space for I when equals N which is from capital N to capital N
+[00:18:18 -> 00:18:21] And so that's what you know
+[00:18:21 -> 00:18:28] Basically will happen is that as P gets increases further the iteration space of I and the inner loop would also would start decreasing
+[00:18:28 -> 00:18:32] So from here we have basically converted the iteration space to this
+[00:18:33 -> 00:18:40] More intuitively what we are doing is we are basically traversing the iteration space it at a 135 degree angle, okay, so
+[00:18:41 -> 00:18:44] We first look at this strand at the very end
+[00:18:44 -> 00:18:48] Let's say and and that would just have the corner element one element
+[00:18:48 -> 00:18:53] Then the next strand which would have let's say three elements that the next strand which may have let's say five elements
+[00:18:53 -> 00:18:58] And so on until we hit the diagonal the longest diagonal of this iteration space
+[00:18:58 -> 00:19:06] Which is the middle element of value of P and then after that again these strands start becoming shorter and shorter and so our space
+[00:19:06 -> 00:19:08] Partitioning constraints has basically, you know
+[00:19:09 -> 00:19:16] Done done this resolution. We are basically it has figured out. What are those strands and those strands should be basically
+[00:19:16 -> 00:19:20] You know executed in parallel through the outer loop
+[00:19:21 -> 00:19:23] Even though the strands may be of different
+[00:19:24 -> 00:19:30] Lengths now I want to point out that because the strands are of different length if I just parallelize it
+[00:19:30 -> 00:19:36] Naively then it may happen that some iterations finish very quickly while some other iterations finish take longer to
+[00:19:37 -> 00:19:42] Finish but recall that when we started our whole discussion on synchronization free parallelism
+[00:19:42 -> 00:19:47] we said we're just going to assume that there are lots and lots of parallel processors and so
+[00:19:47 -> 00:19:52] You know and so in this case the number of parallel processor that we can potentially use at most is
+[00:19:52 -> 00:19:57] From minus m to n so that's nearly m plus n plus 1, right?
+[00:19:57 -> 00:19:59] So we can use m plus n plus 1 parallel processors
+[00:19:59 -> 00:20:04] But if we have smaller number of processes because capital N and capital N could be really big numbers
+[00:20:04 -> 00:20:08] Maybe in millions or something like that if we want if I have smaller number of processors
+[00:20:08 -> 00:20:12] We may need to do some scheduling for and we may need to have some intelligent scheduling
+[00:20:12 -> 00:20:15] strategy where we basically say that the longer strands are
+[00:20:16 -> 00:20:21] kind of not grouped but the smaller strands are grouped with each other so that each of the
+[00:20:21 -> 00:20:28] Physical processors has roughly an equal amount of work to do so that we are using the maximum amount of parallelism
+[00:20:28 -> 00:20:31] available at all possible program points during the execution
+[00:20:33 -> 00:20:35] Okay
+[00:20:35 -> 00:20:41] Finally this I mean this transformation from my original program to the new program is basically nothing but
+[00:20:41 -> 00:20:49] An example of changing the axes I change my axis from i comma j to i
+[00:20:50 -> 00:20:57] Minus j comma i all right. That's what this this this this space partitioning constraints formulation
+[00:20:57 -> 00:21:02] Achieved for me and if I basically was to write this as a matrix
+[00:21:02 -> 00:21:06] This is my skewing matrix that basically skews the axes
+[00:21:06 -> 00:21:11] You know, so the first axis becomes one i minus j and the second axis becomes i
+[00:21:12 -> 00:21:17] Notice that I'm calling I'm not calling this a permutation matrix a permutation matrix needs to have a special property that
+[00:21:18 -> 00:21:23] There's only one nonzero value on every row and every column and that value is a one
+[00:21:23 -> 00:21:29] This is not a permutation matrix because it's not just a permutation of the axes as it was for our affine transform number six
+[00:21:29 -> 00:21:33] It is actually a skewing transformation because we are basically
+[00:21:33 -> 00:21:40] traversing the data now at a 135 degree angle and it's not just about interchange of axes and loops
+[00:21:43 -> 00:21:49] Finally, I want to say a word about the geometrical interpretation that we may have developed an intuition about
+[00:21:49 -> 00:21:51] through all these primitive affine transforms
+[00:21:52 -> 00:21:58] Notice that we assume that you know, assuming a two-dimensional space and this can be generalized to higher dimensions as well
+[00:21:58 -> 00:22:06] But assuming a two-dimensional space if we use the x-axis as the inner dimension and the y-axis at the outer dimension
+[00:22:06 -> 00:22:09] So let's say the inner dimension is x1 and the outer dimension is x2
+[00:22:09 -> 00:22:11] Then we are basically, you know
+[00:22:12 -> 00:22:14] Iterating the space in the ascending lexicographic order
+[00:22:14 -> 00:22:19] Which means I first exhaust all values of x1 for the first value of x2 and then you know
+[00:22:19 -> 00:22:22] And then all values of x1 for the second value of x2 and so on
+[00:22:22 -> 00:22:29] In other words, this is the direction of my traversal of the iteration space then there will be dependency edges from
+[00:22:30 -> 00:22:33] Iterations that read or write some data element to
+[00:22:34 -> 00:22:41] Iterations that read or write the same data element and I claim that you know in this set in this kind of representation
+[00:22:41 -> 00:22:46] graphical representation the dependency edges can no matter what program you write if you draw the
+[00:22:47 -> 00:22:53] Pictorial representation in this way where the inner loop is basically the x-axis and the outer loop is the y-axis
+[00:22:53 -> 00:22:56] Then the dependency edges can only have an angle
+[00:22:56 -> 00:23:02] Between 0 and 180 degrees which means I could have angles which look like this which look like this
+[00:23:02 -> 00:23:07] Which look like this which look like this which look like this, but I can't have an angle which looks like this
+[00:23:07 -> 00:23:10] All right, so this is not possible. So why is this not possible?
+[00:23:10 -> 00:23:16] Well, because if I have such an angle that basically means that this point executed before this point
+[00:23:16 -> 00:23:23] And that's not possible in our ascending lexicographic order in our ascending lexicographic order this point must execute, you know
+[00:23:23 -> 00:23:26] this point must execute before this point and so
+[00:23:27 -> 00:23:32] You know this that another way to say that is that the dependency edges can only
+[00:23:32 -> 00:23:40] Have an angle between 0 degrees and 180 degrees and this just comes from the ascending lexicographic order of the iteration space
+[00:23:40 -> 00:23:46] What do the space iteration space partitioning constraints for synchronization free parallelism by us?
+[00:23:46 -> 00:23:50] Space partitioning ensures that the outer loops are data independent
+[00:23:50 -> 00:23:54] So it tries to ensure that whatever as the direction of dependency edges
+[00:23:54 -> 00:23:59] it tries to find the maximum rank solution such that all those dependency edges basically are
+[00:24:00 -> 00:24:08] You know traversed in the inner loop iterations if possible and the outer loop iterations are basically data
+[00:24:08 -> 00:24:10] Independent and this is what we saw in us doing
+[00:24:10 -> 00:24:15] example as well the strands basically, you know each of the strands basically form the inner loop and
+[00:24:15 -> 00:24:21] The the iteration across the strands basically forms the outer loop in other words
+[00:24:21 -> 00:24:27] If I was able to find a rank minus a rank one solution for a two-dimensional space
+[00:24:27 -> 00:24:34] So if this is rank one solution, then the data dependencies would only only be horizontal in the new solution
+[00:24:34 -> 00:24:38] Just like they were in for us doing and permutation matrices
+[00:24:39 -> 00:24:43] Of course, I'm just you know doing this pictorial representation for a two-dimensional case
+[00:24:44 -> 00:24:47] You could potentially generalize this also for a three-dimensional case
+[00:24:47 -> 00:24:51] For example, I could now talk about either a rank one solution or a rank two solution
+[00:24:51 -> 00:24:53] Notice that if I get a rank zero solution, that's no good
+[00:24:53 -> 00:24:57] That's basically saying that everything is still executing on the same processor
+[00:24:57 -> 00:25:01] And if I do the code generation, I'm going to get the same program as the original program back
+[00:25:01 -> 00:25:03] So rank zero solution is no good
+[00:25:04 -> 00:25:10] rank one solution for a two-dimensional case ensures that all the dependency edges are only horizontal and there is no
+[00:25:10 -> 00:25:16] So all the dependency edges are basically zero degree edges basically theta equals zero for for the rank one solution
+[00:25:17 -> 00:25:18] Similarly for a three-dimensional case
+[00:25:18 -> 00:25:24] You could have an either a rank one solution or a rank two solution or even a rank three solution
+[00:25:24 -> 00:25:25] Even for a two-dimensional case
+[00:25:25 -> 00:25:30] I could have a rank two solution if I had a rank two solution basically means every point can be executed in parallel
+[00:25:30 -> 00:25:34] So there are no dependency edges for a if we got a rank two solution
+[00:25:34 -> 00:25:37] In a three-dimensional case if I get a rank one solution
+[00:25:37 -> 00:25:42] It basically means that all my dependency edges should be in the in the plane
+[00:25:42 -> 00:25:44] So if it's a three-dimensional case
+[00:25:44 -> 00:25:50] It should be on the XY plane where Z axis is the vertical axis the outermost axis and
+[00:25:50 -> 00:25:55] Similarly, you can also think about what will happen if it was a rank one solution in a three-dimensional case
+[00:25:55 -> 00:25:58] So I find this, you know pictorial thinking
+[00:25:59 -> 00:26:04] Of this of these kind of a fine transform very useful in trying to understand what's happening
+[00:26:04 -> 00:26:09] Apart from all the gory details related to mathematics

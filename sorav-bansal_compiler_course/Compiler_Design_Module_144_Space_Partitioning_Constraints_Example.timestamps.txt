@@ -1,0 +1,342 @@
+Title: Compiler Design Module 144 : Space Partitioning Constraints Example
+Video ID: K1kNF_FRZ5U
+Detected language: en
+------------------------------------------------------------
+
+[00:00:00 -> 00:00:04] So we discussed an example where we created
+[00:00:04 -> 00:00:06] space partition constraints.
+[00:00:06 -> 00:00:10] And then we basically saw what it would look like
+[00:00:10 -> 00:00:12] in a 2D diagram.
+[00:00:12 -> 00:00:16] We took an example which had a loopness of depths two.
+[00:00:16 -> 00:00:18] And then we just gave the solution and said,
+[00:00:18 -> 00:00:21] look, here's a solution and you can verify for yourself
+[00:00:21 -> 00:00:25] that this solution satisfies the constraints.
+[00:00:25 -> 00:00:26] We're going to look at it
+[00:00:26 -> 00:00:28] in a more mathematical sense today
+[00:00:28 -> 00:00:31] instead of looking at it just from a pictorial representation
+[00:00:31 -> 00:00:34] and convincing ourselves that the solution works.
+[00:00:34 -> 00:00:36] Let's look at it from a mathematical standpoint
+[00:00:36 -> 00:00:40] to convince ourselves that the solution actually works
+[00:00:40 -> 00:00:41] even from a mathematical standpoint.
+[00:00:41 -> 00:00:44] So it's the same loop that we had earlier
+[00:00:44 -> 00:00:48] for i equals one to 100, for j equals one to 100,
+[00:00:48 -> 00:00:52] xij equals xij plus yi minus one j
+[00:00:52 -> 00:00:56] and yij equals yij plus xij minus one.
+[00:00:57 -> 00:01:01] And we said that the only data dependencies of consequence here
+[00:01:01 -> 00:01:03] are xij with xij minus one
+[00:01:03 -> 00:01:07] and yi minus one j with yij, right?
+[00:01:07 -> 00:01:10] So these two and these two, the diagonal ones.
+[00:01:10 -> 00:01:13] Because the other ones are not going to make much difference
+[00:01:13 -> 00:01:17] except for the fact that this entire statement has to have,
+[00:01:17 -> 00:01:18] you know, this entire C statement
+[00:01:18 -> 00:01:20] which involves three memory accesses
+[00:01:20 -> 00:01:23] should all be mapped to the same processor
+[00:01:23 -> 00:01:26] and similarly for the second statement as well.
+[00:01:26 -> 00:01:29] So if you take that, then the only two kind of conflicting
+[00:01:29 -> 00:01:34] potentially, accesses that could potentially
+[00:01:34 -> 00:01:37] have data dependencies are xij and xij minus one
+[00:01:37 -> 00:01:41] and yi minus one j and yij, okay?
+[00:01:41 -> 00:01:45] So when I look at xij and xij minus one,
+[00:01:45 -> 00:01:49] so just picking one of these data dependency pair
+[00:01:49 -> 00:01:51] of statements that have a data dependency
+[00:01:51 -> 00:01:53] which is xij and xij minus one,
+[00:01:53 -> 00:01:55] what do I need to do?
+[00:01:55 -> 00:01:56] What are the unknowns?
+[00:01:56 -> 00:02:01] The unknowns are C1, which is C1 is the mapping function
+[00:02:04 -> 00:02:09] from S1 for S1 and so the coefficient matrix for S1
+[00:02:12 -> 00:02:15] and small c1 is the additive vector for S1.
+[00:02:15 -> 00:02:19] Similarly, capital C2 is the coefficient matrix for S2
+[00:02:19 -> 00:02:22] and small c2 is the additive vector for S2.
+[00:02:22 -> 00:02:26] So in other words, if my loop iteration indexes,
+[00:02:26 -> 00:02:30] indices for S1 were i1 j1, then the processor ID
+[00:02:30 -> 00:02:34] for the i1 j1 iteration count would be given
+[00:02:34 -> 00:02:39] by C1 i1, C1 into i1 j1 plus small c1
+[00:02:39 -> 00:02:43] and similarly for S2, we will do capital C1 small c2.
+[00:02:43 -> 00:02:48] Okay, so what is the maximum rank
+[00:02:48 -> 00:02:50] that C1, capital C1 can have?
+[00:02:50 -> 00:02:53] Well, notice that the loop iteration nest itself
+[00:02:53 -> 00:02:55] is of depth two.
+[00:02:55 -> 00:02:57] So the maximum loop nest, the dimension
+[00:02:57 -> 00:02:59] of the iteration space is two
+[00:02:59 -> 00:03:03] and so the maximum dimension of the processor space
+[00:03:03 -> 00:03:05] on which this can get mapped is also two
+[00:03:05 -> 00:03:08] and so from that, we basically get
+[00:03:08 -> 00:03:10] a square coefficient matrix.
+[00:03:10 -> 00:03:13] The number of columns represents the depth
+[00:03:13 -> 00:03:16] of the loop iteration nest
+[00:03:16 -> 00:03:20] and the number of rows represents the size
+[00:03:20 -> 00:03:22] or the dimension of the processor matrix,
+[00:03:22 -> 00:03:24] the maximum dimension and this is true
+[00:03:24 -> 00:03:27] for both capital C1 and capital C2
+[00:03:27 -> 00:03:29] and also small c1 and small c2
+[00:03:29 -> 00:03:34] because the additive constants will have two rows each.
+[00:03:35 -> 00:03:38] Now, when I look at this, one thing
+[00:03:38 -> 00:03:41] that I would going to, now basically I want
+[00:03:41 -> 00:03:44] to solve for capital C1 and so when I solve
+[00:03:44 -> 00:03:46] capital C1 basically means I need to figure out
+[00:03:46 -> 00:03:49] what are the values for each of the elements
+[00:03:49 -> 00:03:51] in this matrix, there are four elements in the matrix
+[00:03:51 -> 00:03:55] and so I have named them so that I can easily
+[00:03:55 -> 00:03:58] kind of refer to them that C triple one,
+[00:03:58 -> 00:04:01] C double one two, C one two one, C one two two,
+[00:04:01 -> 00:04:04] similarly C two one one, C two one two,
+[00:04:04 -> 00:04:05] C two two one and C two two two.
+[00:04:05 -> 00:04:09] So there are eight such unknowns
+[00:04:09 -> 00:04:12] in the coefficient matrix and similarly small c1 one
+[00:04:12 -> 00:04:16] and small c1 two, small c2 one and small c2 two
+[00:04:16 -> 00:04:19] are the unknowns in the additive vectors
+[00:04:19 -> 00:04:22] and I want to solve for these unknowns.
+[00:04:22 -> 00:04:25] Now, one thing that I'm going to tell you upfront
+[00:04:25 -> 00:04:26] about this problem from what we know
+[00:04:26 -> 00:04:29] from the previous module is that I know
+[00:04:29 -> 00:04:32] that the best solution for this is going
+[00:04:32 -> 00:04:36] to be a one dimensional processor space mapping
+[00:04:36 -> 00:04:38] which means the processors, the dimension
+[00:04:38 -> 00:04:40] of the processor space on which this is going
+[00:04:40 -> 00:04:42] to get mapped, this loop is going to map
+[00:04:42 -> 00:04:45] is going to have one dimension of one.
+[00:04:45 -> 00:04:47] So that's the value of K that we have been using
+[00:04:47 -> 00:04:50] in our previous discussion where K is the dimension
+[00:04:50 -> 00:04:51] of the processor space.
+[00:04:51 -> 00:04:52] How do I know that?
+[00:04:52 -> 00:04:54] Well, that's from, you know, that's just,
+[00:04:54 -> 00:04:56] I'm using the previous knowledge that we have
+[00:04:56 -> 00:05:00] from the figure where basically there are N number
+[00:05:00 -> 00:05:03] of two, two N number of independent chains
+[00:05:03 -> 00:05:07] and two N is basically a linear number in the,
+[00:05:07 -> 00:05:09] in one dimension, which is order N.
+[00:05:09 -> 00:05:12] So in other two, N is 100 in this case.
+[00:05:12 -> 00:05:13] So that's basically the number
+[00:05:13 -> 00:05:17] of independent parallel processing threads
+[00:05:17 -> 00:05:20] that you can create maximum is basically linear
+[00:05:20 -> 00:05:23] in the size of one dimension.
+[00:05:23 -> 00:05:25] On the other hand, if there were no data dependencies
+[00:05:25 -> 00:05:27] then the processor space would have been two dimensional.
+[00:05:27 -> 00:05:29] And so what does this mean?
+[00:05:29 -> 00:05:32] What do I know just from this previous knowledge?
+[00:05:32 -> 00:05:33] In general, when we are solving for this
+[00:05:33 -> 00:05:35] we won't have this previous knowledge
+[00:05:35 -> 00:05:37] but just to make the discussion simpler
+[00:05:37 -> 00:05:39] and easy to kind of communicate
+[00:05:39 -> 00:05:40] I'm using the previous knowledge.
+[00:05:40 -> 00:05:43] And so what does it mean based on the fact
+[00:05:43 -> 00:05:45] that we already know that the processor space
+[00:05:45 -> 00:05:47] that we're going to map the iteration space
+[00:05:47 -> 00:05:49] to is going to be one dimensional.
+[00:05:49 -> 00:05:53] It basically means that this matrix capital C one
+[00:05:53 -> 00:05:56] is going to have a rank of one.
+[00:05:56 -> 00:05:57] Okay.
+[00:05:57 -> 00:05:59] In other words, there's going to be only one
+[00:05:59 -> 00:06:03] linearly independent row in this matrix.
+[00:06:03 -> 00:06:04] The second row will be dependent.
+[00:06:04 -> 00:06:06] In other words, I can specify,
+[00:06:06 -> 00:06:08] I can, you know, C one to one and C one to two
+[00:06:08 -> 00:06:12] can be always specified as linear multiples
+[00:06:12 -> 00:06:15] of C triple one and C one one two.
+[00:06:15 -> 00:06:16] In other words, when I, I mean
+[00:06:16 -> 00:06:18] I can always kind of bring this matrix
+[00:06:18 -> 00:06:20] to an echelon form.
+[00:06:20 -> 00:06:24] And so basically what I can say is that, I mean
+[00:06:24 -> 00:06:26] because it is rank one, I can always bring it
+[00:06:26 -> 00:06:28] to a form where the last row
+[00:06:28 -> 00:06:30] the second row is always zero.
+[00:06:30 -> 00:06:33] Okay. So this is zero and this is zero.
+[00:06:33 -> 00:06:36] And if the row, because it's going to be a rank
+[00:06:37 -> 00:06:39] I already kind of from my previous discussion, no
+[00:06:39 -> 00:06:40] that's going to be zero.
+[00:06:40 -> 00:06:42] Now when I'm going to actually solve the equation
+[00:06:42 -> 00:06:44] in, you know, on a computer or something like that
+[00:06:44 -> 00:06:46] I won't have this information in which case
+[00:06:46 -> 00:06:51] I am going to have, you know
+[00:06:51 -> 00:06:53] all the four unknowns here
+[00:06:53 -> 00:06:54] and then I'm going to solve for them.
+[00:06:54 -> 00:06:56] And then from that solution itself
+[00:06:56 -> 00:06:58] it will become apparent that these
+[00:06:58 -> 00:07:00] these matrices are rank one
+[00:07:00 -> 00:07:02] but I don't want to go through the entire, you know
+[00:07:02 -> 00:07:05] solution in my discussion today.
+[00:07:05 -> 00:07:08] So I'm just making it simpler by just noticing
+[00:07:08 -> 00:07:10] that I'm sure that I'm, you know
+[00:07:10 -> 00:07:11] the last row is going to come out
+[00:07:11 -> 00:07:14] to be a linearly dependent row on the first row
+[00:07:14 -> 00:07:16] because I know that the solution is going
+[00:07:16 -> 00:07:17] to be a rank one matrix.
+[00:07:17 -> 00:07:20] And so I'm just going to simplify the discussion
+[00:07:20 -> 00:07:22] but just, you know, assuming that this
+[00:07:22 -> 00:07:24] I can just strike out the second row.
+[00:07:24 -> 00:07:27] In other words, I can just make this row zero.
+[00:07:27 -> 00:07:29] And similarly, I can strike out the row
+[00:07:29 -> 00:07:32] from the additive vector as well, which is the small C's.
+[00:07:33 -> 00:07:35] Okay. And so with this discussion
+[00:07:35 -> 00:07:37] this is our new problem.
+[00:07:37 -> 00:07:39] Capital C one is, has two unknowns.
+[00:07:39 -> 00:07:40] And now I, you know
+[00:07:40 -> 00:07:42] I can use a smaller number of unknowns.
+[00:07:42 -> 00:07:44] Also the naming becomes easier.
+[00:07:44 -> 00:07:46] So it's a C one one and C one two
+[00:07:46 -> 00:07:48] instead of C triple one and C double one two
+[00:07:48 -> 00:07:49] and stuff like that.
+[00:07:49 -> 00:07:51] And now C two is C two one and C two two.
+[00:07:51 -> 00:07:54] Once again, I know I've made this simplification
+[00:07:54 -> 00:07:56] just for discussion purposes.
+[00:07:56 -> 00:07:58] In an actual implementation
+[00:07:58 -> 00:08:01] you would basically optimistically assume
+[00:08:01 -> 00:08:03] that the matrix may be full rank.
+[00:08:03 -> 00:08:04] And then when you get to the solution
+[00:08:04 -> 00:08:05] you're going to find over the rank
+[00:08:05 -> 00:08:06] of the matrix actually one.
+[00:08:06 -> 00:08:08] And then it is at that point
+[00:08:08 -> 00:08:09] that you're going to remove the last row.
+[00:08:09 -> 00:08:12] So I'm just removing the last row upfront
+[00:08:12 -> 00:08:15] so that, you know, the discussion becomes easier.
+[00:08:15 -> 00:08:16] All right.
+[00:08:16 -> 00:08:18] So now I have to solve for all these unknowns.
+[00:08:18 -> 00:08:20] So how many unknowns are there?
+[00:08:20 -> 00:08:22] There are one, two, three, four, five, six.
+[00:08:22 -> 00:08:23] All right.
+[00:08:23 -> 00:08:25] So there are six unknowns here
+[00:08:25 -> 00:08:27] and that I need to solve for.
+[00:08:27 -> 00:08:29] And what are, you know, what are the constraints?
+[00:08:29 -> 00:08:32] It's the same space partitioning constraints
+[00:08:32 -> 00:08:34] that we are, that we have already seen.
+[00:08:34 -> 00:08:36] So what are the space partitioning constraints?
+[00:08:36 -> 00:08:39] The space partitioning constraints are that these capital,
+[00:08:39 -> 00:08:41] these, you know, when I multiply, when I use C one,
+[00:08:41 -> 00:08:44] I, when I multiply this with the iteration vector
+[00:08:44 -> 00:08:47] plus C one should equal C, you know,
+[00:08:47 -> 00:08:50] should be equal for different values of I one J one
+[00:08:50 -> 00:08:53] and I one prime J one prime.
+[00:08:53 -> 00:08:55] They should be mapping to the same location
+[00:08:55 -> 00:08:56] in the processor space
+[00:08:56 -> 00:08:58] or the same PID in the processor space.
+[00:08:58 -> 00:08:59] If there was a data dependency
+[00:08:59 -> 00:09:02] between I one J one and I one prime J one prime.
+[00:09:02 -> 00:09:07] And similarly for I two, first statement S two,
+[00:09:07 -> 00:09:08] which case it will be I two J two
+[00:09:08 -> 00:09:10] and I two prime J two prime.
+[00:09:10 -> 00:09:12] And similarly across S one and S two.
+[00:09:12 -> 00:09:13] All right.
+[00:09:13 -> 00:09:16] So for example, because both the iteration space
+[00:09:16 -> 00:09:19] of both S one and S two are equal, you know,
+[00:09:19 -> 00:09:21] across these things also going to be I one J one
+[00:09:21 -> 00:09:23] and I two prime J two prime.
+[00:09:24 -> 00:09:25] Okay.
+[00:09:25 -> 00:09:27] So, so here are my space partitioning constraints
+[00:09:27 -> 00:09:28] as we know them.
+[00:09:28 -> 00:09:31] If I is less than equal to 100.
+[00:09:31 -> 00:09:33] So I'm not using I one and J one now because,
+[00:09:33 -> 00:09:35] as I said, both S one and S two
+[00:09:35 -> 00:09:36] have the same iteration space.
+[00:09:36 -> 00:09:38] So let's just use I and J
+[00:09:38 -> 00:09:40] because it's going to be the same iteration space.
+[00:09:40 -> 00:09:43] So if I is less than equal to 100
+[00:09:43 -> 00:09:45] and J is less than equal to 100 for S one,
+[00:09:45 -> 00:09:49] and then if I prime is less than equal to 100
+[00:09:50 -> 00:09:51] and greater than equal to one,
+[00:09:51 -> 00:09:53] and J prime is less than equal to 100
+[00:09:53 -> 00:09:54] and greater than equal to one.
+[00:09:56 -> 00:09:57] And there is a data dependency
+[00:09:57 -> 00:10:08] between xij and xij-1. So what does that mean? It basically means that xij is pointing to
+[00:10:08 -> 00:10:15] the same location as x i prime, j prime-1. In other words, when will these two locations
+[00:10:15 -> 00:10:22] point to the same thing? When i is equal to i prime and j equals j prime-1. So that's
+[00:10:22 -> 00:10:28] our constraint. That's coming from our f i plus small f equals f prime i prime plus
+[00:10:28 -> 00:10:35] small f prime. So capital F and small f are coming from i, j. Capital F prime and small
+[00:10:35 -> 00:10:43] f prime are coming from i, j-1. So basically what I get is i equals i prime and j equals
+[00:10:43 -> 00:10:49] j prime-1. So my constraint is that if all these conditions are true, for all such
+[00:10:49 -> 00:10:55] values of i and i prime and j and j prime, whenever this condition is true, it must
+[00:10:55 -> 00:11:03] be true that c11, c12 multiplied with i, j plus small c1 equals c21, c22 multiplied
+[00:11:03 -> 00:11:10] by i prime, j prime plus small c2. So whenever this is true, this is true for all possible
+[00:11:10 -> 00:11:18] values of i, j, i prime, j prime. Okay, so I need to solve this equation and I'm
+[00:11:18 -> 00:11:22] going to propose some. So once again, I'm not going to discuss the algorithm to solve
+[00:11:22 -> 00:11:29] the solution, but I'm going to propose some potential solutions and basically to get
+[00:11:29 -> 00:11:38] a sense of what is the nature of this problem. So here is one possible solution. So I want
+[00:11:38 -> 00:11:44] to find a solution to c11 and c12 and similarly small c1 and capital C21 and
+[00:11:44 -> 00:11:50] c22 and small c2 such that these constraints are satisfied. Now notice that whenever i equals
+[00:11:50 -> 00:11:57] i prime and j equals j prime-1, these should be equal. So here is one simple idea that
+[00:11:57 -> 00:12:04] what if I just say that c12 equals 0 and c11 equals 1. Alright, and similarly c21
+[00:12:04 -> 00:12:10] equals 1 and c22 equals 0. In other words, the coefficient of i is 1 and the coefficient
+[00:12:10 -> 00:12:16] of j is 0. In which case, basically because whenever i is equal to i prime, this is going
+[00:12:16 -> 00:12:20] to be the processor that is going to map to is i and let's say small c1 and small
+[00:12:20 -> 00:12:26] c2 are also 0. So then this processor, the processor indicated by the PID indicated
+[00:12:26 -> 00:12:31] by the LHS of this equation is going to be just i. Alright, so here is my proposed
+[00:12:31 -> 00:12:39] solution. Small c1 equals c2 equals 0, capital C11 equals capital C21 equals 1.
+[00:12:39 -> 00:12:45] Similarly capital C12 equals capital C22 equals 0. I claim that with this solution,
+[00:12:45 -> 00:12:50] all these constraints are getting satisfied. So why? Let's see, if capital C11 equals
+[00:12:50 -> 00:12:55] 1 and capital C12 equals 0, that's what these constraints say, then this becomes
+[00:12:55 -> 00:13:01] just i and small c1 equals 0. So this whole thing becomes i. Similarly, this
+[00:13:01 -> 00:13:07] whole thing becomes i prime, because capital C21 is 1, capital C22 is 0, small c2 is
+[00:13:07 -> 00:13:13] 0. So whenever i is equal to i prime, this becomes i and this becomes i prime and I
+[00:13:13 -> 00:13:18] know i equals i prime, so the processor ID was also i and i prime which are
+[00:13:18 -> 00:13:21] equal and so these constraints are getting satisfied. Now I'm not claiming
+[00:13:21 -> 00:13:25] that this is the maximum rank solution. Actually it turns out that the
+[00:13:25 -> 00:13:29] maximum rank solution, if the only constraint was this constraint, then the
+[00:13:29 -> 00:13:33] maximum rank solution would have been a rank 2 solution and I'm just working
+[00:13:33 -> 00:13:37] with the rank 1 solution. But this is one of the possible solutions which may
+[00:13:37 -> 00:13:41] not be the maximum rank solution. It is not as dumb as a trivial solution. Of
+[00:13:41 -> 00:13:46] course a trivial solution is both C11 and C12 are 0 and similarly C21 and C22
+[00:13:46 -> 00:13:50] are 0. So everything is 0, which is a trivial rank 0 solution and I'm not
+[00:13:50 -> 00:13:54] interested in that. But you know I have a better solution which is C11 is
+[00:13:54 -> 00:13:59] 1 and C12 is 0 and C21 is 1 and C22 is 0 and these additive
+[00:13:59 -> 00:14:03] coefficients are also 0, in which case these constraints are going to get
+[00:14:03 -> 00:14:08] satisfied. Okay, but this is not the only constraint I have in the program. So
+[00:14:08 -> 00:14:11] let's remember the solution. The solution is that the coefficients of i
+[00:14:11 -> 00:14:17] are 1 and coefficients of j are 0. j and j prime are 0 and i and i prime are 1.
+[00:14:17 -> 00:14:22] Now let's look at the other constraint which is coming from yij and y i
+[00:14:22 -> 00:14:26] minus 1j. So this is the other constraint that's coming from y i
+[00:14:26 -> 00:14:31] minus 1j and y ij and once again I set up my equations. The only
+[00:14:31 -> 00:14:37] difference is that now the capital F and small f and capital F prime and small f
+[00:14:37 -> 00:14:43] prime are different. Capital F and small f are relating to yij and capital F
+[00:14:43 -> 00:14:48] prime and small f prime are relating to y i minus 1j and so now my space
+[00:14:48 -> 00:14:52] partitioning constraints are whenever i minus 1 which is you know coming
+[00:14:52 -> 00:14:58] from S1 equals i prime which is coming from S2 and j which is coming
+[00:14:58 -> 00:15:03] from S1 and j prime which is coming from S2 then see then the same thing
+[00:15:03 -> 00:15:10] right c11 c into ij plus small c equals c2 into i prime j prime plus
+[00:15:10 -> 00:15:16] small c. Now just like I had you know I had done in my previous slide I can
+[00:15:16 -> 00:15:20] make the same observation that here it's j equals j prime. So what I can
+[00:15:20 -> 00:15:25] do is one solution to this this whole thing could be that let's just put
+[00:15:25 -> 00:15:29] a coefficient of j to be 1 and coefficient of i to be 0 and that would
+[00:15:29 -> 00:15:34] be a solution to this set of equation this this particular equation but now
+[00:15:34 -> 00:15:38] this is not going to be a valid solution for the previous constraints
+[00:15:38 -> 00:15:42] that I had on the previous slide. So I want a solution that's that has a
+[00:15:42 -> 00:15:45] solution that satisfies both the
+[00:15:45 -> 00:15:49] constraints and that's that makes the problem interesting isn't it. So
+[00:15:49 -> 00:15:52] the first thing I want to point out is that the solution that I had in
+[00:15:52 -> 00:15:55] the previous slide is not going to satisfy the constraints on this slide.
+[00:15:55 -> 00:15:59] So this recall that the previous slide the solution was coefficients of i which
+[00:15:59 -> 00:16:04] are c11 and c21 are 1 and coefficients of j are c12 which are c12 and
+[00:16:04 -> 00:16:08] c22 are 0 and if I do that then I get and then the additive constants
+[00:16:08 -> 00:16:15] are 0 then if I do that then I get i plus 0 which is i and here I get
+[00:16:15 -> 00:16:21] i prime and it's not so it but i is not equal to i prime i prime
+[00:16:21 -> 00:16:26] equals i minus 1 in the in the preconditions so so this is not going to
+[00:16:26 -> 00:16:28] work right so this solution is not going to satisfy this constraint
+[00:16:28 -> 00:16:33] because whenever i minus 1 equals i prime it is not true that i equals i
+[00:16:33 -> 00:16:36] prime and so this solution does not satisfy the constraint on this slide
+[00:16:36 -> 00:16:39] so this is the recall that this is the solution that we had for the
+[00:16:39 -> 00:16:43] previous set of constraints on the previous slide. Now here is another
+[00:16:43 -> 00:16:47] possible solution and the solution is that I put the coefficients of j and j
+[00:16:47 -> 00:16:52] prime to be 1 and coefficients of i and i prime to be 0 so just flip and now it
+[00:16:52 -> 00:16:56] satisfies the solution the constraints on this slide because now whenever j
+[00:16:56 -> 00:16:59] equals j prime the processor IDs that the two statements map to are
+[00:16:59 -> 00:17:03] going to be same but then this does not satisfy the constraints on the
+[00:17:03 -> 00:17:07] previous slide for the same reason and I claim that here is the
+[00:17:07 -> 00:17:12] solution which satisfies both the constraints and the solution is that
+[00:17:12 -> 00:17:19] you have both all the coefficients of i to be 1 so c11 c21 is 1
+[00:17:19 -> 00:17:25] coefficients of j to be minus 1 so c12 and c22 are minus 1 and the
+[00:17:25 -> 00:17:31] additive constants are also important c2 c1 is minus 1 and c2 equals 0 so
+[00:17:31 -> 00:17:37] let's see whenever i minus 1 equals i prime and j equals j prime then c11
+[00:17:37 -> 00:17:44] becomes 1 so this becomes 1 c12 becomes minus 1 similarly c21 becomes
+[00:17:44 -> 00:17:53] 1 and c22 becomes minus 1 c1 becomes minus 1 and this becomes 0 and so
+[00:17:53 -> 00:18:03] this becomes i minus j minus 1 equals i prime minus j prime plus 0 so
+[00:18:03 -> 00:18:07] I'm just not writing the 0 and is it true that whenever i minus 1 equals i
+[00:18:07 -> 00:18:12] prime and j equals j prime i minus j minus 1 equals i prime minus j prime
+[00:18:12 -> 00:18:17] well because j equals j prime I can just you know eliminate j and j prime and
+[00:18:17 -> 00:18:21] both sides and then I'm remaining with i minus 1 equals i prime and that's
+[00:18:21 -> 00:18:25] all that's true because of this constraint so indeed this solution
+[00:18:25 -> 00:18:30] that I have which is c1 equals minus capital C 1 1 capital C 2 1
+[00:18:30 -> 00:18:34] equals 1 capital C 1 2 capital C 2 2 equal minus 1 and small c1 equal
+[00:18:34 -> 00:18:38] minus 1 small c2 equals 0 satisfies the constraints on this slide and I claim
+[00:18:38 -> 00:18:42] that you can try this solution also on the constraints that I had in the
+[00:18:42 -> 00:18:44] previous slide and you would find that this set of constraints this
+[00:18:44 -> 00:18:48] solution satisfies those constraints as well so now we have a solution that
+[00:18:48 -> 00:18:52] satisfies both sets of constraints unlike the previous two solutions which
+[00:18:52 -> 00:18:55] satisfied only one of the constraints

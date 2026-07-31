@@ -1,0 +1,137 @@
+Title: Compiler Design Module 155 : Affine Transform #6   Loop Interchange
+Video ID: 1oUjj-537Mk
+Detected language: en
+------------------------------------------------------------
+
+[00:00:00 -> 00:00:06] So we'll discuss our sixth primitive affine transform which is permutation. So to understand
+[00:00:06 -> 00:00:13] this transform, let's look at an example. For i equals 0 to n, for j equals 0 to m,
+[00:00:14 -> 00:00:23] z i j equals z i minus 1 j. So notice that in this example, we are accessing a two-dimensional
+[00:00:23 -> 00:00:30] array indexed by two indices, i, j in this case and i minus 1, j in this case.
+[00:00:30 -> 00:00:37] And so you can see that it's not the innermost dimension which has a dependency,
+[00:00:37 -> 00:00:43] it's the outer dimension which has a dependency within the statement. There's a dependency from
+[00:00:44 -> 00:00:52] i, jth iteration to i minus 1, jth iteration because in the i minus 1, jth iteration,
+[00:00:52 -> 00:00:59] z i minus 1, j would be written and in i, jth iteration, z i minus 1, j would be read.
+[00:01:00 -> 00:01:06] If I was to basically draw the pictorial representation in 2D and I draw the inner
+[00:01:06 -> 00:01:11] dimension as the x-axis, so the inner dimension is j and the outer dimension as the y-axis which
+[00:01:11 -> 00:01:17] is i and so the lexicographic order is basically shown by these green lines. So first I exhaust
+[00:01:17 -> 00:01:23] all values of j for the first value of i, then I exhaust all values of j for the second value
+[00:01:23 -> 00:01:30] of i and so on. Then the dependency edges are drawn in grey. For example, there's a dependency
+[00:01:30 -> 00:01:40] from 0, 0 to 1, 0 where this is i, j, so i is coming first but there's a dependency from 0,
+[00:01:40 -> 00:01:46] 0 to 1, 0 and this is exactly what our space, our data dependence constraints would also
+[00:01:46 -> 00:01:56] have told us because as I said before, in our 1, 0th iteration, 0, 0th element would have been
+[00:01:56 -> 00:02:04] read because of this i minus 1, j and in the 0, 0th iteration, 0, 0 would have been written.
+[00:02:04 -> 00:02:14] So in 0, 0 iteration, z 0, 0 would have been written and in 1, 0 iteration, z 0, 0 would have
+[00:02:14 -> 00:02:21] been read and so there is a read after write dependency as shown by this grey edge and in
+[00:02:21 -> 00:02:30] fact, this can be generalized to 1, 1 and 2, 1, 0 and 2, 0, 1, 2, 0 and 3, 0 and so on
+[00:02:30 -> 00:02:38] and similarly for other values of j. So this is our dependency graph and we can see
+[00:02:38 -> 00:02:45] that the outer loop iterations which are the iterations of i are not data independent,
+[00:02:45 -> 00:02:50] they are data dependent because you know, this is the lowest bottom row is basically for
+[00:02:50 -> 00:02:56] when i equals 0 and then the second row is basically when i equals 1. However, I cannot
+[00:02:56 -> 00:03:02] execute the iteration for i equals 0 in parallel with the iteration for i equals 1 because
+[00:03:02 -> 00:03:07] there are data dependencies between the iterations of i equals 0 and the iterations
+[00:03:07 -> 00:03:13] of i equals 1. So there is no data dependency between, there is, you know, there is data
+[00:03:13 -> 00:03:18] dependency between different iterations of the outer loop and so the outer loop is not
+[00:03:18 -> 00:03:23] parallelizable. Now it's a different matter that the inner loop for a given value of i,
+[00:03:24 -> 00:03:29] so for a given value of i, the inner loop may be parallelizable but that is, you know,
+[00:03:29 -> 00:03:33] that's like saying that the outer loop is not parallelizable and the inner loop doesn't
+[00:03:33 -> 00:03:38] have that much parallelism to have because inner loop only contains one iteration per point
+[00:03:38 -> 00:03:44] and so the inner loops parallelization is not going to be very helpful if the outer loop is
+[00:03:44 -> 00:03:50] basically sequential. So we are going to basically transform this program so that we can
+[00:03:52 -> 00:03:57] have better parallelism and we are going to use our well-known technique of space
+[00:03:57 -> 00:04:01] partitioning constraints. So what is the first step in doing so? We are going to represent
+[00:04:01 -> 00:04:05] this program as a polyhedron, as a set of polyhedral constraints. There's only one
+[00:04:05 -> 00:04:11] statement here which is z i j equals z i minus 1 j. I mean there are actually two static accesses
+[00:04:11 -> 00:04:15] but they basically have a dependency so we're going to consider this as one statement
+[00:04:15 -> 00:04:20] and so this statement has an iteration space of two-dimensional iteration space formed by
+[00:04:20 -> 00:04:27] the Cartesian product of 0 comma n which is for i and 0 comma m which is for j. So for
+[00:04:27 -> 00:04:34] example 0 comma 0, 0 comma 1, 0 comma 2, 1 comma 0, 1 comma 1, 1 comma 2 all the way till
+[00:04:34 -> 00:04:42] n comma n. So there are m plus 1 into n plus 1 kind of elements in my iteration space and now
+[00:04:42 -> 00:04:47] I basically want to set up the data dependence space partitioning constraints and so basically
+[00:04:47 -> 00:04:51] I want to say that whenever there are two iterations that have a data dependence then
+[00:04:51 -> 00:04:56] it must be true that they are mapped to the same processor and so this is what our data
+[00:04:56 -> 00:05:01] dependence constraints would look like. Let's say one of the iterations in points in the
+[00:05:01 -> 00:05:06] iteration space is i comma j and let's say the other point is i prime comma j prime.
+[00:05:06 -> 00:05:11] Then for there to be a dependence between i comma j and i prime comma j prime it must be
+[00:05:11 -> 00:05:17] true that you know if I look at these two static accesses then the two iterations should
+[00:05:17 -> 00:05:22] access the same location and so in other words the location access by i comma j as a right
+[00:05:22 -> 00:05:29] would be i comma j, z i comma j and the location access by i prime comma the i
+[00:05:29 -> 00:05:36] prime comma j prime iteration is z i prime minus 1 j prime. So for there to be a data
+[00:05:36 -> 00:05:41] dependency it must be true that i comma j equals i prime minus 1 comma j prime
+[00:05:42 -> 00:05:46] and notice that I'm only considering data dependence I'm only considering this access
+[00:05:46 -> 00:05:51] and this access as a pair. I could have also considered this access with itself
+[00:05:51 -> 00:05:55] in which case I would have said that there is no data dependency because every element is
+[00:05:55 -> 00:06:00] every iteration is accessing a different element of the matrix. Similarly I could have looked for
+[00:06:00 -> 00:06:05] data dependencies for this access with itself once again I would have found that they are
+[00:06:05 -> 00:06:10] all data independent so the only data dependencies are across this axis and this
+[00:06:10 -> 00:06:15] axis and that's what I have encoded in my space partitioning constraints. So when i comma
+[00:06:15 -> 00:06:20] j equals i prime minus 1 comma j prime then it must be true that they map to the same
+[00:06:20 -> 00:06:27] processor in other words the function from p from i comma j for this statement should be equal to
+[00:06:27 -> 00:06:33] the function from you know maybe I should say p prime for the different function for
+[00:06:33 -> 00:06:39] i prime minus 1 comma j prime. Now actually it's p prime should be equal to p because
+[00:06:39 -> 00:06:44] it's the same c statement right so there are anyway kind of static data dependencies
+[00:06:44 -> 00:06:49] so p prime would be equal to p and so I can just say p. Now when I look for the maximum
+[00:06:49 -> 00:06:55] rank solution for this function p which needs to be an affine function in our framework then I just
+[00:06:55 -> 00:07:01] get this solution that p must be equal to j. So notice that because there are dependency
+[00:07:01 -> 00:07:06] chains for i's for example there's a dependency from 0 comma j to 1 comma j 1 comma j to 2 comma
+[00:07:06 -> 00:07:12] j 2 comma j so along the dimension of i everything is data dependent but along the
+[00:07:12 -> 00:07:17] dimension of j things are independent and that's what we also saw in our pictorial
+[00:07:17 -> 00:07:21] representation and so basically what I'm saying is that you know just partition the space such
+[00:07:21 -> 00:07:27] that every different j value is given a different processor right so in our diagram it's every
+[00:07:27 -> 00:07:35] vertical strand or that is basically sent to a single processor and notice that in this particular
+[00:07:35 -> 00:07:40] example while my iteration space is two dimensional my processor space is one dimensional
+[00:07:40 -> 00:07:44] okay and this is the maximum rank solution that I could obtain using space partitioning
+[00:07:44 -> 00:07:48] constraints and this is not surprising because there are data dependencies on
+[00:07:48 -> 00:07:52] one of the dimensions and so the only dimension that is parallelizable is the other dimension
+[00:07:52 -> 00:07:58] which is j. So this is my function and now basically I can do my code generation.
+[00:07:58 -> 00:08:04] The outer loop is going to iterate on p and what are the minimum and maximum values for p
+[00:08:04 -> 00:08:09] they are the same as the minimum and maximum values for j because p equals j and so I get
+[00:08:09 -> 00:08:14] for p equals zero p is less than equal to m p plus plus and then I just paste the original
+[00:08:14 -> 00:08:20] code as it is except that I predicate all the statements with the corresponding processor
+[00:08:20 -> 00:08:24] mapping function so in this case it's so that basically encoding the fact that only
+[00:08:24 -> 00:08:29] those iterations should execute on this processor which are which are supposed to execute on this
+[00:08:29 -> 00:08:33] processor and in this case the mapping function is p equals j so I basically have a predicate
+[00:08:33 -> 00:08:41] it says if p equals j only then execute this statement which is my s1 statement so so that's
+[00:08:41 -> 00:08:44] you know that's our simple code generation strategy and our next step is to tighten
+[00:08:44 -> 00:08:50] the loop bounds and and in this case basically I can see that the inner loop is going to
+[00:08:50 -> 00:08:57] execute only once the statement and all the other kind of m minus all the so out of the
+[00:08:57 -> 00:09:01] m plus one iterations of the inner loop m iterations are going to be empty iterations
+[00:09:01 -> 00:09:06] and only one iteration is going to actually execute the statement and that iteration is
+[00:09:06 -> 00:09:11] going to be the iteration when j equals p and so what I can do is I can just replace I can just
+[00:09:11 -> 00:09:17] eliminate this whole loop and just replace this with j equals p and I am done right and because
+[00:09:17 -> 00:09:22] I have now said j equals p I don't even need the guard and now I can just you know just
+[00:09:22 -> 00:09:28] copy propagate j equals p so that I can just replace j with p everywhere and now this is
+[00:09:28 -> 00:09:36] what my new code looks like for p equals zero to m for i equals zero to n zip equals z i minus 1
+[00:09:36 -> 00:09:41] p notice the difference the change that I have been able to make using the space partitioning
+[00:09:41 -> 00:09:47] constraints is that the outer loop on i has now become the inner loop on the same variable i
+[00:09:47 -> 00:09:54] whereas the outer loop has become a loop on the processor variable p and this is you know
+[00:09:54 -> 00:09:59] this is important because now what I have done is because you know the dimension on which there
+[00:09:59 -> 00:10:04] was a data dependency that dimension is now the inner loop and so I have decreased the reuse
+[00:10:04 -> 00:10:09] distance moreover the different iterations of the outer loop are now data independent
+[00:10:09 -> 00:10:12] and that's coming from our space partitioning constraints the way we have set it up
+[00:10:13 -> 00:10:17] because we had got the solution we can be sure that the outer loop iterations
+[00:10:17 -> 00:10:23] are data independent they don't have any data dependencies so if I was to look at this
+[00:10:23 -> 00:10:28] pictorially this is my original picture where there are data dependencies that are vertical
+[00:10:28 -> 00:10:35] but my traversal order is horizontal and so the outer loop didn't have the outer loop had
+[00:10:35 -> 00:10:41] data dependencies so the outer loop could not be parallelized but now I have changed it earlier
+[00:10:41 -> 00:10:48] my inner loop was on j and the outer loop was on i now my inner loop is on i so that's now
+[00:10:48 -> 00:10:54] our new x-axis and the outer loop is on p and p is just you know you can think of p as j so
+[00:10:54 -> 00:11:00] basically I've just switched you know I've just switched the loops i and j the inner and outer
+[00:11:00 -> 00:11:04] loops so that the inner loop has become the outer loop and the outer loop has become the
+[00:11:04 -> 00:11:11] inner loop and now in this kind of you know rotation of the axis what I see is that all
+[00:11:11 -> 00:11:17] my dependency edges are also horizontal and my traversal order of the loop is also in the same
+[00:11:17 -> 00:11:22] order as the dependency edges so clearly I have reduced my reuse distance because anything that
+[00:11:22 -> 00:11:28] I write is just read in the next iteration moreover different iterations of the outer loop
+[00:11:28 -> 00:11:32] are now data independent and they can be parallelized so each row can be
+[00:11:32 -> 00:11:39] given to a different processor and without any worry of incorrectness so this kind of
+[00:11:40 -> 00:11:48] parallelism would keep the program correct another way to say this is that I have changed
+[00:11:48 -> 00:11:55] the axis earlier my axes were p i comma j and so now my new axes are p and i and just to
+[00:11:55 -> 00:12:01] distinguish from the old i I say p and i prime and the relation between p and i prime and the
+[00:12:01 -> 00:12:08] original axis i and j is given by this matrix so p equals 0 into i plus 1 into j in other
+[00:12:08 -> 00:12:14] words p equals j and i prime equals 1 into i plus 0 into j in other words i prime equals i
+[00:12:14 -> 00:12:21] so i the i prime is just the same as i and p is now j and 0 1 1 0 represents our
+[00:12:22 -> 00:12:28] permutation matrix because which basically decides how we have permuted this
+[00:12:30 -> 00:12:37] permuted my axes so that I have better parallelism and locality so this particular
+[00:12:37 -> 00:12:43] matrix which basically dictates how the axes should be interchanged this is also called this
+[00:12:43 -> 00:12:46] transformation is also called loop interchange because I have interchanged the loops I have
+[00:12:46 -> 00:12:50] made the inner loop the outer loop and the outer loop the inner loop so this this matrix
+[00:12:50 -> 00:13:03] that dictates what this interchange should look like is also called the permutation matrix

@@ -1,0 +1,123 @@
+Title: Compiler Design Module 83 : Liveness DFA Example
+Video ID: dTVq4gnbUYg
+Detected language: en
+------------------------------------------------------------
+
+[00:00:00 -> 00:00:05] So now we're going to discuss an example to show the liveness dataflow analysis algorithm
+[00:00:05 -> 00:00:12] in action. So consider this example. So it's a very simple example, where a variable x
+[00:00:12 -> 00:00:18] is initialized to 0. We have a loop, let's say it's a while loop, let's say while x
+[00:00:18 -> 00:00:24] is not equal to 10, x is colon equal to x plus 1. And then we just return. Notice
+[00:00:24 -> 00:00:28] that I'm not returning x or anything like that, I'm just returning. So in other words,
+[00:00:28 -> 00:00:35] the value of x is not being used at the end of the program. Now the question is, what is
+[00:00:35 -> 00:00:41] the liveness status of x in this program at different program points? The first question
+[00:00:41 -> 00:00:45] is what are all the program points? So before we can talk about that, let's represent this
+[00:00:45 -> 00:00:52] program in our IR, intermediate representation, as a control flow graph. Recall that most
+[00:00:52 -> 00:00:57] intermediate representations that generate assembly code are basically control flow graphs. And
+[00:00:57 -> 00:01:03] so here's a control flow graph. This is the entry point. And we have x is colon equal
+[00:01:03 -> 00:01:08] to 0 as the first basic block. Then we have a check which says x is not equal to 10,
+[00:01:08 -> 00:01:13] which forms a separate basic block of its own. Then there's the loop body, which
+[00:01:13 -> 00:01:18] is incrementing x, x is colon equal to x plus 1. And then it's just jumping
+[00:01:18 -> 00:01:24] back to the loop condition, which is and then if the loop condition fails, that's
+[00:01:24 -> 00:01:28] the false branch. Then it just goes to the return statement, which forms a separate
+[00:01:28 -> 00:01:32] basic block. So this particular program is when represented as a control flow graph
+[00:01:32 -> 00:01:37] has four basic blocks. And these are all the program points. Once again, all the
+[00:01:37 -> 00:01:41] program points are just before and after every statement. And so in this case,
+[00:01:41 -> 00:01:45] because every statement has its own basic block, every statement is associated with
+[00:01:45 -> 00:01:51] two different program points, one just before it and one just after it. And recall
+[00:01:51 -> 00:01:56] that our initialization condition for the liveness DFA involves setting all the
+[00:01:56 -> 00:02:03] values of L to false. This is the value for the liveness value for x. More
+[00:02:03 -> 00:02:11] precisely, this is L, S, x, in, out. So this is what we are
+[00:02:11 -> 00:02:16] looking at. But in out is basically being captured by these program
+[00:02:16 -> 00:02:19] points and S is also being captured. So I'm just saying that what is the
+[00:02:19 -> 00:02:24] value of x at different program points. And I'm initializing everything to false.
+[00:02:24 -> 00:02:29] Recall that's what our liveness algorithm was. And our question is which
+[00:02:29 -> 00:02:35] program point to pick. And basically we want to pick a program
+[00:02:35 -> 00:02:41] point which does not satisfy one of our DFA rules. And once we pick it,
+[00:02:41 -> 00:02:45] then we are going to update the value such that it starts satisfying it.
+[00:02:45 -> 00:02:48] And recall that liveness is a backward data flow analysis. So we are
+[00:02:48 -> 00:02:52] going to pick a value. If I pick a statement, then I'm going to pick a
+[00:02:52 -> 00:02:57] value at the in of the statement. I'm going to set the in based on the out.
+[00:02:57 -> 00:03:02] So it's generally the upper value that is being represented as a function of
+[00:03:02 -> 00:03:10] the lower value. All right, so in this case, which points in the
+[00:03:10 -> 00:03:14] program do not satisfy our liveness rules. Actually, there are multiple
+[00:03:14 -> 00:03:18] points. For example, if I look at this particular statement, x is colon
+[00:03:18 -> 00:03:24] equal to x plus 1. The statement is using x, yet the value at the beginning
+[00:03:24 -> 00:03:28] of the statement is false. And this violates our liveness DFA rule because
+[00:03:28 -> 00:03:33] the liveness DFA rule, if you recall, was that if the statement is using x,
+[00:03:33 -> 00:03:38] then the value of L just before that statement is going to be true. Right?
+[00:03:38 -> 00:03:43] So but this in this case, it's false. And actually the same thing applies
+[00:03:43 -> 00:03:47] here. When I look at x is not equal to 10, here x is being used because
+[00:03:47 -> 00:03:53] it's a comparison. And based on that, this value just before x is not
+[00:03:53 -> 00:03:57] equal to 10 comparison should have been true. So I could have I could
+[00:03:57 -> 00:04:02] pick any of these values as if there are multiple options, recall that the
+[00:04:02 -> 00:04:05] DFA can pick any of these values and it doesn't really matter.
+[00:04:05 -> 00:04:09] So maybe I'll pick this one first, which is x is colon equal to x plus 1.
+[00:04:09 -> 00:04:14] And based on that, I'm going to set the value at the beginning of the
+[00:04:14 -> 00:04:20] statement to true. Now, once again, I need to pick a pick a point program
+[00:04:20 -> 00:04:23] point where the rules are not being met. And what is one point where the
+[00:04:23 -> 00:04:27] rules are not being met? Well, here is one point which is just after x is
+[00:04:27 -> 00:04:32] not equal to 10. The value is false. Whereas on least on one of the
+[00:04:32 -> 00:04:36] predecessors, the value is true. And recall that the first rule was that
+[00:04:36 -> 00:04:41] the predecessors value is the logical odd of the values at the
+[00:04:41 -> 00:04:47] successors. And one of the successors is true. The other successor is false.
+[00:04:47 -> 00:04:51] The logical or of true and false is true. And so this value needs to be
+[00:04:51 -> 00:04:57] updated to true. And that's my next step. So I update this value to true.
+[00:04:57 -> 00:05:01] Now, I can continue this. And now this is true. X is being used.
+[00:05:01 -> 00:05:04] So this value needs to be set to true as well, just before the
+[00:05:04 -> 00:05:10] comparison x not equal to 10. And that's my third step of the DFA.
+[00:05:10 -> 00:05:15] It sets false to true in this just before. And now what?
+[00:05:15 -> 00:05:20] Now, which statement or which program point is not satisfying our live news
+[00:05:20 -> 00:05:24] DFA rules? Well, let's look at this particular program point just after
+[00:05:24 -> 00:05:30] the assignment of x is equal to zero. This is a point and the in of x
+[00:05:30 -> 00:05:34] is not equal to zero is true. If we apply the first rule, this should
+[00:05:34 -> 00:05:37] have been also true because there's only one successor and that value is
+[00:05:37 -> 00:05:41] true, then the logical or of true is just true. And this should have been
+[00:05:41 -> 00:05:45] true, not false. And so I need to update this. Moreover, how many
+[00:05:45 -> 00:05:50] predecessors does this point have? It has this and it has this as
+[00:05:50 -> 00:05:53] a predecessor, right? Because of the loop edge, the one that I'm
+[00:05:53 -> 00:05:57] traversing, this particular place here is also false and this can
+[00:05:57 -> 00:06:01] also become true. And I'll update both these values in one go.
+[00:06:01 -> 00:06:07] So this is true and this is true. And at this point, you may find
+[00:06:07 -> 00:06:13] that all the data flow analysis rules are being followed. This
+[00:06:13 -> 00:06:16] remains false because this is an assignment. This remains false
+[00:06:16 -> 00:06:20] because return is not actually looking at x and that's it,
+[00:06:21 -> 00:06:23] right? So all these values have become true, but there are some
+[00:06:23 -> 00:06:27] values that still remain false. So this is the fixed point
+[00:06:27 -> 00:06:32] solution of our live news DFA. Some observations on the live news
+[00:06:32 -> 00:06:37] DFA, notice that each value can change only once, right? In
+[00:06:37 -> 00:06:40] constant propagation, we argued that each value can change at
+[00:06:40 -> 00:06:44] most twice. Here, each value can change at most once.
+[00:06:44 -> 00:06:47] Sometimes it may not change at all. And that's because you
+[00:06:47 -> 00:06:50] can start with false and maybe it will go to true and
+[00:06:50 -> 00:06:52] that's it. And those are the only two options. And so
+[00:06:52 -> 00:06:54] what is the convergence guarantee? Well, because each
+[00:06:54 -> 00:06:59] value can only change once and at every step of the DFA
+[00:06:59 -> 00:07:02] iteration, fixed point iteration, at least some value
+[00:07:02 -> 00:07:06] should change. And there are at most two into n values where
+[00:07:06 -> 00:07:09] n is the number of statements in the program. So the DFA
+[00:07:09 -> 00:07:13] algorithm is guaranteed to converge within two into n
+[00:07:13 -> 00:07:16] steps. What is the worst case execution time? Well, as
+[00:07:16 -> 00:07:20] we just discussed, the worst case execution time is when
+[00:07:20 -> 00:07:24] all the values converge with a single value, all the
+[00:07:24 -> 00:07:28] values change and with a single value changing in every
+[00:07:28 -> 00:07:31] step, the worst case execution time would be two into n
+[00:07:31 -> 00:07:33] steps where n is the number of statements in the program.
+[00:07:35 -> 00:07:37] Once the analysis finishes, we have all these
+[00:07:39 -> 00:07:42] values false, true, false, true everywhere. And if
+[00:07:43 -> 00:07:47] there is a statement where the after if there's a
+[00:07:47 -> 00:07:50] statement that is defining x and the value of liveness
+[00:07:50 -> 00:07:53] for x just after that statement is false, then we
+[00:07:53 -> 00:07:56] can eliminate that statement as dead code. So once the
+[00:07:56 -> 00:07:59] analysis finishes, we can use it to identify dead
+[00:07:59 -> 00:08:02] code. And notice that the direction of flow of
+[00:08:02 -> 00:08:05] information for constant propagation was forward while
+[00:08:05 -> 00:08:08] for liveness is backward. Why do I say backward?
+[00:08:08 -> 00:08:13] Because in liveness, it's the upper value that is
+[00:08:13 -> 00:08:15] represented as a function of the lower values. In
+[00:08:15 -> 00:08:18] constant propagation is a lower value that is
+[00:08:18 -> 00:08:20] represented as a function of the upper values. Or
+[00:08:20 -> 00:08:23] more precisely, in forward data flow analysis, the
+[00:08:23 -> 00:08:26] direction of the data flow is in the direction of
+[00:08:26 -> 00:08:30] program analysis from top to bottom. In backward
+[00:08:30 -> 00:08:33] data flow analysis, the direction of data flow is
+[00:08:33 -> 00:08:36] against the direction of program execution.

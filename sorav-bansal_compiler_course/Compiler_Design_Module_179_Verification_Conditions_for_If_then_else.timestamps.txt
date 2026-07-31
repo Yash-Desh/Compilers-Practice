@@ -1,0 +1,171 @@
+Title: Compiler Design Module 179 : Verification Conditions for If then else
+Video ID: lvzVLVYh82M
+Detected language: en
+------------------------------------------------------------
+
+[00:00:00 -> 00:00:05] We were discussing the assignment verification condition in our last module and this time
+[00:00:05 -> 00:00:11] we are going to discuss another construct in a typical imperative language which is
+[00:00:11 -> 00:00:17] the if-then-else operator or this is also called the conditional and so we are discussing
+[00:00:17 -> 00:00:22] the conditional verification condition in this module.
+[00:00:22 -> 00:00:28] So consider this program which is if some condition b where the condition itself may
+[00:00:28 -> 00:00:35] be a function of the variables x etc then some body which may modify x or other variables
+[00:00:35 -> 00:00:41] else some other body which again can modify x or other variables and we want to show the
+[00:00:41 -> 00:00:46] whole triple which is that if the precondition p holds on the variables of the program
+[00:00:47 -> 00:00:54] which are x and others there in the beginning of the program then the assertion q holds
+[00:00:54 -> 00:01:01] at the end of the program for any arbitrary p and q and for any arbitrary b and the if
+[00:01:01 -> 00:01:09] and then and else bodies. Okay so how do you basically reason about this? Well
+[00:01:11 -> 00:01:17] here is one way to do this you basically identify assertions which recall are nothing
+[00:01:17 -> 00:01:25] but abstractions at the beginning and the end of each of these sub programs which are the
+[00:01:25 -> 00:01:30] then clause and the else clause so for example at the beginning of the then clause you have p1
+[00:01:30 -> 00:01:36] x dot dot dot then you have the body and then you have p2 at the end which is again
+[00:01:36 -> 00:01:42] some predicate p2 x dot dot dot similarly and else we have p3 and p4 at the beginning and
+[00:01:42 -> 00:01:50] the end of the respective body. Okay so now that we have so basically what we have done
+[00:01:50 -> 00:01:55] is we have broken down a proof obligation that was basically for the entire program which
+[00:01:55 -> 00:02:03] involved a conditional into smaller segments such that the proof obligations also become smaller
+[00:02:03 -> 00:02:10] the smaller segments are going to be from p to p1 from p1 to p2 similarly from p2 p3
+[00:02:10 -> 00:02:18] from p3 to p4 and finally from p2 to q and p4 to q and in this module I'm going to discuss
+[00:02:18 -> 00:02:25] what these proof obligations are. So in general you know basically this whole business of trying
+[00:02:25 -> 00:02:31] to discharge a verification condition is turning out to be breaking down the program
+[00:02:31 -> 00:02:35] into smaller and smaller segments until you kind of reach the base case which is let's
+[00:02:35 -> 00:02:43] say a single assignment and then solving that there and so on. Of course the one of the key
+[00:02:43 -> 00:02:48] questions here is what should be p1 what should be p2 what should be p3 what should be p4
+[00:02:48 -> 00:02:54] how do we get these predicates automatically and I haven't really discussed that yet but
+[00:02:54 -> 00:03:00] let's assume that these p1 p2 p3 p4 are somehow available to us maybe some oracle is
+[00:03:00 -> 00:03:08] telling us what p1 p2 p3 p4 should be and so now once we know what the p1 p2 p3 p4 should be
+[00:03:08 -> 00:03:12] what should be the resulting verification conditions for this program what would be
+[00:03:12 -> 00:03:18] the smaller verification conditions for this program. So the first verification condition
+[00:03:18 -> 00:03:24] or vc1 is basically that if you start from p and if you reach this point where p1 should
+[00:03:24 -> 00:03:29] hold then what should be the verification condition well it is basically you can
+[00:03:29 -> 00:03:36] express it as a whole triple which says you know assuming p holds and if b evaluates to true then
+[00:03:36 -> 00:03:42] p1 holds at the end of the program. But if I bring that to a logical statement let's say
+[00:03:42 -> 00:03:47] in propositional logic or some first order logic or something like that then basically
+[00:03:47 -> 00:03:55] this turns out to be that if p holds and the Boolean condition holds then p1 holds
+[00:03:55 -> 00:04:00] right so you know in this notice that in this notation I'm not using the whole triple at all
+[00:04:00 -> 00:04:04] I'm just using a logical notation with the AND operator as our AND and the implication
+[00:04:04 -> 00:04:12] operators as our connectors so p and b implies p1 so that's our verification condition one
+[00:04:12 -> 00:04:17] notice that when I'm using p1 I'm not doing any substitution unlike the assignment operator
+[00:04:17 -> 00:04:22] where we were basically having this extra bracket at the end right which was basically a
+[00:04:22 -> 00:04:28] substitution operation here we don't have any substitution operation because after all
+[00:04:28 -> 00:04:32] nothing has changed the state hasn't changed the only thing that has changed is that we have
+[00:04:32 -> 00:04:35] basically have we have some kind of control flow and some kind of
+[00:04:37 -> 00:04:40] program execution has taken place and the pc value has changed the
+[00:04:40 -> 00:04:45] the location of the program counter has changed and that's it so this is our first
+[00:04:45 -> 00:04:51] verification condition similarly you know we have a second verification condition actually
+[00:04:51 -> 00:04:57] our second verification condition is going to relate p1 to p2 based on the body and you know
+[00:04:57 -> 00:05:03] if the body was a was a no-op then p1 and p2 can be equal if the body had a single assignment
+[00:05:03 -> 00:05:13] then we already know how to kind of you know represent this whole triple p1 assignment p2
+[00:05:14 -> 00:05:19] as a logical formula and we will do that so I mean that breaking down of this body
+[00:05:20 -> 00:05:25] can be done separately for example if it was another if then else then we would basically
+[00:05:25 -> 00:05:30] again apply this if then else rule to basically break it down further so I'm not going to
+[00:05:30 -> 00:05:36] discuss you know I mean this kind this proof obligation from p1 to p2 across this body
+[00:05:36 -> 00:05:40] is basically the application of the same rules again if it was just an assignment then we use
+[00:05:40 -> 00:05:47] the assignment operator and and we can do this recursively so I'm going to omit that but
+[00:05:47 -> 00:05:51] because I'm really interested in what how to deal with the if then else and not
+[00:05:51 -> 00:05:56] about the bodies of these if then else so let's look at from what happens from
+[00:05:56 -> 00:06:03] on the else side so once again if p holds and b does not hold which means I go to else
+[00:06:03 -> 00:06:09] then p3 must hold right that's what the whole whole triple condition implies or represents
+[00:06:09 -> 00:06:15] and so that's basically represented here using vc3 I'm using vc3 to basically you know emphasize
+[00:06:15 -> 00:06:25] that vc2 basically relates p1 and p2 and now vc3 relates p and p3 so if p holds and not b holds
+[00:06:25 -> 00:06:36] which means b is false implies p3 holds so this is the whole triple condition for p and not b
+[00:06:36 -> 00:06:44] implying p3 okay and finally you know after I have executed you know I will the program
+[00:06:44 -> 00:06:50] will either execute the then body or the else body irrespective they're both going to reach
+[00:06:50 -> 00:06:56] the end of this program where I want to assert q and so what is the verification condition
+[00:06:56 -> 00:07:01] that basically checks that irrespective of whether I come through the then body
+[00:07:01 -> 00:07:05] or whether I come through the else body q always holds and so that's going to be our
+[00:07:05 -> 00:07:11] next verification condition which I'm calling vc5 so if p2 holds so p2 is the end of the then
+[00:07:11 -> 00:07:20] clause or p4 holds then q holds all right so notice that is the first time we have a
+[00:07:20 -> 00:07:27] disjunction operator which is the logical or operator and says that you know if either p2
+[00:07:27 -> 00:07:34] hold or p4 hold then q should hold so this is this you know basically means that if p2 holds
+[00:07:34 -> 00:07:40] then q should hold further if p4 holds then also q should hold and the way to kind of say
+[00:07:40 -> 00:07:46] this in a single formula is that irrespective of whether p2 if either p2 or p4 hold then
+[00:07:46 -> 00:07:52] q must and so this is our other verification condition for this conditional operator if
+[00:07:52 -> 00:07:59] then else operator so let's look at an example to see this this encoding of
+[00:07:59 -> 00:08:03] verification conditions in action here is a program which says if x greater than equal
+[00:08:03 -> 00:08:10] to zero so this forms our b then skip skip is just a no-op just do nothing else x colon
+[00:08:10 -> 00:08:16] equals minus x so assign minus x to x so this is the I mean you already know how to
+[00:08:16 -> 00:08:20] handle an assignment for skip we are just going to assume that you know it's a no-op
+[00:08:20 -> 00:08:26] so it's as though you know whatever was holding before p the skip instruction also holds after
+[00:08:26 -> 00:08:31] the skip instruction and and now we are interested in proving this whole triple which
+[00:08:31 -> 00:08:37] says that if capital x equals some value x naught which could be a concrete value then at
+[00:08:37 -> 00:08:47] the end of this program capital x holds the modulus of x naught and how do I go ahead go
+[00:08:47 -> 00:08:53] about proving this well the first thing is I need to identify what should be my p1 p2 p3 p4
+[00:08:53 -> 00:08:59] and recall that I said that some oracle is going to give me these p2 p3 p1 p2 p3 p4 and
+[00:08:59 -> 00:09:06] let's assume that these are my p1 p2 p3 p4 which is p1 is x equals x naught and x is
+[00:09:06 -> 00:09:11] greater than equal to zero p2 is the same thing because after all skip is not doing
+[00:09:11 -> 00:09:21] anything p3 is x equals x naught and x is less than zero and p4 is x equals minus x naught
+[00:09:21 -> 00:09:27] and x is greater than zero once again I want to emphasize that these predicates these
+[00:09:27 -> 00:09:30] intermediate predicates that I have indicated in yellow are just kind of coming to us from
+[00:09:30 -> 00:09:37] some kind of oracle but once these are available then it becomes easy to show then
+[00:09:37 -> 00:09:43] we can apply our verification condition rules to show that whether to check actually I should
+[00:09:43 -> 00:09:48] say whether to check whether this whole tuple holds or not the first thing I want to point
+[00:09:48 -> 00:09:54] out is that if there exists any p1 p2 p3 p4 which satisfies the three verification conditions
+[00:09:54 -> 00:10:00] that we had which is actually we had five verification conditions vc1 vc2 vc3 vc4 and
+[00:10:00 -> 00:10:04] vc5 of which I just showed three the other two were basically relating to the body which
+[00:10:04 -> 00:10:12] I didn't really show but if all those verification conditions hold for any valuations of p1 p2 p3 p4
+[00:10:12 -> 00:10:18] then the whole trip then then we have been able to prove the whole triple relating end to end
+[00:10:19 -> 00:10:25] behavior of the whole program so that's why I mean I'm saying that this p1 p2 p3 p4 are
+[00:10:25 -> 00:10:31] coming from an oracle because for any kind as long as I'm able to find some p1 p2 p3 p4
+[00:10:31 -> 00:10:38] such that all the verification conditions evaluate to true or evaluate as to true then
+[00:10:38 -> 00:10:46] basically we have been able to prove the end to end theorem of you know p the whole program q
+[00:10:47 -> 00:10:53] represented as a whole triple all right so now let's get down to basically showing that
+[00:10:53 -> 00:10:57] checking whether these verification conditions hold or not so the first thing I'm going
+[00:10:57 -> 00:11:03] to check is whether when I'm at x equals x naught and if the condition evaluates it true does
+[00:11:03 -> 00:11:10] p1 hold and so that's my first condition which is assuming x equals x naught and x is greater
+[00:11:10 -> 00:11:14] than equal to zero which is b then is it true that x equals x naught and x is greater than
+[00:11:14 -> 00:11:19] equal to zero actually it's easy to see that the LHS of the implication and the Rh of the
+[00:11:19 -> 00:11:25] application are basically the same and so indeed this verification condition holds the next
+[00:11:25 -> 00:11:30] verification condition is going to be checking whether you know on the else path so if x equals
+[00:11:30 -> 00:11:38] x naught and not of x greater than equal to zero so when b is not true then is it true that x
+[00:11:38 -> 00:11:43] equals x naught and x is less than zero once again the left hand side of the implication
+[00:11:43 -> 00:11:47] is basically almost identical to the right hand side of the implication the only difference
+[00:11:47 -> 00:11:52] is that instead of saying not of x greater than equal to zero I'm saying I'm basically
+[00:11:52 -> 00:11:56] removing I'm kind of folding the not operator inside the relational operator and basically
+[00:11:56 -> 00:12:05] replacing it with x is less than zero so vc2 also holds and I haven't shown this vc for
+[00:12:05 -> 00:12:10] now p1 and p2 because this is the skip opcode this holds trivially the next thing I want to
+[00:12:10 -> 00:12:20] show is the body of the else of the else clause so here the p is basically this x equals x
+[00:12:20 -> 00:12:27] naught and x is less than zero so that becomes p implies q which is x equals minus x naught and
+[00:12:27 -> 00:12:33] x is greater than zero but substitute it with substitute x for minus x right so this is the
+[00:12:33 -> 00:12:40] whole encoding which says this is q with x colon equals minus x where q is nothing but
+[00:12:40 -> 00:12:46] this this predicate here and so what I get on the right hand side is
+[00:12:47 -> 00:12:53] you know replace x with minus x so this becomes minus x equals minus x naught so minus x naught
+[00:12:53 -> 00:12:58] coming straight away from here and then and x is greater than zero becomes and minus x is
+[00:12:58 -> 00:13:02] greater than zero so let's so this is the I want to point out that this is the whole
+[00:13:02 -> 00:13:08] encoding of the of the triple as opposed to let's say the floyd encoding we could have
+[00:13:08 -> 00:13:13] used the floyd encoding and again found the same answer whatever we will get with the whole
+[00:13:13 -> 00:13:20] encoding it doesn't really matter okay so let's see if x equals x naught and capital x is less
+[00:13:20 -> 00:13:26] than zero does that imply that minus x equals x minus x naught of course if capital x equals
+[00:13:26 -> 00:13:30] x naught then you know if I just multiply both sides by one minus one then I get minus x
+[00:13:30 -> 00:13:36] equals minus so this is okay so this is okay and is it is it true that minus x is greater
+[00:13:36 -> 00:13:42] than zero once again if x is less than zero then if I just kind of take x to the other
+[00:13:42 -> 00:13:48] direction I get like minus x is greater than zero so even this is okay and indeed this vc3
+[00:13:48 -> 00:13:56] also verifies to be true and because all and finally we need to prove that irrespective of
+[00:13:56 -> 00:14:02] which branch I take q is true all right and so which means that I have to show that you know
+[00:14:02 -> 00:14:11] x equals x naught and x is greater than equal to zero this is my p2 or p4 which is x equals
+[00:14:11 -> 00:14:21] minus x naught and x greater than zero together I mean basically either of them imply x equals
+[00:14:21 -> 00:14:26] mod x naught so let's see whether this holds or not the mod is modulus is basically the absolute
+[00:14:26 -> 00:14:33] value operator so this does this hold well if x is greater than equal to zero and a capital
+[00:14:33 -> 00:14:39] x equals x naught then indeed capital x equals mod x naught because we know that
+[00:14:41 -> 00:14:45] x naught is greater than equal to zero so and capital x equals x naught so
+[00:14:46 -> 00:14:51] modulus of x naught is just x naught and so indeed capital x of you know both sides are
+[00:14:51 -> 00:14:56] evaluated true let's look at the other one which is if capital x equals minus x naught
+[00:14:56 -> 00:15:05] and x is greater than zero then does x equals x naught sorry this should have been plus x naught
+[00:15:05 -> 00:15:17] right so this is because oh sorry this is fine so x equals minus x naught and x greater than
+[00:15:17 -> 00:15:24] zero does this imply x equals mod x naught well if capital x equals minus x naught and
+[00:15:24 -> 00:15:29] x is greater than zero that basically means that small x naught must have been less than zero
+[00:15:29 -> 00:15:35] because small x naught is minus x if minus capital x and if capital x is greater than zero
+[00:15:35 -> 00:15:40] then minus capital x would be less than zero and so x naught is less than zero and if x
+[00:15:40 -> 00:15:45] naught is less than zero and capital x is equal to minus x naught then again I know that
+[00:15:45 -> 00:15:58] capital x equals mod of x naught and so the disjunction of p2 and or p4 imply q all right
+[00:15:58 -> 00:16:02] once again I want to emphasize that this is a disjunction and not a conjunction which means
+[00:16:02 -> 00:16:07] that if I take any of these you know let's say I look at this in isolation
+[00:16:07 -> 00:16:12] if I just cross the second one out completely and if I just look at this then this implies
+[00:16:12 -> 00:16:17] this is true similarly I could have chosen the second one and tried to check whether
+[00:16:17 -> 00:16:22] the second one implies q or not and that would also have evaluated to true and that's why
+[00:16:22 -> 00:16:25] this whole you know all the verification conditions
+[00:16:27 -> 00:16:34] pass or succeed or evaluate to true and thus this whole whole triple is valid
+[00:16:34 -> 00:16:41] so what we have seen is basically how to you know break down and if then else program
+[00:16:41 -> 00:16:49] a conditional program into smaller segments identify some assertions at the middle point
+[00:16:49 -> 00:16:54] where which are the end points of the smaller segments and then generate the corresponding
+[00:16:54 -> 00:16:58] verification conditions we have discussed what should be the what should the verification
+[00:16:58 -> 00:17:04] conditions look like but we haven't yet discussed how to identify these intermediate
+[00:17:04 -> 00:17:18] assertions p1 p2 p3 p4

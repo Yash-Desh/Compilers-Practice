@@ -1,0 +1,424 @@
+Title: Compiler Design Module 124 7: Versioning Variables and Running time of Conversion to SSA
+Video ID: dOdQSqL6qoQ
+Detected language: en
+------------------------------------------------------------
+
+[00:00:00 -> 00:00:03] So we're going to now talk about the final step
+[00:00:03 -> 00:00:05] of the translation to SSA,
+[00:00:05 -> 00:00:07] which is versioning variables.
+[00:00:07 -> 00:00:09] So in this step,
+[00:00:09 -> 00:00:13] we are going to rename the mentions of a variable.
+[00:00:13 -> 00:00:15] We have already added the trivial five functions
+[00:00:15 -> 00:00:18] and we are going to now rename the mentions of a variable
+[00:00:18 -> 00:00:20] such that the program now becomes in SSA form,
+[00:00:20 -> 00:00:24] which means that every assignment to a variable version
+[00:00:24 -> 00:00:25] is happening at most once
+[00:00:25 -> 00:00:28] in the static text of the program.
+[00:00:28 -> 00:00:30] And for this, we process all the user definitions,
+[00:00:30 -> 00:00:33] for example, A equals B plus C,
+[00:00:33 -> 00:00:35] and all the five functions that have been inserted
+[00:00:35 -> 00:00:38] by our algorithm in step two in the same traversal.
+[00:00:39 -> 00:00:40] And the idea is very simple.
+[00:00:40 -> 00:00:43] We're going to do a depth-first search traversal
+[00:00:43 -> 00:00:44] of the CFG.
+[00:00:44 -> 00:00:47] And at each step of this depth-first search traversal,
+[00:00:47 -> 00:00:48] we're going to keep track
+[00:00:48 -> 00:00:51] of the current version of the variable.
+[00:00:51 -> 00:00:53] And depending on the current version of the variable,
+[00:00:53 -> 00:00:55] if that variable is being used
+[00:00:55 -> 00:00:58] in the current node of the DFS traversal,
+[00:00:58 -> 00:01:01] then we are going to rename that node
+[00:01:01 -> 00:01:02] with the current version.
+[00:01:02 -> 00:01:04] If that variable is being assigned,
+[00:01:04 -> 00:01:05] then we are going to increment the version
+[00:01:05 -> 00:01:10] and then give that assignment variable a new version.
+[00:01:10 -> 00:01:11] And this happens,
+[00:01:11 -> 00:01:13] this is done for every,
+[00:01:13 -> 00:01:16] the DFS traversal basically visits every node
+[00:01:16 -> 00:01:17] at most once.
+[00:01:17 -> 00:01:20] So to do this, there's a visited set that's kept
+[00:01:20 -> 00:01:23] and you basically ensure that every node
+[00:01:23 -> 00:01:24] is visited at most once.
+[00:01:25 -> 00:01:26] Okay.
+[00:01:26 -> 00:01:29] So this is our pseudo code for the DFS traversal.
+[00:01:29 -> 00:01:32] It's pretty much the standard depth-first search traversal
+[00:01:32 -> 00:01:35] with a slight twist because of the five nodes.
+[00:01:35 -> 00:01:37] I want to talk about that very quick soon.
+[00:01:37 -> 00:01:39] So we initialize the version map,
+[00:01:39 -> 00:01:41] which is the version map for every variable.
+[00:01:41 -> 00:01:43] And this initialization basically gives zero version
+[00:01:43 -> 00:01:46] for every variable in the program, right?
+[00:01:46 -> 00:01:47] So basically, initially,
+[00:01:47 -> 00:01:50] every variable is basically given the zero version.
+[00:01:50 -> 00:01:52] And then we call the depth-first search procedure,
+[00:01:52 -> 00:01:54] which we have the recursive depth-first search procedure,
+[00:01:54 -> 00:01:56] which I'm going to call DFS,
+[00:01:56 -> 00:02:00] on the entry node of the control flow graph.
+[00:02:00 -> 00:02:04] And with this initial V map,
+[00:02:04 -> 00:02:06] which is initialized with zero version
+[00:02:06 -> 00:02:08] for all the variables.
+[00:02:08 -> 00:02:13] Now, for given a node N in the graph and a V map,
+[00:02:14 -> 00:02:19] the DFS function renames N's variable.
+[00:02:19 -> 00:02:20] So within the node N,
+[00:02:20 -> 00:02:23] so N represents a node in the control flow graph,
+[00:02:23 -> 00:02:24] which means it represents a basic block
+[00:02:24 -> 00:02:26] in the control flow graph.
+[00:02:26 -> 00:02:28] And inside that basic block,
+[00:02:28 -> 00:02:30] there'll be instructions like A equals B plus C, et cetera.
+[00:02:30 -> 00:02:34] So for all such instructions, A equals B plus C,
+[00:02:34 -> 00:02:37] rename B and C with their appropriate versions, right?
+[00:02:37 -> 00:02:39] So for those B and C,
+[00:02:39 -> 00:02:42] basically they represent the non-fi uses,
+[00:02:42 -> 00:02:44] and you rename them using V maps.
+[00:02:44 -> 00:02:46] So for example, it becomes B zero plus C three
+[00:02:46 -> 00:02:48] or something like that.
+[00:02:48 -> 00:02:50] Similarly, you create,
+[00:02:54 -> 00:02:55] a V map prime.
+[00:02:55 -> 00:02:57] So if there's an assignment,
+[00:02:57 -> 00:03:00] so when I say uses, I also include assignments.
+[00:03:00 -> 00:03:01] So for example, A equals B plus C,
+[00:03:01 -> 00:03:04] then because A is an assignment,
+[00:03:04 -> 00:03:05] or A is being assigned to,
+[00:03:05 -> 00:03:08] then if the current version of A in the V map was,
+[00:03:08 -> 00:03:10] let's say three,
+[00:03:10 -> 00:03:11] then I increment it by one to four,
+[00:03:11 -> 00:03:14] and then make this as A four
+[00:03:14 -> 00:03:17] equals B something plus C something.
+[00:03:17 -> 00:03:19] So that's what rename N's variable non-fi uses
+[00:03:19 -> 00:03:21] using V map means.
+[00:03:21 -> 00:03:25] Then there's one slight twist here.
+[00:03:25 -> 00:03:27] For the fi nodes at my successors,
+[00:03:27 -> 00:03:31] I'm going to rename the variable
+[00:03:31 -> 00:03:34] corresponding to my branch in that fi node
+[00:03:34 -> 00:03:35] in this step itself.
+[00:03:35 -> 00:03:37] So when I'm visiting node N,
+[00:03:37 -> 00:03:38] I'm also going to rename,
+[00:03:38 -> 00:03:41] just like I renamed all the non-fi uses
+[00:03:41 -> 00:03:43] in my basic log,
+[00:03:43 -> 00:03:45] I'm going to rename the fi uses
+[00:03:45 -> 00:03:47] in the successor of N.
+[00:03:47 -> 00:03:50] Notice that I'm not renaming the fi uses
+[00:03:50 -> 00:03:52] of N in this step.
+[00:03:52 -> 00:03:52] I'm just going,
+[00:03:52 -> 00:03:54] but I'm going to rename the fi uses
+[00:03:54 -> 00:03:55] of the successor of N.
+[00:03:55 -> 00:03:57] And overall, that's going to ensure
+[00:03:57 -> 00:04:00] that all the fi uses are also renamed appropriately.
+[00:04:00 -> 00:04:03] So before I do the renaming
+[00:04:03 -> 00:04:05] of the fi arguments of the successor,
+[00:04:06 -> 00:04:09] I create a V map prime by copying V map
+[00:04:09 -> 00:04:10] and incrementing the versions
+[00:04:10 -> 00:04:11] of the variables modified by N.
+[00:04:11 -> 00:04:14] So for example, if A has been modified in N,
+[00:04:14 -> 00:04:16] then the new version of A will be four
+[00:04:16 -> 00:04:18] in V map prime.
+[00:04:18 -> 00:04:20] And for each successor S of N,
+[00:04:22 -> 00:04:25] if the successor S contains a fi node,
+[00:04:27 -> 00:04:30] then one of those arguments of that fi node
+[00:04:30 -> 00:04:33] or fi function will be corresponding to N
+[00:04:33 -> 00:04:34] in that successor.
+[00:04:34 -> 00:04:36] That's what a fi function means
+[00:04:36 -> 00:04:38] because it will have as many arguments
+[00:04:38 -> 00:04:40] as the number of incoming edges to S.
+[00:04:40 -> 00:04:43] And one of those arguments is going to refer to N
+[00:04:43 -> 00:04:46] and rename that particular argument,
+[00:04:46 -> 00:04:48] only that particular argument in S
+[00:04:48 -> 00:04:50] based on V map prime
+[00:04:50 -> 00:04:52] because that represents the latest map
+[00:04:52 -> 00:04:55] after all the assignments in N have been completed.
+[00:04:55 -> 00:04:57] And if S has not already been visited,
+[00:04:57 -> 00:04:59] this is the standard visited,
+[00:04:59 -> 00:05:02] visit every node once only in the DFS
+[00:05:02 -> 00:05:04] called DFS S, V prime.
+[00:05:04 -> 00:05:06] And this is guaranteed to terminate
+[00:05:06 -> 00:05:11] when order N visits of the DFS
+[00:05:11 -> 00:05:14] because it's basically visiting each node at most once.
+[00:05:15 -> 00:05:16] When I say order N,
+[00:05:16 -> 00:05:18] I mean order V plus V and E
+[00:05:18 -> 00:05:20] are the number of nodes and edges
+[00:05:20 -> 00:05:21] in the control flow graph.
+[00:05:22 -> 00:05:26] So what is the running time of this algorithm?
+[00:05:26 -> 00:05:27] It's not just okay to just count
+[00:05:27 -> 00:05:29] the number of DFS traversals,
+[00:05:29 -> 00:05:31] but within each DFS traversal,
+[00:05:31 -> 00:05:33] we may be doing a non-constant amount of work
+[00:05:33 -> 00:05:34] which we are.
+[00:05:34 -> 00:05:37] And so to be able to talk about the running time
+[00:05:37 -> 00:05:39] of this third step of translation to SSA,
+[00:05:39 -> 00:05:42] we count the number of mentions of a variable.
+[00:05:43 -> 00:05:45] And we are going to first count
+[00:05:45 -> 00:05:46] the number of mentions of a variable.
+[00:05:46 -> 00:05:48] The mention includes both a use
+[00:05:48 -> 00:05:50] or a def of a variable in the original program.
+[00:05:50 -> 00:05:53] So for example, on a node X,
+[00:05:53 -> 00:05:54] on a basic block X,
+[00:05:54 -> 00:05:57] if mOrigX represents the number of mentions
+[00:05:57 -> 00:06:00] in the node X,
+[00:06:00 -> 00:06:01] then the total number of mentions
+[00:06:01 -> 00:06:02] in the whole program is basically
+[00:06:02 -> 00:06:05] summation over X mOrigX,
+[00:06:05 -> 00:06:07] where X is a node in the control flow graph
+[00:06:07 -> 00:06:09] and that basically represents a basic block.
+[00:06:09 -> 00:06:11] When we convert the program to SSA
+[00:06:12 -> 00:06:15] by introducing, let's say, trivial phi nodes,
+[00:06:15 -> 00:06:16] then the number of mentions of a variable
+[00:06:16 -> 00:06:18] in the final program is,
+[00:06:18 -> 00:06:21] for each new assignment,
+[00:06:21 -> 00:06:22] a phi X that I add.
+[00:06:22 -> 00:06:25] So the only new assignments that I add to the program
+[00:06:25 -> 00:06:28] are all the phi functions that I've added.
+[00:06:28 -> 00:06:31] So for each such assignment,
+[00:06:31 -> 00:06:33] the number of mentions is basically
+[00:06:33 -> 00:06:35] m phi X is increased in the new program,
+[00:06:35 -> 00:06:37] the final program, by the in degree of X.
+[00:06:37 -> 00:06:40] Because if the new mention is something like
+[00:06:40 -> 00:06:45] a equals phi of a1, a2, a dot dot dot dot dot a,
+[00:06:46 -> 00:06:48] then the number of mentions
+[00:06:48 -> 00:06:51] that are present in this single instruction
+[00:06:51 -> 00:06:54] is basically proportional to the in degree,
+[00:06:54 -> 00:06:58] or the number of incoming incident edges at this node.
+[00:06:58 -> 00:06:59] So the number of,
+[00:06:59 -> 00:07:01] for each assignment of this type,
+[00:07:01 -> 00:07:06] the amount by which the number of mentions increases
+[00:07:06 -> 00:07:07] for because of the phi node
+[00:07:07 -> 00:07:11] is basically given by in degree of X.
+[00:07:11 -> 00:07:14] And so we say m phi X plus equals in degree of X.
+[00:07:14 -> 00:07:17] And the total number of mentions in the new program,
+[00:07:17 -> 00:07:19] in the program in which the trivial phi nodes
+[00:07:19 -> 00:07:20] have been inserted is,
+[00:07:20 -> 00:07:23] mx final equals mx origin plus mx phi,
+[00:07:23 -> 00:07:25] where mx phi represents all the mentions
+[00:07:25 -> 00:07:29] due to the newly added phi nodes in step two.
+[00:07:29 -> 00:07:32] Now, here's the interesting thing.
+[00:07:32 -> 00:07:35] How many different new assignments could have been added
+[00:07:35 -> 00:07:37] because of this step two?
+[00:07:37 -> 00:07:39] Well, it turns out that there can be
+[00:07:39 -> 00:07:41] up to order n square new assignments,
+[00:07:41 -> 00:07:43] where n is equal to the number of assignments
+[00:07:43 -> 00:07:45] in the original program.
+[00:07:45 -> 00:07:50] And this is because the number of different variables
+[00:07:51 -> 00:07:55] that need to be versioned using the phi node
+[00:07:55 -> 00:07:58] may be up to order n in every basic block.
+[00:07:58 -> 00:08:00] Because for every basic block,
+[00:08:00 -> 00:08:01] there could be up to order n variables
+[00:08:01 -> 00:08:03] that are reaching that basic block.
+[00:08:03 -> 00:08:06] And so because of that,
+[00:08:06 -> 00:08:08] and if all of those variables have different versions
+[00:08:08 -> 00:08:11] reaching through different incoming edges,
+[00:08:11 -> 00:08:12] then for each of those variables,
+[00:08:12 -> 00:08:14] we need to create a different phi node.
+[00:08:14 -> 00:08:17] So for every basic block in the program,
+[00:08:17 -> 00:08:20] I may need to add up to order n phi nodes
+[00:08:20 -> 00:08:22] for each different variable.
+[00:08:22 -> 00:08:24] And the number of basic blocks is also order n.
+[00:08:24 -> 00:08:28] So effectively meaning that I may have to add a total
+[00:08:28 -> 00:08:31] of order n square phi nodes in the overall program.
+[00:08:32 -> 00:08:34] But typically this number is linear,
+[00:08:34 -> 00:08:36] even though it can be worst case order n square
+[00:08:36 -> 00:08:40] or quadratic, typically this number is linear
+[00:08:40 -> 00:08:41] in n, where n is the number
+[00:08:41 -> 00:08:43] of original program statements
+[00:08:43 -> 00:08:45] or original assignments in the program.
+[00:08:47 -> 00:08:51] Further, because a phi x,
+[00:08:51 -> 00:08:53] the number of new assignments
+[00:08:53 -> 00:08:56] can be order n to order n square,
+[00:08:56 -> 00:08:59] the n degree can be order one to order n.
+[00:08:59 -> 00:09:01] So it can be maybe the n degrees at most two,
+[00:09:01 -> 00:09:03] but in the worst case, it can be order n
+[00:09:03 -> 00:09:05] because maybe a lot of different nodes
+[00:09:05 -> 00:09:07] can potentially reach a particular basic block.
+[00:09:07 -> 00:09:11] And so because of that, the number of mentions
+[00:09:11 -> 00:09:13] is basically obtained by multiplying
+[00:09:13 -> 00:09:16] the number of new assignments by the n degree.
+[00:09:16 -> 00:09:18] And the number of new assignments
+[00:09:18 -> 00:09:19] can be n to n square.
+[00:09:19 -> 00:09:22] And if the number of n degree can be order one to n,
+[00:09:22 -> 00:09:25] then the number of mentions in the new program
+[00:09:25 -> 00:09:27] can be order n to n cube.
+[00:09:27 -> 00:09:31] And so we can have a cubic number of mentions
+[00:09:31 -> 00:09:33] in the final program compared
+[00:09:33 -> 00:09:36] to the number of mentions in the original program.
+[00:09:36 -> 00:09:38] Recall that in the original program,
+[00:09:38 -> 00:09:40] the number of mentions is proportional
+[00:09:40 -> 00:09:41] to the size of the program
+[00:09:41 -> 00:09:43] because it's a three address code representation.
+[00:09:43 -> 00:09:46] So every instruction can have only a constant number
+[00:09:46 -> 00:09:48] of mentions, maybe up to two or three.
+[00:09:48 -> 00:09:50] But because of the SSA transformation,
+[00:09:50 -> 00:09:53] every instruction, the phi instructions
+[00:09:53 -> 00:09:55] or the phi functions can have more
+[00:09:55 -> 00:09:58] than a constant number and up to order n number
+[00:09:58 -> 00:09:59] of mentions, and that is the reason
+[00:09:59 -> 00:10:03] why we can have order n cube, worst case blow up
+[00:10:03 -> 00:10:06] in the number of mentions that we have in the program.
+[00:10:06 -> 00:10:08] But the good news is that typically
+[00:10:08 -> 00:10:10] this blow up doesn't happen
+[00:10:10 -> 00:10:12] and the typical case is order n only.
+[00:10:12 -> 00:10:15] So the program doesn't grow by a cubic factor,
+[00:10:15 -> 00:10:19] but just stays linear.
+[00:10:19 -> 00:10:21] Finally, if I talk about the running time
+[00:10:21 -> 00:10:23] of the step three of the translation to SSA,
+[00:10:23 -> 00:10:25] then we need to look at each mention
+[00:10:25 -> 00:10:27] at least once and rename it.
+[00:10:27 -> 00:10:30] So that is basically order of m final,
+[00:10:30 -> 00:10:32] which is the number of mention the final program.
+[00:10:32 -> 00:10:33] And so this can, as we have said,
+[00:10:33 -> 00:10:36] m final is between order n, which is a typical case
+[00:10:36 -> 00:10:39] to order n cube, which is the worst case.
+[00:10:40 -> 00:10:43] Overall, if I look at the overall translation
+[00:10:43 -> 00:10:46] to SSA algorithm, it was divided into three parts.
+[00:10:46 -> 00:10:47] The first part was the computation
+[00:10:47 -> 00:10:49] of dominance frontiers, which we said
+[00:10:49 -> 00:10:54] was order E plus V multiplied by the average size
+[00:10:55 -> 00:10:59] of the dominance frontier of a node.
+[00:10:59 -> 00:11:03] And E and V are order n, but dominance frontier
+[00:11:03 -> 00:11:06] could be anywhere between constant size to order n.
+[00:11:06 -> 00:11:09] And so this step can take order n to n square.
+[00:11:10 -> 00:11:12] The second step of the algorithm
+[00:11:12 -> 00:11:13] was placing the five nodes,
+[00:11:13 -> 00:11:16] which was basically the time complexity of this
+[00:11:16 -> 00:11:19] was the number of assignments in the final program
+[00:11:19 -> 00:11:22] multiplied by the weighted average
+[00:11:22 -> 00:11:25] of the dominance frontiers of all the nodes,
+[00:11:25 -> 00:11:26] where the weighted average depends
+[00:11:26 -> 00:11:29] on the number of assignments in each node.
+[00:11:29 -> 00:11:32] Once again, the number of new assignments
+[00:11:32 -> 00:11:35] that could have been added in the program
+[00:11:35 -> 00:11:38] is between n to n square.
+[00:11:38 -> 00:11:40] And the weighted average size
+[00:11:40 -> 00:11:43] of the dominance frontier is between one to n.
+[00:11:43 -> 00:11:44] And so the overall running time
+[00:11:44 -> 00:11:47] of step two of this translation to SSA
+[00:11:47 -> 00:11:49] can be from order n to n cube.
+[00:11:50 -> 00:11:52] And finally, the versioning algorithm
+[00:11:52 -> 00:11:54] that does a simple depth-first traversal
+[00:11:54 -> 00:11:58] on the graph has a running time complexity of m final,
+[00:11:58 -> 00:12:01] which we have already said is between order n to n cube.
+[00:12:01 -> 00:12:04] Now, this is a large gap between,
+[00:12:05 -> 00:12:07] I'm saying that the typical case is order n
+[00:12:07 -> 00:12:09] and the worst case is the order n cube.
+[00:12:09 -> 00:12:12] So I think we need some intuition or some sense
+[00:12:12 -> 00:12:13] of when is it going to be order n
+[00:12:13 -> 00:12:15] and when is it going to be order n cube.
+[00:12:15 -> 00:12:17] And for that, there's this nice theorem
+[00:12:17 -> 00:12:21] that if a program contains only if then else
+[00:12:21 -> 00:12:22] and while do loops,
+[00:12:22 -> 00:12:26] which means while something and then body,
+[00:12:26 -> 00:12:29] then the size of the dominance frontier
+[00:12:29 -> 00:12:32] of any node is always less than equal to two.
+[00:12:32 -> 00:12:34] And recall that if the dominance frontier,
+[00:12:35 -> 00:12:37] so this can be seen using examples.
+[00:12:37 -> 00:12:42] For example, here E represents a while or an if condition,
+[00:12:43 -> 00:12:45] A represents let's say an if condition
+[00:12:45 -> 00:12:48] and then there's this meet point and so on.
+[00:12:48 -> 00:12:51] And if I look at the size of the dominance frontiers,
+[00:12:51 -> 00:12:52] the superscript basically represents the size
+[00:12:52 -> 00:12:54] of the dominance frontier of each of these nodes.
+[00:12:54 -> 00:12:57] The size of the dominance frontier of E is zero.
+[00:12:57 -> 00:13:01] The size of the dominance frontier of A is one and so on.
+[00:13:01 -> 00:13:03] And similarly, here is an example
+[00:13:03 -> 00:13:05] which contains both if then else and while loops.
+[00:13:05 -> 00:13:09] For example, here A represents a while do loop
+[00:13:09 -> 00:13:12] where the while condition at A determines
+[00:13:12 -> 00:13:16] whether to go to the loop body C or to go to B.
+[00:13:16 -> 00:13:19] And once again, the maximum dominance frontier
+[00:13:19 -> 00:13:22] that you can have here is two in this graph,
+[00:13:22 -> 00:13:23] in this example.
+[00:13:23 -> 00:13:25] And once again, here's another example
+[00:13:25 -> 00:13:27] where the maximum dominance frontier you can have is two.
+[00:13:27 -> 00:13:30] So I'm not going through a proof of this statement
+[00:13:30 -> 00:13:32] that for a program with only if then else
+[00:13:32 -> 00:13:34] and while do loops, the dominance frontier
+[00:13:34 -> 00:13:36] of every node will be less than equal to two,
+[00:13:36 -> 00:13:38] but I'm just giving you some examples
+[00:13:38 -> 00:13:41] to kind of introduce the idea.
+[00:13:41 -> 00:13:43] The proof of this is out of scope for our discussion,
+[00:13:43 -> 00:13:44] but if you're interested,
+[00:13:44 -> 00:13:46] you're welcome to look at the original paper
+[00:13:46 -> 00:13:49] which actually contains the proof.
+[00:13:49 -> 00:13:52] Now, however, so that's a good news
+[00:13:52 -> 00:13:53] that the dominance frontier
+[00:13:53 -> 00:13:54] will be always less than equal to two,
+[00:13:54 -> 00:13:56] which means that the average size of dominance frontier
+[00:13:56 -> 00:13:58] will be always less than equal to two,
+[00:13:58 -> 00:14:00] which means that the first step
+[00:14:00 -> 00:14:01] will only take linear time.
+[00:14:01 -> 00:14:03] The second step would also,
+[00:14:03 -> 00:14:04] because of the first step is,
+[00:14:04 -> 00:14:07] the second step is also going to take
+[00:14:07 -> 00:14:09] roughly linear time and so on.
+[00:14:09 -> 00:14:10] So it's going to be small,
+[00:14:10 -> 00:14:15] but that's not what really happens in the real world
+[00:14:15 -> 00:14:17] because in the real world,
+[00:14:17 -> 00:14:19] we don't necessarily have only if then else
+[00:14:19 -> 00:14:20] and while do,
+[00:14:20 -> 00:14:23] we also have repeat until or do while loops.
+[00:14:23 -> 00:14:25] And repeat until and do while loops
+[00:14:25 -> 00:14:29] basically are of this form where the loop head
+[00:14:29 -> 00:14:31] basically does not have two branches,
+[00:14:31 -> 00:14:32] but has only a single branch,
+[00:14:32 -> 00:14:34] but it's the back edge,
+[00:14:34 -> 00:14:36] the node which has an outgoing back edge
+[00:14:36 -> 00:14:38] which has two branches,
+[00:14:38 -> 00:14:42] in which case the dominance frontier of a node
+[00:14:42 -> 00:14:43] can be as high as order n
+[00:14:43 -> 00:14:45] or the number of nodes in the graph.
+[00:14:45 -> 00:14:47] So here's an example.
+[00:14:47 -> 00:14:49] There are these three nested loops.
+[00:14:49 -> 00:14:52] The outer nested loop is at loop head A.
+[00:14:52 -> 00:14:55] The second inner nested loop is at loop head B.
+[00:14:55 -> 00:14:57] The third inner nested loop is at loop head C.
+[00:14:57 -> 00:14:58] And in this example,
+[00:14:58 -> 00:15:00] the dominance frontier size of,
+[00:15:00 -> 00:15:03] for example, the node C is three.
+[00:15:03 -> 00:15:05] In general, for a K depth loop nest,
+[00:15:05 -> 00:15:08] the dominance frontier size for some node X
+[00:15:08 -> 00:15:10] can be as high as K
+[00:15:10 -> 00:15:13] and K in turn can be as high as order n.
+[00:15:13 -> 00:15:14] And so in general,
+[00:15:14 -> 00:15:19] the program can have order n dominance frontiers.
+[00:15:19 -> 00:15:23] And so in pathological cases,
+[00:15:23 -> 00:15:25] this algorithm that translates to SSA
+[00:15:25 -> 00:15:28] can become quadratic or worst case, cubic.
+[00:15:29 -> 00:15:30] Now you may say,
+[00:15:30 -> 00:15:33] if repeat until and if do while are so bad,
+[00:15:33 -> 00:15:35] then why don't some languages
+[00:15:35 -> 00:15:38] should not just simply not allow these constructs,
+[00:15:38 -> 00:15:40] but that's not a solution at all
+[00:15:40 -> 00:15:43] because recall that when we do compiler transformations,
+[00:15:43 -> 00:15:46] then we often convert while do loops to do while loops.
+[00:15:46 -> 00:15:49] For example, recall the loop inversion transformation
+[00:15:49 -> 00:15:52] or other transformations like loop unrolling
+[00:15:52 -> 00:15:54] or loop splitting,
+[00:15:54 -> 00:15:56] but loop inversion is the primary one.
+[00:15:56 -> 00:15:58] So loop inversion actually completely converts
+[00:15:58 -> 00:16:00] a while do loop to a repeat until loop.
+[00:16:00 -> 00:16:05] And a typical compiler will need to maintain the program
+[00:16:05 -> 00:16:07] in SSA form across these transformations.
+[00:16:07 -> 00:16:10] And so even though the original program
+[00:16:10 -> 00:16:12] may have only while do loops,
+[00:16:12 -> 00:16:14] because of these transformation pipeline,
+[00:16:14 -> 00:16:16] the intermediate programs will have do while loops,
+[00:16:16 -> 00:16:18] in which case it's not guaranteed
+[00:16:18 -> 00:16:20] that the dominance frontier will be less than equal to two,
+[00:16:20 -> 00:16:22] it can be as bad as order n.
+[00:16:22 -> 00:16:26] So finally, we have the overall running time
+[00:16:26 -> 00:16:30] of the conversion to SSA algorithm
+[00:16:30 -> 00:16:35] is order n typical to order n square worst
+[00:16:35 -> 00:16:37] for the first step.
+[00:16:37 -> 00:16:40] Order n typical to order n cube worst
+[00:16:40 -> 00:16:42] for the second step.
+[00:16:43 -> 00:16:45] And order n typical to order n cube worst
+[00:16:45 -> 00:16:46] for the third step.
+[00:16:46 -> 00:16:48] And you've also gotten some sense
+[00:16:48 -> 00:16:50] of when is it going to be good
+[00:16:50 -> 00:16:51] and when it's going to be bad.
+[00:16:51 -> 00:16:54] And notice that these pathological cases
+[00:16:54 -> 00:16:58] where the size of the dominance frontier is very large
+[00:16:58 -> 00:17:01] happens when the loop depth nests are very long
+[00:17:01 -> 00:17:03] or very deep or something like that.
+[00:17:03 -> 00:17:05] And that's not typically the case.
+[00:17:05 -> 00:17:10] And hence, in practice, this is not such a big problem.
+[00:17:11 -> 00:17:14] And that's why the translation to SSA algorithm,
+[00:17:14 -> 00:17:16] the one we have discussed is often used
+[00:17:16 -> 00:17:18] and typically used in compilers.

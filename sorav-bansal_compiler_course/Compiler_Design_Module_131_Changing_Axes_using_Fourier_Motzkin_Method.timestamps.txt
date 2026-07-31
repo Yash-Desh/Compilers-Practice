@@ -1,0 +1,186 @@
+Title: Compiler Design Module 131 : Changing Axes using Fourier Motzkin Method
+Video ID: w1qVjnWnzi0
+Detected language: en
+------------------------------------------------------------
+
+[00:00:00 -> 00:00:05] So, last time we learned about the Fourier mode skin algorithm which basically tells us
+[00:00:05 -> 00:00:12] how we can project a polyhedron on a smaller dimension. So, let us say I have a polyhedron
+[00:00:12 -> 00:00:18] in n dimensions then I can remove one dimension say the nth dimension and project the polyhedron
+[00:00:18 -> 00:00:24] on the remaining n minus 1 dimensions and how one could do this by just manipulating
+[00:00:24 -> 00:00:33] the inequalities that represent that particular polyhedron. Now, so the bigger problem however
+[00:00:33 -> 00:00:39] is that given a polyhedral iteration space, a polyhedron S generate a loop nest with
+[00:00:39 -> 00:00:44] a certain arbitrary order of the loop iteration indices. So, let me say that order is x1
+[00:00:44 -> 00:00:49] x2 dot dot dot xn where x1 is supposed to be the outermost loop iteration index
+[00:00:49 -> 00:00:55] and xn is supposed to be the innermost loop iteration index. Now, the original polyhedron
+[00:00:55 -> 00:01:03] is just a set of n equations maybe it is constructed by all the by an original loop
+[00:01:03 -> 00:01:08] nest which had a completely different order of these loop iteration indices. We don't
+[00:01:08 -> 00:01:12] know what that original order was we don't care what that original order was it was
+[00:01:12 -> 00:01:16] some arbitrary order of loop iteration indices and now we have abstracted that
+[00:01:16 -> 00:01:22] order of indices into a loop polyhedron into a polyhedral space and now we want to redefine
+[00:01:22 -> 00:01:27] the order and we have chosen our own arbitrary order x1 x2 dot dot dot xn and we want to
+[00:01:27 -> 00:01:32] represent that polyhedral space in this particular order. Now, of course, I can only
+[00:01:32 -> 00:01:36] kind of change the order of indices if I am respecting data dependencies. So far
+[00:01:36 -> 00:01:40] I have not really delved into the question of what are the data dependencies how do
+[00:01:40 -> 00:01:45] I kind of preserve data dependencies and so on but let us assume that either there
+[00:01:45 -> 00:01:49] are no data dependencies or even if there are data dependencies when we do this kind
+[00:01:49 -> 00:01:54] of reordering of loop iteration indices the data dependencies are being respected but
+[00:01:54 -> 00:02:00] even you know we forget about data dependencies the question is if we have this order of
+[00:02:00 -> 00:02:05] loop iteration indices what should be the lower and upper bounds of each of these
+[00:02:05 -> 00:02:08] loop iteration indices and this is something that the projection algorithm the Fourier
+[00:02:08 -> 00:02:15] Modeskin algorithm actually helps us determine and so here is the basic idea
+[00:02:15 -> 00:02:19] that we start with the innermost loop index which is xn and we bring the
+[00:02:19 -> 00:02:24] in equations to the form n is less than equal to c1 xn or c2 xn is less
+[00:02:24 -> 00:02:29] than equal to u and this is exactly how the Fourier Modeskin algorithm also
+[00:02:29 -> 00:02:35] proceeded where c1 and c2 are positive coefficients of xn and now once we have
+[00:02:35 -> 00:02:40] that using these in equations we can project and of course there will be some
+[00:02:40 -> 00:02:43] in equations that don't involve xn at all and so even that forms the part of
+[00:02:43 -> 00:02:49] the projection and we project on the remaining iteration dimensions or
+[00:02:49 -> 00:02:53] iteration indices x1 dot dot xn minus 1 and we use the Fourier Modeskin
+[00:02:53 -> 00:02:57] method to do that as we saw in our last lecture module and once we have
+[00:02:57 -> 00:03:05] projected it on the remaining set of indices x1 dot dot xn minus 1 we can
+[00:03:05 -> 00:03:09] now recursively do this so far from that polyhedron now we get a new polyhedron
+[00:03:09 -> 00:03:14] s prime and from that s prime we can now remove xn minus 1 to project on the
+[00:03:14 -> 00:03:19] first n minus 2 indices and keep doing that as we go along but now till we
+[00:03:19 -> 00:03:23] get to the first iteration index which is x1 and from that we will know
+[00:03:23 -> 00:03:28] what are the bounds of the outermost iteration index x1 it will be only
+[00:03:28 -> 00:03:32] constants 0 start really some constant will not involve any of the
+[00:03:32 -> 00:03:37] loop iteration indices and once we have the bounds for x1 we would want to know
+[00:03:37 -> 00:03:42] what are the bounds of x2 in terms of x1 and potentially other constants and to
+[00:03:42 -> 00:03:46] do that we just use these in equations like L is less than equal to c1 into
+[00:03:46 -> 00:03:50] xn and c2 xn is less than equal to u to determine the lower and upper
+[00:03:50 -> 00:03:55] bounds for xn so at every step when we project and remove one iteration
+[00:03:55 -> 00:03:59] index when we have kind of figured out what are the inequalities that
+[00:03:59 -> 00:04:03] represent the projected polyhedron for the iteration index that was just
+[00:04:03 -> 00:04:06] removed we can determine the lower and upper bound by exactly these
+[00:04:06 -> 00:04:11] equations that we used for the Fourier Moleskine method all right so for
+[00:04:11 -> 00:04:14] example we can just say that xn should be greater than equal to L by
+[00:04:14 -> 00:04:19] c1 and xn should be less than equal to u by c2 recall that L and u are
+[00:04:19 -> 00:04:25] just a fine expressions on x1 x2 dot dot dot xn minus 1 and so this
+[00:04:25 -> 00:04:30] basically gives us lower and upper bounds on xn to see this with an example here
+[00:04:30 -> 00:04:37] was here's our code for i equals 0 to 9 i plus plus for j equals i to till j is
+[00:04:37 -> 00:04:42] less than 7 and j is less than i plus 4 j plus plus and then there's some
+[00:04:42 -> 00:04:47] loop body aij equals 0 in this case now the desired order was j comma i so
+[00:04:47 -> 00:04:51] what do I do I start with the innermost loop index which is i and
+[00:04:51 -> 00:04:54] I try to remove it and project on the remaining loop indices which in
+[00:04:54 -> 00:04:59] this case is j and so I basically bring my equations or in equations into the
+[00:04:59 -> 00:05:03] form which is you know xn in this case is i so I say 0 is less than equal to
+[00:05:03 -> 00:05:08] i so here L becomes 0 and the coefficient of i is just 1 similarly i
+[00:05:08 -> 00:05:13] is less than equal to 8 so u becomes 8 i is less than equal to j that's
+[00:05:13 -> 00:05:19] coming from the fact that j starts from i and so now u becomes j i is
+[00:05:19 -> 00:05:24] greater than equal to j minus 3 so L becomes j minus 3 ok and now once we
+[00:05:24 -> 00:05:29] have done this we project on j we do a projection on x1 dot dot xn minus 1
+[00:05:29 -> 00:05:34] which in this particular example is just a single variable j and we get j is
+[00:05:34 -> 00:05:37] greater than equal to 0 and j is less than equal to 6 this is similar
+[00:05:37 -> 00:05:41] to what we had done in a previous module now once we know the bounds for
+[00:05:41 -> 00:05:45] j we want to also know the bounds of i and that just comes from these
+[00:05:45 -> 00:05:51] in equations which are we already expressed in the form of L and u and so
+[00:05:51 -> 00:05:56] from here we know that given j for a given value of j we know what are the
+[00:05:56 -> 00:06:01] bounds for i which is our xn in our general algorithm so we
+[00:06:01 -> 00:06:05] know that i should be greater than equal to j minus 3 and so the lower
+[00:06:05 -> 00:06:09] bound of j and i should be greater than equal to 0 so the lower bound
+[00:06:09 -> 00:06:13] is maximum of j minus 3 comma 0 because that's just coming from this
+[00:06:13 -> 00:06:18] in equations that we constructed for our Fourier Modeskin method similarly i
+[00:06:18 -> 00:06:22] should be less than equal to 8 and i should be less than equal to j so upper
+[00:06:22 -> 00:06:26] bound is nothing but minimum of 8 comma j but recall that we know that j is
+[00:06:26 -> 00:06:31] less than equal to 6 so minimum of 8 comma j is nothing but just j
+[00:06:31 -> 00:06:35] because 8 is greater than 6 and so and because j can only take maximum
+[00:06:35 -> 00:06:40] value 6 minimum of 8 comma j is nothing but j and so I mean we may or
+[00:06:40 -> 00:06:44] not simplify it to j we can just leave it as minimum of 8 comma j it's up to us
+[00:06:44 -> 00:06:49] but whatever it is we have been able to identify the lower and upper bound of
+[00:06:49 -> 00:06:54] the variable that we just removed which is xn using these in equations
+[00:06:54 -> 00:06:59] in this particular case xn was i and so this is the general method to be
+[00:06:59 -> 00:07:05] able to reorder the iteration space using any order of
+[00:07:05 -> 00:07:08] loop iteration indices I can choose any order of the loop iteration indices
+[00:07:08 -> 00:07:12] and then apply the Fourier Modeskin method to do the projection and once I
+[00:07:12 -> 00:07:16] have projected I can also use these in equations to identify the upper and
+[00:07:16 -> 00:07:20] lower bounds of the inner index based on the fixed values of the
+[00:07:20 -> 00:07:27] outer indices okay so we now can choose the order of iteration indices
+[00:07:27 -> 00:07:32] provided we respect data dependencies all this discussion is basically under
+[00:07:32 -> 00:07:36] the caveat that we have been able to preserve data dependencies perhaps
+[00:07:36 -> 00:07:39] there are no data dependencies we are not being talking about data dependencies
+[00:07:39 -> 00:07:43] and in the 2d space you know the fact that we can reorder the iteration
+[00:07:43 -> 00:07:48] space any way which we like in 2d space is equivalent to saying
+[00:07:48 -> 00:07:53] either we can traverse the iteration space horizontally which is something
+[00:07:53 -> 00:07:58] like this or I can traverse the iteration space vertically which is
+[00:07:58 -> 00:08:03] something like this alright and assuming I am respecting data
+[00:08:03 -> 00:08:08] dependencies it is really our choice in what way we basically traverse the
+[00:08:08 -> 00:08:12] iteration space depending on our choice we can use the Fourier Modeskin method
+[00:08:12 -> 00:08:16] and the algorithm we just discussed to be able to identify the lower and
+[00:08:16 -> 00:08:20] upper bounds of each of the loop iteration index now here's one
+[00:08:20 -> 00:08:26] interesting thing about this we it's not just fact true that we can choose
+[00:08:26 -> 00:08:30] to iterate horizontally or vertically we can actually choose to iterate in
+[00:08:30 -> 00:08:36] any direction we like as long as the set of kind of indices are such that it
+[00:08:36 -> 00:08:40] covers the entire space for example we can also traverse in the 2d
+[00:08:40 -> 00:08:44] case the space diagonally for example I can traverse is something like this
+[00:08:44 -> 00:08:49] and then this and then this and then this and so on and so how what does
+[00:08:49 -> 00:08:52] it mean and how do we do this this is nothing but this basically means
+[00:08:52 -> 00:08:58] that I want to change my axis from let's say i comma j or j comma i to
+[00:08:58 -> 00:09:03] let's say j minus i comma j so which means that I would know this is my
+[00:09:03 -> 00:09:08] execution order that lexicographic order so I'm going to first do you know
+[00:09:08 -> 00:09:14] increasing lexicographic order of in the order of j minus i comma j and this
+[00:09:14 -> 00:09:19] order will be different from i comma j or j comma i or any other kind of
+[00:09:19 -> 00:09:24] combination of axes we just change the axis and now we are going to and
+[00:09:24 -> 00:09:27] the order is going to be defined by the increasing lexicographic order of
+[00:09:27 -> 00:09:32] the change axis but the question is if I want to change the axis how do I now
+[00:09:32 -> 00:09:36] identify what are the lower and upper bounds of the new axis and the
+[00:09:36 -> 00:09:39] algorithm would look very similar to what we have already discussed
+[00:09:39 -> 00:09:43] basically if I wanted to do j minus i comma j what do I need to do I need
+[00:09:43 -> 00:09:48] to introduce a new variable k to represent that new axis j minus i so
+[00:09:48 -> 00:09:53] k equals j minus i and now the desired order is nothing but k comma j and
+[00:09:53 -> 00:09:59] now I rewrite all my in equations in the in terms of k and not in terms of
+[00:09:59 -> 00:10:04] i notice that there's no i here and so I can eliminate i by saying i equals j
+[00:10:04 -> 00:10:09] minus k so basic idea is that I will replace i with j minus k in the
+[00:10:09 -> 00:10:12] in equations I will get a new set of in equations and I'm going to use
+[00:10:12 -> 00:10:16] the same algorithm which involves the Fourier Modeskin algorithm the
+[00:10:16 -> 00:10:20] method to basically identify the lower and upper bounds for both k and
+[00:10:20 -> 00:10:25] j notice in this case I want j to be the inner index and k to be the outer
+[00:10:25 -> 00:10:31] index so here's my original polyhedron here's just an example to show how this
+[00:10:31 -> 00:10:34] will be done here's my original polyhedron let's say i is greater than
+[00:10:34 -> 00:10:37] equal to j minus 3 i is greater than equal to 0 i is less than equal to j
+[00:10:37 -> 00:10:41] j is greater than equal to 0 j is less than equal to 7 this set of in
+[00:10:41 -> 00:10:46] equations basically specifies a polyhedral space in the in two
+[00:10:46 -> 00:10:50] dimensions i comma j and in this particular case actually I'm using j
+[00:10:50 -> 00:10:54] comma i because if you notice all the in equations a lower and upper bound of j
+[00:10:54 -> 00:10:59] are just specified as constants and all the lower bounds and upper bounds of i
+[00:10:59 -> 00:11:06] are represented as functions of j okay so these form the outer loop and this
+[00:11:06 -> 00:11:14] forms the inner loop now I want to change the axis I want to change the
+[00:11:14 -> 00:11:19] axis to j minus i comma j or in other words k comma j and what do I
+[00:11:19 -> 00:11:25] do I rewrite these in equations to eliminate i so that i becomes j minus k
+[00:11:25 -> 00:11:29] and so i is greater than equal to j minus 3 becomes j minus k is greater
+[00:11:29 -> 00:11:32] than equal to j minus 3 i is greater than equal to 0 becomes j minus k is
+[00:11:32 -> 00:11:36] greater than equal to 0 and so on i is less than equal to j becomes j minus
+[00:11:36 -> 00:11:39] k is greater than equal to j and then everything which does not involve i
+[00:11:39 -> 00:11:43] just remains identical j is greater than equal to 0 and j is less than
+[00:11:43 -> 00:11:47] equal to 7 now if I just simplify these in equations I get the
+[00:11:47 -> 00:11:53] following in equations some of them just become vacuously true and so this comes k is less
+[00:11:53 -> 00:11:57] than equal to 3 and k is less than equal to j. So this notation k is less than equal
+[00:11:57 -> 00:12:02] to 3, j basically means that it is less than equal to both 3 and j. In other words
+[00:12:02 -> 00:12:07] it is less than equal to minimum of 3, j. Similarly k is greater than equal to 0,
+[00:12:07 -> 00:12:10] j is greater than equal to 0 and j is less than equal to 7. So this is my new
+[00:12:10 -> 00:12:16] set of in equations and I want to traverse this space, this polyhedral space in
+[00:12:16 -> 00:12:21] the lexicographic order of k, j. What is the inner-most index? It's j. So what do I
+[00:12:21 -> 00:12:26] project on? I project on k and from that I basically get upper bound and lower
+[00:12:26 -> 00:12:30] bound of the outer loop on k and then I get the lower bound and upper bound of
+[00:12:30 -> 00:12:36] the inner loop of j for a given value of k. So I project on k by eliminating
+[00:12:36 -> 00:12:41] j. These are my equations that are you know that are in the form of l and
+[00:12:41 -> 00:12:47] u. So something into k is greater than equal to l, something into k is less
+[00:12:47 -> 00:12:54] than equal to u. In this case for example j forms are u. Here j is
+[00:12:54 -> 00:12:57] less than equal to 7, does not even involve k and so on. So these are my
+[00:12:57 -> 00:13:04] set of in equations. I project on k by eliminating j and so I get k is
+[00:13:04 -> 00:13:09] greater than equal to 0 and k is less than equal to 3. So I get this
+[00:13:09 -> 00:13:19] from my Fourier mode skin method and for a given value of k I get the
+[00:13:19 -> 00:13:23] lower bound and upper bound of j by just using these in equations. So
+[00:13:23 -> 00:13:30] j, the lower bound of j is maximum of 0, k and the upper bound on j is 7.
+[00:13:30 -> 00:13:36] And so from with that I have been able to rewrite my loop in the
+[00:13:36 -> 00:13:39] desired order which is k, j. Recall that k is a
+[00:13:39 -> 00:13:45] changed axis, it's basically j minus i. So for k equals 0, k is less than equal
+[00:13:45 -> 00:13:49] to 3, the bounds have been determined using the Fourier mode skin method k
+[00:13:49 -> 00:13:53] plus plus. For j equals 0, j is less than equal to 7, j plus plus. And now I
+[00:13:53 -> 00:13:58] need to write my body and recall that the original body was basically in
+[00:13:58 -> 00:14:02] terms of i and j but now i and j, i is no longer present. Recall that the
+[00:14:02 -> 00:14:08] original body here was nothing but a i comma j equals 0. I need to also
+[00:14:08 -> 00:14:13] replace i in terms of or represent i in terms of k and j and that's just going
+[00:14:13 -> 00:14:20] to be j minus k because recall that k equals j minus i so i equals j minus k
+[00:14:20 -> 00:14:25] and so this is my new loop. It basically traverses the
+[00:14:25 -> 00:14:29] iteration space in a different order but it is functionally equivalent to
+[00:14:29 -> 00:14:33] the loop that we had on the original slide.

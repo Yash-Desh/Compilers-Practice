@@ -1,0 +1,433 @@
+Title: Compiler Design Module 120 : Computational Structure of a Region based DFA
+Video ID: UjS378OAj8c
+Detected language: en
+------------------------------------------------------------
+
+[00:00:00 -> 00:00:05] Now we're going to talk about the computational structure of a region-based DFA.
+[00:00:05 -> 00:00:08] We already talked about how to construct a region hierarchy,
+[00:00:08 -> 00:00:11] but then how does a DFA work on regions?
+[00:00:11 -> 00:00:14] We have also discussed this to some extent in an informal way,
+[00:00:14 -> 00:00:18] but we are going to concretize that discussion in this module.
+[00:00:18 -> 00:00:24] So the first part of the region-based DFA is to identify transfer function
+[00:00:24 -> 00:00:26] for each region and subregions.
+[00:00:26 -> 00:00:31] Notice that the region hierarchy has many regions, some nested within the other,
+[00:00:31 -> 00:00:35] and we need to first identify transfer function for each of these regions,
+[00:00:35 -> 00:00:37] at each level of the hierarchy.
+[00:00:37 -> 00:00:39] This requires a bottom-up pass.
+[00:00:39 -> 00:00:42] For example, first basic blocks transfer functions are derived
+[00:00:42 -> 00:00:45] from individual statements transfer function.
+[00:00:45 -> 00:00:49] This derivation may be either trivial, which means just composition
+[00:00:49 -> 00:00:52] of the individual instructions, or something more sophisticated,
+[00:00:52 -> 00:00:54] for example, symbolic analysis.
+[00:00:54 -> 00:00:59] Next, maybe the loop body's transfer function is derived from the basic blocks transfer function.
+[00:00:59 -> 00:01:02] So all the basic blocks transfer functions are there,
+[00:01:02 -> 00:01:05] and then the loop body is an acyclic graph,
+[00:01:05 -> 00:01:08] let's say the innermost loop body is an acyclic graph on those basic blocks,
+[00:01:08 -> 00:01:12] and then you want to basically summarize what is the transfer function of this loop body.
+[00:01:12 -> 00:01:16] Once again, you can use a trivial composition of the individual functions
+[00:01:16 -> 00:01:18] to identify a summary function,
+[00:01:18 -> 00:01:22] or you can use some more sophisticated analysis, such as symbolic analysis.
+[00:01:22 -> 00:01:26] And finally, you get the loop's transfer function from the loop body's transfer function.
+[00:01:26 -> 00:01:29] So once you have the transfer function of a loop body,
+[00:01:29 -> 00:01:32] then you want to identify the transfer function of the entire loop,
+[00:01:32 -> 00:01:34] which also includes the back edges.
+[00:01:34 -> 00:01:39] And once again, one idea here is to just use a trivial summary,
+[00:01:39 -> 00:01:47] which is just create a function that applies the transfer function of the loop body repeatedly
+[00:01:47 -> 00:01:49] until there's a fixed point.
+[00:01:49 -> 00:01:54] Or you could do a more sophisticated analysis, such as a symbolic analysis,
+[00:01:54 -> 00:01:59] for identifying the transfer function of a loop based on the transfer function of the loop body.
+[00:01:59 -> 00:02:03] Recall that the kind of analysis that we motivated this whole region-level analysis discussion
+[00:02:03 -> 00:02:08] was actually doing something like a symbolic analysis,
+[00:02:08 -> 00:02:13] which was identifying the transfer function of the entire loop
+[00:02:13 -> 00:02:16] from the transfer function of the body of the loop.
+[00:02:16 -> 00:02:19] For example, the body is incrementing a variable by 10,
+[00:02:19 -> 00:02:22] and the loop is iterating n times,
+[00:02:22 -> 00:02:28] and the entire loop is basically incrementing the variable by 10 into n, or something like that.
+[00:02:28 -> 00:02:35] And that would be the symbolic analysis used to do a bottom-up identification
+[00:02:35 -> 00:02:40] of the loop's transfer function from the loop body's transfer function.
+[00:02:40 -> 00:02:42] And that was a sophisticated analysis.
+[00:02:42 -> 00:02:50] You could have also just used a trivial fixed-point analysis to identify the transfer function,
+[00:02:50 -> 00:02:57] in which case the region-based analysis wouldn't have given you enough advantage in this particular loop.
+[00:02:57 -> 00:03:00] So, once we are done with the bottom-up analysis,
+[00:03:00 -> 00:03:03] and identified the transfer functions of all the regions,
+[00:03:03 -> 00:03:06] we compute the data flow values at each program point
+[00:03:06 -> 00:03:10] by using these summary transfer functions for entire regions.
+[00:03:10 -> 00:03:13] Now that we have transfer functions for all the regions,
+[00:03:13 -> 00:03:18] at every level you can just use a DFA analysis,
+[00:03:18 -> 00:03:20] which is your typical DFA fixed-point iteration,
+[00:03:20 -> 00:03:23] to identify the values at each program point.
+[00:03:23 -> 00:03:25] And I am just going to use a summary transfer function.
+[00:03:25 -> 00:03:28] And I am going to do this in a top-down manner.
+[00:03:28 -> 00:03:30] So, this is going to be a top-down analysis.
+[00:03:30 -> 00:03:35] For example, I am going to first do a DFA on the top level of the region hierarchy
+[00:03:35 -> 00:03:38] between the root node and the children of the root node.
+[00:03:38 -> 00:03:40] So, children of the root node are going to form a graph,
+[00:03:40 -> 00:03:43] and I am going to do a DFA on that graph.
+[00:03:43 -> 00:03:46] Notice that the children of the root node are going to be regions,
+[00:03:46 -> 00:03:48] which will have their own summary transfer function.
+[00:03:48 -> 00:03:50] And while doing the DFA at that level,
+[00:03:50 -> 00:03:53] I am going to utilize those summary transfer functions.
+[00:03:53 -> 00:03:56] And with that, I would basically get all the DFA values
+[00:03:56 -> 00:04:00] at all the boundaries of these sub-regions of the root node.
+[00:04:00 -> 00:04:03] But now if I want to identify the internal values,
+[00:04:03 -> 00:04:05] internal to any of these sub-regions,
+[00:04:05 -> 00:04:08] then I need to traverse one level down the hierarchy
+[00:04:08 -> 00:04:13] to basically repeat the procedure between the level 1 regions
+[00:04:13 -> 00:04:15] and level 2 sub-regions.
+[00:04:15 -> 00:04:19] So, top-down analysis involves descending down the region hierarchy
+[00:04:19 -> 00:04:23] to identify the program values for internal points.
+[00:04:23 -> 00:04:25] So, here is an example.
+[00:04:25 -> 00:04:27] Let's say I have this program,
+[00:04:27 -> 00:04:30] sum equals 0, i equals 0, i is less than n,
+[00:04:30 -> 00:04:32] sum plus equals i, i plus plus.
+[00:04:33 -> 00:04:36] And I want to identify the transfer functions
+[00:04:36 -> 00:04:40] for the available expressions analysis for this kind of a program.
+[00:04:40 -> 00:04:42] Now, the first thing I am going to do here
+[00:04:42 -> 00:04:44] is I am going to construct a region hierarchy.
+[00:04:44 -> 00:04:47] And we already know what a region hierarchy is going to look like.
+[00:04:47 -> 00:04:49] It's going to be a loop body, then the whole loop,
+[00:04:49 -> 00:04:51] and then the whole procedure.
+[00:04:51 -> 00:04:55] And so, when I do this bottom-up traversal
+[00:04:55 -> 00:04:58] to basically identify the transfer functions,
+[00:04:58 -> 00:05:00] this is my first level,
+[00:05:00 -> 00:05:04] I should say the second-last level of my region hierarchy
+[00:05:04 -> 00:05:06] that's going to have the loop body region,
+[00:05:06 -> 00:05:08] and it's going to have a self-edge,
+[00:05:08 -> 00:05:10] and then this is going to be the basic log,
+[00:05:10 -> 00:05:15] and this is what my sub-graph is going to look at this particular level.
+[00:05:15 -> 00:05:19] Now, for this, I need to have a summary transfer function
+[00:05:19 -> 00:05:21] for the loop body region.
+[00:05:21 -> 00:05:24] Recall that I am assuming that my basic logs are my leaf nodes,
+[00:05:24 -> 00:05:29] so it's easy to identify the transfer function for the first node here.
+[00:05:29 -> 00:05:32] It's just the transfer function of the basic log
+[00:05:32 -> 00:05:34] that is already available to us.
+[00:05:34 -> 00:05:36] It's a leaf node.
+[00:05:36 -> 00:05:38] But I need to identify the transfer function of the loop body region.
+[00:05:38 -> 00:05:40] What is the loop body?
+[00:05:40 -> 00:05:42] It checks whether i is less than n.
+[00:05:42 -> 00:05:44] If it is not, then it goes to exit.
+[00:05:44 -> 00:05:47] If it is, then it goes to sum plus equals i,
+[00:05:47 -> 00:05:49] and i plus plus.
+[00:05:49 -> 00:05:51] Let me just label this.
+[00:05:51 -> 00:05:53] This is the true branch, and that's the false branch.
+[00:05:53 -> 00:05:56] Now, if I do symbolic analysis,
+[00:05:56 -> 00:05:59] and I can see that Fb m equals m prime,
+[00:05:59 -> 00:06:02] so if there's an input mapping of the variables,
+[00:06:02 -> 00:06:04] then the output mapping is m prime,
+[00:06:04 -> 00:06:11] and the transfer function Fb basically represents
+[00:06:11 -> 00:06:13] what m prime will be in terms of m.
+[00:06:13 -> 00:06:17] So Fb is the transfer function of the body of the loop.
+[00:06:17 -> 00:06:20] And from this, from symbolic analysis,
+[00:06:20 -> 00:06:22] I can say m prime i would be mi plus 1.
+[00:06:22 -> 00:06:24] So whatever is the input value,
+[00:06:24 -> 00:06:26] I'm going to just increase by 1,
+[00:06:26 -> 00:06:28] and that's going to be the value of i
+[00:06:28 -> 00:06:32] in terms of available expressions at the output map.
+[00:06:32 -> 00:06:36] Similarly, m prime sum equals m sum plus mi.
+[00:06:36 -> 00:06:39] And that's just coming from the individual instructions,
+[00:06:39 -> 00:06:41] and just do a symbolic analysis to figure this out.
+[00:06:41 -> 00:06:43] Now, based on Fb,
+[00:06:43 -> 00:06:45] I'm going to try at the next level
+[00:06:45 -> 00:06:48] to create a summary transfer function of the entire loop,
+[00:06:48 -> 00:06:50] which also includes the back edge.
+[00:06:50 -> 00:06:51] And that's my next step.
+[00:06:51 -> 00:06:55] I'm going to identify the transfer function of the entire loop
+[00:06:55 -> 00:06:56] in a bottom-up manner,
+[00:06:56 -> 00:06:58] just like we have been doing so far.
+[00:06:58 -> 00:07:02] And let's say my transfer function of the entire loop is Fl,
+[00:07:02 -> 00:07:06] and I use ml to denote the output mapping for Fl.
+[00:07:06 -> 00:07:08] So if there's an input mapping m,
+[00:07:08 -> 00:07:12] then what is the output mapping ml for all the variables?
+[00:07:12 -> 00:07:14] In this case, the two variables i and sum.
+[00:07:14 -> 00:07:16] So based on symbolic analysis,
+[00:07:16 -> 00:07:23] I will be able to say that ml of i is either mi or n,
+[00:07:23 -> 00:07:25] depending on which one is minimum.
+[00:07:25 -> 00:07:30] Actually, this should have been maximum, not minimum.
+[00:07:30 -> 00:07:32] So the point here is that,
+[00:07:32 -> 00:07:34] notice that there's a check here, i is less than n,
+[00:07:34 -> 00:07:37] and our symbolic analysis, sophisticated symbolic analysis,
+[00:07:37 -> 00:07:40] is able to figure out that if mi,
+[00:07:40 -> 00:07:43] which is the initial value that comes into the loop region,
+[00:07:43 -> 00:07:47] notice that the loop region kind of only has one input and one output,
+[00:07:47 -> 00:07:49] and whatever is happening inside the loop body,
+[00:07:49 -> 00:07:50] maybe multiple iterations,
+[00:07:50 -> 00:07:52] is completely hidden from us at this level.
+[00:07:52 -> 00:07:54] We want to summarise the entire loop region
+[00:07:54 -> 00:07:56] as a single transfer function Fl.
+[00:07:56 -> 00:07:58] And I'm saying that if the initial value, mi,
+[00:07:58 -> 00:08:00] is greater than n,
+[00:08:00 -> 00:08:04] then nothing happens because I'm going to just go out
+[00:08:04 -> 00:08:05] and go to the exit.
+[00:08:05 -> 00:08:09] And so mli would be maximum of mi, n.
+[00:08:09 -> 00:08:11] So if the loop was not even entered,
+[00:08:11 -> 00:08:14] which is the case if mi was greater than n,
+[00:08:14 -> 00:08:15] greater than equal to n,
+[00:08:15 -> 00:08:16] I'm just going to get mi.
+[00:08:16 -> 00:08:19] And if the loop was entered,
+[00:08:19 -> 00:08:22] then I'm going to keep iterating till I reach n.
+[00:08:22 -> 00:08:25] I'm assuming unsigned numbers here.
+[00:08:25 -> 00:08:26] And so till I reach n,
+[00:08:26 -> 00:08:28] I'm going to basically keep iterating,
+[00:08:28 -> 00:08:31] and so I'm going to exit only when it is n,
+[00:08:31 -> 00:08:33] because mi was less than n,
+[00:08:33 -> 00:08:36] and so in the second case, mi would be less than n initial,
+[00:08:36 -> 00:08:38] initial value would be less than n,
+[00:08:38 -> 00:08:40] and I would keep incrementing till I reach n,
+[00:08:40 -> 00:08:42] and when I reach n, I'm going to exit.
+[00:08:42 -> 00:08:45] So mli, which is the value at loop exit,
+[00:08:45 -> 00:08:48] would be either the value at loop entry
+[00:08:48 -> 00:08:51] if that loop value was greater than n,
+[00:08:51 -> 00:08:53] or it would be just n.
+[00:08:53 -> 00:08:56] And this requires some sophisticated analysis,
+[00:08:56 -> 00:08:58] but let's say there is some sophisticated analysis.
+[00:08:58 -> 00:09:01] We are not discussing how that sophisticated analysis is going to work.
+[00:09:01 -> 00:09:04] It is going to use some algebraic kind of reasoning,
+[00:09:04 -> 00:09:06] and we're going to talk about that later.
+[00:09:06 -> 00:09:08] But even if I have that,
+[00:09:08 -> 00:09:10] then how is it integrating into the region-based analysis?
+[00:09:10 -> 00:09:12] That is what our current discussion is.
+[00:09:12 -> 00:09:15] Similarly, my symbolic analysis would be able to figure out
+[00:09:15 -> 00:09:17] that at the end of the loop,
+[00:09:17 -> 00:09:22] ml sum would be whatever is the initial value of msum
+[00:09:22 -> 00:09:26] plus summation of mi to n-1j.
+[00:09:26 -> 00:09:28] So this basically, from mi,
+[00:09:28 -> 00:09:30] it counts upwards till n-1.
+[00:09:30 -> 00:09:33] If mi was greater than n-1,
+[00:09:33 -> 00:09:36] then this whole value evaluates to 0,
+[00:09:36 -> 00:09:38] and we just get msum.
+[00:09:38 -> 00:09:42] But if mi was less than or equal to n-1,
+[00:09:42 -> 00:09:44] then I get some summation terms here.
+[00:09:44 -> 00:09:46] And once again, this can be just identified
+[00:09:46 -> 00:09:49] using some kind of symbolic analysis.
+[00:09:49 -> 00:09:52] And with this transfer function, fl,
+[00:09:52 -> 00:09:56] I am able to express ml in terms of m.
+[00:09:56 -> 00:09:57] And this is a big step,
+[00:09:57 -> 00:10:03] because I am able to express the mapping of the variables
+[00:10:03 -> 00:10:06] in terms of available expressions at the end of the loop
+[00:10:06 -> 00:10:08] in terms of the mapping of the variables
+[00:10:08 -> 00:10:09] and the beginning of the loop.
+[00:10:09 -> 00:10:12] So the entire loop, all the iterations of the loop
+[00:10:12 -> 00:10:15] have been summarized in this case as a single function.
+[00:10:15 -> 00:10:17] And this is a sophisticated symbolic analysis,
+[00:10:17 -> 00:10:20] which may not be possible for every possible loop,
+[00:10:20 -> 00:10:22] in which case there is always a fallback option
+[00:10:22 -> 00:10:23] of doing what?
+[00:10:23 -> 00:10:28] Of basically, fl internally just having a body
+[00:10:28 -> 00:10:31] which just executes fl in a loop
+[00:10:31 -> 00:10:32] till it reaches a fixed point,
+[00:10:32 -> 00:10:35] just like your basic data flow analysis.
+[00:10:35 -> 00:10:37] And so based on this,
+[00:10:37 -> 00:10:40] I am going to go to my next level.
+[00:10:40 -> 00:10:42] And my next level is going to make a region
+[00:10:42 -> 00:10:45] out of this whole thing into a procedure region.
+[00:10:45 -> 00:10:47] And now I want to have a summary transfer function
+[00:10:47 -> 00:10:49] for the entire procedure region.
+[00:10:49 -> 00:10:51] And let me call it fp,
+[00:10:51 -> 00:10:57] which produces a mapping mp for an input mapping m.
+[00:10:57 -> 00:11:00] And now I would be able to combine the two.
+[00:11:00 -> 00:11:01] Now this one is easy,
+[00:11:01 -> 00:11:04] because I already know what is the summary transfer function
+[00:11:04 -> 00:11:06] for loop region, which is fl.
+[00:11:06 -> 00:11:12] And that basically says that ml of i equals mi
+[00:11:12 -> 00:11:15] plus maximum of mi, n.
+[00:11:15 -> 00:11:17] And I know, this time I know that
+[00:11:17 -> 00:11:18] using available expressions,
+[00:11:18 -> 00:11:21] I will know that at this particular point,
+[00:11:21 -> 00:11:24] the mi would be 0,
+[00:11:24 -> 00:11:27] and msum would also be 0.
+[00:11:27 -> 00:11:30] And so all I need to do is basically apply
+[00:11:30 -> 00:11:32] the transfer function fl on this mapping,
+[00:11:32 -> 00:11:35] where i is mapped to 0 and sum is mapped to 0.
+[00:11:35 -> 00:11:37] And I am going to get mp,
+[00:11:37 -> 00:11:39] which is just going to be max of 0, n,
+[00:11:39 -> 00:11:40] which is n,
+[00:11:40 -> 00:11:41] assuming unsigned,
+[00:11:41 -> 00:11:44] because that means n can only be greater than or equal to 0.
+[00:11:44 -> 00:11:46] And similarly,
+[00:11:46 -> 00:11:55] I am going to get msum plus summation of 0 to n minus 1 j.
+[00:11:55 -> 00:11:58] And msum is just 0,
+[00:11:58 -> 00:12:01] because that is the input value mapping that we have.
+[00:12:01 -> 00:12:05] And summation of 0 to n minus 1 of j
+[00:12:05 -> 00:12:09] can be simplified to n into n minus 1 by 2.
+[00:12:09 -> 00:12:13] And that is what I get in this particular transfer function.
+[00:12:13 -> 00:12:17] Now, I want to highlight here that the transfer function
+[00:12:17 -> 00:12:20] doesn't need to be a closed form syntax formula.
+[00:12:20 -> 00:12:23] It doesn't necessarily need to have n into n minus 1 by 2
+[00:12:23 -> 00:12:24] or something like that.
+[00:12:24 -> 00:12:27] I could have had a loop inside my transfer function,
+[00:12:27 -> 00:12:30] which just computes the sum from 1 to n
+[00:12:30 -> 00:12:31] or something like that.
+[00:12:31 -> 00:12:34] A transfer function needs to be a computable function.
+[00:12:34 -> 00:12:37] It need not be a closed form formula.
+[00:12:37 -> 00:12:40] It just needs to be a computable function.
+[00:12:40 -> 00:12:42] And so transfer functions need to be computable
+[00:12:42 -> 00:12:44] or terminating functions.
+[00:12:44 -> 00:12:46] I should be able to make a call to the transfer function
+[00:12:46 -> 00:12:48] for some input mapping m.
+[00:12:48 -> 00:12:52] And that transfer function should basically terminate.
+[00:12:52 -> 00:12:55] So by computable, I mean it should be a terminating execution.
+[00:12:55 -> 00:12:57] I shouldn't have to wait forever.
+[00:12:57 -> 00:13:01] In fact, it should ideally have a bounded running time.
+[00:13:01 -> 00:13:04] And within that running time, it should give me the answer.
+[00:13:04 -> 00:13:06] And so that any body of a loop,
+[00:13:06 -> 00:13:09] any body of a function that is definitely terminating
+[00:13:09 -> 00:13:12] can be our potential transfer function for a region.
+[00:13:12 -> 00:13:14] And that is how, in fact, we were constructing
+[00:13:14 -> 00:13:17] trivial summaries based on the fixed point
+[00:13:17 -> 00:13:18] in the first place.
+[00:13:18 -> 00:13:22] When we said that one trivial summary transfer function
+[00:13:22 -> 00:13:25] of any region can be just created
+[00:13:25 -> 00:13:29] by running the fixed point iteration on the constituent graph
+[00:13:29 -> 00:13:31] on the subregions, that basically means that
+[00:13:31 -> 00:13:33] I don't have a fixed point expression
+[00:13:33 -> 00:13:35] for the summary transfer function,
+[00:13:35 -> 00:13:38] but I do have a body which can be computable.
+[00:13:38 -> 00:13:40] What is the guarantee of termination
+[00:13:40 -> 00:13:41] for the trivial transfer function?
+[00:13:41 -> 00:13:43] The guarantee of termination for the trivial transfer function
+[00:13:43 -> 00:13:47] is the same guarantee that we have for the DFA analysis.
+[00:13:47 -> 00:13:50] The transfer function, the summary transfer function,
+[00:13:50 -> 00:13:52] the trivial summary transfer function
+[00:13:52 -> 00:13:54] is going to execute the fixed point iteration
+[00:13:54 -> 00:13:56] and we are guaranteed that the fixed point
+[00:13:56 -> 00:13:58] will be reached within a finite number of iterations
+[00:13:58 -> 00:14:02] because the lattice for our DFA analysis
+[00:14:02 -> 00:14:06] is assumed, is supposed to be a finite height lattice.
+[00:14:06 -> 00:14:09] And so the trivial summaries based on fixed point
+[00:14:09 -> 00:14:12] are not necessarily closed form expressions,
+[00:14:12 -> 00:14:15] but they are also computable terminating functions.
+[00:14:15 -> 00:14:17] And that's what our requirement is
+[00:14:17 -> 00:14:20] for these summary transfer functions.
+[00:14:20 -> 00:14:25] Okay, here are some examples.
+[00:14:25 -> 00:14:27] So let's say I wanted to identify
+[00:14:27 -> 00:14:29] what is the value at P1
+[00:14:29 -> 00:14:31] for my available expressions analysis.
+[00:14:31 -> 00:14:33] Well, what I'm going to do is
+[00:14:33 -> 00:14:35] I'm just going to, this is easy,
+[00:14:35 -> 00:14:37] it's the end of the basic law.
+[00:14:37 -> 00:14:39] And so I'm going to, you know,
+[00:14:39 -> 00:14:41] basically I'm going to have to do a top-down analysis.
+[00:14:41 -> 00:14:45] Maybe I first look at the procedure region.
+[00:14:45 -> 00:14:47] Inside the procedure region, I only get two values.
+[00:14:47 -> 00:14:49] One is at the beginning of the procedure
+[00:14:49 -> 00:14:50] and one is at the end of the procedure.
+[00:14:50 -> 00:14:51] And so that's not good enough.
+[00:14:51 -> 00:14:53] P1 is neither the beginning of the procedure
+[00:14:53 -> 00:14:54] nor the end of the procedure.
+[00:14:54 -> 00:14:57] So I'm going to go to the next level of the hierarchy,
+[00:14:57 -> 00:15:00] which is this level of the hierarchy that has two nodes.
+[00:15:00 -> 00:15:02] One is the basic law and one is the loop region.
+[00:15:02 -> 00:15:05] And it's an acyclic graph at this stage.
+[00:15:05 -> 00:15:07] And at this level itself,
+[00:15:07 -> 00:15:10] I would be able to basically, you know,
+[00:15:10 -> 00:15:13] identify the value at P1
+[00:15:13 -> 00:15:15] because I just need to apply F1
+[00:15:15 -> 00:15:17] and I have got the value of P1.
+[00:15:17 -> 00:15:20] I don't need to go any deeper in my region hierarchy.
+[00:15:20 -> 00:15:22] On the other hand, for example,
+[00:15:22 -> 00:15:24] if I was interested in this particular value,
+[00:15:24 -> 00:15:26] let me call that Q1,
+[00:15:26 -> 00:15:28] then I would have had to go deeper
+[00:15:28 -> 00:15:30] because F1 would have only given me
+[00:15:30 -> 00:15:32] the summary of the entire basic law.
+[00:15:32 -> 00:15:36] But now I may be interested in some internal instruction
+[00:15:36 -> 00:15:37] of the basic law,
+[00:15:37 -> 00:15:39] in which case I'm going to now apply
+[00:15:39 -> 00:15:43] the transfer function of this particular instruction
+[00:15:43 -> 00:15:45] to get the value at Q1.
+[00:15:47 -> 00:15:48] Okay.
+[00:15:48 -> 00:15:50] In general, how it's going to work,
+[00:15:50 -> 00:15:51] at every level of the hierarchy,
+[00:15:51 -> 00:15:53] I'm going to first compute the DFA
+[00:15:53 -> 00:15:54] on that level of the hierarchy
+[00:15:54 -> 00:15:56] and I'm going to get the boundary values
+[00:15:56 -> 00:15:57] for that level of regions.
+[00:15:57 -> 00:15:59] And based on those boundary values,
+[00:15:59 -> 00:16:01] if I'm interested in some internal point
+[00:16:01 -> 00:16:02] for a certain region,
+[00:16:02 -> 00:16:05] then I can use the computed value
+[00:16:05 -> 00:16:07] at the beginning of that region
+[00:16:07 -> 00:16:10] to compute the value internal to that region.
+[00:16:10 -> 00:16:12] This is for a forward dataflow analysis.
+[00:16:12 -> 00:16:13] For a backward dataflow analysis,
+[00:16:13 -> 00:16:16] I would use the value at the end of the region
+[00:16:16 -> 00:16:20] to compute the value internal to the region.
+[00:16:20 -> 00:16:22] So here, let's look at another example.
+[00:16:22 -> 00:16:26] Let's say I wanted to compute the value at P2
+[00:16:26 -> 00:16:29] and notice that here P2 is not just the entry of the loop,
+[00:16:29 -> 00:16:31] but it is actually the entry of the head of the loop.
+[00:16:31 -> 00:16:33] So, you know, there is a back edge
+[00:16:33 -> 00:16:35] that's coming at P2 as well.
+[00:16:35 -> 00:16:36] So P2, for example,
+[00:16:36 -> 00:16:38] is different from this location here,
+[00:16:38 -> 00:16:40] which is basically the first time the loop is entering.
+[00:16:40 -> 00:16:42] P2 is actually a location
+[00:16:42 -> 00:16:44] which gets entered multiple times
+[00:16:44 -> 00:16:46] if the loop executes multiple times.
+[00:16:46 -> 00:16:48] And if I want to compute the value at P2,
+[00:16:48 -> 00:16:50] I'm going to again descend down my region hierarchy.
+[00:16:50 -> 00:16:54] I'm going to first do the DFA on procedure region.
+[00:16:54 -> 00:16:56] And of course, I don't need to do it
+[00:16:56 -> 00:16:57] for every point separately.
+[00:16:57 -> 00:16:59] I mean, all of these points are going to be done in one go.
+[00:16:59 -> 00:17:03] So basically, but to get the value of P2,
+[00:17:03 -> 00:17:05] if I was only interested in getting the value of P2,
+[00:17:05 -> 00:17:07] I would first get the,
+[00:17:07 -> 00:17:09] do the DFA on the procedure region.
+[00:17:09 -> 00:17:12] I will get the values at the beginning and the end.
+[00:17:12 -> 00:17:14] Then I would go to the next level
+[00:17:14 -> 00:17:16] and I would get the values at P1,
+[00:17:17 -> 00:17:19] beginning of the loop region,
+[00:17:19 -> 00:17:21] which is the first entry of the loop region
+[00:17:21 -> 00:17:22] and end of the loop region.
+[00:17:22 -> 00:17:24] Now notice that this particular point here,
+[00:17:24 -> 00:17:26] which is the entry of the loop region,
+[00:17:26 -> 00:17:27] is not the same as P1.
+[00:17:27 -> 00:17:29] P1 is executed multiple times,
+[00:17:29 -> 00:17:32] but this particular point here is only executed once.
+[00:17:32 -> 00:17:36] So I will have to now go deeper into the hierarchy
+[00:17:36 -> 00:17:38] to get the value for P1
+[00:17:38 -> 00:17:40] and that's the next level.
+[00:17:40 -> 00:17:42] And here I'm going to use this particular value.
+[00:17:42 -> 00:17:44] So let's say this particular value here
+[00:17:44 -> 00:17:46] is let's say Q2.
+[00:17:46 -> 00:17:49] Using Q2, I will get the value for P2.
+[00:17:50 -> 00:17:52] Sorry, I may have been saying P1.
+[00:17:52 -> 00:17:55] I meant P2 when I was comparing this with this point.
+[00:17:55 -> 00:17:59] Okay, now using Q2, I want to find the value for P2
+[00:17:59 -> 00:18:01] and so I would go to the next level of the hierarchy.
+[00:18:01 -> 00:18:04] And this time using Q2, I would basically say,
+[00:18:04 -> 00:18:06] okay, from Q2, this is what happens
+[00:18:06 -> 00:18:09] and then from Q2 to P2, this is what happens.
+[00:18:09 -> 00:18:11] So I'm going to have to implement,
+[00:18:11 -> 00:18:13] basically execute a data flow analysis
+[00:18:13 -> 00:18:16] to basically figure out what is the value at P2
+[00:18:16 -> 00:18:20] because P2 would have the value which is coming from Q2
+[00:18:20 -> 00:18:24] and repetitive applications
+[00:18:24 -> 00:18:27] of the transfer function of the loop body.
+[00:18:27 -> 00:18:30] In other words, value of P1
+[00:18:30 -> 00:18:34] meet with application of FB on F1M0
+[00:18:34 -> 00:18:38] plus FB square F1M0.
+[00:18:38 -> 00:18:40] F1M0 is the value at P1, right?
+[00:18:40 -> 00:18:43] So value at P1 or this is nothing but F1M0
+[00:18:43 -> 00:18:46] where M0 is the value at the start of the program,
+[00:18:46 -> 00:18:48] entry of the program.
+[00:18:48 -> 00:18:51] And then I meet it with the, you know, I apply FB once,
+[00:18:51 -> 00:18:53] then I apply FB twice, thrice,
+[00:18:53 -> 00:18:55] till I reach a fixed point and I keep meeting it
+[00:18:55 -> 00:18:58] and that's the value that would be computed for P2.
+[00:18:58 -> 00:19:01] So the region hierarchy is only helping us compute,
+[00:19:01 -> 00:19:03] you know, at the higher level,
+[00:19:03 -> 00:19:05] it's only helping us compute the values
+[00:19:05 -> 00:19:07] at the boundaries of the region.
+[00:19:07 -> 00:19:09] If I want to compute values internal to the regions,
+[00:19:09 -> 00:19:12] then I need to implement, you know,
+[00:19:12 -> 00:19:14] I want me to execute my data flow analysis
+[00:19:14 -> 00:19:16] inside that particular region
+[00:19:16 -> 00:19:20] to basically get the values at internal points.
+[00:19:20 -> 00:19:23] Similarly, if I wanted to compute the value at P3,
+[00:19:23 -> 00:19:26] now let's say I already have the value at P2,
+[00:19:26 -> 00:19:28] then how do I get the value at P3?
+[00:19:28 -> 00:19:30] Well, that's easy, that's just apply,
+[00:19:30 -> 00:19:32] let's say this was FS,
+[00:19:32 -> 00:19:36] then I just apply FS to the value at P2.

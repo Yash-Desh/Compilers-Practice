@@ -1,0 +1,106 @@
+Title: Compiler Design Module 153 : Affine Transform #4 - Scaling
+Video ID: VqEo2Vnhpes
+Detected language: en
+------------------------------------------------------------
+
+[00:00:00 -> 00:00:06] Today we are going to discuss the fourth primitive affine transform which is called scaling and
+[00:00:06 -> 00:00:14] let's look at this example to understand scaling. For i equals 0 to n, y of 2 into i equals
+[00:00:14 -> 00:00:20] z of 2 into i. So we are basically updating every alternate element and also reading every
+[00:00:20 -> 00:00:26] alternate element in z. And then for j equals 0 to 2 into n, j plus plus xj equals
+[00:00:26 -> 00:00:34] yj. Here we are looking at each and every element of y in a sequential order. So you
+[00:00:34 -> 00:00:40] can see that there is a read after write dependency on y and so we want to capture this. And
+[00:00:40 -> 00:00:45] if I want to draw this diagrammatically, then crosses are s1 and the circles are
+[00:00:45 -> 00:00:52] s2. So these are all the iterations of s1 from 0 to n. These are all the crosses
+[00:00:52 -> 00:00:56] and then these are all the iterations. The circles are all the iterations from 0 to 2n.
+[00:00:56 -> 00:01:02] So for example j equals 0, j equals 1, j equals 2, j equals 3 and so on till 2n.
+[00:01:02 -> 00:01:07] Here the crosses are for i equals 0, i equals 1 and so on. Now when is there
+[00:01:07 -> 00:01:13] a dependency? Well you know whenever y of 2 into i equals y of j. In other words
+[00:01:13 -> 00:01:24] whenever 2 into i equals j and so for i equals 0, so this is 0. So at i equals 0, we have an edge
+[00:01:24 -> 00:01:31] from i equals 0 to j equals 0. So this is j equals 0. Then we have an edge from i equals 1
+[00:01:31 -> 00:01:40] to j equals 2 because at i equals 1, I am accessing y2 and I am accessing y2 at j equals 2.
+[00:01:40 -> 00:01:46] So I have an edge from i equals 1 to j equals 2. Similarly, I have an edge from i equals 2 to j
+[00:01:46 -> 00:01:54] equals 4 and so on. And now I want to basically transform this program so that
+[00:01:55 -> 00:02:01] the reuse distance is reduced and also if it was a parallel machine, the outer loop becomes
+[00:02:01 -> 00:02:08] parallel. So I am going to use the same old space partitioning constraints formulation
+[00:02:08 -> 00:02:13] and the first thing I am going to do in doing this is basically represent the program
+[00:02:13 -> 00:02:22] in a fine way, in a fine representation. And so S1, there are two statements S1 and S2.
+[00:02:22 -> 00:02:29] The iteration space of S1 is from 0 to n both included and the iteration space of S2 is from
+[00:02:29 -> 00:02:35] 0 to 2 into n. Now I basically look at the data dependencies. So the data dependencies are
+[00:02:35 -> 00:02:41] basically whenever, so I look at all possible pairs and the only data dependency I see is
+[00:02:41 -> 00:02:48] between y of 2 into i and y of j. And so basically there's a data dependency if 2 into
+[00:02:48 -> 00:02:55] i equals j. And so whenever 2 into i equals j, it must be true that the two iterations
+[00:02:55 -> 00:03:01] i and j are mapped to the same processor through a fine function that maps iterations
+[00:03:01 -> 00:03:07] to processor space. So in other words, p of i should be equal to p of j whenever 2 into i
+[00:03:07 -> 00:03:13] equals j. This forms our space partitioning constraints. capital F i plus small f equals
+[00:03:14 -> 00:03:20] capital F prime i prime plus small f prime, that's boiling down to 2 into i plus j equals
+[00:03:20 -> 00:03:27] j. And then whenever this is true, then it must be true that c i plus small c equals c
+[00:03:27 -> 00:03:32] prime i prime plus small c prime. And that basically gives me p i equals p j. And I want
+[00:03:32 -> 00:03:39] the maximum rank solution for t. And it turns out that the maximum rank solution is just
+[00:03:39 -> 00:03:45] the rank of the iteration space itself, where I say p equals 2 into i and t equals j for S2,
+[00:03:45 -> 00:03:53] right? So for S1, I have the fine function which maps every iteration to a processor id
+[00:03:53 -> 00:03:59] that's twice the iteration count. So for example, it maps iteration 0 to 0, iteration 1 to 2,
+[00:03:59 -> 00:04:05] iteration 2 to 4, and so on. Whereas the second affine function from iteration space
+[00:04:05 -> 00:04:10] to processor space is just the identity function. So iteration 0 maps to 0, 1 maps to 1, 2 maps
+[00:04:10 -> 00:04:18] to 2, and so on. Now with this, this is a maximum rank solution to the space partitioning
+[00:04:18 -> 00:04:23] constraints for finding synchronization-free parallelism. And now my job is to basically
+[00:04:23 -> 00:04:29] using this solution, this maximum rank solution, identify the generated code or generate the code.
+[00:04:29 -> 00:04:36] And this is my naive code generation. Basically, I have an outer loop on p. The lower bound on p
+[00:04:36 -> 00:04:41] based on this mapping and looking at the lower bound and upper bound of j, I get the lower
+[00:04:41 -> 00:04:47] bound of p is just 0, because that's also the lower bound of i and j, and p equals 2i and p equals
+[00:04:47 -> 00:04:55] j. So 2 into 0 is 0, and 0 is just 0, so lower bound is 0. And upper bound is 2 into n, because
+[00:04:56 -> 00:05:03] you know, it's coming from i equals p equals 2i and i's upper bound is n. So that gives me 2n
+[00:05:03 -> 00:05:07] and also p equals j and j's upper bound is 2n. So it so happens, this is a very
+[00:05:07 -> 00:05:12] simplified example, and so happens in the simplified example, that both the statements
+[00:05:12 -> 00:05:17] upper bound and lower bound are identical. So both of them basically give me, you know,
+[00:05:17 -> 00:05:22] the upper lower bound is 0 and upper bound is 2 into n. Basically, the lower bound and upper
+[00:05:22 -> 00:05:28] bound are identical for both S1 and S2. And then I just paste the original program as it is,
+[00:05:28 -> 00:05:33] all right? So I just paste the original program, except that I predicate S1 and S2
+[00:05:34 -> 00:05:39] using the mapping function that I have. So for example, I have the first loop is for i equals 0
+[00:05:39 -> 00:05:45] to n, i plus plus, and this is S1, y2 into i equals z2 into i, except that I predicate it
+[00:05:45 -> 00:05:51] with if 2 into i equals p. So only execute if I'm on the correct processor. Similarly,
+[00:05:51 -> 00:05:56] the second loop for j equals 0, j is less than equal to 2 into n, j plus plus. Once again,
+[00:05:56 -> 00:06:03] I have S2, which is xj equals yj, but predicate it with if j equals p. So this is my naive
+[00:06:03 -> 00:06:07] code generation algorithm, but we know that the naive algorithm is not very,
+[00:06:07 -> 00:06:12] is not generating a very tight code. So the next thing we do is tightening of the loop bounds,
+[00:06:12 -> 00:06:17] also called elimination of the empty iterations. So we can see that on this loop,
+[00:06:18 -> 00:06:22] there is only one value that it executes for i, which is basically the value when
+[00:06:22 -> 00:06:29] whenever 2 into i equals p. So I could have just said that whenever 2 into i equals p,
+[00:06:29 -> 00:06:36] only then execute it. When will 2 into i equal p for i equals 0 to n? At p equals 0,
+[00:06:37 -> 00:06:42] i equals 0 would be the only iteration that executes. Let's look at what happens at p equals
+[00:06:42 -> 00:06:50] 1. At p equals 1, i equals 0 will not give me 2 into i equals p. i equals 1 will not
+[00:06:50 -> 00:06:56] give me 2 into i equals p because 2 into 1 is 2, whereas p was 1. And similarly, i equals 2,
+[00:06:56 -> 00:07:01] 3, 4, 5 is not going to give me 2 into i equals p. So this, first of all, there are at most
+[00:07:02 -> 00:07:08] one iteration of the inner body of this first loop that get executed and exactly one get
+[00:07:08 -> 00:07:13] executed when p was an even number. So for example, 0, when p was 0, when p was 2,
+[00:07:13 -> 00:07:20] when p was 4 and so on. And no iteration gets executed when p was an odd number.
+[00:07:21 -> 00:07:26] So this kind of simplification, we can codify them as some kind of pattern matching rules
+[00:07:26 -> 00:07:31] to figure out how to simplify this fact that there's only one iteration. I mean,
+[00:07:31 -> 00:07:36] the first thing I would probably do here is just do a minimum and maximum analysis to say,
+[00:07:36 -> 00:07:44] okay, i starts from minimum of p and maximum of, so minimum of p by 2 and maximum of p by 2
+[00:07:44 -> 00:07:48] or something like that. And basically based on that, I'd be able to say that, okay,
+[00:07:49 -> 00:07:55] there's only one, at most one iteration that gets executed. But only for some values of
+[00:07:56 -> 00:08:00] that range, am I going to actually even execute a single iteration. So I can even
+[00:08:00 -> 00:08:06] further simplify this to basically say whenever p is even only then execute this statement.
+[00:08:06 -> 00:08:11] And for that, whenever p is even, it must be true that i equals p by 2. All right. And then
+[00:08:11 -> 00:08:17] I can just substitute p by 2 for i for that case. Similarly, if I look at the second loop,
+[00:08:17 -> 00:08:23] it's for j equals 0 to 2 into n, j plus plus. If j equals p, xj equals yj. Now in this case,
+[00:08:23 -> 00:08:29] it's very easy to see that only one of the iterations when j equals p is going to execute.
+[00:08:29 -> 00:08:34] So I can just replace this whole loop with just saying if j equals p and in fact I can
+[00:08:34 -> 00:08:41] just replace if j equals p, remove it and then instead say xp because I'm iterating over all
+[00:08:41 -> 00:08:46] possible, you know, so I just said set j to p and then just use xj equals yj and I can do
+[00:08:48 -> 00:08:52] copy propagation just say xp equals yp. And so finally in my code generation,
+[00:08:52 -> 00:09:02] this is the kind of code I get for p equals 0 to 2n. If p mod 2 equals 0, then xyp equals zp
+[00:09:02 -> 00:09:09] and then also I say xp equals yp. All right. And this is the transformed code that I get
+[00:09:09 -> 00:09:15] using my formulation of space partitioning constraints for synchronization free parallelism.
+[00:09:15 -> 00:09:20] Notice that if it was a parallel machine then I could have executed the outer loop
+[00:09:21 -> 00:09:26] on 2 into n different processors because each of the iterations of the outer loop
+[00:09:26 -> 00:09:32] are independent with respect to each other. If I was to draw the diagram for this particular
+[00:09:32 -> 00:09:35] transformation, recall that the original program looked something like this.
+[00:09:36 -> 00:09:42] I have n iterations of s1 and 2 into n iterations of s2 and my dependency edges are
+[00:09:42 -> 00:09:49] look something like this. Whereas in my new transform program, I have 2 into n iterations
+[00:09:49 -> 00:09:56] overall of which only on the even values of this iteration space s1 executes and on all
+[00:09:56 -> 00:10:01] iterations of this iteration space s2 executes. But the important thing is that the reuse distance
+[00:10:01 -> 00:10:05] has been significantly reduced. All these lines, all these dependency edges are now
+[00:10:05 -> 00:10:11] vertical, which means that they belong to the, if there's a dependency, they belong to the
+[00:10:11 -> 00:10:14] same iteration. And this is exactly what the space partitioning constraints
+[00:10:14 -> 00:10:19] formulae and aim to, this is the kind of solution that they aim to obtain.

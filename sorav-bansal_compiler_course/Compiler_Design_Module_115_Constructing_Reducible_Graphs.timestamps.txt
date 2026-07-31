@@ -1,0 +1,358 @@
+Title: Compiler Design Module 115 : Constructing Reducible Graphs
+Video ID: xs_8omtT3Vo
+Detected language: en
+------------------------------------------------------------
+
+[00:00:00 -> 00:00:04] So we've been talking about the dominator DFA analysis.
+[00:00:04 -> 00:00:09] We said that if we visit the nodes in reverse post-order,
+[00:00:09 -> 00:00:10] in a depth-first search order,
+[00:00:10 -> 00:00:17] then we can identify all the reverse post-order in a single pass,
+[00:00:17 -> 00:00:21] and then we can identify the dominators in a single pass.
+[00:00:21 -> 00:00:23] To identify the reverse post-order,
+[00:00:23 -> 00:00:25] we basically had this DFS algorithm.
+[00:00:25 -> 00:00:29] It says we basically initialize visited to false for every node.
+[00:00:29 -> 00:00:33] We start a counter to the maximum count,
+[00:00:33 -> 00:00:35] which is the count of the nodes,
+[00:00:35 -> 00:00:36] and then we keep decrementing it,
+[00:00:36 -> 00:00:40] and then we just implement a depth-first search procedure,
+[00:00:40 -> 00:00:43] and recall that a depth-first search procedure
+[00:00:43 -> 00:00:45] visits a node if it's not already been visited.
+[00:00:45 -> 00:00:49] So it visits any node at most once.
+[00:00:53 -> 00:00:56] After all the successes have been visited,
+[00:00:56 -> 00:00:59] it just assigns the depth-first number
+[00:00:59 -> 00:01:03] for the node,
+[00:01:03 -> 00:01:06] and if all the successes have already been visited,
+[00:01:06 -> 00:01:07] then it just assigns the depth-first number
+[00:01:07 -> 00:01:09] to the current node.
+[00:01:10 -> 00:01:12] And then it just decrements the,
+[00:01:13 -> 00:01:16] and it assigns it to C and then decrements C.
+[00:01:16 -> 00:01:23] So we argued that DFN contains the RPO numbering of the graph.
+[00:01:23 -> 00:01:26] We also said that there can be multiple RPOs for the same graph,
+[00:01:26 -> 00:01:32] and the different RPOs come from different choices of the order
+[00:01:32 -> 00:01:33] in which the successors are visited.
+[00:01:35 -> 00:01:37] So there's some non-determinism in the order
+[00:01:37 -> 00:01:39] in which the successors are visited.
+[00:01:39 -> 00:01:43] All right, so let's try to understand that a little bit more.
+[00:01:43 -> 00:01:46] So let's say I have this particular graph,
+[00:01:46 -> 00:01:50] then what is the DFN order or the reverse-post order?
+[00:01:50 -> 00:01:54] I'm also going to call it just the depth-first numbering or DFN.
+[00:01:54 -> 00:01:56] It's A, B, C, D.
+[00:01:56 -> 00:01:57] You can check it for yourself.
+[00:01:57 -> 00:01:59] You can run the algorithm in the previous slide
+[00:01:59 -> 00:02:02] on this particular example, and you're going to get A, B, C, D.
+[00:02:02 -> 00:02:06] Now, for this particular DFN,
+[00:02:07 -> 00:02:11] in this particular example, it turns out that there is a proper,
+[00:02:11 -> 00:02:12] there's only one depth-first numbering,
+[00:02:12 -> 00:02:15] but there could be multiple depth-first numberings
+[00:02:15 -> 00:02:17] for the same graph. We have seen this before.
+[00:02:17 -> 00:02:20] So, but for this particular depth-first numbering,
+[00:02:20 -> 00:02:24] if we basically just, you know, draw all the edges,
+[00:02:24 -> 00:02:26] then we see that most edges
+[00:02:26 -> 00:02:28] are basically in the forward direction,
+[00:02:28 -> 00:02:31] but some edges are in the reverse direction.
+[00:02:31 -> 00:02:34] By reverse direction, I mean the edge is going from
+[00:02:34 -> 00:02:38] a higher DFN number node to a lower DFN number node.
+[00:02:38 -> 00:02:41] So for example here, C is the higher DFN number node
+[00:02:41 -> 00:02:43] and B is the lower DFN number node,
+[00:02:43 -> 00:02:46] and this edge is going from a higher DFN number node
+[00:02:46 -> 00:02:48] to the lower DFN number node.
+[00:02:48 -> 00:02:50] And these such edges are going to be called
+[00:02:50 -> 00:02:52] retreating edges, all right?
+[00:02:52 -> 00:02:54] So I'm going to call this edge from C to B
+[00:02:54 -> 00:02:55] a retreating edge,
+[00:02:55 -> 00:02:59] whereas all the other edges are not retreating edges.
+[00:02:59 -> 00:03:01] And notice that a retreating edge
+[00:03:01 -> 00:03:03] is a property of a particular DFN.
+[00:03:03 -> 00:03:05] So for different DFNs,
+[00:03:05 -> 00:03:08] we may have different retreating edges, right?
+[00:03:08 -> 00:03:10] So let's see that with an example.
+[00:03:10 -> 00:03:12] So let's say I have this particular graph
+[00:03:12 -> 00:03:14] with A, B and C.
+[00:03:14 -> 00:03:17] A, there's edges from A to B and A to C.
+[00:03:17 -> 00:03:20] There are also edges from B to C and C to B.
+[00:03:20 -> 00:03:21] Now, we have seen this before
+[00:03:22 -> 00:03:24] that this particular graph has two different DFNs.
+[00:03:24 -> 00:03:27] One particular DFN is A, B, C,
+[00:03:27 -> 00:03:29] in which case if I draw the edges,
+[00:03:29 -> 00:03:33] then C to B is the retreating edge.
+[00:03:33 -> 00:03:35] But there's another DFN which is A, C, B,
+[00:03:35 -> 00:03:38] depending on which successor got enumerated first
+[00:03:38 -> 00:03:42] when I was looking at A's successors.
+[00:03:42 -> 00:03:44] And so A, C, B is also a valid RPO
+[00:03:44 -> 00:03:46] or a valid DFN based on algorithm.
+[00:03:46 -> 00:03:47] But when I do this,
+[00:03:47 -> 00:03:49] then B to C is the retreating edge.
+[00:03:49 -> 00:03:52] So you can see that depending on the DFN,
+[00:03:53 -> 00:03:54] the particular DFN that we got,
+[00:03:54 -> 00:03:57] the set of retreating edges can be different.
+[00:03:57 -> 00:03:59] In this example, the set of retreating edges
+[00:03:59 -> 00:04:04] is made up of the single element C to B.
+[00:04:04 -> 00:04:06] And in the second case,
+[00:04:06 -> 00:04:09] the set is also made up of a single element
+[00:04:09 -> 00:04:11] and that is B to C.
+[00:04:12 -> 00:04:14] All right, so retreating edge is a property
+[00:04:14 -> 00:04:18] of a particular DFN.
+[00:04:18 -> 00:04:23] But recall that back edges are not a property of a DFN,
+[00:04:23 -> 00:04:26] back edges are a property of the graph, right?
+[00:04:26 -> 00:04:28] So before we talk about back edges,
+[00:04:28 -> 00:04:30] let's define retreating edges.
+[00:04:30 -> 00:04:34] And edge M to N is a retreating edge if and only if,
+[00:04:34 -> 00:04:36] this is the definition of a retreating edge.
+[00:04:36 -> 00:04:40] DFN M, DFN of the source is greater than equal
+[00:04:40 -> 00:04:42] to DFN N, DFN of the destination of that edge.
+[00:04:42 -> 00:04:44] And this is for a particular DFN,
+[00:04:44 -> 00:04:46] we have already seen that.
+[00:04:46 -> 00:04:48] And this basically means that indicates
+[00:04:48 -> 00:04:51] that M was reached through N from entry
+[00:04:51 -> 00:04:53] during DFS traversal.
+[00:04:53 -> 00:04:57] So this can only happen if the DFN of M
+[00:04:57 -> 00:05:00] can be greater than equal to DFN of N
+[00:05:00 -> 00:05:02] for an edge M to N,
+[00:05:02 -> 00:05:05] only if M was reached during the DFS traversal
+[00:05:05 -> 00:05:06] through N.
+[00:05:06 -> 00:05:09] So first N was reached and then after N was reached,
+[00:05:09 -> 00:05:12] you were traversing the tree and then M was reached.
+[00:05:12 -> 00:05:17] And this also means that the lifetime of search M
+[00:05:21 -> 00:05:24] was contained in the lifetime of search N
+[00:05:24 -> 00:05:26] for that particular DFN, all right?
+[00:05:26 -> 00:05:30] So this can only happen if M's exploration,
+[00:05:30 -> 00:05:35] the exploration of M subtree was kind of a subset
+[00:05:35 -> 00:05:37] of the exploration of N's subtree.
+[00:05:37 -> 00:05:40] So if I was to draw the DFS traversal as a tree,
+[00:05:40 -> 00:05:45] then the subtree rooted at M would be a subset
+[00:05:45 -> 00:05:49] or a subtree of the subtree rooted at N.
+[00:05:49 -> 00:05:51] And you can check that.
+[00:05:51 -> 00:05:52] For all other cases, you would find
+[00:05:52 -> 00:05:54] that this kind of condition cannot be true
+[00:05:54 -> 00:05:56] that for an edge from M to N,
+[00:05:56 -> 00:05:59] DFN M is greater than equal to DFN N.
+[00:05:59 -> 00:06:00] So for every retreating edge,
+[00:06:00 -> 00:06:04] it basically means that N was reached through M.
+[00:06:04 -> 00:06:06] Now this also gives us a hint.
+[00:06:06 -> 00:06:09] If N was reached through M from the start node,
+[00:06:09 -> 00:06:12] then clearly, and there's an edge,
+[00:06:12 -> 00:06:17] then all such, if I was to ask
+[00:06:17 -> 00:06:20] whether M can dominate N or not,
+[00:06:20 -> 00:06:23] then the answer is, well, one of the things is
+[00:06:23 -> 00:06:26] if DFN of M is less than,
+[00:06:28 -> 00:06:31] I want to ask whether N can dominate M or not.
+[00:06:31 -> 00:06:35] So if I want to ask the question N dom N, all right?
+[00:06:35 -> 00:06:37] If I want to ask this question,
+[00:06:37 -> 00:06:38] then basically, you know,
+[00:06:38 -> 00:06:42] one way to have a quick check is,
+[00:06:42 -> 00:06:47] does DFN of N,
+[00:06:47 -> 00:06:53] is this greater than equal to DFN of N
+[00:06:53 -> 00:06:56] or less than equal to, right?
+[00:06:56 -> 00:06:58] And I can ask this question.
+[00:06:58 -> 00:07:00] And if it is greater than equal to,
+[00:07:01 -> 00:07:02] if it is greater than equal to,
+[00:07:02 -> 00:07:05] then the answer is definitely no, right?
+[00:07:05 -> 00:07:10] Because if N dominates N,
+[00:07:10 -> 00:07:13] then N should have been visited before M.
+[00:07:13 -> 00:07:15] And if N should have been visited before M,
+[00:07:15 -> 00:07:18] then N should have had a smaller DFN number.
+[00:07:18 -> 00:07:21] And so if, you know, this is an easy check,
+[00:07:21 -> 00:07:25] that if DFN N is greater than equal to DFN M,
+[00:07:25 -> 00:07:27] then N does not dominate M.
+[00:07:27 -> 00:07:28] The other way is not true, right?
+[00:07:28 -> 00:07:32] So it's possible that DFN N is less than DFN M
+[00:07:32 -> 00:07:34] and yet N does not dominate M, all right?
+[00:07:34 -> 00:07:38] So it's not, so it gives us some hint
+[00:07:38 -> 00:07:39] about the relationship between
+[00:07:39 -> 00:07:41] retreating edges and back edges.
+[00:07:41 -> 00:07:43] Recall that for a back edge,
+[00:07:43 -> 00:07:46] the destination should dominate the source.
+[00:07:46 -> 00:07:47] For a retreating edge,
+[00:07:47 -> 00:07:51] the destination should have a lower DFN number
+[00:07:51 -> 00:07:53] than the source.
+[00:07:53 -> 00:07:57] And so we are saying that for dominators,
+[00:07:57 -> 00:07:59] the dominating node should always have
+[00:07:59 -> 00:08:01] a lower DFN number than the source.
+[00:08:01 -> 00:08:03] So this basically means that all back edges
+[00:08:03 -> 00:08:06] should be a subset of all the retreating edges
+[00:08:06 -> 00:08:09] because for some node to dominate some other node,
+[00:08:09 -> 00:08:12] if A dominates B, then it must be true
+[00:08:12 -> 00:08:16] that for any DFN, any DFS traversal,
+[00:08:16 -> 00:08:19] DFN of A is less than equal to DFN of B.
+[00:08:20 -> 00:08:24] All right, so recall what is a back edge.
+[00:08:24 -> 00:08:26] A back edge is an edge M to N
+[00:08:26 -> 00:08:28] such that N dominates M.
+[00:08:28 -> 00:08:30] And from that we can derive the theorem
+[00:08:30 -> 00:08:33] that every back edge is a retreating edge
+[00:08:33 -> 00:08:34] for any DFN.
+[00:08:34 -> 00:08:36] So we take any DFN, it must be true
+[00:08:36 -> 00:08:40] that whatever are the retreating edges
+[00:08:40 -> 00:08:41] for that particular DFN,
+[00:08:41 -> 00:08:44] that set of retreating edges must contain
+[00:08:44 -> 00:08:47] the set of back edges of the program,
+[00:08:47 -> 00:08:48] but not vice versa.
+[00:08:48 -> 00:08:50] It's not necessary that every retreating edge
+[00:08:50 -> 00:08:51] is a back edge.
+[00:08:51 -> 00:08:55] And the argument is exactly what I said earlier.
+[00:08:55 -> 00:08:57] Back edge requires a stronger property
+[00:08:57 -> 00:08:59] that the destination dominates the source.
+[00:08:59 -> 00:09:02] Retreating edge requires a weaker property
+[00:09:02 -> 00:09:04] that the DFN number of the destination
+[00:09:04 -> 00:09:07] is smaller than the DFN number of the source.
+[00:09:07 -> 00:09:11] One implies the other, but not the other way around.
+[00:09:11 -> 00:09:14] So if N dominates M, then it must be true
+[00:09:14 -> 00:09:18] that DFN of N is less than equal to DFN of M,
+[00:09:18 -> 00:09:20] but not vice versa.
+[00:09:20 -> 00:09:22] And so every back edge is a retreating edge,
+[00:09:22 -> 00:09:26] but every retreating edge is not necessarily a back edge.
+[00:09:27 -> 00:09:30] So here is, you know,
+[00:09:30 -> 00:09:33] recall that we were interested in finding back edges.
+[00:09:33 -> 00:09:35] So in this particular
+[00:09:38 -> 00:09:41] graph, what are the back edges?
+[00:09:41 -> 00:09:44] Notice that there are multiple cycles.
+[00:09:44 -> 00:09:46] So there's a cycle between B and C.
+[00:09:46 -> 00:09:48] There's a cycle between A and C.
+[00:09:48 -> 00:09:51] And I claim that the only back edges are C to A.
+[00:09:51 -> 00:09:53] So if I look at this graph,
+[00:09:53 -> 00:09:56] we know that A dominates B and A dominates C,
+[00:09:56 -> 00:09:59] but B does not dominate C and BC does not dominate A.
+[00:09:59 -> 00:10:02] B, and so the only back edge is, you know,
+[00:10:02 -> 00:10:04] the only edge that basically has a destination
+[00:10:04 -> 00:10:06] dominating the source is the edge C to A.
+[00:10:06 -> 00:10:09] But if I look at DFN number one, it would be ABC.
+[00:10:09 -> 00:10:13] If I look at DFN number two, it would be ACD.
+[00:10:13 -> 00:10:15] The retreating edges of DFN number one
+[00:10:15 -> 00:10:17] would be C to B and C to A.
+[00:10:17 -> 00:10:19] The retreating edges of DFN number two
+[00:10:19 -> 00:10:21] would be B to C and C to A.
+[00:10:21 -> 00:10:23] And in this example,
+[00:10:23 -> 00:10:24] notice that, I mean,
+[00:10:24 -> 00:10:26] that's just coming from the DFN, right?
+[00:10:26 -> 00:10:29] So C to B is actually a retreating edge in this DFN,
+[00:10:29 -> 00:10:33] and B to C is the retreating edge in this DFN.
+[00:10:33 -> 00:10:34] And notice that in both cases,
+[00:10:34 -> 00:10:36] C to A is always present
+[00:10:36 -> 00:10:39] as part of the set of retreating edges.
+[00:10:39 -> 00:10:43] Irrespective of which DFN I got,
+[00:10:43 -> 00:10:45] the back edges will always be present
+[00:10:45 -> 00:10:46] in the set of retreating edges.
+[00:10:46 -> 00:10:48] Even though different DFNs
+[00:10:48 -> 00:10:50] give different set of retreating edges,
+[00:10:50 -> 00:10:51] we have a nice property
+[00:10:51 -> 00:10:53] that the back edges are always present
+[00:10:53 -> 00:10:55] in the set of retreating edges.
+[00:10:55 -> 00:10:59] Now, from this, we get a nice definition.
+[00:10:59 -> 00:11:01] We say that a control flow graph is reducible
+[00:11:01 -> 00:11:03] if and only if all the retreating edges
+[00:11:03 -> 00:11:05] in any depth-first numbering
+[00:11:05 -> 00:11:08] are also back edges, all right?
+[00:11:08 -> 00:11:13] So basically we want that for any DFN numbering,
+[00:11:13 -> 00:11:15] if I identify the retreating edges,
+[00:11:15 -> 00:11:17] then all those retreating edges should be back edges.
+[00:11:17 -> 00:11:19] So here are examples of reducible graphs.
+[00:11:19 -> 00:11:21] This one is a reducible graph.
+[00:11:21 -> 00:11:23] This one is a reducible graph.
+[00:11:23 -> 00:11:25] But here, this is not a reducible graph.
+[00:11:25 -> 00:11:28] So pretty much if the cycles in the graph
+[00:11:28 -> 00:11:29] are natural loops,
+[00:11:29 -> 00:11:32] all cycles in the graphs are natural loops,
+[00:11:32 -> 00:11:34] then they are reducible graphs.
+[00:11:34 -> 00:11:37] Both these cases, all cycles are natural loops.
+[00:11:37 -> 00:11:38] You can check that.
+[00:11:38 -> 00:11:40] But this case, all cycles are not natural loops
+[00:11:40 -> 00:11:42] because this particular cycle
+[00:11:42 -> 00:11:43] between the second and the third node
+[00:11:43 -> 00:11:47] is not a natural loop.
+[00:11:47 -> 00:11:51] So all cycles in a reducible graph are natural loops.
+[00:11:51 -> 00:11:53] And we can also define the loop nesting depth
+[00:11:53 -> 00:11:55] of a reducible graph.
+[00:11:55 -> 00:11:58] L1 is less than L2 if L1 is nested in L2
+[00:11:58 -> 00:12:00] and the depth of a reducible graph,
+[00:12:00 -> 00:12:01] the loop nesting depth,
+[00:12:01 -> 00:12:02] is the longest chain of such
+[00:12:02 -> 00:12:04] less than relationships in a graph.
+[00:12:04 -> 00:12:06] So we already talked about nesting of loops
+[00:12:06 -> 00:12:08] and based on that nesting of loops,
+[00:12:08 -> 00:12:11] we can draw a hierarchy of nesting between loops
+[00:12:11 -> 00:12:13] and the maximum length of such a chain
+[00:12:13 -> 00:12:17] is going to be the loop nesting depth of that graph.
+[00:12:19 -> 00:12:20] Here are examples.
+[00:12:20 -> 00:12:24] This is a depth one CFG and this is a depth two CFG
+[00:12:24 -> 00:12:28] because it has two loops, one nested inside the other.
+[00:12:29 -> 00:12:32] So after we have identified the back edge,
+[00:12:32 -> 00:12:35] we need to identify the natural loop
+[00:12:35 -> 00:12:37] associated with the back edge, all right?
+[00:12:37 -> 00:12:38] And to do that,
+[00:12:38 -> 00:12:40] we basically need to identify all the nodes
+[00:12:40 -> 00:12:44] that can reach the source of the back edge.
+[00:12:44 -> 00:12:46] So let's say the back edge was n to d,
+[00:12:46 -> 00:12:48] then we want to identify all the nodes
+[00:12:48 -> 00:12:51] that can reach n without going through d.
+[00:12:51 -> 00:12:53] And one easy way to do that
+[00:12:53 -> 00:12:56] is to remove d from the CFG
+[00:12:56 -> 00:12:57] and then find all the nodes
+[00:12:57 -> 00:12:59] that can reach n in the modified CFG.
+[00:12:59 -> 00:13:01] And that's just the transitive closure.
+[00:13:01 -> 00:13:06] This is just a naive explanation of what could be done
+[00:13:06 -> 00:13:08] to identify all the nodes of a natural loop.
+[00:13:08 -> 00:13:09] You could do something smarter.
+[00:13:09 -> 00:13:11] You don't really need to remove d,
+[00:13:11 -> 00:13:14] but you can just modify your transitive closure algorithm
+[00:13:14 -> 00:13:18] so that it does not consider edges
+[00:13:18 -> 00:13:21] that are incident to the node d.
+[00:13:21 -> 00:13:25] So this is a way to basically construct the natural loop
+[00:13:25 -> 00:13:27] once you have identified all the back edges.
+[00:13:29 -> 00:13:32] Also, we talked about what is a reducible graph.
+[00:13:32 -> 00:13:34] A reducible graph is a graph
+[00:13:34 -> 00:13:36] where every cycle is also a natural loop.
+[00:13:36 -> 00:13:40] But what if we have a non-reducible graph?
+[00:13:40 -> 00:13:43] So first of all, luckily, as I said before,
+[00:13:43 -> 00:13:47] most programs produce reducible graphs.
+[00:13:47 -> 00:13:49] And that is a property that comes from the
+[00:13:49 -> 00:13:52] structuredness of our high-level programming languages.
+[00:13:52 -> 00:13:56] And that's one reason why the use of control flow constructs
+[00:13:56 -> 00:13:58] like Goto is discouraged,
+[00:13:58 -> 00:14:02] because Goto can produce potentially non-reducible graphs.
+[00:14:02 -> 00:14:05] And because most programs are reducible in nature,
+[00:14:05 -> 00:14:08] or in other words, they produce reducible CFGs,
+[00:14:08 -> 00:14:12] we focus our optimization effort on reducible graphs
+[00:14:12 -> 00:14:14] because that makes the problem simpler
+[00:14:14 -> 00:14:17] because the graphs are more structured.
+[00:14:17 -> 00:14:19] But if I have a non-reducible graph,
+[00:14:19 -> 00:14:21] then often I need to convert it to a reducible graph
+[00:14:21 -> 00:14:23] so that I can run my algorithms.
+[00:14:23 -> 00:14:26] And so the good news is that every non-reducible graph
+[00:14:26 -> 00:14:29] can be converted to a reducible graph.
+[00:14:29 -> 00:14:30] However, the bad news is
+[00:14:30 -> 00:14:33] that it may require code duplication.
+[00:14:33 -> 00:14:35] So one of the canonical examples
+[00:14:35 -> 00:14:38] or patterns of a non-reducible graph
+[00:14:38 -> 00:14:42] is this cycle which has two entry points, right?
+[00:14:42 -> 00:14:43] A reducible graph is a graph
+[00:14:43 -> 00:14:46] where every cycle has only one entry point.
+[00:14:46 -> 00:14:48] And so if I want to draw a non-reducible graph,
+[00:14:48 -> 00:14:50] the easiest thing to do is create a cycle
+[00:14:50 -> 00:14:53] and then have two entry points to that cycle.
+[00:14:54 -> 00:14:56] Now, if I wanted to convert this graph
+[00:14:56 -> 00:14:59] or this pattern to a reducible graph,
+[00:14:59 -> 00:15:01] then I can do this by code duplication.
+[00:15:01 -> 00:15:03] For example, I could duplicate this node C
+[00:15:03 -> 00:15:05] and I could have C prime and C
+[00:15:05 -> 00:15:07] and then have some of the edges
+[00:15:07 -> 00:15:10] that are incoming to C come to the original C
+[00:15:10 -> 00:15:12] and some of the edges come to C prime.
+[00:15:12 -> 00:15:16] For example, I have decided that C prime is the node
+[00:15:16 -> 00:15:18] that's going to be part of the loop
+[00:15:18 -> 00:15:21] and C is going to have all the other incoming edges.
+[00:15:21 -> 00:15:25] And this way, this loop B on C prime becomes a natural loop.
+[00:15:25 -> 00:15:27] And so I've been able to convert the cycle
+[00:15:27 -> 00:15:28] into a natural loop
+[00:15:28 -> 00:15:32] and still maintain the semantics of the program.
+[00:15:32 -> 00:15:34] The problem here is that I have increased code size
+[00:15:34 -> 00:15:38] because I have duplicated the node C.
+[00:15:38 -> 00:15:42] And there exists an algorithm to do this
+[00:15:42 -> 00:15:43] in the most general case,
+[00:15:43 -> 00:15:46] but the problem is because of this duplication of nodes,
+[00:15:46 -> 00:15:50] it can potentially lead to exponential growth in code size.
+[00:15:50 -> 00:15:53] And this is a negative of this algorithm
+[00:15:53 -> 00:15:56] that converts irreducible graphs to reducible graphs.
+[00:15:56 -> 00:15:59] Fortunately, most graphs are reducible
+[00:15:59 -> 00:16:01] and even if they have irreducibility,
+[00:16:01 -> 00:16:03] then it would be a very local thing
+[00:16:03 -> 00:16:06] and it was possible to resolve that
+[00:16:06 -> 00:16:09] using code duplication as discussed in this slide.

@@ -1,0 +1,593 @@
+Title: Compiler Design Module 106 : Lazy Code Motion Problem
+Video ID: We3LEZklr8U
+Detected language: en
+------------------------------------------------------------
+
+[00:00:00 -> 00:00:05] So, now that we are familiar with partial redundancy elimination, the problem of partial
+[00:00:05 -> 00:00:12] redundancy elimination, let's look at some examples to see what the program could be
+[00:00:12 -> 00:00:14] transformed using PRA.
+[00:00:14 -> 00:00:21] So, just to recap, what is the problem of partial redundancy elimination?
+[00:00:21 -> 00:00:27] We want all redundant computations of expressions that can be eliminated without code duplication
+[00:00:27 -> 00:00:28] to be eliminated.
+[00:00:29 -> 00:00:34] So, all redundant computations on expressions that can be eliminated without code duplication
+[00:00:34 -> 00:00:36] on any of the program paths.
+[00:00:36 -> 00:00:43] I'm not really now explicitly saying on any program path, it is implicit in these statements
+[00:00:43 -> 00:00:52] that if something is redundant on any path, then it is partially redundant or simply redundant.
+[00:00:52 -> 00:00:56] So that's one part of the problem that we want to solve.
+[00:00:56 -> 00:01:01] The other part of the problem is that the optimized program does not perform any computations
+[00:01:01 -> 00:01:05] that were not already present in the original program.
+[00:01:05 -> 00:01:12] So recall that we only move computation up, we hoist a computation only if it was
+[00:01:12 -> 00:01:16] going to be computed on all possible paths from that particular program point.
+[00:01:16 -> 00:01:19] So, it shouldn't happen that on some of the program paths, some computation
+[00:01:19 -> 00:01:24] was not present in the original program, but is now present in the transformed program
+[00:01:24 -> 00:01:26] because that would be counterproductive.
+[00:01:26 -> 00:01:31] We're just going to make one path faster, we are making another path slower and so we
+[00:01:31 -> 00:01:32] don't want to do that.
+[00:01:32 -> 00:01:38] We don't want to introduce any extra computations on any other path or any path of the program.
+[00:01:38 -> 00:01:43] Not any other path, but we don't want to introduce extra computations on any path
+[00:01:43 -> 00:01:44] of the program.
+[00:01:44 -> 00:01:48] Now, that's the problem of partial redundancy elimination.
+[00:01:48 -> 00:01:52] A slight variant of this problem is called lazy code motion.
+[00:01:52 -> 00:01:57] So this is the problem of lazy code motion, which basically has both the first two conditions,
+[00:01:57 -> 00:01:59] but it also has a third condition.
+[00:01:59 -> 00:02:04] And the third condition is that expressions are computed at the latest possible time.
+[00:02:04 -> 00:02:10] Now, what this means is that expressions are computed lazily and that's why the
+[00:02:10 -> 00:02:13] term lazy code motion, they are computed as late as possible.
+[00:02:13 -> 00:02:19] When I say as late as possible, probably they are computed before their first use
+[00:02:19 -> 00:02:23] on that particular path, just before their first use on that particular path.
+[00:02:23 -> 00:02:26] Why do we want to compute expressions as late as possible?
+[00:02:26 -> 00:02:31] Because if we compute the expressions too early, then we have to maintain some storage
+[00:02:31 -> 00:02:33] space to store the value of the expression.
+[00:02:33 -> 00:02:38] And so that's going to add to our register pressure because we have to kind of keep
+[00:02:38 -> 00:02:42] that that many registers around either on the register or on the memory slot
+[00:02:42 -> 00:02:43] or something like that.
+[00:02:43 -> 00:02:45] But we don't want to do that.
+[00:02:45 -> 00:02:49] So lazy code motion is an extra constraint, adds an extra constraint to the problem
+[00:02:49 -> 00:02:51] of partial redundancy elimination.
+[00:02:51 -> 00:02:56] And that is that expressions are computed as lazily as possible or at the last
+[00:02:56 -> 00:02:58] latest possible time.
+[00:02:58 -> 00:03:00] So let's look at an example to understand what is lazy code motion.
+[00:03:00 -> 00:03:06] So here is an example that contains two loops, an example program.
+[00:03:06 -> 00:03:09] And in the first loop, it's just some block D1.
+[00:03:09 -> 00:03:14] And then on the second loop, there is an expression that's M plus N,
+[00:03:14 -> 00:03:17] which is redundantly being computed on the loop paths.
+[00:03:17 -> 00:03:22] And so partial redundancy elimination should implement loop invariant code motion.
+[00:03:22 -> 00:03:28] And A equals M plus N should be hoisted out of the second loop.
+[00:03:28 -> 00:03:29] But here is one possible solution.
+[00:03:29 -> 00:03:34] And the solution is that you hoist the computation of M plus N right to the
+[00:03:34 -> 00:03:35] beginning of a program, right?
+[00:03:35 -> 00:03:38] So basically say T equals M plus N.
+[00:03:38 -> 00:03:39] Then we have the original B1 loop.
+[00:03:39 -> 00:03:41] That's our first loop in the original program.
+[00:03:41 -> 00:03:45] And then in the second loop, I replace M plus N with T.
+[00:03:45 -> 00:03:50] And so that way I have been able to eliminate the redundant computations of M
+[00:03:50 -> 00:03:52] plus N in the second loop.
+[00:03:52 -> 00:03:57] But while this eliminates all partial redundancy, it is not a valid
+[00:03:57 -> 00:03:59] solution to a lazy code motion problem.
+[00:03:59 -> 00:04:02] So it's a valid solution to the partial redundancy elimination problem,
+[00:04:02 -> 00:04:05] but not a valid solution to the lazy code motion problem.
+[00:04:05 -> 00:04:11] Because we are basically having to maintain the value T across the entire
+[00:04:11 -> 00:04:16] duration of the loop B1, even though it was not even used in the loop B1.
+[00:04:16 -> 00:04:20] And so that's just going to eat up one extra register for us.
+[00:04:20 -> 00:04:22] And we don't want to do that.
+[00:04:22 -> 00:04:27] And that's why this extra constraint of compute as lazily as possible or at
+[00:04:27 -> 00:04:28] the latest possible time.
+[00:04:28 -> 00:04:33] And so this third solution here is the acceptable solution under the lazy code
+[00:04:33 -> 00:04:34] motion problem.
+[00:04:34 -> 00:04:39] Here I compute M plus N after B1, but before the second loop, all right?
+[00:04:40 -> 00:04:43] After this first loop and before the second loop.
+[00:04:43 -> 00:04:47] And this way I'm both eliminating partial redundancies and I'm computing the
+[00:04:47 -> 00:04:50] expression at the latest possible time.
+[00:04:50 -> 00:04:51] All right.
+[00:04:51 -> 00:04:58] So to recap, we make a distinction between full redundancy and partial
+[00:04:58 -> 00:05:00] redundancy.
+[00:05:00 -> 00:05:05] If I am computing some expression E, let's say M plus N at some location
+[00:05:05 -> 00:05:08] and I'm storing it in X, then I may have multiple program paths that are
+[00:05:08 -> 00:05:11] coming into this program point.
+[00:05:11 -> 00:05:15] Now, E is fully redundant at this particular program point if it is
+[00:05:15 -> 00:05:17] available on all incoming paths.
+[00:05:17 -> 00:05:21] And that is something that is captured using the available expressions
+[00:05:21 -> 00:05:25] analysis that we use for common sub-expression elimination.
+[00:05:25 -> 00:05:29] E is partially redundant if it is available on some but not all
+[00:05:29 -> 00:05:30] incoming paths.
+[00:05:30 -> 00:05:34] So maybe E is available on one of the paths and not on other, or
+[00:05:34 -> 00:05:38] maybe it's available on some subset of the incoming paths and not some
+[00:05:38 -> 00:05:40] other subset of the incoming paths.
+[00:05:40 -> 00:05:46] So, for example, in this example, if let's say A equals E is present on
+[00:05:46 -> 00:05:50] one of the paths or on some of the paths, but it's not present on the
+[00:05:50 -> 00:05:53] some of the other paths, then E is partially redundant at this
+[00:05:53 -> 00:05:55] program point S.
+[00:05:55 -> 00:06:00] Now, our goal in the algorithm of partial redundancy elimination and
+[00:06:00 -> 00:06:04] lazy code motion is that we want to place additional copies of E in the
+[00:06:04 -> 00:06:08] control flow graph so that it becomes fully redundant at S.
+[00:06:08 -> 00:06:13] So we want to put extra copies, for example, on this path of the
+[00:06:13 -> 00:06:16] computation of E such that it becomes fully redundant on S.
+[00:06:16 -> 00:06:20] And when it becomes fully redundant at S, then it can be eliminated,
+[00:06:20 -> 00:06:20] right?
+[00:06:20 -> 00:06:25] So, I cannot eliminate the computation of E at this point if it
+[00:06:25 -> 00:06:28] is partially redundant because on some of the paths, it's not
+[00:06:28 -> 00:06:29] even available.
+[00:06:29 -> 00:06:33] So what I do is I place extra copies of E on those paths where
+[00:06:33 -> 00:06:36] it is not available so that it becomes fully redundant at S.
+[00:06:36 -> 00:06:40] And once it becomes fully redundant at S, then I can eliminate the
+[00:06:40 -> 00:06:46] computation of E and replace it by the stored value, let's say T here.
+[00:06:46 -> 00:06:51] So I can say X equals T if T is where the computation is
+[00:06:51 -> 00:06:54] available on all paths.
+[00:06:54 -> 00:06:57] So, for example, in this particular example, I would say, you know, on
+[00:06:57 -> 00:06:59] this particular path, E was already available.
+[00:06:59 -> 00:07:02] I just ensure that it's available in a particular temporary
+[00:07:02 -> 00:07:04] variable called T.
+[00:07:04 -> 00:07:06] And then I use A equals T.
+[00:07:06 -> 00:07:09] And then on the other path, I just say T equals E.
+[00:07:09 -> 00:07:12] So I create an extra copy.
+[00:07:12 -> 00:07:15] The moment I create an extra copy of E on this path, E
+[00:07:15 -> 00:07:17] becomes fully redundant at S.
+[00:07:17 -> 00:07:23] And so at S, I can just replace E with T, right?
+[00:07:23 -> 00:07:27] So this is the point S, OK?
+[00:07:27 -> 00:07:32] So this is the kind of transformation that I am going to do in my lazy
+[00:07:32 -> 00:07:34] code motion algorithm.
+[00:07:34 -> 00:07:39] So I'm going to talk about some examples to further understand what is
+[00:07:39 -> 00:07:41] the problem of lazy code motion.
+[00:07:41 -> 00:07:43] We're not going to discuss the algorithm in this module.
+[00:07:43 -> 00:07:45] We'll do that in the next module.
+[00:07:45 -> 00:07:47] But in this module, we are at least going to look at all the
+[00:07:47 -> 00:07:51] particular examples to understand what transformations are required for
+[00:07:51 -> 00:07:53] what kind of program.
+[00:07:53 -> 00:07:55] So here is an example.
+[00:07:55 -> 00:07:57] Here we have A equals B plus C.
+[00:07:57 -> 00:07:58] Then there are multiple paths.
+[00:07:58 -> 00:08:00] And then I have D equals B plus C.
+[00:08:00 -> 00:08:04] Now at this particular point, B plus C is fully redundant because it's
+[00:08:04 -> 00:08:07] available on all incoming paths.
+[00:08:07 -> 00:08:10] And so this is very similar to our available expressions.
+[00:08:10 -> 00:08:13] But recall that partial redundancy elimination and lazy code motion
+[00:08:13 -> 00:08:16] subsume common sub-expression elimination.
+[00:08:16 -> 00:08:21] And so just like common sub-expression elimination, our
+[00:08:21 -> 00:08:23] lazy code motion algorithm should also make this transformation.
+[00:08:23 -> 00:08:29] It should compute B plus C into a temporary variable T, replace all
+[00:08:29 -> 00:08:30] occurrences of B plus C with T.
+[00:08:30 -> 00:08:34] So A equals T, D equals T.
+[00:08:34 -> 00:08:41] So this is what should happen in this particular example for lazy
+[00:08:41 -> 00:08:43] code motion.
+[00:08:43 -> 00:08:45] Now let's change that example a little bit.
+[00:08:45 -> 00:08:49] Let's say on one of the paths I am updating the value of B.
+[00:08:49 -> 00:08:53] Now at this particular point, B plus C is only partially redundant.
+[00:08:53 -> 00:08:57] It is not fully redundant because on this particular path, it is not
+[00:08:57 -> 00:09:01] redundant because I actually need to compute, recompute B plus C.
+[00:09:01 -> 00:09:05] But on this particular path, B plus C is redundant because I already
+[00:09:05 -> 00:09:08] have B plus C computed in the variable A.
+[00:09:08 -> 00:09:10] So I could have, on this particular path, I could have
+[00:09:10 -> 00:09:13] replaced D equals B plus C with D equals A.
+[00:09:13 -> 00:09:16] But on this particular path, I cannot do that.
+[00:09:16 -> 00:09:18] And so I need to recompute it.
+[00:09:18 -> 00:09:23] So the lazy code motion algorithm should transform, ideally, the
+[00:09:23 -> 00:09:23] program like this.
+[00:09:23 -> 00:09:28] Recall that we want to place extra copies of B plus C so that it becomes
+[00:09:28 -> 00:09:32] fully redundant at this point, while the extra places where it is added,
+[00:09:32 -> 00:09:33] it is not redundant.
+[00:09:33 -> 00:09:33] Right.
+[00:09:33 -> 00:09:35] So, so this is what should happen.
+[00:09:36 -> 00:09:39] Recall that we are not allowed to duplicate code, but we are
+[00:09:39 -> 00:09:41] allowed to add extra basic blocks.
+[00:09:41 -> 00:09:45] And so I just add an extra basic block here on this particular path
+[00:09:45 -> 00:09:48] where it was not redundant, where it had to be re-computed.
+[00:09:49 -> 00:09:51] And I recompute on that particular path.
+[00:09:51 -> 00:09:53] On this particular path, it was redundant.
+[00:09:53 -> 00:09:54] And so I don't recompute it.
+[00:09:54 -> 00:09:57] And I just say D equals T, right?
+[00:09:57 -> 00:10:01] So I replace A equals B plus C with T equals B plus C and A equals T.
+[00:10:02 -> 00:10:05] On this particular path, I just said D equals T.
+[00:10:05 -> 00:10:09] On this particular path, I said T equals B plus C and then the same
+[00:10:09 -> 00:10:12] statement D equals T can be reused for that.
+[00:10:13 -> 00:10:16] So this is the transformation for this particular example that is
+[00:10:16 -> 00:10:19] expected from lazy code motion.
+[00:10:21 -> 00:10:23] Now, let's change the example a little bit.
+[00:10:23 -> 00:10:27] Let's say that I have A equals B plus C on one of the paths.
+[00:10:27 -> 00:10:31] And in the other path, I have B equals 7 and then F equals B plus C.
+[00:10:31 -> 00:10:34] And on the joint point, I have D equals B plus C.
+[00:10:34 -> 00:10:38] Now, again, I'm looking at this particular location and I'm saying,
+[00:10:38 -> 00:10:41] is B plus C available on all program paths?
+[00:10:41 -> 00:10:45] Well, on this particular program path, it's available in variable A.
+[00:10:46 -> 00:10:49] On this particular program path, it's available in variable F.
+[00:10:50 -> 00:10:51] So how do I solve that problem?
+[00:10:51 -> 00:10:54] Well, this is something that we have been doing all along anyway.
+[00:10:54 -> 00:10:57] We just introduce a new variable and we don't worry about copies
+[00:10:57 -> 00:11:00] because we assume that copies are going to be taken care of later on
+[00:11:00 -> 00:11:02] by copy propagation.
+[00:11:02 -> 00:11:05] And so we just introduce T equals B plus C.
+[00:11:05 -> 00:11:06] And here we say A equals T.
+[00:11:06 -> 00:11:10] Similarly, here we introduce T equals B plus C and we say F equals T.
+[00:11:10 -> 00:11:13] And here we say D equals T.
+[00:11:13 -> 00:11:16] And so this way, we have eliminated redundancy
+[00:11:16 -> 00:11:18] at this particular program point.
+[00:11:18 -> 00:11:21] Notice that in the original program, there was redundancy on all program paths.
+[00:11:21 -> 00:11:24] So B plus C was actually fully redundant.
+[00:11:24 -> 00:11:27] But only problem was that it was available in different registers
+[00:11:27 -> 00:11:28] on different paths.
+[00:11:28 -> 00:11:32] We were able to solve this problem by introducing a new temporary variable T
+[00:11:32 -> 00:11:35] and using that, we were able to eliminate redundancy on all the paths.
+[00:11:36 -> 00:11:38] OK, now let's take another example.
+[00:11:38 -> 00:11:41] Here, B plus C is available on only one of the paths.
+[00:11:41 -> 00:11:43] It's not available on the other path.
+[00:11:43 -> 00:11:45] And so how do we deal with this?
+[00:11:45 -> 00:11:47] Well, this is something that we have sort of seen
+[00:11:47 -> 00:11:50] in one of the previous examples as well.
+[00:11:50 -> 00:11:52] We say T equals B plus C, A equals T.
+[00:11:52 -> 00:11:57] And on this particular path, we add a basic block and say T equals B plus C.
+[00:11:58 -> 00:12:00] It is not necessary here to add a basic block.
+[00:12:00 -> 00:12:03] We could have also added T equals B plus C
+[00:12:03 -> 00:12:05] to the previous basic block at the end of it.
+[00:12:06 -> 00:12:09] We are anyway going to do such, you know,
+[00:12:09 -> 00:12:12] we can do these kind of coalescing of basic blocks later on.
+[00:12:12 -> 00:12:15] It's just easy to think about it as an addition of a basic block
+[00:12:16 -> 00:12:22] and adding addition which computes the expression of interest,
+[00:12:22 -> 00:12:24] in this case, B plus C.
+[00:12:25 -> 00:12:27] Now, let's look at this particular example.
+[00:12:27 -> 00:12:29] Here, there are multiple program paths.
+[00:12:29 -> 00:12:31] So let's look at this program point.
+[00:12:31 -> 00:12:35] And so there are three paths that are reaching this program point.
+[00:12:36 -> 00:12:38] Similarly, if I look at this program point,
+[00:12:38 -> 00:12:40] there are two paths that are reaching this program point.
+[00:12:41 -> 00:12:45] And A plus B is being redundantly computed on some of those paths.
+[00:12:45 -> 00:12:47] So, for example, on this particular program path,
+[00:12:47 -> 00:12:49] A plus B is redundantly computed.
+[00:12:51 -> 00:12:53] It's actually being computed thrice on this program path.
+[00:12:53 -> 00:12:56] So it is being redundantly computed twice.
+[00:12:56 -> 00:12:58] So the second and third time, it really didn't have to be computed.
+[00:12:58 -> 00:13:02] But on this particular program path, I need to have A equals B.
+[00:13:02 -> 00:13:05] Similarly, on this particular path, I need to have A equals B.
+[00:13:05 -> 00:13:09] So once again, what do I expect my lazy code motion algorithm to do?
+[00:13:09 -> 00:13:12] I wanted to add the computation of A plus B,
+[00:13:12 -> 00:13:15] make copies of it at the appropriate point
+[00:13:15 -> 00:13:18] so that A plus B becomes fully redundant,
+[00:13:18 -> 00:13:20] wherever it is partially redundant.
+[00:13:20 -> 00:13:24] And so for that, all I will do is I will add computations of A plus B
+[00:13:24 -> 00:13:27] on this path and this path.
+[00:13:27 -> 00:13:31] And I'm going to do my usual introduction of a temporary variable, T.
+[00:13:31 -> 00:13:34] Say T equals A plus B, X equals T.
+[00:13:34 -> 00:13:37] Here, I'm going to add T equals A plus B.
+[00:13:37 -> 00:13:40] And now A plus B has become fully redundant there.
+[00:13:40 -> 00:13:43] And it's available in the variable T.
+[00:13:43 -> 00:13:44] And so I say Y equals T.
+[00:13:44 -> 00:13:47] Similarly, on this program path, I say T equals A plus B
+[00:13:47 -> 00:13:49] and the size Z equals T.
+[00:13:49 -> 00:13:52] Now, on all three program paths,
+[00:13:52 -> 00:13:56] the expression A plus B is not being computed redundantly.
+[00:13:56 -> 00:13:58] It's only been computed once.
+[00:13:59 -> 00:14:00] Okay.
+[00:14:00 -> 00:14:03] Now, let's look at an example that has a loop, all right?
+[00:14:03 -> 00:14:05] So we have X equals A plus B.
+[00:14:05 -> 00:14:08] And then I have this program.
+[00:14:08 -> 00:14:11] It has Y equals A plus B.
+[00:14:11 -> 00:14:13] And inside the loop, there's some branching.
+[00:14:13 -> 00:14:16] And then we go back to the loop head.
+[00:14:16 -> 00:14:17] And then this is a loop exit.
+[00:14:18 -> 00:14:22] Now, is A plus B being computed redundantly in this program?
+[00:14:22 -> 00:14:24] The answer is yes.
+[00:14:24 -> 00:14:26] If you look at this particular program path here,
+[00:14:26 -> 00:14:30] then A plus B is already available in the location X.
+[00:14:30 -> 00:14:34] And it is being randomly computed for location Y.
+[00:14:34 -> 00:14:37] I could have potentially said Y equals X.
+[00:14:37 -> 00:14:39] If I look at this program path here,
+[00:14:40 -> 00:14:43] this, the right side, the right back edge,
+[00:14:43 -> 00:14:46] the right loop, the right side of the loop,
+[00:14:46 -> 00:14:48] then again, A plus B is being computed redundantly
+[00:14:48 -> 00:14:49] on every iteration.
+[00:14:49 -> 00:14:53] It's already available in Y and X.
+[00:14:53 -> 00:14:55] And I don't really need to recompute it,
+[00:14:55 -> 00:14:57] but I'm really computing it over and over again.
+[00:14:57 -> 00:15:00] And so there is a lot of redundancy here
+[00:15:00 -> 00:15:01] in the computation of A plus B
+[00:15:01 -> 00:15:03] on this part of the loop.
+[00:15:03 -> 00:15:05] However, if I look at the other part of the loop,
+[00:15:05 -> 00:15:07] which is this part here,
+[00:15:07 -> 00:15:09] then it seems like it is not redundant
+[00:15:09 -> 00:15:11] because I've updated A.
+[00:15:11 -> 00:15:12] And so after I've updated A,
+[00:15:12 -> 00:15:15] I need to recompute A plus B
+[00:15:15 -> 00:15:17] because A plus B is no longer available in Y
+[00:15:17 -> 00:15:19] because I've updated A.
+[00:15:19 -> 00:15:21] You may say, oh, after the first iteration,
+[00:15:21 -> 00:15:22] it will be available.
+[00:15:22 -> 00:15:24] So let me just make this a little bit more interesting.
+[00:15:24 -> 00:15:25] Let me say A equals A plus one
+[00:15:26 -> 00:15:27] or something like that,
+[00:15:27 -> 00:15:29] something which is a variable, right?
+[00:15:29 -> 00:15:30] Or instead of A equals 10,
+[00:15:30 -> 00:15:32] maybe I could have said A equals C
+[00:15:32 -> 00:15:35] or something like that, some extra variable.
+[00:15:35 -> 00:15:37] So now on this particular path,
+[00:15:37 -> 00:15:39] it is not redundant, okay?
+[00:15:39 -> 00:15:42] But on this particular path, it is redundant.
+[00:15:42 -> 00:15:45] And so it is the classic case of partial redundancy.
+[00:15:45 -> 00:15:46] At this particular program point,
+[00:15:46 -> 00:15:49] it is not fully redundant,
+[00:15:49 -> 00:15:50] but it is partially redundant
+[00:15:50 -> 00:15:51] because it is redundant
+[00:15:51 -> 00:15:53] on some of the incoming program paths.
+[00:15:53 -> 00:15:55] On what path is it redundant?
+[00:15:55 -> 00:15:57] It's redundant on the right side path
+[00:15:57 -> 00:15:59] and the incoming path,
+[00:15:59 -> 00:16:02] but it's not redundant on the left side loop path.
+[00:16:02 -> 00:16:03] All right.
+[00:16:03 -> 00:16:06] So how do I solve this problem?
+[00:16:06 -> 00:16:08] What do I expect my lazy code motion algorithm
+[00:16:08 -> 00:16:11] to return as an answer for this particular program?
+[00:16:11 -> 00:16:15] Well, notice that I basically have,
+[00:16:15 -> 00:16:16] on this particular program path,
+[00:16:16 -> 00:16:18] A plus B is not redundant,
+[00:16:18 -> 00:16:20] whereas on some other path, it is redundant.
+[00:16:20 -> 00:16:21] So what do I need to do?
+[00:16:21 -> 00:16:23] I need to add copies of A plus B
+[00:16:23 -> 00:16:26] on the paths where it is not available
+[00:16:26 -> 00:16:27] so that it becomes fully redundant
+[00:16:27 -> 00:16:29] at this particular program point.
+[00:16:29 -> 00:16:30] So how do I do that?
+[00:16:31 -> 00:16:33] Well, here's what I can do.
+[00:16:33 -> 00:16:36] I can add the computation of A plus B here
+[00:16:36 -> 00:16:38] after A has been updated.
+[00:16:38 -> 00:16:39] So instead of A equals 10,
+[00:16:39 -> 00:16:42] let me just say A equals C.
+[00:16:43 -> 00:16:46] All right, and C is some variable
+[00:16:46 -> 00:16:49] that's changing throughout the program, let's say.
+[00:16:49 -> 00:16:52] So now this is, you know,
+[00:16:52 -> 00:16:55] I'm claiming that after I add T equals A plus B here
+[00:16:55 -> 00:16:57] and also, you know, at the first instruction,
+[00:16:57 -> 00:17:00] I also use T equals A plus B and then X equals T,
+[00:17:00 -> 00:17:03] then A plus B becomes fully redundant
+[00:17:03 -> 00:17:04] at this particular program point
+[00:17:04 -> 00:17:06] because it's now going to be available
+[00:17:06 -> 00:17:08] on all possible incoming paths.
+[00:17:08 -> 00:17:09] So what are all the possible incoming paths
+[00:17:09 -> 00:17:11] at this program point?
+[00:17:11 -> 00:17:14] One is the entry path, which is just coming straight.
+[00:17:14 -> 00:17:16] So it's available there in variable T.
+[00:17:16 -> 00:17:19] Another is a loop that is taken,
+[00:17:20 -> 00:17:23] the one iteration of the loop from the right side,
+[00:17:23 -> 00:17:25] even there, it is available in the variable T
+[00:17:25 -> 00:17:27] because, you know, nothing has changed,
+[00:17:27 -> 00:17:29] neither A nor B has changed
+[00:17:29 -> 00:17:30] and T still holds A plus B.
+[00:17:30 -> 00:17:34] So on this path, A plus B is available in T.
+[00:17:34 -> 00:17:37] Similarly, on this path, A has changed,
+[00:17:37 -> 00:17:40] but T, we have recomputed A plus B into T
+[00:17:40 -> 00:17:42] and so once again, on this path also,
+[00:17:42 -> 00:17:44] A plus B is available on T.
+[00:17:44 -> 00:17:46] And I can take any number of iterations.
+[00:17:46 -> 00:17:49] In fact, I can kind of first take the right part
+[00:17:49 -> 00:17:50] of the loop, then take the right left part
+[00:17:50 -> 00:17:54] and whatever path I create for this particular program,
+[00:17:54 -> 00:17:56] I will see that at this particular program point,
+[00:17:56 -> 00:18:00] A plus B is available on all incoming paths
+[00:18:00 -> 00:18:03] because of this extra copy of A plus B on this path.
+[00:18:03 -> 00:18:07] And so now I am able to remove A plus B's computation
+[00:18:07 -> 00:18:09] and replace it with Y equals T.
+[00:18:11 -> 00:18:13] So the other thing I need to check here
+[00:18:13 -> 00:18:17] is that I haven't added the computation of A plus B
+[00:18:17 -> 00:18:20] on a path where it was not already present.
+[00:18:20 -> 00:18:22] So I have made a copy of A plus B
+[00:18:22 -> 00:18:24] on this particular path
+[00:18:24 -> 00:18:29] and is it possible that I have added A plus B
+[00:18:30 -> 00:18:33] is computation to a path where it was not already present.
+[00:18:33 -> 00:18:35] So let's look at this particular path.
+[00:18:35 -> 00:18:41] I enter and then I take the left side of the loop
+[00:18:41 -> 00:18:43] and then I come back here.
+[00:18:43 -> 00:18:47] So on this part of the loop, so let me just draw it.
+[00:18:47 -> 00:18:51] So let's say this is my path.
+[00:18:51 -> 00:18:55] On this path, it may seem that initially that,
+[00:18:55 -> 00:18:57] oh, I'm computing A plus B on this path
+[00:18:57 -> 00:19:00] whereas it was not originally going to be computed
+[00:19:00 -> 00:19:01] on this path.
+[00:19:02 -> 00:19:03] But the fact is that it would have been computed,
+[00:19:03 -> 00:19:05] it would have been computed here.
+[00:19:05 -> 00:19:06] So I haven't really,
+[00:19:06 -> 00:19:08] because when I say a program path,
+[00:19:08 -> 00:19:11] I mean a program path that goes through the program
+[00:19:11 -> 00:19:13] and then goes all the way to the exit.
+[00:19:13 -> 00:19:15] So there are so many different program paths
+[00:19:15 -> 00:19:20] that are possible that go from the start of the program
+[00:19:20 -> 00:19:21] to the end of the program.
+[00:19:21 -> 00:19:22] And so one of the program paths
+[00:19:22 -> 00:19:24] may be let's say this one.
+[00:19:25 -> 00:19:27] And if you see this program path
+[00:19:27 -> 00:19:29] already had an A plus B computation
+[00:19:29 -> 00:19:30] in the original program.
+[00:19:31 -> 00:19:33] The program path would have been this one.
+[00:19:33 -> 00:19:37] And here there is a computation of A plus B
+[00:19:37 -> 00:19:39] after A equals C.
+[00:19:39 -> 00:19:41] And even here, there's a computation.
+[00:19:41 -> 00:19:43] So here there is a computation of A plus B
+[00:19:43 -> 00:19:44] after A equals C because on this path,
+[00:19:44 -> 00:19:46] I just assign A equals C
+[00:19:46 -> 00:19:49] and then I recompute A plus B.
+[00:19:49 -> 00:19:51] And that computation is still present
+[00:19:51 -> 00:19:53] on this particular program path.
+[00:19:53 -> 00:19:56] I haven't really introduced an extra computation
+[00:19:56 -> 00:19:57] on this path.
+[00:19:57 -> 00:20:01] And in fact, one can prove that in this transformation,
+[00:20:01 -> 00:20:03] I haven't really added the computation of A plus B
+[00:20:03 -> 00:20:06] on any path where it was not already being computed.
+[00:20:07 -> 00:20:11] And so I'm also satisfying my second condition.
+[00:20:12 -> 00:20:14] So I've been able to remove the redundancy
+[00:20:14 -> 00:20:18] on all paths for A plus B.
+[00:20:18 -> 00:20:21] And I'm also ensuring that I have not introduced
+[00:20:21 -> 00:20:23] an extra computation in the program
+[00:20:23 -> 00:20:24] that was not already present
+[00:20:24 -> 00:20:26] in the original program on any path.
+[00:20:27 -> 00:20:30] All right, now let's look at another example.
+[00:20:30 -> 00:20:31] And let's say this is a loop.
+[00:20:31 -> 00:20:34] It says A equals B plus C and then B equals read
+[00:20:34 -> 00:20:37] where read is supposed to be some random value
+[00:20:37 -> 00:20:38] that it's assigned to be.
+[00:20:38 -> 00:20:42] Now, is B plus C being computed randomly?
+[00:20:42 -> 00:20:47] Well, is it available on any program path here?
+[00:20:47 -> 00:20:49] It's not available on the initial program path
+[00:20:49 -> 00:20:51] that's coming from the outside of entry of the program.
+[00:20:51 -> 00:20:52] It's not available.
+[00:20:52 -> 00:20:54] B plus C is not available.
+[00:20:54 -> 00:20:55] Is it available on the loop path?
+[00:20:55 -> 00:20:57] No, it is not even available on the loop path.
+[00:20:57 -> 00:21:00] So B plus C is neither partially redundant
+[00:21:00 -> 00:21:03] nor fully redundant at this particular program point.
+[00:21:03 -> 00:21:06] And so I'm going to just leave the program unchanged.
+[00:21:06 -> 00:21:08] So I expect my lazy code motion algorithm
+[00:21:08 -> 00:21:10] to just leave this program unchanged.
+[00:21:11 -> 00:21:15] Okay, let's take another example.
+[00:21:15 -> 00:21:16] Let's say I have a loop.
+[00:21:16 -> 00:21:18] Let's say A equals B plus C
+[00:21:18 -> 00:21:23] and then I basically compute going around the loop.
+[00:21:23 -> 00:21:28] Now, here it seems that B plus C is actually redundant
+[00:21:28 -> 00:21:30] on the loop path because in the first iteration
+[00:21:30 -> 00:21:32] I would have computed B plus C.
+[00:21:32 -> 00:21:34] And then when I come into the second iteration
+[00:21:34 -> 00:21:36] I'm again recomputing B plus C
+[00:21:36 -> 00:21:39] even though B plus C is already available
+[00:21:39 -> 00:21:40] in the variable A.
+[00:21:41 -> 00:21:44] So what do I expect my lazy code motion algorithm to do?
+[00:21:44 -> 00:21:48] Well, one response is that why don't we do
+[00:21:48 -> 00:21:49] loop invariant code motion
+[00:21:49 -> 00:21:52] because B plus C are loop invariant.
+[00:21:52 -> 00:21:54] Notice that in the previous example that I had
+[00:21:54 -> 00:21:56] on the previous slide, B plus C were not loop invariant
+[00:21:56 -> 00:21:58] because I had B equals read.
+[00:21:58 -> 00:22:00] But here B plus C are loop invariant.
+[00:22:00 -> 00:22:03] So I could move A equals B plus C outside the loop.
+[00:22:03 -> 00:22:07] And so that would potentially eliminate redundancy.
+[00:22:07 -> 00:22:10] However, that would also violate
+[00:22:10 -> 00:22:13] our second condition of the problem
+[00:22:13 -> 00:22:15] which is that I shouldn't introduce an extra computation
+[00:22:15 -> 00:22:17] on any of the paths.
+[00:22:17 -> 00:22:19] So what's the problem on this particular path
+[00:22:19 -> 00:22:22] on this particular path here?
+[00:22:22 -> 00:22:24] B plus C is not even getting computed, right?
+[00:22:24 -> 00:22:27] So the path that comes from the entry
+[00:22:27 -> 00:22:29] and then goes all the way to exit.
+[00:22:29 -> 00:22:30] B plus C is not even getting computed.
+[00:22:30 -> 00:22:34] However, if I hoist B plus C here,
+[00:22:34 -> 00:22:37] if I put B plus C here, then that would be wrong
+[00:22:37 -> 00:22:39] because now I'm adding extra computations
+[00:22:39 -> 00:22:41] on some of the paths where they were not
+[00:22:41 -> 00:22:44] already present in the original program.
+[00:22:44 -> 00:22:47] Now in this particular example, it seems like
+[00:22:47 -> 00:22:51] the second constraint is kind of holding us back.
+[00:22:52 -> 00:22:55] In this program, I'll probably be recomputing
+[00:22:55 -> 00:22:57] B plus C millions of times
+[00:22:57 -> 00:22:59] if the loop iterates millions of times.
+[00:22:59 -> 00:23:01] And it would be such a nice optimization
+[00:23:01 -> 00:23:03] if I could have just hoisted B plus C above the loop
+[00:23:03 -> 00:23:06] and that way I would have only computed once.
+[00:23:06 -> 00:23:08] But just because of one particular path
+[00:23:08 -> 00:23:10] that is not even going to be executed
+[00:23:10 -> 00:23:14] most of the time, B plus C was never computed
+[00:23:14 -> 00:23:15] on this path in the original program
+[00:23:15 -> 00:23:18] but now it is being computed in the new program,
+[00:23:18 -> 00:23:19] in the transform program,
+[00:23:19 -> 00:23:21] I'm being disallowed from doing so.
+[00:23:21 -> 00:23:24] But we are not going to allow this to happen.
+[00:23:24 -> 00:23:26] Even though this looks very attractive,
+[00:23:27 -> 00:23:31] very tempting to basically hoist B plus C above the loop,
+[00:23:31 -> 00:23:35] we are not going to allow our algorithm to do that.
+[00:23:35 -> 00:23:36] And there are a couple of reasons for that.
+[00:23:36 -> 00:23:38] One is of course that this particular path
+[00:23:38 -> 00:23:40] has become slower.
+[00:23:40 -> 00:23:42] But then there is a more involved reason
+[00:23:42 -> 00:23:45] and the involved reason is that B plus C is computation.
+[00:23:45 -> 00:23:48] And so recall that when I use the operator plus,
+[00:23:48 -> 00:23:50] I'm just using it as a placeholder for some operator.
+[00:23:50 -> 00:23:52] And it is possible that this computation
+[00:23:52 -> 00:23:56] could have resulted in an exception, in an error.
+[00:23:56 -> 00:23:59] And so if the program was not going to even go,
+[00:23:59 -> 00:24:01] compute it in the original program,
+[00:24:01 -> 00:24:03] then if I hoist the computation above,
+[00:24:03 -> 00:24:05] then the original program would have a different behavior
+[00:24:05 -> 00:24:06] from the new program.
+[00:24:06 -> 00:24:09] The original program would have not had any error,
+[00:24:09 -> 00:24:10] but the new program would now have the error.
+[00:24:10 -> 00:24:12] And so that is not acceptable.
+[00:24:12 -> 00:24:15] And so we have the second rule
+[00:24:15 -> 00:24:17] in our second requirement of our problem
+[00:24:17 -> 00:24:19] and that we want to strictly obey it.
+[00:24:19 -> 00:24:23] And so what we expect our lazy code motion algorithm to do
+[00:24:23 -> 00:24:27] is it's not going to change this program at all.
+[00:24:27 -> 00:24:29] It's not going to hoist A equals B plus C above the loop
+[00:24:29 -> 00:24:32] because that's going to add computation
+[00:24:32 -> 00:24:35] that was not already present in the original program
+[00:24:35 -> 00:24:38] on some of the paths.
+[00:24:38 -> 00:24:42] Here is the last example that I want to discuss.
+[00:24:42 -> 00:24:43] And this is an interesting example
+[00:24:43 -> 00:24:46] because here we're going to see that
+[00:24:46 -> 00:24:48] redundancy elimination is not always possible.
+[00:24:48 -> 00:24:49] Even in the previous example,
+[00:24:49 -> 00:24:52] we saw a conflict between redundancy elimination
+[00:24:52 -> 00:24:54] and addition of computation on some of the paths.
+[00:24:54 -> 00:24:56] And we decided to be more conservative
+[00:24:56 -> 00:24:58] and we didn't eliminate the redundancy
+[00:24:58 -> 00:25:01] because we don't want to add extra computation
+[00:25:01 -> 00:25:03] on in the new program.
+[00:25:04 -> 00:25:07] Similar thing is going to appear here.
+[00:25:07 -> 00:25:10] So I have X equals A plus B, Y equals A plus B.
+[00:25:10 -> 00:25:13] I have a loop here, but then I also have an exit.
+[00:25:13 -> 00:25:16] Now we can see that here A plus B
+[00:25:16 -> 00:25:18] is redundant on some of the paths.
+[00:25:18 -> 00:25:18] What are the paths?
+[00:25:18 -> 00:25:21] Well, for example, if I look at this particular path here,
+[00:25:21 -> 00:25:23] it is redundant, all right?
+[00:25:23 -> 00:25:28] And so we can feel tempted to copy A plus B
+[00:25:29 -> 00:25:31] somewhere here, all right?
+[00:25:31 -> 00:25:33] And I say, okay, let's compute A plus B here.
+[00:25:33 -> 00:25:35] And this is similar to the pattern
+[00:25:35 -> 00:25:37] that we have seen in one of our previous examples.
+[00:25:37 -> 00:25:40] And then when I compute A plus B here,
+[00:25:40 -> 00:25:43] then A plus B would likely become fully redundant here
+[00:25:43 -> 00:25:45] and I can replace it with Y equals D.
+[00:25:46 -> 00:25:48] But there is a problem with that.
+[00:25:48 -> 00:25:49] If I put A plus B here,
+[00:25:49 -> 00:25:55] then let's look at this particular path here, this path.
+[00:25:56 -> 00:26:00] Now on this path, A plus B was not computed
+[00:26:00 -> 00:26:03] after A was set to 10, right?
+[00:26:03 -> 00:26:05] On the original program, all right?
+[00:26:05 -> 00:26:07] So let me use a different picture.
+[00:26:07 -> 00:26:09] So in the original program,
+[00:26:09 -> 00:26:11] so I'm looking at this particular path,
+[00:26:11 -> 00:26:13] so this is my original program.
+[00:26:13 -> 00:26:16] On this particular path here, A plus B is computed twice
+[00:26:17 -> 00:26:19] but then after A has been set to 10,
+[00:26:19 -> 00:26:21] I don't recompute A plus B.
+[00:26:23 -> 00:26:27] Whereas if I now put A plus B here,
+[00:26:27 -> 00:26:29] then I would be computing A plus B on that path.
+[00:26:29 -> 00:26:31] And once again, I'm going to violate
+[00:26:31 -> 00:26:35] my second requirement of the algorithm.
+[00:26:35 -> 00:26:38] And so I'm not going to change this program at all.
+[00:26:38 -> 00:26:40] And I'm going to leave this program as is
+[00:26:40 -> 00:26:41] because once again,
+[00:26:41 -> 00:26:43] I'm going to strictly follow my second requirement.
+[00:26:43 -> 00:26:47] I don't want to add computation on paths
+[00:26:47 -> 00:26:50] where it was not already present
+[00:26:50 -> 00:26:52] because A, I'm going to be making those paths slower
+[00:26:52 -> 00:26:56] and B, more critically and more importantly,
+[00:26:56 -> 00:26:59] if the computation resulted in some kind of error,
+[00:26:59 -> 00:27:02] for example, it was resulting in a segmentation fault.
+[00:27:02 -> 00:27:04] Maybe it's a dereference,
+[00:27:04 -> 00:27:08] A plus B was A, recall that plus is just a placeholder.
+[00:27:08 -> 00:27:10] So maybe it's some dereference.
+[00:27:10 -> 00:27:11] And if it caused the segmentation fault,
+[00:27:11 -> 00:27:13] then in the original program,
+[00:27:13 -> 00:27:15] if the program was going to take this particular path,
+[00:27:15 -> 00:27:17] there wouldn't have been a segmentation fault.
+[00:27:17 -> 00:27:20] But now if I voice the computation and copy it here,
+[00:27:20 -> 00:27:23] then there would be a segmentation fault
+[00:27:23 -> 00:27:24] and we don't want it.
+[00:27:24 -> 00:27:26] And so this program, once again,
+[00:27:26 -> 00:27:28] we're going to live with the redundancy
+[00:27:28 -> 00:27:31] because we don't want to add extra computation
+[00:27:31 -> 00:27:33] in other places.
+[00:27:33 -> 00:27:36] So to summarize, we have a bunch of requirements,
+[00:27:36 -> 00:27:39] the three requirements that I had on the initial slide
+[00:27:39 -> 00:27:41] for the lazy code motion problem.
+[00:27:41 -> 00:27:44] Wherever there is a conflict of one requirement
+[00:27:44 -> 00:27:46] with the other, especially the first two requirements,
+[00:27:46 -> 00:27:50] we side on the safe side, we go to the safe side.
+[00:27:50 -> 00:27:53] We don't want to add redundant extra computation
+[00:27:53 -> 00:27:55] in the transform program,
+[00:27:55 -> 00:27:56] even though that means we have to live
+[00:27:56 -> 00:28:01] with more redundant computations in our optimized program.

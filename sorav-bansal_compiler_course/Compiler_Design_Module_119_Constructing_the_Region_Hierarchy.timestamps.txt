@@ -1,0 +1,430 @@
+Title: Compiler Design Module 119 : Constructing the Region Hierarchy
+Video ID: aaV_ibG3qoU
+Detected language: en
+------------------------------------------------------------
+
+[00:00:00 -> 00:00:03] So last time we discussed about what is a region,
+[00:00:03 -> 00:00:07] and then what are the typical regions that a compiler constructs.
+[00:00:07 -> 00:00:12] Now we're going to talk about how we can construct a region hierarchy.
+[00:00:12 -> 00:00:14] What is the algorithm to construct such a hierarchy?
+[00:00:14 -> 00:00:18] Assuming you already know what regions you want to compute,
+[00:00:18 -> 00:00:23] how would the compiler go about actually creating such a region hierarchy?
+[00:00:23 -> 00:00:27] In this discussion, as we have been doing in the past modules as well,
+[00:00:27 -> 00:00:32] we'll assume that the CFG, the control flow graph, is reducible.
+[00:00:32 -> 00:00:36] And the rationale for that is that most programs produce reducible graphs.
+[00:00:36 -> 00:00:41] And even if there's an odd program or an odd part of a program that is not
+[00:00:41 -> 00:00:44] reducible, it is possible to convert it to a reducible graph using code
+[00:00:44 -> 00:00:45] duplication.
+[00:00:45 -> 00:00:48] Even though that can potentially cause increase in code size,
+[00:00:48 -> 00:00:51] hopefully such cases are going to be rare.
+[00:00:51 -> 00:00:55] And so it becomes a practical solution.
+[00:00:55 -> 00:00:55] All right.
+[00:00:55 -> 00:01:02] So our regions, the choice of regions for our compiler is going to be the same
+[00:01:02 -> 00:01:05] as we had discussed in the previous module.
+[00:01:05 -> 00:01:06] It's going to be basic blocks.
+[00:01:06 -> 00:01:08] And these are going to form our leaf regions.
+[00:01:08 -> 00:01:15] So notice that I'm not using regions for modeling individual instructions.
+[00:01:15 -> 00:01:18] My lowest level regions are going to be basic blocks.
+[00:01:18 -> 00:01:22] And this is on purpose because it just makes, you know,
+[00:01:22 -> 00:01:26] you can just summarize the transfer functions of basic blocks.
+[00:01:26 -> 00:01:28] And then based on that, you can do the DFA.
+[00:01:28 -> 00:01:32] And that just improves the efficiency of your algorithm.
+[00:01:32 -> 00:01:35] It doesn't make any difference to the precision,
+[00:01:35 -> 00:01:37] but it improves the efficiency of the algorithm.
+[00:01:37 -> 00:01:40] Sometimes it may actually also make the improvement to the precision
+[00:01:40 -> 00:01:43] if you are able to identify a more precise transfer function
+[00:01:43 -> 00:01:46] for the basic block than simply the composition
+[00:01:46 -> 00:01:51] of the individual transfer functions of the constituent instructions.
+[00:01:51 -> 00:01:54] In any case, I'm going to assume that the leaf regions
+[00:01:54 -> 00:01:56] are going to be basic blocks.
+[00:01:56 -> 00:01:59] And then there will be a hierarchy of regions
+[00:01:59 -> 00:02:01] which will be based on the loop hierarchy.
+[00:02:01 -> 00:02:05] So natural loops would form the next levels of regions.
+[00:02:05 -> 00:02:08] And this is, again, I'm considering bottom up,
+[00:02:08 -> 00:02:10] bottom to top of my region hierarchy.
+[00:02:10 -> 00:02:13] So natural loops, in other words, would be inside out.
+[00:02:13 -> 00:02:16] So I'm going to first construct the innermost loops,
+[00:02:16 -> 00:02:18] then the outer loop, then the outer loop,
+[00:02:18 -> 00:02:22] and so on until I reach the outermost loop.
+[00:02:22 -> 00:02:26] And also, each natural loop will define two regions, actually.
+[00:02:26 -> 00:02:30] So for every loop, even if it's an innermost loop,
+[00:02:30 -> 00:02:32] there will be two regions that that loop would define.
+[00:02:32 -> 00:02:35] One would be the region corresponding
+[00:02:35 -> 00:02:37] to the body of the loop, loop body,
+[00:02:37 -> 00:02:42] which is the acyclic graph of its subregions.
+[00:02:42 -> 00:02:43] And then the loop itself, which
+[00:02:43 -> 00:02:46] is made up of one subregion, made up of this loop body,
+[00:02:46 -> 00:02:47] and then the back edge.
+[00:02:48 -> 00:02:51] Recall that the region formed by the loop body
+[00:02:51 -> 00:02:53] is basically nothing but the region formed by the loop
+[00:02:53 -> 00:02:55] without the back edge.
+[00:02:55 -> 00:02:57] And so, conversely, the region formed by the loop
+[00:02:57 -> 00:03:00] is nothing but the region formed by the loop body
+[00:03:00 -> 00:03:02] plus the back edge.
+[00:03:02 -> 00:03:03] And finally, the top level regions
+[00:03:03 -> 00:03:06] are going to be the procedure bodies.
+[00:03:07 -> 00:03:09] All right, so here is an example.
+[00:03:09 -> 00:03:11] Let's say I had this program,
+[00:03:11 -> 00:03:14] and I equals zero, if I is less than N,
+[00:03:14 -> 00:03:16] then you exit, and then inside the loop,
+[00:03:16 -> 00:03:18] there is some branch on some other variable X.
+[00:03:18 -> 00:03:21] If X is greater than zero, then I plus equals X,
+[00:03:21 -> 00:03:22] otherwise I am minus equals X.
+[00:03:23 -> 00:03:28] All right, so in this, if I was to create a loop hierarchy,
+[00:03:28 -> 00:03:29] I'm going to show what the loop hierarchy
+[00:03:29 -> 00:03:31] is going to look like.
+[00:03:31 -> 00:03:32] And this time I'm going to show the loop hierarchy
+[00:03:32 -> 00:03:34] top to bottom, all right?
+[00:03:34 -> 00:03:37] Although we're going to construct it bottom to top,
+[00:03:37 -> 00:03:39] as we discussed in the previous slide,
+[00:03:39 -> 00:03:40] I'm going to show this example,
+[00:03:40 -> 00:03:42] the result of that algorithm,
+[00:03:42 -> 00:03:45] and the result I'm going to show as a top to bottom
+[00:03:46 -> 00:03:48] exposition of the hierarchy.
+[00:03:48 -> 00:03:51] So recall that the top level region
+[00:03:51 -> 00:03:53] for this is going to be the procedure region.
+[00:03:53 -> 00:03:56] And that procedure region's graph
+[00:03:56 -> 00:04:00] is going to be made up of two subregions.
+[00:04:00 -> 00:04:02] One is going to be B1,
+[00:04:02 -> 00:04:04] which is going to be just the basic block.
+[00:04:04 -> 00:04:06] And the second is going to be the loop region
+[00:04:06 -> 00:04:09] that's going to represent this entire loop.
+[00:04:09 -> 00:04:12] And then the loop region's outgoing edge
+[00:04:12 -> 00:04:14] is going to go to the exit node,
+[00:04:14 -> 00:04:19] just like in the original CFG, control flow graph.
+[00:04:19 -> 00:04:21] So this represents a top level graph
+[00:04:21 -> 00:04:24] as the DFA analysis would see it, right?
+[00:04:24 -> 00:04:26] For the procedure, it's just a graph
+[00:04:26 -> 00:04:28] made up of two nodes, all right?
+[00:04:28 -> 00:04:32] Of which one node is, at this level,
+[00:04:32 -> 00:04:34] I don't even know what these nodes are,
+[00:04:34 -> 00:04:36] but when I go one level deeper into the hierarchy,
+[00:04:36 -> 00:04:38] I will find out that this node
+[00:04:38 -> 00:04:40] is actually a basic block,
+[00:04:40 -> 00:04:41] and the second node is actually a loop,
+[00:04:41 -> 00:04:43] and so I would have, you know,
+[00:04:43 -> 00:04:45] I can basically do more inside those nodes.
+[00:04:45 -> 00:04:47] But when I'm going to run the DFA at this level,
+[00:04:47 -> 00:04:49] it just looks like two different nodes,
+[00:04:49 -> 00:04:51] and I'm just going to assume
+[00:04:51 -> 00:04:52] that I have summary transfer functions
+[00:04:52 -> 00:04:54] for both these nodes.
+[00:04:55 -> 00:04:56] Now, similarly, I can go to the next level,
+[00:04:56 -> 00:04:57] and for the basic block,
+[00:04:57 -> 00:04:59] I'm already at the leaf node.
+[00:04:59 -> 00:05:01] For B1, I'm already at the leaf node.
+[00:05:01 -> 00:05:02] But for the loop region,
+[00:05:02 -> 00:05:05] I would have the next level of the hierarchy.
+[00:05:05 -> 00:05:07] And so this is the hierarchy,
+[00:05:07 -> 00:05:09] this is the graph that would be,
+[00:05:11 -> 00:05:14] this is what the graph for a loop region would look like.
+[00:05:14 -> 00:05:16] And this is actually true for any loop,
+[00:05:16 -> 00:05:18] because for any loop recall
+[00:05:18 -> 00:05:20] that we are basically constructing two regions,
+[00:05:20 -> 00:05:22] one is for the loop itself,
+[00:05:22 -> 00:05:23] and one is for the loop body.
+[00:05:23 -> 00:05:25] And so we're just going to abstract
+[00:05:25 -> 00:05:27] the whole loop body as a single node,
+[00:05:27 -> 00:05:29] and then have a back edge to it,
+[00:05:29 -> 00:05:32] and then have an entry and an exit.
+[00:05:32 -> 00:05:34] And so this is the graph that looks,
+[00:05:34 -> 00:05:36] that is generated at the next level
+[00:05:36 -> 00:05:38] of the loop region.
+[00:05:38 -> 00:05:43] And so the DFA is going to run on this abstracted version
+[00:05:43 -> 00:05:45] with just one node and a back edge
+[00:05:45 -> 00:05:48] and an entry and an exit edge.
+[00:05:48 -> 00:05:50] And I should have a summary transfer function
+[00:05:50 -> 00:05:51] for the loop body region.
+[00:05:51 -> 00:05:53] And based on the summary transfer function
+[00:05:53 -> 00:05:53] of the blue body region,
+[00:05:53 -> 00:05:57] I may want to construct a summary transfer function
+[00:05:57 -> 00:05:58] of the loop region.
+[00:05:58 -> 00:06:00] Recall that the fallback summary function,
+[00:06:00 -> 00:06:02] transfer function of the loop region
+[00:06:02 -> 00:06:04] would just be the result of running
+[00:06:04 -> 00:06:06] the fixed point DFA iteration
+[00:06:06 -> 00:06:08] on the summary transfer function
+[00:06:08 -> 00:06:09] of the loop body region.
+[00:06:09 -> 00:06:12] But maybe you can do better using symbolic analysis
+[00:06:12 -> 00:06:14] as we had seen previously.
+[00:06:15 -> 00:06:18] Now, this is the second level of the region hierarchy.
+[00:06:20 -> 00:06:21] It only has one node,
+[00:06:21 -> 00:06:24] but this node actually where I dig deeper,
+[00:06:24 -> 00:06:26] if I go one level down the hierarchy,
+[00:06:26 -> 00:06:28] I would find that this is actually a,
+[00:06:29 -> 00:06:30] it has a control program.
+[00:06:30 -> 00:06:32] It's not just a simple basic block, right?
+[00:06:32 -> 00:06:36] And so this is what the loop body region would look like.
+[00:06:36 -> 00:06:37] It would have B2.
+[00:06:37 -> 00:06:39] So this particular node I'm calling B2.
+[00:06:39 -> 00:06:41] It's labeled B2.
+[00:06:41 -> 00:06:43] B2, B3, B4, B5, B6.
+[00:06:43 -> 00:06:47] So the control flow graph for the next level of hierarchy
+[00:06:47 -> 00:06:49] is going to be the entire loop body.
+[00:06:49 -> 00:06:50] And this is going to be the entry
+[00:06:50 -> 00:06:53] and it's going to have two exits this time.
+[00:06:53 -> 00:06:54] Notice that one exit is actually going
+[00:06:54 -> 00:06:56] to the program exit.
+[00:06:56 -> 00:06:59] So one exit of the region is going to go
+[00:06:59 -> 00:07:01] to the exit of the program.
+[00:07:01 -> 00:07:04] And the other exit of the region is actually not going
+[00:07:04 -> 00:07:05] to go to the exit of the program,
+[00:07:05 -> 00:07:08] but it is going to go to the back edge.
+[00:07:08 -> 00:07:11] And recall that in the loop body region,
+[00:07:11 -> 00:07:13] I'm not including the back edge.
+[00:07:13 -> 00:07:17] And so the outgoing edge just looks like a region exit.
+[00:07:17 -> 00:07:19] And so in this particular loop body,
+[00:07:19 -> 00:07:21] I kind of, it seems like,
+[00:07:21 -> 00:07:25] and also we basically have two exits
+[00:07:25 -> 00:07:28] for this particular loop body region.
+[00:07:28 -> 00:07:31] One for the program exit itself, the original exit,
+[00:07:31 -> 00:07:33] and one for the loop back edge,
+[00:07:33 -> 00:07:35] because the loop back edge is not captured
+[00:07:35 -> 00:07:37] at this level of the loop region,
+[00:07:37 -> 00:07:40] loop body region hierarchy.
+[00:07:40 -> 00:07:43] Now, at this point, at this level of the hierarchy,
+[00:07:43 -> 00:07:47] all the sub regions, B2, B3, B4, B5, B6,
+[00:07:47 -> 00:07:49] notice that all these correspond to these,
+[00:07:49 -> 00:07:51] also have been also been labeled
+[00:07:51 -> 00:07:52] in the original control flow graph.
+[00:07:52 -> 00:07:54] All these correspond to the leaf regions
+[00:07:54 -> 00:07:55] because they are all basic blocks.
+[00:07:55 -> 00:07:57] And so I'm not going to,
+[00:07:57 -> 00:07:59] there's not going to be an other level of hierarchy
+[00:07:59 -> 00:08:02] and we are already at the bottom most level of the hierarchy.
+[00:08:04 -> 00:08:06] Finally, we know what are the basic block regions
+[00:08:06 -> 00:08:07] going to look like.
+[00:08:07 -> 00:08:10] Well, for every basic block, including B1,
+[00:08:10 -> 00:08:12] which I had shown in the first slide
+[00:08:12 -> 00:08:15] of the top level region, the procedure region,
+[00:08:15 -> 00:08:17] every basic block would have a region
+[00:08:17 -> 00:08:20] which is just going to be made up of single node
+[00:08:20 -> 00:08:22] and two edges, one coming from entry
+[00:08:22 -> 00:08:24] and the other coming from exit, right?
+[00:08:24 -> 00:08:27] Sometimes it can have two outgoing nodes,
+[00:08:27 -> 00:08:29] but because it's a single node, it doesn't matter.
+[00:08:29 -> 00:08:33] I can have just, it just looks like it's a single exit
+[00:08:33 -> 00:08:35] from that particular basic block.
+[00:08:35 -> 00:08:38] It can also have two exits,
+[00:08:38 -> 00:08:40] in which case the transfer function should summarize,
+[00:08:40 -> 00:08:42] there should be two transfer functions for each of the exits.
+[00:08:42 -> 00:08:44] So there would be one transfer function of B2
+[00:08:44 -> 00:08:47] that goes from entry to first exit.
+[00:08:47 -> 00:08:49] And then there will be a second transfer function for B2
+[00:08:49 -> 00:08:52] that's going to go from entry to the second exit.
+[00:08:52 -> 00:08:54] Some of the basic blocks have only a single exit.
+[00:08:54 -> 00:08:57] Some of the basic blocks have more than one exit.
+[00:08:57 -> 00:08:59] So it could be two, three, four, whatever.
+[00:08:59 -> 00:09:00] If there are more exits,
+[00:09:00 -> 00:09:02] then there should need to be separate summary transfer
+[00:09:02 -> 00:09:04] functions for each of those exits.
+[00:09:04 -> 00:09:06] But the common thing about all these regions
+[00:09:06 -> 00:09:08] is that they all have a single entry.
+[00:09:08 -> 00:09:12] And recall that that's by the definition of a region,
+[00:09:12 -> 00:09:14] including the regions formed by basic blocks,
+[00:09:14 -> 00:09:16] the region formed by loop bodies,
+[00:09:16 -> 00:09:18] the region formed by loops themselves,
+[00:09:18 -> 00:09:19] or the regions formed by procedures.
+[00:09:19 -> 00:09:22] All these basically need to have a single entry.
+[00:09:22 -> 00:09:24] They can potentially have multiple exits.
+[00:09:26 -> 00:09:27] All right, so how am I going to construct
+[00:09:27 -> 00:09:28] the region hierarchy?
+[00:09:28 -> 00:09:31] I just showed you what is the result of,
+[00:09:31 -> 00:09:33] what is the expected result of the algorithm
+[00:09:33 -> 00:09:34] on a given example.
+[00:09:34 -> 00:09:37] And we looked at all the levels of the region hierarchy.
+[00:09:37 -> 00:09:41] But then what is the algorithm to construct this solution?
+[00:09:41 -> 00:09:43] And we're going to construct the region hierarchy
+[00:09:43 -> 00:09:44] bottom up.
+[00:09:44 -> 00:09:46] We are going to first identify
+[00:09:46 -> 00:09:48] all the basic blocks as regions.
+[00:09:48 -> 00:09:50] And we know how to identify basic blocks.
+[00:09:50 -> 00:09:52] We've already discussed how a control flow graph
+[00:09:52 -> 00:09:54] can be split into basic blocks
+[00:09:54 -> 00:09:56] and you identify all the straight line sequences
+[00:09:56 -> 00:09:59] of instructions, which can only jump to the beginning
+[00:09:59 -> 00:10:02] of that sequence of instructions, right?
+[00:10:02 -> 00:10:03] So then you basically,
+[00:10:03 -> 00:10:05] and then you replace them with a single node
+[00:10:05 -> 00:10:07] and you record this relationship between the node
+[00:10:07 -> 00:10:10] and the constituent sequence of instructions, right?
+[00:10:10 -> 00:10:13] So that forms one level of my region hierarchy.
+[00:10:15 -> 00:10:17] Notice that we are using a bottom up strategy
+[00:10:17 -> 00:10:18] to construct the region hierarchy.
+[00:10:18 -> 00:10:20] And that's why we start with first constructing
+[00:10:20 -> 00:10:24] the regions associated with the basic blocks.
+[00:10:24 -> 00:10:25] Then the next level is basically,
+[00:10:25 -> 00:10:29] we need to identify the natural loop from the inside out.
+[00:10:29 -> 00:10:31] So we already have discussed
+[00:10:31 -> 00:10:32] how to identify natural loops.
+[00:10:32 -> 00:10:34] We identify back edges,
+[00:10:34 -> 00:10:36] then we identify the header of the loop
+[00:10:36 -> 00:10:40] and based on that, we identify all the nodes in the loop.
+[00:10:40 -> 00:10:42] Now, once we have identified all the loops,
+[00:10:42 -> 00:10:44] we also construct a hierarchy of the loops.
+[00:10:44 -> 00:10:47] And we also discussed how we can call one loop
+[00:10:47 -> 00:10:49] to be nested within another loop.
+[00:10:49 -> 00:10:53] If the header is part of the loop,
+[00:10:53 -> 00:10:55] if the headers are disjoint,
+[00:10:55 -> 00:10:57] then if all the nodes in one loop
+[00:10:57 -> 00:11:00] are a subset of all the nodes in the other loop,
+[00:11:00 -> 00:11:02] then we say that the first loop
+[00:11:02 -> 00:11:04] is nested within the second loop.
+[00:11:04 -> 00:11:07] And so we identify the natural loops and their hierarchy
+[00:11:07 -> 00:11:08] based on that algorithm,
+[00:11:08 -> 00:11:11] and then we use that to construct our regions.
+[00:11:11 -> 00:11:14] And basically, we are going to do the expected thing.
+[00:11:14 -> 00:11:16] We are going to replace a loop L with a node
+[00:11:16 -> 00:11:17] in two steps.
+[00:11:17 -> 00:11:19] First, we are going to construct a region
+[00:11:19 -> 00:11:21] for the body of the loop.
+[00:11:21 -> 00:11:24] And we have already identified the body of the loop
+[00:11:24 -> 00:11:26] using our loop identification algorithm,
+[00:11:26 -> 00:11:28] which means all the nodes and edges
+[00:11:28 -> 00:11:31] accept the back edges to the header, right?
+[00:11:31 -> 00:11:33] And this body of the loop is replaced
+[00:11:33 -> 00:11:37] by a node representing region R, okay?
+[00:11:37 -> 00:11:41] And edges coming into the loop header now come into R,
+[00:11:41 -> 00:11:44] and edges going out of the loop now go out of R.
+[00:11:44 -> 00:11:47] So when we are actually collapsing a region
+[00:11:47 -> 00:11:48] into a single node,
+[00:11:48 -> 00:11:50] we have to also worry about what are the edges
+[00:11:50 -> 00:11:52] that are going to come into this node
+[00:11:52 -> 00:11:54] and what are the edges that are going to go out of the node.
+[00:11:54 -> 00:11:57] For example, when we talked about constructing a region
+[00:11:57 -> 00:11:58] out of a basic block,
+[00:11:58 -> 00:12:00] what are the edges that are going to come into the node?
+[00:12:00 -> 00:12:02] These are all the edges that would have come into
+[00:12:02 -> 00:12:04] the header of the basic block.
+[00:12:04 -> 00:12:05] What are the edges that will go out
+[00:12:05 -> 00:12:07] of a basic block region?
+[00:12:07 -> 00:12:09] These are all the edges that go out
+[00:12:09 -> 00:12:11] of the last instruction of the basic block.
+[00:12:11 -> 00:12:12] And they could be either one outgoing edge
+[00:12:12 -> 00:12:14] or could be two outgoing edges,
+[00:12:14 -> 00:12:16] depending on whether it's a conditional branch
+[00:12:16 -> 00:12:18] or a unconditional branch or a fall through.
+[00:12:19 -> 00:12:21] Similarly, for a loop,
+[00:12:21 -> 00:12:24] all the incoming edges to the single node R
+[00:12:24 -> 00:12:27] for the loop body is going to be all the nodes,
+[00:12:27 -> 00:12:29] all the edges that are coming into the header
+[00:12:29 -> 00:12:32] of this loop, except the back edges, all right?
+[00:12:32 -> 00:12:34] So we're not going to consider the back edges
+[00:12:34 -> 00:12:36] at this stage because we are only interested
+[00:12:36 -> 00:12:38] in the body and not in the entire loop.
+[00:12:38 -> 00:12:41] Similarly, what are the loop edges going out
+[00:12:41 -> 00:12:42] of this particular node?
+[00:12:42 -> 00:12:44] These are all the loop exit edges.
+[00:12:44 -> 00:12:48] Loop exit edges are edges that have the source node
+[00:12:48 -> 00:12:50] belonging to the loop and the destination node
+[00:12:50 -> 00:12:52] not belonging to the loop, all right?
+[00:12:52 -> 00:12:54] And so all such edges are the outgoing
+[00:12:54 -> 00:12:57] out of the loop are now going to go out of R.
+[00:12:57 -> 00:12:59] And we have already talked about
+[00:12:59 -> 00:13:00] if there are multiple edges that are going
+[00:13:00 -> 00:13:03] out of a region node, then when I'm constructing
+[00:13:03 -> 00:13:05] summary transfer functions, then I need to have
+[00:13:05 -> 00:13:06] different summary transfer functions
+[00:13:06 -> 00:13:09] for each of those exits from the entry.
+[00:13:10 -> 00:13:11] All right.
+[00:13:11 -> 00:13:15] And finally, so these back edges
+[00:13:15 -> 00:13:17] would become self-loop edges on R.
+[00:13:17 -> 00:13:20] So now at the next level of hierarchy,
+[00:13:20 -> 00:13:22] I'm going to actually identify the loop itself
+[00:13:22 -> 00:13:23] as a region.
+[00:13:23 -> 00:13:24] And when I'm going to do that,
+[00:13:24 -> 00:13:27] all the back edges would now become self-loop edges
+[00:13:27 -> 00:13:28] on the R.
+[00:13:28 -> 00:13:32] And in fact, they can be either
+[00:13:36 -> 00:13:37] collapsed into a single edge
+[00:13:37 -> 00:13:40] or they can be retained as different edges,
+[00:13:40 -> 00:13:42] depending on what is the type of symbolic analysis
+[00:13:42 -> 00:13:44] you are interested in doing
+[00:13:44 -> 00:13:47] for that particular level of the hierarchy.
+[00:13:47 -> 00:13:48] All right.
+[00:13:48 -> 00:13:53] And R is called a body region.
+[00:13:53 -> 00:13:54] We have already discussed that
+[00:13:54 -> 00:13:56] because R is formed out of a body.
+[00:13:56 -> 00:14:01] And then this is what my higher level region looks like.
+[00:14:02 -> 00:14:04] So this body region becomes a loop
+[00:14:04 -> 00:14:07] and this higher level region now becomes a loop region.
+[00:14:08 -> 00:14:09] Okay.
+[00:14:09 -> 00:14:11] Now I want to again kind of discuss
+[00:14:11 -> 00:14:14] what happens if the body has two back edges.
+[00:14:14 -> 00:14:17] So two back edges going into the header of the loop,
+[00:14:17 -> 00:14:21] in which case we would have two edges,
+[00:14:21 -> 00:14:22] maybe something like this,
+[00:14:23 -> 00:14:26] and two back edges at this level of the hierarchy
+[00:14:26 -> 00:14:27] for the same node.
+[00:14:27 -> 00:14:30] And we may want to retain this information
+[00:14:30 -> 00:14:33] because our symbolic analysis may rely on this information
+[00:14:33 -> 00:14:36] to be able to compute more precise transfer functions
+[00:14:37 -> 00:14:38] for the entire loop.
+[00:14:38 -> 00:14:41] So notice that at every level of the hierarchy,
+[00:14:41 -> 00:14:44] based on the summary transfer functions of the sub regions,
+[00:14:45 -> 00:14:46] we are computing the summary transfer functions
+[00:14:46 -> 00:14:50] of the current region.
+[00:14:50 -> 00:14:51] So for example, in this case,
+[00:14:51 -> 00:14:55] based on the summary transfer function of the loop body,
+[00:14:55 -> 00:14:57] we are going to compute the summary transfer function
+[00:14:57 -> 00:14:59] of the entire loop.
+[00:14:59 -> 00:15:02] And we can do this either using a symbolic analysis
+[00:15:02 -> 00:15:04] or our fallback implementation can just be
+[00:15:04 -> 00:15:06] to just run a fixed point iteration
+[00:15:06 -> 00:15:07] and whatever is the answer,
+[00:15:07 -> 00:15:10] we basically give that as a summary transfer function
+[00:15:10 -> 00:15:11] of the entire loop.
+[00:15:12 -> 00:15:17] So once again, first the loop body of the L is constructed
+[00:15:17 -> 00:15:19] and is collapsed into a region R.
+[00:15:19 -> 00:15:23] And second, a region R prime that includes R
+[00:15:23 -> 00:15:25] and itself loop is constructed.
+[00:15:25 -> 00:15:27] So that becomes the next level of hierarchy,
+[00:15:27 -> 00:15:28] which includes the back edges.
+[00:15:28 -> 00:15:32] And I'm calling that particular region R prime.
+[00:15:32 -> 00:15:33] So there are two regions that have been created,
+[00:15:33 -> 00:15:36] one nested in the other, R for the body,
+[00:15:36 -> 00:15:39] R prime for the loop, which includes the body,
+[00:15:39 -> 00:15:44] which includes R and its back edges.
+[00:15:44 -> 00:15:48] So in our particular example,
+[00:15:48 -> 00:15:49] if this was my control flow graph,
+[00:15:49 -> 00:15:53] then all these circles in the original control flow graph
+[00:15:53 -> 00:15:55] represent basic logs.
+[00:15:55 -> 00:16:00] Then after doing the first level of loop body regions,
+[00:16:01 -> 00:16:02] I'm going to get a graph like this
+[00:16:02 -> 00:16:04] where R represents the loop body.
+[00:16:04 -> 00:16:06] And the back edge still looks,
+[00:16:06 -> 00:16:09] is available in the loop in the control flow graph.
+[00:16:09 -> 00:16:11] And after doing the next level of region hierarchy,
+[00:16:11 -> 00:16:13] I'm going to get rid of the back edge.
+[00:16:13 -> 00:16:19] And this is going to be my loop region R prime.
+[00:16:19 -> 00:16:22] Eventually, all natural loops would get
+[00:16:23 -> 00:16:25] collapsed into single nodes.
+[00:16:25 -> 00:16:27] Recall that we are only discussing reducible graphs.
+[00:16:27 -> 00:16:29] All cycles are loops.
+[00:16:29 -> 00:16:32] And so we already have algorithms to reduce
+[00:16:32 -> 00:16:35] or collapse all loops into single nodes.
+[00:16:35 -> 00:16:36] And so at the very end,
+[00:16:36 -> 00:16:39] we are going to be left with a directed acyclic graph
+[00:16:39 -> 00:16:41] for the procedure body.
+[00:16:41 -> 00:16:43] So what we are going to be left with
+[00:16:43 -> 00:16:44] is a directed acyclic graph.
+[00:16:44 -> 00:16:46] And we can see that even in this particular example,
+[00:16:46 -> 00:16:49] we are left with just two nodes and three edges.
+[00:16:49 -> 00:16:52] And this is a directed acyclic graph or DAG.
+[00:16:53 -> 00:16:55] And so we are going to be left with a DAG
+[00:16:55 -> 00:16:56] for the procedure body.
+[00:16:56 -> 00:16:57] And this DAG can be collapsed
+[00:16:57 -> 00:17:01] into a single top level procedure region.
+[00:17:01 -> 00:17:03] And so we have finished our procedure
+[00:17:03 -> 00:17:06] for constructing the region hierarchy in this way.
+[00:17:06 -> 00:17:09] So notice that we constructed the regions
+[00:17:09 -> 00:17:10] in a bottom up fashion,
+[00:17:10 -> 00:17:12] first constructing basic log regions,
+[00:17:12 -> 00:17:13] then constructing inner loop regions,
+[00:17:13 -> 00:17:16] then outer loop region bodies,
+[00:17:16 -> 00:17:17] then inner loop regions,
+[00:17:17 -> 00:17:20] then outer loop bodies, outer loop regions,
+[00:17:20 -> 00:17:23] until I get to the top level outermost loop body
+[00:17:23 -> 00:17:25] and then outermost loop region.
+[00:17:25 -> 00:17:27] And finally, the procedure region.
+[00:17:27 -> 00:17:30] And this will form my region hierarchy tree.

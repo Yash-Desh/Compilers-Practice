@@ -1,0 +1,329 @@
+Title: Compiler Design Module 108 : DFA Interaction Examples
+Video ID: 0YcUZ7SG66A
+Detected language: en
+------------------------------------------------------------
+
+[00:00:00 -> 00:00:02] So we've been talking about data flow analysis
+[00:00:02 -> 00:00:04] in a lot of detail.
+[00:00:04 -> 00:00:06] We looked at some examples of data flow analysis,
+[00:00:06 -> 00:00:08] then we looked at a framework,
+[00:00:08 -> 00:00:10] and then we looked at some complex analysis
+[00:00:10 -> 00:00:13] like lazy code motion based on data flow analysis.
+[00:00:13 -> 00:00:16] So why did we discuss data flow analysis in so much detail?
+[00:00:16 -> 00:00:18] Well, because it's one of the most important
+[00:00:18 -> 00:00:22] and fundamental techniques in static program analysis.
+[00:00:22 -> 00:00:24] And while we've been discussing about it
+[00:00:24 -> 00:00:27] in the context of compiler optimization,
+[00:00:27 -> 00:00:28] it actually has more applications
+[00:00:29 -> 00:00:30] than just compiler optimization.
+[00:00:30 -> 00:00:33] One of the applications of data flow analysis
+[00:00:33 -> 00:00:35] is software verification.
+[00:00:35 -> 00:00:39] So just like we do, for example, constant propagation,
+[00:00:39 -> 00:00:41] it's just an analysis that we could either use
+[00:00:41 -> 00:00:45] for optimization or we could use for some properties
+[00:00:45 -> 00:00:47] that we want to ascertain about the program.
+[00:00:47 -> 00:00:48] For example, if there's an assertion
+[00:00:48 -> 00:00:51] at a particular program point that we want to make,
+[00:00:51 -> 00:00:52] for example, we want to make an assertion
+[00:00:52 -> 00:00:55] that X is always equal to three,
+[00:00:55 -> 00:00:57] then something like that can be checked
+[00:00:57 -> 00:00:59] using data flow analysis.
+[00:00:59 -> 00:01:01] Of course, when we talk about software verification,
+[00:01:01 -> 00:01:04] the properties are not as simple as just X equals three,
+[00:01:04 -> 00:01:06] but typically you're interested in checking
+[00:01:06 -> 00:01:10] more complex and more involved properties of the software.
+[00:01:10 -> 00:01:15] Similarly, there's another kind of technique
+[00:01:15 -> 00:01:16] and products based on that technique
+[00:01:16 -> 00:01:18] which are called anti-pattern detection.
+[00:01:18 -> 00:01:20] So what is an anti-pattern?
+[00:01:20 -> 00:01:22] An anti-pattern is a pattern
+[00:01:22 -> 00:01:25] that is kind of commonly present in software,
+[00:01:25 -> 00:01:27] but it is actually not a good pattern to have.
+[00:01:27 -> 00:01:31] So for example, it's a very common programming mistakes
+[00:01:31 -> 00:01:33] that you would malloc, you could call malloc
+[00:01:33 -> 00:01:36] to get a pointer to a newly allocated memory,
+[00:01:36 -> 00:01:38] but you would not check it against null
+[00:01:38 -> 00:01:39] before dereferencing it.
+[00:01:39 -> 00:01:42] And that's an error because just in case malloc
+[00:01:42 -> 00:01:45] had failed, it would have returned a null pointer.
+[00:01:45 -> 00:01:46] And then if you dereference it,
+[00:01:46 -> 00:01:48] that would have caused a memory error,
+[00:01:48 -> 00:01:49] a segmentation fault.
+[00:01:49 -> 00:01:52] And so there are static analysis tools
+[00:01:52 -> 00:01:54] that will detect such anti-patterns.
+[00:01:54 -> 00:01:56] The malloc example I gave is just one example
+[00:01:56 -> 00:01:57] of an anti-pattern.
+[00:01:57 -> 00:01:59] You could have lots of such anti-patterns.
+[00:01:59 -> 00:02:01] There's some anti-patterns that are common
+[00:02:01 -> 00:02:04] across all programs in a certain language.
+[00:02:04 -> 00:02:07] There's some anti-patterns that are specific
+[00:02:07 -> 00:02:09] to a particular system being built.
+[00:02:09 -> 00:02:11] And so you can detect such anti-patterns
+[00:02:11 -> 00:02:15] using techniques similar to data flow analysis.
+[00:02:15 -> 00:02:17] Also things like data flow analysis
+[00:02:17 -> 00:02:19] very helpful for doing code mobility.
+[00:02:19 -> 00:02:22] So what do I mean by code mobility?
+[00:02:22 -> 00:02:25] Let's say I am a website
+[00:02:25 -> 00:02:28] and I want to send code to your browser
+[00:02:28 -> 00:02:30] and you're going to run my code on your browser.
+[00:02:30 -> 00:02:32] So before you run my code,
+[00:02:32 -> 00:02:34] you can do some kind of data flow analysis
+[00:02:34 -> 00:02:38] to make sure that the untrusted code
+[00:02:38 -> 00:02:40] that you downloaded on your browser
+[00:02:40 -> 00:02:43] is not going to harm your computer in any way.
+[00:02:43 -> 00:02:46] Similarly, there's a famous example
+[00:02:46 -> 00:02:47] of Berkeley packet filters,
+[00:02:47 -> 00:02:50] which basically allows a user application
+[00:02:50 -> 00:02:52] to download code into the kernel mode
+[00:02:52 -> 00:02:53] and run it in the kernel mode.
+[00:02:53 -> 00:02:55] So what the kernel does is it implements
+[00:02:55 -> 00:02:57] some sort of a data flow analysis
+[00:02:57 -> 00:03:00] to check that the code that's been downloaded
+[00:03:00 -> 00:03:03] is safe to run and then it runs it in kernel mode.
+[00:03:03 -> 00:03:05] Running it in kernel mode makes it faster
+[00:03:05 -> 00:03:07] than having to run it in user mode.
+[00:03:07 -> 00:03:09] And something like that is used
+[00:03:09 -> 00:03:10] for high speed networking.
+[00:03:10 -> 00:03:13] And that's how the name packet filters comes along.
+[00:03:14 -> 00:03:18] So data flow analysis is a very powerful
+[00:03:18 -> 00:03:21] and very important and a very fundamental technique.
+[00:03:21 -> 00:03:24] But then when you have multiple data flow analysis,
+[00:03:24 -> 00:03:25] you often have situations
+[00:03:25 -> 00:03:28] where one DFA based transformation enables another.
+[00:03:28 -> 00:03:31] And this is in the context of compiled optimization.
+[00:03:31 -> 00:03:34] So we've already seen examples
+[00:03:34 -> 00:03:37] where one DFA is based on another DFA.
+[00:03:37 -> 00:03:40] For example, we looked at lazy code motion,
+[00:03:40 -> 00:03:43] but also one DFA based transformation enables another.
+[00:03:43 -> 00:03:47] And this is very similar to our discussion
+[00:03:47 -> 00:03:48] in the beginning of optimization,
+[00:03:48 -> 00:03:51] we said one optimization enables another.
+[00:03:51 -> 00:03:52] And so the same thing actually holds
+[00:03:52 -> 00:03:56] for DFA based optimizations or transformations as well.
+[00:03:56 -> 00:03:57] So here's an example.
+[00:03:57 -> 00:04:00] And this example, I call it deep common sub-expressions.
+[00:04:00 -> 00:04:01] So let's say I have a program
+[00:04:01 -> 00:04:04] where I have T1 equals A plus B
+[00:04:04 -> 00:04:06] and C equals T1 plus D.
+[00:04:06 -> 00:04:07] And then after some point,
+[00:04:07 -> 00:04:09] maybe at some other location,
+[00:04:09 -> 00:04:14] I have T2 equals A plus B and E equals T2 plus D.
+[00:04:14 -> 00:04:16] Now you can see that at this particular program point,
+[00:04:16 -> 00:04:18] A plus B is available in T1
+[00:04:18 -> 00:04:20] because all the incoming parts
+[00:04:20 -> 00:04:22] both come through T1 equals A plus B.
+[00:04:22 -> 00:04:25] So A plus B is already available in T1.
+[00:04:25 -> 00:04:27] But if I look at the second expression here,
+[00:04:27 -> 00:04:28] it's T2 plus D,
+[00:04:28 -> 00:04:32] whereas in the first basic block,
+[00:04:32 -> 00:04:33] it was T1 plus D.
+[00:04:33 -> 00:04:38] And it doesn't seem like they are common.
+[00:04:38 -> 00:04:41] Textually T1 plus D and T2 plus D are different.
+[00:04:41 -> 00:04:43] And so our common sub-expressions elimination
+[00:04:43 -> 00:04:44] will call them different
+[00:04:44 -> 00:04:47] and not be able to eliminate one of them.
+[00:04:47 -> 00:04:48] All right.
+[00:04:48 -> 00:04:52] So that's basically the idea.
+[00:04:52 -> 00:04:54] So how do we solve this problem?
+[00:04:54 -> 00:04:56] And so the point I'm going to make here
+[00:04:56 -> 00:04:57] is that if I just run
+[00:04:57 -> 00:04:59] common sub-expression elimination algorithm,
+[00:04:59 -> 00:05:02] as we know it, twice on this program,
+[00:05:02 -> 00:05:07] then we are going to maybe interspersed
+[00:05:07 -> 00:05:08] with copy propagation,
+[00:05:08 -> 00:05:10] then we are going to be able to eliminate
+[00:05:10 -> 00:05:14] both the expressions A plus B and T1 plus D.
+[00:05:14 -> 00:05:15] So how does it work?
+[00:05:15 -> 00:05:18] Well, our first pass of common sub-expression elimination
+[00:05:18 -> 00:05:20] is going to eliminate A plus B.
+[00:05:20 -> 00:05:23] And so it's going to replace T2 equals A plus B
+[00:05:23 -> 00:05:24] with T2 equals T1.
+[00:05:25 -> 00:05:27] And then once we do that,
+[00:05:27 -> 00:05:29] then I'm going to do copy propagation.
+[00:05:29 -> 00:05:32] And so I'm going to replace T2 by T1 everywhere.
+[00:05:32 -> 00:05:34] And so that's what this code becomes.
+[00:05:34 -> 00:05:36] It becomes E equals T1 plus D.
+[00:05:36 -> 00:05:38] And now after I've done copy propagation,
+[00:05:38 -> 00:05:41] if I run common sub-expression again,
+[00:05:41 -> 00:05:43] you can see that T1 plus D is now common
+[00:05:43 -> 00:05:44] across the two programs.
+[00:05:44 -> 00:05:46] And so we have been able to achieve
+[00:05:46 -> 00:05:48] deep common sub-expression elimination.
+[00:05:48 -> 00:05:50] So in the final step,
+[00:05:50 -> 00:05:52] I'll just remove E equals T1 plus D
+[00:05:52 -> 00:05:54] and replace it with E equals C.
+[00:05:57 -> 00:05:59] So that's an example where the same transformation
+[00:05:59 -> 00:06:01] or actually common sub-expression elimination
+[00:06:01 -> 00:06:03] and copy propagation
+[00:06:03 -> 00:06:05] followed by common sub-expression elimination
+[00:06:05 -> 00:06:08] yielded us deep common sub-expression elimination.
+[00:06:08 -> 00:06:11] Here's another example of DFA interaction.
+[00:06:11 -> 00:06:13] Let's say I have X equals 10,
+[00:06:13 -> 00:06:15] then I say X greater than zero,
+[00:06:15 -> 00:06:17] Y equals 20 on one branch,
+[00:06:17 -> 00:06:19] Y equals Y plus A on the other branch,
+[00:06:19 -> 00:06:19] and there's a loop.
+[00:06:19 -> 00:06:20] And then at the end,
+[00:06:20 -> 00:06:23] at the meet point we have Z equals Y.
+[00:06:23 -> 00:06:26] So notice that I'm setting X equals 10,
+[00:06:26 -> 00:06:27] I'm checking X is greater than zero,
+[00:06:27 -> 00:06:31] which is always going to evaluate to true
+[00:06:31 -> 00:06:34] in the first iteration.
+[00:06:34 -> 00:06:37] So let's do constant propagation here.
+[00:06:37 -> 00:06:38] So if I do constant propagation,
+[00:06:38 -> 00:06:40] then I would be able to identify
+[00:06:40 -> 00:06:43] that this condition X is greater than zero,
+[00:06:46 -> 00:06:48] so I'm going to be able to identify
+[00:06:48 -> 00:06:50] that on all the incoming parts,
+[00:06:50 -> 00:06:51] X equals 10, right?
+[00:06:51 -> 00:06:54] Because here I'm not actually modifying X anywhere.
+[00:06:54 -> 00:06:55] So X is equal to 10,
+[00:06:55 -> 00:06:57] and so I would be able to replace
+[00:06:57 -> 00:07:00] X greater than zero with false, right?
+[00:07:00 -> 00:07:02] So I'm going to be able to replace this with false.
+[00:07:02 -> 00:07:05] And so, sorry, with true.
+[00:07:05 -> 00:07:06] And when I replace it with true,
+[00:07:06 -> 00:07:10] then I can just get rid of this other branch,
+[00:07:10 -> 00:07:11] including the loop,
+[00:07:11 -> 00:07:14] because I know that it's not even reachable.
+[00:07:14 -> 00:07:15] So that's what I'm going to show.
+[00:07:15 -> 00:07:17] So after constant propagation,
+[00:07:17 -> 00:07:19] I'm able to get 10 is greater than zero,
+[00:07:19 -> 00:07:20] which is just true.
+[00:07:20 -> 00:07:22] And so based on that,
+[00:07:22 -> 00:07:24] if I can do dead code elimination,
+[00:07:24 -> 00:07:26] so after dead code elimination,
+[00:07:26 -> 00:07:28] I just get rid of one branch
+[00:07:28 -> 00:07:31] of this condition block, right?
+[00:07:31 -> 00:07:32] And so based on that,
+[00:07:32 -> 00:07:34] once again, based on that,
+[00:07:34 -> 00:07:38] if I do common constant propagation again,
+[00:07:38 -> 00:07:41] then I will be able to replace Z equals Y
+[00:07:41 -> 00:07:43] with Z equals 20, right?
+[00:07:43 -> 00:07:44] Whereas in the original program,
+[00:07:44 -> 00:07:46] I wouldn't have been able to do that
+[00:07:46 -> 00:07:48] because if I do constant propagation on this program,
+[00:07:48 -> 00:07:50] then on the incoming path,
+[00:07:50 -> 00:07:53] on one path, I see that Y equals 20,
+[00:07:53 -> 00:07:54] but on the other path,
+[00:07:54 -> 00:07:55] Y equals Y plus A,
+[00:07:55 -> 00:07:57] which is not a constant, right?
+[00:07:57 -> 00:08:01] So I'm going to not be able to replace Z equals Y
+[00:08:01 -> 00:08:02] with Z equals 20.
+[00:08:02 -> 00:08:04] But after I do dead code elimination,
+[00:08:04 -> 00:08:06] now if I do constant propagation,
+[00:08:06 -> 00:08:08] then I'm able to replace Z equals Y
+[00:08:08 -> 00:08:10] with Z equals 20.
+[00:08:10 -> 00:08:13] This should be 20, okay?
+[00:08:14 -> 00:08:16] All right.
+[00:08:16 -> 00:08:18] So once again,
+[00:08:18 -> 00:08:21] constant propagation followed by dead code elimination
+[00:08:21 -> 00:08:22] and then constant propagation again
+[00:08:22 -> 00:08:26] in this particular example yielded me a better result
+[00:08:26 -> 00:08:28] than if I hadn't done things
+[00:08:28 -> 00:08:29] in this particular sequence.
+[00:08:30 -> 00:08:34] So these were both examples that I showed
+[00:08:34 -> 00:08:36] of interactions of DFA analysis
+[00:08:36 -> 00:08:38] involved constructive interference,
+[00:08:38 -> 00:08:42] which means one analysis was enabling another analysis.
+[00:08:42 -> 00:08:43] There are also examples
+[00:08:43 -> 00:08:46] of destructive DFA interference.
+[00:08:46 -> 00:08:47] So for example,
+[00:08:47 -> 00:08:50] this is our well-known strength reduction example.
+[00:08:50 -> 00:08:52] So let's say I have T equals two into A
+[00:08:52 -> 00:08:54] and B equals three into T.
+[00:08:54 -> 00:08:57] Now I can potentially implement constant folding
+[00:08:57 -> 00:08:59] using common sub-expression elimination
+[00:08:59 -> 00:09:00] and I can say, okay,
+[00:09:00 -> 00:09:02] I can just replace B equals three into T
+[00:09:02 -> 00:09:03] with D equals six into A.
+[00:09:04 -> 00:09:07] And I can just get rid of, let's say, T.
+[00:09:07 -> 00:09:11] Now, assuming T is not lying apart from at this statement.
+[00:09:11 -> 00:09:15] Now, if I can do this kind of constant folding
+[00:09:15 -> 00:09:18] only if I know that both of them are multiplications
+[00:09:18 -> 00:09:20] and they're multiplications to constants.
+[00:09:20 -> 00:09:22] But if I do strength reduction first,
+[00:09:22 -> 00:09:25] then what I'll do is I'll replace T equals two into A
+[00:09:25 -> 00:09:29] with T equals A left shifted by one.
+[00:09:29 -> 00:09:30] And once I do this,
+[00:09:30 -> 00:09:33] then it becomes much harder to identify the pattern
+[00:09:33 -> 00:09:36] that something that is left shifted by one
+[00:09:36 -> 00:09:38] and then multiplied by three is the same as saying
+[00:09:38 -> 00:09:40] that it multiplied by six, all right.
+[00:09:40 -> 00:09:42] So it is possible to implement even such analysis
+[00:09:42 -> 00:09:45] but the point is that whatever analysis we implement,
+[00:09:45 -> 00:09:46] it will have some limitations.
+[00:09:46 -> 00:09:47] And in this case,
+[00:09:47 -> 00:09:49] I'm assuming that the constant folding has a limitation
+[00:09:49 -> 00:09:51] that it can only fold multiplications,
+[00:09:51 -> 00:09:53] not a shift with a multiplication.
+[00:09:53 -> 00:09:57] And so I'm not going to be able to go
+[00:09:57 -> 00:09:59] from this program to this program.
+[00:09:59 -> 00:09:59] On the other hand,
+[00:09:59 -> 00:10:01] if I had done constant folding first,
+[00:10:01 -> 00:10:04] then I would have just eliminated T equals two into A
+[00:10:04 -> 00:10:07] and just had B equals six into A.
+[00:10:07 -> 00:10:08] So constant folding and let's say
+[00:10:08 -> 00:10:14] plus dead code elimination would have given me this, right.
+[00:10:14 -> 00:10:16] And so if I had done this first,
+[00:10:16 -> 00:10:18] then I would have gotten this answer,
+[00:10:18 -> 00:10:19] which is a good answer.
+[00:10:19 -> 00:10:21] If I had done strength reduction first,
+[00:10:21 -> 00:10:23] then I won't be able to go from here to here
+[00:10:23 -> 00:10:26] because my analysis is not powerful enough
+[00:10:26 -> 00:10:28] to identify such patterns.
+[00:10:28 -> 00:10:31] So while data flow analysis based transformations
+[00:10:31 -> 00:10:34] may often interfere constructively,
+[00:10:34 -> 00:10:37] sometimes they may also interfere destructively.
+[00:10:38 -> 00:10:41] So this is the well known phase ordering problem,
+[00:10:41 -> 00:10:44] which means if two or more transformations
+[00:10:44 -> 00:10:46] are mutually interfering,
+[00:10:46 -> 00:10:49] the order of their execution may be consequential.
+[00:10:49 -> 00:10:51] And the phase ordering problem is basically the problem
+[00:10:51 -> 00:10:53] that what is the best order
+[00:10:53 -> 00:10:56] and to arrange these transformations in.
+[00:10:57 -> 00:10:58] We've already seen examples
+[00:10:58 -> 00:11:00] where one transformation may enable
+[00:11:00 -> 00:11:01] another transformation.
+[00:11:01 -> 00:11:02] And we've also seen an example
+[00:11:02 -> 00:11:06] where one transformation may disable another transformation.
+[00:11:06 -> 00:11:08] Now the phase ordering problem is a hard problem
+[00:11:10 -> 00:11:13] in terms of computational tractability.
+[00:11:13 -> 00:11:15] And so solving it precisely
+[00:11:15 -> 00:11:18] is not possible in polynomial time or efficiently.
+[00:11:18 -> 00:11:20] And so typically what people do
+[00:11:20 -> 00:11:24] is either they carefully engineer
+[00:11:24 -> 00:11:26] the pipeline of transformation passes,
+[00:11:26 -> 00:11:28] DFA based transformation passes
+[00:11:28 -> 00:11:30] that should be executed in a compiler.
+[00:11:31 -> 00:11:33] And that's the order in which they happen.
+[00:11:33 -> 00:11:37] Often the same transformation pass
+[00:11:37 -> 00:11:39] repeats in that pipeline also.
+[00:11:39 -> 00:11:40] For example, common sub expression
+[00:11:40 -> 00:11:44] may be executed twice in that pipeline.
+[00:11:44 -> 00:11:48] For example, some examples we saw require that.
+[00:11:48 -> 00:11:52] Or copy propagation is executed multiple times.
+[00:11:52 -> 00:11:54] Also, there is another approach
+[00:11:54 -> 00:11:56] which is that you run a meta fixed point loop
+[00:11:56 -> 00:11:59] in which you kind of apply these transformations
+[00:11:59 -> 00:12:01] in some predefined order
+[00:12:01 -> 00:12:04] and you keep executing that meta fixed point loop
+[00:12:04 -> 00:12:06] until the program stops changing.
+[00:12:06 -> 00:12:08] And this assumes that the program
+[00:12:08 -> 00:12:10] is changing in a particular direction.
+[00:12:10 -> 00:12:14] So this algorithm will eventually reach a fixed point
+[00:12:14 -> 00:12:16] and will not diverge, it will converge.
+[00:12:16 -> 00:12:20] The second approach is less practical
+[00:12:20 -> 00:12:22] because potentially the compiler can run
+[00:12:22 -> 00:12:25] for a long time to reach the fixed point.
+[00:12:26 -> 00:12:27] But it is also an option.
+[00:12:27 -> 00:12:29] And it is an efficient option
+[00:12:29 -> 00:12:32] in the sense that it's not an exponential time algorithm
+[00:12:32 -> 00:12:34] to figure out the best possible answer.
+[00:12:34 -> 00:12:36] There have been some other approaches
+[00:12:36 -> 00:12:38] to also solve the phase ordering problem
+[00:12:38 -> 00:12:41] which involve trying to identify all possible orders
+[00:12:44 -> 00:12:45] but doing so efficiently.
+[00:12:45 -> 00:12:48] And that is something that has appeared
+[00:12:48 -> 00:12:49] in a lot of research literature
+[00:12:49 -> 00:12:52] but that is outside the scope of our discussion.

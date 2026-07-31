@@ -1,0 +1,344 @@
+Title: Compiler Design Module 118 : Region Definition
+Video ID: -Oo-5rdUOZI
+Detected language: en
+------------------------------------------------------------
+
+[00:00:00 -> 00:00:02] Last time we talked about region-based analysis
+[00:00:02 -> 00:00:06] and how it can help integrate a data flow analysis
+[00:00:06 -> 00:00:09] with more precise symbolic analysis
+[00:00:09 -> 00:00:11] for internal to regions.
+[00:00:12 -> 00:00:15] Now, before we go any further,
+[00:00:15 -> 00:00:18] we need to understand what do I mean by a region?
+[00:00:18 -> 00:00:20] And it needs to be defined more formally.
+[00:00:21 -> 00:00:25] Recall that a program is viewed as a hierarchy of regions.
+[00:00:25 -> 00:00:26] And roughly speaking,
+[00:00:26 -> 00:00:29] a region is the portion of a flow graph
+[00:00:29 -> 00:00:31] that has only one point of entry.
+[00:00:31 -> 00:00:36] So not every portion of the control flow graph is a region.
+[00:00:36 -> 00:00:37] It needs to have a property
+[00:00:37 -> 00:00:42] and the property is that it only has one point of entry.
+[00:00:42 -> 00:00:43] Notice that this is very similar
+[00:00:43 -> 00:00:46] to the requirement we had for a natural loop.
+[00:00:46 -> 00:00:47] A natural loop is a cycle
+[00:00:47 -> 00:00:49] which has only one point of entry.
+[00:00:49 -> 00:00:51] Similarly, a region is a portion of the program.
+[00:00:51 -> 00:00:54] It need not be a loop, it need not be a cycle.
+[00:00:54 -> 00:00:57] A portion of program that has only one point of entry.
+[00:00:58 -> 00:01:00] So consider a block structure program
+[00:01:00 -> 00:01:03] like the one we write in a high-level language like C.
+[00:01:03 -> 00:01:04] We could have curly braces.
+[00:01:04 -> 00:01:07] And so in this kind of structure,
+[00:01:07 -> 00:01:10] each of these blocks forms a region
+[00:01:10 -> 00:01:15] and this nesting of blocks forms a region hierarchy.
+[00:01:15 -> 00:01:17] Because it's not possible to jump
+[00:01:17 -> 00:01:18] to the middle of a block.
+[00:01:19 -> 00:01:22] And in any case, these high-level languages
+[00:01:22 -> 00:01:23] do not provide you constructs
+[00:01:23 -> 00:01:26] to allow you to do arbitrary jumps.
+[00:01:26 -> 00:01:29] You can only do jumps using control flow structures
+[00:01:29 -> 00:01:32] like if-then-else, for-loop, while-loop, and so on.
+[00:01:32 -> 00:01:36] And all such loops basically create scoped regions,
+[00:01:36 -> 00:01:38] nested scoped regions.
+[00:01:38 -> 00:01:41] And these scoped regions basically form regions,
+[00:01:42 -> 00:01:45] regions in our region-level analysis sense
+[00:01:45 -> 00:01:48] because they will only have a single entry.
+[00:01:48 -> 00:01:50] So in this figure that I draw,
+[00:01:50 -> 00:01:52] you can imagine that these extra scopes
+[00:01:52 -> 00:01:54] are being created because of statements
+[00:01:54 -> 00:01:57] like if-then-else, or for, or whatever.
+[00:01:57 -> 00:01:59] And so each of these scopes can form a single region.
+[00:02:00 -> 00:02:04] More formally, a region is a collection of nodes n
+[00:02:04 -> 00:02:08] and edges e such that these nodes and edges
+[00:02:08 -> 00:02:10] must be a subset of the nodes and edges
+[00:02:10 -> 00:02:12] of the entire control flow graph.
+[00:02:12 -> 00:02:14] And there are more requirements
+[00:02:14 -> 00:02:15] such that there is a header edge
+[00:02:15 -> 00:02:17] belonging to the set of nodes n
+[00:02:17 -> 00:02:20] that dominates all nodes in n.
+[00:02:20 -> 00:02:23] And this basically encodes our single entry condition.
+[00:02:23 -> 00:02:26] So edge should be our single entry point into this region.
+[00:02:26 -> 00:02:28] And the way to say that is that edge should dominate
+[00:02:28 -> 00:02:31] all the other nodes in that particular region.
+[00:02:32 -> 00:02:37] Second, if there is some node m that can reach node n,
+[00:02:37 -> 00:02:41] belonging to capital N, without going through edge,
+[00:02:41 -> 00:02:42] then m also belongs to n.
+[00:02:42 -> 00:02:46] So all the nodes that can reach any node in the region
+[00:02:46 -> 00:02:47] without going through edge
+[00:02:47 -> 00:02:48] should also belong to the region.
+[00:02:48 -> 00:02:51] This is exactly like our natural-loop definition.
+[00:02:51 -> 00:02:54] It basically means that if there are two nodes
+[00:02:54 -> 00:02:56] where one node can reach another node
+[00:02:56 -> 00:02:59] without going through the header of the region
+[00:02:59 -> 00:03:02] or the dominating node of the region edge,
+[00:03:02 -> 00:03:05] then all such nodes should be a part of the region.
+[00:03:05 -> 00:03:08] So this is just saying that a region
+[00:03:08 -> 00:03:10] should be the maximal such entity
+[00:03:10 -> 00:03:12] which is dominated by edge
+[00:03:12 -> 00:03:14] and such that they can reach,
+[00:03:14 -> 00:03:17] one can reach the other, all right?
+[00:03:17 -> 00:03:20] And so that's just about what nodes
+[00:03:20 -> 00:03:21] to include in the region.
+[00:03:21 -> 00:03:23] And so what edges to include in the region?
+[00:03:23 -> 00:03:24] That's also easy.
+[00:03:25 -> 00:03:28] From the nodes, the edges largely follow.
+[00:03:28 -> 00:03:31] E is the set of all control flow edges
+[00:03:31 -> 00:03:34] between nodes N1 and N2 in N,
+[00:03:34 -> 00:03:37] except possibly for some that enter edge.
+[00:03:37 -> 00:03:40] So basically, once we have identified
+[00:03:40 -> 00:03:41] all the nodes in the region,
+[00:03:42 -> 00:03:44] basically first we identify the header
+[00:03:44 -> 00:03:45] that dominates all the other nodes
+[00:03:45 -> 00:03:46] in that particular region,
+[00:03:46 -> 00:03:48] firstly we decide what do we want to call a region, right?
+[00:03:48 -> 00:03:50] Maybe we want to call every block a region
+[00:03:50 -> 00:03:52] or something like that.
+[00:03:52 -> 00:03:53] We want to call every loop a region.
+[00:03:53 -> 00:03:55] We want to discuss how to identify regions
+[00:03:55 -> 00:03:57] or what regions to choose very soon.
+[00:03:57 -> 00:03:59] But let's say once I have identified a region
+[00:03:59 -> 00:04:01] and I identified a header of the region,
+[00:04:01 -> 00:04:03] if I want to identify all the nodes of a region,
+[00:04:03 -> 00:04:04] I just basically look for nodes
+[00:04:04 -> 00:04:06] that can reach other nodes in the region
+[00:04:06 -> 00:04:08] without going through edge.
+[00:04:08 -> 00:04:09] Once I identify all the nodes,
+[00:04:09 -> 00:04:10] maximals are set,
+[00:04:10 -> 00:04:13] we identify all the nodes in the region,
+[00:04:13 -> 00:04:16] then all the edges that kind of go
+[00:04:16 -> 00:04:19] between these nodes of the region
+[00:04:19 -> 00:04:21] are also the edges of the region itself.
+[00:04:21 -> 00:04:23] So E is the set of all control flow edges
+[00:04:23 -> 00:04:26] between node N1 and N2 in N.
+[00:04:26 -> 00:04:28] So if both N1 and N2 belong to N,
+[00:04:28 -> 00:04:30] then any edge between N1 and N2
+[00:04:30 -> 00:04:32] belongs to the region as well.
+[00:04:32 -> 00:04:36] But possibly it is possible that I define a region
+[00:04:36 -> 00:04:40] which excludes some node edges that enter edge.
+[00:04:40 -> 00:04:45] So it is possible that N1 belongs to N,
+[00:04:45 -> 00:04:46] edge belongs to N,
+[00:04:46 -> 00:04:49] there's an edge from N1 to edge
+[00:04:50 -> 00:04:52] and yet I exclude it from the region.
+[00:04:52 -> 00:04:55] And so we're going to see how an example of that.
+[00:04:55 -> 00:04:57] So here are some examples of regions.
+[00:04:57 -> 00:04:59] A natural loop is a region
+[00:04:59 -> 00:05:01] and you would see that the definition of a region
+[00:05:01 -> 00:05:04] actually is complete agreement
+[00:05:04 -> 00:05:06] with the definition of a natural loop.
+[00:05:06 -> 00:05:08] There's single entry point
+[00:05:08 -> 00:05:11] and all the nodes that can reach
+[00:05:11 -> 00:05:13] any other node in the region
+[00:05:13 -> 00:05:14] without going through edge,
+[00:05:14 -> 00:05:16] the single entry point are also part of the region
+[00:05:16 -> 00:05:18] and that's exactly what the loop says.
+[00:05:19 -> 00:05:21] All the edges that go between any two nodes
+[00:05:21 -> 00:05:23] inside the region are part of the region
+[00:05:23 -> 00:05:25] and that's also part of a natural loop.
+[00:05:27 -> 00:05:28] A basic block is a region.
+[00:05:28 -> 00:05:31] Recall that a basic block has a single entry point
+[00:05:31 -> 00:05:33] and it's a straight line sequence of code
+[00:05:33 -> 00:05:36] and so once again,
+[00:05:36 -> 00:05:38] it's a maximal straight line sequence of code
+[00:05:38 -> 00:05:40] and so that defines a region as well.
+[00:05:41 -> 00:05:44] A single statement is a region.
+[00:05:44 -> 00:05:46] A single statement is the smallest region
+[00:05:46 -> 00:05:47] that you can have
+[00:05:47 -> 00:05:49] because it has a single entry point
+[00:05:49 -> 00:05:51] and it has only one node.
+[00:05:51 -> 00:05:56] So there can be multiple ways
+[00:05:56 -> 00:05:59] in which I can construct the region
+[00:05:59 -> 00:06:01] and actually there are more regions
+[00:06:01 -> 00:06:03] that can be identified in most programs.
+[00:06:03 -> 00:06:05] For example, we just looked at this example
+[00:06:05 -> 00:06:06] of block structure.
+[00:06:06 -> 00:06:07] So in these examples that I'm using,
+[00:06:07 -> 00:06:10] natural loop, basic block and single statement,
+[00:06:10 -> 00:06:12] I'm not actually considering regions
+[00:06:12 -> 00:06:13] that are being created
+[00:06:13 -> 00:06:15] because of other blocks and things like that,
+[00:06:15 -> 00:06:17] language level, scoping blocks.
+[00:06:18 -> 00:06:19] I'm not considering that,
+[00:06:19 -> 00:06:20] but you can create more regions
+[00:06:20 -> 00:06:22] and you can have a hierarchy of regions,
+[00:06:22 -> 00:06:24] whatever choice of regions you take
+[00:06:24 -> 00:06:26] and for example, you could say that
+[00:06:26 -> 00:06:28] the highest level regions are natural loops
+[00:06:28 -> 00:06:30] and then basic blocks and then single statements
+[00:06:30 -> 00:06:32] and above the natural loop, you have a procedure
+[00:06:32 -> 00:06:37] just like we had discussed in the previous module.
+[00:06:37 -> 00:06:40] Notice that the definition of a region
+[00:06:40 -> 00:06:43] also allows me to call the body of a natural loop
+[00:06:43 -> 00:06:45] without the back edge to be a region.
+[00:06:45 -> 00:06:50] So the acyclic region within a loop.
+[00:06:50 -> 00:06:51] So here's an example of a loop
+[00:06:51 -> 00:06:56] and this particular edge going from the last node
+[00:06:56 -> 00:06:58] to the header of the loop is the back edge, right?
+[00:06:58 -> 00:06:59] So this is the back edge
+[00:07:01 -> 00:07:03] and notice that the green square
+[00:07:03 -> 00:07:05] that I have drawn represents a region
+[00:07:05 -> 00:07:09] and that is not including the back edge
+[00:07:09 -> 00:07:11] and I'm claiming that even this green edge,
+[00:07:11 -> 00:07:13] green circle is a region.
+[00:07:13 -> 00:07:15] So of course, if I draw the larger circle
+[00:07:15 -> 00:07:18] which includes the back edge, that is also a region
+[00:07:18 -> 00:07:21] but the inner green rectangle is also a region
+[00:07:21 -> 00:07:23] and these are two separate regions
+[00:07:23 -> 00:07:28] and why is the inner green rectangle a region?
+[00:07:28 -> 00:07:30] Because it satisfies all our properties.
+[00:07:30 -> 00:07:31] It has a single entry point
+[00:07:31 -> 00:07:33] which is also the header of the loop
+[00:07:33 -> 00:07:34] and the header of the loop body.
+[00:07:34 -> 00:07:36] Notice that the body of a natural loop
+[00:07:36 -> 00:07:37] is different from the loop
+[00:07:37 -> 00:07:40] in the sense that the loop also includes the back edge,
+[00:07:40 -> 00:07:41] the body doesn't include the back edge
+[00:07:41 -> 00:07:43] and there could be multiple back edges.
+[00:07:43 -> 00:07:46] So the body doesn't include any of the back edges
+[00:07:46 -> 00:07:49] and so in this, we satisfy that property.
+[00:07:49 -> 00:07:51] It's also true that if there's a node
+[00:07:51 -> 00:07:53] that can reach any other node in the region
+[00:07:53 -> 00:07:54] without going through edge,
+[00:07:54 -> 00:07:56] then that node is also part of the region.
+[00:07:56 -> 00:07:57] So for example,
+[00:07:57 -> 00:07:59] all both these nodes are part of the region
+[00:07:59 -> 00:08:04] and then all edges that are kind of between nodes
+[00:08:05 -> 00:08:07] of the region are part of the region
+[00:08:07 -> 00:08:10] except potentially some edges
+[00:08:10 -> 00:08:13] that are entering the header of the region.
+[00:08:13 -> 00:08:15] And so in this case,
+[00:08:16 -> 00:08:19] that except possibly some edges
+[00:08:19 -> 00:08:20] that are entering the header
+[00:08:20 -> 00:08:23] and so here I'm using that particular definition
+[00:08:23 -> 00:08:25] to exclude the back edge
+[00:08:25 -> 00:08:28] and yet the loop body can be called a region.
+[00:08:28 -> 00:08:30] So recall that was the significance
+[00:08:30 -> 00:08:31] of that particular clause
+[00:08:31 -> 00:08:33] that it is possible that some edges
+[00:08:33 -> 00:08:37] that are entering the header of the region
+[00:08:37 -> 00:08:41] and which start from one of the nodes in the region
+[00:08:42 -> 00:08:43] are not included in the region
+[00:08:43 -> 00:08:45] and yet it could be called a region
+[00:08:45 -> 00:08:48] and so I'm calling the body of a loop,
+[00:08:48 -> 00:08:50] a natural loop, a region.
+[00:08:51 -> 00:08:51] Okay and we're going to see
+[00:08:51 -> 00:08:53] that this is actually useful
+[00:08:53 -> 00:08:55] as we're going to discuss
+[00:08:55 -> 00:08:59] region-based analysis in future.
+[00:08:59 -> 00:09:00] What is a typical region hierarchy?
+[00:09:00 -> 00:09:02] So right now I have just defined regions
+[00:09:02 -> 00:09:04] in the most general way.
+[00:09:04 -> 00:09:05] What are all the possible regions
+[00:09:05 -> 00:09:08] that can be constructed out of a program,
+[00:09:08 -> 00:09:10] of a control flow graph
+[00:09:10 -> 00:09:12] and based on the choice of regions,
+[00:09:12 -> 00:09:14] you also create a region hierarchy
+[00:09:14 -> 00:09:17] but typically what do compilers do
+[00:09:17 -> 00:09:18] because there's such a large space
+[00:09:18 -> 00:09:19] of what regions could be.
+[00:09:19 -> 00:09:23] Typically compilers use procedure bodies as regions.
+[00:09:23 -> 00:09:26] Procedure bodies satisfy all our constraints.
+[00:09:26 -> 00:09:28] The entry can only be at the beginning
+[00:09:28 -> 00:09:30] of the procedure body.
+[00:09:30 -> 00:09:33] Natural loops, their bodies
+[00:09:33 -> 00:09:35] and the associated hierarchy.
+[00:09:35 -> 00:09:37] So natural loops and the associated hierarchy.
+[00:09:37 -> 00:09:39] So if I have a natural loop,
+[00:09:39 -> 00:09:42] I create a region out of it
+[00:09:42 -> 00:09:43] and in my region hierarchy
+[00:09:43 -> 00:09:46] and any nested loops create separate regions
+[00:09:46 -> 00:09:49] and then they participate in the region hierarchy
+[00:09:49 -> 00:09:51] as we saw in the last module.
+[00:09:51 -> 00:09:52] I should also add here
+[00:09:52 -> 00:09:54] that natural loops and their bodies
+[00:09:56 -> 00:09:58] and their loop bodies, right?
+[00:09:58 -> 00:10:00] As we saw in our previous slide,
+[00:10:02 -> 00:10:05] loop bodies form regions of themselves
+[00:10:05 -> 00:10:06] and in this case the loop body
+[00:10:06 -> 00:10:10] would be a sub-region of the loop itself, right?
+[00:10:10 -> 00:10:11] And the difference between the loop body
+[00:10:11 -> 00:10:13] and the loop itself would be the absence
+[00:10:13 -> 00:10:16] of the back edges of that particular loop.
+[00:10:16 -> 00:10:18] The next level of regions is basic blocks
+[00:10:18 -> 00:10:20] and the final level of regions
+[00:10:20 -> 00:10:22] is the individual statements.
+[00:10:22 -> 00:10:24] And so this is exactly like the example
+[00:10:24 -> 00:10:26] that we had discussed in our previous module
+[00:10:26 -> 00:10:28] and this happens to be the typical way
+[00:10:28 -> 00:10:31] of demarcating regions by compilers.
+[00:10:31 -> 00:10:33] How does a compiler decide
+[00:10:33 -> 00:10:34] how to demarcate the regions?
+[00:10:34 -> 00:10:37] Well, before we discuss that,
+[00:10:37 -> 00:10:40] I want to share an example of a portion
+[00:10:40 -> 00:10:43] of the control flow graph that is not a region.
+[00:10:43 -> 00:10:46] So example, in this particular control flow graph,
+[00:10:46 -> 00:10:48] this gray rectangle is not a region
+[00:10:48 -> 00:10:49] because there are two entry points,
+[00:10:49 -> 00:10:52] one at this node and one at this node.
+[00:10:52 -> 00:10:53] So this is not a region.
+[00:10:53 -> 00:10:54] On the other hand,
+[00:10:54 -> 00:10:56] if I look at this particular control flow graph,
+[00:10:56 -> 00:10:59] if I use this particular rectangle,
+[00:10:59 -> 00:11:00] then this is a region
+[00:11:00 -> 00:11:02] because there's only one entry point.
+[00:11:02 -> 00:11:05] Notice that there are potentially two exits
+[00:11:05 -> 00:11:07] but there's only one entry point
+[00:11:07 -> 00:11:08] and so this can be called a region.
+[00:11:09 -> 00:11:11] And so, even though this can be called a region
+[00:11:11 -> 00:11:12] and this is a region,
+[00:11:12 -> 00:11:14] it's not necessary that the compiler chooses
+[00:11:14 -> 00:11:15] to make a region out of this.
+[00:11:15 -> 00:11:17] And as we discussed in the last slide,
+[00:11:17 -> 00:11:21] compiler chooses only specific types of regions
+[00:11:21 -> 00:11:23] and not necessarily all the possible regions
+[00:11:23 -> 00:11:25] that are possible in the control flow graph.
+[00:11:28 -> 00:11:30] How does the compiler decide how to choose regions?
+[00:11:30 -> 00:11:32] Well, regions should be chosen
+[00:11:32 -> 00:11:35] to try and produce more precise transfer functions.
+[00:11:35 -> 00:11:38] So the whole idea of demarcating regions
+[00:11:39 -> 00:11:40] is that we can do some symbolic analysis
+[00:11:40 -> 00:11:42] on that particular region
+[00:11:42 -> 00:11:44] or some other kind of sophisticated analysis
+[00:11:44 -> 00:11:46] to produce better summary functions
+[00:11:46 -> 00:11:48] than what a fixed point iteration DFA
+[00:11:48 -> 00:11:50] would have produced for that sub region.
+[00:11:50 -> 00:11:52] And so here's an example of a region
+[00:11:52 -> 00:11:54] for constant propagation.
+[00:11:54 -> 00:11:56] Let's say I have this diamond-shaped structure
+[00:11:56 -> 00:11:57] of a control flow graph.
+[00:11:57 -> 00:11:58] I've used this example before.
+[00:11:58 -> 00:12:01] On the left side, we have x equals two, y equals three.
+[00:12:01 -> 00:12:04] On the right side, we have y equals two, x equals three
+[00:12:04 -> 00:12:07] and at the meet point, I have z equals x plus y.
+[00:12:07 -> 00:12:09] Now, if I run a basic data flow analysis graph,
+[00:12:09 -> 00:12:14] I'm going to get z equals bottom for DFA.
+[00:12:14 -> 00:12:17] But if I use a summary,
+[00:12:17 -> 00:12:20] symbolic analysis-based data flow graph
+[00:12:20 -> 00:12:23] transfer function for this, I can get z equals five.
+[00:12:23 -> 00:12:24] And so in this particular case,
+[00:12:24 -> 00:12:27] it would help to create a region
+[00:12:27 -> 00:12:30] out of these four blocks
+[00:12:30 -> 00:12:32] as demarcated by this gray rectangle.
+[00:12:32 -> 00:12:35] And so ideally, we want to identify regions
+[00:12:35 -> 00:12:37] or demarcate regions
+[00:12:37 -> 00:12:41] so that the associated transfer function for that region
+[00:12:41 -> 00:12:44] through a more sophisticated symbolic analysis
+[00:12:44 -> 00:12:46] is more precise than the transfer function
+[00:12:46 -> 00:12:50] that is obtained by your vanilla DFA analysis.
+[00:12:50 -> 00:12:52] In general, that is a pretty hard thing to do
+[00:12:52 -> 00:12:53] to identify all such places
+[00:12:53 -> 00:12:54] where the transfer function
+[00:12:54 -> 00:12:56] is going to give you a more precise answer.
+[00:12:56 -> 00:13:00] And so compilers would typically ignore such regions
+[00:13:00 -> 00:13:02] and they would just use a heuristic to just say,
+[00:13:02 -> 00:13:04] okay, let's just consider all the loops as regions
+[00:13:04 -> 00:13:07] and then maybe all the loop bodies as regions
+[00:13:07 -> 00:13:09] and then all the basic blocks as separate regions
+[00:13:09 -> 00:13:10] and so on.
+[00:13:10 -> 00:13:11] And so within those regions,
+[00:13:11 -> 00:13:12] they can do symbolic analysis
+[00:13:12 -> 00:13:14] and sometimes they may miss out
+[00:13:14 -> 00:13:17] on opportunities like this one.
+[00:13:17 -> 00:13:19] So although regions give you a framework
+[00:13:19 -> 00:13:20] to do more precise analysis,
+[00:13:20 -> 00:13:23] the choice of regions is still heuristic-based
+[00:13:23 -> 00:13:24] and because of that,
+[00:13:24 -> 00:13:27] you can still have imprecision in your analysis.

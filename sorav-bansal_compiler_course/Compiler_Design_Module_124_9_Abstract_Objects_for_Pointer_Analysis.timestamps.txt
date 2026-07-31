@@ -1,0 +1,412 @@
+Title: Compiler Design Module 124 9: Abstract Objects for Pointer Analysis
+Video ID: y5ryr1EgXcg
+Detected language: en
+------------------------------------------------------------
+
+[00:00:00 -> 00:00:08] So, we've been talking about points to analysis where we basically identify all the objects
+[00:00:08 -> 00:00:14] to which a pointer may point to and this is an object may point to other objects and
+[00:00:14 -> 00:00:22] so on and so forth and the question however is that in a program the number of objects
+[00:00:22 -> 00:00:28] that are actually created may be dynamically created may be unbounded, here's an example
+[00:00:28 -> 00:00:33] of a program with an unbounded number of objects and this is a simple program that creates a
+[00:00:33 -> 00:00:38] linked list, a node in the linked list is represented by struct lnode which contains
+[00:00:38 -> 00:00:46] a value v and a next pointer and this is a code in a C++ like language that just
+[00:00:46 -> 00:00:52] creates k different nodes and links them together in a linked list.
+[00:00:52 -> 00:01:02] Now, in general at runtime the program may have an arbitrary amount of logic that is
+[00:01:02 -> 00:01:07] preceding any allocation event, for example here the allocation event is this new lnode
+[00:01:07 -> 00:01:12] but the number of times this new lnode is called depends on the for loop and the
+[00:01:12 -> 00:01:16] number of times a for loop iteration executes depends on this parameter k, in
+[00:01:16 -> 00:01:22] general it is an undecided problem to identify how many times a loop may execute because
+[00:01:22 -> 00:01:26] the condition for the loop to execute may be arbitrary and so in general it is
+[00:01:26 -> 00:01:31] impossible to identify or undecidable to identify the total number of objects
+[00:01:31 -> 00:01:37] that a program may create at runtime. So the points to graph the actual points
+[00:01:37 -> 00:01:43] to graph for this this kind of a program would look something like this
+[00:01:43 -> 00:01:49] where the head is the list head because we assign the newly allocated
+[00:01:49 -> 00:01:54] node to n and we do n.next equals head so head points to the most recently
+[00:01:54 -> 00:02:00] allocated object whose next pointer points to the second most recently
+[00:02:00 -> 00:02:06] allocated object and so on until the last least the the oldest object which
+[00:02:06 -> 00:02:10] is whose next point is going to point to null and this is the actual points
+[00:02:10 -> 00:02:15] to graph notice that the number of objects in this points to graph is
+[00:02:15 -> 00:02:20] unbounded because an unknown at compile time what we need for our compile time
+[00:02:20 -> 00:02:25] analysis is that we need a predictable number of objects or a bounded number
+[00:02:25 -> 00:02:30] of objects that we can reason about at compile time this is this picture can
+[00:02:30 -> 00:02:34] be drawn at runtime but such a we do at compile time we don't know how how
+[00:02:34 -> 00:02:39] big this picture is or what the shape of this picture is going to be so to
+[00:02:39 -> 00:02:44] tackle this problem we define the notion of an abstract object an abstract
+[00:02:44 -> 00:02:50] object represents a set of runtime objects so for example the entire all
+[00:02:50 -> 00:02:54] the objects that are created for a given linkage may be represented by a
+[00:02:54 -> 00:02:59] single abstract object and so on and so it represents a set of runtime
+[00:02:59 -> 00:03:04] objects and this set of runtime objects may be that a single abstract
+[00:03:04 -> 00:03:11] object represents may be may be of bounded size or and size that is known
+[00:03:11 -> 00:03:14] at compile time or it may be of an unbounded size or a size that is not
+[00:03:14 -> 00:03:20] known at compile time for a compile time analysis to work we require that
+[00:03:20 -> 00:03:25] the set of abstract objects must be finite which means that all you know
+[00:03:25 -> 00:03:30] depending on how we categorized the runtime object so the idea is that for
+[00:03:30 -> 00:03:34] all the runtime object at the program we create we we partition those
+[00:03:34 -> 00:03:39] objects into different abstract objects so for example all the objects that
+[00:03:39 -> 00:03:42] were created for the linked list can be one single abstract object all the
+[00:03:42 -> 00:03:46] objects that were created for the tree binary search stream may be one
+[00:03:46 -> 00:03:51] abstract object and so on and any abstract the total set of such
+[00:03:51 -> 00:03:56] abstract objects must be finite so whatever scheme you use to partition
+[00:03:56 -> 00:03:59] these runtime objects into abstract objects must ensure that the set of
+[00:03:59 -> 00:04:03] abstract objects must be finite and a corollary of that is that a single
+[00:04:03 -> 00:04:07] abstract object may represent an unbounded number of runtime objects
+[00:04:07 -> 00:04:11] because after all the total number of runtime objects is unbounded and if we
+[00:04:11 -> 00:04:15] are trying to represent them through a finite number of abstract objects that
+[00:04:15 -> 00:04:19] means each abstract object may potentially represent an unbounded
+[00:04:19 -> 00:04:26] number of runtime objects so here's an example of abstract objects and in
+[00:04:26 -> 00:04:31] general you can choose any partition of the runtime objects as long as
+[00:04:31 -> 00:04:36] you satisfy the finiteness property of the set of abstract objects and and
+[00:04:36 -> 00:04:40] so you can be creative about how you partition the runtime objects into
+[00:04:40 -> 00:04:46] abstract objects now one and I'm going to give you three different ideas on how
+[00:04:46 -> 00:04:52] you may partition and these are just some ideas that that that that
+[00:04:52 -> 00:04:56] could be possible and you know some of these ideas are actually you are
+[00:04:56 -> 00:05:00] popular now because they are they are practically usable and useful in real
+[00:05:00 -> 00:05:04] programs but let us say that just because you know when we are
+[00:05:04 -> 00:05:07] discussing the link list example we were talking about how some object is the
+[00:05:07 -> 00:05:14] least freak least is the last allocated object second last allocated object or
+[00:05:14 -> 00:05:18] most recently allocated object second most recently allocated object and so
+[00:05:18 -> 00:05:21] on and that's how we are reasoning about the points to relationship in a
+[00:05:21 -> 00:05:25] linked list the only problem was we don't know how many such objects may be
+[00:05:25 -> 00:05:31] allocated so maybe we we partition these objects that are created in a
+[00:05:31 -> 00:05:35] linked list based on the time of creation and we say that an abstract
+[00:05:35 -> 00:05:41] object AI represents the last KI runtime objects created before all the
+[00:05:41 -> 00:05:46] objects that were represented by a 1 a 2 a 3 dot dot AI minus 1 to make
+[00:05:46 -> 00:05:50] this more clear let's say this was the timeline of program execution then
+[00:05:50 -> 00:05:55] if I am at this you know if I'm considering a program at at this
+[00:05:55 -> 00:06:03] point in the program execution then the last K1 of allocations maybe for the
+[00:06:03 -> 00:06:09] linked list are represented by abstract object A1 the K2 allocations that were
+[00:06:09 -> 00:06:14] prior to these K1 allocations are represented by abstract object A2 and
+[00:06:14 -> 00:06:20] so on and maybe the KN allocations that were prior to all these K1 plus
+[00:06:20 -> 00:06:25] K2 plus KN minus dot dot dot KS minus 1 allocations are represented by
+[00:06:25 -> 00:06:31] allocation or abstract object allocation N and notice that K1 K2 K3 KN are all
+[00:06:31 -> 00:06:38] finite numbers but but this the total number of allocations may be unbounded
+[00:06:38 -> 00:06:43] so we may say that all objects that were allocated before all these objects
+[00:06:43 -> 00:06:49] K1 K2 K3 summation of K1 plus K2 plus K3 plus dot dot dot KN all the
+[00:06:49 -> 00:06:52] objects that were allocated before them let's call them represent have them
+[00:06:52 -> 00:06:56] have a single abstract object called A last so in this scheme all these
+[00:06:56 -> 00:07:01] abstract objects A1 A2 A3 represent a finite number of concrete runtime
+[00:07:01 -> 00:07:05] objects but A last represents a potentially unbounded set of concrete
+[00:07:05 -> 00:07:10] runtime objects and so this is what this is this is the mathematical
+[00:07:10 -> 00:07:15] meaning of each abstract object for I belonging to 1 dot dot N AI
+[00:07:15 -> 00:07:21] represents the last KI runtime objects created before summation of KJ from J
+[00:07:21 -> 00:07:27] equals 1 to I minus 1 for example if I look at A2 then A2 represents the K2
+[00:07:27 -> 00:07:34] objects allocated before K1 objects the last K1 objects or if I look at KN then
+[00:07:34 -> 00:07:38] it represents the if I look at AN then it represents the KN objects that
+[00:07:38 -> 00:07:42] were allocated before all the K1 plus K2 plus dot dot dot KN minus 1
+[00:07:42 -> 00:07:46] objects allocated and so on and then there's an abstract object A last
+[00:07:46 -> 00:07:50] that represents all the objects created before all these objects were
+[00:07:50 -> 00:07:55] allocated in summation of J equals 1 to N KJ creations but this is just some
+[00:07:55 -> 00:08:01] arbitrary idea of grouping together concrete objects runtime objects into a
+[00:08:01 -> 00:08:05] finite set of abstract objects where each abstract object may represent a
+[00:08:05 -> 00:08:10] potentially unbounded number of concrete objects or runtime objects now
+[00:08:10 -> 00:08:14] let's look at how this recency abstraction how well this recency
+[00:08:14 -> 00:08:19] abstraction performs so this is this this this this this way of dividing or
+[00:08:19 -> 00:08:23] partitioning the concrete objects into abstract objects I'm also going to
+[00:08:23 -> 00:08:28] call it the recency abstraction where we abstract out the project the the
+[00:08:28 -> 00:08:34] runtime objects using the recency of their allocation and so let's take this
+[00:08:34 -> 00:08:36] linked list example that we saw which was the creation of a linked
+[00:08:36 -> 00:08:41] list using this for loop in this case we can say that the head pointer
+[00:08:42 -> 00:08:46] and let's say in our recency abstraction we use these parameters where N is
+[00:08:46 -> 00:08:52] equal to 2 which means I'm going to track two different classes of recent
+[00:08:52 -> 00:08:57] objects and K1 equals K2 equals 1 which means I'm going to say that you
+[00:08:57 -> 00:09:00] know what I'm going to keep track of the most recently allocated object
+[00:09:00 -> 00:09:05] the second most recently allocated object and all the objects allocated
+[00:09:05 -> 00:09:09] before the last two objects and that that will be the A last and if I draw
+[00:09:09 -> 00:09:13] the points to graph for this program notice that because I have now a
+[00:09:13 -> 00:09:20] finite set of abstract objects that is known at compile time I can I can draw
+[00:09:20 -> 00:09:25] this graph completely also I can I mean if I had some kind of analysis
+[00:09:25 -> 00:09:29] the best answer that I could get for this program is that head points to
+[00:09:29 -> 00:09:33] at you know at the end of this program head would point to the most
+[00:09:33 -> 00:09:40] recently allocated object which which I'm representing by A1 even an object
+[00:09:40 -> 00:09:47] of type A1 or an object in class A1 in abstract class A1 can may point to
+[00:09:47 -> 00:09:54] an object in class A2 so this is what this represents an object in
+[00:09:54 -> 00:10:02] class A2 may point to an object in class A last and an object in class
+[00:10:02 -> 00:10:08] A last may point to an object in class A last right so this is this is the at
+[00:10:08 -> 00:10:13] the picture the points to graph or the points to relationships between abstract
+[00:10:13 -> 00:10:17] objects for this particular program using the recency abstraction head may
+[00:10:17 -> 00:10:21] point to the most recently object allocated object the most recently
+[00:10:21 -> 00:10:24] allocated object may point to the second most recently allocated object
+[00:10:24 -> 00:10:28] through the next pointer the second most recently allocated object may point
+[00:10:28 -> 00:10:34] to an object in that belongs to the A last partition or class and and A last
+[00:10:34 -> 00:10:39] through its next pointer may point to another object within A last notice
+[00:10:39 -> 00:10:42] that we have you know when we do the subtraction we have lost some
+[00:10:42 -> 00:10:46] information for example here we are is you know this picture seems to say
+[00:10:46 -> 00:10:50] that it's possible for an object in A last class to point to itself
+[00:10:50 -> 00:10:54] whereas in the original program that was not possible you know an object
+[00:10:54 -> 00:10:57] cannot point to itself it can only point to another object but in this
+[00:10:57 -> 00:11:00] picture because we have abstracted out the concrete object into abstract
+[00:11:00 -> 00:11:04] object it seems like an object in A last may point to another object in A
+[00:11:04 -> 00:11:10] last which includes itself so so using this although abstraction helps us
+[00:11:10 -> 00:11:15] make the problem tractable it also introduces imprecision and and that
+[00:11:15 -> 00:11:22] can be seen in this example okay further while the recency abstraction
+[00:11:22 -> 00:11:26] worked well for a if the only program that was running or in the
+[00:11:26 -> 00:11:29] only function in the program was create list but let's say there was an
+[00:11:29 -> 00:11:33] other program called create tree that was going to create some nodes in a
+[00:11:33 -> 00:11:37] tree in some order and there was some parameter depending on which it will
+[00:11:37 -> 00:11:41] either create a tree of zero nodes one nodes two nodes etc and the main
+[00:11:41 -> 00:11:44] function let's say there was there were calls to these functions for
+[00:11:44 -> 00:11:50] example head equals create list and root equals create tree now because
+[00:11:50 -> 00:11:54] create tree may create any number of allocations and we cannot at compile
+[00:11:54 -> 00:11:59] time predict how many allocations create tree may make at the end of this
+[00:11:59 -> 00:12:05] program at this point at the end of this program the it's not clear where
+[00:12:05 -> 00:12:08] the head is pointing to the most recent allocation or is it pointing to
+[00:12:08 -> 00:12:13] the second most recent allocation or or or older allocations than the
+[00:12:13 -> 00:12:16] second most recent allocation because you know depending on how many
+[00:12:16 -> 00:12:21] allocations were made by create tree head may point to either the most so
+[00:12:21 -> 00:12:25] if for example create tree didn't make any allocation at all then head may
+[00:12:25 -> 00:12:30] point to a one the most recent allocation on the other hand if create
+[00:12:30 -> 00:12:38] tree made exactly one allocation then head may point to a two if create tree
+[00:12:38 -> 00:12:45] made more than one allocations then head may point all to a last and so
+[00:12:45 -> 00:12:50] it's not clear whether you know so so the graph the the points two
+[00:12:50 -> 00:12:54] relationships now become less precise because I mean because we using the
+[00:12:54 -> 00:12:59] allocate the recency abstraction because at compile time it may be impossible or
+[00:12:59 -> 00:13:03] undecidable to figure out how many nodes will create tree allocate and
+[00:13:03 -> 00:13:07] because of that it seems that head because of that imprecision the
+[00:13:07 -> 00:13:11] compile time analysis the main alias analysis may conservatively determine
+[00:13:11 -> 00:13:15] that hey head can point to or the main points to analysis make
+[00:13:15 -> 00:13:19] conservatively determine that head may point to a one or it may point to a
+[00:13:19 -> 00:13:25] two or it may point to a last and maybe because you know you through some
+[00:13:25 -> 00:13:28] analysis you are able to figure out that the last node that is allocated
+[00:13:28 -> 00:13:33] in create tree is the is the root node so you maybe the analysis is able to
+[00:13:33 -> 00:13:37] figure out that root still points to the most recently allocated object so
+[00:13:37 -> 00:13:41] root will point to a one either root will point to nothing in which case
+[00:13:41 -> 00:13:45] it's okay or it if it points to something then it will point to a one
+[00:13:45 -> 00:13:49] now this kind of a picture is less satisfactory than the picture that we had
+[00:13:49 -> 00:13:53] less in the previous figure because here we have lot we don't have the
+[00:13:53 -> 00:13:57] precision is much less in we I mean we are not able to reason about the
+[00:13:57 -> 00:14:02] fact that head you know the structure of the data structure is
+[00:14:02 -> 00:14:06] completely lost it seems like head can point anywhere A1 can point
+[00:14:06 -> 00:14:12] anywhere A2 can point anywhere and so on and this is this is not this is
+[00:14:12 -> 00:14:17] not you know this is not very precise and very useful for most applications so
+[00:14:17 -> 00:14:21] while the recency abstraction was one idea on how you could partition the
+[00:14:21 -> 00:14:26] object we've seen a weakness of the recency abstraction because sometimes
+[00:14:26 -> 00:14:30] it may not be possible to figure out how many allocations are
+[00:14:30 -> 00:14:34] happening in a particular piece it's a fragment of the program in which
+[00:14:34 -> 00:14:37] case you have to conservatively assume that any number of allocations
+[00:14:37 -> 00:14:41] may happen and that fragment of the program and that may cause spurious
+[00:14:41 -> 00:14:45] edges in the points to graph this this relationship between the points to
+[00:14:45 -> 00:14:51] relationships denoted by these edges is represented as is also called a
+[00:14:51 -> 00:14:56] points to graph where the node if a node in a points to graph points to
+[00:14:56 -> 00:15:01] another object then basically means that the value stored in that object
+[00:15:01 -> 00:15:05] for example in this case head may may have a pointer to an object of type
+[00:15:05 -> 00:15:10] A1 and similarly a value stored in A1 may have an a pointer to an object of
+[00:15:10 -> 00:15:16] class A last and so on okay so to resolve the problem of the recency
+[00:15:16 -> 00:15:22] abstraction here's another idea how about we use different types depending
+[00:15:22 -> 00:15:27] on the type of the allocation we group the different allocations into
+[00:15:27 -> 00:15:31] different abstract objects so for example all the objects of type L
+[00:15:31 -> 00:15:37] node will be called will be represented by abstract object L node and all the
+[00:15:37 -> 00:15:42] allocations of type T node which is T node represents in tree node for the
+[00:15:42 -> 00:15:46] create tree function that are not shown although we'll have a separate
+[00:15:46 -> 00:15:49] abstract class called T node that represents all the concrete objects
+[00:15:49 -> 00:15:54] that are allocated for T node at runtime now if we use the type
+[00:15:54 -> 00:15:59] abstraction this this this it becomes much the the the points to
+[00:15:59 -> 00:16:04] graph for this program becomes much much better because it seems like head
+[00:16:04 -> 00:16:10] may point to L node but head will not point will never point to T node
+[00:16:10 -> 00:16:15] further in L node through the next pointer may point to itself similarly
+[00:16:15 -> 00:16:18] the root may point to T node and the T node through the left and right
+[00:16:18 -> 00:16:23] pointers may point to other objects in the class T node but neither T
+[00:16:23 -> 00:16:28] node may point to L node not not L node may point to T node head may
+[00:16:28 -> 00:16:32] not point to L node and root will not point to L node. Head will not point to
+[00:16:32 -> 00:16:36] T node and root will not point to L node. so this is a, this is much better
+[00:16:36 -> 00:16:39] information than what we had in the previous points to graph. in the
+[00:16:39 -> 00:16:42] previous points to graph it seemed like both head and root may point to
+[00:16:42 -> 00:16:45] the same thing here at least we have this information that head will not
+[00:16:45 -> 00:16:49] point to the same thing as root or in other words head and root will not
+[00:16:49 -> 00:16:53] alias at runtime through this type of abstraction however none of these
+[00:16:53 -> 00:16:57] abstractions are perfect for example even in the type abstraction let's
+[00:16:57 -> 00:17:01] Let's take an example where the type abstraction actually does not work that well.
+[00:17:01 -> 00:17:06] So let's say I have these statements x equals new capital X and y equals new capital Y.
+[00:17:06 -> 00:17:10] Now because these two are different, capital X and capital Y are different types, I'll
+[00:17:10 -> 00:17:15] have different abstract objects, capital X and capital Y in my set of abstract objects.
+[00:17:15 -> 00:17:17] And my points to graph would look something like this.
+[00:17:17 -> 00:17:25] So if I do x.f equals y, that would basically mean that inside the object small x, I
+[00:17:25 -> 00:17:29] have a pointer to an object y, which is of type capital Y.
+[00:17:29 -> 00:17:35] So which means that small x, first of all, may point to an object of type capital X.
+[00:17:35 -> 00:17:40] Small y may point to an object of type capital Y because of these two new statements.
+[00:17:40 -> 00:17:47] And finally, because of this statement x.f equals y, a pointer inside capital X, an
+[00:17:47 -> 00:17:54] object of type capital X or an object of class capital X may have a pointer to an
+[00:17:54 -> 00:17:56] object of class capital Y.
+[00:17:56 -> 00:17:58] And that pointer may be stored in the field f.
+[00:17:58 -> 00:18:02] That information is not shown in the points to graph.
+[00:18:02 -> 00:18:08] But the point is that a pointer inside an object of abstract class X may contain
+[00:18:08 -> 00:18:12] a pointer to an object that belongs to the abstract class Y.
+[00:18:12 -> 00:18:15] And that's what this edge here represents.
+[00:18:15 -> 00:18:18] Now this is what the type abstraction gives me for this program.
+[00:18:18 -> 00:18:20] But let me make this program slightly different.
+[00:18:20 -> 00:18:27] So let's say I create another variable z of the same type capital Y as the
+[00:18:27 -> 00:18:30] original variable small y.
+[00:18:30 -> 00:18:37] And in this case, once again, because I use the type-based abstraction, it
+[00:18:37 -> 00:18:41] seems like small z can point to an object of type capital Y.
+[00:18:41 -> 00:18:43] So I'm drawing edge from z to capital Y.
+[00:18:43 -> 00:18:47] And let's say at some other point in the program, I say z equals new capital
+[00:18:48 -> 00:18:50] And capital Z is, let's say, a different type.
+[00:18:50 -> 00:18:54] Maybe one is a derived type and one is a base type or something like that.
+[00:18:54 -> 00:18:59] In which case, small z may point either to an object of class capital Z or it may
+[00:18:59 -> 00:19:01] point to an object of class capital Y.
+[00:19:01 -> 00:19:05] And this is what a points to graph looks like in this example.
+[00:19:05 -> 00:19:09] Now, notice that this points to graph has an imprecision already because it seems
+[00:19:09 -> 00:19:13] like both y and z may point to the same object.
+[00:19:13 -> 00:19:19] In other words, star y and star z may alias because they may point to the same object.
+[00:19:19 -> 00:19:24] Whereas, if you look at the original program, it's very clear that there's
+[00:19:24 -> 00:19:29] nowhere in the program where z is being assigned the same, where we're
+[00:19:29 -> 00:19:33] basically assigning the same pointer in z, which was actually held in y.
+[00:19:33 -> 00:19:40] And so this is an imprecision in the points to graph.
+[00:19:40 -> 00:19:44] And this imprecision is largely arising because of the abstraction that we have made,
+[00:19:44 -> 00:19:45] which is the type abstraction.
+[00:19:45 -> 00:19:49] Now, how does this make things hard?
+[00:19:49 -> 00:19:53] Because let's say there was another statement called z dot dot g equals x.
+[00:19:53 -> 00:19:59] So in other words, whatever is z pointing to, in this case, z may point to y or z.
+[00:19:59 -> 00:20:04] Now, that can contain a pointer to x, which means an object in type y,
+[00:20:04 -> 00:20:08] because z can point to y, can now contain a pointer to x.
+[00:20:08 -> 00:20:11] And an object of type z can now contain a pointer to x.
+[00:20:11 -> 00:20:18] So these edges from y to x and z to x represent the possibilities created
+[00:20:18 -> 00:20:23] by this statement, z dot g equals x.
+[00:20:23 -> 00:20:28] Once again, these are imprecisions because, after all, z couldn't have alias with capital,
+[00:20:28 -> 00:20:33] z couldn't have pointed to capital, you know, to the same object at small y.
+[00:20:33 -> 00:20:38] And now it seems like through y, I can reach capital X,
+[00:20:38 -> 00:20:42] whereas, actually, in the program, I can reach capital X through z,
+[00:20:42 -> 00:20:44] but never through y.
+[00:20:44 -> 00:20:50] And so these imprecisions are an artifact of the type abstraction.
+[00:20:50 -> 00:20:55] Similarly, if I have another statement said z dot f equals y,
+[00:20:55 -> 00:21:00] then it seems like small z is pointing to capital Z.
+[00:21:00 -> 00:21:02] So capital Z can point to capital Y.
+[00:21:02 -> 00:21:06] And because small z is also pointing to capital Y, capital Y can point to itself, and so on.
+[00:21:06 -> 00:21:10] And the more the edges in the points to graph,
+[00:21:10 -> 00:21:12] the less imprecise the points to graph is.
+[00:21:12 -> 00:21:15] I mean, ideally, the best points to graph is the points to graph
+[00:21:15 -> 00:21:17] which has as few edges as possible.
+[00:21:17 -> 00:21:21] Of course, the analysis is still sound, but still needs to remain sound.
+[00:21:21 -> 00:21:24] But the fewer the edges, the more precise the analysis.
+[00:21:24 -> 00:21:27] And it seems like we're adding a lot of spurious edges
+[00:21:27 -> 00:21:31] because of the type abstraction in this example.
+[00:21:31 -> 00:21:34] On the other hand, instead of a type abstraction,
+[00:21:34 -> 00:21:38] I used another scheme to create this object abstraction.
+[00:21:38 -> 00:21:41] And this scheme is called the allocation site abstraction.
+[00:21:41 -> 00:21:44] In the allocation site abstraction, for each statement in the program,
+[00:21:44 -> 00:21:46] I label it with the corresponding PC.
+[00:21:46 -> 00:21:51] So let's say this allocation site is PC1, this allocation site is PC2,
+[00:21:51 -> 00:21:55] this allocation site is PC4, z equals nu y.
+[00:21:55 -> 00:22:00] Notice that even though they are both allocating an object of the same type,
+[00:22:00 -> 00:22:03] the allocation sites of the fourth statement
+[00:22:03 -> 00:22:07] and the second statement are different because the PCs are different.
+[00:22:07 -> 00:22:12] And similarly, z equals nu capital Z is an allocation site 7.
+[00:22:12 -> 00:22:16] So my points to graph now looks very different for the same program,
+[00:22:16 -> 00:22:18] but with the allocation site abstraction.
+[00:22:18 -> 00:22:23] Here, what I do is I say, because any object that is allocated at PC1
+[00:22:23 -> 00:22:29] is represented by abstract object 1, and small x can point to 1,
+[00:22:29 -> 00:22:37] small y can point to an abstracted object 2.
+[00:22:37 -> 00:22:43] Because of x.f equals y, because x can point to an allocation site 1 object,
+[00:22:43 -> 00:22:47] so 1 can now point to 2, and y can point to 2 an allocation site 2 object.
+[00:22:47 -> 00:22:51] Because of x.f equals y, we can say that 1 can point to 2.
+[00:22:51 -> 00:22:55] And say z equals nu y, so that means z can now point to an allocation site 4.
+[00:22:55 -> 00:22:59] Now, this is the place where the precision improvement happens.
+[00:22:59 -> 00:23:05] Earlier in the type abstraction, z could have pointed either to 4 or either to,
+[00:23:05 -> 00:23:10] now z was pointing to y, which was also pointed to by small y.
+[00:23:10 -> 00:23:13] But in this allocation site abstraction, z is pointing to 4,
+[00:23:13 -> 00:23:15] while small y is pointing to 2.
+[00:23:15 -> 00:23:19] And it's clear that z, whatever star z is, it cannot alias with star y
+[00:23:19 -> 00:23:24] because they're pointing to different abstract objects.
+[00:23:24 -> 00:23:27] So the allocation site abstraction seems more precise
+[00:23:27 -> 00:23:30] than the type abstraction in this example.
+[00:23:30 -> 00:23:35] Similarly, when we say z.g equals x, so whatever z is pointing to, which is 4,
+[00:23:35 -> 00:23:38] can point to whatever x is pointing to, which is 1.
+[00:23:38 -> 00:23:40] So we draw an edge from 4 to 1.
+[00:23:40 -> 00:23:45] And say z.f equals y, so once again, 4 can point to 2 this time
+[00:23:45 -> 00:23:51] because z can point to 4 and y can point to 2, so z 4 can point to 2.
+[00:23:51 -> 00:23:52] And then say z equals nu capital Z.
+[00:23:53 -> 00:23:58] Because z equals nu capital Z, this is the seventh allocation site number 7.
+[00:23:58 -> 00:24:01] So now z can point to 7.
+[00:24:01 -> 00:24:09] And now because of these statements, because z.g equals x and z.f equals y,
+[00:24:09 -> 00:24:13] once I say that z points to 7, then I also need to consider these statements.
+[00:24:13 -> 00:24:18] And I'm going to use a fixed point algorithm, a DFL algorithm,
+[00:24:18 -> 00:24:23] to figure this out, that if z can point to 7 and z.g equals x,
+[00:24:23 -> 00:24:27] which means whatever z can point to can point to whatever x can point to,
+[00:24:27 -> 00:24:28] then 7 can point to 1.
+[00:24:28 -> 00:24:33] And similarly, 7 can point to 2 because of z.f equals y.
+[00:24:33 -> 00:24:36] And this is the final points to a graph that is obtained
+[00:24:36 -> 00:24:37] by an allocation site abstraction.
+[00:24:37 -> 00:24:40] We're going to see an algorithm to draw these points to graphs
+[00:24:40 -> 00:24:42] automatically later on.
+[00:24:42 -> 00:24:47] But in this module, I'm primarily interested in identifying
+[00:24:47 -> 00:24:50] the different abstractions and their trade-offs.
+[00:24:50 -> 00:24:53] So for this example, the type abstraction is less precise
+[00:24:53 -> 00:24:56] because it introduces more edges than the allocation site abstraction,
+[00:24:56 -> 00:25:03] which has less edges and better or less.
+[00:25:03 -> 00:25:06] I guess I can't directly compare the number of edges
+[00:25:06 -> 00:25:09] because the number of abstract objects is also different in the two cases.
+[00:25:09 -> 00:25:15] But less aliasing relationships are possible in this points to graph
+[00:25:15 -> 00:25:16] than in this points to graph.
+[00:25:17 -> 00:25:20] For example, in this points to graph, star y cannot alias with star z,
+[00:25:20 -> 00:25:27] whereas in this points to graph, star y can alias with star z.
+[00:25:27 -> 00:25:31] Finally, for our linked list example,
+[00:25:31 -> 00:25:33] if I use the allocation site abstraction,
+[00:25:33 -> 00:25:36] then there were at least two allocation sites.
+[00:25:36 -> 00:25:40] One was the allocation site that was allocating an L node for create list.
+[00:25:40 -> 00:25:44] And there was another allocation site that may be a part
+[00:25:44 -> 00:25:47] of the create tree function that's allocating the tree node.
+[00:25:47 -> 00:25:49] And if I use the allocation site abstraction,
+[00:25:49 -> 00:25:52] the points to graph looks something like this.
+[00:25:52 -> 00:25:55] Head may point to an object allocated at allocation site one,
+[00:25:55 -> 00:25:58] and an object allocated at allocation site one
+[00:25:58 -> 00:26:00] may point to itself through the next pointer.
+[00:26:00 -> 00:26:04] Similarly, the root may point to an object of allocation site two,
+[00:26:04 -> 00:26:06] and an object of allocation site two
+[00:26:06 -> 00:26:08] may point to itself through the next pointer.
+[00:26:08 -> 00:26:11] And once again, this looks like a nice neat graph
+[00:26:11 -> 00:26:13] that allows us to reason about several aliasing
+[00:26:13 -> 00:26:15] and points to relationships,
+[00:26:15 -> 00:26:17] and rule out several may point to relationships.
+[00:26:17 -> 00:26:21] And so the allocation site abstraction works well for this example
+[00:26:21 -> 00:26:23] where there's both a list and a tree,
+[00:26:23 -> 00:26:28] unlike the recency abstraction, which didn't work that well.
+[00:26:28 -> 00:26:29] Here's another example.
+[00:26:29 -> 00:26:34] Let's say the create list function was called twice.
+[00:26:34 -> 00:26:37] Here's an example where the allocation site abstraction
+[00:26:37 -> 00:26:40] actually creates more imprecision than desirable.
+[00:26:40 -> 00:26:44] So because both head and head two are calling the same function
+[00:26:44 -> 00:26:47] to create the list, there's only one allocation site
+[00:26:47 -> 00:26:50] that's basically representing both the lists
+[00:26:51 -> 00:26:54] created by both the functions, both the function calls.
+[00:26:54 -> 00:26:57] And so it seems like HD may point to one,
+[00:26:57 -> 00:26:58] and one may point to itself,
+[00:26:58 -> 00:27:00] but also HD two may point to one,
+[00:27:00 -> 00:27:01] and one may point to itself.
+[00:27:01 -> 00:27:04] Whereas root may still point to only objects
+[00:27:04 -> 00:27:06] and allocated at allocation site two.
+[00:27:06 -> 00:27:09] Now this allocation site abstraction based points to graph
+[00:27:09 -> 00:27:12] is still better than the recency based
+[00:27:13 -> 00:27:17] points to graph, but it has imprecisions.
+[00:27:17 -> 00:27:20] For example, it seems to imply that star head may alias
+[00:27:20 -> 00:27:21] with star head two,
+[00:27:21 -> 00:27:24] whereas we can see from the code that that's not true.
+[00:27:24 -> 00:27:28] So, you know, allocation site is working better
+[00:27:28 -> 00:27:31] for the example that we have discussed so far,
+[00:27:31 -> 00:27:32] but even it has imprecisions,
+[00:27:32 -> 00:27:34] and we've seen one example of an imprecision.
+[00:27:34 -> 00:27:37] We're going to see ways to get rid
+[00:27:37 -> 00:27:39] of these imprecisions later on.
+[00:27:39 -> 00:27:41] In general, it is possible to combine
+[00:27:41 -> 00:27:43] the multiple abstractions.
+[00:27:43 -> 00:27:45] For example, you can have, for example,
+[00:27:45 -> 00:27:48] the type abstraction may create a set of abstract objects,
+[00:27:48 -> 00:27:50] a1 dot dot an.
+[00:27:51 -> 00:27:54] Let's say an allocation site abstraction may create
+[00:27:54 -> 00:27:56] yet another set of abstract objects,
+[00:27:56 -> 00:27:58] let's say b1 dot dot bm.
+[00:27:58 -> 00:28:00] Then you can take a Cartesian product of them,
+[00:28:00 -> 00:28:03] and that would be the total number of abstract objects
+[00:28:03 -> 00:28:05] to potentially get more precision
+[00:28:05 -> 00:28:08] than any single abstraction.
+[00:28:08 -> 00:28:09] As long as we obey the discipline
+[00:28:09 -> 00:28:14] that the total number of abstract objects is finite,
+[00:28:15 -> 00:28:17] any abstraction is okay.
+[00:28:17 -> 00:28:18] Of course, there's a trade-off
+[00:28:18 -> 00:28:23] between how many abstract objects we want to create,
+[00:28:23 -> 00:28:23] even though they're finite,
+[00:28:23 -> 00:28:25] if we take Cartesian products,
+[00:28:25 -> 00:28:28] they can become exponential very quickly,
+[00:28:28 -> 00:28:29] and the precision,
+[00:28:29 -> 00:28:31] so the more the abstract objects,
+[00:28:31 -> 00:28:33] maybe you can get better precision,
+[00:28:33 -> 00:28:35] but at the cost of higher run time
+[00:28:35 -> 00:28:37] of the points to analysis.

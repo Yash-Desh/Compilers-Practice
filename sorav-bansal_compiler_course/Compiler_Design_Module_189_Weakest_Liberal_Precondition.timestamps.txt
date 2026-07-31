@@ -1,0 +1,129 @@
+Title: Compiler Design Module 189 : Weakest Liberal Precondition
+Video ID: oI1n1cBVhao
+Detected language: en
+------------------------------------------------------------
+
+[00:00:00 -> 00:00:05] we've been looking at the weakest precondition predicate transformer and let's step back a little
+[00:00:05 -> 00:00:12] bit to before we discuss the weakest precondition rules for other constructs such as loops and other
+[00:00:12 -> 00:00:19] things, let's step back a little bit and try to visit again what are the semantics of this
+[00:00:19 -> 00:00:28] weakest precondition or precondition. So given a program or statement S and a post condition R,
+[00:00:28 -> 00:00:35] we are interested in finding some predicate such that if this predicate is true and S executes
+[00:00:35 -> 00:00:43] then R holds but more precisely the precondition is the condition or predicate just prior to the
+[00:00:43 -> 00:00:50] execution of S such that when S executes then R holds but this the statement is a little bit
+[00:00:50 -> 00:00:55] ambiguous so we need to define it more carefully and that's what we do in the next slide.
+[00:00:55 -> 00:01:03] So one option is if when S executes and it terminates such that the control reaches just
+[00:01:03 -> 00:01:09] after S so if S terminates where terminates basically means it S completes execution and
+[00:01:09 -> 00:01:17] control reaches the program counter value just after S then R holds so that one option for
+[00:01:17 -> 00:01:23] precondition could be the condition just prior to the execution of S such that if S terminates
+[00:01:23 -> 00:01:30] then R holds this is option one. What is option two? Option two is the condition just prior to
+[00:01:30 -> 00:01:37] the execution of S such that S terminates and R holds so option one is saying if S terminates
+[00:01:37 -> 00:01:44] then R holds option two is saying the condition under which S definitely terminates and R holds
+[00:01:44 -> 00:01:51] so the option two is also kind of constraining the conditions to be such that S definitely
+[00:01:51 -> 00:01:57] terminates which means S completes execution and reaches the PC just after S and so these are
+[00:01:57 -> 00:02:04] the two different ways of defining preconditions and both are valid ways they actually define
+[00:02:04 -> 00:02:11] different correctness criteria the first one is basically the whole triple for partial correctness
+[00:02:11 -> 00:02:15] and this is something that we have discussed earlier as well when we define partial correctness
+[00:02:16 -> 00:02:22] if the execution terminates then this holds and that's exactly the partial correctness
+[00:02:22 -> 00:02:29] definition or meaning and so the option one corresponds exactly to the condition for partial
+[00:02:29 -> 00:02:35] correctness option two says S terminates and R holds so that's actually the condition for
+[00:02:35 -> 00:02:40] total correctness which means that this statement S or this program S actually terminates
+[00:02:40 -> 00:02:44] for sure terminates which means it completes execution reaches the PC just after S
+[00:02:45 -> 00:02:51] and to distinguish partial correctness from total correctness we kind of have a different
+[00:02:51 -> 00:02:56] notation for the corresponding whole triple in the partial correctness whole triple we were using
+[00:02:56 -> 00:03:02] these braces these curly braces for the precondition and the post condition for total
+[00:03:02 -> 00:03:07] correctness we're going to use these square brackets for both for the precondition and the
+[00:03:07 -> 00:03:14] post condition all right so to summarize basically option one is if S terminates then R
+[00:03:14 -> 00:03:19] holds and this is the partial correctness condition and option two is S terminates and
+[00:03:19 -> 00:03:22] R holds and this is the total correctness condition and the total correctness condition
+[00:03:22 -> 00:03:29] is also represented as using a whole triple with square brackets something like this all
+[00:03:29 -> 00:03:39] right so this condition this precondition that is for partial correctness which means option one
+[00:03:40 -> 00:03:46] is going to be different from the precondition for option two and so we need to distinguish it
+[00:03:46 -> 00:03:52] when we talk about weakest preconditions and things like that and for this reason we actually
+[00:03:52 -> 00:03:58] now define two different values one is the weakest precondition which corresponds to total
+[00:03:58 -> 00:04:03] correctness and the other is weakest liberal precondition which corresponds to partial
+[00:04:03 -> 00:04:09] correctness and we're going to see some examples of where weakest liberal precondition would be
+[00:04:09 -> 00:04:16] different from weakest precondition the first point i want to point out is that
+[00:04:16 -> 00:04:20] weakest precondition is going to be a stronger condition than weakest liberal precondition
+[00:04:20 -> 00:04:26] and that's easy to see because weakest precondition requires a stronger post condition
+[00:04:27 -> 00:04:33] weakest precondition requires that S terminates and R holds whereas weakest linear precondition
+[00:04:33 -> 00:04:39] requires a weaker post condition which is if S terminates then R should hold if S does not
+[00:04:39 -> 00:04:44] terminate then I don't really care and so weakest linear precondition correspondingly is
+[00:04:44 -> 00:04:48] going to be weaker than weakest precondition the other way to kind of say this is that
+[00:04:48 -> 00:04:57] weakest precondition for any statement and post condition S and R respectively WP will imply
+[00:04:57 -> 00:05:05] WLP if I write it in the Venn diagram set notation then WP represents a smaller space
+[00:05:05 -> 00:05:12] and WLP represents a larger space and this represents the fact that WP implies WLP all right
+[00:05:12 -> 00:05:18] so how do I what should be my rules I mean so far I've been talking about
+[00:05:18 -> 00:05:24] weakest precondition all the way but now I have introduced two different preconditions one is
+[00:05:24 -> 00:05:31] WP and the other is WLP for total correctness and partial correctness respectively and so how
+[00:05:31 -> 00:05:36] do my rules that have discussed so far change the good news is that the rules that I've
+[00:05:36 -> 00:05:44] discussed so far do not change so for example for the skip instruction it's the same thing
+[00:05:44 -> 00:05:55] WP skip R equals R WLP skip R equals R assignment WP X colon equals E comma R is just R with X
+[00:05:55 -> 00:06:03] replaced by E and similarly WLP is identical when I come to sequence so WP S1 semicolon
+[00:06:03 -> 00:06:14] S2 comma R equals WP S1 comma WP S2 comma R similarly WLP S1 semicolon S2 comma R is WLP
+[00:06:14 -> 00:06:20] S1 comma WLP S2 comma R so really nothing has changed but notice that there is a subtle thing
+[00:06:20 -> 00:06:27] here WP on the right hand side I mean for W to define WP on the sequence I also use WP
+[00:06:27 -> 00:06:34] on the individual statements on the right hand side similarly when I define WLP then I use WLP
+[00:06:34 -> 00:06:40] on the individual statements on the right hand side so far WP and WP are identical but later on
+[00:06:40 -> 00:06:45] we're going to discuss some constructs such as loops where WP and WLP will be different in which
+[00:06:45 -> 00:06:52] case a sequence which involves a loop would involve would give a different result for WLP
+[00:06:52 -> 00:06:58] and a different result for WP and similarly the final rule is for if then else or conditional
+[00:06:58 -> 00:07:04] and these two rules are also identical and it's not hard to see that all these kind of
+[00:07:04 -> 00:07:12] constructs that we've discussed with skip assignment sequence and conditional they are
+[00:07:12 -> 00:07:17] terminating constructs in the sense that if S1 for example if I look at sequence firstly
+[00:07:17 -> 00:07:22] assignment is terminating because you know I'm guaranteed that this execution of this
+[00:07:22 -> 00:07:26] atomic statement assignment statement will terminate in the sense that it will complete
+[00:07:26 -> 00:07:31] execution and the control will reach the end of the statement for sure because just an assignment
+[00:07:31 -> 00:07:38] similarly conditional is a terminating statement sequence assuming S1 and S2 are
+[00:07:38 -> 00:07:43] terminating statements then the sequence of them would also be terminating and so it's not
+[00:07:43 -> 00:07:49] hard to see that you know the rules will be identical because whether you talk about total
+[00:07:49 -> 00:07:53] correctness where we say oh it definitely terminates and our holds or you talk about
+[00:07:55 -> 00:08:00] partial correctness which says if it terminates then our holds you know at least because of
+[00:08:00 -> 00:08:05] this particular construct that we have we have looked at for example sequence or if then else
+[00:08:05 -> 00:08:11] or assignment or skip it doesn't because it always terminates the two definitions are
+[00:08:11 -> 00:08:18] identical assuming the kind of sub statements also terminate and you know we are basically
+[00:08:18 -> 00:08:22] relying if the substatements didn't terminate then that's what's captured by the fact
+[00:08:22 -> 00:08:30] then for WP we are using WP of the substatements like S1 and S2 for WP and similarly for WLP we
+[00:08:30 -> 00:08:35] are using WLP for the substatements all right so now we're going to look at the first
+[00:08:35 -> 00:08:42] example where WP and WLP diverge and that's the abort statement so let's say in my program
+[00:08:42 -> 00:08:46] I have just like I had a skip instruction the skip skip statement I have the abort statement
+[00:08:46 -> 00:08:51] the abort statement basically just aborts the program and that means that the control doesn't
+[00:08:51 -> 00:08:57] reach the end of the statement because the program is just aborted and so abort can be is
+[00:08:57 -> 00:09:03] basically by our definition of termination a non-terminating instruction and so by that
+[00:09:03 -> 00:09:10] definition WP abort R for any post condition R is just false because no matter what pre-condition
+[00:09:10 -> 00:09:17] you use abort is never going to terminate and so the strong I mean so the only answer
+[00:09:17 -> 00:09:22] for the pre-condition the weakest pre-condition for total correctness is false on the other
+[00:09:22 -> 00:09:30] hand W the weakest liberal pre-condition WLP for abort for any post condition is true because
+[00:09:30 -> 00:09:37] recall the WLP says that if it terminates then R holds if it does not terminate then I don't
+[00:09:37 -> 00:09:43] care and so in this case by irrespective of what R is it will never terminate and and if
+[00:09:43 -> 00:09:48] it doesn't terminate then this WLP is vacuously true because if it doesn't terminate I don't need
+[00:09:48 -> 00:09:52] to have any condition on it and so you can use any pre-condition and it you know it
+[00:09:52 -> 00:09:56] will be true that it will be partially correct this is the same thing that we discussed while
+[00:09:56 -> 00:10:02] we were discussing partial correctness so let's look at an example to see this in action
+[00:10:02 -> 00:10:08] so let's say I have my assignment statement called x colon equals y by z notice that I'm
+[00:10:08 -> 00:10:14] using the division operator on my RHS and the post condition that I'm interested in checking is
+[00:10:14 -> 00:10:20] that y equals x star z after this execution and you can see that for well-behaved values
+[00:10:20 -> 00:10:26] of x y z this post condition should hold and so I mean it's the same statement which is the
+[00:10:27 -> 00:10:34] assignment to a division of y by z to x and the same post condition is y equals x star z but
+[00:10:34 -> 00:10:37] what is the weakest pre-condition and what's the weakest linear pre-condition
+[00:10:38 -> 00:10:43] in this syntax I'm assuming that divide by zero causes the program to abort so if you
+[00:10:43 -> 00:10:48] divide by zero it causes the program to abort I mean this is different from for example the
+[00:10:48 -> 00:10:52] C language where divide by zero is undefined behavior which means anything can happen but
+[00:10:52 -> 00:10:57] anything can happen includes abort but it also includes other things which says okay maybe
+[00:10:57 -> 00:11:02] terminates and then it goes to the next thing in which case WP and WLP would have behaved
+[00:11:02 -> 00:11:08] differently but in this example that I'm going to show to motivate you know why WP
+[00:11:08 -> 00:11:13] and WLP will be different for this case I'm assuming that divide by zero actually
+[00:11:14 -> 00:11:20] you know for sure causes program abort which means it you know this if z was zero then the
+[00:11:20 -> 00:11:28] statement does not terminate so what is the answer for this thing now of course I can
+[00:11:28 -> 00:11:33] basically I should be applying my assignment rule and things like that but now for weakest
+[00:11:33 -> 00:11:41] pre-condition I also need to check that the program does not abort because if it aborts then
+[00:11:41 -> 00:11:49] it's going to not terminate on the other hand for the weakest linear pre-condition I don't need
+[00:11:49 -> 00:11:53] to do any such check so that's the difference between partial correctness and total correctness
+[00:11:53 -> 00:11:59] in WP I need to additionally check that s terminates and so although I haven't really
+[00:11:59 -> 00:12:04] discussed how I am going to check whether s terminates or not intuitively basically what
+[00:12:04 -> 00:12:08] happens is that for the weakest linear pre-condition any the weakest linear
+[00:12:09 -> 00:12:14] liberal pre-condition here is true whereas the weakest pre-condition is that z is not equal to
+[00:12:14 -> 00:12:20] zero because for weakest pre-condition I also need to ensure that the program actually completes
+[00:12:20 -> 00:12:25] successfully or terminates on the other hand for weakest linear pre-condition I don't need
+[00:12:25 -> 00:12:29] to do that and so for this particular statement where we assume that divide by zero causes
+[00:12:29 -> 00:12:36] abort WP and WLP are different WP is needs to ensure that z is not equal to zero whereas
+[00:12:36 -> 00:12:45] WLP has no such constraint and you can see that WP is a stronger condition than WLP.

@@ -1,0 +1,292 @@
+Title: Compiler Design Module 13 : Derivation Tree and Order
+Video ID: sOs_POC9tvc
+Detected language: en
+------------------------------------------------------------
+
+[00:00:00 -> 00:00:04] We're going to study more about CFGs today.
+[00:00:04 -> 00:00:06] So recall that for a context-free grammar,
+[00:00:06 -> 00:00:09] there is a corresponding meaning to it,
+[00:00:09 -> 00:00:12] which is the context-free language that it represents.
+[00:00:12 -> 00:00:15] And given a string, we are interested in knowing
+[00:00:15 -> 00:00:17] whether that string belongs to that language or not.
+[00:00:17 -> 00:00:21] So that's a membership query.
+[00:00:21 -> 00:00:23] And a parser is supposed to tell us
+[00:00:23 -> 00:00:27] whether a string belongs to a context-free language or not.
+[00:00:27 -> 00:00:29] But that's not all.
+[00:00:30 -> 00:00:34] If it does, then it should also produce a parse tree,
+[00:00:34 -> 00:00:39] which represents the meaning of that particular sentence
+[00:00:39 -> 00:00:42] or statement or expression, depending
+[00:00:42 -> 00:00:43] on what is the context.
+[00:00:43 -> 00:00:46] And if no, then there should be some error handling
+[00:00:46 -> 00:00:47] mechanism, right?
+[00:00:47 -> 00:00:51] So if that string is not a valid legal sentence
+[00:00:51 -> 00:00:54] in that particular context-free language,
+[00:00:54 -> 00:00:56] because the context-free grammar cannot produce
+[00:00:56 -> 00:01:01] that particular sentence or string or sequence of tokens,
+[00:01:01 -> 00:01:04] then either we can just say that, OK, it does not belong,
+[00:01:04 -> 00:01:06] which would be just saying parse error
+[00:01:06 -> 00:01:08] and returning to the user.
+[00:01:08 -> 00:01:10] Or a better error handling would be to basically tell
+[00:01:10 -> 00:01:13] the user that, OK, this is where the problem occurred
+[00:01:13 -> 00:01:15] and this is where I failed.
+[00:01:15 -> 00:01:17] And even better response would be to tell the user
+[00:01:17 -> 00:01:20] that this is where it failed and then try to recover
+[00:01:20 -> 00:01:23] from there and continue and parse the rest of the program
+[00:01:23 -> 00:01:25] so that multiple errors can be reported
+[00:01:25 -> 00:01:31] to the user or the developer in one go.
+[00:01:31 -> 00:01:34] There exist automated tools to do this.
+[00:01:34 -> 00:01:39] For example, there is the well-known Bison parser
+[00:01:39 -> 00:01:40] available.
+[00:01:40 -> 00:01:43] So this particular tool basically,
+[00:01:43 -> 00:01:47] or any parsing tool like Bison,
+[00:01:47 -> 00:01:50] requires an input context-free grammar
+[00:01:50 -> 00:01:53] that the user is going to program into the system.
+[00:01:53 -> 00:01:55] For example, the context-free grammar
+[00:01:55 -> 00:01:57] that we saw for the C programming language
+[00:01:57 -> 00:01:59] in the previous module.
+[00:01:59 -> 00:02:04] And this tool is going to emit a parser implementation.
+[00:02:04 -> 00:02:06] Parser implementation is a program
+[00:02:06 -> 00:02:09] that can take as input a string
+[00:02:09 -> 00:02:12] and return either a parse tree,
+[00:02:12 -> 00:02:13] if that string belongs to the language
+[00:02:13 -> 00:02:15] represented by the context-free grammar
+[00:02:15 -> 00:02:19] or produce the appropriate error handling logic.
+[00:02:21 -> 00:02:23] All right, so once again,
+[00:02:24 -> 00:02:28] the automated tools exist,
+[00:02:28 -> 00:02:32] which basically take as input a context-free grammar,
+[00:02:32 -> 00:02:35] which includes terminals, non-terminals, productions,
+[00:02:35 -> 00:02:39] start symbol, and emit an implementation of a parser
+[00:02:39 -> 00:02:43] that will basically check whether any input string
+[00:02:43 -> 00:02:47] belongs to this particular language or not.
+[00:02:47 -> 00:02:50] Okay, now we're going to study
+[00:02:50 -> 00:02:53] how these tools potentially do that.
+[00:02:53 -> 00:02:57] What are some algorithms that can help us produce,
+[00:02:57 -> 00:03:01] figure out whether a string belongs to the language or not,
+[00:03:01 -> 00:03:04] or more accurately,
+[00:03:04 -> 00:03:05] tools that will generate a parse tree
+[00:03:05 -> 00:03:08] from a sequence of tokens.
+[00:03:08 -> 00:03:09] But before we do that,
+[00:03:09 -> 00:03:11] let's understand a little bit more
+[00:03:11 -> 00:03:13] about CFGs, context-free grammars.
+[00:03:13 -> 00:03:17] First of all, many grammars generate the same language.
+[00:03:17 -> 00:03:18] So here is an example.
+[00:03:18 -> 00:03:21] Let's say there's a production
+[00:03:21 -> 00:03:25] which says E can produce E plus E.
+[00:03:25 -> 00:03:27] This is some example that you've already seen.
+[00:03:27 -> 00:03:30] Now there's another way to write this particular production.
+[00:03:30 -> 00:03:33] I could split this into two productions,
+[00:03:33 -> 00:03:35] introduce a new non-terminal F,
+[00:03:35 -> 00:03:38] and say E produces EF,
+[00:03:38 -> 00:03:41] and F produces plus E.
+[00:03:41 -> 00:03:45] Now you can see that the two are pretty much equivalent.
+[00:03:45 -> 00:03:47] I'm just splitting the job
+[00:03:47 -> 00:03:51] of producing the right-hand side in the first case
+[00:03:51 -> 00:03:54] to two steps in the second case.
+[00:03:54 -> 00:03:56] And so both these grammars are likely to,
+[00:03:56 -> 00:03:59] are going to be equivalent in the languages
+[00:03:59 -> 00:04:00] that they represent.
+[00:04:00 -> 00:04:02] And so, in other words,
+[00:04:02 -> 00:04:04] so this is an example which shows
+[00:04:04 -> 00:04:06] that you could represent your grammar
+[00:04:06 -> 00:04:08] in any way which you like.
+[00:04:08 -> 00:04:12] They could be significantly different grammars
+[00:04:12 -> 00:04:15] that actually represent the same context-free language.
+[00:04:17 -> 00:04:19] Also, this has an implication
+[00:04:19 -> 00:04:21] because parsing tools are sometimes sensitive
+[00:04:21 -> 00:04:23] to the form of grammar.
+[00:04:23 -> 00:04:27] So it is not usually possible to parse every grammar.
+[00:04:27 -> 00:04:30] So although in the previous slide I showed you
+[00:04:30 -> 00:04:32] that you could input any grammar,
+[00:04:32 -> 00:04:34] but tools will typically restrict
+[00:04:34 -> 00:04:37] what is the type of grammar that you may input.
+[00:04:37 -> 00:04:39] So the grammar should have certain properties
+[00:04:39 -> 00:04:42] in the way it has been written.
+[00:04:42 -> 00:04:43] And if it has those properties,
+[00:04:43 -> 00:04:45] then the parsing tool will be able
+[00:04:45 -> 00:04:48] to generate a parser implementation for that grammar.
+[00:04:48 -> 00:04:49] Otherwise it will not be able
+[00:04:49 -> 00:04:54] to generate a parser implementation.
+[00:04:55 -> 00:04:58] So what are these properties and why do they matter?
+[00:04:58 -> 00:04:59] We're going to understand once we understand
+[00:04:59 -> 00:05:01] what are these algorithms that are used
+[00:05:01 -> 00:05:04] to parse such strings.
+[00:05:05 -> 00:05:09] Okay, now also we talked about derivations.
+[00:05:09 -> 00:05:14] So we said that a string or a sequence of tokens
+[00:05:14 -> 00:05:16] is accepted by a context-free grammar
+[00:05:16 -> 00:05:19] if there exists a derivation starting
+[00:05:19 -> 00:05:21] from the start symbol to that string.
+[00:05:22 -> 00:05:27] Okay, so such a derivation we represented
+[00:05:28 -> 00:05:30] as a sequence of steps.
+[00:05:30 -> 00:05:32] But there's another way to represent derivations
+[00:05:32 -> 00:05:34] and that's called the derivation tree.
+[00:05:34 -> 00:05:35] A derivation tree is not very different
+[00:05:35 -> 00:05:38] from a parse tree that we have already understood.
+[00:05:38 -> 00:05:40] But it also kind of, you know,
+[00:05:40 -> 00:05:42] you can also say what is the derivation
+[00:05:42 -> 00:05:44] or what was the production that you used
+[00:05:44 -> 00:05:47] to generate that part of the tree.
+[00:05:47 -> 00:05:49] So for example, in this case,
+[00:05:49 -> 00:05:52] I am showing you three deductions,
+[00:05:52 -> 00:05:55] one from ID to E.
+[00:05:55 -> 00:05:57] ID to E, there are three different identifiers,
+[00:05:57 -> 00:06:01] each of them getting replaced by E.
+[00:06:02 -> 00:06:04] Using the production, E produces ID.
+[00:06:05 -> 00:06:07] I'm just taking a shortcut here.
+[00:06:07 -> 00:06:08] There should have been three different steps
+[00:06:08 -> 00:06:12] and I'm just putting them all in a single step.
+[00:06:12 -> 00:06:13] Then we could have a production
+[00:06:14 -> 00:06:18] which apply the production E goes to E star E
+[00:06:18 -> 00:06:23] and that would reduce the first ID star ID to E
+[00:06:23 -> 00:06:25] because E star E to E.
+[00:06:25 -> 00:06:29] And then we could apply the production E goes to E plus E
+[00:06:29 -> 00:06:33] to reduce the plus operator with the two expressions
+[00:06:33 -> 00:06:36] on its left hand side and right hand side.
+[00:06:36 -> 00:06:39] Now, the interesting thing to note in this example
+[00:06:39 -> 00:06:42] is that there is an ambiguity.
+[00:06:42 -> 00:06:47] I could have either reduced E star E to E first
+[00:06:47 -> 00:06:51] or I could have reduced E plus E to E first.
+[00:06:51 -> 00:06:52] So while this is one derivation tree,
+[00:06:52 -> 00:06:54] so one derivation tree,
+[00:06:55 -> 00:06:59] I will show you another derivation tree on the next slide.
+[00:06:59 -> 00:07:02] So here is another possibility of a derivation tree
+[00:07:02 -> 00:07:05] and see that it looks completely different
+[00:07:05 -> 00:07:08] from the derivation tree which had earlier.
+[00:07:08 -> 00:07:10] In this particular derivation tree,
+[00:07:10 -> 00:07:15] I'm first clubbing ID plus ID into a single capital E
+[00:07:15 -> 00:07:16] and then at the top level,
+[00:07:16 -> 00:07:21] I'm clubbing E star E to produce E, the star symbol.
+[00:07:22 -> 00:07:25] Now, this is another possibility
+[00:07:25 -> 00:07:26] and this is a completely different possibility
+[00:07:26 -> 00:07:28] from the first derivation tree.
+[00:07:28 -> 00:07:31] In fact, these are two different derivation trees
+[00:07:31 -> 00:07:35] and which one should we use is unclear
+[00:07:35 -> 00:07:38] in this particular example and so this is an ambiguity.
+[00:07:41 -> 00:07:44] Programming languages can have ambiguities,
+[00:07:44 -> 00:07:47] but ideally, there should be a way to resolve such ambiguities
+[00:07:47 -> 00:07:49] and we're gonna see some more examples.
+[00:07:49 -> 00:07:52] For example, in the case of arithmetic expressions,
+[00:07:52 -> 00:07:53] we would probably have some rules
+[00:07:53 -> 00:07:56] like the board mass rule which says
+[00:07:56 -> 00:07:59] that the multiplication should be given higher priority
+[00:07:59 -> 00:08:01] than addition and in which case,
+[00:08:01 -> 00:08:04] maybe the ID star ID should have been grouped first
+[00:08:04 -> 00:08:08] before grouping it with the plus operator.
+[00:08:08 -> 00:08:10] Notice that these two derivation trees
+[00:08:10 -> 00:08:12] represent two different parse trees
+[00:08:12 -> 00:08:15] and thus they represent two different expressions
+[00:08:15 -> 00:08:16] altogether.
+[00:08:17 -> 00:08:20] In the first case, I would multiply first and then add.
+[00:08:20 -> 00:08:21] In the second case,
+[00:08:21 -> 00:08:24] I would first add and then multiply.
+[00:08:24 -> 00:08:26] And so this ambiguity is not just at the syntax level
+[00:08:26 -> 00:08:28] but also at the semantics level.
+[00:08:28 -> 00:08:32] What does this expression mean?
+[00:08:32 -> 00:08:36] Okay, moreover, there is the issue of derivation order.
+[00:08:36 -> 00:08:40] So I could have the same derivation tree
+[00:08:41 -> 00:08:43] but I could derive it in different orders, all right?
+[00:08:43 -> 00:08:47] So this is different from ambiguous derivation trees
+[00:08:47 -> 00:08:49] because there could be two different trees
+[00:08:49 -> 00:08:50] but even if I just consider one tree,
+[00:08:50 -> 00:08:53] I could either derive it left,
+[00:08:53 -> 00:08:55] I could either do a leftmost derivation
+[00:08:55 -> 00:08:56] which means at each step,
+[00:08:56 -> 00:09:00] I'm going to expand the leftmost non-terminal
+[00:09:00 -> 00:09:02] or I could do a rightmost derivation
+[00:09:02 -> 00:09:03] which means that each step,
+[00:09:03 -> 00:09:06] I'm going to expand the rightmost non-terminal
+[00:09:06 -> 00:09:07] or I could do anything else.
+[00:09:07 -> 00:09:10] For example, I could choose to expand
+[00:09:10 -> 00:09:12] the middle non-terminal and then maybe this left one
+[00:09:12 -> 00:09:14] and then the right one or any which order.
+[00:09:14 -> 00:09:17] Recall that when we discussed context free grammars,
+[00:09:17 -> 00:09:20] we said that we could pick any non-terminal
+[00:09:20 -> 00:09:23] in the current alpha i non-deterministically.
+[00:09:23 -> 00:09:27] And now we're going to kind of study that
+[00:09:27 -> 00:09:28] a little bit further and say,
+[00:09:28 -> 00:09:31] and actually there are two interesting derivation orders.
+[00:09:31 -> 00:09:34] One is leftmost order and the rightmost.
+[00:09:34 -> 00:09:35] The main derivation order
+[00:09:35 -> 00:09:38] but the two interesting orders
+[00:09:38 -> 00:09:42] from the perspective of parsing implementations.
+[00:09:42 -> 00:09:44] So the leftmost derivation,
+[00:09:44 -> 00:09:46] so let's assume that this particular string
+[00:09:46 -> 00:09:51] that we're interested in is id into id plus id.
+[00:09:51 -> 00:09:55] And also let's assume that we are going to,
+[00:09:57 -> 00:09:58] the top level operator here is plus
+[00:09:58 -> 00:10:02] and then this is going to get clubbed, right?
+[00:10:02 -> 00:10:06] And then this is going to get added.
+[00:10:06 -> 00:10:08] So to do this, you know,
+[00:10:08 -> 00:10:10] both leftmost and rightmost are going to expand
+[00:10:10 -> 00:10:13] e plus e and the first step, all right?
+[00:10:13 -> 00:10:16] But let's see.
+[00:10:16 -> 00:10:17] In the leftmost,
+[00:10:17 -> 00:10:20] I'm going to first expand the leftmost e.
+[00:10:20 -> 00:10:28] So in this case, it's going to become e star e plus e.
+[00:10:30 -> 00:10:34] Then we're going to say e.
+[00:10:34 -> 00:10:36] So the leftmost again is e.
+[00:10:36 -> 00:10:40] So I'm going to produce that and produce id here.
+[00:10:40 -> 00:10:44] Star e plus e.
+[00:10:44 -> 00:10:46] Now the leftmost is this e.
+[00:10:46 -> 00:10:51] So I'm going to say id into id plus e.
+[00:10:52 -> 00:10:54] And now there's only one e remaining
+[00:10:54 -> 00:10:56] and so one non-terminal remaining.
+[00:10:56 -> 00:10:59] And so I'm going to say id into id plus id.
+[00:10:59 -> 00:11:01] And at this point, we have finished our derivation.
+[00:11:01 -> 00:11:04] So this is an example of a leftmost derivation.
+[00:11:05 -> 00:11:07] Similarly, I could have done a rightmost derivation.
+[00:11:07 -> 00:11:09] So in the rightmost derivation,
+[00:11:09 -> 00:11:11] I'm going to expand the rightmost non-terminal
+[00:11:11 -> 00:11:12] at every step.
+[00:11:12 -> 00:11:19] So this becomes e plus id, right?
+[00:11:22 -> 00:11:25] So we want to accept id into id plus id.
+[00:11:25 -> 00:11:27] So what's on the right of plus?
+[00:11:27 -> 00:11:29] It's id, so it becomes e plus id.
+[00:11:29 -> 00:11:32] Now the rightmost non-terminal is e.
+[00:11:32 -> 00:11:37] So it's going to be e star e plus id.
+[00:11:38 -> 00:11:43] Then e star id plus id.
+[00:11:43 -> 00:11:49] And then finally id star id plus id, all right?
+[00:11:49 -> 00:11:52] Recall that I'm using id for the identifier token,
+[00:11:52 -> 00:11:56] which could internally be any variable name,
+[00:11:56 -> 00:11:57] x, y, or z.
+[00:11:57 -> 00:11:59] And they can all be different names and things like that.
+[00:11:59 -> 00:12:02] Okay, so notice that they both produce
+[00:12:02 -> 00:12:06] identical derivation trees or parse trees,
+[00:12:06 -> 00:12:09] but they just differ in the order in which they were derived.
+[00:12:09 -> 00:12:12] In one case, we are deriving leftmost.
+[00:12:12 -> 00:12:13] We're doing a leftmost derivation.
+[00:12:13 -> 00:12:14] And in the second case,
+[00:12:14 -> 00:12:17] we are doing a rightmost derivation.
+[00:12:17 -> 00:12:19] Once again, they produce the same derivation tree.
+[00:12:19 -> 00:12:21] And so this is different from ambiguity
+[00:12:21 -> 00:12:24] in derivation trees.
+[00:12:24 -> 00:12:26] To summarize, a parse tree,
+[00:12:26 -> 00:12:28] what is a parse tree or a derivation tree?
+[00:12:28 -> 00:12:30] It has terminals at the leaf nodes
+[00:12:30 -> 00:12:32] and non-terminals at the internal nodes.
+[00:12:32 -> 00:12:34] So if you recall, all the derivation trees
+[00:12:34 -> 00:12:37] basically have non-terminals at the internal nodes
+[00:12:37 -> 00:12:39] and the leaf nodes have terminals.
+[00:12:39 -> 00:12:41] This is expected because non-terminals
+[00:12:41 -> 00:12:43] are further expanded while terminals are not.
+[00:12:45 -> 00:12:48] Further, we saw that there could be ambiguity.
+[00:12:48 -> 00:12:53] And the parse tree actually accurately represents
+[00:12:54 -> 00:12:57] or precisely represents the association.
+[00:12:57 -> 00:13:00] In one, for example, for id star id plus id,
+[00:13:00 -> 00:13:04] we would associate multiplication first and then addition.
+[00:13:04 -> 00:13:06] Whereas for the other derivation tree,
+[00:13:06 -> 00:13:08] we would first associate addition
+[00:13:08 -> 00:13:10] and then associate multiplication.
+[00:13:10 -> 00:13:12] And in some case, in grammars,
+[00:13:12 -> 00:13:15] there may be an ambiguity which one to use.
+[00:13:15 -> 00:13:17] There should be, we're going to discuss ambiguity
+[00:13:17 -> 00:13:20] in more detail in our next module.
+[00:13:20 -> 00:13:23] Further, even if there is no-no ambiguity,
+[00:13:23 -> 00:13:24] or even if there is ambiguity
+[00:13:24 -> 00:13:27] and there is a single parse tree,
+[00:13:27 -> 00:13:28] for a given parse tree,
+[00:13:28 -> 00:13:31] there could be multiple ways or orders
+[00:13:31 -> 00:13:34] to derive the same parse tree.
+[00:13:34 -> 00:13:37] And this depends on the method to derive it
+[00:13:37 -> 00:13:40] could be, for example, leftmost or rightmost
+[00:13:40 -> 00:13:41] or anything else.
+[00:13:41 -> 00:13:43] We just saw some examples for that.

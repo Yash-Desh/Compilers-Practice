@@ -1,0 +1,254 @@
+Title: Compiler Design Module 127 : Blocking in Matrix Multiplication
+Video ID: EqkDgVkMjwI
+Detected language: en
+------------------------------------------------------------
+
+[00:00:00 -> 00:00:04] So, last time we were discussing the matrix multiplication example and we saw what is the
+[00:00:04 -> 00:00:12] best and the worst case performance in terms of cache misses when we execute a naive implementation.
+[00:00:12 -> 00:00:17] And recall that a naive implementation basically iterates over the rows from i equals 0 to
+[00:00:17 -> 00:00:24] n, then iterates over the columns for each row for j equals 0 to n and then for each
+[00:00:24 -> 00:00:31] jth element, it again iterates over k such that k iterates over the rows of the first
+[00:00:31 -> 00:00:38] matrix A and the columns of the second matrix B and it performs this operation Cij plus
+[00:00:38 -> 00:00:46] equals Aik into Bkj. And we basically analyzed that what is the performance of a matrix
+[00:00:46 -> 00:00:53] multiplication routine that's written such that cache misses which form the bulk of
+[00:00:53 -> 00:00:58] the runtime because a cache miss basically means going all the way to memory that can
+[00:00:58 -> 00:01:03] take tens to hundreds of cycles. We basically counting the number of cache misses and we
+[00:01:03 -> 00:01:08] said that the number of cache misses can be as low as order n square and as high
+[00:01:08 -> 00:01:12] as order n cube for large matrices. And typically we will be concerning ourselves
+[00:01:12 -> 00:01:16] with large matrices because that's what is the common case where we basically trying
+[00:01:16 -> 00:01:22] to multiply large matrices with each other. There are many applications of matrix multiplication
+[00:01:22 -> 00:01:27] with large matrices, one of the most recent being the deep neural networks where basically
+[00:01:27 -> 00:01:34] you want to multiply the weight matrix with the input matrix and things like that.
+[00:01:34 -> 00:01:46] So here is the diagrammatic representation of what the loop for matrix multiplication,
+[00:01:46 -> 00:01:50] the naive implementation that we saw in the previous slide. For the ijth element
+[00:01:50 -> 00:01:59] of C, we basically iterate k over the row of A, over the ijth row of A and k over the
+[00:01:59 -> 00:02:06] jth column of B. And we said that one of them is going to have some spatial locality.
+[00:02:06 -> 00:02:12] For example, A can have high spatial locality assuming row major format and B would have
+[00:02:12 -> 00:02:17] very low spatial locality assuming row major format and so most of the misses will
+[00:02:17 -> 00:02:23] be dominated by B and if the arrays are big enough then the number of, it will basically
+[00:02:23 -> 00:02:30] be a cache miss for every axis of B. And from that we basically get order n cube cache
+[00:02:30 -> 00:02:36] misses in B. So every axis of B is a cache miss and because there are order n cube
+[00:02:36 -> 00:02:39] accesses so there will be order n cube cache misses. So we want to improve the
+[00:02:39 -> 00:02:44] situation. This is not a very good situation. We have some cache which is fast memory
+[00:02:44 -> 00:02:49] available close to the CPU but it is being underutilized. There are so many cells there
+[00:02:49 -> 00:02:53] that are not being utilized. Those cells are only being used to cache the elements of
+[00:02:53 -> 00:02:59] A but because of low spatial locality and low temporal locality, the elements of B
+[00:02:59 -> 00:03:03] are not getting cached and so overall that's causing a degradation in the performance
+[00:03:03 -> 00:03:09] of our matrix multiplication loop. So how can we fix the solution? So here's one
+[00:03:09 -> 00:03:13] important observation and the observation is that it doesn't really matter what is
+[00:03:13 -> 00:03:17] the order in which I perform this computation. This computation of adding,
+[00:03:17 -> 00:03:23] multiplying the elements of A and B and then adding it to the element of C. So
+[00:03:23 -> 00:03:27] we can do partial dot products in one go before moving to another C ij for
+[00:03:27 -> 00:03:31] better cache utilization. And what do I mean? That would be more clear with
+[00:03:31 -> 00:03:35] this figure. So instead of looking at just one element of C ij, let me just
+[00:03:35 -> 00:03:42] do a bunch of elements in this square of C ij. So instead of C ij, let me
+[00:03:42 -> 00:03:47] also do the partial dot products not the full dot products for elements
+[00:03:47 -> 00:03:52] around C ij. So from let's say I introduce a new iteration of a variable
+[00:03:52 -> 00:03:59] ii. So ii iterates from, you know, so ii is the beginning and ii plus b is the
+[00:03:59 -> 00:04:04] end and now I would iterate from ii to ii plus b. Similarly I go from jj
+[00:04:04 -> 00:04:10] to jj plus b using j and in one go I compute the partial dot product of
+[00:04:10 -> 00:04:17] this entire square of cells, right? So the number of cells in the square is b
+[00:04:17 -> 00:04:22] into b, b rows and b columns and so it's order b square cells and I
+[00:04:22 -> 00:04:26] basically do the partial dot product of these b square cells before I move
+[00:04:26 -> 00:04:33] to the next block of b square cells. So instead of doing the full dot
+[00:04:33 -> 00:04:38] product of one element, how about I do the partial dot product of a block
+[00:04:38 -> 00:04:44] of elements where the block is of size b square elements in one go and when I do
+[00:04:44 -> 00:04:50] this then k is going to iterate from ii to ii plus b because that's what
+[00:04:50 -> 00:04:55] the rows are iterating from and similarly in b it would
+[00:04:55 -> 00:05:00] iterate from jj to jj plus b but for k it's going to iterate from kk to
+[00:05:00 -> 00:05:07] kk plus b. So not only do I block the elements of C ij but I also block
+[00:05:07 -> 00:05:12] the elements of aik and bkj, right? Which means that and that's why I call it a
+[00:05:12 -> 00:05:18] partial dot product. I don't iterate kk all the way from 0 to n but I iterate
+[00:05:18 -> 00:05:25] k from kk to kk plus b, right? On the columns and of a and
+[00:05:25 -> 00:05:31] similarly kk to kk plus b on the rows of b. So I iterate k from kk to
+[00:05:31 -> 00:05:38] kk plus b both on the columns of a and rows of the second matrix. I'm calling
+[00:05:38 -> 00:05:44] it b. Notice that the matrix b and the blocking factor b are two different b's.
+[00:05:44 -> 00:05:49] I'm writing them in different colors. So notice that we have reordered the
+[00:05:49 -> 00:05:53] iteration space significantly because the order of iterations does not
+[00:05:53 -> 00:05:58] matter in this case. Why does it not matter? Because addition is commutative
+[00:05:58 -> 00:06:02] and associative. So I can do these additions in any order and so that's
+[00:06:02 -> 00:06:06] what that's what I'm exploiting to make my matrix multiplication routine
+[00:06:06 -> 00:06:09] faster and because the order of iterations does not matter this
+[00:06:09 -> 00:06:14] remains correct, right? So I can compute the partial dot product of this block
+[00:06:14 -> 00:06:19] of elements for this block using this block and this block and then keep
+[00:06:19 -> 00:06:23] doing this until I have covered all the blocks and thus I have covered
+[00:06:23 -> 00:06:29] all the elements. So we're at a very high level. This is what my code is
+[00:06:29 -> 00:06:34] going to look like. Instead of a single multiply which was cij equals
+[00:06:34 -> 00:06:43] cij plus ai k into bkj. I'm going to do a block multiply from c of ii jj
+[00:06:43 -> 00:06:55] to aii kk and cii jj to aii, so I should have corrected this, this
+[00:06:55 -> 00:07:09] is ii kk and bkk jj, okay? So that's what I want to do. I want to do a block
+[00:07:09 -> 00:07:15] multiply where I'm going to do compute partial dot products for the
+[00:07:15 -> 00:07:21] block of elements of size B square, capital B square which is B is in red
+[00:07:21 -> 00:07:29] from starting from ii, jj to ii plus b, jj plus b and I'm going to do the
+[00:07:29 -> 00:07:36] partial dot products using elements from aii kk block at aii kk and block
+[00:07:36 -> 00:07:42] at bkk jj, right? So this is the full code. Now my loop nest becomes a
+[00:07:42 -> 00:07:47] depth 6 loop nest where the inner loop nest which is drawn in green is
+[00:07:47 -> 00:07:54] basically implementing my block multiply and what it's doing is it's
+[00:07:54 -> 00:08:01] iterating i from ii to ii plus b, iterating j from jj to jj plus b and
+[00:08:01 -> 00:08:05] iterating k also from kk to kk plus b. So I have blocked all the three
+[00:08:05 -> 00:08:13] variables i, j and k and then I do cij plus equals cai k into bkj and so
+[00:08:13 -> 00:08:24] this operation here is doing a partial dot product for the block specified by
+[00:08:24 -> 00:08:37] kk in from ii kk to kk jj, right? In a and b respectively. So this is what my
+[00:08:37 -> 00:08:42] loop is going to look like and once again this is correct because I have
+[00:08:42 -> 00:08:46] only reordered the computation. At the end of the day this particular
+[00:08:46 -> 00:08:53] statement is going to get executed for every possible pair of i, j and k for
+[00:08:53 -> 00:08:57] every possible tuple of i, j and k. If I look at the space of i it is
+[00:08:57 -> 00:09:02] still 0 to n for every possible value just reordered it. For example ii is
+[00:09:02 -> 00:09:07] now iterating from 0 to n with a step of b. Similarly j is iterating from 0
+[00:09:07 -> 00:09:12] to n with a step of b and k is iterating from 0 to n with a
+[00:09:12 -> 00:09:16] step of b and then these smaller variables i, j and k are iterating
+[00:09:16 -> 00:09:22] within these steps with a step of 1 within the b size big step with smaller
+[00:09:22 -> 00:09:31] steps of size 1. Okay so overall this instruction this statement cij plus
+[00:09:31 -> 00:09:39] equals ai k into a pkj gets executed exactly once for every triple i, j and
+[00:09:39 -> 00:09:48] k for belonging to the space of 0 0 0 to n n n excluding you know n minus 1 n
+[00:09:48 -> 00:09:52] minus 1 n minus 1 to be more precise and and this is getting executed for
+[00:09:52 -> 00:09:57] all these elements and I've just reordered the computation and so but
+[00:09:57 -> 00:10:01] the final result of the computation is guaranteed to be identical. I've just
+[00:10:01 -> 00:10:04] reordered the computation the amount of computation is still
+[00:10:04 -> 00:10:09] exactly the same but this new reordering is giving me better cache
+[00:10:09 -> 00:10:18] locality if I choose my capital B judiciously alright and I how would I
+[00:10:18 -> 00:10:21] like to choose my capital B I would like to choose my capital B so that
+[00:10:21 -> 00:10:24] all this computation that's happening in green which is part of the block
+[00:10:24 -> 00:10:29] multiply routine can be served largely from the cache and so if I
+[00:10:29 -> 00:10:35] basically choose my capital B such that all these three arrays of size b square
+[00:10:35 -> 00:10:40] plus b square plus b square all these three sub arrays or sub matrices fit in
+[00:10:40 -> 00:10:45] the cache and then we if they do then what we are going to do is notice that
+[00:10:45 -> 00:10:50] this whole green block here is involving n cube computations or b cube
+[00:10:50 -> 00:10:54] computations but they only require b square data because it's just b
+[00:10:54 -> 00:11:00] square data that needs to be touched it's a ik b kj and c ij and so we
+[00:11:00 -> 00:11:06] basically going from each block is needs to be is of size b square and so
+[00:11:06 -> 00:11:11] we have three b square amount of data that is being computed on and the
+[00:11:11 -> 00:11:14] amount of computation that I'm doing on that data is order n cube because
+[00:11:14 -> 00:11:19] we have a three loop nest in this green portion of the code so we are
+[00:11:19 -> 00:11:24] performing b cube computations on three b squared data and if all this
+[00:11:24 -> 00:11:28] three b square data can fit in cache then I would just pay three b square
+[00:11:28 -> 00:11:33] cache misses while I would have done b cube computation recall that in my
+[00:11:33 -> 00:11:38] original code if my arrays were large then I would have had to do n cube
+[00:11:38 -> 00:11:43] misses for n cube computation now I'm going to be doing b square or 3b
+[00:11:43 -> 00:11:49] square misses for b cube computation so I have made an improvement in the
+[00:11:49 -> 00:11:56] number of cache misses and so if L is the cache line size the number of
+[00:11:56 -> 00:12:01] misses to get a block into the cache is b squared by L because b squared is the
+[00:12:01 -> 00:12:07] size of a block and L is the size of a cache line size assuming spatial
+[00:12:07 -> 00:12:13] locality we're basically going to access one one element we're going to
+[00:12:13 -> 00:12:16] get the whole cache line so for the other elements of the this b
+[00:12:16 -> 00:12:20] square block we won't have to go through we won't have to pay cache
+[00:12:20 -> 00:12:24] misses all right so I'm assuming that all these b square elements have
+[00:12:24 -> 00:12:28] spatial locality which they do because irrespective of whether I have
+[00:12:28 -> 00:12:33] row major format or column major format assuming capital B is greater
+[00:12:33 -> 00:12:37] than the cache line size then there is a lot of spatial locality because
+[00:12:37 -> 00:12:41] element if you element access some element then it brings the entire
+[00:12:41 -> 00:12:44] cache line and those cache line set of elements are going to be accessed
+[00:12:44 -> 00:12:48] very close in time in our green part of the code which is part of the block
+[00:12:48 -> 00:12:53] multiply and because there are three such arrays I also put a three such
+[00:12:53 -> 00:12:56] blocks that I'm doing inside the inner block multiply I basically also
+[00:12:56 -> 00:13:00] multiply this by 3 and so that's 3b square by L but I'm just going to
+[00:13:00 -> 00:13:04] call that b square by L because that's the order of the amount of
+[00:13:04 -> 00:13:07] count cache misses that I have also recall that some of these cache
+[00:13:07 -> 00:13:12] misses will be less problematic because they will have their own spatial
+[00:13:12 -> 00:13:17] locality and others would be more problematic just like we were doing
+[00:13:17 -> 00:13:22] for then when we were discussing for the naive implementation for example B
+[00:13:22 -> 00:13:26] has low spatial and temporal locality on the other hand A has higher
+[00:13:26 -> 00:13:32] spatial locality and so on so let's say that b square by L is the
+[00:13:32 -> 00:13:38] number of misses to get a block into the cache of A B and C arrays or
+[00:13:38 -> 00:13:43] matrices and number of times we need to bring a block into cache now what
+[00:13:43 -> 00:13:47] about the outer loop so the outer loop still does not have enough cache
+[00:13:47 -> 00:13:53] locality and but the outer loop is now only going to execute n by b times
+[00:13:53 -> 00:13:58] for each of the loop nest lines and so that gives me n by b whole cube so
+[00:13:58 -> 00:14:02] this is just following from our original reasoning the original live
+[00:14:02 -> 00:14:07] implementation was giving me an cache miss for every access and that was
+[00:14:07 -> 00:14:12] the order n cube now this is the outer loop is going to give me a cache miss
+[00:14:12 -> 00:14:17] for the entire block on every access to that block how many blocks are there
+[00:14:17 -> 00:14:24] there are n by b n by b times for every line and so this is going to be
+[00:14:24 -> 00:14:29] how many times am I going to have to bring a block into the cache that's n
+[00:14:29 -> 00:14:32] by b whole cube so what is the number of total cache misses this is
+[00:14:32 -> 00:14:36] number of times I need to bring a block into the cache which is n by b
+[00:14:36 -> 00:14:41] whole cube this is the number of misses that I pay to bring a block into the
+[00:14:41 -> 00:14:44] cache because once I bring a block into the cache then I can basically do some
+[00:14:44 -> 00:14:48] competition on that so that's b squared by L and so the total number
+[00:14:48 -> 00:14:53] of misses that I pay is n by b whole cube into b squared by L and that
+[00:14:53 -> 00:14:58] gives me n cubed by b L now this is a big improvement over what we had
+[00:14:58 -> 00:15:03] earlier earlier we had order n cube misses for the naive implementation
+[00:15:03 -> 00:15:09] but now I have order n cubed by b L misses b is coming from our blocking
+[00:15:09 -> 00:15:13] factor which is the size of a block one dimension of our two dimensional block
+[00:15:13 -> 00:15:19] and L is coming from the cache line now it may seem counterintuitive that we
+[00:15:19 -> 00:15:23] also we have you know dividing by b seems reasonable because we are doing
+[00:15:23 -> 00:15:27] the blocking by that factor but why is there a factor of L that's coming in
+[00:15:27 -> 00:15:30] and that's because because of the blocking that we are doing we have
+[00:15:30 -> 00:15:35] also improved the spatial locality of accesses to the array b and because of
+[00:15:35 -> 00:15:39] that the cache line spatial locality that's built in the hardware also
+[00:15:39 -> 00:15:43] starts playing up and giving us the advantage and so overall we get an
+[00:15:43 -> 00:15:49] order b L reduction in my number of cache misses this is a significant
+[00:15:49 -> 00:15:55] reduction for example if I have L1 cache and I use a block factor of b
+[00:15:55 -> 00:16:00] equals 8 so that should give me an order of at least
+[00:16:00 -> 00:16:08] 8x and more reduction in my number of cache misses and in fact I can do
+[00:16:08 -> 00:16:13] blocking at multiple layers of the cache hierarchy so for example my cache
+[00:16:13 -> 00:16:16] hierarchy today in modern machines has multiple layers for example I
+[00:16:16 -> 00:16:20] could have an L1 cache, L2 cache, L3 cache and then the main memory and
+[00:16:20 -> 00:16:24] these have all have different sizes and different access latencies and
+[00:16:24 -> 00:16:28] depending on the size of the cache and the access latencies of the of the
+[00:16:28 -> 00:16:32] respective cache I can choose a different blocking factor b for each of
+[00:16:32 -> 00:16:35] the cache also the cache line size matters so for example I could use a
+[00:16:35 -> 00:16:41] blocking factor b of 8 for L1, 80 for L2 and so on and when I use
+[00:16:41 -> 00:16:45] different blocking factors for different levels of cache what does this mean
+[00:16:45 -> 00:16:50] it means that I actually am increasing the loopless depth so in
+[00:16:50 -> 00:16:54] my previous slide I showed you a blocking implementation that had a
+[00:16:54 -> 00:16:58] loopness depth of 6 because I had an inner loop which was doing a block
+[00:16:58 -> 00:17:02] multiply but now if I do blocking at multiple levels let's say for L1 and
+[00:17:02 -> 00:17:08] L2 separately then my loopness depth would become 9 the second triple of
+[00:17:08 -> 00:17:13] loopness is going to be for let's say L2 and the innermost loopness
+[00:17:13 -> 00:17:19] would be for L1 and so I can although the size of my code has
+[00:17:19 -> 00:17:24] increased from a triple loopness to a 6 loopness to a 9 loopness my
+[00:17:24 -> 00:17:27] performance has improved because I have saved on the number of cache misses at
+[00:17:27 -> 00:17:32] that particular level of the cache hierarchy notice that the value of b
+[00:17:32 -> 00:17:38] is sensitive to this nature size and associativity of your cache and needs
+[00:17:38 -> 00:17:43] to be chosen in a appropriate manner depending on the machine that is
+[00:17:43 -> 00:17:49] going to run on so in practice blocking improves runtime by a factor of around
+[00:17:49 -> 00:17:55] 3 on a modern uniprocessor machine now this may seem surprising to you in my
+[00:17:55 -> 00:17:59] previous slide I had said that if I use a blocking factor of b then I
+[00:17:59 -> 00:18:03] should basically have an improvement of b into L in terms of cache misses
+[00:18:03 -> 00:18:09] but and if b is 8 then why do I have an improvement of only 3x well
+[00:18:09 -> 00:18:14] it's because the Amdahl's law kicks in recall that the Amdahl's law says that
+[00:18:14 -> 00:18:18] the performance is limited by the performance or the runtime of the
+[00:18:18 -> 00:18:23] slowest part of your code and so once you make the caches faster or cache is
+[00:18:23 -> 00:18:26] more effective there are other parts of the code which include the
+[00:18:26 -> 00:18:30] competition lower levels of the cache hierarchy and so on that become the
+[00:18:30 -> 00:18:34] bottleneck but even a 3x improvement in performance is a huge improvement
+[00:18:34 -> 00:18:40] based on this method of blocking this whole optimization transformation that I
+[00:18:40 -> 00:18:44] described is also called blocking and it's a very popular transformation not
+[00:18:44 -> 00:18:48] just for matrix multiplication but for other types of computations where
+[00:18:48 -> 00:18:52] computation can be reordered recall that we are basically relying on this
+[00:18:52 -> 00:18:55] fact that we can completely reorder this computation and that's what we
+[00:18:55 -> 00:19:00] have been doing to implement blocking finally we last time discussed how
+[00:19:00 -> 00:19:05] even if you parallelize a naive implementation of a matrix multiplication
+[00:19:05 -> 00:19:11] loop across p processors then we still have order n cubed misses at the main
+[00:19:11 -> 00:19:15] memory and if the main memory is has does not have enough parallelism then
+[00:19:15 -> 00:19:21] basically we won't be able to fully utilize you know the parallelism
+[00:19:21 -> 00:19:25] available in the processing level because at the processor level they are
+[00:19:25 -> 00:19:28] all going all the way to the main memory and that's where the
+[00:19:28 -> 00:19:31] bottleneck is so even and the processors will mostly be idle just
+[00:19:31 -> 00:19:34] waiting for main memory and so even though I have p processors the
+[00:19:34 -> 00:19:37] performance improvement that I get by row by row parallelization would not be
+[00:19:37 -> 00:19:42] much but now with blocking we can now again do row by row parallelization so
+[00:19:42 -> 00:19:46] we can you know for example after we have this six loop nest
+[00:19:46 -> 00:19:51] implementation blocking implementation of matrix multiply I can do a row by
+[00:19:51 -> 00:19:55] row parallelization of the six loop nest for the top level loop and then
+[00:19:55 -> 00:20:02] I can expect that I can expect actually the similar behavior but this time each
+[00:20:02 -> 00:20:07] of these CPUs each of these p CPUs would have their own caches and each of
+[00:20:07 -> 00:20:12] those caches would basically be able to utilize all the cells in those
+[00:20:12 -> 00:20:15] caches on the lines and the caches using blocking and so the main
+[00:20:15 -> 00:20:20] memory much of the main memory content of the arrays a b and c would
+[00:20:20 -> 00:20:24] actually be residing in the respective caches of these p processors
+[00:20:24 -> 00:20:28] so as you increase the number of processors with the blocking
+[00:20:28 -> 00:20:33] implementation you are also improving the size of the effective cache let's
+[00:20:33 -> 00:20:36] say the L1 cache so every CPU would have its own L1 cache and so
+[00:20:36 -> 00:20:44] effectively with p processors the size of L1 cache also becomes p into gets
+[00:20:44 -> 00:20:49] amplified by a factor of p and that basically eventually gives you speed up
+[00:20:49 -> 00:20:52] that are linear in the number of processors p so with my original
+[00:20:52 -> 00:20:56] implementation the naive implementation the memory was becoming a
+[00:20:56 -> 00:21:01] bottleneck and even though I was parallelizing across p processors my
+[00:21:01 -> 00:21:05] performance was not scaling with p it was just you know getting bottleneck
+[00:21:05 -> 00:21:10] at the main memory but with blocking I'm now able to use the caches
+[00:21:10 -> 00:21:15] and increase my effective cache size across p processors by a factor of p
+[00:21:15 -> 00:21:18] and overall that typically gives you speed ups that are linear in the
+[00:21:18 -> 00:21:23] number of processors and this again is a big improvement because of blocking
+[00:21:23 -> 00:21:29] it gives you better scalability of your matrix multiplication routine

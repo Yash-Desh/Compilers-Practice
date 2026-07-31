@@ -1,0 +1,258 @@
+Title: Compiler Design Module 105 : Partial Redundancy Elimination
+Video ID: bC83QnRcoeM
+Detected language: en
+------------------------------------------------------------
+
+[00:00:00 -> 00:00:04] So now we have discussed the data flow analysis framework in a lot of detail
+[00:00:04 -> 00:00:09] and also talked about its various properties. Now let's look at some examples of DFA based
+[00:00:09 -> 00:00:14] transformations, some of which we are already familiar with. So for example, we have looked
+[00:00:14 -> 00:00:19] at constant propagation, copy propagation, dead code elimination, which is based on the liveness
+[00:00:19 -> 00:00:25] DFA analysis, which is actually a backward analysis. The other two that I mentioned,
+[00:00:25 -> 00:00:29] copy propagation and constant propagation are forward data flow analysis, common
+[00:00:29 -> 00:00:35] sub-expression elimination, and we're also going to discuss loop invariant code motion
+[00:00:35 -> 00:00:39] and partial redundancy elimination in the next few lecture modules.
+[00:00:40 -> 00:00:46] So here's an example. Let's say I have a program which says for i equals 0 to n,
+[00:00:46 -> 00:00:54] i plus plus ai equals m plus n, an minus 1 plus equals ai plus 1. Now in this particular
+[00:00:54 -> 00:00:59] program, there are a couple of things that are loop invariant, which means they don't really
+[00:00:59 -> 00:01:04] change across different iterations of the same loop. What are those computations? Well,
+[00:01:04 -> 00:01:08] one of them is m plus n. Notice that this loop is not actually changing m,
+[00:01:09 -> 00:01:14] neither it's changing m nor it's changing n. And so m plus n is actually a constant across
+[00:01:14 -> 00:01:21] the iterations of the loop. In other words, m plus n is loop invariant. Also notice that
+[00:01:21 -> 00:01:27] this particular computation here, which is the address of element i in array a
+[00:01:28 -> 00:01:33] is not loop invariant because it changes with every iteration because every iteration has a
+[00:01:33 -> 00:01:38] different value of i and so ai would be different value for the address of ai would be different
+[00:01:38 -> 00:01:47] value and every iteration. Similarly, ai plus 1, both the address and the value of ai plus 1
+[00:01:47 -> 00:01:53] are going to be different in every iteration. But let's look at this one an minus 1. So n
+[00:01:53 -> 00:01:59] is loop invariant and so the address of an minus 1 is also loop invariant. And so
+[00:02:00 -> 00:02:06] there are two computations in this particular loop which are invariant across iterations
+[00:02:06 -> 00:02:13] of the loop. And so it is possible to implement loop invariant code motion. So that's the
+[00:02:13 -> 00:02:18] name of this particular transformation where you move the loop, move the computation which is loop
+[00:02:18 -> 00:02:28] invariant outside the loop. Typically before the loop. So for example, here you do m plus n in
+[00:02:28 -> 00:02:34] the beginning of the loop. So t1 equals m plus n and similarly you do t2 equals the address
+[00:02:34 -> 00:02:40] of an minus 1. So in the C syntax that's using the ampersand operator. So t2 is just the
+[00:02:40 -> 00:02:46] address of an minus 1 computed once in the beginning of the starting of the loop. Now this
+[00:02:46 -> 00:02:53] is likely to be a beneficial optimization if the loop is going to execute at least a few
+[00:02:53 -> 00:02:58] number of times potentially a large number of times maybe tens of times or hundreds of times
+[00:02:58 -> 00:03:02] or even thousands or millions of times. In which case this is a very useful optimization
+[00:03:02 -> 00:03:08] because without this optimization we would have, now using this optimization we are saving
+[00:03:08 -> 00:03:10] potentially millions of operations if the loop had million iterations.
+[00:03:12 -> 00:03:19] Alright, so now the loop just becomes ai equals t1 and star t2 plus equals ai plus 1.
+[00:03:19 -> 00:03:25] So instead of m plus 1 I just replace it with t1 and instead of an minus 1 which involves
+[00:03:25 -> 00:03:33] arithmetic of adding n minus 1 to a all that has been done a priori into t2 and I just need
+[00:03:33 -> 00:03:40] to dereference t2 and then add ai plus 1 to it. So these are examples of loop invariant
+[00:03:40 -> 00:03:45] code motion transformations and we want to know how we are going to implement such
+[00:03:45 -> 00:03:49] transformations. First of all once again I want to point out that these are very
+[00:03:49 -> 00:03:54] consequential transformations because the loop may execute a large number of times.
+[00:03:54 -> 00:03:58] I also want to point out that it is not necessary that this transformation actually reduces
+[00:03:58 -> 00:04:06] your program time because if for example it was true that the loop was n was 0 for example
+[00:04:06 -> 00:04:11] in this example. So if n was 0 this loop would have never executed and if this loop
+[00:04:11 -> 00:04:17] would have never executed I would have never had to compute m plus n or I would have never
+[00:04:17 -> 00:04:24] had to compute the address of an minus 1 and this transformation is actually always going to,
+[00:04:24 -> 00:04:29] I mean it's going to cause that computation to always happen. So in that rare scenario where
+[00:04:29 -> 00:04:36] n is going to be 0 we may end up doing more work in the optimized or in the transformed program
+[00:04:36 -> 00:04:43] than in the original program but typically we expect that if the programmer has written a loop
+[00:04:43 -> 00:04:48] it's likely to execute at least a few number of times typically large number of times and so
+[00:04:48 -> 00:04:53] a compiler can make this approximation. Once again compiler is making a trade-off here
+[00:04:53 -> 00:04:59] between the probability that the transformation is actually going to cause a slowdown is small
+[00:04:59 -> 00:05:03] and the probability that the transformation is going to cause a speed up is large and the
+[00:05:03 -> 00:05:08] associated speed up itself is also large and the associated slowdown is also small because
+[00:05:08 -> 00:05:13] if the loop was not going to execute even once then all we are doing is adding two extra
+[00:05:13 -> 00:05:18] computations on that path. On the other hand if the loop was going to execute you know at
+[00:05:18 -> 00:05:22] least let's say a hundred times then we have saved 200 computations so you know what the
+[00:05:22 -> 00:05:28] compiler needs to make these trade-offs when it is doing these transformations and typically
+[00:05:28 -> 00:05:34] loop invariant core motion is considered a very profitable transformation as in this example.
+[00:05:36 -> 00:05:43] Alright so here is we are going to talk about one transformation which is called you know we're
+[00:05:43 -> 00:05:49] going to talk about a category of transformations which is called partial redundancy elimination and
+[00:05:49 -> 00:05:54] we're also going to call it lazy code motion in subsequent modules. So the good thing about
+[00:05:54 -> 00:05:59] partial redundancy elimination I'm going to describe what it is in the next few slides
+[00:05:59 -> 00:06:04] is that it subsumes a few different transformations for example it subsumes common
+[00:06:04 -> 00:06:07] subexpression elimination. We have already learned about common subexpression elimination
+[00:06:07 -> 00:06:15] earlier and partial redundancy elimination subsumes CSE why what do you what do I mean
+[00:06:15 -> 00:06:20] I mean that if you implement partial redundancy elimination all common subexpression would
+[00:06:20 -> 00:06:25] automatically get eliminated in the same algorithm. Similarly partial redundancy
+[00:06:25 -> 00:06:31] elimination subsumes loop invariant core motion so that seems pretty powerful a single
+[00:06:31 -> 00:06:36] transformation can subsume both loop invariant core motion and common subexpression elimination
+[00:06:36 -> 00:06:42] and it gives you a few extra capabilities alright so it is a it is a very powerful
+[00:06:43 -> 00:06:47] transformation it is also based on data flow analysis it is one of the very interesting
+[00:06:47 -> 00:06:52] ones because it involves multiple data flow analyses to be fit together and we're going
+[00:06:52 -> 00:06:57] to use this as a case study in the next to and study it in more detail in the next few
+[00:06:57 -> 00:07:02] lecture modules. I should also mention that partial redundancy elimination is a practical
+[00:07:02 -> 00:07:06] transformation that is typically implemented in all modern optimizing compilers.
+[00:07:07 -> 00:07:13] Alright so what is partial redundancy elimination and to understand that let's look at this
+[00:07:13 -> 00:07:20] particular example so in this example I am computing B plus C on one branch and I am
+[00:07:20 -> 00:07:24] updating B on the other branch and then on the midpoint again I am computing B plus C.
+[00:07:25 -> 00:07:32] Now B plus C is partially redundant the computation B plus C is partially redundant
+[00:07:32 -> 00:07:39] why do I say it's partially redundant because it's redundant only on some of the program paths
+[00:07:39 -> 00:07:44] so it's only redundant on this program path it is not redundant on this program path in other
+[00:07:44 -> 00:07:49] words in on this program path I don't need to do it again I can I could have used common
+[00:07:49 -> 00:07:54] sub-expression elimination to eliminate the second one and kind of reuse the previous
+[00:07:55 -> 00:08:00] previously computed value but on the other path I still need to compute it and so
+[00:08:01 -> 00:08:06] so this computation is only partially redundant this is in contrast with common
+[00:08:06 -> 00:08:12] sub-expression elimination where we eliminate a second expression only if it is totally
+[00:08:12 -> 00:08:16] redundant so here you know because in common sub-expression elimination recall that the
+[00:08:16 -> 00:08:20] meet operator is intersection and so if I run the common sub-expression elimination algorithm on
+[00:08:20 -> 00:08:26] this particular example I won't be able to eliminate B plus C on any of the paths
+[00:08:26 -> 00:08:31] all right but partial redundancy elimination is a more sophisticated idea and in this we are going
+[00:08:31 -> 00:08:37] to say okay so for example I may want to transform it on the right side and so the
+[00:08:37 -> 00:08:42] right is program here is the optimized transform program which does not have partial
+[00:08:42 -> 00:08:48] redundancy so how does it work well on the left hand side we just basically have the same
+[00:08:48 -> 00:08:54] computation just that we store it in a temporary variable T and then just do A equals T recall
+[00:08:54 -> 00:08:58] that creating these extra copies is not a problem as long as we're going to do
+[00:08:58 -> 00:09:02] copy propagation later on hopefully that's going to solve these problems for us
+[00:09:02 -> 00:09:08] and on the other branch I basically when after I do B equals seven I recompute B plus C only
+[00:09:08 -> 00:09:14] on this particular branch and then at the meet point I just do D equals T so what have I done
+[00:09:14 -> 00:09:20] I've eliminated the partial redundancy if you look at it on both the paths B plus C is not
+[00:09:20 -> 00:09:28] redundant right so B plus C is not being recomputed redundantly on any of the paths
+[00:09:28 -> 00:09:32] and that's why it's called elimination of partial redundancy in the original program
+[00:09:33 -> 00:09:39] B plus C was redundant on some of the paths that means it was partially redundant in the transform
+[00:09:39 -> 00:09:44] programs B plus C is not redundant on any of the paths so the partial redundancy has been
+[00:09:44 -> 00:09:48] eliminated on this particular path B plus C is only computed once and on the other path also
+[00:09:48 -> 00:09:54] B plus C is only computed once okay so that's what partial redundancy elimination means
+[00:09:56 -> 00:10:01] and so you know one way of kind of asking this question in a more general way so right
+[00:10:01 -> 00:10:05] now I just showed you a single example but if I wanted to ask this question of partial
+[00:10:05 -> 00:10:10] redundancy elimination in a more general way I want to ask the question can we place computations
+[00:10:10 -> 00:10:17] of B plus C such that no path recomputes the same expression all right so I basically no
+[00:10:17 -> 00:10:22] program path so recall that there are there could be potentially an infinite number of
+[00:10:22 -> 00:10:26] program paths in the program because there are loops and other things but can we place
+[00:10:26 -> 00:10:32] computations of any computation so in this example I'm using B plus C as an example or
+[00:10:32 -> 00:10:40] any given computation such that no path recomputes the same expression more than once
+[00:10:40 -> 00:10:45] right so if I if on that path it has already been computed and it has not been killed for
+[00:10:45 -> 00:10:51] example if I'm computing B plus C then B hasn't been set to 7 or something like that or no
+[00:10:51 -> 00:10:55] other value or C hasn't been set to some other value something like that so as long as
+[00:10:55 -> 00:11:02] that expression is available on that path I'm not going to recompute that expression on on that
+[00:11:02 -> 00:11:08] path all right so this is very similar to the available expressions analysis that we've seen
+[00:11:08 -> 00:11:13] earlier just that in the available expressions we had the mandate that it should be available
+[00:11:13 -> 00:11:18] on all paths here we are saying that and we would say that there should not be redundancy
+[00:11:18 -> 00:11:21] if there is if it is available on all paths here we are saying that
+[00:11:22 -> 00:11:28] look at each path in isolation and even on every single path there should not be any redundancy
+[00:11:28 -> 00:11:37] so that's a much more difficult statement or analysis to kind of imagine so first of all
+[00:11:37 -> 00:11:41] I want to point out that partial redundancy elimination subsumes loop invariant code motion
+[00:11:41 -> 00:11:47] and that's easy to see because if I have a loop and let's say this m plus n is a loop
+[00:11:47 -> 00:11:53] invariant computation then m plus n is is redundant on many paths for example if I just
+[00:11:53 -> 00:12:00] take the path which comes which goes around the loop once and then goes goes out here m plus n
+[00:12:00 -> 00:12:06] is being redundantly computed once more right so it's total in total is being computed twice
+[00:12:06 -> 00:12:12] but randomly computed once right so once it's the first time you need it but the second time
+[00:12:12 -> 00:12:17] it was redundantly computed or even if I take a path which has which goes around the loop three
+[00:12:17 -> 00:12:22] times or ten times then m plus n being is being redundantly computed you know twice or nine
+[00:12:22 -> 00:12:27] times or things like that so so here there is partial redundancy right so involves redundant
+[00:12:27 -> 00:12:32] computation on loop path so there are some paths where there is redundancy and so this
+[00:12:32 -> 00:12:39] expression this program has partial redundancy in it what would be a way to solve this problem
+[00:12:39 -> 00:12:44] well one way to solve this problem is to basically eliminate the partial redundancy by doing loop
+[00:12:44 -> 00:12:51] invariant code motion you recompute m plus n ahead of the loop and then you just do a equals
+[00:12:51 -> 00:12:57] t inside the loop and now I have eliminated partial redundancy on this particular program
+[00:12:57 -> 00:13:03] because in this program m plus n is computed only once on all the program paths right
+[00:13:03 -> 00:13:07] irrespective of whether so let's say let's take a program path that goes around the loop
+[00:13:07 -> 00:13:15] ten times even there m plus n is only computed once all right so partial redundancy elimination
+[00:13:15 -> 00:13:24] or pre subsumes loop invariant code motion or licm all right now here is an example that shows
+[00:13:24 -> 00:13:30] that pre may require adding basic blocks so here is an example so for example you have c
+[00:13:30 -> 00:13:37] equals a plus b and then you know some from somewhere above in the program there is another
+[00:13:37 -> 00:13:43] basic block and there's some computation here and then there's a meet point where I say d equals
+[00:13:43 -> 00:13:49] a plus b so now once again a plus b is being partially computed on some of the program paths
+[00:13:49 -> 00:13:53] for example on this particular program path a plus b is being partially computed but if I look
+[00:13:53 -> 00:14:00] at this particular program path a plus b is not partially is not is not redundant so here
+[00:14:00 -> 00:14:06] it is redundant on this particular program path it's redundant on this program path it
+[00:14:06 -> 00:14:12] is not redundant so a plus b is redundant on some path there is partial redundancy with respect to
+[00:14:12 -> 00:14:19] a plus b the question is how should I remove this partial redundancy now notice that if I
+[00:14:19 -> 00:14:25] bring this a plus b here so if I bring this a plus b here then that's not a good idea because
+[00:14:25 -> 00:14:31] then I have introduced redundancy so I have eliminated redundancy on this path so with
+[00:14:31 -> 00:14:37] this if I bring a plus b here let's say so let me just draw an arrow so let's say I bring this
+[00:14:37 -> 00:14:44] here then I have eliminated redundancy on this path but I have introduced a redundancy on this
+[00:14:44 -> 00:14:49] path because on this path a plus b was not getting computed probably it was not even
+[00:14:49 -> 00:14:55] required and still I have put a plus b computation there so one of the other things
+[00:14:55 -> 00:14:59] about redundancy is that only those expressions should be computed which are actually required on
+[00:14:59 -> 00:15:06] that particular program path right and so here I mean if in the original so I shouldn't introduce
+[00:15:06 -> 00:15:14] any extra computations on any of the program paths in the program but if I move a plus b
+[00:15:14 -> 00:15:19] here then I have added an extra computation of a plus b on this particular program path
+[00:15:19 -> 00:15:23] and that would be that would that is not an acceptable solution for partial redundancy
+[00:15:23 -> 00:15:29] elimination because to eliminate redundancy on one of the paths we're kind of adding redundancy
+[00:15:29 -> 00:15:33] on another path we are adding extra computations on another path where they were not even required
+[00:15:33 -> 00:15:37] all right so that is not you know that is not something that we would like to have
+[00:15:37 -> 00:15:42] in our solution and so it is not okay to compute a plus b here all right so this is
+[00:15:42 -> 00:15:48] this is a bad solution so what is a better solution well first of all I want to point
+[00:15:48 -> 00:15:55] out that why is this problem even occurring this problem is occurring because because there is
+[00:15:55 -> 00:16:04] a an edge here which basically has a basic block which has two successors and
+[00:16:05 -> 00:16:09] so the from basic block of this particular edge has two successors and the two basic
+[00:16:09 -> 00:16:16] block of this particular edge has two predecessors and so if I want to move a plus b into this
+[00:16:16 -> 00:16:21] here then I'm adding extra redundancy on some of the program paths for example I'm
+[00:16:21 -> 00:16:25] adding redundancy on this particular program path so what is the solution the solution is to
+[00:16:25 -> 00:16:33] add a new basic block which basically breaks this particular edge into two edges all right
+[00:16:33 -> 00:16:40] so and that way I'm being able to remove redundancy on this particular path without
+[00:16:40 -> 00:16:43] adding redundancy on this particular path so on this particular path a plus b is not getting
+[00:16:43 -> 00:16:49] computed on this particular path a plus b is on this particular path a plus b is only getting
+[00:16:49 -> 00:16:54] computed once and on this particular path it is also getting computed before it is getting used so
+[00:16:54 -> 00:17:00] it's it's all good in this situation so in this case we had to eliminate the partial redundancy
+[00:17:00 -> 00:17:05] we had to add an extra basic block and why did we have to add an extra basic block because
+[00:17:05 -> 00:17:10] I wanted to break this particular edge into two edges so that I can place a computation in
+[00:17:10 -> 00:17:15] the middle of that edge I didn't want to place the computation at the source of that edge I
+[00:17:15 -> 00:17:19] wanted to place the computation in the middle of the edge so what is special about this edge
+[00:17:19 -> 00:17:24] that I had to break it into two and place a computation in the middle of it well it's
+[00:17:24 -> 00:17:32] because this edge is special because it as I just said before it's from node has two successors
+[00:17:32 -> 00:17:37] and it's two node has two predecessors and that's why it becomes difficult to move a
+[00:17:37 -> 00:17:42] computation or hoist a computation when we move a computation above earlier in the program
+[00:17:42 -> 00:17:47] then we call it hoisting of a computation so it becomes harder for to hoist a computation
+[00:17:47 -> 00:17:53] because across a critical edge because now you may be adding redundancy on some other
+[00:17:53 -> 00:18:00] parts of the program and so for in so I want to act so I need to break the critical edge
+[00:18:00 -> 00:18:06] into two edges and insert a basic block in the middle of them so what what is a critical
+[00:18:06 -> 00:18:11] edge a critical edge is an edge where the source basic block has multiple successors
+[00:18:11 -> 00:18:15] and the destination basic block has multiple predecessors so here is an example of a critical
+[00:18:15 -> 00:18:20] base edge this particular basic block has two successors and this particular basic block has
+[00:18:20 -> 00:18:27] two predecessors two or more predecessors two or more successes all right critical edges make
+[00:18:27 -> 00:18:32] it harder to remove redundancy because if I have a plus b here and let's say a plus b
+[00:18:32 -> 00:18:38] was also being computed on some other path in the at the at some of the predecessors of
+[00:18:38 -> 00:18:44] the destination node of the critical edge then I don't know where to put a plus b because if
+[00:18:44 -> 00:18:49] I put it here then I'm adding redundancy on this particular path and that's not a good idea
+[00:18:49 -> 00:18:54] so where to hoist a plus b if it is redundant on the other incoming edge of the destination
+[00:18:54 -> 00:19:00] well the answer is that you need to add a new basic block for that particular critical
+[00:19:00 -> 00:19:06] edge so so this is going to be a feature of our algorithm we are going to typically have
+[00:19:06 -> 00:19:11] we may have to break critical edges into two edges and put a basic block in the middle of
+[00:19:11 -> 00:19:18] them to be able to eliminate partial redundancy now I want to point out that partial redundancy
+[00:19:18 -> 00:19:23] may still not be eliminatable even after adding basic blocks and here is an example
+[00:19:24 -> 00:19:30] here basically I have a equals b plus c and d equals b plus c and I have this diamond
+[00:19:30 -> 00:19:36] shaped two diamonds I have a program structure which is made of two diamond shapes there is a
+[00:19:36 -> 00:19:42] meat point first and then again there is branch and then there is meat and now it is compute b
+[00:19:42 -> 00:19:46] plus c is computed on one of the branches in the first diamond and then it is recomputed on
+[00:19:46 -> 00:19:51] one of the branches in the other diamond now in this particular example if you look at this
+[00:19:51 -> 00:19:57] particular path that has been marked in green then the expression b plus c is computed
+[00:19:57 -> 00:20:03] redundantly twice in this particular path on the other hand if I look at any other path there are
+[00:20:03 -> 00:20:10] four paths in total in this other program and on the other four paths there is no problem of
+[00:20:10 -> 00:20:14] redundancy but on one of these paths there is a problem of redundancy the question is how
+[00:20:14 -> 00:20:22] to remove this redundancy and and the the thing is that here we it's not enough to just
+[00:20:22 -> 00:20:27] add a basic block to remove this partial redundancy in fact here if you want to do this
+[00:20:27 -> 00:20:33] you may have to duplicate the code by duplicating this part of the second diamond of the program
+[00:20:33 -> 00:20:38] right so this program is made up of two diamonds the first diamond structure involves branching
+[00:20:38 -> 00:20:42] and then meeting and the second diamond structure again involves branching and meeting
+[00:20:42 -> 00:20:49] and one way to eliminate partial redundancy in this particular program is to copy the code of
+[00:20:49 -> 00:20:55] the second diamond for each branch separately so specialize the code for each branch and then
+[00:20:55 -> 00:21:01] in one of the branches eliminate the redundancy and on the other branch there is no redundancy
+[00:21:01 -> 00:21:06] anyway and so that way we can achieve partial redundancy elimination so to see that you know
+[00:21:06 -> 00:21:14] what I can do is in this particular example I have first kind of eliminated this b2 to
+[00:21:15 -> 00:21:21] specialize the code of the second diamond on the left hand side path and so this is what I
+[00:21:21 -> 00:21:26] get and on this particular path I've already computed b plus c so I can reuse that and so
+[00:21:26 -> 00:21:31] instead of recomputing b plus c I can just say d equals t where b plus c is already computed
+[00:21:31 -> 00:21:39] into t and for the other branch I copy the original code as it is now you can imagine then
+[00:21:39 -> 00:21:44] when I copy the code then the code size increases and that can also have a dramatic
+[00:21:44 -> 00:21:49] effect on the runtime because of caching effects and things like that moreover when we
+[00:21:50 -> 00:21:57] duplicate code like this example then what happens is that the code size increases by a
+[00:21:57 -> 00:22:01] multiplicative factor and when there is a multiplicative factor involved things can quickly
+[00:22:01 -> 00:22:07] become exponential right so if you start duplicating code like this then then the
+[00:22:07 -> 00:22:15] program can really become really big and that can be detrimental to performance and so but
+[00:22:15 -> 00:22:20] nonetheless even if I'm doing that I can be a little smart about this so maybe I just
+[00:22:20 -> 00:22:27] duplicate b3 but then from b3 the outgoing edges are kind of shared so for example if b3 goes to
+[00:22:27 -> 00:22:34] b4 then both b3 and b3 prime which is the copy of b3 can go to the same b4 right whereas
+[00:22:34 -> 00:22:40] for d equals b plus c one of them has a specialized version d equals t and the other
+[00:22:40 -> 00:22:47] one has the original version which is d equals b plus c and both of them can now go to b5 and
+[00:22:47 -> 00:22:51] so this would be our transform program notice that in the transform program I have duplicated
+[00:22:51 -> 00:22:57] b3 b3 and b3 prime and that is and so to be able to remove partial redundancy I had to
+[00:22:57 -> 00:23:03] duplicate you can check that in this particular program once again there are four possible
+[00:23:03 -> 00:23:08] paths and on all those far four paths there is no redundancy so we have successfully
+[00:23:09 -> 00:23:14] implemented partial redundancy elimination but unfortunately we had to duplicate code to do this
+[00:23:15 -> 00:23:19] we are not interested in our particular algorithm we are not interested in duplicating code because
+[00:23:19 -> 00:23:25] as I said duplication can quickly become exponential in nature and can have detrimental
+[00:23:25 -> 00:23:30] effects both to code size and to performance and in our work we are interested in eliminating
+[00:23:30 -> 00:23:36] only those redundancies which can be eliminated without code duplication right we are not
+[00:23:36 -> 00:23:43] interested in code duplication but without changing the control flow graph structure
+[00:23:45 -> 00:23:49] by much there are some things that we will still allow and that is the addition of basic
+[00:23:49 -> 00:23:54] blocks is still allowed on critical edges but apart from that we don't want to modify the
+[00:23:54 -> 00:23:59] control flow graph structure in any other way yet we want to eliminate partial redundancy
+[00:23:59 -> 00:24:03] wherever possible in such a restricted setting so that's what we're going to be
+[00:24:03 -> 00:24:06] discussing in the next few lecture modules.

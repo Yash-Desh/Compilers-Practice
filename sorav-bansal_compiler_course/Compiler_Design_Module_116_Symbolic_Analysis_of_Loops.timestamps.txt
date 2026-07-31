@@ -1,0 +1,610 @@
+Title: Compiler Design Module 116 : Symbolic Analysis of Loops
+Video ID: 1-vB-pdrfss
+Detected language: en
+------------------------------------------------------------
+
+[00:00:00 -> 00:00:06] So, we are now going to discuss analyses that go beyond the data flow analysis and that
+[00:00:06 -> 00:00:11] was one of the primary reasons that we started defining loops and natural loops because
+[00:00:11 -> 00:00:14] we wanted to do deeper analyses on loops.
+[00:00:14 -> 00:00:18] So, today we're going to talk about symbolic analysis of loops.
+[00:00:18 -> 00:00:24] So to motivate the need for such an analysis, let's look at this particular example.
+[00:00:25 -> 00:00:31] So let's say I initialize sum to s, i to 0 and then I have a natural loop.
+[00:00:31 -> 00:00:34] In the natural loop, there's a loop condition which checks whether i is less than n, n could
+[00:00:34 -> 00:00:40] be either a variable or a constant, but it is loop invariant, so n is not modified inside
+[00:00:40 -> 00:00:41] the loop.
+[00:00:41 -> 00:00:47] Alright, so I call it loop invariant and so then I say ai plus equals sum, so I'm
+[00:00:47 -> 00:00:53] modifying location ai, notice that in this particular statement every iteration is
+[00:00:53 -> 00:00:59] going to modify a different location because i is going to be different in every iteration.
+[00:00:59 -> 00:01:05] I'd say sum plus equals i and then I say i plus plus, so this is a loop that increments
+[00:01:05 -> 00:01:11] i on every iteration until it reaches n and also computes sum and also modifies
+[00:01:11 -> 00:01:14] an array element.
+[00:01:14 -> 00:01:19] Now the question here is can we execute different iterations of this loop in parallel
+[00:01:19 -> 00:01:20] on n processors?
+[00:01:20 -> 00:01:23] So let's say I have n processors and let's say n was a constant.
+[00:01:23 -> 00:01:27] It could be any other variable, so let's say I have more than n processors and so I need
+[00:01:27 -> 00:01:32] to parallelize this loop and the question is can I do that?
+[00:01:32 -> 00:01:38] And the answer seems, if I just look at data dependencies, the first iteration
+[00:01:38 -> 00:01:41] computes sum and that is again used in the second iteration.
+[00:01:41 -> 00:01:48] So there are data dependencies, there are read after write data dependencies from
+[00:01:48 -> 00:01:50] one iteration to the next.
+[00:01:50 -> 00:01:55] For example, the sum variable itself is getting updated in let's say one iteration
+[00:01:55 -> 00:02:00] and the result of that updation is being used in the next iteration because I am accumulating
+[00:02:00 -> 00:02:01] into sum.
+[00:02:01 -> 00:02:06] In fact, similarly, i is getting accumulated into and so the result that is produced
+[00:02:06 -> 00:02:10] in one iteration is going to get used in the next iteration because that is what
+[00:02:10 -> 00:02:14] one is going to get added to.
+[00:02:14 -> 00:02:18] So there are data dependencies across iterations and so if I just look at it naively then
+[00:02:18 -> 00:02:23] then it seems that this loop cannot be parallelized, I cannot execute each iteration of the loop
+[00:02:23 -> 00:02:28] in parallel with other iterations of the loop.
+[00:02:28 -> 00:02:33] But let's look at, you know, can I apply data flow analysis, the common ones that
+[00:02:33 -> 00:02:37] we know and maybe the data flow analysis is going to give me enough information so
+[00:02:37 -> 00:02:39] that I can now start parallelizing the loop.
+[00:02:39 -> 00:02:46] So things like, you know, we have discussed perhaps the DFA's like concept propagation
+[00:02:46 -> 00:02:51] or common sub-expression elimination or some other data flow analysis that we have discussed.
+[00:02:51 -> 00:02:52] Do they help?
+[00:02:52 -> 00:02:57] Well, the answer is that they do not help and I will show that with an example of
+[00:02:57 -> 00:02:59] common sub-expression elimination.
+[00:02:59 -> 00:03:02] So recall that when we want to do common sub-expression elimination, we basically
+[00:03:02 -> 00:03:05] run a data flow analysis called available expressions.
+[00:03:05 -> 00:03:09] So if I run available expressions on this particular program, what I get is, at this
+[00:03:09 -> 00:03:15] particular point, we have two available expressions, zero is available in i and s
+[00:03:15 -> 00:03:17] is available in sum, all right?
+[00:03:17 -> 00:03:20] So that's what the available expressions is going to give me here.
+[00:03:20 -> 00:03:21] But what about this point?
+[00:03:21 -> 00:03:25] Notice that this is the head of the loop and so one of the incoming edges is the
+[00:03:25 -> 00:03:29] entry of the loop and the other incoming edge is the back edge of the loop.
+[00:03:29 -> 00:03:33] And so here, is some value available in i?
+[00:03:33 -> 00:03:35] The answer is no because it's changing on every iteration.
+[00:03:35 -> 00:03:38] So there is no value available in i.
+[00:03:38 -> 00:03:40] Is there some value available in sum?
+[00:03:40 -> 00:03:45] The answer is no because once again, sum is being modified in every iteration,
+[00:03:45 -> 00:03:48] it is going to have a different value on every iteration.
+[00:03:48 -> 00:03:52] And so the set of available expressions here at this particular point at the loop
+[00:03:52 -> 00:03:55] head is just the empty set.
+[00:03:55 -> 00:03:59] And similarly, the set of available expressions at all other points in the
+[00:03:59 -> 00:04:05] loop, you will find is just the empty set because I cannot actually say that
+[00:04:05 -> 00:04:10] some expression, some static expression is available by looking at the program
+[00:04:10 -> 00:04:14] statically in some variable at any of these program points that lie within
+[00:04:14 -> 00:04:15] the loop.
+[00:04:15 -> 00:04:18] And notice that there's one more program point, which is the exit of the loop.
+[00:04:18 -> 00:04:23] And at this point also, I cannot really claim that I have some
+[00:04:23 -> 00:04:27] relationship between the available expressions and some variables.
+[00:04:27 -> 00:04:30] So I wrote my set of available expressions even at the exit is empty.
+[00:04:30 -> 00:04:33] Now, is that the ideal solution?
+[00:04:33 -> 00:04:38] And I'm going to say that if I look at the program and I reason about it,
+[00:04:39 -> 00:04:43] then I can basically say that at this particular point, there is a relationship
+[00:04:43 -> 00:04:47] between sum and I, and how do I identify that relationship?
+[00:04:47 -> 00:04:53] Well, it's coming from the fact that sum represents the addition or
+[00:04:53 -> 00:04:58] the sum of the first I numbers at any iteration.
+[00:04:58 -> 00:05:02] So at this particular point, sum would be the sum of first I numbers.
+[00:05:02 -> 00:05:08] And so that information is not being discovered by our
+[00:05:08 -> 00:05:11] common sub-expression elimination analysis.
+[00:05:11 -> 00:05:16] Because if we knew that sum is the sum of the first I numbers,
+[00:05:16 -> 00:05:19] then first I natural numbers, then what I could have simply done is I could have
+[00:05:19 -> 00:05:24] used the identity and said, sum is equal to I into I minus 1 by 2 or
+[00:05:24 -> 00:05:26] something like that.
+[00:05:27 -> 00:05:34] So the solution for available expressions that would have been a better solution,
+[00:05:34 -> 00:05:38] a better solution than what our DFA produces, could have been the following.
+[00:05:38 -> 00:05:44] That in the beginning of the loop, we still have I, 0 and sum, S.
+[00:05:44 -> 00:05:46] But at the head of the loop, now instead of the empty set,
+[00:05:46 -> 00:05:52] I have this information that sum is S plus I into I minus 1 by 2.
+[00:05:52 -> 00:05:57] Now notice that this expression S plus I into I minus 1 by 2 is not really
+[00:05:57 -> 00:06:00] appearing in the program anywhere, and that's why our available expressions DFA
+[00:06:00 -> 00:06:03] was not able to infer this relationship.
+[00:06:03 -> 00:06:06] But if I was to do a more sophisticated analysis,
+[00:06:06 -> 00:06:09] I would have liked that sophisticated analysis to infer this relationship
+[00:06:09 -> 00:06:13] between sum and I and S for us.
+[00:06:13 -> 00:06:15] Similarly, at this particular program point,
+[00:06:15 -> 00:06:20] I would have the same relationship, sum is S plus I into I minus 1 by 2.
+[00:06:20 -> 00:06:25] Then on the exit, I would have some relationship, and I'm going to come to that.
+[00:06:25 -> 00:06:29] But on the loop body, we're going to have the same relationship,
+[00:06:29 -> 00:06:31] and I'm going to say AI plus equals sum.
+[00:06:31 -> 00:06:38] Now notice that here, because I know that sum is S plus I into I minus 1 by 2,
+[00:06:38 -> 00:06:42] here I could have just replaced sum with S plus I into I minus 1 by 2.
+[00:06:42 -> 00:06:45] And you may say, why does it make sense to actually repeat the computation?
+[00:06:45 -> 00:06:49] You are already computing it in sum, but it would help in parallelization,
+[00:06:49 -> 00:06:50] as we're going to see later.
+[00:06:50 -> 00:06:53] So the question that I had started asking was,
+[00:06:53 -> 00:06:55] can I parallelize each iteration of this loop?
+[00:06:55 -> 00:06:58] And now what I've done is, if I know that sum is nothing,
+[00:06:58 -> 00:07:01] but sum can be expressed in terms of I,
+[00:07:01 -> 00:07:04] then I could remove or eliminate some of the data dependencies
+[00:07:04 -> 00:07:05] across iterations.
+[00:07:05 -> 00:07:09] And indeed, the sophisticated analysis that I'm hoping for
+[00:07:09 -> 00:07:11] is going to give me some relationship,
+[00:07:11 -> 00:07:16] and that is sum is equal to S plus I into I minus 1 by 2.
+[00:07:16 -> 00:07:19] Now similarly, when I say sum plus equals I,
+[00:07:19 -> 00:07:20] now the relationship changes.
+[00:07:20 -> 00:07:24] Now it is not just the sum of the first I minus 1 numbers,
+[00:07:24 -> 00:07:27] but it's now the sum of first I numbers, natural numbers.
+[00:07:27 -> 00:07:30] And so it becomes S plus I into I plus 1 by 2,
+[00:07:30 -> 00:07:32] instead of I minus 1 by 2.
+[00:07:32 -> 00:07:36] And similarly, now we have increment I, and now once again,
+[00:07:36 -> 00:07:41] because I has been incremented, this relationship changes
+[00:07:41 -> 00:07:44] and becomes S plus I into I minus 1 by 2.
+[00:07:44 -> 00:07:46] So notice the subtle difference.
+[00:07:46 -> 00:07:50] Earlier it was S plus I into I minus 1 by 2,
+[00:07:50 -> 00:07:52] then it became I into I plus 1 by 2,
+[00:07:52 -> 00:07:54] and then after I got incremented,
+[00:07:54 -> 00:07:56] it again became I into I minus 1 by 2.
+[00:07:58 -> 00:08:00] Now all this requires sophisticated analysis
+[00:08:00 -> 00:08:03] that is beyond the scope of the data flow analysis
+[00:08:03 -> 00:08:05] that we have talked so far.
+[00:08:05 -> 00:08:08] And so this kind of analysis is going to be called
+[00:08:08 -> 00:08:10] the symbolic analysis of loops,
+[00:08:10 -> 00:08:12] and we're going to discuss how to do something like this
+[00:08:12 -> 00:08:14] in the next few modules.
+[00:08:14 -> 00:08:16] Also notice that there's a loop exit,
+[00:08:16 -> 00:08:18] and so using an analysis on the loops,
+[00:08:18 -> 00:08:22] I may be able to infer that when the loop exits,
+[00:08:22 -> 00:08:24] then I would be equal to N,
+[00:08:24 -> 00:08:26] because I starts at zero, gets incremented,
+[00:08:26 -> 00:08:28] until I is less than N,
+[00:08:28 -> 00:08:32] so it exits the loop only when I equals N,
+[00:08:32 -> 00:08:34] and so I can say that at exit,
+[00:08:34 -> 00:08:37] I would be equal to N, or in other words,
+[00:08:37 -> 00:08:40] the available expressions would contain I comma N.
+[00:08:40 -> 00:08:44] And similarly, I would have sum is S plus N
+[00:08:44 -> 00:08:45] into N minus 1 by 2,
+[00:08:45 -> 00:08:47] and that's just coming from this fact
+[00:08:47 -> 00:08:51] that just previously it was sum is S plus I
+[00:08:51 -> 00:08:53] into I minus 1 by 2, and I equals N,
+[00:08:53 -> 00:08:55] so from that I know sum is S plus N
+[00:08:55 -> 00:08:57] into N minus 1 by 2.
+[00:08:57 -> 00:09:01] Now once again, these are nice relationships to have
+[00:09:01 -> 00:09:03] through our available expressions analysis,
+[00:09:03 -> 00:09:06] but the DFA that as we have discussed so far
+[00:09:06 -> 00:09:11] is incapable of generating such relationships.
+[00:09:11 -> 00:09:16] So what we require for such results from our analysis
+[00:09:16 -> 00:09:18] is we require a loop level analysis.
+[00:09:18 -> 00:09:19] We need to understand what the loop
+[00:09:19 -> 00:09:21] is actually trying to do,
+[00:09:21 -> 00:09:23] and this kind of loop level analysis
+[00:09:23 -> 00:09:25] is called a symbolic analysis of the loops,
+[00:09:25 -> 00:09:27] where we try to understand how the variables
+[00:09:27 -> 00:09:30] are evolving across iterations.
+[00:09:31 -> 00:09:36] So I'm going to discuss how symbolic analysis may work
+[00:09:36 -> 00:09:38] in the next few modules,
+[00:09:38 -> 00:09:40] but I'm going to give you a brief overview
+[00:09:40 -> 00:09:42] of how it may work,
+[00:09:42 -> 00:09:46] and the basic idea here is that we're going to compute
+[00:09:46 -> 00:09:48] the transfer function of a loop iteration.
+[00:09:48 -> 00:09:50] By the transfer function of a loop iteration,
+[00:09:50 -> 00:09:52] I basically mean the transfer function
+[00:09:52 -> 00:09:53] of the body of the loop,
+[00:09:53 -> 00:09:56] and I'm going to call that FB, all right?
+[00:09:56 -> 00:09:59] So for example, the body of the loop is consisting
+[00:09:59 -> 00:10:02] of these two basic blocks, I less than N
+[00:10:02 -> 00:10:05] and this basic block containing three statements
+[00:10:05 -> 00:10:06] without the back edge, all right?
+[00:10:06 -> 00:10:09] And so the body of the loop has one entry
+[00:10:09 -> 00:10:11] and two exits, one is the exit of the loop
+[00:10:11 -> 00:10:13] and one is the back edge,
+[00:10:13 -> 00:10:14] but the body doesn't have the back edge,
+[00:10:14 -> 00:10:16] so we're going to treat the back edge also
+[00:10:16 -> 00:10:18] as an exit of the body.
+[00:10:19 -> 00:10:21] And then we're going to use sophisticated reasoning
+[00:10:21 -> 00:10:25] to try and summarize K iterations of the body.
+[00:10:25 -> 00:10:26] So we know what is FB,
+[00:10:26 -> 00:10:29] we're going to first identify what is FB
+[00:10:29 -> 00:10:30] as a symbolic function.
+[00:10:30 -> 00:10:33] So if something comes in, what comes out?
+[00:10:33 -> 00:10:35] And now once I have FB,
+[00:10:35 -> 00:10:37] then I'm going to use symbolic analysis
+[00:10:37 -> 00:10:39] or sophisticated reasoning to say,
+[00:10:39 -> 00:10:44] what if I concatenate FB or compose FB with itself K times
+[00:10:44 -> 00:10:45] and I'm going to call,
+[00:10:45 -> 00:10:47] I'm calling it FB to the power K, all right?
+[00:10:47 -> 00:10:49] So FB composed with itself K times.
+[00:10:49 -> 00:10:51] And what is FB to the power K?
+[00:10:51 -> 00:10:53] You can think of it as FB to the power K
+[00:10:53 -> 00:10:57] equals FB to the power K minus one composed with FB,
+[00:10:57 -> 00:10:59] all right, for K greater than one, okay?
+[00:10:59 -> 00:11:00] And if K is equal to one,
+[00:11:00 -> 00:11:04] then FB to the power one is just FB, all right?
+[00:11:04 -> 00:11:05] What does composition mean?
+[00:11:05 -> 00:11:07] Well, we know that already,
+[00:11:07 -> 00:11:10] FB to the power K of any input X is,
+[00:11:10 -> 00:11:13] you first apply FB to the power K minus one to X
+[00:11:13 -> 00:11:15] and then you apply FB to it.
+[00:11:15 -> 00:11:17] And so this way I'm defining FB
+[00:11:17 -> 00:11:19] to the power K inductively.
+[00:11:19 -> 00:11:21] Similarly, I could say FB to the power K minus one,
+[00:11:21 -> 00:11:25] there's nothing but composition of FB to the power K
+[00:11:25 -> 00:11:28] minus two and FB till I reach K equals one.
+[00:11:29 -> 00:11:32] Okay, so once I know FB,
+[00:11:32 -> 00:11:34] I'm saying that I can use symbolic analysis
+[00:11:34 -> 00:11:38] to be able to see if I can summarize FB to the power K
+[00:11:39 -> 00:11:40] in a more precise way
+[00:11:40 -> 00:11:42] and that's exactly what a symbolic analysis
+[00:11:42 -> 00:11:43] is going to do.
+[00:11:43 -> 00:11:45] So this is what a symbolic analysis,
+[00:11:45 -> 00:11:47] this is what we are going to call a symbolic analysis.
+[00:11:47 -> 00:11:49] So let's try to understand
+[00:11:49 -> 00:11:51] what would a symbolic analysis do.
+[00:11:51 -> 00:11:52] I'm not going to talk about
+[00:11:52 -> 00:11:54] how the symbolic analysis is being implemented
+[00:11:54 -> 00:11:55] at this stage.
+[00:11:55 -> 00:11:59] We're going to discuss how in later modules,
+[00:11:59 -> 00:12:01] but at least what will the symbolic analysis
+[00:12:01 -> 00:12:03] be expected to do in this example.
+[00:12:03 -> 00:12:06] So let's say FB is,
+[00:12:06 -> 00:12:07] so firstly, what is FB?
+[00:12:07 -> 00:12:09] FB takes an input machine state
+[00:12:10 -> 00:12:13] which contains let's say available expression map.
+[00:12:13 -> 00:12:15] So I'm calling the map M
+[00:12:15 -> 00:12:20] and M is a map from variables to their values
+[00:12:20 -> 00:12:22] or their expressions.
+[00:12:22 -> 00:12:24] So that's why it's called available expression
+[00:12:24 -> 00:12:25] and then it returns another map,
+[00:12:25 -> 00:12:28] which is the new map.
+[00:12:28 -> 00:12:30] And so for example,
+[00:12:30 -> 00:12:32] so this is what FB's shape is going to be
+[00:12:32 -> 00:12:34] what FB's type is going to be.
+[00:12:34 -> 00:12:34] And using this type,
+[00:12:34 -> 00:12:37] I'm going to try to infer what is FB to the power K
+[00:12:37 -> 00:12:38] for some K.
+[00:12:39 -> 00:12:40] So for example,
+[00:12:40 -> 00:12:44] what is FB for this particular loop?
+[00:12:44 -> 00:12:48] Well, if I say that M,
+[00:12:48 -> 00:12:50] recall that M is nothing but a map.
+[00:12:50 -> 00:12:53] So I could say MI is the expression
+[00:12:53 -> 00:12:56] corresponding to I in the map.
+[00:12:56 -> 00:12:58] And if there is no expression corresponding to I in map,
+[00:12:58 -> 00:13:00] then this would just be bottom
+[00:13:00 -> 00:13:03] and then anything that is kind of added
+[00:13:03 -> 00:13:07] or subtracted from bottom is just bottom.
+[00:13:07 -> 00:13:10] So I could concisely specify that M prime of I
+[00:13:10 -> 00:13:13] is nothing but MI or plus one.
+[00:13:13 -> 00:13:17] So whatever, if the input map M
+[00:13:17 -> 00:13:20] maps I to some value V,
+[00:13:20 -> 00:13:22] then the output map M prime
+[00:13:22 -> 00:13:25] would map I to some value V plus one.
+[00:13:25 -> 00:13:27] That's what this statement M prime I
+[00:13:27 -> 00:13:28] equals MI plus one means.
+[00:13:28 -> 00:13:31] But whatever M is mapping I to,
+[00:13:31 -> 00:13:32] let's say it's V,
+[00:13:32 -> 00:13:36] then M prime would map the same I to V plus one.
+[00:13:36 -> 00:13:39] In other words, M prime I would be equal to MI plus one.
+[00:13:40 -> 00:13:41] Similarly, I could say,
+[00:13:41 -> 00:13:44] and this is just coming from the statements, right?
+[00:13:44 -> 00:13:45] From the statements,
+[00:13:45 -> 00:13:47] I can identify these transfer functions.
+[00:13:47 -> 00:13:50] M prime sum equals M sum plus MI.
+[00:13:50 -> 00:13:52] So how do I say that?
+[00:13:52 -> 00:13:55] Because the input value is MI,
+[00:13:55 -> 00:13:59] and then I add that to the input value M sum,
+[00:13:59 -> 00:14:01] and that's the new value of sum.
+[00:14:01 -> 00:14:05] And so M prime sum becomes M sum plus MI.
+[00:14:05 -> 00:14:06] So in the new map,
+[00:14:06 -> 00:14:09] the sum value is going to be mapped to an expression
+[00:14:09 -> 00:14:14] which has the old expression for sum
+[00:14:14 -> 00:14:16] plus the old expression for I.
+[00:14:16 -> 00:14:18] Notice that subtlety here, M sum plus MI,
+[00:14:18 -> 00:14:20] not M sum plus M prime I,
+[00:14:20 -> 00:14:23] because notice that I'm using the old value of I
+[00:14:24 -> 00:14:24] to add to sum,
+[00:14:24 -> 00:14:28] because sum plus equals I is occurring before I plus plus.
+[00:14:28 -> 00:14:30] And so it's the old value of I,
+[00:14:30 -> 00:14:33] and so if sum plus equals I was occurring after I plus plus,
+[00:14:33 -> 00:14:36] then I would have had M prime I here.
+[00:14:36 -> 00:14:37] So based on this body,
+[00:14:37 -> 00:14:39] just analyzing this body or the function,
+[00:14:39 -> 00:14:41] I'm able to identify the transfer function
+[00:14:41 -> 00:14:43] in a symbolic way,
+[00:14:43 -> 00:14:46] say M prime sum equals M sum plus MI.
+[00:14:47 -> 00:14:49] Now, once I have this,
+[00:14:49 -> 00:14:51] now I want to basically generalize this
+[00:14:51 -> 00:14:54] for K iterations or K compositions of FB.
+[00:14:54 -> 00:14:57] And so this is what it's going to look like.
+[00:14:57 -> 00:14:58] I'd say M,
+[00:14:58 -> 00:15:00] so just like I have M prime for one iteration
+[00:15:00 -> 00:15:02] or one application of FB,
+[00:15:02 -> 00:15:04] I'm going to say M prime K is the map
+[00:15:04 -> 00:15:07] that's generated by K applications of FB.
+[00:15:07 -> 00:15:12] And so M prime K equals FB to the power K of M.
+[00:15:13 -> 00:15:15] And now I can see that if one iteration
+[00:15:15 -> 00:15:18] is incrementing I by one,
+[00:15:18 -> 00:15:20] then just using symbolic analysis,
+[00:15:21 -> 00:15:24] you know, just using some mathematical identities.
+[00:15:24 -> 00:15:25] By symbolic analysis,
+[00:15:25 -> 00:15:27] I mean some sophisticated mathematical reasoning.
+[00:15:27 -> 00:15:30] That's very easy to us to kind of do this.
+[00:15:30 -> 00:15:33] You know, easy to see this as humans
+[00:15:33 -> 00:15:34] is it's basically M.
+[00:15:34 -> 00:15:36] If one iteration increments by one,
+[00:15:36 -> 00:15:40] then K iterations is going to increment by K, right?
+[00:15:40 -> 00:15:41] And such rules,
+[00:15:41 -> 00:15:45] such axioms can be coded up in our symbolic analysis,
+[00:15:45 -> 00:15:46] hard coded in our symbolic analysis
+[00:15:46 -> 00:15:49] so that whenever you see this kind of pattern,
+[00:15:49 -> 00:15:50] then you basically say that,
+[00:15:50 -> 00:15:54] you know, K compositions of this function
+[00:15:54 -> 00:15:59] is just going to multiply this increment by K.
+[00:16:00 -> 00:16:04] And so M K prime I equals MI plus K.
+[00:16:04 -> 00:16:06] And so I could have some rules that basically says
+[00:16:06 -> 00:16:08] that if one application of the transfer function
+[00:16:08 -> 00:16:10] increments the variable by X,
+[00:16:10 -> 00:16:13] then K applications of the transfer function
+[00:16:13 -> 00:16:16] will increment the same function by K into X,
+[00:16:16 -> 00:16:19] where X I'm assuming is a constant.
+[00:16:20 -> 00:16:22] But what about M K prime sum?
+[00:16:22 -> 00:16:25] So we know M prime sum equals M sum plus MI.
+[00:16:25 -> 00:16:27] How do I compose K applications
+[00:16:27 -> 00:16:29] of the same transfer functions
+[00:16:29 -> 00:16:33] to generate the map M K prime and for sum?
+[00:16:33 -> 00:16:36] So what should be the expression for sum?
+[00:16:36 -> 00:16:38] If the input expression was M sum,
+[00:16:38 -> 00:16:43] then what should be the expression for M prime K sum?
+[00:16:44 -> 00:16:46] Now, this is also easy to see.
+[00:16:46 -> 00:16:48] Once again, I can use some symbolic analysis,
+[00:16:48 -> 00:16:50] some algebraic identities to see
+[00:16:50 -> 00:16:55] that sum is basically the sum of the first K numbers.
+[00:16:56 -> 00:16:59] And so that way, and then I can use the algebraic,
+[00:16:59 -> 00:17:00] well known algebraic identity
+[00:17:00 -> 00:17:02] that the sum of first K numbers
+[00:17:02 -> 00:17:06] is nothing but K into K plus one by two
+[00:17:06 -> 00:17:07] and things like that.
+[00:17:07 -> 00:17:09] And so that's what I'm going to do.
+[00:17:09 -> 00:17:10] I'm just going to expand,
+[00:17:10 -> 00:17:13] our symbolic analysis is going to expand
+[00:17:13 -> 00:17:18] M K prime sum equals M prime K minus one sum.
+[00:17:20 -> 00:17:23] So to be able to solve for M K prime,
+[00:17:23 -> 00:17:26] I'm going to expand this one iteration at a time
+[00:17:26 -> 00:17:30] and recall that M prime sum was M sum plus MI.
+[00:17:30 -> 00:17:34] So M K prime sum is M K minus one prime sum
+[00:17:34 -> 00:17:36] plus M K minus one prime I.
+[00:17:36 -> 00:17:39] I'm just using the definition of one application of FB
+[00:17:39 -> 00:17:41] in this particular expansion.
+[00:17:43 -> 00:17:44] And now once I have that,
+[00:17:44 -> 00:17:47] then I know that M K prime I,
+[00:17:47 -> 00:17:50] M K minus one prime I is nothing but K minus one,
+[00:17:50 -> 00:17:51] MI plus K minus one,
+[00:17:51 -> 00:17:56] because M K prime I for any K is basically MI plus K
+[00:17:56 -> 00:17:58] and so M K prime I,
+[00:17:58 -> 00:18:03] M K minus one prime I is nothing but MI plus K minus one.
+[00:18:03 -> 00:18:07] So from this,
+[00:18:07 -> 00:18:12] I'm being able to expand this for K minus one, right?
+[00:18:12 -> 00:18:16] Okay, so I get MI plus K minus one for M K prime,
+[00:18:16 -> 00:18:18] M K minus one prime I,
+[00:18:18 -> 00:18:22] and now I need to expand M K minus one prime sum.
+[00:18:22 -> 00:18:25] And notice that I basically have M K prime sum
+[00:18:25 -> 00:18:30] equals M K minus one prime sum plus MI plus K minus one.
+[00:18:30 -> 00:18:33] MI is independent of K,
+[00:18:33 -> 00:18:37] K minus one decreases by one for every K.
+[00:18:37 -> 00:18:39] And so what I get is,
+[00:18:39 -> 00:18:41] eventually I can kind of have an identity
+[00:18:41 -> 00:18:44] which says that if you ever see this kind of a recurrence,
+[00:18:44 -> 00:18:48] then you can just multiply K for the constant element,
+[00:18:48 -> 00:18:50] which is MI, independent of K.
+[00:18:50 -> 00:18:55] And then you can say summation of K one to K minus one,
+[00:18:56 -> 00:18:58] or zero to K minus one.
+[00:19:00 -> 00:19:03] And so that's what my next expansion
+[00:19:03 -> 00:19:04] is going to look like.
+[00:19:04 -> 00:19:08] I'm going to say this is nothing but M K minus one,
+[00:19:08 -> 00:19:10] this is nothing but K into MI,
+[00:19:10 -> 00:19:14] because MI is appearing for every expansion,
+[00:19:14 -> 00:19:16] for every single expansion.
+[00:19:16 -> 00:19:17] So I'm going to, for K expansion,
+[00:19:17 -> 00:19:19] I'm just going to multiply K with it.
+[00:19:20 -> 00:19:24] The end base case is going to produce M sum,
+[00:19:24 -> 00:19:29] because M prime sum is nothing but M sum plus MI.
+[00:19:30 -> 00:19:32] And so that's going to produce M sum.
+[00:19:34 -> 00:19:36] MI is going to be,
+[00:19:37 -> 00:19:39] MI has already been folded into K into MI.
+[00:19:39 -> 00:19:42] And then I have a summation from J equals zero
+[00:19:42 -> 00:19:44] to K minus one of J.
+[00:19:45 -> 00:19:47] And finally, I'm going to be able to simplify this
+[00:19:47 -> 00:19:52] to K into MI plus M of sum plus K into K minus one by two,
+[00:19:52 -> 00:19:55] where K is the number of iterations
+[00:19:55 -> 00:19:57] of the loop that I've executed.
+[00:19:57 -> 00:19:59] Now notice that I'm able to talk about
+[00:19:59 -> 00:20:02] the number of iterations of a loop that I've executed
+[00:20:02 -> 00:20:04] because it's a loop with a single entry.
+[00:20:04 -> 00:20:07] So I know that it's the same head
+[00:20:07 -> 00:20:10] that's going to get visited over and over again
+[00:20:10 -> 00:20:12] across different iterations.
+[00:20:12 -> 00:20:15] And because of that, I can kind of talk about
+[00:20:15 -> 00:20:18] the transfer function of a single iteration
+[00:20:18 -> 00:20:21] and its composition for K times,
+[00:20:21 -> 00:20:23] and where K is the number of iterations of the loop
+[00:20:23 -> 00:20:26] that I've executed so far.
+[00:20:26 -> 00:20:27] And so if K is the number of iterations
+[00:20:27 -> 00:20:28] that I've executed so far,
+[00:20:28 -> 00:20:32] I can say that the map for sum
+[00:20:32 -> 00:20:34] is going to have the expression
+[00:20:34 -> 00:20:38] K into MI plus M sum plus K into K minus one by two.
+[00:20:38 -> 00:20:41] And similarly, the map for I after K iterations
+[00:20:41 -> 00:20:42] is going to be MI plus K.
+[00:20:42 -> 00:20:44] Notice that this kind of analysis
+[00:20:44 -> 00:20:47] is basically more sophisticated than a data flow analysis.
+[00:20:47 -> 00:20:49] We are generating expressions
+[00:20:49 -> 00:20:51] that didn't actually necessarily exist
+[00:20:51 -> 00:20:52] in the original program,
+[00:20:52 -> 00:20:54] such as K into K minus one by two,
+[00:20:54 -> 00:20:58] but they can be inferred by using properties of the loop
+[00:20:58 -> 00:21:00] and algebraic properties of the values
+[00:21:00 -> 00:21:04] that are being computed upon.
+[00:21:05 -> 00:21:08] Finally, I know that MI, which is the input value,
+[00:21:08 -> 00:21:13] the value of I when the loop was first entered,
+[00:21:14 -> 00:21:15] because I know that at input,
+[00:21:15 -> 00:21:17] I already know that we have
+[00:21:17 -> 00:21:19] the available expression I comma zero.
+[00:21:19 -> 00:21:21] So I can replace MI with zero.
+[00:21:22 -> 00:21:24] That is coming from the DFA,
+[00:21:24 -> 00:21:26] available expressions DFA.
+[00:21:26 -> 00:21:28] At this particular point,
+[00:21:28 -> 00:21:33] the map is going to map the value of I
+[00:21:34 -> 00:21:35] to expression zero.
+[00:21:35 -> 00:21:40] Similarly, it maps the variable sum to expression S.
+[00:21:40 -> 00:21:44] And so I can replace MI with zero and M sum with S.
+[00:21:44 -> 00:21:46] And so what I eventually left with,
+[00:21:47 -> 00:21:49] so this requires symbolic analysis of the loop body
+[00:21:49 -> 00:21:51] as you've already seen.
+[00:21:51 -> 00:21:55] And what I'm eventually left with is MK prime I is K
+[00:21:55 -> 00:21:59] and MK prime sum is S plus K into K minus one by two.
+[00:21:59 -> 00:22:02] So now I've been able to talk about
+[00:22:02 -> 00:22:05] the expressions available in each variable
+[00:22:05 -> 00:22:07] after K iterations of the loop.
+[00:22:08 -> 00:22:11] And I can use this to identify
+[00:22:13 -> 00:22:16] relationships among the variables.
+[00:22:16 -> 00:22:18] So for example, if I know that after K iterations,
+[00:22:18 -> 00:22:20] I equals K,
+[00:22:20 -> 00:22:23] then I can just say after K iterations,
+[00:22:23 -> 00:22:25] sum equals S plus,
+[00:22:26 -> 00:22:29] here I have K into K minus one by two,
+[00:22:29 -> 00:22:30] but because I equals K,
+[00:22:30 -> 00:22:33] I can just say S plus I into I minus one by two.
+[00:22:33 -> 00:22:35] So although I'm doing the symbolic analysis
+[00:22:35 -> 00:22:37] with respect to the number of iterations
+[00:22:37 -> 00:22:39] of the loop that I've executed,
+[00:22:39 -> 00:22:41] I can now use these relationships
+[00:22:41 -> 00:22:43] to also identify relationships
+[00:22:43 -> 00:22:46] between different program variables,
+[00:22:46 -> 00:22:47] which do not include K.
+[00:22:47 -> 00:22:50] So here I will be able to identify relationships
+[00:22:50 -> 00:22:52] between sum and I.
+[00:22:52 -> 00:22:53] Also, I would be able to say that,
+[00:22:53 -> 00:22:56] oh, I is getting incremented,
+[00:22:56 -> 00:22:59] so MK prime after K iterations, I is K,
+[00:22:59 -> 00:23:03] and I exit the loop when I becomes greater than equal to N,
+[00:23:03 -> 00:23:04] and initially I was zero.
+[00:23:04 -> 00:23:05] So what do I know when the loop exits?
+[00:23:05 -> 00:23:07] I would be able to say,
+[00:23:07 -> 00:23:09] once again, I could use algebraic reasoning
+[00:23:09 -> 00:23:13] to say that, oh, I starts at zero,
+[00:23:13 -> 00:23:16] I gets incremented by one on every iteration.
+[00:23:17 -> 00:23:20] The loop exits when I becomes greater than equal to N,
+[00:23:20 -> 00:23:22] which basically means that loop must exit
+[00:23:22 -> 00:23:24] when I becomes equal to N.
+[00:23:24 -> 00:23:25] And so at the exit point,
+[00:23:25 -> 00:23:27] I would be able to identify that.
+[00:23:27 -> 00:23:31] You know, one of the points here is
+[00:23:31 -> 00:23:34] that after K iterations, I would be equal to K,
+[00:23:34 -> 00:23:37] and so after how many iterations would I exit the loop?
+[00:23:37 -> 00:23:41] Well, when the number of iterations,
+[00:23:41 -> 00:23:43] K would be greater than equal to N,
+[00:23:43 -> 00:23:44] because it will execute,
+[00:23:44 -> 00:23:46] exit the loop when I would be greater than equal to N,
+[00:23:46 -> 00:23:49] I equals K, so K should be greater than equal to N,
+[00:23:49 -> 00:23:52] and so K would be exactly N, right?
+[00:23:52 -> 00:23:53] Because the first time I do this,
+[00:23:53 -> 00:23:54] I'm going to exit the loop.
+[00:23:54 -> 00:23:56] And so when I exit the loop,
+[00:23:56 -> 00:23:58] I know that K would be equal to N,
+[00:23:58 -> 00:24:00] and from that, I would be able to identify
+[00:24:00 -> 00:24:03] available expressions for the exit of the loop,
+[00:24:03 -> 00:24:05] which would be, I would be just N,
+[00:24:05 -> 00:24:09] and sum would be S plus N into N minus one by two.
+[00:24:10 -> 00:24:13] So I'm going to introduce a term,
+[00:24:13 -> 00:24:14] it's called the loop trip count.
+[00:24:14 -> 00:24:18] Loop trip count is a number of loop body executions
+[00:24:18 -> 00:24:21] between the loop entry and loop exit.
+[00:24:21 -> 00:24:24] And I'm going to try to estimate the loop trip count
+[00:24:24 -> 00:24:26] also using symbolic analysis of a loop.
+[00:24:26 -> 00:24:28] So now that we have identified the natural loop,
+[00:24:28 -> 00:24:30] we are able to do symbolic analysis
+[00:24:30 -> 00:24:32] on the transfer function of the natural loop.
+[00:24:32 -> 00:24:33] We want to use the symbolic analysis
+[00:24:33 -> 00:24:36] to identify as many properties of the loop as possible.
+[00:24:36 -> 00:24:39] And one of the properties is the loop trip count.
+[00:24:39 -> 00:24:41] And I'm saying that I'm going to use
+[00:24:41 -> 00:24:43] the symbolic analysis, the transfer function,
+[00:24:43 -> 00:24:46] to also estimate the loop trip count.
+[00:24:47 -> 00:24:49] So we already discussed this,
+[00:24:49 -> 00:24:51] I already know that MI equals zero,
+[00:24:51 -> 00:24:54] the input value, the first value to I,
+[00:24:54 -> 00:24:57] at the first entry of the loop is just zero.
+[00:24:58 -> 00:25:01] After the Kth iteration, the value of I is K.
+[00:25:01 -> 00:25:04] Exit condition is that I should be greater than equal to N
+[00:25:04 -> 00:25:07] or MK prime I should be greater than equal to N.
+[00:25:07 -> 00:25:09] All these three basically together imply
+[00:25:09 -> 00:25:10] that the number of iterations
+[00:25:10 -> 00:25:12] that the loop is going to execute for
+[00:25:12 -> 00:25:13] is going to be N.
+[00:25:13 -> 00:25:15] And from that, we're going to know
+[00:25:15 -> 00:25:17] that the loop trip count of this loop is N.
+[00:25:18 -> 00:25:20] Once again, I'm not discussing
+[00:25:20 -> 00:25:21] how the symbolic analysis works,
+[00:25:21 -> 00:25:24] I'm just saying that there is some analysis
+[00:25:24 -> 00:25:28] that's going to be able to apply these algebraic axioms
+[00:25:28 -> 00:25:30] to decipher these properties of the loop.
+[00:25:30 -> 00:25:32] And from here, I'm going to be able to say
+[00:25:32 -> 00:25:34] that the loop trip count is N.
+[00:25:34 -> 00:25:37] Moreover, I'm going to be able to say that at exit,
+[00:25:37 -> 00:25:41] MN prime I, so because N is the number of iterations
+[00:25:41 -> 00:25:42] the loop is going to execute,
+[00:25:42 -> 00:25:44] MN prime I would be N,
+[00:25:44 -> 00:25:48] and MN prime sum would be S plus N into N minus one
+[00:25:48 -> 00:25:48] by two.
+[00:25:48 -> 00:25:50] Notice that I'm just replacing K by N
+[00:25:50 -> 00:25:52] in our algebraic identity
+[00:25:52 -> 00:25:55] that we get inferred in the previous slide.
+[00:25:55 -> 00:25:57] And so at exit, we will have these relationships
+[00:25:57 -> 00:26:01] and more available expressions.
+[00:26:01 -> 00:26:05] With all this complicated symbolic analysis,
+[00:26:05 -> 00:26:07] we achieve more precise DFL solution
+[00:26:07 -> 00:26:13] through this loop level symbolic analysis.
+[00:26:13 -> 00:26:14] Basically, the way it works is
+[00:26:14 -> 00:26:16] we introduce a variable called K,
+[00:26:16 -> 00:26:20] which represents the loop trip count so far,
+[00:26:20 -> 00:26:22] how many times the loop has gone through
+[00:26:22 -> 00:26:24] since its last entry.
+[00:26:24 -> 00:26:27] The same loop may have been entered multiple times.
+[00:26:27 -> 00:26:28] Let's say it was the inner loop.
+[00:26:28 -> 00:26:30] Then maybe the first time it got entered
+[00:26:30 -> 00:26:32] was the first iteration of the outer loop.
+[00:26:32 -> 00:26:34] The second time it got entered
+[00:26:34 -> 00:26:36] was the second iteration of the outer loop and so on.
+[00:26:36 -> 00:26:39] When we talk about the loop trip count of a loop,
+[00:26:39 -> 00:26:42] we are talking about the number of iterations
+[00:26:42 -> 00:26:45] of the loop since the last entry into the loop.
+[00:26:45 -> 00:26:50] And so even if this is enclosed in an outside loop
+[00:26:50 -> 00:26:53] and that outside loop has executed hundreds of times,
+[00:26:53 -> 00:26:55] the first, you know, the first,
+[00:26:55 -> 00:26:56] this time when it enters,
+[00:26:56 -> 00:26:59] I'm going to call it the first entry.
+[00:26:59 -> 00:27:01] And based on that, I would basically be able
+[00:27:01 -> 00:27:03] to identify these relationships.
+[00:27:03 -> 00:27:05] We have seen these relationships earlier.
+[00:27:05 -> 00:27:06] We're going to say sum is S,
+[00:27:06 -> 00:27:09] I is zero, K is zero at here.
+[00:27:09 -> 00:27:11] So basically one way to think about it
+[00:27:11 -> 00:27:14] is that at entry, I set K to be zero.
+[00:27:14 -> 00:27:16] At the back edge, I say K plus plus,
+[00:27:16 -> 00:27:18] and everything else remains the same.
+[00:27:18 -> 00:27:20] K is the loop trip count variable.
+[00:27:20 -> 00:27:23] And based on this, I do symbolic analysis
+[00:27:23 -> 00:27:26] to identify relationships between sum and K
+[00:27:26 -> 00:27:30] and I and K, okay?
+[00:27:30 -> 00:27:33] We have already seen these kinds of things.
+[00:27:33 -> 00:27:38] Now, based on this analysis and these relationships,
+[00:27:38 -> 00:27:43] it is now possible to execute each iteration in parallel.
+[00:27:43 -> 00:27:44] How?
+[00:27:44 -> 00:27:47] Because now I know that we know sum
+[00:27:47 -> 00:27:51] as a function of loop invariant variables S
+[00:27:51 -> 00:27:54] and the loop iteration variable K.
+[00:27:54 -> 00:27:59] Similarly, I know I as just the loop iteration variable K.
+[00:27:59 -> 00:28:04] And so the update of AI can be done
+[00:28:04 -> 00:28:06] in each separately in each iteration
+[00:28:06 -> 00:28:09] because different iterations are going to execute
+[00:28:09 -> 00:28:10] different locations of memory
+[00:28:10 -> 00:28:12] because AI is going to be different
+[00:28:12 -> 00:28:14] for different values of I.
+[00:28:14 -> 00:28:16] And we also know what is the value
+[00:28:16 -> 00:28:17] that needs to be added
+[00:28:17 -> 00:28:20] because sum is no longer dependent.
+[00:28:21 -> 00:28:24] The value of the current iteration of sum,
+[00:28:24 -> 00:28:25] the value of sum in the current iteration
+[00:28:25 -> 00:28:27] is no longer dependent on the value of sum
+[00:28:27 -> 00:28:28] in the previous iteration
+[00:28:28 -> 00:28:30] because I've been able to identify
+[00:28:30 -> 00:28:34] that sum is nothing but S plus K into K minus one by two.
+[00:28:34 -> 00:28:37] And so each iteration can independently set,
+[00:28:37 -> 00:28:40] identify what is the sum for that particular iteration,
+[00:28:40 -> 00:28:42] what would have the sum have been
+[00:28:42 -> 00:28:43] for that particular iteration
+[00:28:43 -> 00:28:45] and then update I independently.
+[00:28:45 -> 00:28:47] And so what we have been able to do
+[00:28:47 -> 00:28:49] is eliminate data dependencies across iterations
+[00:28:49 -> 00:28:52] using this symbolic analysis.

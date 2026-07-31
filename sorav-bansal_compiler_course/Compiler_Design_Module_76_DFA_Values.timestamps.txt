@@ -1,0 +1,150 @@
+Title: Compiler Design Module 76 : DFA Values
+Video ID: 9ttcxCG1jcA
+Detected language: en
+------------------------------------------------------------
+
+[00:00:00 -> 00:00:05] So let's continue our discussion on global constant propagation. Recall that for global
+[00:00:05 -> 00:00:12] constant propagation, we had a property which said to replace the use of x by a constant k
+[00:00:13 -> 00:00:21] on every path to the use of x, the last assignment to x should be x is equal to k, right? So the
+[00:00:21 -> 00:00:26] important keyword here is on every path, all right? So it needs to be true for every path
+[00:00:27 -> 00:00:34] and the last assignment, the last assignment to x should be x is assigned the constant k
+[00:00:34 -> 00:00:39] and that should be true on every path and if that's true then we can replace the use of x by
+[00:00:39 -> 00:00:46] a constant k and so we need to do this for every x in the program, all right? So we need to kind
+[00:00:46 -> 00:00:51] of do this for every variable in the program but let's first do this for a single variable
+[00:00:51 -> 00:00:55] and then we will generalize it to more variables later on but let's just say that
+[00:00:55 -> 00:00:59] we're interested in looking at one particular variable and replacing and finding if there
+[00:00:59 -> 00:01:04] are places where it can be replaced by some constant k and let's say that variable is x,
+[00:01:06 -> 00:01:11] all right? So here is how a data flow analysis will be structured. We first want to talk about
+[00:01:11 -> 00:01:17] a data flow analysis values, all right? So these are abstract values that are supposed
+[00:01:17 -> 00:01:25] to capture a set or a category of values, concrete values that in this case x may take.
+[00:01:26 -> 00:01:30] So it will probably become clearer with an example. So at each program point,
+[00:01:30 -> 00:01:35] we want to associate one of the following values with x and these are abstract values.
+[00:01:37 -> 00:01:42] Value one is this value called top and the symbol used to represent top is this
+[00:01:43 -> 00:01:53] capital T like character. The top value represents that this statement never executes,
+[00:01:53 -> 00:01:58] right? So maybe some part of the program is not reachable at all from the beginning of the
+[00:01:58 -> 00:02:04] program and so then the value of x at that point would be just top because it just says
+[00:02:04 -> 00:02:08] that we can't, I mean this program, this statement never executes so we can't even,
+[00:02:08 -> 00:02:14] I mean it's not meaningful to say whether x is going to be equal to a constant or not.
+[00:02:14 -> 00:02:22] So to basically set the context, we are interested in finding what are the possible
+[00:02:22 -> 00:02:29] values of x at every program point, all right? So maybe we can say that x is a constant or
+[00:02:29 -> 00:02:32] you say x is not a constant and we're going to come to those values but one of the values
+[00:02:32 -> 00:02:36] is going to be that oh but this program is never reached, this program point is never
+[00:02:36 -> 00:02:41] reached. If that program point is never reached then it's not really so useful to talk about
+[00:02:41 -> 00:02:47] what would be the value of x if it had reached, right? So the values that we are talking about is
+[00:02:47 -> 00:02:52] you know what if the program reached here and then if it reached here what would have been
+[00:02:52 -> 00:02:56] the value of x and what are all the possible values of x, that's what we want to capture
+[00:02:56 -> 00:03:02] using our DFA abstract values and so the first value that I'm introducing here is the
+[00:03:02 -> 00:03:09] top value and this just says that this statement that never executes and this is as a final result
+[00:03:09 -> 00:03:14] of our analysis but maybe in the middle of the analysis also we want to use this value
+[00:03:14 -> 00:03:20] and so in that case this value can be interpreted as we have not executed it yet. So
+[00:03:21 -> 00:03:24] we're going to come to the algorithm of how dataflow analysis is implemented
+[00:03:24 -> 00:03:29] but you know during the dataflow analysis algorithm, during the execution of the dataflow
+[00:03:29 -> 00:03:34] analysis algorithm we may want to keep the top value to represent that at least so far we
+[00:03:34 -> 00:03:40] haven't seen this to get executed and eventually when we have actually executed everything that
+[00:03:40 -> 00:03:46] could possibly get executed then maybe this top value would represent that this statement
+[00:03:46 -> 00:03:52] never executes, all right? So the top value is kind of at the end of the analysis means
+[00:03:52 -> 00:03:56] that I'm sure that this value never executes and in the middle of the analysis it means
+[00:03:56 -> 00:04:03] that so far it has not executed, all right? The second abstract value is c which represents
+[00:04:03 -> 00:04:08] a constant and c can be any constant for example 0, 1, 2, 3, minus 1, whatever
+[00:04:08 -> 00:04:14] and so this is basically saying that whenever this program point is reached irrespective of
+[00:04:14 -> 00:04:20] which path you take I'm sure that x would be equal to constant c, all right? So this is
+[00:04:20 -> 00:04:24] exactly capturing the property that we had seen in the previous slide which is that
+[00:04:24 -> 00:04:31] on every possible program path to that program point x is going to be c and if you know this
+[00:04:31 -> 00:04:37] then it's possible to do constant propagation and replacement, all right? And the third value
+[00:04:37 -> 00:04:43] is bottom and this is represented by this inverted t symbol and this is called bottom
+[00:04:45 -> 00:04:49] and it says it means that I can't say that x is constant, all right? So this means that
+[00:04:50 -> 00:04:56] I'm not, I can't say for sure that x is constant when this point is reached so I can't say that
+[00:04:58 -> 00:05:03] irrespective of what path is taken x is going to be constant so for example it's possible that
+[00:05:03 -> 00:05:08] on some paths x is not going to be constant or on some paths the constant value that x
+[00:05:08 -> 00:05:12] takes is going to be different from the constant value that x would take on some other
+[00:05:12 -> 00:05:17] paths, all right? So all those cases are basically encapsulated in this abstract value
+[00:05:17 -> 00:05:23] called bottom. So notice that even if we know that x is not a constant we don't have a separate
+[00:05:23 -> 00:05:27] abstract value for that, right? So for example I'm 100% sure that x is not a constant. For
+[00:05:27 -> 00:05:31] example I know that on one path it's going to be 4, on the other path it's going to be 3 and
+[00:05:31 -> 00:05:36] I'm also sure that both paths will be taken for some inputs, right? So I know for sure
+[00:05:36 -> 00:05:40] that x is not a constant but I am not really not interested in capturing that fact that x
+[00:05:40 -> 00:05:46] is not a constant. It's enough for me to say x is a constant and I don't know whether
+[00:05:46 -> 00:05:50] x is a constant or not. Now the fact that it is not a constant is kind of a part of that
+[00:05:50 -> 00:05:57] space of I don't know whether x is a constant, all right? So once again I want to emphasize the
+[00:05:57 -> 00:06:02] fact that bottom doesn't mean x is not a constant, bottom just means I can't say that
+[00:06:02 -> 00:06:06] x is a constant, right? So it's like almost like saying I'm not sure, it's almost like
+[00:06:06 -> 00:06:11] saying nothing about x, right? It's like saying I don't know, my analysis couldn't really say
+[00:06:11 -> 00:06:16] for sure and so we also call it the conservative value in our analysis. For example I could just
+[00:06:16 -> 00:06:22] have an analysis which just produces bottom for all possible program points for x and in which
+[00:06:22 -> 00:06:27] case no that's okay and basically saying I can't be sure and even if it was constant you know
+[00:06:28 -> 00:06:33] my analysis wasn't sure and if the analysis says that that's that's a valid answer just
+[00:06:33 -> 00:06:37] that it's not a very useful answer because now basically that means I can't do any constant
+[00:06:37 -> 00:06:43] propagation. All right so here's an example to show how these values may be used. So once again
+[00:06:43 -> 00:06:48] this is you know you assign 3 to x then there's a branch based on this condition b is greater
+[00:06:48 -> 00:06:54] than zero if it's true then it comes here where y is assigned followed by x being assigned 4
+[00:06:54 -> 00:06:59] this time and here on the false branch x is not assigned and finally they both these both
+[00:06:59 -> 00:07:06] branches meet at this basic block where x is used to evaluate a. Now question is what should
+[00:07:06 -> 00:07:11] be so we can see that from this program that at this program point where x is used to evaluate a
+[00:07:11 -> 00:07:16] x is not a constant because on one path it's 4 on the other path it's 3 but how will our data flow
+[00:07:16 -> 00:07:22] analysis look like or what would be the values that the data flow analysis should produce for
+[00:07:22 -> 00:07:27] this example what are the abstract values for every program point so first question and what
+[00:07:27 -> 00:07:32] are the program points so these are all the program points every before every statement
+[00:07:32 -> 00:07:36] there's a program point and after every statement there's a program point and of course you know
+[00:07:36 -> 00:07:40] after x is equal to 3 and before b is greater than zero it's the same program point so we don't
+[00:07:40 -> 00:07:44] really repeat the program points so for example there are three program points in the first
+[00:07:44 -> 00:07:49] basic block there are three basic block points in this basic block two in this and two in this
+[00:07:50 -> 00:07:56] so program points are both before and after every statement and at every program point we
+[00:07:56 -> 00:08:02] are interested in knowing what is the dfa abstract value for x that are that an analysis would
+[00:08:02 -> 00:08:10] typically compute so all right so for example at this point we can say that you know at the
+[00:08:10 -> 00:08:15] beginning for example i could say that oh i'm sure you know because i at this point i can
+[00:08:15 -> 00:08:20] just say oh it's bottom because i don't know what from where i'm coming from in the program
+[00:08:20 -> 00:08:25] maybe there were other places which is not visible in this current analysis and from there
+[00:08:25 -> 00:08:29] x could have been assigned anything so i'm going to conservatively say that the value is bottom
+[00:08:29 -> 00:08:33] which means i can't say that x is a constant at the beginning of the program and that's just the
+[00:08:33 -> 00:08:39] conservative thing to say that's more the safe thing to say but at this point what can
+[00:08:39 -> 00:08:44] we say about x we know that x has already been assigned three so we are sure that at
+[00:08:44 -> 00:08:50] this point x is definitely three so maybe i'm going to say here that x is three all right
+[00:08:50 -> 00:08:56] and that's the abstract value that x is going to have at this point in our dfa analysis what
+[00:08:56 -> 00:09:01] about this point once again x has been modified and nothing strange has happened so x would still
+[00:09:01 -> 00:09:06] remain three okay and so on so we're going to do this for a different base of blocks so let's
+[00:09:06 -> 00:09:12] let's see the whole picture right so here are the expected values and we already saw bottom
+[00:09:12 -> 00:09:21] three and three okay and now what should be the value at this program point okay so you know this
+[00:09:21 -> 00:09:28] program point is reached if if this condition evaluated to true and x hasn't really changed
+[00:09:28 -> 00:09:33] here so maybe x is still going to be three what about this program point well it's again
+[00:09:33 -> 00:09:37] three because x hasn't been changed it's just y that's being assigned something but what about
+[00:09:37 -> 00:09:43] this program point now i can say that oh this program point i'm just succeeding this assignment
+[00:09:43 -> 00:09:52] to x with constant four so i'm going to change this to four okay so so that's how our data flow
+[00:09:52 -> 00:09:57] analysis is going to proceed similarly what about let's look at this basic block and in
+[00:09:57 -> 00:10:01] this basic block we are going to say that x is three in the beginning of this basic block
+[00:10:01 -> 00:10:05] and x is three at the end of this basic block because the basic block is really not
+[00:10:05 -> 00:10:14] modifying x in any way all right so let's see and this is our next phase where three we got three
+[00:10:14 -> 00:10:20] three four in this basic block and three and three in the right side basic block the false branch
+[00:10:21 -> 00:10:26] now the question is what should be the values that i use on the last basic block which has
+[00:10:26 -> 00:10:31] a is equal to two into x and there are two program points in this basic block now
+[00:10:32 -> 00:10:36] the the thing to notice here is that if i come on this path then the value is four
+[00:10:36 -> 00:10:42] and if i come on this path then the value is three and so what should i say about x among
+[00:10:42 -> 00:10:47] which value among the three values are should i choose should i choose stop no because i know
+[00:10:47 -> 00:10:52] that this is getting executed this may get executed and through some path or the other
+[00:10:54 -> 00:10:58] then and we have seen it executing at least through one of the paths
+[00:11:01 -> 00:11:07] it's is it three no because on one of the paths it's four is it four no because on one of the
+[00:11:07 -> 00:11:13] paths it's three so the only option that remains is the bottom value because i can it's basically
+[00:11:13 -> 00:11:19] saying we actually we know that it's not a constant because some paths it could be it's
+[00:11:19 -> 00:11:25] four it's our path it's three but but you know not a constant is not a value what we have
+[00:11:25 -> 00:11:30] is the bottom value it says i can't say that it is a constant and that's bottom all right and
+[00:11:30 -> 00:11:34] so we're going to use the bottom value here and then we are going to use the bottom value
+[00:11:34 -> 00:11:39] at the end of the basic block also because x has not been modified so because x has been
+[00:11:39 -> 00:11:44] modified whatever is the value before the statement is also the value after the statement
+[00:11:44 -> 00:11:49] and in this example this is bottom so this is what our analysis is going to produce and
+[00:11:49 -> 00:11:55] because the value is bottom in this case i'm not going to be able to replace this particular
+[00:11:55 -> 00:12:01] use of x by three so i can't replace it with three all right so no this is not this is not
+[00:12:01 -> 00:12:07] possible because i can't be sure that x is a constant at this point so this is how our dfa
+[00:12:07 -> 00:12:11] analysis is going to proceed we're going to talk about more details about how this algorithm
+[00:12:11 -> 00:12:16] is going to be structured and its properties so here's the idea we're going to use these
+[00:12:16 -> 00:12:22] computed dfa values data flow analysis values for transformation so for example given global
+[00:12:22 -> 00:12:26] constant information let's say there's some analysis they're going to give us for every
+[00:12:26 -> 00:12:34] program point values top constant c for some c or bottom right for every program point i'll
+[00:12:34 -> 00:12:41] have this value which says oh here x is top here x is bottom here x is c for some constant
+[00:12:41 -> 00:12:46] c and and so when i'm going to do constant propagation what i'm going to do is i'm going
+[00:12:46 -> 00:12:53] to inspect what is the abstract value for x is it top bottom or c and and at the program point
+[00:12:53 -> 00:13:01] that just precedes the statement that uses x and if it is constant if it if it is x equals c
+[00:13:01 -> 00:13:06] then i'm going to replace the use of x with c all right and so in the previous example
+[00:13:06 -> 00:13:11] we saw that it was not possible to replace the use of x with c because x was not constant
+[00:13:11 -> 00:13:14] but on the other hand if i had changed this value to three
+[00:13:15 -> 00:13:18] right so let's say i had changed this value to three then this would have become three
+[00:13:18 -> 00:13:22] and then this would have become three and then this would have become three
+[00:13:22 -> 00:13:37] and now it would have been okay to change this value of x to three

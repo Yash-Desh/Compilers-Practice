@@ -1,0 +1,740 @@
+Title: Compiler Design Module 172 : Undef Value Operational Semantics
+Video ID: _cqmCTWqCJg
+Detected language: en
+------------------------------------------------------------
+
+[00:00:00 -> 00:00:04] Now that we have been introduced to the undefined value or undeaf,
+[00:00:04 -> 00:00:09] just like we defined the operational semantics of the Poisson value,
+[00:00:09 -> 00:00:12] we need to define the operational semantics of the undeaf value.
+[00:00:12 -> 00:00:17] So what happens if you multiply by undeaf or if you branch by undeaf or if you're
+[00:00:17 -> 00:00:19] defined by undeaf, et cetera.
+[00:00:19 -> 00:00:23] So first of all, an undeaf value represents a set of values.
+[00:00:23 -> 00:00:27] So example, if I just have a statement which says x equals i8 undeaf,
+[00:00:27 -> 00:00:29] this is LLVM syntax.
+[00:00:29 -> 00:00:33] So i8 undeaf basically means that it's an undeaf value of type i8.
+[00:00:34 -> 00:00:37] What this really means is that each time x is read,
+[00:00:37 -> 00:00:43] any value in the range of the type i8, which is 0 to 255, can be returned.
+[00:00:45 -> 00:00:48] Or if you want to consider i8 as a sine integer,
+[00:00:48 -> 00:00:51] then you can say minus 128 to plus 127.
+[00:00:52 -> 00:00:56] But the point is that each time x is accessed or x is observed,
+[00:00:56 -> 00:01:00] any value, any random value from this range can be returned.
+[00:01:00 -> 00:01:01] And that's what undeaf means.
+[00:01:01 -> 00:01:04] And this is very different from Poisson because in Poisson,
+[00:01:04 -> 00:01:06] if each time something is observed, it just returns Poisson.
+[00:01:08 -> 00:01:11] But here it's basically saying it's a non-deterministic value
+[00:01:11 -> 00:01:14] which can return any value from a given set.
+[00:01:14 -> 00:01:17] And by default, if it's an undeaf value,
+[00:01:17 -> 00:01:19] for example, the undeaf keyword in LLVM,
+[00:01:19 -> 00:01:23] that basically represents the whole set of values of that particular type.
+[00:01:23 -> 00:01:27] Even if, for example, I had something which actually generated undeaf
+[00:01:27 -> 00:01:32] because of some operation like maybe integer overflow or some other operation.
+[00:01:32 -> 00:01:36] Integer overflow in C is actually generating undefined behavior
+[00:01:36 -> 00:01:38] and that's really modeled as Poisson value.
+[00:01:38 -> 00:01:40] But let's say there was some other operation
+[00:01:40 -> 00:01:42] which was about reading an uninitialized variable.
+[00:01:42 -> 00:01:44] So if it's reading an uninitialized variable,
+[00:01:44 -> 00:01:46] whatever is the type of that particular variable,
+[00:01:48 -> 00:01:52] all the values in that set that that type represents,
+[00:01:53 -> 00:01:56] undeaf would represent a random value drawn from that type.
+[00:01:56 -> 00:01:59] And that value, that random value could be different
+[00:01:59 -> 00:02:01] each time that variable is observed.
+[00:02:01 -> 00:02:04] So that's another property of undeaf that we had discussed last time
+[00:02:04 -> 00:02:06] that each time an undeaf value is observed,
+[00:02:06 -> 00:02:09] it can return a different random value.
+[00:02:09 -> 00:02:11] And that's again for allowing better optimization.
+[00:02:13 -> 00:02:16] Now let's take another example instruction.
+[00:02:16 -> 00:02:21] Let's say we already established what are the values that x can draw from.
+[00:02:21 -> 00:02:24] It's the entire range of i8, let's say 0 to 255.
+[00:02:24 -> 00:02:27] And then let's say I do multiplication of x with 2.
+[00:02:27 -> 00:02:30] So x is y equals x into 2.
+[00:02:30 -> 00:02:33] Now, because x could have taken any value,
+[00:02:35 -> 00:02:36] what can y take?
+[00:02:36 -> 00:02:38] y can take only the even values in the range.
+[00:02:38 -> 00:02:44] So 0, 2, 4, 6, dot dot dot 254.
+[00:02:44 -> 00:02:47] What happens if x was greater than 254 divided by 2?
+[00:02:47 -> 00:02:53] So let's say x was 128 or 129 or something like that.
+[00:02:53 -> 00:02:56] Then 129 into 2 is just going to wrap around
+[00:02:56 -> 00:03:00] and become 129 into 2 would be 258 minus,
+[00:03:00 -> 00:03:02] let's say 256 that would just become 2.
+[00:03:04 -> 00:03:07] And so y is also a non-deterministic value,
+[00:03:07 -> 00:03:09] but we don't call it an undeaf value.
+[00:03:09 -> 00:03:11] We call it a partially undeaf value.
+[00:03:11 -> 00:03:16] Because an undeaf value represents the entire range of values
+[00:03:16 -> 00:03:19] that can be represented in a particular type.
+[00:03:19 -> 00:03:21] But y is not the entire range.
+[00:03:21 -> 00:03:24] y is selected values in that range.
+[00:03:24 -> 00:03:25] In particular, in this example,
+[00:03:25 -> 00:03:27] the selected values are all the even values
+[00:03:27 -> 00:03:29] and that's just coming from the computation.
+[00:03:29 -> 00:03:31] x could be representing any value
+[00:03:31 -> 00:03:32] and if you multiply that by 2,
+[00:03:32 -> 00:03:34] you can only get even values for y.
+[00:03:34 -> 00:03:36] And so each time y is read,
+[00:03:36 -> 00:03:39] it can return any value belonging to this set.
+[00:03:39 -> 00:03:43] So once again, y is going to follow the same principle as x,
+[00:03:43 -> 00:03:45] which is that each time y is observed,
+[00:03:45 -> 00:03:47] a different value may be returned from this particular set.
+[00:03:48 -> 00:03:50] Although the set has shrunk a little bit,
+[00:03:50 -> 00:03:52] it has become half of what it was originally.
+[00:03:52 -> 00:03:54] It's only the even values now,
+[00:03:54 -> 00:03:55] ignore the odd values.
+[00:03:55 -> 00:03:57] But each time y is observed,
+[00:03:57 -> 00:03:59] it could return a different random
+[00:03:59 -> 00:04:02] or non-deterministic value from this particular set.
+[00:04:02 -> 00:04:04] And so that's what are the semantics
+[00:04:04 -> 00:04:07] of the undeaf value or the partially undeaf value.
+[00:04:07 -> 00:04:08] And so in this case,
+[00:04:08 -> 00:04:12] x is a fully undeaf value and y is a partially undeaf value.
+[00:04:12 -> 00:04:14] Now, similarly, I mean,
+[00:04:14 -> 00:04:17] if I just say z equals x into 0,
+[00:04:17 -> 00:04:21] so now x could draw from anywhere between 0 and 255,
+[00:04:21 -> 00:04:22] but if I multiply it by 0,
+[00:04:22 -> 00:04:23] I only get 0.
+[00:04:23 -> 00:04:26] And so z is a deterministic value 0.
+[00:04:26 -> 00:04:29] And the other way to look at it
+[00:04:29 -> 00:04:33] is that z draws from a partially undeaf value
+[00:04:33 -> 00:04:35] whose set is a singleton set, which is 0.
+[00:04:35 -> 00:04:39] So if the set of a partially undeaf value
+[00:04:39 -> 00:04:40] is a singleton set,
+[00:04:41 -> 00:04:43] then each time that value is observed,
+[00:04:43 -> 00:04:44] you can only get a single value.
+[00:04:44 -> 00:04:46] So it becomes deterministic, right?
+[00:04:46 -> 00:04:47] So that's another way to look at it.
+[00:04:47 -> 00:04:48] I mean, you can either say
+[00:04:48 -> 00:04:49] that it's a deterministic value
+[00:04:49 -> 00:04:51] or you can say it's a partially undeaf value
+[00:04:51 -> 00:04:53] with a singleton set.
+[00:04:54 -> 00:04:55] Both are valid ways to look at it
+[00:04:55 -> 00:04:59] and they are both equivalent semantically.
+[00:05:00 -> 00:05:02] All right, so now the question is
+[00:05:02 -> 00:05:05] what happens if you branch on an undeaf value?
+[00:05:05 -> 00:05:06] And when I say branch on undeaf,
+[00:05:06 -> 00:05:09] I'm also including partially undeaf values as well.
+[00:05:09 -> 00:05:10] So for example, the undeaf value
+[00:05:10 -> 00:05:12] could be set of all even numbers
+[00:05:12 -> 00:05:14] or any subset.
+[00:05:14 -> 00:05:15] So for example, I could construct
+[00:05:15 -> 00:05:17] some arithmetic operation
+[00:05:17 -> 00:05:20] that constrains any variable
+[00:05:20 -> 00:05:23] to be some specific set of values
+[00:05:24 -> 00:05:25] from a given type.
+[00:05:25 -> 00:05:26] So for example, I could construct
+[00:05:26 -> 00:05:28] a set of operations
+[00:05:28 -> 00:05:30] that could constrain a particular variable
+[00:05:30 -> 00:05:31] to be, let's say, four values,
+[00:05:31 -> 00:05:33] one, three, seven, and nine.
+[00:05:33 -> 00:05:35] Just randomly chosen here.
+[00:05:35 -> 00:05:37] And whatever it is,
+[00:05:37 -> 00:05:41] as long as that value
+[00:05:41 -> 00:05:44] is basically a partially undeaf
+[00:05:44 -> 00:05:46] or a fully undeaf value
+[00:05:46 -> 00:05:47] which is not a singleton set.
+[00:05:48 -> 00:05:49] All right, so that's where
+[00:05:49 -> 00:05:51] we're going to make a distinction.
+[00:05:51 -> 00:05:52] If it is a singleton set,
+[00:05:52 -> 00:05:54] then everything is okay.
+[00:05:54 -> 00:05:55] But if it is not a singleton set
+[00:05:55 -> 00:05:58] which means it's a non-deterministic value,
+[00:05:58 -> 00:06:00] either partially undeaf or fully undeaf,
+[00:06:00 -> 00:06:00] then what should happen?
+[00:06:02 -> 00:06:04] And here the easy option is
+[00:06:04 -> 00:06:05] that branch on undeaf
+[00:06:05 -> 00:06:06] should be undefined behavior
+[00:06:06 -> 00:06:08] because it's very hard
+[00:06:08 -> 00:06:10] to reason about what should happen.
+[00:06:10 -> 00:06:11] One option is that you could
+[00:06:12 -> 00:06:13] potentially take
+[00:06:13 -> 00:06:15] any one of the branches non-deterministically
+[00:06:15 -> 00:06:16] but that interferes
+[00:06:16 -> 00:06:18] with the kind of transformations
+[00:06:18 -> 00:06:20] that a compiler would typically like to perform.
+[00:06:20 -> 00:06:21] For example, things like
+[00:06:21 -> 00:06:22] dead-core elimination
+[00:06:22 -> 00:06:24] and things like that.
+[00:06:24 -> 00:06:25] And so the easiest option
+[00:06:25 -> 00:06:26] is branch on undeaf
+[00:06:26 -> 00:06:27] causes undefined behavior.
+[00:06:27 -> 00:06:29] And this is the same kind of semantics
+[00:06:29 -> 00:06:31] that we had also used for the Poisson value.
+[00:06:31 -> 00:06:32] Recall that when we
+[00:06:32 -> 00:06:34] were looking at the operational semantics
+[00:06:34 -> 00:06:34] of the Poisson value,
+[00:06:34 -> 00:06:36] we said that a branch on a Poisson value
+[00:06:36 -> 00:06:37] is also undefined behavior.
+[00:06:37 -> 00:06:38] Another way to say that
+[00:06:38 -> 00:06:41] is that it's unreachable.
+[00:06:41 -> 00:06:43] So if this thing happens,
+[00:06:43 -> 00:06:44] then this is an unreachable code
+[00:06:44 -> 00:06:48] which means the program is basically,
+[00:06:48 -> 00:06:49] this should never happen.
+[00:06:49 -> 00:06:50] And if this happens,
+[00:06:50 -> 00:06:52] then the compiler can assume,
+[00:06:52 -> 00:06:53] I mean, the compiler can assume
+[00:06:53 -> 00:06:54] that this can never happen.
+[00:06:54 -> 00:06:55] And so for the case
+[00:06:55 -> 00:06:56] when this actually happens,
+[00:06:56 -> 00:06:58] the compiler can do anything it likes
+[00:06:58 -> 00:06:59] and doesn't matter.
+[00:06:59 -> 00:07:01] So that's what undefined behavior means anyway.
+[00:07:01 -> 00:07:02] And we are already familiar
+[00:07:02 -> 00:07:03] with those semantics.
+[00:07:03 -> 00:07:05] So what are the consequences
+[00:07:05 -> 00:07:06] of this easy option
+[00:07:06 -> 00:07:08] that branch on undef causes UB?
+[00:07:08 -> 00:07:11] We've already seen in the context of Poisson
+[00:07:11 -> 00:07:13] that because of this,
+[00:07:13 -> 00:07:14] you know, it becomes harder
+[00:07:14 -> 00:07:15] to hoist branches.
+[00:07:16 -> 00:07:17] One of the examples
+[00:07:17 -> 00:07:18] that we have looked at is,
+[00:07:18 -> 00:07:19] let's say we have if A
+[00:07:20 -> 00:07:21] and then a nested if
+[00:07:21 -> 00:07:22] and say if B.
+[00:07:22 -> 00:07:24] Now, can I change this to
+[00:07:24 -> 00:07:26] if A and B?
+[00:07:26 -> 00:07:27] So this is logical and
+[00:07:27 -> 00:07:28] this double ampersand operator
+[00:07:28 -> 00:07:29] is logical and.
+[00:07:29 -> 00:07:30] So I can first compute
+[00:07:30 -> 00:07:32] the logical and of A and B
+[00:07:32 -> 00:07:33] and then, you know,
+[00:07:33 -> 00:07:34] just execute the body
+[00:07:34 -> 00:07:37] that's here represented by triple dot here.
+[00:07:38 -> 00:07:40] But this is, is this okay?
+[00:07:40 -> 00:07:42] Firstly, if B was Poisson,
+[00:07:42 -> 00:07:43] then this is not okay.
+[00:07:43 -> 00:07:45] But if B is undef,
+[00:07:45 -> 00:07:46] then it is okay.
+[00:07:46 -> 00:07:48] I mean, B is either undef
+[00:07:48 -> 00:07:49] or partially undef,
+[00:07:49 -> 00:07:50] then this is okay
+[00:07:50 -> 00:07:51] because what will happen is,
+[00:07:51 -> 00:07:52] see, in the case of Poisson,
+[00:07:52 -> 00:07:53] what will happen is
+[00:07:53 -> 00:07:55] that if A was false,
+[00:07:55 -> 00:07:56] then this whole thing
+[00:07:56 -> 00:07:57] would have never executed.
+[00:07:57 -> 00:07:58] But in this case,
+[00:07:58 -> 00:08:00] if A was false, then for,
+[00:08:00 -> 00:08:02] but A and Poisson
+[00:08:02 -> 00:08:03] would still return Poisson
+[00:08:03 -> 00:08:04] and then branch on Poisson
+[00:08:04 -> 00:08:06] would give me UB.
+[00:08:06 -> 00:08:08] But now in the case of undef,
+[00:08:09 -> 00:08:10] if A was false,
+[00:08:10 -> 00:08:11] then false and undef
+[00:08:11 -> 00:08:12] would give me a singleton set,
+[00:08:12 -> 00:08:13] which is false.
+[00:08:14 -> 00:08:15] And so then if false
+[00:08:15 -> 00:08:16] will not be UB,
+[00:08:16 -> 00:08:17] it would just be that
+[00:08:17 -> 00:08:18] you don't enter the loop.
+[00:08:18 -> 00:08:19] And so that would be
+[00:08:19 -> 00:08:20] a perfectly well-defined behavior
+[00:08:20 -> 00:08:22] and that would match the behavior
+[00:08:22 -> 00:08:23] of the original source program
+[00:08:23 -> 00:08:24] because if A was false,
+[00:08:24 -> 00:08:26] then this kind of block
+[00:08:26 -> 00:08:27] has never entered
+[00:08:27 -> 00:08:29] in both sides of this transformation.
+[00:08:30 -> 00:08:31] And so this is okay
+[00:08:31 -> 00:08:33] if B is possibly undef,
+[00:08:33 -> 00:08:34] but not Poisson.
+[00:08:35 -> 00:08:36] So if the compiler can somehow reason
+[00:08:36 -> 00:08:38] that B cannot be Poisson,
+[00:08:39 -> 00:08:41] then this transformation is okay
+[00:08:41 -> 00:08:42] because for undef values,
+[00:08:42 -> 00:08:44] this transformation is all right.
+[00:08:44 -> 00:08:46] I also want to point out that
+[00:08:48 -> 00:08:48] the order doesn't matter.
+[00:08:48 -> 00:08:50] I mean, whether I do A and B
+[00:08:50 -> 00:08:52] or B and A doesn't really matter.
+[00:08:52 -> 00:08:52] Both are going to,
+[00:08:52 -> 00:08:53] if A was false,
+[00:08:53 -> 00:08:55] then both are going to return false
+[00:08:55 -> 00:08:56] irrespective of whether B is
+[00:08:56 -> 00:08:58] partially undef or fully undef
+[00:08:58 -> 00:08:59] or deterministic.
+[00:09:00 -> 00:09:01] And so this is,
+[00:09:01 -> 00:09:03] this becomes an okay transformation
+[00:09:03 -> 00:09:05] and this is a big kind of change
+[00:09:05 -> 00:09:07] from what was the operational semantics
+[00:09:07 -> 00:09:07] of Poisson.
+[00:09:08 -> 00:09:09] Let's look at another example.
+[00:09:09 -> 00:09:10] Let's say,
+[00:09:10 -> 00:09:11] let's look at this example
+[00:09:11 -> 00:09:12] of loop un-switching
+[00:09:12 -> 00:09:14] where there is an if-then-else
+[00:09:14 -> 00:09:15] within a while loop, let's say,
+[00:09:15 -> 00:09:17] and the compiler
+[00:09:17 -> 00:09:19] is basically considering this option
+[00:09:19 -> 00:09:21] of bringing the if loop outside,
+[00:09:21 -> 00:09:22] the if condition outside,
+[00:09:22 -> 00:09:23] assuming that the B
+[00:09:23 -> 00:09:25] was basically loop invariant.
+[00:09:25 -> 00:09:26] It's potentially possible
+[00:09:26 -> 00:09:28] to bring if B outside
+[00:09:28 -> 00:09:29] and then have two copies
+[00:09:29 -> 00:09:29] of the while loop
+[00:09:29 -> 00:09:31] and this way you have saved,
+[00:09:31 -> 00:09:32] you know, you kind of shrunk
+[00:09:32 -> 00:09:34] the body of the while loop.
+[00:09:34 -> 00:09:36] And is this an okay transformation?
+[00:09:38 -> 00:09:39] Especially in,
+[00:09:39 -> 00:09:40] I'm interested in the case
+[00:09:40 -> 00:09:42] when B could have been undef.
+[00:09:43 -> 00:09:45] And the answer here is no.
+[00:09:45 -> 00:09:47] This is not okay because
+[00:09:47 -> 00:09:49] let's say A was false,
+[00:09:49 -> 00:09:50] then in the original program
+[00:09:50 -> 00:09:52] the while loop is never entered
+[00:09:52 -> 00:09:53] and everything is okay.
+[00:09:53 -> 00:09:55] But in the new program,
+[00:09:55 -> 00:09:57] if B was undef and A was false,
+[00:09:57 -> 00:09:58] this is the case,
+[00:09:58 -> 00:09:59] if B is undef and A is false,
+[00:09:59 -> 00:10:00] then if B would
+[00:10:00 -> 00:10:02] immediately cause UB,
+[00:10:02 -> 00:10:04] and that's the consequence
+[00:10:04 -> 00:10:04] of an easy option
+[00:10:04 -> 00:10:08] that branch undef causes UB.
+[00:10:08 -> 00:10:10] So when we take these options,
+[00:10:10 -> 00:10:12] when we take these kind of choices
+[00:10:12 -> 00:10:14] on what to do
+[00:10:14 -> 00:10:17] when you branch on a non-realistic value
+[00:10:17 -> 00:10:18] like undef or poison,
+[00:10:18 -> 00:10:19] et cetera,
+[00:10:19 -> 00:10:20] we pay a price.
+[00:10:20 -> 00:10:21] I mean, firstly,
+[00:10:22 -> 00:10:24] we enable some transformations
+[00:10:24 -> 00:10:25] like things like
+[00:10:25 -> 00:10:27] dead code elimination, et cetera,
+[00:10:27 -> 00:10:29] but we also disable some transformation,
+[00:10:29 -> 00:10:32] things like hoisting of branches,
+[00:10:32 -> 00:10:34] especially loop unswitching
+[00:10:34 -> 00:10:35] is an example
+[00:10:35 -> 00:10:37] where you need to hoist a branch
+[00:10:37 -> 00:10:39] and that becomes an illegal transformation
+[00:10:39 -> 00:10:39] in this case.
+[00:10:40 -> 00:10:42] Of course, this is an illegal transformation
+[00:10:42 -> 00:10:44] also in the case when B was poisoned.
+[00:10:44 -> 00:10:45] But I would find,
+[00:10:45 -> 00:10:47] even if we are able to reason
+[00:10:47 -> 00:10:48] that B is not poisoned,
+[00:10:48 -> 00:10:50] but this is still an illegal transformation
+[00:10:50 -> 00:10:54] for B is undef or partially undef.
+[00:10:54 -> 00:10:57] Then there are some other kind of operations
+[00:10:57 -> 00:10:58] that we should talk about
+[00:10:58 -> 00:10:59] when we talk about operational semantics
+[00:10:59 -> 00:11:01] of non-deterministic value.
+[00:11:01 -> 00:11:03] So what happens when you do star x equals undef
+[00:11:04 -> 00:11:06] where undef could be a partially undef value as well.
+[00:11:06 -> 00:11:08] I mean, it's not very different from
+[00:11:09 -> 00:11:10] storing any other value,
+[00:11:10 -> 00:11:10] just store,
+[00:11:11 -> 00:11:13] set the memory bytes pointed to by x
+[00:11:13 -> 00:11:14] to the undef value.
+[00:11:14 -> 00:11:17] That's what the runtime operational semantics do.
+[00:11:17 -> 00:11:18] I mean, it's not very different.
+[00:11:19 -> 00:11:21] It doesn't cause any undefined behavior
+[00:11:21 -> 00:11:22] or anything like that.
+[00:11:22 -> 00:11:23] On the other hand,
+[00:11:23 -> 00:11:25] if you do star u equals x
+[00:11:25 -> 00:11:27] where u could be either fully undef
+[00:11:27 -> 00:11:29] or partially undef,
+[00:11:29 -> 00:11:31] then that triggers uv
+[00:11:31 -> 00:11:32] because now the program doesn't know
+[00:11:32 -> 00:11:34] which address to write at.
+[00:11:34 -> 00:11:36] If u is a partially undef
+[00:11:36 -> 00:11:37] or a fully undef value,
+[00:11:37 -> 00:11:38] if it's partially undef,
+[00:11:38 -> 00:11:39] then it's a non-singleton.
+[00:11:39 -> 00:11:42] So whenever I say something is partially undef,
+[00:11:42 -> 00:11:44] it basically means it's a non-singleton.
+[00:11:44 -> 00:11:45] It should have at least greater,
+[00:11:45 -> 00:11:47] at least two or more possibilities.
+[00:11:47 -> 00:11:49] So if u is a partially undef
+[00:11:49 -> 00:11:50] or a fully undef value,
+[00:11:50 -> 00:11:53] then this triggers uv
+[00:11:53 -> 00:11:54] because now the program,
+[00:11:54 -> 00:11:56] the abstract machine doesn't know
+[00:11:56 -> 00:11:57] where to write
+[00:11:57 -> 00:11:59] because there are multiple options
+[00:11:59 -> 00:12:00] and so this triggers uv.
+[00:12:00 -> 00:12:01] And this also has a consequence.
+[00:12:01 -> 00:12:03] Anytime you say something triggers uv,
+[00:12:03 -> 00:12:04] that basically means
+[00:12:04 -> 00:12:05] hoisting transformations
+[00:12:05 -> 00:12:06] are now disabled
+[00:12:06 -> 00:12:08] for these kinds of operations.
+[00:12:08 -> 00:12:09] Just like hoisting was now
+[00:12:09 -> 00:12:10] was disabled for branches,
+[00:12:10 -> 00:12:13] hoisting would be disabled for stores
+[00:12:13 -> 00:12:14] where the address of the store
+[00:12:14 -> 00:12:16] could potentially be an undef value.
+[00:12:16 -> 00:12:18] And we had seen something similar
+[00:12:18 -> 00:12:19] when we were discussing
+[00:12:19 -> 00:12:20] about the poison value as well
+[00:12:20 -> 00:12:24] because the star of poison equals x
+[00:12:24 -> 00:12:25] is also going to trigger uv.
+[00:12:26 -> 00:12:28] Similarly, just like store,
+[00:12:28 -> 00:12:29] a load from an undef pointer
+[00:12:29 -> 00:12:30] also triggers uv
+[00:12:30 -> 00:12:32] just because we don't know
+[00:12:32 -> 00:12:33] what the address is.
+[00:12:33 -> 00:12:35] The address becomes non-deterministic.
+[00:12:35 -> 00:12:36] Once again, I'm using,
+[00:12:36 -> 00:12:38] you know, when I say u,
+[00:12:38 -> 00:12:39] I'm talking about both partially undef
+[00:12:39 -> 00:12:41] and fully undef values
+[00:12:41 -> 00:12:44] with the set being a non-singleton.
+[00:12:45 -> 00:12:46] And this also triggers uv
+[00:12:46 -> 00:12:47] for the same reason.
+[00:12:47 -> 00:12:47] And once again,
+[00:12:47 -> 00:12:49] this means that I cannot hoist
+[00:12:49 -> 00:12:51] loads above, you know,
+[00:12:51 -> 00:12:54] outside loops or if conditions
+[00:12:54 -> 00:12:56] or if conditions or branches
+[00:12:56 -> 00:12:58] until I'm sure that this is not undef,
+[00:12:58 -> 00:12:59] the address is not undef
+[00:13:00 -> 00:13:01] and it is neither poison
+[00:13:01 -> 00:13:02] as we have seen earlier.
+[00:13:02 -> 00:13:04] Similarly, if I do x by u,
+[00:13:04 -> 00:13:05] then what happens?
+[00:13:06 -> 00:13:07] Now, this is interesting
+[00:13:07 -> 00:13:09] because u is a partially undef,
+[00:13:09 -> 00:13:10] could be a partially undef
+[00:13:10 -> 00:13:11] or a fully undef value.
+[00:13:12 -> 00:13:14] If the compiler knows,
+[00:13:15 -> 00:13:16] sorry, it's not about the compiler.
+[00:13:16 -> 00:13:17] So I'm talking about operational semantics.
+[00:13:17 -> 00:13:19] So when you say x by u,
+[00:13:19 -> 00:13:20] if I know that u
+[00:13:20 -> 00:13:22] is a partially undef value,
+[00:13:22 -> 00:13:24] if zero belongs to the set of values
+[00:13:24 -> 00:13:25] that you can take.
+[00:13:25 -> 00:13:27] So let me call that uval,
+[00:13:27 -> 00:13:28] then this triggers uv
+[00:13:28 -> 00:13:28] just like, you know,
+[00:13:28 -> 00:13:29] anything divided by zero
+[00:13:29 -> 00:13:30] triggers uv.
+[00:13:31 -> 00:13:32] Divide by zero
+[00:13:32 -> 00:13:33] basically triggers uv
+[00:13:33 -> 00:13:35] because machines typically,
+[00:13:35 -> 00:13:36] you know, through an exception
+[00:13:36 -> 00:13:38] on such operations.
+[00:13:38 -> 00:13:40] But if let's say u was not,
+[00:13:40 -> 00:13:41] this uval did not contain
+[00:13:41 -> 00:13:42] the value zero.
+[00:13:42 -> 00:13:44] So let's say uval contained
+[00:13:44 -> 00:13:46] only numbers that were one and above
+[00:13:46 -> 00:13:49] in a type of i8
+[00:13:49 -> 00:13:50] or something like that,
+[00:13:50 -> 00:13:51] then x by u is not uv.
+[00:13:52 -> 00:13:54] And that's an interesting change
+[00:13:54 -> 00:13:56] from the Poisson value.
+[00:13:56 -> 00:13:58] So if u basically represented
+[00:13:58 -> 00:13:59] a set,
+[00:13:59 -> 00:14:00] a non-relative value
+[00:14:00 -> 00:14:02] drawn from a set which is,
+[00:14:02 -> 00:14:04] which does not contain zero,
+[00:14:04 -> 00:14:05] then x by u basically,
+[00:14:06 -> 00:14:08] you know, whatever is the value of x
+[00:14:08 -> 00:14:09] and the value of u,
+[00:14:09 -> 00:14:10] you basically combine them
+[00:14:10 -> 00:14:11] to find, form the values.
+[00:14:11 -> 00:14:14] So if I say y equals x by u,
+[00:14:14 -> 00:14:15] then let's say u was,
+[00:14:15 -> 00:14:16] let's say, you know,
+[00:14:16 -> 00:14:17] the set of uval was,
+[00:14:17 -> 00:14:19] let's say 1 comma 2
+[00:14:19 -> 00:14:21] and let's say x was 4.
+[00:14:22 -> 00:14:24] Then y's values would be
+[00:14:25 -> 00:14:26] 4 divided by 1,
+[00:14:27 -> 00:14:28] which is 4
+[00:14:28 -> 00:14:29] and 4 divided by 2,
+[00:14:29 -> 00:14:30] which is 2.
+[00:14:30 -> 00:14:30] And so this would be
+[00:14:30 -> 00:14:32] the new y values, right?
+[00:14:32 -> 00:14:32] So basically,
+[00:14:32 -> 00:14:33] you know, if it's not,
+[00:14:33 -> 00:14:35] if zero does not belong
+[00:14:35 -> 00:14:37] to the set of possible values
+[00:14:37 -> 00:14:39] that you can be drawn from,
+[00:14:39 -> 00:14:40] then we just basically,
+[00:14:40 -> 00:14:41] you know, enumerate
+[00:14:41 -> 00:14:42] all the possibilities
+[00:14:42 -> 00:14:44] and can create a new set
+[00:14:44 -> 00:14:45] for the return value.
+[00:14:45 -> 00:14:46] And then return value
+[00:14:46 -> 00:14:47] would also be a fully undef
+[00:14:47 -> 00:14:49] or a partially undef value,
+[00:14:49 -> 00:14:51] depending on the size of the set
+[00:14:51 -> 00:14:51] that we generate
+[00:14:51 -> 00:14:53] based on this operation.
+[00:14:55 -> 00:14:57] Finally, I want to also talk about
+[00:14:57 -> 00:14:59] another operand
+[00:14:59 -> 00:15:01] that is kind of specific
+[00:15:01 -> 00:15:02] to the LLVM IR,
+[00:15:02 -> 00:15:03] but it's something
+[00:15:03 -> 00:15:05] that we also seen in C
+[00:15:05 -> 00:15:05] and that's called
+[00:15:05 -> 00:15:07] the ternary operator.
+[00:15:07 -> 00:15:08] So something like
+[00:15:08 -> 00:15:10] condition question mark
+[00:15:10 -> 00:15:11] x colon y.
+[00:15:11 -> 00:15:12] So basically,
+[00:15:12 -> 00:15:13] this represents a value.
+[00:15:13 -> 00:15:14] This is an expression
+[00:15:14 -> 00:15:16] that represents a value,
+[00:15:17 -> 00:15:18] which is, you know,
+[00:15:18 -> 00:15:19] depending on the value of C,
+[00:15:19 -> 00:15:20] the values are going to be
+[00:15:20 -> 00:15:22] equal to either x or y.
+[00:15:22 -> 00:15:23] So if C was true,
+[00:15:23 -> 00:15:24] then it will be x.
+[00:15:24 -> 00:15:25] If C was false,
+[00:15:25 -> 00:15:26] then it will be y.
+[00:15:26 -> 00:15:28] And so that operation
+[00:15:28 -> 00:15:30] is basically encoded in LLVM.
+[00:15:30 -> 00:15:31] This ternary operator
+[00:15:31 -> 00:15:32] is encoded in LLVM
+[00:15:32 -> 00:15:34] using the select opcode.
+[00:15:34 -> 00:15:35] C is the condition,
+[00:15:35 -> 00:15:36] just like I had here.
+[00:15:36 -> 00:15:39] X is the true case value
+[00:15:39 -> 00:15:41] and the third operand
+[00:15:41 -> 00:15:43] is the false case value.
+[00:15:43 -> 00:15:44] And in this case,
+[00:15:44 -> 00:15:45] I'm interested in select
+[00:15:45 -> 00:15:46] with undef value.
+[00:15:46 -> 00:15:48] So what if one of the values
+[00:15:48 -> 00:15:49] of these,
+[00:15:49 -> 00:15:50] the second or the third operand
+[00:15:50 -> 00:15:51] is undef?
+[00:15:51 -> 00:15:52] Well, that's easy.
+[00:15:52 -> 00:15:53] If C was true,
+[00:15:53 -> 00:15:54] then it returns C.
+[00:15:54 -> 00:15:56] If C was false,
+[00:15:56 -> 00:15:57] then it returns undef.
+[00:15:58 -> 00:16:00] Now notice that this is a change
+[00:16:00 -> 00:16:03] from the branching thing.
+[00:16:03 -> 00:16:04] I mean, select is basically
+[00:16:04 -> 00:16:07] kind of a higher level
+[00:16:07 -> 00:16:08] representation of branch
+[00:16:08 -> 00:16:09] because unlike a branch
+[00:16:09 -> 00:16:10] where, you know,
+[00:16:10 -> 00:16:11] you could execute
+[00:16:11 -> 00:16:12] arbitrary code
+[00:16:12 -> 00:16:13] in the then branch
+[00:16:13 -> 00:16:14] and the else branch,
+[00:16:14 -> 00:16:14] for example,
+[00:16:14 -> 00:16:16] you could do memory operations,
+[00:16:16 -> 00:16:17] you could do more branches,
+[00:16:17 -> 00:16:18] you could do function calls.
+[00:16:18 -> 00:16:20] A select basically restricts
+[00:16:20 -> 00:16:22] its second and third operands
+[00:16:22 -> 00:16:23] to be expressions
+[00:16:23 -> 00:16:24] of a certain type
+[00:16:24 -> 00:16:25] or, you know,
+[00:16:25 -> 00:16:26] in case of three address code
+[00:16:27 -> 00:16:28] variables or registers
+[00:16:28 -> 00:16:29] of a certain type,
+[00:16:30 -> 00:16:31] whatever is the type
+[00:16:31 -> 00:16:32] of the return value.
+[00:16:32 -> 00:16:33] Okay.
+[00:16:33 -> 00:16:34] So to summarize,
+[00:16:35 -> 00:16:38] if undef is one of the two values,
+[00:16:38 -> 00:16:39] either the true value
+[00:16:39 -> 00:16:41] or the false value
+[00:16:41 -> 00:16:42] that is returned
+[00:16:42 -> 00:16:43] depending on the value of C,
+[00:16:43 -> 00:16:44] then this is not going
+[00:16:44 -> 00:16:45] to trigger any UV.
+[00:16:45 -> 00:16:47] It's just going to either
+[00:16:47 -> 00:16:48] return X
+[00:16:49 -> 00:16:49] in terms of the runtime
+[00:16:49 -> 00:16:50] operational semantics
+[00:16:50 -> 00:16:51] depending on the value
+[00:16:51 -> 00:16:53] if C was true
+[00:16:53 -> 00:16:54] and return undef
+[00:16:54 -> 00:16:55] if C was false.
+[00:16:55 -> 00:16:55] And, you know,
+[00:16:55 -> 00:16:56] I can do the other way around also
+[00:16:56 -> 00:16:58] if undef was the second operand,
+[00:16:58 -> 00:16:59] then, you know,
+[00:16:59 -> 00:17:00] it will return undef
+[00:17:00 -> 00:17:01] if C was true
+[00:17:01 -> 00:17:03] and X if C was false.
+[00:17:06 -> 00:17:07] Because I'm introducing
+[00:17:07 -> 00:17:07] the select operator
+[00:17:07 -> 00:17:08] for the first time,
+[00:17:08 -> 00:17:09] I should also talk
+[00:17:09 -> 00:17:10] what happens
+[00:17:10 -> 00:17:11] when select with poison value
+[00:17:11 -> 00:17:12] and once again,
+[00:17:12 -> 00:17:13] it's the same thing.
+[00:17:13 -> 00:17:14] I mean, if poison
+[00:17:14 -> 00:17:15] is one of the two
+[00:17:15 -> 00:17:17] kind of options
+[00:17:17 -> 00:17:18] depending on this value of C,
+[00:17:18 -> 00:17:20] then it just behaves identically.
+[00:17:20 -> 00:17:21] You know, if C was true,
+[00:17:21 -> 00:17:22] then it returns poison.
+[00:17:22 -> 00:17:23] If C was false,
+[00:17:23 -> 00:17:24] then it returns X.
+[00:17:26 -> 00:17:28] Also, I want to point out
+[00:17:28 -> 00:17:29] that one of the kind of
+[00:17:29 -> 00:17:30] transformations that a compiler
+[00:17:30 -> 00:17:31] would potentially do
+[00:17:31 -> 00:17:32] once it has figured out
+[00:17:32 -> 00:17:33] that this value is going
+[00:17:33 -> 00:17:34] to be always undef,
+[00:17:34 -> 00:17:35] for example,
+[00:17:35 -> 00:17:37] it can kind of convert
+[00:17:37 -> 00:17:39] select C X undef to X
+[00:17:39 -> 00:17:41] because undef can take any value.
+[00:17:41 -> 00:17:42] I mean, in this case,
+[00:17:42 -> 00:17:43] I'm assuming that undef
+[00:17:43 -> 00:17:45] is not a partially undef value
+[00:17:45 -> 00:17:46] but a fully undef value
+[00:17:46 -> 00:17:47] and so which basically means
+[00:17:47 -> 00:17:49] the non-deterministic value
+[00:17:49 -> 00:17:49] and recall that
+[00:17:49 -> 00:17:51] I can always transform
+[00:17:51 -> 00:17:53] from a more non-determinism
+[00:17:53 -> 00:17:55] to less non-determinism.
+[00:17:55 -> 00:17:56] And so if undef
+[00:17:56 -> 00:17:57] is a fully non-deterministic value,
+[00:17:57 -> 00:17:58] I can always choose
+[00:17:58 -> 00:17:59] a particular value
+[00:17:59 -> 00:18:00] which is the same value
+[00:18:00 -> 00:18:02] as whatever the X operand is.
+[00:18:02 -> 00:18:04] And so even though I don't know
+[00:18:04 -> 00:18:05] what X is,
+[00:18:05 -> 00:18:06] whatever it is,
+[00:18:06 -> 00:18:08] I can just take that value
+[00:18:08 -> 00:18:08] and then this becomes
+[00:18:08 -> 00:18:10] select of C, X, X
+[00:18:11 -> 00:18:12] and that can be just
+[00:18:12 -> 00:18:13] simplified to X
+[00:18:13 -> 00:18:14] because both depend
+[00:18:14 -> 00:18:15] irrespective of whether C is true
+[00:18:15 -> 00:18:17] or false return X
+[00:18:17 -> 00:18:19] and that can be simplified to X.
+[00:18:20 -> 00:18:20] And similarly,
+[00:18:20 -> 00:18:22] for the second statement as well,
+[00:18:22 -> 00:18:23] it's okay to transform this
+[00:18:23 -> 00:18:25] to a plain variable X.
+[00:18:25 -> 00:18:26] So this is a transformation
+[00:18:26 -> 00:18:27] you can do
+[00:18:27 -> 00:18:29] if the compiler can statically reason
+[00:18:29 -> 00:18:31] that this particular value,
+[00:18:31 -> 00:18:32] one of the two branches,
+[00:18:32 -> 00:18:33] branch values
+[00:18:33 -> 00:18:35] is basically definitely
+[00:18:35 -> 00:18:37] either an undef or a Poisson.
+[00:18:38 -> 00:18:40] Okay, what happens when
+[00:18:41 -> 00:18:44] undef is the C value?
+[00:18:44 -> 00:18:46] So if during the runtime,
+[00:18:46 -> 00:18:48] the value of C is undef
+[00:18:48 -> 00:18:49] and X and Y
+[00:18:49 -> 00:18:50] are the true values
+[00:18:50 -> 00:18:51] and the false values,
+[00:18:52 -> 00:18:53] if C was undef,
+[00:18:53 -> 00:18:55] then basically we choose
+[00:18:55 -> 00:18:56] non-deterministically
+[00:18:56 -> 00:18:57] between X and Y.
+[00:18:57 -> 00:18:58] So basically we return
+[00:18:58 -> 00:19:00] a partially undef value
+[00:19:00 -> 00:19:02] which has two elements X and Y
+[00:19:02 -> 00:19:04] and this is perfectly okay, right?
+[00:19:04 -> 00:19:05] Because undef can be,
+[00:19:05 -> 00:19:06] after all,
+[00:19:06 -> 00:19:07] C being a Boolean values,
+[00:19:07 -> 00:19:10] the first operator of a select operator
+[00:19:10 -> 00:19:11] needs to be a Boolean value.
+[00:19:11 -> 00:19:13] So undef can either be true or false.
+[00:19:14 -> 00:19:15] And so if it is true,
+[00:19:15 -> 00:19:16] then X,
+[00:19:16 -> 00:19:17] if it's false, then Y
+[00:19:17 -> 00:19:19] and so what you return,
+[00:19:19 -> 00:19:20] what you get in return
+[00:19:20 -> 00:19:22] is basically a partially undef value
+[00:19:23 -> 00:19:25] whose set is basically X, Y.
+[00:19:25 -> 00:19:27] And so these undef values
+[00:19:27 -> 00:19:27] are kind of
+[00:19:28 -> 00:19:30] keeping the non-determinism,
+[00:19:31 -> 00:19:32] not increasing the non-determinism
+[00:19:32 -> 00:19:34] unlike Poisson or something like that
+[00:19:34 -> 00:19:35] where they just kind of
+[00:19:36 -> 00:19:37] bring everything to Poisson.
+[00:19:37 -> 00:19:39] Here you're kind of keeping track
+[00:19:39 -> 00:19:41] of the exact degree of non-determinism
+[00:19:41 -> 00:19:43] as you go along in your execution.
+[00:19:45 -> 00:19:46] On the other hand,
+[00:19:46 -> 00:19:48] if I do select of Poisson, X, Y,
+[00:19:48 -> 00:19:50] then that immediately triggers UB
+[00:19:50 -> 00:19:51] because, I mean,
+[00:19:51 -> 00:19:53] it's basically like saying that,
+[00:19:53 -> 00:19:53] you know,
+[00:19:53 -> 00:19:56] you're basically doing some operation on Poisson
+[00:19:56 -> 00:19:56] and recall that
+[00:19:56 -> 00:19:58] if you do any operation on Poisson,
+[00:19:58 -> 00:19:59] you get Poisson back.
+[00:19:59 -> 00:20:00] In this case,
+[00:20:00 -> 00:20:01] you are deterministically doing
+[00:20:01 -> 00:20:02] some operation on Poisson.
+[00:20:03 -> 00:20:06] Notice that when Poisson was,
+[00:20:06 -> 00:20:06] you know,
+[00:20:06 -> 00:20:07] one of the true or false values,
+[00:20:07 -> 00:20:10] we actually did something
+[00:20:10 -> 00:20:14] which was less non-deterministic.
+[00:20:14 -> 00:20:14] So, I mean,
+[00:20:14 -> 00:20:16] depending on whether C was true,
+[00:20:16 -> 00:20:18] we could choose a non-Poisson value as well,
+[00:20:19 -> 00:20:20] so in that case,
+[00:20:20 -> 00:20:22] we are not basically following the rule
+[00:20:22 -> 00:20:24] that anything that is operated with Poisson
+[00:20:24 -> 00:20:25] basically becomes Poisson
+[00:20:25 -> 00:20:26] because, you know,
+[00:20:26 -> 00:20:27] we treat select specially
+[00:20:27 -> 00:20:29] or LLVM treats select specially
+[00:20:29 -> 00:20:30] and says,
+[00:20:30 -> 00:20:33] oh, we return Poisson only if C was true,
+[00:20:34 -> 00:20:35] if C was appointed
+[00:20:35 -> 00:20:37] to the corresponding branch where Poisson lives,
+[00:20:37 -> 00:20:38] otherwise we return the other value.
+[00:20:38 -> 00:20:40] But if Poisson was one of,
+[00:20:40 -> 00:20:41] there was a condition itself,
+[00:20:41 -> 00:20:42] then it triggers,
+[00:20:43 -> 00:20:44] then it's basically,
+[00:20:46 -> 00:20:48] I shouldn't say it triggers UB actually,
+[00:20:48 -> 00:20:50] it should basically return Poisson.
+[00:20:50 -> 00:20:50] Okay.
+[00:20:50 -> 00:20:52] So, this is a mistake.
+[00:20:52 -> 00:20:53] It returns Poisson.
+[00:20:55 -> 00:20:55] Okay.
+[00:20:56 -> 00:20:59] Now, contrast this with branching, right?
+[00:20:59 -> 00:21:01] So, this just returns Poisson.
+[00:21:03 -> 00:21:05] Contrast this with branching.
+[00:21:05 -> 00:21:05] In branching,
+[00:21:05 -> 00:21:08] if I said if undef dot dot dot
+[00:21:08 -> 00:21:10] or if Poisson dot dot dot,
+[00:21:10 -> 00:21:11] they both trigger UB.
+[00:21:12 -> 00:21:12] On the other hand,
+[00:21:12 -> 00:21:14] select being a higher level operator
+[00:21:14 -> 00:21:16] and kind of giving less flexibility,
+[00:21:16 -> 00:21:19] it cannot kind of execute arbitrary code
+[00:21:19 -> 00:21:20] in the if branch or the then branch.
+[00:21:20 -> 00:21:21] It's just a particular value
+[00:21:21 -> 00:21:23] which may or may not be Poisson.
+[00:21:23 -> 00:21:25] We can actually return Poisson
+[00:21:25 -> 00:21:27] or partially undef value.
+[00:21:27 -> 00:21:28] Whereas,
+[00:21:29 -> 00:21:31] when I have if undef or if Poisson,
+[00:21:31 -> 00:21:32] we actually trigger UB.
+[00:21:32 -> 00:21:34] So, there's a nice contrast
+[00:21:34 -> 00:21:35] between different semantics
+[00:21:35 -> 00:21:37] for the ternary select operator
+[00:21:37 -> 00:21:41] versus the branching operator like if.

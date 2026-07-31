@@ -1,0 +1,126 @@
+Title: Compiler Design Module 125 : Need for Locality
+Video ID: KiGHVWI2QfA
+Detected language: en
+------------------------------------------------------------
+
+[00:00:00 -> 00:00:07] So now we're going to talk about the need for locality in high performance computing and so
+[00:00:07 -> 00:00:13] to understand what do I mean by locality basically I'm saying that it's important that we
+[00:00:14 -> 00:00:21] have either spatial locality or temporal locality in the program to get better performance.
+[00:00:21 -> 00:00:27] So what is spatial locality? Spatial locality is a property that if you access a particular
+[00:00:27 -> 00:00:33] memory location then you also likely access a memory location that is closed in space
+[00:00:33 -> 00:00:38] and address space to that particular memory location. What is temporal locality? That if
+[00:00:38 -> 00:00:42] you have addressed a memory location then very soon you are likely to access the same memory
+[00:00:42 -> 00:00:48] location again. So you know we're going to discuss the need for locality through some
+[00:00:48 -> 00:00:53] examples in today's module but before we do that let's understand the characteristics
+[00:00:53 -> 00:01:00] of typical hardware that we have today. So we have registers which are on the CPU chip they take
+[00:01:00 -> 00:01:07] one cycle to access and they can be of size ranging from 256 bytes to 8 kilobytes. I'm talking
+[00:01:07 -> 00:01:12] about the entire space entire address space of the registers by address space I mean what is
+[00:01:12 -> 00:01:17] the total size of the register file including all the registers depending on the architecture
+[00:01:17 -> 00:01:22] it could be as small as 256 bytes or up to 8 kilobytes and this is the amount of
+[00:01:23 -> 00:01:27] circuitry that can fit on the chip. I should also point out so registers are kind of the
+[00:01:27 -> 00:01:33] fastest storage available to a computer program on a modern hardware processor general purpose
+[00:01:33 -> 00:01:40] processor and actually the larger the register file the more power hungry the CPU becomes
+[00:01:40 -> 00:01:44] because there's a lot of circuitry that needs to go into in basically demultiplexing
+[00:01:44 -> 00:01:50] address into data and then also having the interconnect to route the data to the CPU in the
+[00:01:50 -> 00:01:55] fastest possible time. So but the good thing is that you know you can have you can afford
+[00:01:55 -> 00:02:00] some amount of such space on the chip within and you can access it within a single cycle.
+[00:02:00 -> 00:02:06] Then you have caches multi-level caches L1, L2, L3. L1 is typically almost as fast as
+[00:02:06 -> 00:02:13] register access. L2 is you know maybe 5 to 10x slower. L3 is another you know
+[00:02:14 -> 00:02:21] 4 to 5x slower than L2 and then so this is basically from you know one to tens of cycles
+[00:02:21 -> 00:02:28] and the sizes here range from 256 bytes for L1 to let's say one megabyte kind of sizes for
+[00:02:28 -> 00:02:34] L3. Then you have the main memory which can go which is the actual memory that you basically
+[00:02:34 -> 00:02:41] plug into your computer which is outside the chip the CPU chip itself and so that's going
+[00:02:41 -> 00:02:47] from 20 to 100 cycles to access and this can range from megabytes to terabytes today.
+[00:02:48 -> 00:02:54] And then you have magnetic disk which takes you know half a million to five million cycles
+[00:02:54 -> 00:02:59] so notice that there's a huge jump from main memory to magnetic disk but the good thing is
+[00:02:59 -> 00:03:06] that you can have bigger capacity gigabytes to petabytes. I should also mention that recently
+[00:03:06 -> 00:03:12] there's been advances in non-volatile memory which also gives you persistence just like magnetic
+[00:03:12 -> 00:03:19] disk across power failures which has you know order of access you know 3 to 4x slower
+[00:03:19 -> 00:03:25] than what the main memory does different as technology progresses we expect these numbers
+[00:03:25 -> 00:03:31] to become better but it takes long times to basically become better and so you know even
+[00:03:31 -> 00:03:36] if they become better this kind of hierarchy would always remain and we would want that as
+[00:03:36 -> 00:03:42] many accesses as possible are satisfied by the upper layers of this hierarchy than by the lower
+[00:03:42 -> 00:03:49] layers of the hierarchy and it is the job of both the hardware and the software to ensure this
+[00:03:49 -> 00:03:55] in collaboration. Some of these parts of the hierarchy are managed by the hardware for example
+[00:03:55 -> 00:04:00] typically caches are hardware managed but then some part of this is also managed by software
+[00:04:00 -> 00:04:05] because even though the caches are soft hardware managed maybe the compiler can reorder the
+[00:04:05 -> 00:04:10] computation such that the caches become more effective and we're going to see some examples
+[00:04:10 -> 00:04:16] in today's module. So consider this particular loop this is a two loop nest outer loop is
+[00:04:16 -> 00:04:24] iterating j from 1 to 10 and the inner loop is iterating i from 1 to let's say million or
+[00:04:24 -> 00:04:31] 10 million and then I'm just accessing elements i ai and bi notice that I'm not actually the
+[00:04:31 -> 00:04:37] memory accesses do not really depend on j here it's just depend on i ai and bi and they
+[00:04:37 -> 00:04:43] don't really depend on j. Now let's look at what the access pattern for something like this
+[00:04:43 -> 00:04:47] is going to be the first thing I want to point out that this value 10 million is bigger
+[00:04:47 -> 00:04:51] than the size of any cache and so these accesses will have to go all the way to the
+[00:04:51 -> 00:04:57] main memory which are you know 100 cycles or you know up to 100 cycles slow it would have been
+[00:04:57 -> 00:05:01] better if you know when we are accessing it I could have been more sure that this
+[00:05:01 -> 00:05:07] this value would be in this cache and so in this particular thing by the time the second
+[00:05:07 -> 00:05:15] iteration of the outer loop starts the cache has no reusable iterations locations so for j
+[00:05:15 -> 00:05:23] equals one I just for j equals one so this should have been one so for j equals one and two
+[00:05:23 -> 00:05:30] for j equals one I'm going to do a linear scan on the array from beginning to end and and then
+[00:05:30 -> 00:05:36] at j equals two I'm going to again start from element number zero so I'm pretty sure that by
+[00:05:36 -> 00:05:41] the time I come to element number zero at j equals two element number zero is not in the
+[00:05:41 -> 00:05:46] cache because everything else would the hardware would have brought in the other elements into the
+[00:05:46 -> 00:05:52] cache and the cache would have been would would contain the these elements the ones at the end
+[00:05:52 -> 00:05:57] by the time I access zero it's going to be a cache miss and if it's a cache miss then I'm
+[00:05:57 -> 00:06:05] going to have to do 100 cycles to get the data into the cache and so every time I access
+[00:06:05 -> 00:06:10] so I'm accessing a zero let's say 10 times then every time I access a zero I'm going all
+[00:06:10 -> 00:06:16] the way to the main memory question is can the compiler reorder the computation such that at
+[00:06:16 -> 00:06:22] least I can save some of the trips to the main memory and the answer is actually here is yes
+[00:06:22 -> 00:06:28] and we can basically the problem here is that the reuse distance of any array location is very
+[00:06:28 -> 00:06:35] high the reuse distance basically refers to the distance between two uses of the same location
+[00:06:35 -> 00:06:40] reuse distance and so the distance between two uses of the same location in this particular code is
+[00:06:41 -> 00:06:47] 10 million right so the number of accesses that happen between two uses of the same location in
+[00:06:47 -> 00:06:52] this particular code is let's say 10 million pretty large number and I want to reduce this
+[00:06:52 -> 00:06:57] can the compiler do some transformation so that this becomes less and the answer is yes it is
+[00:06:57 -> 00:07:03] possible to reorder and the answer is really simple if I just make the j loop the
+[00:07:03 -> 00:07:10] inner loop and the i loop the outer loop so my loop now nest now looks like for i equals 1 to
+[00:07:10 -> 00:07:19] 10 million i plus plus for j equals 1 to 10 j plus plus ai into star equals bi now I claim that
+[00:07:19 -> 00:07:24] the logic of the program hasn't changed it's going to do the same thing but the
+[00:07:26 -> 00:07:30] performance of the program has increased dramatically because of this transformation
+[00:07:31 -> 00:07:36] okay so let me just first fix this this is one and two and now what I have done is that I have
+[00:07:36 -> 00:07:42] reordered the loop iterations to decrease the reuse distance because now for i equals one
+[00:07:42 -> 00:07:48] j is going to go from one to ten but it's the same location i that's going to be accessed
+[00:07:48 -> 00:07:52] ten times for different values of j and so this is now the new picture
+[00:07:53 -> 00:08:02] uh 10 times access a0 then 10 times and b0 I'm not drawing b0 here then access a1 10 times
+[00:08:02 -> 00:08:09] then access b a2 10 times and so on and so after the first access the next nine accesses
+[00:08:09 -> 00:08:15] are guaranteed to be in the cache maybe even the l1 cache in which case I have saved almost
+[00:08:15 -> 00:08:22] a 100 x access latency because memory access was 100 cycles l1 access is close to one cycle
+[00:08:22 -> 00:08:26] and so for that particular memory access for nine of those 10 accesses I've been able to
+[00:08:26 -> 00:08:32] satisfy the request from the l1 cache overall this loop in on a modern architecture would
+[00:08:32 -> 00:08:36] typically give you at least 10x improvement compared to the previous loop while computing
+[00:08:36 -> 00:08:41] the same answer this kind of transformation is also called loop interchange where we
+[00:08:41 -> 00:08:47] interchange the loops the inner and outer loops without changing the meaning of the program
+[00:08:47 -> 00:08:51] and we're going to see techniques on how the compiler may be able to do such things
+[00:08:51 -> 00:08:58] automatically here is another example this is the common you know mathematical operation
+[00:08:58 -> 00:09:06] matrix vector multiplication here basically we have for i equals i equals zero to n
+[00:09:07 -> 00:09:11] you basically are going to compute the result in y so you say y i equals zero
+[00:09:12 -> 00:09:19] and then you say for j equals zero to n y i plus equals aij in star xj so I'm trying
+[00:09:19 -> 00:09:26] to multiply a matrix a with vector x and get my result in y and so if I draw this
+[00:09:26 -> 00:09:32] diagrammatically let's say this is my matrix a and this is my vector x then I for a given
+[00:09:32 -> 00:09:40] row i I just scan j in this direction and also I scan j in this direction keep multiplying
+[00:09:40 -> 00:09:48] and accumulating the result into yi so my question here is what would be a good is this
+[00:09:48 -> 00:09:55] an efficient way of doing computation is it going to give me good locality right and the
+[00:09:55 -> 00:10:02] answer is it depends what depending on what is the memory layout or the 2d array a if the 2d
+[00:10:02 -> 00:10:09] array a is row major then ai comma j and ai comma j plus one would be adjacent locations in
+[00:10:09 -> 00:10:16] memory and because of spatial locality because cache sizes are not bigger than single words
+[00:10:16 -> 00:10:22] they are typically let's say eight words or 16 words because of spatial locality I would have
+[00:10:22 -> 00:10:27] the value of ai comma j plus one in cache if I have previously accessed ai comma j with a high
+[00:10:27 -> 00:10:32] probability and if I have that then that's a good idea so if it's a row major then it would be
+[00:10:32 -> 00:10:38] a good performance whereas if it was column major if a was stored in a column major form
+[00:10:38 -> 00:10:47] then it would give me a very bad performance because then you know ai comma j and ai comma j
+[00:10:47 -> 00:10:55] plus one would be far apart because there will be a full row in the middle of ai comma j plus
+[00:10:55 -> 00:11:00] one and ai comma j and so there will be very little spatial locality and so the caches will
+[00:11:00 -> 00:11:04] not work well because recall that the caches are hardware managed and the hardware is just
+[00:11:04 -> 00:11:10] going to not bring ai comma j plus one if it has seen ai comma j because ai comma j and ai
+[00:11:10 -> 00:11:15] comma j plus one seem like they are very far apart and so this is going to be bad for
+[00:11:15 -> 00:11:19] performance but row major is going to be good for performance now I should also point out
+[00:11:19 -> 00:11:23] that this is just an artifact of the way the code has been written if I had written the code
+[00:11:23 -> 00:11:28] in a different way for example if I had hydrated over the columns in the outer loop and over
+[00:11:28 -> 00:11:32] the rows in the inner loop I'll have to figure out how to do that but it is possible
+[00:11:32 -> 00:11:37] to do it in this particular example then maybe the column major would have been a better
+[00:11:38 -> 00:11:43] solution so either I should change my program or I should change my data representation to
+[00:11:43 -> 00:11:48] basically give me better locality and we are going to we are interested in compiler
+[00:11:48 -> 00:11:58] algorithms that given a data layout give me the best way of computing the code such that
+[00:11:58 -> 00:12:03] it gives me best locality or given a competition give me the best memory layout that gives me
+[00:12:03 -> 00:12:07] the best locality

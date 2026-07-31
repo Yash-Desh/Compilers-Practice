@@ -1,0 +1,241 @@
+Title: Compiler Design Module 11 : Context Free Grammar
+Video ID: F6MU5HBUjd4
+Detected language: en
+------------------------------------------------------------
+
+[00:00:00 -> 00:00:05] So today we are going to move beyond regular languages and it turns out that some intuitive
+[00:00:05 -> 00:00:08] languages are actually not regular.
+[00:00:08 -> 00:00:12] So here is an example of a language.
+[00:00:12 -> 00:00:20] This language accepts all strings which contain balanced parenthesis.
+[00:00:20 -> 00:00:30] So for example, it would accept any number of open parenthesis but it should be followed
+[00:00:30 -> 00:00:35] by exactly the same number of closed parenthesis.
+[00:00:35 -> 00:00:40] For any value of i, you can open the parenthesis any number of times.
+[00:00:40 -> 00:00:43] You need to count how many times did you open it so that you can close it exactly
+[00:00:43 -> 00:00:44] the same number of times.
+[00:00:44 -> 00:00:48] Now it turns out that this is not a regular language and intuitively this is not a
+[00:00:48 -> 00:00:55] regular language because recall that a regular language has the machine that is required
+[00:00:55 -> 00:01:03] to, that can identify a regular language like a DFA or an NFA has only a finite amount
+[00:01:03 -> 00:01:04] of memory.
+[00:01:04 -> 00:01:08] But this particular language requires potentially unbounded amount of memory depending on how
+[00:01:08 -> 00:01:13] big a i is and i is potentially unbounded, right?
+[00:01:13 -> 00:01:20] So for example, I could have an NFA that has a million states but if I have, if
+[00:01:20 -> 00:01:23] I use i which is greater than 1 million, let's say 2 million or something like
+[00:01:23 -> 00:01:29] that, then that NFA would not be able to maintain that much information that how much
+[00:01:29 -> 00:01:37] or in fact, you know, even if it used logarithmic encoding to encode how much the
+[00:01:37 -> 00:01:46] count i, I mean the logarithmic of an infinite amount of count is also infinite.
+[00:01:46 -> 00:01:50] So overall this language is not regular, all right?
+[00:01:50 -> 00:01:55] But this language is pretty intuitive and in fact, we use it all the time in our regular
+[00:01:55 -> 00:02:00] mathematical expressions where we use brackets.
+[00:02:00 -> 00:02:07] So in fact, many of our programming constructs also have this recursive structure.
+[00:02:07 -> 00:02:14] For example, scopes, functions and so on, you could have scope inside scope inside
+[00:02:14 -> 00:02:19] scope inside scope and this could go on forever.
+[00:02:19 -> 00:02:22] So this or expressions also have a lot of recursive structure within them.
+[00:02:22 -> 00:02:27] For example, you could have parentheses within parentheses inside an expression.
+[00:02:27 -> 00:02:31] You could have if-then-is within an if-then-is and so on and so forth.
+[00:02:31 -> 00:02:37] So a regular language usually does not suffice for doing something like that and so while
+[00:02:37 -> 00:02:43] the regular language is good for identifying tokens from characters usually, you know,
+[00:02:43 -> 00:02:47] for the whole language, a regular language is not usually enough.
+[00:02:47 -> 00:02:55] And so we need we need something more powerful and at this step, so once so now we're going
+[00:02:55 -> 00:03:01] to talk about parsing, which is a step above tokens, right?
+[00:03:01 -> 00:03:09] So lexical analysis was the task of converting a stream of characters to a stream of tokens.
+[00:03:09 -> 00:03:13] Parsing is going to take a stream of tokens or a sequence of tokens and convert
+[00:03:13 -> 00:03:23] it into a parse tree, a structured tree, right, which basically is able to match operators
+[00:03:23 -> 00:03:25] to their operands and things like that.
+[00:03:25 -> 00:03:32] For example, the parse tree of a language of balanced parentheses would basically match
+[00:03:32 -> 00:03:39] the outermost two parentheses and then say that the inner parentheses should also
+[00:03:39 -> 00:03:41] be balanced and so on, right?
+[00:03:41 -> 00:03:49] So for example, consider this this statement from your favorite programming language.
+[00:03:49 -> 00:03:57] If x is greater than equal to y, then z equals one semicolon else a equals z.
+[00:03:57 -> 00:04:03] Now this is no so this is this is just a string but let's assume that we have already
+[00:04:03 -> 00:04:07] performed lexical analysis on it and so we have a stream of tokens and the stream
+[00:04:07 -> 00:04:10] of tokens is basically let's say if is a keyword.
+[00:04:10 -> 00:04:14] So that's one token, x is an identifier, so that's another token, greater than equal
+[00:04:14 -> 00:04:18] to is yet another token, which would be the relational operator and so on, right?
+[00:04:18 -> 00:04:24] We already understood the mechanism to convert characters to tokens.
+[00:04:24 -> 00:04:28] But now once we have but now we just have a linear sequence of tokens, whereas this
+[00:04:28 -> 00:04:33] particular statement has a hierarchical structure to it.
+[00:04:33 -> 00:04:34] What is the hierarchical structure?
+[00:04:34 -> 00:04:43] Well, if you look at it, this whole sequence of tokens represents a single statement and
+[00:04:43 -> 00:04:45] in this particular case, it's an if-then-else statement.
+[00:04:45 -> 00:04:52] Further, there is a part of the if-then-else statement that is the relational expression
+[00:04:52 -> 00:04:56] and then there are statements corresponding to the then and the else clauses of the
+[00:04:56 -> 00:04:58] if-then-else statement.
+[00:04:58 -> 00:05:07] So before the compiler or the interpreter, for that matter, can try and interpret or
+[00:05:07 -> 00:05:15] specialize this particular program, it needs to identify what is this recursive structure
+[00:05:15 -> 00:05:18] and what do each of these things mean, right?
+[00:05:18 -> 00:05:26] In this case, we can build a parse tree to represent this recursive structure and
+[00:05:26 -> 00:05:28] it would be built something like the following.
+[00:05:28 -> 00:05:33] Basically, we would first identify that x greater than equal to y, these three tokens
+[00:05:33 -> 00:05:35] represent a relational expression.
+[00:05:35 -> 00:05:42] Similarly, z equals one semicolon represents a statement and similarly, a equals z semicolon
+[00:05:42 -> 00:05:45] represents another statement, all right?
+[00:05:45 -> 00:05:51] And then we are going to say that, okay, now I have a sentence which looks
+[00:05:52 -> 00:05:59] like if relational expression, then statement, else statement and this looks like a complete
+[00:05:59 -> 00:06:03] well-formed if-then-else statement and we are going to call that an if-then-else statement
+[00:06:03 -> 00:06:07] and at the top level, this is just a statement.
+[00:06:07 -> 00:06:11] We don't really care whether it's an if-then-else statement or not, for maybe the end user
+[00:06:11 -> 00:06:17] that what matters or for the, I mean, the whole program should probably be just
+[00:06:17 -> 00:06:20] a statement and so that is what it is.
+[00:06:20 -> 00:06:25] Now, this structure that we have just constructed, statement, if-then-else statement and then
+[00:06:25 -> 00:06:29] relational expression, statement, statement, notice that this is a tree structure.
+[00:06:29 -> 00:06:31] We can read it either bottom up or top down.
+[00:06:31 -> 00:06:35] Right now, I've drawn it as an inverted tree where the root is at the bottom but
+[00:06:35 -> 00:06:38] I could also have drawn it in the other way, in which case the root would have
+[00:06:38 -> 00:06:40] been at the top.
+[00:06:40 -> 00:06:44] So parsing is this process of converting a sequence of tokens to a parse tree like
+[00:06:44 -> 00:06:51] the one shown in this example, this is also called a parse tree.
+[00:06:51 -> 00:07:00] Alright, so such recursive structures are common and we already discussed that
+[00:07:00 -> 00:07:05] regular languages are insufficient to represent such recursive structures but
+[00:07:05 -> 00:07:11] there's another category of languages that's a more powerful and more bigger
+[00:07:11 -> 00:07:18] category of languages which is context-free languages, alright?
+[00:07:18 -> 00:07:24] And a context-free grammar can be used to specify a context-free language.
+[00:07:24 -> 00:07:31] Recall that regular expressions can be used to specify a regular language.
+[00:07:31 -> 00:07:36] Similarly, a context-free grammar can be used to specify a context-free language.
+[00:07:36 -> 00:07:39] Here's an example of a context-free grammar.
+[00:07:39 -> 00:07:43] So let's say I say I want to represent the language of expressions.
+[00:07:44 -> 00:07:51] So I can say that if expression, you know, if there are two expressions then I can
+[00:07:51 -> 00:07:57] always put a plus operator in the middle of them, between them, the two
+[00:07:57 -> 00:08:03] expressions and the resulting string or sequence of tokens would also be an
+[00:08:03 -> 00:08:05] expression, alright?
+[00:08:05 -> 00:08:10] Similarly, I could say that if there are three expressions then I can join
+[00:08:10 -> 00:08:14] them as such, expression question mark, expression colon expression and this
+[00:08:14 -> 00:08:19] would be a ternary expression supported by many programming languages, alright?
+[00:08:19 -> 00:08:20] We'll see this in more detail.
+[00:08:20 -> 00:08:23] So what is a context-free grammar more formally?
+[00:08:23 -> 00:08:26] It is a set of terminals, T.
+[00:08:26 -> 00:08:27] So what are terminals?
+[00:08:27 -> 00:08:29] This is just the alphabet of tokens.
+[00:08:29 -> 00:08:32] Recall that when we were talking about Lexing, we were talking about the
+[00:08:32 -> 00:08:35] alphabet of characters but terminals are basically the alphabet of tokens.
+[00:08:35 -> 00:08:40] So what are all the tokens that this grammar understands, right?
+[00:08:40 -> 00:08:50] So we need to have that set and that set is called, so each element of this
+[00:08:50 -> 00:08:55] set is called a terminal and this set entirely is called terminals and is
+[00:08:55 -> 00:08:58] represented by T, okay?
+[00:08:58 -> 00:09:01] Then a set of non-terminals, N.
+[00:09:01 -> 00:09:03] So we're going to see why do I need a non-terminal?
+[00:09:03 -> 00:09:06] Well, we're going to see that very soon.
+[00:09:06 -> 00:09:13] A start symbol S belonging to N, so this is going to represent how we can start,
+[00:09:13 -> 00:09:19] from where should we start identifying whether a sentence or a sequence of
+[00:09:19 -> 00:09:23] tokens belongs to the language or not and a set of productions and a set of
+[00:09:23 -> 00:09:28] productions, so notice this word productions, this is also something that
+[00:09:28 -> 00:09:32] we are defining here and what does the production look like?
+[00:09:32 -> 00:09:41] It looks like something like the following, X, right arrow, Y1, Y2, dot dot dot, YN.
+[00:09:41 -> 00:09:48] Here X must be a non-terminal, so that means X must belong to N, the set of
+[00:09:48 -> 00:09:54] non-terminals and each of the YIs, Y1, Y2, Y3 could be either a
+[00:09:54 -> 00:09:59] non-terminal or a terminal or it could even be an epsilon character,
+[00:09:59 -> 00:10:05] so epsilon just means the empty token, like no token basically, it's the empty
+[00:10:05 -> 00:10:10] sequence. So YI could be either a non-terminal or a terminal, so let's
+[00:10:10 -> 00:10:14] see an example to understand this better. So for example, if I wanted to
+[00:10:14 -> 00:10:18] represent the language of balanced parenthesis that we started with, we
+[00:10:18 -> 00:10:22] could represent this in a context free grammar as follows, let's say
+[00:10:22 -> 00:10:28] there's a symbol S, capital S, so this is the non-terminal and then
+[00:10:29 -> 00:10:36] create a production saying S, right arrow, open parenthesis, S, close
+[00:10:36 -> 00:10:43] parenthesis and capital S, right arrow, epsilon. So if this is my grammar, we're
+[00:10:43 -> 00:10:47] going to see why this grammar accepts the language of balanced
+[00:10:47 -> 00:10:50] parenthesis in a minute but before we do that, let's identify what are all
+[00:10:50 -> 00:10:54] the terminals in this language, well it turns out that the terminals are
+[00:10:54 -> 00:10:59] only, there's only one, there are actually two terminals, one is the open
+[00:10:59 -> 00:11:05] parenthesis token and the other is the close parenthesis token, notice that
+[00:11:05 -> 00:11:09] while I'm writing it as a character, these are really tokens if we are
+[00:11:09 -> 00:11:13] talking about parsing. What are the set of non-terminals in this grammar?
+[00:11:13 -> 00:11:22] Well actually there is only one non-terminal S and what is the start
+[00:11:22 -> 00:11:25] symbol? Recall that start symbol should be a non-terminal and it
+[00:11:25 -> 00:11:31] represents the non-terminal at which we should start, right and in this case
+[00:11:31 -> 00:11:37] there's only one non-terminal, it also happens to be our start symbol, all
+[00:11:37 -> 00:11:42] right. Now that we see this as an example of a grammar, let's see
+[00:11:42 -> 00:11:50] why does it accept the language of balanced parenthesis. So
+[00:11:50 -> 00:11:53] to understand that, we need to understand how to interpret these
+[00:11:53 -> 00:11:57] productions and these non-terminals. So productions can be read as
+[00:11:57 -> 00:12:01] replacement rules. So we begin with the start symbol, whatever is the start
+[00:12:01 -> 00:12:06] symbol that's specified by our grammar, let's say that start symbol
+[00:12:06 -> 00:12:10] is S, so we begin with the start symbol and at every step we can use
+[00:12:10 -> 00:12:16] the production to expand the current set of symbols that we have,
+[00:12:16 -> 00:12:20] all right. So this is how I'm going to do, I'm going to replace any
+[00:12:20 -> 00:12:26] non-terminal in the string with the RHS of some production. What is the RHS of
+[00:12:26 -> 00:12:28] some production? Recall that a production is basically a
+[00:12:28 -> 00:12:32] non-terminal right arrow and a string of
+[00:12:32 -> 00:12:35] YIs which could be either terminals or non-terminals.
+[00:12:35 -> 00:12:38] So everything on the right of the right arrow is the RHS
+[00:12:38 -> 00:12:42] and everything on the left of the right arrow is the LHS.
+[00:12:42 -> 00:12:45] So we can replace any non-terminal in the string with the RHS of some
+[00:12:45 -> 00:12:51] production x to y1 dot dot yn and we can repeat this step
+[00:12:51 -> 00:12:55] two until no non-terminals remain, okay.
+[00:12:55 -> 00:13:00] So let's see this further. So this process of kind of
+[00:13:00 -> 00:13:04] interpreting grammar is also called a derivation.
+[00:13:04 -> 00:13:08] So we could start with the symbol S and then we would search in the
+[00:13:08 -> 00:13:10] grammar for some production which has S on the left,
+[00:13:10 -> 00:13:15] on the LHS and then if we find something then we are going to
+[00:13:15 -> 00:13:20] non-deterministically choose it and if we choose it then we are going to expand
+[00:13:20 -> 00:13:22] it to whatever is the RHS of that vertical
+[00:13:22 -> 00:13:27] production. Let's call it alpha 0, right. Now inside alpha 0 we are going to
+[00:13:27 -> 00:13:30] again pick some non-terminal if 1 exists
+[00:13:30 -> 00:13:35] and then again expand it and so on. So from alpha 0 you may get alpha 1
+[00:13:35 -> 00:13:39] and so on and you may get it till some number of
+[00:13:39 -> 00:13:43] steps say n steps where n is greater than equal to 0
+[00:13:43 -> 00:13:47] and this whole process will be called a derivation.
+[00:13:47 -> 00:13:54] A derivation stops after n steps if and only if after n steps
+[00:13:54 -> 00:13:59] the string that I have
+[00:13:59 -> 00:14:04] alpha n contains only terminals and does not contain any non-terminals,
+[00:14:04 -> 00:14:12] alright. So alpha n contains only terminals.
+[00:14:12 -> 00:14:15] Okay and what does the step in the derivation look like?
+[00:14:15 -> 00:14:18] Alright so this is important. So let's say at any step I have
+[00:14:18 -> 00:14:25] this string x1 x2 dot dot dot xi and then let's say some non-terminal
+[00:14:25 -> 00:14:30] x and then xi plus 1 dot dot dot xn. Now
+[00:14:30 -> 00:14:37] I'm assuming here that x is a non-terminal
+[00:14:37 -> 00:14:44] whereas all the other xi's could be either non-terminal
+[00:14:44 -> 00:14:53] or terminals or could be the epsilon character.
+[00:14:53 -> 00:14:57] Okay so let's say at any step in the derivation so for example in the in the
+[00:14:57 -> 00:15:01] first step of the derivation I am guaranteed to have only one
+[00:15:01 -> 00:15:05] symbol x but maybe in the next step I have some
+[00:15:05 -> 00:15:09] some xi's and of which one of them is a non-terminal which I'm representing by
+[00:15:09 -> 00:15:11] x and all the other xi's on the left
+[00:15:11 -> 00:15:16] and on the right are could be either terminals or non-terminals.
+[00:15:16 -> 00:15:21] Now I could choose not there could be multiple non-terminals in the string
+[00:15:21 -> 00:15:23] and I could choose anyone non-deterministically.
+[00:15:23 -> 00:15:27] So let's say I chose x and then I can apply some derivation so let's say
+[00:15:27 -> 00:15:31] there was a derivation that says x
+[00:15:31 -> 00:15:40] goes to y1 y2 dot dot dot yi or let's say yk
+[00:15:40 -> 00:15:48] then I could expand x to y1 dot dot yk in this step of the
+[00:15:48 -> 00:15:53] derivation. So if this was alpha i
+[00:15:53 -> 00:15:57] then my new alpha i plus one which is the next step in the derivation
+[00:15:57 -> 00:16:00] is going to have everything else is going to remain the same which is x1
+[00:16:00 -> 00:16:04] dot dot xi remains where it was xi plus one dot dot xn
+[00:16:04 -> 00:16:08] remain where it was but x itself is replaced by y1 dot
+[00:16:08 -> 00:16:12] dot yk this in other words we have expanded the
+[00:16:12 -> 00:16:18] production x produces y1 dot dot yk
+[00:16:18 -> 00:16:22] all right and recall that y1 dot dot yk could be either
+[00:16:22 -> 00:16:25] non-terminals or terminals and you keep doing this so
+[00:16:25 -> 00:16:29] so this is this whole process is derivation two things to note here
+[00:16:29 -> 00:16:33] we are choosing the non-terminal to expand
+[00:16:33 -> 00:16:36] non-deterministically we are also choosing
+[00:16:36 -> 00:16:40] which derivation to use non-deterministically
+[00:16:40 -> 00:16:44] and we are stopping only when there are no
+[00:16:44 -> 00:16:48] non-terminals left in our alpha n right so
+[00:16:48 -> 00:16:54] when all these things x1 dot dot xn and y1 dot dot yk become all terminals
+[00:16:54 -> 00:16:57] we are going to stop because there's no more product
+[00:16:57 -> 00:17:03] nothing more to produce okay all right so with that we can now
+[00:17:03 -> 00:17:06] define the language of a context-free grammar
+[00:17:06 -> 00:17:15] so let let g be a context-free grammar recall that we we represent g by four
+[00:17:15 -> 00:17:18] four quantities one is t which is the set of terminals
+[00:17:18 -> 00:17:22] n which is set of non-terminals s which represents the
+[00:17:22 -> 00:17:26] start symbol and p which is the set of productions which have an LHS and
+[00:17:26 -> 00:17:28] an RHS and the LHS is a non-terminal and
+[00:17:28 -> 00:17:31] RHS is a string of terminals non-terminals and the
+[00:17:31 -> 00:17:38] epsilon character the language now recall that so now we already
+[00:17:38 -> 00:17:41] defined what what could be a grammar right but
+[00:17:41 -> 00:17:45] now we want to find the meaning of a grammar or the language defined by a
+[00:17:45 -> 00:17:48] grammar the language of a grammar is basically
+[00:17:48 -> 00:17:53] all strings a1 dot dot an such that all the ai's belong to the terminal
+[00:17:53 -> 00:18:00] set so maybe they are the tokens in case of parsing and there exists
+[00:18:00 -> 00:18:05] a derivation that starting with s which produces this particular string
+[00:18:05 -> 00:18:12] right so note so so in other words if there exists a derivation starting
+[00:18:12 -> 00:18:17] from s to alpha zero alpha one dot dot dot
+[00:18:17 -> 00:18:25] such that i get a1 dot dot an where all these ai's are basically
+[00:18:25 -> 00:18:27] terminals which means i can't expand them
+[00:18:28 -> 00:18:34] now i reach the end of my derivation then then such a string belongs to the
+[00:18:34 -> 00:18:38] language represented by this grammar if there does not exist any such
+[00:18:38 -> 00:18:41] derivation then it does not belong to the grammar
+[00:18:41 -> 00:18:45] right so notice that this is the non-determinism is captured by
+[00:18:45 -> 00:18:49] the exist operator so if there exists a derivation
+[00:18:49 -> 00:18:56] that produces this string starting with s then that string
+[00:18:56 -> 00:19:01] belongs to the language otherwise it does not

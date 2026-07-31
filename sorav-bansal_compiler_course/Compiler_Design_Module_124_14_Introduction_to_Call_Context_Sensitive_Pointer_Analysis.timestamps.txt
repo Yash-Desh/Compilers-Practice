@@ -1,0 +1,400 @@
+Title: Compiler Design Module 124 14: Introduction to Call Context Sensitive Pointer Analysis
+Video ID: sllbh3zpHlE
+Detected language: en
+------------------------------------------------------------
+
+[00:00:00 -> 00:00:05] So now we're going to discuss call context sensitivity
+[00:00:05 -> 00:00:07] or just context sensitivity for short,
+[00:00:07 -> 00:00:10] as it is usually referred to
+[00:00:10 -> 00:00:12] in the context of points to analysis.
+[00:00:12 -> 00:00:15] So the problem is explained by this example
+[00:00:15 -> 00:00:19] where there is interference of arguments across call sites.
+[00:00:19 -> 00:00:22] So let's say I use some kind of points to analysis.
+[00:00:22 -> 00:00:23] It could be Anderson's algorithm,
+[00:00:23 -> 00:00:26] Steensgard's algorithm, or some other algorithm.
+[00:00:26 -> 00:00:28] All these algorithms basically require
+[00:00:28 -> 00:00:31] you to transfer across different statements.
+[00:00:31 -> 00:00:34] And one type of statement is going to be a function call.
+[00:00:34 -> 00:00:36] So when there's a function call,
+[00:00:36 -> 00:00:41] let's say using a function bar or baz,
+[00:00:41 -> 00:00:43] from bar, there's a call to foo,
+[00:00:43 -> 00:00:45] and maybe there are two calls to foo from bar,
+[00:00:45 -> 00:00:47] and there's another call to foo from baz.
+[00:00:48 -> 00:00:51] Then there'll be some arguments to this function,
+[00:00:51 -> 00:00:54] and then there'll be some return values to this function
+[00:00:54 -> 00:00:56] that are returned by this function.
+[00:00:56 -> 00:01:00] And the function itself will have some function body.
+[00:01:00 -> 00:01:03] And when we do our points to analysis,
+[00:01:03 -> 00:01:05] then we are going to do our points to analysis
+[00:01:05 -> 00:01:07] on the function foo.
+[00:01:08 -> 00:01:11] By assuming certain initial values,
+[00:01:11 -> 00:01:13] initial points to values for x,
+[00:01:13 -> 00:01:15] for example, what can x points to?
+[00:01:15 -> 00:01:18] And depending on that,
+[00:01:18 -> 00:01:20] the variables in the body of function foo
+[00:01:20 -> 00:01:24] can point to some of the abstract objects,
+[00:01:24 -> 00:01:27] and eventually some value gets returned,
+[00:01:27 -> 00:01:30] which is also going to point to some abstract objects.
+[00:01:30 -> 00:01:34] Now, this transfer from the call site to the function
+[00:01:34 -> 00:01:37] involves copying the actual argument,
+[00:01:37 -> 00:01:38] in this case, p1,
+[00:01:38 -> 00:01:40] to the formal argument, in this case, x.
+[00:01:40 -> 00:01:45] So this function called dispatch
+[00:01:45 -> 00:01:49] involves a copy of p1 to x.
+[00:01:49 -> 00:01:51] And the corresponding transfer function
+[00:01:51 -> 00:01:54] is basically the same as the copy rule,
+[00:01:55 -> 00:01:57] you just take one variable y
+[00:01:57 -> 00:02:00] and assign it to another variable x, y equals x.
+[00:02:00 -> 00:02:03] So this is as good as saying x equals p1.
+[00:02:03 -> 00:02:05] So when you make the function call,
+[00:02:05 -> 00:02:06] when there's a dispatch,
+[00:02:06 -> 00:02:09] then you copy each argument
+[00:02:09 -> 00:02:11] from the actual argument to the formal argument.
+[00:02:11 -> 00:02:13] So this is equivalent to saying x equals p1
+[00:02:13 -> 00:02:14] in this example.
+[00:02:14 -> 00:02:16] And then when you return,
+[00:02:16 -> 00:02:20] then whatever is the return value,
+[00:02:20 -> 00:02:22] so let's say the return value is y,
+[00:02:22 -> 00:02:25] that gets copied to whatever the return value
+[00:02:25 -> 00:02:28] at the call site is, in this case, q1.
+[00:02:28 -> 00:02:31] So on return, the effective transfer function
+[00:02:31 -> 00:02:34] or the effective logic that needs to be transferred across
+[00:02:34 -> 00:02:37] is q1 equals the return value.
+[00:02:37 -> 00:02:39] So if it was y, then q1 equals y.
+[00:02:40 -> 00:02:42] Similarly, at this call site,
+[00:02:42 -> 00:02:44] you will first do x equals p2
+[00:02:44 -> 00:02:46] and then transfer control to foo,
+[00:02:46 -> 00:02:48] execute foo, and then when you return,
+[00:02:48 -> 00:02:52] then you're going to do q2 equals the return value,
+[00:02:52 -> 00:02:53] and so on.
+[00:02:53 -> 00:02:55] So when I have to,
+[00:02:55 -> 00:02:56] so this was the actual execution,
+[00:02:56 -> 00:02:58] but when I'm doing,
+[00:02:58 -> 00:03:00] when you're interpreting it for the points to analysis,
+[00:03:00 -> 00:03:03] when I'm running a data flow analysis,
+[00:03:03 -> 00:03:06] then when I do an interprocedural data flow analysis,
+[00:03:06 -> 00:03:07] so far we have usually been talking
+[00:03:07 -> 00:03:08] about data flow analysis
+[00:03:08 -> 00:03:11] in an intraprocedural setting within a procedure,
+[00:03:11 -> 00:03:13] but now you can also extend the same idea
+[00:03:13 -> 00:03:14] to interprocedural.
+[00:03:14 -> 00:03:16] So when you do an interprocedural analysis,
+[00:03:16 -> 00:03:19] whatever p1 could have pointed to
+[00:03:19 -> 00:03:21] based on your analysis in bar,
+[00:03:21 -> 00:03:24] that now x can point to,
+[00:03:24 -> 00:03:26] because as we already said,
+[00:03:26 -> 00:03:28] that the dispatch involves a copy
+[00:03:28 -> 00:03:31] of the actual argument to the formal argument.
+[00:03:31 -> 00:03:35] So whatever p1 can point to is now x can point to
+[00:03:35 -> 00:03:37] by the virtue of the transfer function
+[00:03:37 -> 00:03:39] for a copy statement.
+[00:03:40 -> 00:03:43] Now, okay, this will be a weak update
+[00:03:43 -> 00:03:46] because whatever x was pointing to originally,
+[00:03:47 -> 00:03:49] that remains, in addition,
+[00:03:49 -> 00:03:51] whatever p1 was pointing to,
+[00:03:51 -> 00:03:52] x now starts pointing to that.
+[00:03:52 -> 00:03:53] Recall that the transfer functions
+[00:03:53 -> 00:03:55] for all these statements,
+[00:03:55 -> 00:03:57] including the copy statement, was a weak update.
+[00:03:57 -> 00:03:59] Now, based on that,
+[00:03:59 -> 00:04:02] we get some points to set for x.
+[00:04:02 -> 00:04:05] Using that, we develop Foo's points to graph
+[00:04:05 -> 00:04:08] and we return the points to,
+[00:04:08 -> 00:04:09] we return a value,
+[00:04:09 -> 00:04:11] so whatever is the points to set of that value,
+[00:04:11 -> 00:04:12] let's say that we return y,
+[00:04:12 -> 00:04:15] and so whatever is the points to set of y
+[00:04:15 -> 00:04:17] based on Foo's points to graph,
+[00:04:17 -> 00:04:19] that gets copied to q1.
+[00:04:20 -> 00:04:22] Now, the problem with this whole setup
+[00:04:22 -> 00:04:25] in this interprocedural setting of points to analysis,
+[00:04:25 -> 00:04:26] which is very much required
+[00:04:26 -> 00:04:30] when we are doing points to analysis of any precision.
+[00:04:30 -> 00:04:32] Of course, one idea is to just use
+[00:04:32 -> 00:04:33] intraprocedural points to analysis,
+[00:04:33 -> 00:04:35] but that loses a lot of the precision
+[00:04:35 -> 00:04:36] because you have to conservatively assume
+[00:04:36 -> 00:04:38] that the arguments may point to anything
+[00:04:38 -> 00:04:40] and the return values will point to anything,
+[00:04:40 -> 00:04:43] and that really makes the precision very low.
+[00:04:43 -> 00:04:45] So if you want to improve the precision,
+[00:04:46 -> 00:04:48] then you do this interprocedural copy of arguments
+[00:04:48 -> 00:04:51] and return values during dispatch and return.
+[00:04:52 -> 00:04:53] The problem, however,
+[00:04:53 -> 00:04:57] is that because there are single points to graph for Foo,
+[00:04:57 -> 00:05:00] there's interference of arguments across call sites.
+[00:05:00 -> 00:05:03] So for example, let's look at q2,
+[00:05:03 -> 00:05:07] then because p1's value has been copied into x,
+[00:05:07 -> 00:05:11] then it will start appearing like q2 can also access,
+[00:05:11 -> 00:05:14] can also point to anything that p1 could have pointed to
+[00:05:14 -> 00:05:16] if x was flowing into the return value.
+[00:05:16 -> 00:05:18] So let's see this with a more concrete example.
+[00:05:18 -> 00:05:23] So let's say p1 was allocated at this location a1,
+[00:05:24 -> 00:05:26] at allocation site a1,
+[00:05:26 -> 00:05:29] p2 was allocated at allocation site a2,
+[00:05:29 -> 00:05:32] and let's say p3 was allocated at allocation site a3.
+[00:05:32 -> 00:05:35] Then by virtue of the function call dispatch
+[00:05:35 -> 00:05:37] at all these three places,
+[00:05:37 -> 00:05:39] it will appear that x can point to either a1
+[00:05:39 -> 00:05:42] because of this call site and this dispatch,
+[00:05:42 -> 00:05:46] which is going to do the copy of p1 to x,
+[00:05:46 -> 00:05:49] or it can point to a2 because of this dispatch,
+[00:05:49 -> 00:05:53] or it can point to a3 because of this dispatch, okay?
+[00:05:53 -> 00:05:56] And p1 can only point to a1,
+[00:05:56 -> 00:05:58] and p2 can only point to a2,
+[00:05:58 -> 00:06:00] and p3 can only point to a3.
+[00:06:00 -> 00:06:04] However, x can now point to any of these three.
+[00:06:04 -> 00:06:07] And now when I execute the points to analysis
+[00:06:07 -> 00:06:11] on the body of F,
+[00:06:11 -> 00:06:13] then I say y equals x plus one,
+[00:06:13 -> 00:06:14] this again looks like a copy,
+[00:06:14 -> 00:06:15] and then I return y.
+[00:06:15 -> 00:06:19] So this basically kind of gives me this relation,
+[00:06:19 -> 00:06:21] this points to graph for the body of Foo,
+[00:06:21 -> 00:06:28] which says x and y could point to either a1 or a2 or a3.
+[00:06:28 -> 00:06:31] And then when I transfer this back on the return paths,
+[00:06:31 -> 00:06:34] then once again I have to copy y into q1,
+[00:06:34 -> 00:06:38] and so that's a weak update on q1 or q2 or q3.
+[00:06:38 -> 00:06:41] And so that basically gives me this points to graph,
+[00:06:41 -> 00:06:44] which is x, y, q1, q2, q3,
+[00:06:44 -> 00:06:48] all of these variables can point to either a1 or a2 or a3.
+[00:06:48 -> 00:06:53] Whereas p1 and p2 and p3 can only point to a1,
+[00:06:54 -> 00:06:55] their respective allocation size,
+[00:06:55 -> 00:06:59] but it seems like q1 can point to a3 or a2.
+[00:06:59 -> 00:07:02] Whereas we can see clearly that q1 can never point
+[00:07:02 -> 00:07:05] to a3 because q1 can only point to a1
+[00:07:05 -> 00:07:08] because p1 is flowing in,
+[00:07:08 -> 00:07:10] which is going to always have a1.
+[00:07:10 -> 00:07:14] So we are missing the fact that this call here
+[00:07:14 -> 00:07:15] will only return here,
+[00:07:15 -> 00:07:19] but somehow our dataflow analysis is also allowing paths
+[00:07:19 -> 00:07:22] like this where the return happens.
+[00:07:22 -> 00:07:25] You call at allocation at call site one,
+[00:07:25 -> 00:07:26] but you return at call site three.
+[00:07:26 -> 00:07:28] And that's just the nature of how,
+[00:07:28 -> 00:07:30] this is the imprecision cause
+[00:07:30 -> 00:07:33] because of our static analysis.
+[00:07:33 -> 00:07:35] Okay, so what is the solution?
+[00:07:35 -> 00:07:37] Well, I think we have seen this before
+[00:07:37 -> 00:07:38] and this one of the solutions that we've discussed
+[00:07:38 -> 00:07:41] in the past is region-based analysis.
+[00:07:41 -> 00:07:46] The idea is that you summarize the whole procedure,
+[00:07:46 -> 00:07:48] in this case foo,
+[00:07:48 -> 00:07:50] and construct a summary transfer function for foo.
+[00:07:50 -> 00:07:51] And at every call site,
+[00:07:51 -> 00:07:54] just invoke that summary transfer function.
+[00:07:54 -> 00:07:56] So that way these transfer functions,
+[00:07:56 -> 00:07:57] the summary transfer functions
+[00:07:57 -> 00:07:59] will be independent at each call site
+[00:07:59 -> 00:08:01] and so there'll be no interference.
+[00:08:01 -> 00:08:03] So let's see how that would work.
+[00:08:03 -> 00:08:04] Well, we're going to construct
+[00:08:04 -> 00:08:06] a summary transfer function for foo.
+[00:08:06 -> 00:08:08] And what should be the summary transfer function
+[00:08:08 -> 00:08:09] for foo?
+[00:08:09 -> 00:08:10] Well, in this example,
+[00:08:10 -> 00:08:11] the summary transfer function should just say
+[00:08:11 -> 00:08:14] that whatever X was pointing to just,
+[00:08:14 -> 00:08:18] I mean, so X could have any arbitrary points to set,
+[00:08:18 -> 00:08:20] then Y would have the same points to set
+[00:08:20 -> 00:08:21] because I mean, it's just a copy.
+[00:08:21 -> 00:08:24] This plus one is just being treated as a copy here.
+[00:08:24 -> 00:08:27] And so Y is just going to have the same points to set
+[00:08:27 -> 00:08:29] as X and that's my summary transfer function.
+[00:08:29 -> 00:08:31] And then when I apply the summary
+[00:08:31 -> 00:08:33] across this call site,
+[00:08:33 -> 00:08:36] so that transfer across this edge
+[00:08:36 -> 00:08:38] basically involves applying the summary transfer function.
+[00:08:38 -> 00:08:40] And because P1 can point to A1,
+[00:08:40 -> 00:08:43] so and the summary transfer function says
+[00:08:43 -> 00:08:46] that whatever P1 can point to then Q1
+[00:08:46 -> 00:08:51] or that just, we just apply the summary transfer function
+[00:08:51 -> 00:08:53] because we have summarized the function
+[00:08:53 -> 00:08:55] and we're not actually considering the values.
+[00:08:55 -> 00:08:58] So it looks like Q1 can only point
+[00:08:58 -> 00:08:59] to whatever P1 can point to,
+[00:08:59 -> 00:09:01] so Q1 can also point to only A1.
+[00:09:01 -> 00:09:04] Similarly, when I summarize the function foo,
+[00:09:04 -> 00:09:05] then I represent the transfer function
+[00:09:06 -> 00:09:07] as a whole single function
+[00:09:07 -> 00:09:08] and say whatever P2 can point to,
+[00:09:08 -> 00:09:11] then Q2 can point to the same thing and so on.
+[00:09:11 -> 00:09:13] And that actually solves the problem for us
+[00:09:13 -> 00:09:16] and it will give us a more precise points to graph.
+[00:09:16 -> 00:09:18] So instead of this points to graph here,
+[00:09:18 -> 00:09:20] I would just say that Q1 can point,
+[00:09:20 -> 00:09:23] so X, Q1 can point to A1
+[00:09:23 -> 00:09:27] and Q2 can point to A2 and Q3 can point to A3.
+[00:09:27 -> 00:09:28] And really the region based analysis
+[00:09:28 -> 00:09:30] will solve the problem for us.
+[00:09:31 -> 00:09:33] However, this was a very simple example
+[00:09:33 -> 00:09:36] where the procedure body was really simple.
+[00:09:36 -> 00:09:39] But how do you decide what a summary transfer function
+[00:09:39 -> 00:09:42] should be if the procedure body has loops,
+[00:09:42 -> 00:09:44] et cetera, and complex control flow?
+[00:09:44 -> 00:09:47] Well, recall that there's one very easy choice
+[00:09:47 -> 00:09:48] of the summary transfer function,
+[00:09:48 -> 00:09:51] which is whenever there's a transfer across a call site,
+[00:09:51 -> 00:09:54] just run the entire DFA fixed point algorithm
+[00:09:54 -> 00:09:55] on each transfer.
+[00:09:55 -> 00:09:57] So take the value at that call site,
+[00:09:57 -> 00:09:58] the argument values,
+[00:09:58 -> 00:10:00] and then just use those values
+[00:10:00 -> 00:10:04] and run those values through a full DFA
+[00:10:04 -> 00:10:06] on the body of the callee.
+[00:10:06 -> 00:10:08] So in this case, foo.
+[00:10:08 -> 00:10:11] And this will be with...
+[00:10:11 -> 00:10:12] So at each call site,
+[00:10:12 -> 00:10:15] we may have a potentially different boundary condition
+[00:10:15 -> 00:10:18] because depending on what the arguments are,
+[00:10:18 -> 00:10:21] what the points to set of the arguments are,
+[00:10:21 -> 00:10:23] that would define the boundary condition
+[00:10:23 -> 00:10:26] for that invocation of the DFA fixed point algorithm
+[00:10:26 -> 00:10:26] for the callee.
+[00:10:28 -> 00:10:30] And this basically means that if there are K call sites,
+[00:10:31 -> 00:10:32] of foo, then there are K,
+[00:10:32 -> 00:10:36] at least K independent executions of DFA on foo.
+[00:10:36 -> 00:10:38] And if foo was a large function,
+[00:10:38 -> 00:10:40] then that multiplicative factor
+[00:10:40 -> 00:10:43] can become really prohibitive.
+[00:10:43 -> 00:10:44] Further, that's, I mean,
+[00:10:44 -> 00:10:46] notice I'm saying at least K
+[00:10:46 -> 00:10:48] because actually you may require multiple transfers
+[00:10:48 -> 00:10:48] at each call site,
+[00:10:48 -> 00:10:50] because recall that the DFA algorithm
+[00:10:50 -> 00:10:52] is an iterative fixed point algorithm.
+[00:10:52 -> 00:10:54] And so that may require multiple transfers.
+[00:10:54 -> 00:10:56] And for each transfer,
+[00:10:56 -> 00:10:59] you'll have to run the entire DFA on the callee's body,
+[00:10:59 -> 00:11:00] on foo's body,
+[00:11:01 -> 00:11:02] with the new boundary condition.
+[00:11:02 -> 00:11:06] And so this is a problem.
+[00:11:06 -> 00:11:08] This is a scalability problem.
+[00:11:08 -> 00:11:10] This is a huge scalability problem.
+[00:11:10 -> 00:11:13] And this can be seen especially
+[00:11:13 -> 00:11:16] because the number of such invocations
+[00:11:16 -> 00:11:19] can grow exponentially with the call depth.
+[00:11:19 -> 00:11:22] So example, if the main function calls B twice,
+[00:11:22 -> 00:11:24] then B's summary transfer function
+[00:11:24 -> 00:11:26] will be executed more than twice,
+[00:11:26 -> 00:11:27] as we saw earlier,
+[00:11:27 -> 00:11:29] because there are two call sites.
+[00:11:29 -> 00:11:31] And if B's calling C twice,
+[00:11:31 -> 00:11:33] then C's summary transfer function
+[00:11:33 -> 00:11:35] will be called more than four times
+[00:11:35 -> 00:11:37] because B will be called twice,
+[00:11:37 -> 00:11:38] completely independently
+[00:11:38 -> 00:11:39] with different boundary conditions.
+[00:11:39 -> 00:11:42] And each time B is called, C's will be called,
+[00:11:42 -> 00:11:44] and C will be called twice for each of them.
+[00:11:44 -> 00:11:46] And because they are completely independent,
+[00:11:46 -> 00:11:49] we're going to execute the C summary transfer function
+[00:11:49 -> 00:11:50] greater than or equal to four times,
+[00:11:50 -> 00:11:52] which may eventually call foo.
+[00:11:52 -> 00:11:54] And so foo's summary transfer function
+[00:11:54 -> 00:11:56] may get executed more than eight times
+[00:11:56 -> 00:11:59] if foo was being called twice in C and so on.
+[00:12:00 -> 00:12:01] So in general, the number of times
+[00:12:01 -> 00:12:03] you have to execute the DFA
+[00:12:03 -> 00:12:05] on the whole body of a function
+[00:12:05 -> 00:12:07] may be exponential in the call depth.
+[00:12:07 -> 00:12:09] And this is a huge scalability bottleneck.
+[00:12:09 -> 00:12:13] If you have programs that are thousands
+[00:12:13 -> 00:12:14] to millions of lines of code,
+[00:12:14 -> 00:12:19] then something like this will never scale.
+[00:12:19 -> 00:12:22] So to summarize, region-based analysis
+[00:12:22 -> 00:12:24] yields more precise solutions.
+[00:12:24 -> 00:12:25] In this example,
+[00:12:25 -> 00:12:27] these are the kind of solutions that we get,
+[00:12:27 -> 00:12:29] but has exponential time complexity.
+[00:12:30 -> 00:12:31] That's a deal breaker.
+[00:12:33 -> 00:12:37] So that's a good motivation for context-sensitive analysis.
+[00:12:37 -> 00:12:40] And the idea here is that we will still construct
+[00:12:40 -> 00:12:42] a separate points to graph.
+[00:12:42 -> 00:12:44] So instead of actually invoking
+[00:12:44 -> 00:12:48] and treating the whole callee's body
+[00:12:48 -> 00:12:51] or callee's transfer function as a function
+[00:12:51 -> 00:12:54] and completely re-executing it all the time,
+[00:12:54 -> 00:12:56] we're going to construct a separate points
+[00:12:56 -> 00:12:58] to graph of foo for each call context.
+[00:12:58 -> 00:13:01] So somewhere in the middle,
+[00:13:01 -> 00:13:04] so a completely context-insensitive
+[00:13:04 -> 00:13:07] or the original analysis was basically
+[00:13:07 -> 00:13:10] just having a single points to graph for foo.
+[00:13:11 -> 00:13:12] The summary transfer function
+[00:13:12 -> 00:13:15] or the region-based analysis basically
+[00:13:15 -> 00:13:16] didn't have any points to graph or C.
+[00:13:16 -> 00:13:18] They just recreate the whole points
+[00:13:18 -> 00:13:19] to graph at every call site.
+[00:13:19 -> 00:13:22] So that's almost like inlining the callee
+[00:13:22 -> 00:13:23] at every call site,
+[00:13:23 -> 00:13:25] and that's also super expensive.
+[00:13:25 -> 00:13:26] This is a middle path
+[00:13:26 -> 00:13:28] where you do a separate points to graph
+[00:13:28 -> 00:13:29] for each call context.
+[00:13:29 -> 00:13:31] So you define a bunch of call,
+[00:13:31 -> 00:13:34] a set of call contexts that you are interested in,
+[00:13:34 -> 00:13:35] and then you have a separate points to graph
+[00:13:35 -> 00:13:37] for each call context.
+[00:13:37 -> 00:13:39] So for example, you could say that,
+[00:13:40 -> 00:13:41] so how do you decide what the call contexts
+[00:13:41 -> 00:13:42] are going to be?
+[00:13:42 -> 00:13:45] So you have some finite small number,
+[00:13:45 -> 00:13:47] manageable number of call contexts.
+[00:13:47 -> 00:13:49] For example, you could have one depth call context,
+[00:13:49 -> 00:13:52] which means that I'm going to have one call context
+[00:13:52 -> 00:13:55] for every call site, and that's it.
+[00:13:55 -> 00:13:59] So if the call chain has a depth 10,
+[00:13:59 -> 00:14:02] then I'm just going to look at the last call site
+[00:14:02 -> 00:14:04] and use that as a calling context.
+[00:14:04 -> 00:14:09] And so for all the above all the functions
+[00:14:09 -> 00:14:12] that are calling that call site,
+[00:14:12 -> 00:14:14] we are not going to be gonna ignore those,
+[00:14:14 -> 00:14:15] that part of the call context.
+[00:14:15 -> 00:14:19] So they will all have the same common points to graph.
+[00:14:19 -> 00:14:23] So for example, in this case here,
+[00:14:24 -> 00:14:27] if for example, I have a call context of depth one,
+[00:14:27 -> 00:14:30] then Foo will have only two call context
+[00:14:30 -> 00:14:33] because Foo has only two call sites,
+[00:14:33 -> 00:14:38] but at depth one of the call chain.
+[00:14:38 -> 00:14:42] And so irrespective of whether B called C here
+[00:14:42 -> 00:14:43] and then reach there,
+[00:14:43 -> 00:14:46] or whether B called C here and then reach there,
+[00:14:46 -> 00:14:49] we are going to have the same common points to graph.
+[00:14:49 -> 00:14:50] So this is an improvement,
+[00:14:50 -> 00:14:51] precision improvement over how we're having
+[00:14:51 -> 00:14:53] a single points to graph for Foo.
+[00:14:53 -> 00:14:55] Instead of single points to graph,
+[00:14:55 -> 00:14:57] I have two points to graph now.
+[00:14:57 -> 00:14:59] So it's a better improvement.
+[00:14:59 -> 00:15:01] At the same time, it is not as expensive
+[00:15:01 -> 00:15:02] as the region-based analysis.
+[00:15:02 -> 00:15:05] You could have exponential growth in the analysis time.
+[00:15:06 -> 00:15:10] Now, how do you decide which call context
+[00:15:10 -> 00:15:11] and how many call context to have?
+[00:15:11 -> 00:15:14] So one common thing that has seemed to work most
+[00:15:14 -> 00:15:17] and people use a lot is using one depth call context.
+[00:15:17 -> 00:15:19] So I have a different call context
+[00:15:19 -> 00:15:21] for every function at every call site.
+[00:15:21 -> 00:15:25] So for example, in this example here,
+[00:15:25 -> 00:15:27] there'll be two call contexts for Foo.
+[00:15:27 -> 00:15:29] There'll be two call contexts for C
+[00:15:29 -> 00:15:31] and there'll be two call contexts for B.
+[00:15:32 -> 00:15:36] And well, I mean, of course, this is a heuristic
+[00:15:36 -> 00:15:39] and there are practical trade-off considerations
+[00:15:39 -> 00:15:41] in making these such choices,
+[00:15:41 -> 00:15:44] but this is something that people commonly use.
+[00:15:44 -> 00:15:45] A more general approach could be
+[00:15:45 -> 00:15:48] to use K-depth call context in which case,
+[00:15:48 -> 00:15:51] and you can do this, when you do this analysis,
+[00:15:51 -> 00:15:53] you can mix and match.
+[00:15:53 -> 00:15:55] You can say that for certain functions,
+[00:15:55 -> 00:15:58] you will use deeper call context depths
+[00:15:58 -> 00:16:02] while doing the call context-sensitive analysis,
+[00:16:02 -> 00:16:03] points-through analysis.
+[00:16:03 -> 00:16:04] And for other functions,
+[00:16:04 -> 00:16:05] I'm going to do shallower ones
+[00:16:05 -> 00:16:08] depending on the structure of the program.
+[00:16:08 -> 00:16:10] So this is the basic idea of context sensitivity
+[00:16:10 -> 00:16:12] and we're going to look at it in more detail
+[00:16:12 -> 00:16:13] in the next module.

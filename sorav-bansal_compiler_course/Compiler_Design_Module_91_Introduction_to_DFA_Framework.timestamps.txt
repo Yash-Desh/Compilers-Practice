@@ -1,0 +1,421 @@
+Title: Compiler Design Module 91 : Introduction to DFA Framework
+Video ID: TncFeaBTuR4
+Detected language: en
+------------------------------------------------------------
+
+[00:00:00 -> 00:00:04] We have been looking at different types of dataflow analysis.
+[00:00:04 -> 00:00:06] For example, we looked at constant propagation,
+[00:00:06 -> 00:00:08] we looked at available expressions,
+[00:00:08 -> 00:00:10] we looked at reaching definitions.
+[00:00:10 -> 00:00:13] But we want to basically gradually build up
+[00:00:13 -> 00:00:17] a common framework to express these dataflow analysis.
+[00:00:17 -> 00:00:20] So if we look at forward dataflow analysis,
+[00:00:20 -> 00:00:24] then basically we have a statement S in our program,
+[00:00:24 -> 00:00:26] for all possible statements.
+[00:00:26 -> 00:00:28] Then just before the statement,
+[00:00:28 -> 00:00:31] we have a value which we denote as in S,
+[00:00:31 -> 00:00:33] and then just after the statement,
+[00:00:33 -> 00:00:36] we have a value which is called out S.
+[00:00:36 -> 00:00:38] These values drawn out from
+[00:00:38 -> 00:00:41] the domain of values for that particular dataflow analysis.
+[00:00:41 -> 00:00:44] For example, in the case of constant propagation,
+[00:00:44 -> 00:00:46] this value is going to be a set of constant mappings.
+[00:00:46 -> 00:00:48] For reaching definitions,
+[00:00:48 -> 00:00:50] it's going to be a set of definitions and so on.
+[00:00:50 -> 00:00:53] Then we have to specify a transfer function
+[00:00:53 -> 00:00:56] that transfers in into out.
+[00:00:56 -> 00:00:58] So the transfer function is specified as something that
+[00:00:59 -> 00:01:01] takes V and produces FV.
+[00:01:01 -> 00:01:06] And in this case, in S is supplied as argument
+[00:01:06 -> 00:01:11] in place of V and out S is basically updated using FV.
+[00:01:13 -> 00:01:17] The other part of dataflow analysis is the meet operator.
+[00:01:17 -> 00:01:19] And so in a forward dataflow analysis,
+[00:01:19 -> 00:01:20] if we have a statement S,
+[00:01:20 -> 00:01:25] then we express the in of S as a function of out of P,
+[00:01:26 -> 00:01:30] where P represents a predecessor of S.
+[00:01:30 -> 00:01:33] So P0, P1, dot, dot, dot, PN.
+[00:01:33 -> 00:01:35] So basically we know the out values
+[00:01:35 -> 00:01:36] of all these predecessors,
+[00:01:36 -> 00:01:39] then we can identify the in value of S
+[00:01:39 -> 00:01:41] using the meet operator.
+[00:01:41 -> 00:01:43] So that's the common pattern that we see
+[00:01:43 -> 00:01:45] in all forward dataflow analysis,
+[00:01:45 -> 00:01:49] including constant propagation and reaching definitions.
+[00:01:49 -> 00:01:51] But then there is a backward dataflow analysis,
+[00:01:51 -> 00:01:53] which is just the flip of this,
+[00:01:53 -> 00:01:55] where again, for every statement S,
+[00:01:55 -> 00:01:58] we had in S and out S, just like before,
+[00:01:58 -> 00:02:00] in S is just before the statement S
+[00:02:00 -> 00:02:03] and out S is just after the statement S.
+[00:02:03 -> 00:02:04] But the difference is now the transfer function
+[00:02:04 -> 00:02:07] is operating in the reverse direction.
+[00:02:07 -> 00:02:11] So it takes V and then produces FV just like before,
+[00:02:11 -> 00:02:15] but now we are going to substitute out S for V
+[00:02:15 -> 00:02:17] and update in S using FV.
+[00:02:17 -> 00:02:20] So the arrows of the transfer function have just changed
+[00:02:20 -> 00:02:25] and so FV is appearing in the place of in V, in S
+[00:02:25 -> 00:02:28] and V is appearing in the place of out S.
+[00:02:28 -> 00:02:32] And similarly, the meet operator is also kind of
+[00:02:32 -> 00:02:33] has a diverse direction.
+[00:02:33 -> 00:02:37] Here we want to specify the out of a statement.
+[00:02:37 -> 00:02:39] So let me call that statement P.
+[00:02:39 -> 00:02:43] So I want to specify out P in terms of in S0,
+[00:02:43 -> 00:02:46] in S1, dot, dot, dot, in SN.
+[00:02:46 -> 00:02:48] And notice that I'm using these kind of arrows
+[00:02:48 -> 00:02:49] point anywhere in the program.
+[00:02:49 -> 00:02:51] So they don't need to be strictly
+[00:02:51 -> 00:02:54] after the program point P.
+[00:02:55 -> 00:02:56] For example, if it was a loop,
+[00:02:56 -> 00:02:58] then S could actually be in earlier
+[00:02:58 -> 00:03:00] in the program order as well, right?
+[00:03:00 -> 00:03:01] So because there are cycles
+[00:03:01 -> 00:03:04] in the program control flow graphs.
+[00:03:04 -> 00:03:06] So in this case, we're going to specify out P
+[00:03:06 -> 00:03:10] as a function, which is specified using the meet operator
+[00:03:10 -> 00:03:12] of in S0, in S1 and in SN.
+[00:03:12 -> 00:03:17] So this is a nice diagram to basically contrast
+[00:03:17 -> 00:03:19] backward and forward data flow analysis.
+[00:03:19 -> 00:03:21] Everything else pretty much remains the same.
+[00:03:21 -> 00:03:24] It's just the direction of transfer function
+[00:03:24 -> 00:03:27] and the meet operator that changes between the two.
+[00:03:28 -> 00:03:29] The other thing that we learned was
+[00:03:29 -> 00:03:33] that it's not necessary to work at statement granularity
+[00:03:33 -> 00:03:35] or individual instruction granularity,
+[00:03:35 -> 00:03:37] but we can work at the granularity
+[00:03:37 -> 00:03:38] of basic blocks, for example.
+[00:03:38 -> 00:03:41] And so I'm just replaced in the slide S with B.
+[00:03:41 -> 00:03:45] And so now, when we have B here,
+[00:03:45 -> 00:03:46] then we talk about in B,
+[00:03:46 -> 00:03:48] which is just before the basic block
+[00:03:48 -> 00:03:50] and out V, which is just after the basic block.
+[00:03:50 -> 00:03:53] And the basic block would have multiple instructions.
+[00:03:53 -> 00:03:56] And then we would just define the transfer function
+[00:03:56 -> 00:03:57] in terms of the basic block
+[00:03:57 -> 00:04:00] and not necessarily in terms of individual instructions.
+[00:04:00 -> 00:04:03] And that can make my algorithm slightly faster
+[00:04:03 -> 00:04:05] because I'm doing batch processing.
+[00:04:05 -> 00:04:08] I can pre-compute these transfer functions.
+[00:04:08 -> 00:04:10] And then when I'm doing the fixed point iteration,
+[00:04:10 -> 00:04:11] I need to apply it only once
+[00:04:11 -> 00:04:12] for the entire basic block
+[00:04:12 -> 00:04:16] rather than having to apply it for individual statements.
+[00:04:16 -> 00:04:19] Similarly, in the meet operator,
+[00:04:19 -> 00:04:21] basically, I can reason about basic block
+[00:04:21 -> 00:04:23] and in of basic block.
+[00:04:23 -> 00:04:24] So within a basic block,
+[00:04:24 -> 00:04:29] maybe I don't really need to compute the values
+[00:04:30 -> 00:04:33] in the middle instructions of basic block.
+[00:04:33 -> 00:04:33] If we need to,
+[00:04:33 -> 00:04:36] then we can always propagate in B later on
+[00:04:36 -> 00:04:38] as a post-processing step
+[00:04:38 -> 00:04:42] into the intermediate program points of the basic block.
+[00:04:42 -> 00:04:43] But at the high level,
+[00:04:43 -> 00:04:47] we can just do in B in terms of out P0, out P1,
+[00:04:47 -> 00:04:48] dot dot out PN.
+[00:04:48 -> 00:04:52] And similarly, it's the opposite in the backward direction.
+[00:04:52 -> 00:04:54] Everything else remains the same.
+[00:04:54 -> 00:04:57] I've just replaced S with B everywhere, all right?
+[00:04:57 -> 00:05:00] And so the point here I'm making here with this slide
+[00:05:00 -> 00:05:02] is that you can often analyze
+[00:05:02 -> 00:05:04] at basic block granularity.
+[00:05:05 -> 00:05:08] Okay, so what is the algorithm?
+[00:05:08 -> 00:05:09] Recall that our algorithm
+[00:05:09 -> 00:05:12] is basically a fixed point iteration.
+[00:05:12 -> 00:05:13] So a fixed point iteration
+[00:05:13 -> 00:05:14] is supposed to compute a solution
+[00:05:14 -> 00:05:18] such that the DFA equations hold in the solution, right?
+[00:05:18 -> 00:05:20] So all the equations that we have
+[00:05:20 -> 00:05:22] that relate out to in, in to out
+[00:05:22 -> 00:05:27] across a statement between predecessors and successors
+[00:05:27 -> 00:05:28] should hold.
+[00:05:28 -> 00:05:31] And they should hold even in the presence of cycles.
+[00:05:31 -> 00:05:33] So I'm just drawing some different structures
+[00:05:33 -> 00:05:35] that are possible in the control flow graph.
+[00:05:35 -> 00:05:38] Here's a single basic block cycle.
+[00:05:38 -> 00:05:40] Here's multiple basic blocks
+[00:05:40 -> 00:05:42] that are basically having multiple cycles.
+[00:05:42 -> 00:05:45] And here is another kind of interesting pattern of cycle.
+[00:05:45 -> 00:05:49] So any pattern of the cycle should be possible to do
+[00:05:49 -> 00:05:51] with our data flow analysis algorithm.
+[00:05:51 -> 00:05:53] And I'm claiming that the fixed point iteration
+[00:05:53 -> 00:05:55] algorithm that we have discussed
+[00:05:55 -> 00:05:57] will be able to handle all such loop patterns.
+[00:05:57 -> 00:05:58] Okay, and we're going to see this
+[00:05:58 -> 00:06:00] in more formal detail later.
+[00:06:01 -> 00:06:03] The other common characteristic
+[00:06:03 -> 00:06:04] of all these data flow analysis
+[00:06:04 -> 00:06:07] is that there are partially ordered values.
+[00:06:07 -> 00:06:08] So it's not just a set of values
+[00:06:08 -> 00:06:11] that represents a domain, but also a partial order, right?
+[00:06:11 -> 00:06:15] Which is represented by the less than equal to operator, right?
+[00:06:15 -> 00:06:17] And one way to represent these ordering
+[00:06:17 -> 00:06:20] is by using a directed acyclic graph.
+[00:06:21 -> 00:06:26] For example, in this graph, there's an edge from A to B
+[00:06:26 -> 00:06:28] if and only if A is greater than equal to B,
+[00:06:28 -> 00:06:31] or in other words, B is less than equal to A, right?
+[00:06:31 -> 00:06:32] So example, this is basically saying
+[00:06:32 -> 00:06:34] V2 is less than equal to V1,
+[00:06:34 -> 00:06:35] V3 is less than equal to V1,
+[00:06:35 -> 00:06:39] but V2 and V3 really have no comparison with themselves.
+[00:06:39 -> 00:06:40] So they're not comparable.
+[00:06:40 -> 00:06:41] That's why it's called a partial order
+[00:06:41 -> 00:06:43] as opposed to a total order.
+[00:06:44 -> 00:06:49] Okay, so the other common part here is that
+[00:06:49 -> 00:06:51] there is usually one value
+[00:06:51 -> 00:06:52] which is greater than equal
+[00:06:52 -> 00:06:53] to all other values in the domain,
+[00:06:53 -> 00:06:55] and there is one value which is less than equal
+[00:06:55 -> 00:06:57] to all other values in the domain.
+[00:06:57 -> 00:07:00] So the former is called the top value
+[00:07:00 -> 00:07:03] and represented by this symbol which looks like a T,
+[00:07:03 -> 00:07:05] and the second one,
+[00:07:05 -> 00:07:07] which is less than equal to all other values,
+[00:07:07 -> 00:07:07] is also called bottom,
+[00:07:07 -> 00:07:13] which looks like the inverted symbol T.
+[00:07:13 -> 00:07:17] So here's what a typical data flow analysis
+[00:07:17 -> 00:07:19] fixed-point iteration looks like,
+[00:07:19 -> 00:07:20] and I'm using the example
+[00:07:20 -> 00:07:23] of a constant propagation data flow analysis.
+[00:07:23 -> 00:07:24] So in this, we basically say
+[00:07:24 -> 00:07:27] out of entry equals empty set.
+[00:07:27 -> 00:07:31] So the input to this algorithm is a control flow graph
+[00:07:31 -> 00:07:33] which can be represented as a set of nodes N,
+[00:07:33 -> 00:07:35] a set of edges E,
+[00:07:35 -> 00:07:38] a special node which is the entry node,
+[00:07:38 -> 00:07:40] and a special node which is the exit node.
+[00:07:40 -> 00:07:42] I'm assuming that there's only one entry and one exit.
+[00:07:42 -> 00:07:44] If there are multiple exits,
+[00:07:44 -> 00:07:46] then you can just join them into a single exit
+[00:07:46 -> 00:07:49] using a no-op edge,
+[00:07:49 -> 00:07:52] and hopefully the program only has a single entry.
+[00:07:52 -> 00:07:53] If it has multiple entries,
+[00:07:53 -> 00:07:55] once again, you would basically have a single entry
+[00:07:55 -> 00:07:59] that just has no-ops to all the other entries.
+[00:07:59 -> 00:08:01] But typically, we talk about programs
+[00:08:01 -> 00:08:02] that have a single entry
+[00:08:02 -> 00:08:04] because we are basically, for example,
+[00:08:04 -> 00:08:08] analyzing the body of a function or a method.
+[00:08:08 -> 00:08:10] Okay, so when we are talking about constant propagation,
+[00:08:10 -> 00:08:12] we basically, the first thing we do is we say
+[00:08:12 -> 00:08:14] out entry equals empty set.
+[00:08:14 -> 00:08:16] And then we say for each other basic block,
+[00:08:16 -> 00:08:19] which is not entry, other than entry,
+[00:08:19 -> 00:08:23] we say out B equals X comma top for all X.
+[00:08:23 -> 00:08:24] So top is supposed to be the top value.
+[00:08:24 -> 00:08:26] And this is optimistically,
+[00:08:26 -> 00:08:27] we have set everything to the top value
+[00:08:27 -> 00:08:28] which is saying that,
+[00:08:28 -> 00:08:30] okay, let's just assume that everything is top.
+[00:08:30 -> 00:08:32] It's not reached yet.
+[00:08:32 -> 00:08:33] Except for the entry,
+[00:08:33 -> 00:08:34] everything else has not been reached.
+[00:08:34 -> 00:08:37] Recall that when we talked about constant propagation,
+[00:08:37 -> 00:08:38] the top value was basically signifying
+[00:08:38 -> 00:08:41] that we haven't reached this program point yet.
+[00:08:42 -> 00:08:45] And then we basically have our fixed point iteration
+[00:08:45 -> 00:08:49] that says while changes in any out occur.
+[00:08:49 -> 00:08:52] Any out means any out of any basic block occur.
+[00:08:52 -> 00:08:53] For each basic block B,
+[00:08:53 -> 00:08:58] we say in B equals intersection over all the out Ps
+[00:08:58 -> 00:09:01] where P is a predecessor of B, right?
+[00:09:01 -> 00:09:03] So for all predecessors P of B,
+[00:09:03 -> 00:09:07] we intersect over out Ps to get in B.
+[00:09:07 -> 00:09:08] So that's our meat operator.
+[00:09:08 -> 00:09:12] And then we apply the transfer function of B
+[00:09:12 -> 00:09:14] to in B that has just been computed
+[00:09:14 -> 00:09:16] to obtain out B, all right?
+[00:09:16 -> 00:09:17] And so this goes on
+[00:09:17 -> 00:09:20] and this is our fixed point iteration.
+[00:09:20 -> 00:09:22] So if you just go back to our discussion
+[00:09:22 -> 00:09:25] on constant propagation or reaching the definitions,
+[00:09:25 -> 00:09:28] all our algorithms are basically having this form.
+[00:09:28 -> 00:09:29] The only small changes that I've made
+[00:09:29 -> 00:09:32] is that I'm using now a basic block granularity
+[00:09:32 -> 00:09:33] instead of a statement granularity.
+[00:09:33 -> 00:09:36] Also, I have decided an order.
+[00:09:36 -> 00:09:38] I'm first doing meat and then I'm doing transfer function.
+[00:09:38 -> 00:09:40] And notice that with every iteration,
+[00:09:40 -> 00:09:42] I'm basically being able to update
+[00:09:42 -> 00:09:45] the out of a particular B.
+[00:09:45 -> 00:09:46] So this particular first phase
+[00:09:46 -> 00:09:50] of the data flow analysis algorithm
+[00:09:50 -> 00:09:51] is the initialization phase
+[00:09:51 -> 00:09:55] where we are setting the entry value to the empty set
+[00:09:55 -> 00:10:00] and all other values to the top value,
+[00:10:00 -> 00:10:01] X comma top.
+[00:10:01 -> 00:10:03] And then this is the fixed point iteration.
+[00:10:03 -> 00:10:04] Now, I want to point out
+[00:10:04 -> 00:10:07] that the entry value is not the top value, right?
+[00:10:07 -> 00:10:09] Actually, what is the empty set?
+[00:10:09 -> 00:10:10] It's actually the bottom value
+[00:10:10 -> 00:10:11] when we talk about constant propagation
+[00:10:11 -> 00:10:13] because empty set basically indicates
+[00:10:13 -> 00:10:16] that all variables are basically not a constant,
+[00:10:16 -> 00:10:17] basically bottom value, right?
+[00:10:17 -> 00:10:19] So empty set is the bottom value
+[00:10:19 -> 00:10:21] that we are setting for entry.
+[00:10:21 -> 00:10:22] And for everything else, we are setting it to top.
+[00:10:22 -> 00:10:24] And this basically signifies
+[00:10:25 -> 00:10:27] that in the beginning, we just reached the entry,
+[00:10:27 -> 00:10:29] but we haven't really reached
+[00:10:29 -> 00:10:31] any other point in the program.
+[00:10:32 -> 00:10:34] And moreover, at the entry,
+[00:10:34 -> 00:10:36] we know that there are no constant relationships
+[00:10:36 -> 00:10:37] because conservatively we assume
+[00:10:37 -> 00:10:38] that at the entry,
+[00:10:38 -> 00:10:41] we don't really have any constant relationships known.
+[00:10:43 -> 00:10:47] Okay, so this condition that out entry is empty set
+[00:10:47 -> 00:10:49] is also called the boundary condition
+[00:10:49 -> 00:10:51] because it's a condition at the boundary
+[00:10:51 -> 00:10:53] just before we start and kind of propagate
+[00:10:53 -> 00:10:55] this boundary condition all through our program.
+[00:10:55 -> 00:11:00] And this value here is actually our top value, all right?
+[00:11:00 -> 00:11:01] So this is the top value
+[00:11:01 -> 00:11:04] for our constant propagation algorithm.
+[00:11:04 -> 00:11:05] When we discussed constant propagation
+[00:11:05 -> 00:11:07] in the context of the single variable,
+[00:11:07 -> 00:11:08] the top value basically meant
+[00:11:08 -> 00:11:10] the program hasn't point hasn't been reached.
+[00:11:10 -> 00:11:12] When we talk about constant propagation
+[00:11:12 -> 00:11:14] in the context of multiple variables,
+[00:11:14 -> 00:11:16] then this is basically saying
+[00:11:16 -> 00:11:19] that for all possible variables that we know,
+[00:11:19 -> 00:11:21] the program point hasn't been reached.
+[00:11:21 -> 00:11:25] So it's now become a set of X comma top mappings
+[00:11:25 -> 00:11:26] and that becomes our new top value
+[00:11:26 -> 00:11:29] in this new representation
+[00:11:29 -> 00:11:33] of the constant propagation DFA.
+[00:11:33 -> 00:11:36] And this intersection here is our meet operator
+[00:11:36 -> 00:11:37] because in constant propagation,
+[00:11:37 -> 00:11:39] we want that it should be a constant
+[00:11:39 -> 00:11:41] on all possible program parts.
+[00:11:41 -> 00:11:44] And the FB here is our transfer function.
+[00:11:44 -> 00:11:46] And so all dataflow analysis algorithms
+[00:11:46 -> 00:11:48] basically have same structure,
+[00:11:48 -> 00:11:51] just that the boundary condition may be different,
+[00:11:51 -> 00:11:53] the top value may be different,
+[00:11:53 -> 00:11:54] the meet operator may be different
+[00:11:54 -> 00:11:57] and the transfer function may be different.
+[00:11:57 -> 00:12:00] So moreover, if I just,
+[00:12:00 -> 00:12:03] this was only for a forward dataflow analysis.
+[00:12:03 -> 00:12:04] So in the forward dataflow analysis,
+[00:12:04 -> 00:12:06] we are assuming that the boundary condition
+[00:12:06 -> 00:12:08] has the entry and the propagation
+[00:12:08 -> 00:12:10] is happening in a certain way.
+[00:12:10 -> 00:12:11] The meet is happening in a certain way
+[00:12:11 -> 00:12:13] because for example, the meet is happening
+[00:12:13 -> 00:12:16] for out of the predecessor blocks
+[00:12:16 -> 00:12:18] with the in of the current block.
+[00:12:18 -> 00:12:20] Whereas if the backward dataflow analysis,
+[00:12:20 -> 00:12:20] it's the opposite.
+[00:12:20 -> 00:12:22] So I can just rewrite this.
+[00:12:22 -> 00:12:24] I can just kind of annotate some parts.
+[00:12:24 -> 00:12:27] For example, instead of initializing out of entry
+[00:12:27 -> 00:12:28] as my boundary condition,
+[00:12:28 -> 00:12:31] I can initialize in of exit
+[00:12:31 -> 00:12:34] as my boundary condition for a backward dataflow analysis.
+[00:12:34 -> 00:12:39] So I just added backward slash forward in this slide
+[00:12:39 -> 00:12:43] and it comes in for backward, out for forward,
+[00:12:43 -> 00:12:45] exit for backward, entry for forward.
+[00:12:45 -> 00:12:47] And then the boundary condition is of course
+[00:12:47 -> 00:12:50] a parameter depends on what the dataflow analysis is.
+[00:12:50 -> 00:12:52] Similarly, for each basic block,
+[00:12:52 -> 00:12:56] other than exit for backward, entry for forward,
+[00:12:57 -> 00:13:00] once again, in for backward, out for forward,
+[00:13:00 -> 00:13:02] B equals whatever is the top value
+[00:13:02 -> 00:13:05] for that particular dataflow analysis.
+[00:13:05 -> 00:13:07] And then while changes in any,
+[00:13:07 -> 00:13:09] for the backward case, we were looking at in
+[00:13:09 -> 00:13:11] and for forward case, we are looking at out, right?
+[00:13:11 -> 00:13:14] So once again, while changes in any in slash out occur
+[00:13:14 -> 00:13:15] for each basic block B.
+[00:13:15 -> 00:13:18] Now in the case of backward,
+[00:13:18 -> 00:13:20] we first update out using out of B
+[00:13:20 -> 00:13:24] using the backward dataflow analysis,
+[00:13:24 -> 00:13:27] which means using the values at in of the successors.
+[00:13:27 -> 00:13:31] So for backward, we're going to say in of successors,
+[00:13:32 -> 00:13:33] whereas for forward, we're going to say
+[00:13:33 -> 00:13:35] out of predecessors.
+[00:13:35 -> 00:13:37] And similarly, in the transfer function,
+[00:13:37 -> 00:13:41] we're going to update in using FB,
+[00:13:41 -> 00:13:43] applied on outs of the successors.
+[00:13:43 -> 00:13:47] For forward, we update out using FB
+[00:13:47 -> 00:13:50] by applying FB on the ins of the predecessors.
+[00:13:50 -> 00:13:53] So there's a very nice isomorphism
+[00:13:53 -> 00:13:55] between what we are doing in a forward dataflow analysis
+[00:13:55 -> 00:13:57] and a backward dataflow analysis.
+[00:13:57 -> 00:14:01] And that can be just expressed by replacing in by out,
+[00:14:01 -> 00:14:03] or out by in, and in by out,
+[00:14:03 -> 00:14:05] and entry by exit, and so on.
+[00:14:06 -> 00:14:10] Okay, so we are kind of building towards
+[00:14:10 -> 00:14:12] a common framework for a dataflow analysis,
+[00:14:12 -> 00:14:14] and that includes both forward
+[00:14:14 -> 00:14:16] and backward dataflow analysis.
+[00:14:16 -> 00:14:21] So now let's summarize our constant propagation algorithm.
+[00:14:22 -> 00:14:25] So we're going to have a few different parameters.
+[00:14:25 -> 00:14:26] So it's the same framework,
+[00:14:26 -> 00:14:28] just a few different parameters.
+[00:14:28 -> 00:14:31] The first parameter is what is the domain of values?
+[00:14:31 -> 00:14:32] So for constant propagation,
+[00:14:32 -> 00:14:37] the domain of values is sets of constant definitions.
+[00:14:37 -> 00:14:39] So for example, X is mapped to three,
+[00:14:39 -> 00:14:41] Y is mapped to four,
+[00:14:41 -> 00:14:43] Z is mapped to bottom,
+[00:14:43 -> 00:14:45] but bottom ones we are not going to put in the set,
+[00:14:45 -> 00:14:47] they're just going to be removed from the set,
+[00:14:47 -> 00:14:50] so Z is not going to have a mapping.
+[00:14:50 -> 00:14:52] Another set could be everything is mapped to top,
+[00:14:52 -> 00:14:55] so things like that.
+[00:14:55 -> 00:14:58] The direction is another parameter
+[00:14:58 -> 00:14:59] of my dataflow analysis,
+[00:14:59 -> 00:15:01] because depending on the direction,
+[00:15:01 -> 00:15:04] we are going to use the in or the out,
+[00:15:04 -> 00:15:06] and similarly boundary conditions and stuff,
+[00:15:06 -> 00:15:08] entry or exit and things like that.
+[00:15:08 -> 00:15:10] So the direction for the constant propagation algorithm,
+[00:15:10 -> 00:15:12] for example, is forward.
+[00:15:13 -> 00:15:16] Then we have to specify the transfer function,
+[00:15:16 -> 00:15:19] which is going to say out B equals FB in B,
+[00:15:19 -> 00:15:21] because it's a forward dataflow analysis,
+[00:15:21 -> 00:15:22] that's what the structure
+[00:15:22 -> 00:15:24] of the transfer function is going to be.
+[00:15:24 -> 00:15:26] It's going to express out of a basic block
+[00:15:26 -> 00:15:28] in terms of in of a basic block.
+[00:15:28 -> 00:15:31] For example, in the case of constant propagation,
+[00:15:31 -> 00:15:34] one way to represent the transfer function is,
+[00:15:34 -> 00:15:35] it's a function that takes X,
+[00:15:35 -> 00:15:39] so lambda X is representing that function that takes X,
+[00:15:39 -> 00:15:42] and then returns gen B union X minus kill B.
+[00:15:42 -> 00:15:45] So things that are generated by the basic block,
+[00:15:45 -> 00:15:48] and things that are propagated by the basic block.
+[00:15:48 -> 00:15:51] We have looked at the gen and kill functions.
+[00:15:51 -> 00:15:53] Then we have to specify a meet operator,
+[00:15:53 -> 00:15:55] which is another parameter of the DFA.
+[00:15:55 -> 00:15:58] In this case, it's a set intersection operator.
+[00:15:58 -> 00:16:00] And finally, one parameter is,
+[00:16:00 -> 00:16:01] what is the boundary condition?
+[00:16:01 -> 00:16:03] And in the case of constant propagation,
+[00:16:03 -> 00:16:05] the boundary condition is out of entry
+[00:16:05 -> 00:16:08] equals the empty set or five.
+[00:16:08 -> 00:16:10] Now, I could have started
+[00:16:10 -> 00:16:11] with a different boundary condition.
+[00:16:11 -> 00:16:13] For example, somehow if I know that
+[00:16:13 -> 00:16:15] when I come to this function at the very beginning,
+[00:16:15 -> 00:16:18] I already know that X is definitely going to be three,
+[00:16:18 -> 00:16:20] then I could have initialized the boundary condition
+[00:16:20 -> 00:16:23] with a singleton element X comma three, right?
+[00:16:23 -> 00:16:25] But different data flow analysis
+[00:16:25 -> 00:16:26] can have different boundary conditions.
+[00:16:26 -> 00:16:29] And the boundary condition has nothing to do
+[00:16:29 -> 00:16:31] with what is the meet operator typically, right?
+[00:16:31 -> 00:16:32] I mean, it's just things like,
+[00:16:32 -> 00:16:34] what do I know at the beginning
+[00:16:34 -> 00:16:35] of starting to run the data flow analysis?
+[00:16:35 -> 00:16:37] And that's the boundary condition.
+[00:16:37 -> 00:16:39] In the case of a forward data flow analysis,
+[00:16:39 -> 00:16:43] this knowledge is typically at the entry of the function.
+[00:16:43 -> 00:16:45] In the case of backward data flow analysis,
+[00:16:45 -> 00:16:47] this knowledge is typically at the exit of the function,
+[00:16:47 -> 00:16:49] but even that is not necessary.
+[00:16:49 -> 00:16:52] It's possible that boundary conditions are available
+[00:16:52 -> 00:16:54] in the middle of the program as well.

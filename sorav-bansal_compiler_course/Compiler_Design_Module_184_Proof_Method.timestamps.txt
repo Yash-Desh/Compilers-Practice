@@ -1,0 +1,86 @@
+Title: Compiler Design Module 184 : Proof Method
+Video ID: 6n8eL7Gz3Xk
+Detected language: en
+------------------------------------------------------------
+
+[00:00:00 -> 00:00:02] So we've been looking at all the different kinds
+[00:00:02 -> 00:00:06] of verification conditions
+[00:00:06 -> 00:00:08] for different imperative language constructs.
+[00:00:08 -> 00:00:12] And now we'll just generalize this whole discussion
+[00:00:12 -> 00:00:17] into a method for discharging any proof
+[00:00:17 -> 00:00:22] and also a set of rules which basically capture succinctly
+[00:00:22 -> 00:00:26] all the verification conditions
+[00:00:26 -> 00:00:27] that we have discussed so far
+[00:00:28 -> 00:00:31] for the kind of imperative language constructs
+[00:00:31 -> 00:00:33] that we have discussed such as assignment,
+[00:00:33 -> 00:00:35] if then else and loops.
+[00:00:36 -> 00:00:38] So firstly, in this module,
+[00:00:38 -> 00:00:40] I'm gonna talk about the proof method.
+[00:00:40 -> 00:00:43] And so given a precondition P and a program
+[00:00:43 -> 00:00:45] and a post condition Q,
+[00:00:45 -> 00:00:47] we're interested in finding whether
+[00:00:47 -> 00:00:50] this whole triple holds or not.
+[00:00:50 -> 00:00:53] And recall that a whole triple is basically
+[00:00:53 -> 00:00:54] a partial correctness condition.
+[00:00:54 -> 00:00:57] It says that if precondition holds
+[00:00:57 -> 00:00:59] and the program terminates
+[00:00:59 -> 00:01:01] or basically reaches this point,
+[00:01:01 -> 00:01:04] then Q holds, it doesn't talk about
+[00:01:04 -> 00:01:06] whether the program terminates or not
+[00:01:06 -> 00:01:08] or what happens if the program does not terminate
+[00:01:08 -> 00:01:09] and things like that.
+[00:01:09 -> 00:01:12] For example, if the program was non-terminating,
+[00:01:12 -> 00:01:15] then any Q actually would be okay here
+[00:01:15 -> 00:01:17] because one of the antecedents
+[00:01:17 -> 00:01:19] of this whole whole triple statement,
+[00:01:19 -> 00:01:21] the partial correctness statement
+[00:01:21 -> 00:01:24] is that if the program terminates
+[00:01:24 -> 00:01:25] and if the program doesn't terminate,
+[00:01:25 -> 00:01:27] then the statement is vacuously true.
+[00:01:29 -> 00:01:31] All right, so our strategy is going to be
+[00:01:31 -> 00:01:33] to find assertions,
+[00:01:33 -> 00:01:36] recall assertions are basically logical statements,
+[00:01:36 -> 00:01:40] find assertions AI attached to program points I
+[00:01:40 -> 00:01:41] and all program points I.
+[00:01:41 -> 00:01:44] So if you want to find all the assertions,
+[00:01:44 -> 00:01:45] let's say I just divide the program points
+[00:01:45 -> 00:01:47] into all the ends of the beginning
+[00:01:47 -> 00:01:48] of all the statements
+[00:01:48 -> 00:01:50] or the ends of all the statements
+[00:01:50 -> 00:01:51] and things like that.
+[00:01:51 -> 00:01:53] And then I basically attach one assertion
+[00:01:54 -> 00:01:56] and I can find the assertion everywhere.
+[00:01:56 -> 00:01:58] How we are going to define this assertion
+[00:01:58 -> 00:02:01] is going to depend on many things
+[00:02:01 -> 00:02:03] and we're going to have this discussion later on.
+[00:02:03 -> 00:02:05] Some of these assertions we can find
+[00:02:05 -> 00:02:08] using the strategies that we have discussed earlier,
+[00:02:08 -> 00:02:11] such as the one for if then is an assignment
+[00:02:11 -> 00:02:12] and for others like loops,
+[00:02:12 -> 00:02:14] we haven't yet discussed the strategy
+[00:02:14 -> 00:02:16] and we're going to characterize the problem
+[00:02:16 -> 00:02:18] of determining these assertions later on.
+[00:02:19 -> 00:02:21] It turns out that finding such assertions
+[00:02:21 -> 00:02:22] is undecidable in general.
+[00:02:23 -> 00:02:29] But once you have these assertions, you prove all these assertions to be invariant.
+[00:02:29 -> 00:02:31] Recall, what is an invariant?
+[00:02:31 -> 00:02:36] An invariant is an assertion that holds whenever a program reaches that particular point.
+[00:02:36 -> 00:02:39] And so we are interested in proving that all these assertions are invariant.
+[00:02:39 -> 00:02:42] How do we prove that all these assertions are invariant?
+[00:02:42 -> 00:02:47] Well, we start with the precondition and we prove that whenever the control reaches
+[00:02:47 -> 00:02:48] this point, then A1 holds.
+[00:02:48 -> 00:02:51] And that's exactly the whole triple partial correctness condition.
+[00:02:51 -> 00:02:57] And we know how to discharge what are the verification conditions associated with each such proof
+[00:02:57 -> 00:03:02] obligation which is associated with a partial correctness condition or also called the
+[00:03:02 -> 00:03:03] whole triple.
+[00:03:03 -> 00:03:10] And for example, using P, you can probably prove that A1 is an invariant at this point.
+[00:03:10 -> 00:03:16] Using P and A1, you can prove that A2 is an invariant at this point and so on.
+[00:03:16 -> 00:03:22] Once again, the proof effort or the proof obligations that are generated by trying
+[00:03:22 -> 00:03:27] to prove that these assertions, AIs are actually invariant, basically use the assignment
+[00:03:27 -> 00:03:30] or conditional loop VCs that we have been discussing.
+[00:03:30 -> 00:03:36] We have been discussing these using examples and a little informally, we are going
+[00:03:36 -> 00:03:40] to formalize this discussion in the next few modules.
+[00:03:40 -> 00:03:45] And finally, we want to prove that the invariant on exit, the last invariant,
+[00:03:45 -> 00:03:49] the invariant that we have been able to infer at the very end of the program actually
+[00:03:49 -> 00:03:52] proves the required post condition.
+[00:03:52 -> 00:03:55] So that's basically our last step in this proof method.

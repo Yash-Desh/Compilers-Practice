@@ -1,0 +1,238 @@
+Title: Compiler Design Module 82 : Liveness DFA
+Video ID: z7ZVVWRAKu4
+Detected language: en
+------------------------------------------------------------
+
+[00:00:00 -> 00:00:03] Last time, we were talking about the liveness data flow analysis,
+[00:00:03 -> 00:00:05] and we discussed the two values.
+[00:00:05 -> 00:00:09] One was true, which means that a value may be live,
+[00:00:09 -> 00:00:10] and another was false,
+[00:00:10 -> 00:00:12] which was basically, it's definitely not live.
+[00:00:12 -> 00:00:15] Here, the true value is the conservative value,
+[00:00:15 -> 00:00:18] and the false value is actually containing some information.
+[00:00:18 -> 00:00:20] Now, today in this module,
+[00:00:20 -> 00:00:23] we're going to discuss the DFA rules
+[00:00:23 -> 00:00:26] that can be used to compute these values.
+[00:00:27 -> 00:00:32] Just like we discussed for constant propagation,
+[00:00:32 -> 00:00:34] we're going to have two types of rules.
+[00:00:34 -> 00:00:37] One is which is going to relate the out of
+[00:00:37 -> 00:00:40] a predecessor to the in of a successor,
+[00:00:40 -> 00:00:42] and the other which is going to relate
+[00:00:42 -> 00:00:45] the out of a statement to the in of the statement.
+[00:00:45 -> 00:00:48] Now, recall that unlike constant propagation,
+[00:00:48 -> 00:00:50] which was a forward data flow analysis,
+[00:00:50 -> 00:00:52] liveness is a backward data flow analysis.
+[00:00:52 -> 00:00:57] Information is moving from the exit upwards.
+[00:00:57 -> 00:00:59] On the other hand, for constant propagation,
+[00:00:59 -> 00:01:03] the information is moving from entry downwards.
+[00:01:03 -> 00:01:06] Forward data flow analysis is a data flow analysis
+[00:01:06 -> 00:01:08] where the data flow happens
+[00:01:08 -> 00:01:10] in the direction of program execution.
+[00:01:10 -> 00:01:14] Backward data flow analysis is a data flow analysis
+[00:01:14 -> 00:01:17] which has data flow in the direction which is
+[00:01:17 -> 00:01:21] against the direction of program execution.
+[00:01:21 -> 00:01:24] Liveness analysis is actually a backward data flow analysis.
+[00:01:24 -> 00:01:27] So here, we are going to be basically
+[00:01:27 -> 00:01:34] representing the value at the out of
+[00:01:34 -> 00:01:36] a predecessor as a function of
+[00:01:36 -> 00:01:39] the values at the in of the successors.
+[00:01:39 -> 00:01:41] This is just a flip of what we
+[00:01:41 -> 00:01:43] were doing in constant propagation.
+[00:01:43 -> 00:01:45] In constant propagation, we're representing
+[00:01:45 -> 00:01:48] the in of a successor as
+[00:01:48 -> 00:01:50] a function of the out of the predecessors.
+[00:01:50 -> 00:01:52] Here, we're doing the opposite.
+[00:01:52 -> 00:01:54] We are representing the out of
+[00:01:54 -> 00:01:56] a predecessor as a function of
+[00:01:56 -> 00:01:59] the in of potentially multiple successors.
+[00:01:59 -> 00:02:01] Also, I'm going to call this function L.
+[00:02:01 -> 00:02:04] Just like we had a function C for constant propagation,
+[00:02:04 -> 00:02:09] that for the values of that analysis,
+[00:02:09 -> 00:02:13] L is meant to represent the values of the liveness analysis.
+[00:02:13 -> 00:02:16] So L at program point P,
+[00:02:16 -> 00:02:19] at statement P for variable x,
+[00:02:19 -> 00:02:23] and whether I'm looking at the in of P or out of P.
+[00:02:23 -> 00:02:25] So in this case, I'm looking at the out of P,
+[00:02:25 -> 00:02:28] the program point which is just after the statement P.
+[00:02:28 -> 00:02:31] Then there are these statements S1 dot dot SN,
+[00:02:31 -> 00:02:33] and I'm looking at the liveness at Si,
+[00:02:33 -> 00:02:37] x, n. So what should be the rule?
+[00:02:37 -> 00:02:44] This time, we have the notion of orderings.
+[00:02:44 -> 00:02:46] So we're going to recall that when
+[00:02:46 -> 00:02:47] we're talking about constant propagation,
+[00:02:47 -> 00:02:49] we first had four different rules,
+[00:02:49 -> 00:02:51] but then when we talked about orderings,
+[00:02:51 -> 00:02:53] then we could just collapse those four different rules into
+[00:02:53 -> 00:02:56] a single rule which used the greatest lower bound idea.
+[00:02:56 -> 00:02:59] So that's going to happen in liveness as well.
+[00:02:59 -> 00:03:00] So this time, we're not going to
+[00:03:00 -> 00:03:02] enumerate all the separate cases,
+[00:03:02 -> 00:03:05] and we're going to use the idea of greatest lower bound.
+[00:03:05 -> 00:03:07] We already know what are the values, true and false.
+[00:03:07 -> 00:03:09] What is the greatest lower bound function?
+[00:03:09 -> 00:03:11] It is the logical or function.
+[00:03:11 -> 00:03:13] So here is the first rule.
+[00:03:14 -> 00:03:20] L of Px out is the logical or of L Si x in,
+[00:03:20 -> 00:03:22] where Si is a successor of P.
+[00:03:22 -> 00:03:26] So you look at all the values at the in of each successor,
+[00:03:26 -> 00:03:28] and you take a logical or of them,
+[00:03:28 -> 00:03:31] because notice that the values can only be either true or false,
+[00:03:31 -> 00:03:36] and that's the value that you would have at L Px out.
+[00:03:36 -> 00:03:37] So what's the idea?
+[00:03:37 -> 00:03:42] The idea is that if x is live at any of my successors,
+[00:03:42 -> 00:03:45] then it is live at my out point.
+[00:03:46 -> 00:03:50] So that's the idea, and it makes intuitive sense.
+[00:03:50 -> 00:03:52] If it is live on any of the paths,
+[00:03:52 -> 00:03:55] then it is live at the current location,
+[00:03:55 -> 00:03:57] and that's exactly what is being captured
+[00:03:57 -> 00:03:58] in this first rule.
+[00:03:59 -> 00:04:01] Let's look at the second rule.
+[00:04:01 -> 00:04:04] So that one rule actually captures all possible cases
+[00:04:05 -> 00:04:08] between predecessors out and successors in.
+[00:04:08 -> 00:04:10] So now the remaining rules are going to relate
+[00:04:10 -> 00:04:13] the statements in to the statements out,
+[00:04:13 -> 00:04:15] just like we did for quantum propagation.
+[00:04:15 -> 00:04:18] But again, because this is a backward data flow analysis,
+[00:04:18 -> 00:04:21] the value at in of a statement will be specified
+[00:04:21 -> 00:04:25] as a function of the value at out of that statement.
+[00:04:25 -> 00:04:27] And so here's the rule.
+[00:04:27 -> 00:04:30] If S is some instruction
+[00:04:30 -> 00:04:31] which involves computation on X.
+[00:04:31 -> 00:04:33] So for example, it's assigning to something,
+[00:04:33 -> 00:04:35] and then it is doing some computation on X.
+[00:04:35 -> 00:04:38] For example, it could be y equals x plus z
+[00:04:38 -> 00:04:39] or something like that,
+[00:04:39 -> 00:04:41] which basically means it is using x.
+[00:04:41 -> 00:04:43] It is using the value, current value of x.
+[00:04:43 -> 00:04:48] In that case, I would basically say that Lsx in is true,
+[00:04:49 -> 00:04:51] irrespective of what is Lsx out,
+[00:04:51 -> 00:04:53] because this statement is going to use the value of x,
+[00:04:53 -> 00:04:57] then the value at the in of the statement
+[00:04:57 -> 00:04:58] is always going to be true
+[00:04:58 -> 00:05:00] because that value is meaningful.
+[00:05:00 -> 00:05:03] It can affect the execution of the program.
+[00:05:03 -> 00:05:04] So the answer is true.
+[00:05:04 -> 00:05:06] And recall that true is the conservative value.
+[00:05:06 -> 00:05:08] So I can never go wrong if I just use the value true.
+[00:05:10 -> 00:05:15] The other rule here is that if S is an assignment to X,
+[00:05:16 -> 00:05:19] for example, if X is colon equal to E,
+[00:05:19 -> 00:05:21] and E does not refer to X.
+[00:05:21 -> 00:05:23] So this is the typo.
+[00:05:23 -> 00:05:27] It should be E does not refer to X.
+[00:05:27 -> 00:05:31] So if S is a statement, X colon equals E,
+[00:05:31 -> 00:05:34] assignment to X, and E does not refer to X.
+[00:05:34 -> 00:05:35] So it's not like X equals X plus one.
+[00:05:35 -> 00:05:38] In that case, we would use rule number two, right?
+[00:05:39 -> 00:05:42] Because something is occurring on the right-hand side,
+[00:05:42 -> 00:05:43] which is using X.
+[00:05:43 -> 00:05:44] So we will use rule number two,
+[00:05:44 -> 00:05:46] and we'll say that it is live at the input.
+[00:05:46 -> 00:05:49] But if X is not appearing
+[00:05:49 -> 00:05:51] on the right-hand side of the assignment,
+[00:05:51 -> 00:05:53] but it is appearing on the left-hand side
+[00:05:53 -> 00:05:55] of the assignment, LHS of the assignment,
+[00:05:55 -> 00:05:58] that basically means that X is getting overwritten.
+[00:05:58 -> 00:05:59] And if X is getting overwritten,
+[00:05:59 -> 00:06:02] it basically means that X is not live
+[00:06:02 -> 00:06:04] at the in of this particular statement.
+[00:06:04 -> 00:06:09] And so we're just going to say that LSXN equals false, right?
+[00:06:10 -> 00:06:13] So notice in here, in is basically the,
+[00:06:13 -> 00:06:17] just at the beginning of the statement S, right?
+[00:06:17 -> 00:06:18] So we have two rules.
+[00:06:19 -> 00:06:20] One easy way to remember it is,
+[00:06:20 -> 00:06:23] if the statement is using X,
+[00:06:23 -> 00:06:25] then it is live just before the statement.
+[00:06:25 -> 00:06:27] If the statement is defining X,
+[00:06:27 -> 00:06:30] then it is dead just before the statement, all right?
+[00:06:30 -> 00:06:34] So the distinction is between whether X is being used
+[00:06:34 -> 00:06:35] and whether X is being defined.
+[00:06:35 -> 00:06:38] If a statement is both using and defining X,
+[00:06:38 -> 00:06:40] in that case, we are going to use rule number two,
+[00:06:40 -> 00:06:43] and that means that it's going to be considered live
+[00:06:43 -> 00:06:45] at the beginning of the statement.
+[00:06:46 -> 00:06:48] And here's rule number four.
+[00:06:48 -> 00:06:50] If S does not refer to X,
+[00:06:50 -> 00:06:51] so if S does not, you know,
+[00:06:51 -> 00:06:53] neither defines nor uses X,
+[00:06:53 -> 00:06:57] then we can just transfer the value of SX out to SXN.
+[00:06:57 -> 00:07:01] So whatever is SX out also becomes LSXN.
+[00:07:01 -> 00:07:04] So notice once again that the analysis is actually backward
+[00:07:04 -> 00:07:08] because we are specifying the in value
+[00:07:08 -> 00:07:10] as a function of the out values, right?
+[00:07:10 -> 00:07:12] And so that's why it's backward.
+[00:07:12 -> 00:07:13] On the other hand,
+[00:07:13 -> 00:07:16] when we're talking about constant propagation,
+[00:07:16 -> 00:07:18] we were specifying the out value
+[00:07:18 -> 00:07:19] as a function of the in values.
+[00:07:19 -> 00:07:21] That's why it was a forward data flow analysis.
+[00:07:21 -> 00:07:24] And this is a backward data flow analysis, all right?
+[00:07:24 -> 00:07:27] So here's the Leibniz DFA algorithm.
+[00:07:27 -> 00:07:28] This is a familiar algorithm,
+[00:07:29 -> 00:07:31] we're just going to, you know,
+[00:07:31 -> 00:07:35] initialize LSXN out is equal false
+[00:07:35 -> 00:07:36] for all statements S and X.
+[00:07:36 -> 00:07:39] So why do I initialize it to false?
+[00:07:39 -> 00:07:41] Recall that when we were doing constant propagation,
+[00:07:41 -> 00:07:44] we were initializing it to top.
+[00:07:44 -> 00:07:46] Here we are initializing it to false.
+[00:07:46 -> 00:07:47] So what do you see common here?
+[00:07:47 -> 00:07:49] Well, if you look at our ordering,
+[00:07:49 -> 00:07:51] we are basically looking at the greatest element,
+[00:07:51 -> 00:07:54] which is greater than equal to every other element
+[00:07:54 -> 00:07:55] in my set of values.
+[00:07:55 -> 00:07:58] That is the element that I'm using to initialize.
+[00:07:59 -> 00:08:04] And that's actually common in both this algorithm
+[00:08:04 -> 00:08:06] and the constant propagation algorithm.
+[00:08:06 -> 00:08:07] Why is that important?
+[00:08:07 -> 00:08:09] Well, that is important from a precision point of view.
+[00:08:09 -> 00:08:12] And we haven't really discussed the precision argument yet,
+[00:08:12 -> 00:08:14] but we are going to do that later in the course.
+[00:08:14 -> 00:08:18] But basically, if you don't assign it the top value,
+[00:08:18 -> 00:08:20] if you assign it the top value,
+[00:08:20 -> 00:08:22] you're going to get a more precise answer
+[00:08:22 -> 00:08:24] than if you try to assign something in the middle
+[00:08:24 -> 00:08:25] or maybe you try to assign bottom.
+[00:08:25 -> 00:08:28] For example, just to take an extreme case,
+[00:08:28 -> 00:08:32] if I, for example, assigned LSXN out to true
+[00:08:32 -> 00:08:33] in the beginning,
+[00:08:33 -> 00:08:34] then my final fixed point solution
+[00:08:34 -> 00:08:36] is just going to be true everywhere
+[00:08:36 -> 00:08:39] because it's only going to go lower
+[00:08:39 -> 00:08:41] and so it's probably going to be true.
+[00:08:41 -> 00:08:44] Although, if it was just before,
+[00:08:45 -> 00:08:47] there will be some cases where it will become false,
+[00:08:47 -> 00:08:49] but it will be a more conservative solution.
+[00:08:49 -> 00:08:51] So it's not true that it's going to arrive
+[00:08:51 -> 00:08:52] at a fixed point, which is all true.
+[00:08:52 -> 00:08:55] It's going because of uses in some places
+[00:08:55 -> 00:08:57] or because of definitions in some places
+[00:08:57 -> 00:08:58] it's going to become false,
+[00:08:58 -> 00:09:00] but still the solution that I'm going to get
+[00:09:00 -> 00:09:01] will be more conservative
+[00:09:01 -> 00:09:04] than if I assign everything to false in the beginning.
+[00:09:04 -> 00:09:07] So intuitively, it makes sense to be as aggressive
+[00:09:07 -> 00:09:08] as possible in the beginning
+[00:09:08 -> 00:09:09] because anyway, the fixed point solution
+[00:09:09 -> 00:09:11] that you're going to arrive at
+[00:09:11 -> 00:09:14] is going to satisfy all our data flow equations,
+[00:09:14 -> 00:09:16] the system of equations.
+[00:09:16 -> 00:09:19] And so why not start from the most aggressive answer
+[00:09:19 -> 00:09:22] and then maybe settle at some fixed point
+[00:09:22 -> 00:09:24] that is an acceptable answer.
+[00:09:24 -> 00:09:26] If you start too low,
+[00:09:26 -> 00:09:28] then you're going to end up low as well.
+[00:09:28 -> 00:09:30] So start high and then keep getting low,
+[00:09:30 -> 00:09:32] lower till you reach a fixed point.
+[00:09:32 -> 00:09:34] That's basically the intuition.
+[00:09:34 -> 00:09:36] We are going to formalize this intuition later on.
+[00:09:36 -> 00:09:37] And then the algorithm is simple.
+[00:09:37 -> 00:09:38] It's similar.
+[00:09:38 -> 00:09:41] Repeat until all points satisfy the rules.
+[00:09:41 -> 00:09:42] In this case, there are only four rules.
+[00:09:42 -> 00:09:44] Pick a point where one of rules one to four
+[00:09:44 -> 00:09:48] does not hold and update using the appropriate rule.
+[00:09:48 -> 00:09:49] So this is exactly similar
+[00:09:49 -> 00:09:52] to how it was for constant propagation analysis.
+[00:09:52 -> 00:09:57] Just that here the rules are in the diverse direction
+[00:09:57 -> 00:09:58] and constant propagation,
+[00:09:58 -> 00:10:00] the rules were in the forward direction.

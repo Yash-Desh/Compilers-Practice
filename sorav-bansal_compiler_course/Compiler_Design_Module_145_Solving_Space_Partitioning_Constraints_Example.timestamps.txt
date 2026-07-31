@@ -1,0 +1,458 @@
+Title: Compiler Design Module 145 : Solving Space Partitioning Constraints Example
+Video ID: 3CYkvL_3Pk4
+Detected language: en
+------------------------------------------------------------
+
+[00:00:00 -> 00:00:03] We were discussing space partitioning constraints.
+[00:00:03 -> 00:00:07] We set up the space partitioning constraints for our example,
+[00:00:07 -> 00:00:10] for a running example.
+[00:00:10 -> 00:00:11] In one of the modules,
+[00:00:11 -> 00:00:15] we showed how these space partitioning constraints
+[00:00:15 -> 00:00:18] can be expressed in a graphical form,
+[00:00:18 -> 00:00:20] and from there you can derive what things,
+[00:00:20 -> 00:00:23] what iteration points can be executed in
+[00:00:23 -> 00:00:27] parallel and which of them need to be serialized.
+[00:00:27 -> 00:00:32] In another module, we discussed how we can formulate
+[00:00:32 -> 00:00:36] the space partitioning constraints for a given program,
+[00:00:36 -> 00:00:38] for a given loop nest mathematically,
+[00:00:38 -> 00:00:42] and then we discussed what are some possible solutions
+[00:00:42 -> 00:00:46] and non-solutions to that mathematical formulation.
+[00:00:46 -> 00:00:51] Now, we're going to discuss what is a method to actually
+[00:00:51 -> 00:00:54] solve these mathematical formulations or
+[00:00:54 -> 00:00:58] these space partitioning constraints expressed in mathematics.
+[00:00:59 -> 00:01:01] In the previous module,
+[00:01:01 -> 00:01:03] what we had done was we had just come out with
+[00:01:03 -> 00:01:07] a possible solutions and check whether any of those solutions
+[00:01:07 -> 00:01:11] fits for our required constraints or not.
+[00:01:11 -> 00:01:13] But now we're going to try and come up with
+[00:01:13 -> 00:01:16] an algorithm that gives us the solution.
+[00:01:16 -> 00:01:18] So given a set of constraints,
+[00:01:18 -> 00:01:22] how do we arrive at a solution?
+[00:01:22 -> 00:01:26] I'm not going to show you the program again,
+[00:01:26 -> 00:01:28] but I'm going to show you the corresponding space
+[00:01:28 -> 00:01:31] partitioning constraints that we formulated.
+[00:01:31 -> 00:01:34] The space partitioning constraints recall
+[00:01:34 -> 00:01:36] were because of two pairs of accesses.
+[00:01:36 -> 00:01:40] One was xij and xij minus one,
+[00:01:40 -> 00:01:46] and the other was y i minus one j and yij.
+[00:01:46 -> 00:01:51] So if I look at these two pairs of accesses or statements,
+[00:01:51 -> 00:01:52] one of them is a right,
+[00:01:52 -> 00:01:55] and so what I can do is I can say that whenever there's
+[00:01:55 -> 00:01:58] a data dependence between this pair,
+[00:01:58 -> 00:02:00] then it must be true that
+[00:02:00 -> 00:02:04] the corresponding iteration space points map to the same processor ID.
+[00:02:04 -> 00:02:08] Mathematically, that means that for all i, j,
+[00:02:08 -> 00:02:11] i prime, j prime, which represent the iteration indices,
+[00:02:11 -> 00:02:14] whenever i and i prime is between one and 100,
+[00:02:14 -> 00:02:17] and j and j prime is also between one and 100,
+[00:02:17 -> 00:02:21] and fi plus small f equals f prime,
+[00:02:21 -> 00:02:23] i prime plus small f prime.
+[00:02:23 -> 00:02:28] In other words, if i equals i prime and j equals j prime minus one,
+[00:02:28 -> 00:02:32] this is for xij and xij minus one,
+[00:02:32 -> 00:02:37] then it must be true that C matrix
+[00:02:37 -> 00:02:41] multiplied with ij plus small c1
+[00:02:41 -> 00:02:44] equals the C matrix C21,
+[00:02:44 -> 00:02:48] C22 multiplied by i prime j prime plus small c2.
+[00:02:48 -> 00:02:52] Recall that this capital C11,
+[00:02:52 -> 00:02:55] C12, small c1, capital C21,
+[00:02:55 -> 00:02:58] capital C22, small c2 are unknowns,
+[00:02:58 -> 00:03:06] which form part of our coefficient matrix for the processor space.
+[00:03:06 -> 00:03:08] So the coefficient matrix multiplied with
+[00:03:08 -> 00:03:11] the iteration vector plus an additive small c1,
+[00:03:12 -> 00:03:15] small c gives me the corresponding processor ID.
+[00:03:15 -> 00:03:21] So this represents a function from iteration space to processor space.
+[00:03:21 -> 00:03:24] So whenever there's a data dependency,
+[00:03:24 -> 00:03:27] these functions should evaluate to the same processor ID.
+[00:03:27 -> 00:03:29] That's what this says.
+[00:03:29 -> 00:03:34] This was only for xij and xij minus one.
+[00:03:34 -> 00:03:40] Here is the corresponding set of constraints for y i minus one j and y ij.
+[00:03:40 -> 00:03:43] The constraints look very similar for all ij,
+[00:03:43 -> 00:03:46] i prime j prime if they lie between one and 100,
+[00:03:46 -> 00:03:49] and i minus one equals i prime.
+[00:03:49 -> 00:03:52] So this is the primary difference between the two formulations.
+[00:03:52 -> 00:03:56] Here capital F and small f and capital F prime and
+[00:03:56 -> 00:03:58] small f prime are different between the two formulations,
+[00:03:58 -> 00:04:03] which gives here it gives me i minus one equals i prime because y i minus one j,
+[00:04:03 -> 00:04:09] so i minus one from y i minus one j and i prime from y ij,
+[00:04:09 -> 00:04:11] and similarly j equals j prime.
+[00:04:11 -> 00:04:14] So i minus one equals i prime and j equals j prime.
+[00:04:14 -> 00:04:15] Whenever these are true,
+[00:04:15 -> 00:04:18] then it must be true that they map to the same processor ID.
+[00:04:18 -> 00:04:22] That's exactly the same type of constraint that we have here.
+[00:04:22 -> 00:04:26] Now, whatever our solution for these unknowns,
+[00:04:26 -> 00:04:28] Cs, capital Cs and small Cs,
+[00:04:28 -> 00:04:30] it should satisfy both these constraints.
+[00:04:30 -> 00:04:31] So that's the important part.
+[00:04:31 -> 00:04:37] The other part here is that these ij and i prime j prime are not the unknowns.
+[00:04:37 -> 00:04:41] Notice that there is a for-all quantifier on these variables,
+[00:04:41 -> 00:04:45] and so we basically need to come up with a solution which
+[00:04:45 -> 00:04:51] satisfies these constraints for all possible values of i and j,
+[00:04:51 -> 00:04:53] and i prime and j prime.
+[00:04:53 -> 00:04:57] So how do I go about solving this problem?
+[00:04:57 -> 00:05:01] I'm going to first show how one could start breaking down
+[00:05:01 -> 00:05:06] this problem for this particular running example that we're using throughout.
+[00:05:06 -> 00:05:09] In my next module, I'm going to generalize
+[00:05:09 -> 00:05:13] this method to a general problem statement.
+[00:05:13 -> 00:05:15] In general, every problem statement will have
+[00:05:15 -> 00:05:18] space partitioning constraints of a very similar nature,
+[00:05:18 -> 00:05:21] which means that there will be some quantifier over
+[00:05:21 -> 00:05:23] some number of iteration variables
+[00:05:23 -> 00:05:26] which will depend on the dimension of the iteration space.
+[00:05:26 -> 00:05:29] So for all vector i and vector i prime,
+[00:05:29 -> 00:05:32] whenever they lie within the address space,
+[00:05:32 -> 00:05:33] so that's b i plus b.
+[00:05:33 -> 00:05:35] Whenever there is a data dependency,
+[00:05:35 -> 00:05:40] so f i plus small f equals f prime i plus prime plus small i prime,
+[00:05:40 -> 00:05:42] then it must be true that they map to the same process ID.
+[00:05:42 -> 00:05:46] So c i plus small c equals c prime i prime plus small c prime.
+[00:05:46 -> 00:05:50] So that's what my general space partitioning constraints are going to look like.
+[00:05:50 -> 00:05:52] Now, the only question that is remaining is how to
+[00:05:52 -> 00:05:54] solve these space partitioning constraints,
+[00:05:54 -> 00:05:58] and that's what we are discussing using an example in this particular module.
+[00:05:58 -> 00:06:02] So the first thing to notice here is that I want to use
+[00:06:02 -> 00:06:05] Gaussian elimination to eliminate some of these variables,
+[00:06:05 -> 00:06:10] some of these bound variables, the quantified variables.
+[00:06:10 -> 00:06:13] So for example, for all i, j, i prime, j prime,
+[00:06:13 -> 00:06:17] it seems like there are four dimensions that we have to worry about.
+[00:06:17 -> 00:06:19] But notice that there are also constraints that i should be
+[00:06:19 -> 00:06:22] equal to i prime and j should be equal to j prime minus one.
+[00:06:22 -> 00:06:25] So I can just get rid of, for example,
+[00:06:25 -> 00:06:28] i prime and j prime, and just wherever there is i prime,
+[00:06:28 -> 00:06:29] I can just replace it with i because I know
+[00:06:29 -> 00:06:33] that I'm only interested in those cases when i equals i prime.
+[00:06:33 -> 00:06:36] And similarly, I can replace j prime with j plus one.
+[00:06:36 -> 00:06:37] And so that's what I do here.
+[00:06:37 -> 00:06:40] In this equation, I just replace i prime with
+[00:06:40 -> 00:06:44] a i and j prime with j plus one,
+[00:06:44 -> 00:06:45] and this is my new equation.
+[00:06:45 -> 00:06:48] So the only thing that I've been able to achieve is that through
+[00:06:48 -> 00:06:52] Gaussian elimination I have eliminated some of the variables,
+[00:06:52 -> 00:06:56] some of the bound variables so that I don't have to reason about them.
+[00:06:56 -> 00:06:59] And moreover, because I removed those, you know,
+[00:06:59 -> 00:07:01] used Gaussian elimination, I mean,
+[00:07:01 -> 00:07:04] I have basically taken into account these two equations.
+[00:07:04 -> 00:07:05] So I don't really need to, I mean,
+[00:07:05 -> 00:07:10] those equations are now encoded in this constraint automatically.
+[00:07:10 -> 00:07:13] Not only have I reduced the number of quantified variables,
+[00:07:13 -> 00:07:16] I've also not, like, I've also basically folded in
+[00:07:16 -> 00:07:22] the effect of these equations into my constraint.
+[00:07:22 -> 00:07:25] Similarly, I can do this for the other space partitioning constraint.
+[00:07:25 -> 00:07:28] Once again, I cross out i prime and j prime,
+[00:07:28 -> 00:07:32] and replace i prime with i minus one and j prime with j,
+[00:07:32 -> 00:07:34] and that's what I'm doing here.
+[00:07:34 -> 00:07:36] So now I have these two set of equations.
+[00:07:36 -> 00:07:39] It says c into ij plus small c1,
+[00:07:39 -> 00:07:44] c1 into ij plus small c1 equals c2 into ij plus one plus small c2.
+[00:07:44 -> 00:07:48] And here it says c1 into ij plus small c1 equals
+[00:07:48 -> 00:07:51] c2 into i minus one j plus small c2.
+[00:07:51 -> 00:07:53] So notice that these two equations are identical
+[00:07:53 -> 00:07:57] except for the part that has been written in green here.
+[00:07:59 -> 00:08:01] Okay, so now I have these constraints,
+[00:08:01 -> 00:08:02] these simplified constraints that have been
+[00:08:02 -> 00:08:04] simplified using Gaussian elimination,
+[00:08:04 -> 00:08:08] and now I'm going to try solving these simplified constraints.
+[00:08:09 -> 00:08:11] So here is the first thing I'm going to do.
+[00:08:11 -> 00:08:14] I'm just going to first consider this constraint here on the left,
+[00:08:14 -> 00:08:17] and I'm just going to rewrite it so that I bring everything to the left.
+[00:08:20 -> 00:08:22] High school method of solving equations,
+[00:08:22 -> 00:08:24] we bring everything to the left
+[00:08:24 -> 00:08:27] and collect all the coefficients for every unknown.
+[00:08:27 -> 00:08:30] So for example, i and j are the unknowns.
+[00:08:30 -> 00:08:32] So basically I collect the unknowns for i
+[00:08:32 -> 00:08:34] and I get c11 minus c21.
+[00:08:34 -> 00:08:36] So that's the coefficient for i.
+[00:08:36 -> 00:08:38] Similarly, I collect the coefficients for j.
+[00:08:38 -> 00:08:41] So that's c12 minus c22.
+[00:08:41 -> 00:08:44] And so that becomes the coefficient of j.
+[00:08:44 -> 00:08:50] And then the constant term becomes c1 minus c2 and minus c22.
+[00:08:51 -> 00:08:54] c22 is coming because of j plus one, right?
+[00:08:54 -> 00:08:58] So the plus one here is basically showing up as minus c22 here.
+[00:08:58 -> 00:09:00] And so this equals zero.
+[00:09:00 -> 00:09:02] So this becomes my rewritten equation
+[00:09:02 -> 00:09:06] where I have just kind of collected the unknown variables
+[00:09:06 -> 00:09:09] and their coefficients and moved everything to the left
+[00:09:09 -> 00:09:11] so that the right-hand side RHS is written as zero.
+[00:09:12 -> 00:09:14] Now the important thing to note here is
+[00:09:14 -> 00:09:18] that this equation should hold for all possible i and j
+[00:09:18 -> 00:09:19] that belong to this range.
+[00:09:19 -> 00:09:23] Now belong to this range is a little bit difficult thing to model.
+[00:09:23 -> 00:09:25] So I can kind of over approximate.
+[00:09:25 -> 00:09:27] In other words, I can be more conservative.
+[00:09:27 -> 00:09:29] I can say for all possible i and j,
+[00:09:29 -> 00:09:31] for all possible integers i and j, this must be true.
+[00:09:31 -> 00:09:34] In fact, for all possible real numbers i and j,
+[00:09:34 -> 00:09:36] this must be true.
+[00:09:36 -> 00:09:38] And if this must be true for all possible real numbers
+[00:09:38 -> 00:09:41] and if it's true for all possible real numbers,
+[00:09:41 -> 00:09:43] it will be true for all possible integers in this range.
+[00:09:43 -> 00:09:47] So I'm just being more conservative.
+[00:09:48 -> 00:09:49] If I can find that solution,
+[00:09:49 -> 00:09:53] then that solution is going to be good enough.
+[00:09:53 -> 00:09:55] And so what is that solution going to be?
+[00:09:55 -> 00:09:58] If this equation needs to hold for all possible i and j,
+[00:09:58 -> 00:10:03] it basically means that the coefficients of i and j
+[00:10:03 -> 00:10:05] and the constant coefficient should be all zero.
+[00:10:05 -> 00:10:10] In other words, because this must hold for all i and j,
+[00:10:10 -> 00:10:13] it must be true that c11 minus c21 equals zero,
+[00:10:13 -> 00:10:16] c12 minus c22 equals zero
+[00:10:16 -> 00:10:21] and c1 minus c22 minus c2 should also equal zero.
+[00:10:21 -> 00:10:25] And so that gives me equations only on the unknowns
+[00:10:25 -> 00:10:28] and that's something that I've made progress on.
+[00:10:28 -> 00:10:31] And so this is what my new equations look like.
+[00:10:31 -> 00:10:33] From this c11 minus c21 equals zero,
+[00:10:33 -> 00:10:35] I get c11 equals c21.
+[00:10:35 -> 00:10:38] Similarly, c12 equals c22.
+[00:10:38 -> 00:10:42] And finally, c1 equals c2 plus c22.
+[00:10:43 -> 00:10:44] So these are my constraints that I have collected
+[00:10:44 -> 00:10:49] from the equations that I had on the left-hand side.
+[00:10:49 -> 00:10:51] Now I'm going to do a similar exercise
+[00:10:51 -> 00:10:53] from the equations that I have on the right-hand side.
+[00:10:53 -> 00:10:56] And then I'm going to combine all these equations together
+[00:10:56 -> 00:11:00] and see what is the maximum rank solution that I can get.
+[00:11:00 -> 00:11:03] Once again, I want to point out that everything zero
+[00:11:04 -> 00:11:06] always remains a feasible solution.
+[00:11:06 -> 00:11:08] It will satisfy all these equations as well.
+[00:11:08 -> 00:11:09] It is a feasible solution.
+[00:11:09 -> 00:11:12] It's just not the maximum rank solution.
+[00:11:12 -> 00:11:13] It's not the best solution that we want.
+[00:11:13 -> 00:11:16] We want the solution that has maximum number of non-zeros
+[00:11:19 -> 00:11:20] in the coefficient matrix.
+[00:11:20 -> 00:11:22] The additive vector, we don't really care
+[00:11:22 -> 00:11:22] whether it's zero or not.
+[00:11:24 -> 00:11:26] So now we have collected these three constraints
+[00:11:26 -> 00:11:27] from the LHS constraints.
+[00:11:27 -> 00:11:32] So once again, c11 equals c21, c12 equals c22,
+[00:11:32 -> 00:11:35] and c1 equals c2 plus c22.
+[00:11:35 -> 00:11:36] Now I look at the same,
+[00:11:37 -> 00:11:39] I do the same thing on the RHS as well.
+[00:11:39 -> 00:11:41] And I bring everything to the left,
+[00:11:41 -> 00:11:42] collect all the coefficients,
+[00:11:42 -> 00:11:45] and once again, I get c11 minus c21 for i,
+[00:11:45 -> 00:11:48] c12 minus c22 for j,
+[00:11:48 -> 00:11:53] and c1 plus c21 minus c2 for the constant term.
+[00:11:53 -> 00:11:54] And once again, because this must hold
+[00:11:54 -> 00:11:57] for all possible i and j belonging to this range,
+[00:11:57 -> 00:11:59] and then once again over approximating,
+[00:11:59 -> 00:12:00] making it more conservative,
+[00:12:01 -> 00:12:05] what I get is c11 equals c21,
+[00:12:05 -> 00:12:06] but that's something that we already have.
+[00:12:06 -> 00:12:09] So everything needs to be set to zero.
+[00:12:09 -> 00:12:11] So c11 minus c21 should be zero,
+[00:12:11 -> 00:12:13] which means c11 equals c21,
+[00:12:13 -> 00:12:15] but that's a constraint that I already have.
+[00:12:15 -> 00:12:17] Similarly, c12 equals c22.
+[00:12:17 -> 00:12:19] That's again a constraint that I already have.
+[00:12:19 -> 00:12:20] So it's not giving me any new,
+[00:12:20 -> 00:12:22] this new set of constraints is not giving me
+[00:12:22 -> 00:12:24] any new information so far.
+[00:12:24 -> 00:12:26] But here is the new one that's going to get,
+[00:12:26 -> 00:12:28] which is the constant term should be equal to zero.
+[00:12:28 -> 00:12:32] So c1 plus c21 minus c2 should be equal to zero.
+[00:12:32 -> 00:12:34] And so that gives me a new constraint,
+[00:12:34 -> 00:12:37] c1 equals c2 minus c21.
+[00:12:37 -> 00:12:39] So just rewrote this equation
+[00:12:39 -> 00:12:42] so that I bring c2 and c21 to the right,
+[00:12:42 -> 00:12:45] and so I get c1 equals c2 minus c21.
+[00:12:45 -> 00:12:47] So these are the four constraints I get.
+[00:12:47 -> 00:12:49] And now I'm going to solve these constraints
+[00:12:49 -> 00:12:52] using our favorite Gaussian elimination.
+[00:12:53 -> 00:12:54] Now, we can use any kind of
+[00:12:54 -> 00:12:57] Gaussian elimination solver to solve these,
+[00:12:57 -> 00:12:59] but here is one easy way to think about it.
+[00:12:59 -> 00:13:01] Let's say c1 equals c2 plus c22,
+[00:13:01 -> 00:13:03] c1 equals c2 minus c21.
+[00:13:03 -> 00:13:04] So from these two,
+[00:13:04 -> 00:13:07] I straight away know that c22 equals minus c21.
+[00:13:07 -> 00:13:09] I can just subtract these two equations
+[00:13:09 -> 00:13:12] and from that I get c22 equals minus c21.
+[00:13:12 -> 00:13:14] I already know that c11 equals c21,
+[00:13:14 -> 00:13:16] c12 equals c22.
+[00:13:16 -> 00:13:19] And now I know that c22 equals minus c21.
+[00:13:19 -> 00:13:20] So I know an equality relation
+[00:13:20 -> 00:13:25] between all the four coefficient matrix elements.
+[00:13:26 -> 00:13:27] And so that's what it looks like.
+[00:13:27 -> 00:13:29] It says c11 equals c21.
+[00:13:29 -> 00:13:30] That's coming from here.
+[00:13:32 -> 00:13:34] c12 equals c22.
+[00:13:34 -> 00:13:35] That's coming from here.
+[00:13:35 -> 00:13:38] And c22 equals minus c21.
+[00:13:38 -> 00:13:39] And so that's why I say,
+[00:13:39 -> 00:13:41] I just made this a single equation
+[00:13:41 -> 00:13:43] which has c21 equals minus c12
+[00:13:43 -> 00:13:46] equals minus c22 equals c11.
+[00:13:46 -> 00:13:49] And let me just call all these quantities small c.
+[00:13:49 -> 00:13:52] So c11 is small c, c21 is small c,
+[00:13:52 -> 00:13:54] c12 is minus small c,
+[00:13:55 -> 00:13:56] or I should say capital C, sorry.
+[00:13:56 -> 00:13:57] Let's call this capital C
+[00:13:57 -> 00:14:00] because I'm going to use small c later, maybe.
+[00:14:00 -> 00:14:00] And then, and so on.
+[00:14:02 -> 00:14:02] So we just use c.
+[00:14:04 -> 00:14:07] And so the coefficient matrix values we know,
+[00:14:08 -> 00:14:09] let's say c.
+[00:14:09 -> 00:14:12] And so, for example, this would be c.
+[00:14:12 -> 00:14:13] This will be minus c.
+[00:14:13 -> 00:14:14] This will be c.
+[00:14:14 -> 00:14:15] This will be minus c.
+[00:14:15 -> 00:14:16] This will be c.
+[00:14:16 -> 00:14:17] This will be minus c.
+[00:14:17 -> 00:14:18] This will be c.
+[00:14:18 -> 00:14:19] This will be minus c.
+[00:14:19 -> 00:14:21] So we have all the four values.
+[00:14:21 -> 00:14:23] And we can, for these,
+[00:14:23 -> 00:14:24] except that we don't know what c is,
+[00:14:24 -> 00:14:26] we're going to figure that out.
+[00:14:26 -> 00:14:28] But we also need to worry about the constant terms.
+[00:14:28 -> 00:14:29] So for the constant terms,
+[00:14:29 -> 00:14:33] basically we have c1 equals c2 plus c22.
+[00:14:33 -> 00:14:34] So what is plus c22?
+[00:14:34 -> 00:14:35] That's just minus c.
+[00:14:35 -> 00:14:37] So I get c1 equals c2 minus c.
+[00:14:37 -> 00:14:40] So that's the other constraint on the constant terms
+[00:14:40 -> 00:14:44] that I can derive, which is c1 equals c2 minus c.
+[00:14:45 -> 00:14:46] So now I have these two constraints.
+[00:14:46 -> 00:14:48] One is for the coefficient terms,
+[00:14:48 -> 00:14:52] and one is for the constant terms, additive terms.
+[00:14:52 -> 00:14:53] And now I need to solve for them.
+[00:14:53 -> 00:14:55] And what do I want?
+[00:14:55 -> 00:14:57] Once again, you know,
+[00:14:57 -> 00:14:59] everything equals zero is a possible solution,
+[00:14:59 -> 00:15:01] but I want a solution that is maximum rank.
+[00:15:02 -> 00:15:04] And notice that solutions that are just off,
+[00:15:05 -> 00:15:06] that are modular, some constant.
+[00:15:06 -> 00:15:09] So let's say, if I say everything is two,
+[00:15:10 -> 00:15:12] that is the same thing as saying everything is three
+[00:15:12 -> 00:15:13] or everything is one.
+[00:15:13 -> 00:15:15] So modular, a constant multiple for everything
+[00:15:16 -> 00:15:18] doesn't really matter in this framework
+[00:15:18 -> 00:15:20] for the coefficient matrix.
+[00:15:20 -> 00:15:22] Similarly, for the additive vector,
+[00:15:22 -> 00:15:28] anything with a constant additive value,
+[00:15:28 -> 00:15:30] for example, plus one or plus 10 or plus 100,
+[00:15:30 -> 00:15:31] doesn't matter.
+[00:15:31 -> 00:15:35] You're just shifting the values of the processor IDs,
+[00:15:36 -> 00:15:36] left or right.
+[00:15:37 -> 00:15:38] And that doesn't really matter,
+[00:15:39 -> 00:15:40] depending on the additive constant.
+[00:15:40 -> 00:15:43] So without loss of generality,
+[00:15:43 -> 00:15:50] we can pick the multiplicative values constant to be one
+[00:15:50 -> 00:15:52] and the additive values constant,
+[00:15:52 -> 00:15:53] the unknown constant to be zero.
+[00:15:53 -> 00:15:54] And then from there,
+[00:15:54 -> 00:15:56] we can derive all the other values
+[00:15:56 -> 00:15:58] based on the constraints that we have derived
+[00:15:58 -> 00:15:59] using Gaussian elimination.
+[00:15:59 -> 00:16:04] And so what we get is c11 equals c21 equals one,
+[00:16:04 -> 00:16:07] c12 equals c22 equals minus one,
+[00:16:07 -> 00:16:11] c1 equals minus one and c2 equals zero.
+[00:16:11 -> 00:16:14] And this is what it would look like
+[00:16:14 -> 00:16:16] if I just replace the values in the solution
+[00:16:16 -> 00:16:19] that I have obtained using Gaussian elimination
+[00:16:19 -> 00:16:21] and all the other things that we discussed,
+[00:16:21 -> 00:16:25] including elimination of quantified variables
+[00:16:25 -> 00:16:26] and stuff like that.
+[00:16:27 -> 00:16:32] We get c11 and c12 are one and minus one.
+[00:16:33 -> 00:16:34] Small c1 is minus one,
+[00:16:34 -> 00:16:36] so we get i minus j minus one.
+[00:16:36 -> 00:16:38] Similarly, these are one minus one and zero,
+[00:16:38 -> 00:16:40] so this gets i minus j.
+[00:16:41 -> 00:16:43] And so these are the two solutions we get.
+[00:16:43 -> 00:16:50] P1 which determines the function for statement s1
+[00:16:50 -> 00:16:52] basically is i minus j minus one.
+[00:16:53 -> 00:16:55] And P2 which determines the function,
+[00:16:55 -> 00:16:59] the PID function for statement two is i minus j.
+[00:16:59 -> 00:17:00] And this is exactly the solution
+[00:17:00 -> 00:17:03] that we have been kind of guessing
+[00:17:03 -> 00:17:04] either through graphical method
+[00:17:04 -> 00:17:07] or just by written trial in our previous modules.
+[00:17:07 -> 00:17:09] This time we didn't have to do any guessing
+[00:17:09 -> 00:17:11] or any graphical method,
+[00:17:11 -> 00:17:12] but we arrived at the solution
+[00:17:12 -> 00:17:13] through a pure algorithm.
+[00:17:14 -> 00:17:16] But the algorithm was kind of,
+[00:17:17 -> 00:17:20] I showed you the algorithm by using an example.
+[00:17:20 -> 00:17:22] I haven't really generalized algorithm
+[00:17:22 -> 00:17:24] which I'm going to do in the next module.
+[00:17:25 -> 00:17:28] So this is what it looks like.
+[00:17:28 -> 00:17:32] For s1, it's P1 that is mapping to the processor ID space.
+[00:17:32 -> 00:17:34] It's the same processor ID space,
+[00:17:34 -> 00:17:35] but the functions are different.
+[00:17:36 -> 00:17:39] This is P1 function and this is the P2 function.
+[00:17:42 -> 00:17:45] Now, notice that because of these P1 and P2 functions,
+[00:17:45 -> 00:17:48] some of the iterations in s1,
+[00:17:51 -> 00:17:52] different iterations in s1
+[00:17:52 -> 00:17:54] may map to the same processor ID.
+[00:17:54 -> 00:17:56] For example, when I say i minus j minus one,
+[00:17:57 -> 00:18:00] for example, one comma one and two comma two,
+[00:18:00 -> 00:18:03] are going to map to the same processor ID minus one.
+[00:18:03 -> 00:18:06] Similarly, when I look at s2,
+[00:18:06 -> 00:18:08] then one comma one and two comma two
+[00:18:08 -> 00:18:10] and three comma three and four comma four,
+[00:18:10 -> 00:18:12] they're all going to map to the same processor ID zero.
+[00:18:13 -> 00:18:15] Similarly, if I look across P1 and P2,
+[00:18:19 -> 00:18:21] the iteration index of s1 which is
+[00:18:22 -> 00:18:25] two comma one would map to zero
+[00:18:25 -> 00:18:29] and one comma one of s2 would map to zero.
+[00:18:29 -> 00:18:34] Two comma one of s1 would map to the same processor ID
+[00:18:34 -> 00:18:36] as one comma one of s2.
+[00:18:39 -> 00:18:45] The ranges are common for some of these domain points
+[00:18:45 -> 00:18:49] for these two functions within the same function P1 or P2
+[00:18:49 -> 00:18:51] or across the two functions P1 and P2.
+[00:18:53 -> 00:18:55] The only thing that is remaining now
+[00:18:55 -> 00:18:58] in terms of code generation and program transformation is
+[00:18:58 -> 00:19:02] that we can create separate threads for every processor
+[00:19:03 -> 00:19:06] and now we can run each separate thread in parallel.
+[00:19:06 -> 00:19:09] But if two or more iteration points
+[00:19:09 -> 00:19:11] map to the same processor ID,
+[00:19:11 -> 00:19:14] then we have to run them sequentially.
+[00:19:14 -> 00:19:17] Moreover, it's important that we run it in the same order
+[00:19:18 -> 00:19:21] as that it was present in the original untransformed program.
+[00:19:21 -> 00:19:24] So the remaining thing is that if s1 and s2
+[00:19:24 -> 00:19:29] map to the same P for some i comma j and i prime comma j prime,
+[00:19:29 -> 00:19:31] then their relative order must be preserved,
+[00:19:31 -> 00:19:34] the relative order in the original program.
+[00:19:34 -> 00:19:37] So if, for example, two comma one of s1
+[00:19:37 -> 00:19:40] was executing before one comma one of s2,
+[00:19:41 -> 00:19:44] then that order should remain preserved
+[00:19:44 -> 00:19:46] when my transformed program as well.
+[00:19:46 -> 00:19:48] And this is something we haven't really discussed.
+[00:19:48 -> 00:19:51] We are only discussing the mapping from statements
+[00:19:51 -> 00:19:52] to processor IDs.
+[00:19:52 -> 00:19:55] We haven't really discussed the code generation strategy.
+[00:19:55 -> 00:19:56] So just in case you are wondering,
+[00:19:56 -> 00:19:57] we are going to be discussing that
+[00:19:58 -> 00:20:00] a couple of lecture modules later.
+[00:20:00 -> 00:20:03] So please, yeah, so don't worry about that
+[00:20:03 -> 00:20:05] if you are worrying about that.
+[00:20:05 -> 00:20:07] But we have at least solved the problem
+[00:20:07 -> 00:20:09] of what should be the mapping.
+[00:20:09 -> 00:20:11] And notice that in our map,
+[00:20:11 -> 00:20:13] when we are trying to get our mapping,
+[00:20:13 -> 00:20:16] we try to ensure that we have as many non-zero values
+[00:20:16 -> 00:20:18] in the coefficient matrix as possible
+[00:20:18 -> 00:20:20] because when we chose, in this case,
+[00:20:20 -> 00:20:22] there was only one value to be chosen
+[00:20:22 -> 00:20:26] and we chose that to be one and not zero.
+[00:20:26 -> 00:20:29] And so that's why it is a maximum rank solution.
+[00:20:29 -> 00:20:32] Also, I cheated here a little bit in the sense that
+[00:20:32 -> 00:20:35] I started with a coefficient matrix that had only one row
+[00:20:35 -> 00:20:38] because I'm using, assuming this information
+[00:20:38 -> 00:20:42] that I know that the solution
+[00:20:42 -> 00:20:44] is going to be a rank one solution.
+[00:20:44 -> 00:20:46] So they will have one row.
+[00:20:46 -> 00:20:50] But in reality, when you're going to solve such constraints,
+[00:20:50 -> 00:20:51] you will have a coefficient matrix
+[00:20:51 -> 00:20:53] of two rows in this example
+[00:20:53 -> 00:20:56] because the iteration space was of depth two
+[00:20:56 -> 00:20:59] and this solution is going to automatically
+[00:20:59 -> 00:21:01] give you a solution which says that,
+[00:21:01 -> 00:21:08] oh, by the way, the second row can be a linear combination,
+[00:21:08 -> 00:21:11] can be a linear multiple of the first row.
+[00:21:11 -> 00:21:14] And so even though there are four unknowns,
+[00:21:14 -> 00:21:16] you would still get a rank one solution.
+[00:21:16 -> 00:21:19] So with one row, I got a rank one solution.
+[00:21:20 -> 00:21:22] I invite you to try this at home,
+[00:21:22 -> 00:21:25] that even if you try to use two rows,
+[00:21:25 -> 00:21:28] you're still going to get a rank one solution
+[00:21:28 -> 00:21:30] if you use the same method of Gaussian elimination
+[00:21:30 -> 00:21:33] and the quantifier elimination that we discussed today.

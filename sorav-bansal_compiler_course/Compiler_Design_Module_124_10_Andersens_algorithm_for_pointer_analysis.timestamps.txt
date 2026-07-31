@@ -1,0 +1,348 @@
+Title: Compiler Design Module 124 10: Andersen's algorithm for pointer analysis
+Video ID: rfl5OqY7IPg
+Detected language: en
+------------------------------------------------------------
+
+[00:00:00 -> 00:00:06] We've been looking at pointer analysis or the main point to analysis and in the example
+[00:00:06 -> 00:00:12] that we saw in the last module, we just kind of informally showed how the points to graph
+[00:00:12 -> 00:00:18] gets constructed by using a certain object abstraction.
+[00:00:18 -> 00:00:23] However, we haven't yet described what is an algorithm to construct this points to
+[00:00:23 -> 00:00:25] graph automatically.
+[00:00:25 -> 00:00:31] So the problem is that given an abstraction for memory objects, we want to find an algorithm
+[00:00:31 -> 00:00:37] that constructs a points to graph and we are going to use a dataflow analysis.
+[00:00:37 -> 00:00:42] To do this, it's going to be a forward dataflow analysis where the value of the dataflow
+[00:00:42 -> 00:00:46] analysis is going to be the points to graph, which means it's going to be, you know,
+[00:00:46 -> 00:00:54] if I represent the graph in an adjacency list representation, then it's a map from
+[00:00:54 -> 00:01:02] a value V to a set of values, other program values represented as V to 2 to the power V.
+[00:01:02 -> 00:01:11] For example, a node X may point to an object X may point to an object Y or our object Z.
+[00:01:11 -> 00:01:17] So that would be represented as X may point to Y comma Z.
+[00:01:17 -> 00:01:23] So this, you know, it's a map from one object, one abstract object to a set of abstract
+[00:01:23 -> 00:01:26] objects.
+[00:01:26 -> 00:01:31] The meet operator for this dataflow analysis is going to be union of edges, which means
+[00:01:31 -> 00:01:37] that if, for example, X may point to Y on one of the paths and X may point to Z
+[00:01:37 -> 00:01:42] on another path, then when we meet the two values and we say that X may point either
+[00:01:42 -> 00:01:44] to Y or to Z.
+[00:01:45 -> 00:01:49] The formal way to say that is that the meet operator involves the union of edges.
+[00:01:49 -> 00:01:54] And further, because this is a relatively expensive dataflow analysis, we are going to use a
+[00:01:54 -> 00:01:58] flow insensitive analysis on the SSA representation.
+[00:01:58 -> 00:02:03] As you already know, if you use a flow insensitive analysis on an SSA representation,
+[00:02:03 -> 00:02:08] it is usually as precise as a flow sensitive analysis on a non-SSA representation,
+[00:02:08 -> 00:02:11] but typically much faster.
+[00:02:11 -> 00:02:15] In other words, there's going to be a single global value and we can pick the statements
+[00:02:15 -> 00:02:20] in any order and meet eagerly when we perform our dataflow analysis.
+[00:02:20 -> 00:02:24] That means there's going to be a single points to graph and then whenever we transfer
+[00:02:24 -> 00:02:29] across a statement, we are going to add edges to that single global points to graph
+[00:02:29 -> 00:02:35] and then addition of edges is basically the meet operation pretty much with the existing
+[00:02:35 -> 00:02:38] value.
+[00:02:38 -> 00:02:44] Now, the rest of the discussion is going to be about the transfer function of this dataflow
+[00:02:44 -> 00:02:46] analysis that computes the points to graph.
+[00:02:46 -> 00:02:51] And the general shape of the transfer function is if you have some kind of an assignment
+[00:02:51 -> 00:02:56] statement where they say E1 colon equals E2, then whatever E2 can point to, all
+[00:02:56 -> 00:03:01] the objects that E2 can point to must belong to the points to set of E1.
+[00:03:01 -> 00:03:06] So I mean, because whenever this statement gets executed, then if E2 was pointing
+[00:03:06 -> 00:03:11] to some object, let's say Y, then E1 can now also point to Y.
+[00:03:11 -> 00:03:15] So in other words, the transfer function adds all the objects that E2 may point to
+[00:03:15 -> 00:03:17] to the points to set of E1.
+[00:03:17 -> 00:03:21] And we're going to see this more concretely, but I just wanted to give you a flavor of
+[00:03:21 -> 00:03:24] what a transfer function is going to look like.
+[00:03:24 -> 00:03:31] So this algorithm that tracks the points to graph or through one way to represent
+[00:03:31 -> 00:03:36] the points to graph is through an adjacency list where an object to a set of objects
+[00:03:36 -> 00:03:41] is called Anderson's algorithm based on the person who came up with this algorithm
+[00:03:41 -> 00:03:42] for the first time.
+[00:03:42 -> 00:03:46] And I'm going to describe this algorithm in the context of a programming language
+[00:03:46 -> 00:03:48] which supports these operations.
+[00:03:49 -> 00:03:52] This looks like a C like programming language where you could take the address
+[00:03:52 -> 00:03:53] of a variable.
+[00:03:53 -> 00:03:55] So you can say P colon equals ampersand X.
+[00:03:55 -> 00:04:00] You could assign an expression, say A plus B to a variable.
+[00:04:01 -> 00:04:07] You could assign a star P to an arbitrary expression.
+[00:04:07 -> 00:04:12] You could assign P to the star of an arbitrary expression.
+[00:04:12 -> 00:04:16] In other words, you can dereference the value computed by an arbitrary expression
+[00:04:16 -> 00:04:17] and store it into P.
+[00:04:18 -> 00:04:22] You could allocate memory using the new operator or you could declare a local
+[00:04:22 -> 00:04:27] variable using, for example, int X in C.
+[00:04:28 -> 00:04:29] I'm going to omit the types.
+[00:04:29 -> 00:04:30] So I'm just going to call it var X.
+[00:04:31 -> 00:04:35] Also, I want to point out that when I say star P colon equals E,
+[00:04:35 -> 00:04:40] that includes or subsumes the case where P may be a struct and you say P dot F
+[00:04:40 -> 00:04:45] where you actually assign to a field of the object pointed to by P
+[00:04:45 -> 00:04:47] to some expression Q.
+[00:04:48 -> 00:04:53] So star P colon equals E includes P pointer dot F equals Q.
+[00:04:53 -> 00:04:58] Similarly, P equals star E subsumes P colon equals E pointer dot F.
+[00:04:58 -> 00:05:04] So a dereference of a field is treated as though the entire object has been
+[00:05:04 -> 00:05:05] dereferenced.
+[00:05:07 -> 00:05:11] Further, to simplify my analysis, I'm going to canonicalize these different
+[00:05:11 -> 00:05:16] syntaxes into a common syntax where I'm going to treat a local variable
+[00:05:16 -> 00:05:21] declaration just like a dynamic allocation without any problem.
+[00:05:21 -> 00:05:26] Because we are really not worried about scope and lifetime issues in this
+[00:05:26 -> 00:05:27] analysis.
+[00:05:27 -> 00:05:34] So we can treat a variable declaration just like any other heap allocation.
+[00:05:34 -> 00:05:38] I can say that we can pretend that there is a pointer PX that has been
+[00:05:38 -> 00:05:45] created and the value of which is initialized to the pointer
+[00:05:45 -> 00:05:50] returned by this expression new var where var represents the types.
+[00:05:50 -> 00:05:51] For example, new int.
+[00:05:52 -> 00:05:57] Further, any place where we see ampersand used on this variable X, we
+[00:05:57 -> 00:06:02] just replace it with PX, which represents the address of X in this new
+[00:06:02 -> 00:06:02] representation.
+[00:06:03 -> 00:06:06] And finally, wherever we use X in the program, we just replace it with
+[00:06:06 -> 00:06:07] star PX.
+[00:06:07 -> 00:06:12] In other words, for a variable that is kind of a C-like variable, we
+[00:06:13 -> 00:06:19] pretend that we know its pointer and every time X is accessed, we
+[00:06:19 -> 00:06:21] pretend that that pointer is dereferenced.
+[00:06:21 -> 00:06:26] And whenever an address of that variable is taken, we use the pointer
+[00:06:26 -> 00:06:28] value in its place.
+[00:06:30 -> 00:06:35] So further, when I talk about abstractions, we need to talk about
+[00:06:35 -> 00:06:37] the abstraction of the objects.
+[00:06:37 -> 00:06:40] So whenever I say new X, we have already seen how there could be an
+[00:06:40 -> 00:06:43] unbounded number of objects that can be created at runtime.
+[00:06:43 -> 00:06:46] And so we need an abstraction that ensures that at compile time, I
+[00:06:46 -> 00:06:49] can talk about a finite set of abstract objects.
+[00:06:49 -> 00:06:51] And so we're going to define these abstract objects based on the
+[00:06:51 -> 00:06:55] allocation site abstraction, which means I'm going to look at the new
+[00:06:55 -> 00:06:57] statements and number of new statements in the program, and that's
+[00:06:57 -> 00:07:02] the number of abstract objects, or that's the set of abstract
+[00:07:02 -> 00:07:03] objects that I'm going to consider.
+[00:07:04 -> 00:07:09] In general, Anderson's algorithm is independent of the exact
+[00:07:09 -> 00:07:13] abstraction that is used for creating abstract objects.
+[00:07:13 -> 00:07:16] But I'm going to use this concrete abstraction of allocation
+[00:07:16 -> 00:07:19] sites because the transfer functions are sometimes slightly different,
+[00:07:19 -> 00:07:24] depending on what abstraction I use for the object abstraction.
+[00:07:26 -> 00:07:30] Okay, so I'm going to use this example program to demonstrate how
+[00:07:30 -> 00:07:32] Anderson's algorithm is going to work on it.
+[00:07:32 -> 00:07:34] Recall that we are doing a flow-insensitive analysis.
+[00:07:34 -> 00:07:39] So my program just looks like a bag of statements, unordered
+[00:07:39 -> 00:07:40] statements.
+[00:07:40 -> 00:07:42] And in this program, you can see that there are variable
+[00:07:42 -> 00:07:46] declarations, there are allocations made through the new operator,
+[00:07:46 -> 00:07:50] there's the ampersand operator, and there are expressions of the
+[00:07:50 -> 00:07:53] type, there are assignments of the type star r colon equals s,
+[00:07:53 -> 00:07:56] there are dereferences of the type u colon equals star t, and there are
+[00:07:56 -> 00:07:58] copies like p colon equals q.
+[00:07:59 -> 00:08:02] And the first step here is going to be, as I said before, I'm
+[00:08:02 -> 00:08:05] going to canonicalize the program and convert all the variable
+[00:08:05 -> 00:08:11] declarations to their explicit allocation type forms.
+[00:08:11 -> 00:08:15] So for example, var p becomes a p, where a p represents address of p,
+[00:08:15 -> 00:08:17] colon equals new something.
+[00:08:17 -> 00:08:21] And similarly, var q becomes a q colon equals new something.
+[00:08:21 -> 00:08:25] Further, when I say p colon equals new, it's equivalent to saying
+[00:08:25 -> 00:08:29] star a p colon equals new, because recall that p was a variable.
+[00:08:29 -> 00:08:31] And now I've converted p to a p.
+[00:08:31 -> 00:08:35] So every use of p should be replaced with star a p.
+[00:08:35 -> 00:08:37] And similarly, star a q is new, and so on.
+[00:08:37 -> 00:08:41] r colon equals ampersand p becomes r colon equals a p,
+[00:08:41 -> 00:08:42] and so on.
+[00:08:42 -> 00:08:46] And p colon equals q becomes star a p colon equals star a q.
+[00:08:47 -> 00:08:53] Further, if I see an assignment of the type star e1 colon equals e2,
+[00:08:53 -> 00:08:58] where e1 and e2 are expressions, then I break them down further
+[00:08:58 -> 00:09:02] and define transfer functions for each of those smaller instructions.
+[00:09:02 -> 00:09:06] So for example, star e1 colon equals e2 is basically broken down into
+[00:09:06 -> 00:09:07] v1 colon equals e1.
+[00:09:07 -> 00:09:12] So you first compute the LHS, then you compute the RHS.
+[00:09:12 -> 00:09:13] So v2 colon equals e2.
+[00:09:13 -> 00:09:16] And then finally, you actually do the assignment
+[00:09:17 -> 00:09:19] by doing star v1 colon equals v2.
+[00:09:19 -> 00:09:23] These three instructions represent the original operation.
+[00:09:23 -> 00:09:26] But now, because I've broken down the original operation
+[00:09:26 -> 00:09:29] into three different statements, now I'll define the transfer functions
+[00:09:29 -> 00:09:32] of each of these different instructions, smaller instructions.
+[00:09:32 -> 00:09:34] And that's easier to define, and that's why I break it down.
+[00:09:37 -> 00:09:40] So for example, when I use that, then star a p colon equals new
+[00:09:40 -> 00:09:43] something becomes v1 equals new something.
+[00:09:43 -> 00:09:45] And then star a p colon equals v1 using the breaking down
+[00:09:45 -> 00:09:48] that I described in the previous slide and so on.
+[00:09:50 -> 00:09:51] All right.
+[00:09:51 -> 00:09:53] Now let's get started with that Anderson's algorithm.
+[00:09:53 -> 00:09:56] The first thing I'm going to look at, let's say I look at
+[00:09:56 -> 00:09:59] the first instruction, which says a p colon equals new something.
+[00:10:00 -> 00:10:04] Now, in this case, it's clear that whatever is the abstraction
+[00:10:04 -> 00:10:08] that the object being allocated here using the new operator,
+[00:10:09 -> 00:10:10] let's say it's an allocation site abstraction,
+[00:10:11 -> 00:10:14] then a p can point to that abstract object.
+[00:10:14 -> 00:10:17] For example, in this case, if the p c at which new is happening is 1,
+[00:10:17 -> 00:10:20] then a p can point to an object that has been allocated at
+[00:10:20 -> 00:10:22] allocation site 1.
+[00:10:23 -> 00:10:26] So this is the general rule that we're going to use.
+[00:10:26 -> 00:10:28] I mean, this is the generalization of that rule.
+[00:10:28 -> 00:10:33] So if there is an instruction of the type x colon equals new something
+[00:10:34 -> 00:10:40] at p c l, then l must belong to the points to set of x.
+[00:10:40 -> 00:10:46] Now, I'm going to use this notation where x arrow a represents the fact
+[00:10:46 -> 00:10:49] that a belongs to the points to set of x.
+[00:10:49 -> 00:10:56] Now, this inference rule here says that if x pointed to some abstract object a earlier,
+[00:10:57 -> 00:11:02] after transferring across this statement, x now may point to either a or l.
+[00:11:02 -> 00:11:07] So just add another edge to my points to graph saying that
+[00:11:07 -> 00:11:12] if it was earlier pointing to a, then it can now point to either a or l
+[00:11:12 -> 00:11:14] because of the transfer across this instruction,
+[00:11:14 -> 00:11:18] because this instruction says that x may point to an object
+[00:11:18 -> 00:11:20] that was allocated at location l.
+[00:11:21 -> 00:11:25] This operation where we add an edge and not replace the edge
+[00:11:25 -> 00:11:26] is called a weak update.
+[00:11:26 -> 00:11:28] We add a new value to an existing set
+[00:11:30 -> 00:11:33] in contrast to a strong update which would have overwritten
+[00:11:33 -> 00:11:34] the existing set with a new value.
+[00:11:34 -> 00:11:37] For example, a strong update in this case would have changed x
+[00:11:38 -> 00:11:40] arrow a to x arrow l.
+[00:11:40 -> 00:11:43] But recall that we are doing a flow-insensitive analysis.
+[00:11:43 -> 00:11:48] We are consuming the instructions in any arbitrary order
+[00:11:48 -> 00:11:51] and we are meeting eagerly, which means that in this example,
+[00:11:51 -> 00:11:54] in this case, we cannot be sound if we do strong updates,
+[00:11:54 -> 00:11:55] but we are sound if we do weak updates
+[00:11:55 -> 00:11:58] because we are just conservatively saying that it may point to
+[00:11:58 -> 00:12:00] whatever it was pointing to earlier
+[00:12:00 -> 00:12:04] plus whatever it can point to by virtue of this instruction.
+[00:12:05 -> 00:12:10] More formally, the transfer function across a statement
+[00:12:10 -> 00:12:14] which allocates a variable at allocation site n
+[00:12:14 -> 00:12:17] basically says that that allocation site n
+[00:12:17 -> 00:12:19] must belong to the points to set of p.
+[00:12:19 -> 00:12:22] This is what the formal rule or the more general way
+[00:12:22 -> 00:12:24] of representing what I've shown here.
+[00:12:29 -> 00:12:31] So using the first three instructions,
+[00:12:31 -> 00:12:33] we get the points to graph which says
+[00:12:33 -> 00:12:34] AP can point to one,
+[00:12:34 -> 00:12:38] AQ can point to two, and V1 can point to three.
+[00:12:38 -> 00:12:40] Now we are at this assignment instruction
+[00:12:40 -> 00:12:42] which says star AP colon equals V1
+[00:12:42 -> 00:12:44] and we need to define a transfer function for this.
+[00:12:44 -> 00:12:46] And we're going to use the same idea.
+[00:12:46 -> 00:12:48] Whatever V1 can point to,
+[00:12:48 -> 00:12:51] now it should become a part of the points to set
+[00:12:51 -> 00:12:54] of whatever star AP can point to.
+[00:12:55 -> 00:12:59] So this is the general form.
+[00:12:59 -> 00:13:03] If I have a statement which looks like star X colon equals Y
+[00:13:03 -> 00:13:06] and if X was originally pointing to let's say
+[00:13:06 -> 00:13:08] some arbitrary abstract objects A and B
+[00:13:08 -> 00:13:13] and A was pointing to D and Y was pointing to C,
+[00:13:13 -> 00:13:17] then whatever X was pointing to,
+[00:13:17 -> 00:13:18] in this case A and B,
+[00:13:18 -> 00:13:21] will can also now point additionally to C.
+[00:13:21 -> 00:13:23] So example, originally A was pointing to D,
+[00:13:23 -> 00:13:25] but now A can point through C
+[00:13:25 -> 00:13:28] because Y was pointing to C by virtue of this statement.
+[00:13:28 -> 00:13:29] Now A can also point to C.
+[00:13:29 -> 00:13:32] Similarly, B, if it was not pointing to anything earlier,
+[00:13:32 -> 00:13:34] now it can potentially point to C.
+[00:13:35 -> 00:13:39] So this is the general rule that for an assignment statement,
+[00:13:39 -> 00:13:43] for an assignment operation of the form star P colon equals Q,
+[00:13:43 -> 00:13:46] it must be true that everything that is in the points to set of Q
+[00:13:47 -> 00:13:50] must be present in the points to set of star P,
+[00:13:50 -> 00:13:52] written using the superset operator on the right hand side.
+[00:13:55 -> 00:13:56] So using the assign rule,
+[00:13:56 -> 00:14:00] we basically change the points to set from what we saw earlier to this one,
+[00:14:00 -> 00:14:03] where we say that because star P colon equals V1,
+[00:14:04 -> 00:14:06] and V1 was pointing to 3,
+[00:14:06 -> 00:14:10] then whatever AP was pointing to, which is 1,
+[00:14:10 -> 00:14:11] can now point to whatever V1 was pointing to.
+[00:14:11 -> 00:14:14] So I will draw an edge from 1 to 3
+[00:14:14 -> 00:14:18] by virtue of this statement star AP colon equals V1.
+[00:14:22 -> 00:14:24] Now for V2 colon equals new,
+[00:14:24 -> 00:14:27] we just create another edge using our allocation site.
+[00:14:27 -> 00:14:31] V2 can now point to an object point allocated at location 5.
+[00:14:32 -> 00:14:34] Star AQ colon equals V2,
+[00:14:34 -> 00:14:36] we use our assign rule to basically say
+[00:14:36 -> 00:14:38] that whatever AQ can point to, which was 2,
+[00:14:38 -> 00:14:41] will can point to whatever V2 can point to, which was 5.
+[00:14:41 -> 00:14:44] So we draw an edge from 2 to 5 in the points to graph.
+[00:14:46 -> 00:14:50] Then we have this statement called R colon equals AP.
+[00:14:51 -> 00:14:51] And once again,
+[00:14:51 -> 00:14:54] we need to define a transfer function for something like this.
+[00:14:54 -> 00:14:56] And we're going to use the same idea
+[00:14:56 -> 00:14:59] that whatever AP can point to that all those things,
+[00:14:59 -> 00:15:02] all those objects should be a part of whatever R should point to.
+[00:15:03 -> 00:15:05] This is again a weak update.
+[00:15:05 -> 00:15:07] And this is the general rule, which is called the copy rule.
+[00:15:07 -> 00:15:10] So it says that if you say X colon equals Y,
+[00:15:10 -> 00:15:13] then whatever Y can point to, X can also point to.
+[00:15:13 -> 00:15:16] For example, if originally X was pointing to A
+[00:15:16 -> 00:15:17] and Y was pointing to B,
+[00:15:17 -> 00:15:22] then after transfer X may point to either A or B.
+[00:15:22 -> 00:15:24] And I guess I should also for completeness say
+[00:15:24 -> 00:15:26] Y may still point to only B.
+[00:15:27 -> 00:15:30] The more general form or the more formal form of this rule
+[00:15:30 -> 00:15:33] or the transfer function is that for a copy statement
+[00:15:33 -> 00:15:34] of the form P colon equals Q,
+[00:15:36 -> 00:15:38] the transfer function should ensure that
+[00:15:38 -> 00:15:39] anything that Q may point to
+[00:15:40 -> 00:15:43] is also a part of whatever P may point to.
+[00:15:43 -> 00:15:45] In other words, the points to set of P
+[00:15:45 -> 00:15:47] must be a superset of the points to set of Q.
+[00:15:49 -> 00:15:50] All right.
+[00:15:50 -> 00:15:54] Now we're going to look at this instruction S colon equals new.
+[00:15:54 -> 00:15:57] And we're just going to use our allocation side abstraction.
+[00:15:57 -> 00:15:59] So before that, when I say R colon equals AP,
+[00:15:59 -> 00:16:02] it basically ensures that whatever AP could point to,
+[00:16:02 -> 00:16:04] which was one, R can also point to that.
+[00:16:04 -> 00:16:07] And that this is what our new points to graph looks like.
+[00:16:08 -> 00:16:09] Statement A is pretty simple.
+[00:16:09 -> 00:16:13] We just add another edge from S to eight
+[00:16:13 -> 00:16:15] because of statement eight.
+[00:16:15 -> 00:16:19] Star R colon equals S is just our assigned operator,
+[00:16:19 -> 00:16:20] which means that whatever R can point to,
+[00:16:20 -> 00:16:21] which in this case is one,
+[00:16:22 -> 00:16:24] should, may point,
+[00:16:24 -> 00:16:26] may start now pointing to whatever S can point to.
+[00:16:26 -> 00:16:28] In other words, one should now be able to point to eight.
+[00:16:28 -> 00:16:32] And that's what our new points to graph looks like.
+[00:16:32 -> 00:16:35] We draw, we add a new edge from one to eight
+[00:16:35 -> 00:16:38] in this points to graph by virtue of this instruction
+[00:16:38 -> 00:16:39] star R colon equals S.
+[00:16:42 -> 00:16:46] Use T colon equals AQ basically causes this edge to be added
+[00:16:46 -> 00:16:48] because T can point to whatever AQ can point to.
+[00:16:48 -> 00:16:49] So T can now point to two.
+[00:16:50 -> 00:16:52] U colon equals star T.
+[00:16:52 -> 00:16:55] Now this is a dereference of whatever T can point to.
+[00:16:55 -> 00:16:58] And in this case, whatever star T can point to,
+[00:16:58 -> 00:17:01] so T can point to two, but star T,
+[00:17:01 -> 00:17:04] which is represented by whatever two can point to,
+[00:17:04 -> 00:17:06] in this case is five.
+[00:17:06 -> 00:17:09] So you can point to whatever star T can point to
+[00:17:09 -> 00:17:12] and thus you can point to five.
+[00:17:13 -> 00:17:16] More generally, if I have a dereference of the form
+[00:17:16 -> 00:17:18] X colon equals star Y.
+[00:17:18 -> 00:17:20] And if X was pointing to, let's say, A
+[00:17:21 -> 00:17:22] and Y was pointing to, let's say,
+[00:17:22 -> 00:17:24] a couple of abstract objects, B and C.
+[00:17:25 -> 00:17:27] And in turn, because I'm going to dereference Y,
+[00:17:27 -> 00:17:28] I need to know what can B point to.
+[00:17:28 -> 00:17:31] Let's say B points could point to D
+[00:17:31 -> 00:17:32] and C could point to E.
+[00:17:33 -> 00:17:36] Then X can now point to whatever B and C may point to.
+[00:17:36 -> 00:17:39] So X can point to D or E
+[00:17:39 -> 00:17:40] or whatever it was pointing to earlier.
+[00:17:40 -> 00:17:44] So X can now point to either A or D or E.
+[00:17:44 -> 00:17:48] More generally, for a dereference statement
+[00:17:48 -> 00:17:50] of the form P colon equals star Q,
+[00:17:51 -> 00:17:53] whatever star Q may point to
+[00:17:53 -> 00:17:55] is now something that P may point to.
+[00:17:55 -> 00:17:57] In other words, the points to set of P
+[00:17:57 -> 00:18:00] is a superset of whatever the points to set of star Q.
+[00:18:02 -> 00:18:05] In our example, that means that U can point to
+[00:18:05 -> 00:18:07] whatever star T can point to.
+[00:18:07 -> 00:18:11] In other words, U can point to whatever two can point to.
+[00:18:11 -> 00:18:12] In other words, you can point to five.
+[00:18:13 -> 00:18:16] And that's the new edge that we create in our points to graph
+[00:18:16 -> 00:18:19] by virtue of statement U colon equals star T.
+[00:18:23 -> 00:18:25] Again, V3 colon equals star Q.
+[00:18:25 -> 00:18:26] We use our assignment rule and say
+[00:18:26 -> 00:18:28] whatever star A Q can points to,
+[00:18:29 -> 00:18:30] V3 can point to.
+[00:18:30 -> 00:18:31] So A star A Q can point to five.
+[00:18:31 -> 00:18:33] So V3 can now point to five.
+[00:18:34 -> 00:18:37] And finally, star AP colon equals V3.
+[00:18:41 -> 00:18:42] For the statement 12,
+[00:18:42 -> 00:18:44] actually we use the dereference rule.
+[00:18:44 -> 00:18:47] And for statement 13, we use the assignment rule,
+[00:18:47 -> 00:18:50] which means that whatever AP can point to, which is one,
+[00:18:50 -> 00:18:54] can now point to whatever V3 can point to, which is five.
+[00:18:54 -> 00:18:56] And so we draw this edge from one to five.
+[00:18:57 -> 00:18:59] And we need to keep repeating this procedure
+[00:18:59 -> 00:19:01] for all these statements in arbitrary order,
+[00:19:02 -> 00:19:04] our flow insensitive data flow analysis,
+[00:19:04 -> 00:19:06] until we reach a fixed point,
+[00:19:06 -> 00:19:09] which means we don't add any more edges.
+[00:19:09 -> 00:19:11] And in fact, you can check for yourself
+[00:19:11 -> 00:19:13] that this graph, this points to graph
+[00:19:13 -> 00:19:15] that I've drawn here is a fixed point solution
+[00:19:15 -> 00:19:17] using Anderson's algorithm,
+[00:19:17 -> 00:19:18] which is a forward data flow analysis
+[00:19:20 -> 00:19:22] using the rules that we have discussed,
+[00:19:22 -> 00:19:24] the transport for transfer function
+[00:19:24 -> 00:19:27] and the union of edges as the meet object.

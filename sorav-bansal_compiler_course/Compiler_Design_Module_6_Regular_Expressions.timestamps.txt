@@ -1,0 +1,268 @@
+Title: Compiler Design Module 6 : Regular Expressions
+Video ID: p1DlQp_6TgI
+Detected language: en
+------------------------------------------------------------
+
+[00:00:01 -> 00:00:03] Okay, so
+[00:00:04 -> 00:00:06] Last time we
+[00:00:06 -> 00:00:11] Talked about lexical analysis and we said that lexical analysis
+[00:00:12 -> 00:00:14] process which converts a
+[00:00:15 -> 00:00:17] stream of characters to a stream of tokens and
+[00:00:18 -> 00:00:23] What is a token? A token is a token class and the lexeme and lexeme is a string that is
+[00:00:23 -> 00:00:26] You know bitten off from stream of characters
+[00:00:26 -> 00:00:29] Now when we talk about a token class we say that
+[00:00:30 -> 00:00:33] You know, for example an identifier is a token class or a
+[00:00:35 -> 00:00:40] Keyword is a token class a constant is a token class and so on and so how do we identify?
+[00:00:41 -> 00:00:44] Which what string belongs to what token class well
+[00:00:44 -> 00:00:49] we basically have some rules to say that for example an identifier is a string of
+[00:00:50 -> 00:00:55] characters alphabets and numbers, but you must begin with an alphabet right or
+[00:00:55 -> 00:01:02] Keyword is one of the following if else then while for and so on or a constant is just a string of numbers
+[00:01:03 -> 00:01:08] Or a constant could be a string of numbers with a decimal point and then another string of numbers and so on
+[00:01:08 -> 00:01:14] And so so we need to formally define what is a token class
+[00:01:15 -> 00:01:23] In the sense that what are the set of strings or lexemes that a token class accepts? So in so in general
+[00:01:23 -> 00:01:32] There is this concept of a language and what is the language well, you know, we already understand what a language is a language actually, you know
+[00:01:33 -> 00:01:38] Simplistically speaking a language is a set of strings and this is actually the definition that we're going to use for our purposes
+[00:01:39 -> 00:01:41] In this course as well
+[00:01:41 -> 00:01:49] So we say that a string belongs to a language if that string is belongs to the set of strings, right?
+[00:01:49 -> 00:01:51] So let's take some examples
+[00:01:52 -> 00:01:59] You know the English language is a language the Hindi language is a language the English and the Hindi languages have different
+[00:01:59 -> 00:02:01] work on different alphabets
+[00:02:01 -> 00:02:05] So in other words the character sets are different
+[00:02:05 -> 00:02:10] But they both basically accept certain strings and do not accept other certain other strings
+[00:02:10 -> 00:02:14] for example, well-formed sentences are part of these languages and
+[00:02:15 -> 00:02:18] Sentences that are not well-formed are not part of these languages
+[00:02:19 -> 00:02:20] all right
+[00:02:20 -> 00:02:26] The C programming language is a language and similarly we could define other language
+[00:02:26 -> 00:02:31] We can say that you know for a lexical analysis purpose. We could say that this is the language of keywords
+[00:02:32 -> 00:02:34] so every string that is
+[00:02:34 -> 00:02:40] Potentially a keyword belongs to the language and every string string that cannot be a keyword does not belong to the language
+[00:02:41 -> 00:02:46] Similarly, you could have a language of identifiers a language of constants and so on
+[00:02:47 -> 00:02:49] all right, so
+[00:02:50 -> 00:02:56] So perhaps, you know, so different as we saw last time different languages made different choices of
+[00:02:57 -> 00:02:59] What are the typical tokens?
+[00:02:59 -> 00:03:03] What what could kind of strings can belong to those tokens and so on?
+[00:03:03 -> 00:03:10] But modern languages typically want to keep things as simple as possible yet as human readable and intuitive as possible
+[00:03:10 -> 00:03:18] And one of the most simplest languages is is the is a class of language is called regular language
+[00:03:18 -> 00:03:26] Now before we before I talk about regular language, I should also make a distinction between formal
+[00:03:27 -> 00:03:31] language and an informal language
+[00:03:32 -> 00:03:39] Well of an informal language is a language like English, which is kind of not formally specified using
+[00:03:39 -> 00:03:41] You know very strict rules, although there are
+[00:03:41 -> 00:03:44] Strong grammatical rules related to natural languages
+[00:03:45 -> 00:03:50] Those like those rules can have exceptions and things like that on the other hand formal languages
+[00:03:50 -> 00:03:57] Very strict rules on what they will accept and what they will not accept and so formal languages also have a very technical mathematical
+[00:03:57 -> 00:03:59] way of specifying
+[00:03:59 -> 00:04:01] them and
+[00:04:01 -> 00:04:09] Regular language is a category of formal languages. It is actually the weakest form of formal languages, which are widely used
+[00:04:10 -> 00:04:17] Especially in compilers. All right, so so to understand regular languages, let's first understand
+[00:04:18 -> 00:04:23] Regular expressions, okay
+[00:04:25 -> 00:04:26] So
+[00:04:26 -> 00:04:28] What is the regular expression?
+[00:04:28 -> 00:04:34] Well, I'm going to define a language of regular expressions and I'm just going to define it now
+[00:04:34 -> 00:04:40] And then we're going to see why why it's interesting. All right, so let's say there is some
+[00:04:41 -> 00:04:45] Set of characters sigma. All right, so this is a set of characters and
+[00:04:48 -> 00:04:50] We can also call this the alphabet
+[00:04:51 -> 00:04:59] So a language is over an alphabet in this in other words the strings are made up of
+[00:04:59 -> 00:05:02] The characters belonging to sigma. All right
+[00:05:03 -> 00:05:04] so
+[00:05:04 -> 00:05:07] So what is the regular expression? Well
+[00:05:08 -> 00:05:15] I'm going to define what is the regular expression by basically showing what are exact what are the constructors of regular expressions?
+[00:05:15 -> 00:05:17] so a character C is
+[00:05:18 -> 00:05:20] Is a regular expression
+[00:05:20 -> 00:05:29] All right, so a character C where C belongs to sigma, okay
+[00:05:29 -> 00:05:37] So any character C standalone character C is a regular expression. All right, just a definition of regular expression. All right
+[00:05:38 -> 00:05:44] The epsilon character is a regular expression. So what is an epsilon? Epsilon represents the
+[00:05:44 -> 00:05:49] Empty string. All right, so this basically represents the empty string. Just let me
+[00:05:50 -> 00:05:54] Let me just make a comment here that what is an epsilon epsilon is the empty string
+[00:05:54 -> 00:05:56] I should point out that
+[00:05:56 -> 00:06:02] Epsilon is an empty string and this is different from an empty set. All right, so we're going to see what an empty
+[00:06:03 -> 00:06:05] Why an empty set is interesting?
+[00:06:05 -> 00:06:11] So yeah, just just keep in mind that an empty string is different from an empty set and epsilon is an empty string
+[00:06:12 -> 00:06:14] All right
+[00:06:14 -> 00:06:16] Okay now
+[00:06:17 -> 00:06:19] Now we have you know, we already have some
+[00:06:20 -> 00:06:26] Examples of a regular expression or over an alphabet sigma. Now, I'm going to define more so
+[00:06:27 -> 00:06:29] if if
+[00:06:30 -> 00:06:34] A is a regular expression and B is a regular expression
+[00:06:34 -> 00:06:42] Then A plus B is also a regular expression. All right, just definition. So just define this new operator plus
+[00:06:43 -> 00:06:45] all right, so plus is
+[00:06:46 -> 00:06:47] an operator
+[00:06:47 -> 00:06:51] so for example
+[00:06:51 -> 00:06:57] C plus D is
+[00:06:58 -> 00:07:04] A regular expression assuming that's both C and D are part of the alphabet. All right
+[00:07:05 -> 00:07:10] Similarly because C plus D is a regular expression C plus D plus E
+[00:07:10 -> 00:07:12] Is also a regular expression, right?
+[00:07:13 -> 00:07:18] Because this is a regular expression and then I can I can kind of do this over and over and so you can
+[00:07:18 -> 00:07:24] See that I can create an arbitrarily long regular expression using this constructor plus, right?
+[00:07:24 -> 00:07:29] So as long as both A and B are regular expressions, then A plus B is also a regular expression
+[00:07:29 -> 00:07:31] definition
+[00:07:31 -> 00:07:37] All right. Similarly if A is a regular expression and B is a regular expression then AB
+[00:07:38 -> 00:07:44] Is also a regular expression. So by AB I mean concatenation. All right, so concat this is this is concatenation
+[00:07:48 -> 00:07:50] Okay, so for example
+[00:07:51 -> 00:07:55] I'm going to omit the single quotes. So C D E is
+[00:07:55 -> 00:08:02] An example of a regular expression assuming C D and E are all parts of that or all characters in the alphabet
+[00:08:03 -> 00:08:05] Okay
+[00:08:05 -> 00:08:08] and once again, I can make arbitrary long strings to make
+[00:08:09 -> 00:08:12] and they'll all be called regular expressions and
+[00:08:13 -> 00:08:15] then A star
+[00:08:16 -> 00:08:19] Is also a regular expression here A
+[00:08:19 -> 00:08:25] If A is a regular expression, then A star is also a regular expression. All right, so this is
+[00:08:26 -> 00:08:28] The star is called the cleanest star
+[00:08:32 -> 00:08:42] operator so so I just defined what a regular expression. All right, and so first of all notice that
+[00:08:43 -> 00:08:47] This is a language that I have defined right? So this is the language of regular expressions
+[00:08:48 -> 00:08:51] over a set of say over a character set Sigma
+[00:08:52 -> 00:08:57] What do I mean by that? So for example, I could say that C plus B
+[00:09:00 -> 00:09:02] concatenated with E plus F and
+[00:09:03 -> 00:09:05] the whole thing star and
+[00:09:06 -> 00:09:11] Then the whole thing concatenated with A plus B. Well, this is a regular expression. All right
+[00:09:11 -> 00:09:13] why is it this a regular expression because
+[00:09:14 -> 00:09:16] This belongs to the language of regular expressions
+[00:09:16 -> 00:09:23] Because I can construct this expression by using the operators that we just discussed
+[00:09:24 -> 00:09:26] Okay
+[00:09:26 -> 00:09:38] All right. So this is a regular expression and and and once again, you know
+[00:09:38 -> 00:09:46] We have actually defined a language of regular expressions using the operators that we just discussed in the previous slide
+[00:09:46 -> 00:09:48] now every language is
+[00:09:49 -> 00:09:52] Associated with a meaning function. All right, so language
+[00:09:55 -> 00:10:06] Meaning usually every language is associated with a meaning function. And so we want to say that, you know, this string represents
+[00:10:07 -> 00:10:11] This quantity this string represents this quantity and so on
+[00:10:12 -> 00:10:14] so
+[00:10:14 -> 00:10:16] regular expressions
+[00:10:16 -> 00:10:29] Has also has a meaning every regular expression has a meaning it represents a regular language
+[00:10:29 -> 00:10:36] which means that every regular expression
+[00:10:37 -> 00:10:39] encodes a
+[00:10:39 -> 00:10:41] set of strings that
+[00:10:42 -> 00:10:45] belong to that language encoded by that regular expression and
+[00:10:46 -> 00:10:51] Then you know, you know that what strings do not belong to this regular expression
+[00:10:52 -> 00:10:54] Okay, so
+[00:10:55 -> 00:10:57] So let's understand the meaning of the regular expression
+[00:10:58 -> 00:11:01] So if I take the regular expression
+[00:11:01 -> 00:11:03] Formed by the single character C
+[00:11:04 -> 00:11:08] Then the meaning of this regular expression is basically
+[00:11:08 -> 00:11:15] So I need to basically say what is the language that it represents right and recall what is the language a language is a set
+[00:11:15 -> 00:11:17] of strings, so
+[00:11:17 -> 00:11:20] actually this this regular expression just represents a
+[00:11:21 -> 00:11:22] set of
+[00:11:22 -> 00:11:25] containing a single string which contains the
+[00:11:27 -> 00:11:28] alphabet
+[00:11:28 -> 00:11:30] character C
+[00:11:30 -> 00:11:36] Right, so so the regular expression C represents a set that contains a single string C
+[00:11:36 -> 00:11:38] All right
+[00:11:38 -> 00:11:40] similarly the regular expression epsilon
+[00:11:41 -> 00:11:43] represents a set that
+[00:11:43 -> 00:11:45] contains a
+[00:11:46 -> 00:11:48] Single element
+[00:11:48 -> 00:11:50] the empty string, all right, so
+[00:11:50 -> 00:11:52] Okay
+[00:11:52 -> 00:11:53] now
+[00:11:53 -> 00:11:55] Let's consider what?
+[00:11:56 -> 00:11:58] if there is a regular expression formed by
+[00:12:00 -> 00:12:04] Unioning so by the plus operator is also called the union operator
+[00:12:07 -> 00:12:11] So a regular expression that is formed by union in two different regular expressions
+[00:12:12 -> 00:12:18] the language represented by this is basically the union of the sets represented by a
+[00:12:19 -> 00:12:25] And the sets are presented by B. All right, so let me just write it more formally a plus B represents
+[00:12:26 -> 00:12:29] all the strings that belong to a
+[00:12:30 -> 00:12:36] All right
+[00:12:36 -> 00:12:38] union with
+[00:12:38 -> 00:12:48] All the strings that belong to B notice that I am using
+[00:12:49 -> 00:12:52] LA to represent the language of A and
+[00:12:53 -> 00:13:00] LB to represent the language of B. I can also use shorthand and just use A and B here instead, right?
+[00:13:00 -> 00:13:02] So I may do this in
+[00:13:02 -> 00:13:05] Subsequent slides so you should you should know what it means
+[00:13:05 -> 00:13:10] but basically it means that A plus B represents a language that accepts everything that A accepts and
+[00:13:11 -> 00:13:16] Everything that B accepts. All right, so it's it kind of takes a union of both the strings
+[00:13:17 -> 00:13:25] Both the sets of strings. All right, and let's look at concatenation. This is concat
+[00:13:27 -> 00:13:33] concatenation here we get a set that is formed by
+[00:13:34 -> 00:13:38] Concatenating any string in A with any string in B
+[00:13:38 -> 00:13:41] All right, so it's a think of it as a Cartesian product
+[00:13:41 -> 00:13:45] so any string in A can be concatenated with any other string in B and
+[00:13:46 -> 00:13:52] All such strings would be a part of the language that is represented by the regular expression AB
+[00:13:52 -> 00:13:57] Let me write it more formally AB such that A
+[00:13:58 -> 00:14:00] belongs to A and
+[00:14:01 -> 00:14:07] B belongs to so all such strings formed by
+[00:14:09 -> 00:14:17] Substrings A and B by concatenating them where the substring A belongs to capital A the language formed by A and
+[00:14:17 -> 00:14:19] substring B belongs to
+[00:14:19 -> 00:14:20] the language
+[00:14:20 -> 00:14:22] represented by B
+[00:14:22 -> 00:14:24] okay, and
+[00:14:24 -> 00:14:26] finally
+[00:14:26 -> 00:14:30] Kleene star A star and this is
+[00:14:31 -> 00:14:35] This is supposed to represent iteration and here the idea is that
+[00:14:36 -> 00:14:43] A could be so A represents a regular expression and then A could be concatenated with itself any number of times
+[00:14:43 -> 00:14:51] All right, so this is actually equivalent to A to the power 0 plus
+[00:14:51 -> 00:14:53] A
+[00:14:53 -> 00:14:55] power 1 plus A to the power 2
+[00:14:56 -> 00:15:04] plus A to the power 3 plus dot dot dot all the way to infinity. All right, so any number of times
+[00:15:05 -> 00:15:07] where A to the power I
+[00:15:08 -> 00:15:10] is basically
+[00:15:10 -> 00:15:26] A concatenated with itself I times. All right
+[00:15:27 -> 00:15:31] Okay, let's let's take some examples. All right, so
+[00:15:31 -> 00:15:33] Let's assume
+[00:15:33 -> 00:15:35] that
+[00:15:36 -> 00:15:38] The character set is
+[00:15:38 -> 00:15:40] formed by two characters 0 and 1
+[00:15:41 -> 00:15:45] Then an example of a regular
+[00:15:46 -> 00:15:49] Expression is 1 star. Is this a regular expression? Indeed
+[00:15:49 -> 00:15:54] It is 1 is a regular expression and then I can put a Kleene star on that and that's a regular expression
+[00:15:55 -> 00:16:01] What is the language represented by this regular expression? Well, what is the language represented by 1? It's just the string 1
+[00:16:03 -> 00:16:07] And then I put a Kleene star on that so I can repeat this string
+[00:16:08 -> 00:16:13] 0 or more times, right? So if I repeat it 0 times, what do I get? I get the empty string
+[00:16:14 -> 00:16:16] right, so let me
+[00:16:16 -> 00:16:23] Let me represent the language. So it's the start with the empty string 1 appearing once 1 appearing twice
+[00:16:23 -> 00:16:28] and so on
+[00:16:29 -> 00:16:33] So pretty much all strings formed by concatenating
+[00:16:34 -> 00:16:37] Ones or all strings of ones. All right, that's what one star
+[00:16:38 -> 00:16:40] Okay, let's take another example
+[00:16:41 -> 00:16:43] Let's say I say zero star
+[00:16:44 -> 00:16:46] plus one star
+[00:16:46 -> 00:16:48] well
+[00:16:48 -> 00:16:57] this says that zero star is nothing but all strings of zeros just like one star is all strings containing zero one any
+[00:16:57 -> 00:17:01] number of ones similarly zero star is called any all strings containing any number of zeros and
+[00:17:02 -> 00:17:04] zero star plus one star is
+[00:17:05 -> 00:17:11] nothing, but the empty string
+[00:17:12 -> 00:17:14] zero
+[00:17:14 -> 00:17:16] one
+[00:17:16 -> 00:17:18] zero zero one one
+[00:17:19 -> 00:17:25] And so I could write them in any order. I like I just chose to write it in increasing order of the length
+[00:17:25 -> 00:17:28] but basically the union of the two
+[00:17:30 -> 00:17:32] Sets formed by zero star and one star
+[00:17:33 -> 00:17:35] Let's take another example
+[00:17:35 -> 00:17:39] Let's say we have
+[00:17:39 -> 00:17:41] one plus zero
+[00:17:41 -> 00:17:46] Okay, so this
+[00:17:46 -> 00:17:48] represents a language
+[00:17:48 -> 00:17:54] One plus zero represents either one or zero and then we concatenate one to it. So what do we get?
+[00:17:54 -> 00:17:56] We get only two elements
+[00:17:57 -> 00:17:59] one one and
+[00:18:00 -> 00:18:05] Zero one. Okay. So so that's the language
+[00:18:07 -> 00:18:09] Let's take another example
+[00:18:09 -> 00:18:11] zero plus one star
+[00:18:12 -> 00:18:19] Now this says that I could take either zero or one and then
+[00:18:22 -> 00:18:25] Concatenate any of them with any of them, right? So so
+[00:18:25 -> 00:18:32] What are some strings first of all because it's a star. So the empty string would be part of the set then
+[00:18:33 -> 00:18:35] just a single zero a
+[00:18:35 -> 00:18:37] single one sure
+[00:18:37 -> 00:18:40] Then zero could be concatenated with itself
+[00:18:41 -> 00:18:48] Zero could be concatenated with one and similarly one zero one one
+[00:18:51 -> 00:18:53] zeros
+[00:18:53 -> 00:18:54] I'm going to omit the
+[00:18:54 -> 00:18:56] quotes zero zero one
+[00:18:57 -> 00:19:01] Zero one zero one one zero and so on so forth, right?
+[00:19:01 -> 00:19:06] So pretty much any string that can be a combination of one zeros, right?
+[00:19:07 -> 00:19:09] It's part of zero plus one star
+[00:19:10 -> 00:19:15] Okay, so actually this this if you notice zero plus one
+[00:19:17 -> 00:19:21] Represent also is equivalent to sigma isn't it zero plus one represents
+[00:19:22 -> 00:19:29] The set formed by the characters all the characters in sigma that's zero and one and so zero plus one star
+[00:19:30 -> 00:19:32] Has a special name and it's called sigma star
+[00:19:36 -> 00:19:46] Okay in general there are there is many ways to write
+[00:19:49 -> 00:19:51] a
+[00:19:51 -> 00:19:52] regular expression
+[00:19:52 -> 00:20:09] For the same regular language, by the way, what is the regular language?
+[00:20:11 -> 00:20:18] Well, a regular language is basically a language that can be described through a regular expression just like we
+[00:20:19 -> 00:20:26] We saw earlier. All right, so we saw we defined what's a regular expression is then we define the meaning of a regular expression
+[00:20:27 -> 00:20:33] In the sense that every regular expression defines a language and so any language that can be defined using any regular expression
+[00:20:33 -> 00:20:37] is called a regular language, all right, and the point I'm making here is that
+[00:20:38 -> 00:20:43] Many, you know, there's a many to one mapping between regular expressions and regular languages, which means that
+[00:20:44 -> 00:20:49] Multiple regular expressions can represent the same regular language and we just saw an example
+[00:20:49 -> 00:20:56] So here's a very simple example zero plus one one is the same language as zero one
+[00:20:56 -> 00:20:58] plus one one
+[00:20:58 -> 00:21:02] Okay, and these are two different regular expressions and I can create more examples like that
+[00:21:03 -> 00:21:05] All right. Okay

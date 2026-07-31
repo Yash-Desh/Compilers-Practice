@@ -1,0 +1,310 @@
+Title: Compiler Design Module 123 : Induction Variable Analysis
+Video ID: lmkI5GidsXc
+Detected language: en
+------------------------------------------------------------
+
+[00:00:00 -> 00:00:05] So, last time we talked about how we could do loop analysis using induction variables.
+[00:00:05 -> 00:00:10] We introduced induction variables informally but today we are going to look at induction
+[00:00:10 -> 00:00:13] variables in a more formal way and the first thing we are going to do is we are going
+[00:00:13 -> 00:00:15] to define an induction variable.
+[00:00:15 -> 00:00:22] So an induction variable is a variable whose value can be expressed as c1 into i plus
+[00:00:22 -> 00:00:29] c0 where i is the count of iterations through the closest enclosing loop and c1 and c0
+[00:00:29 -> 00:00:35] are constants with respect to that particular closest enclosing loop.
+[00:00:35 -> 00:00:40] So in other words, this particular variable, the induction variable can be expressed as
+[00:00:40 -> 00:00:47] an affine expression over the loop iteration count, the count of iterations through the
+[00:00:47 -> 00:00:50] loop that the loop has already executed.
+[00:00:50 -> 00:00:51] What is the count of iterations?
+[00:00:51 -> 00:00:56] It's basically the number of times the head has been visited since the entry of
+[00:00:56 -> 00:00:57] the loop.
+[00:00:58 -> 00:01:02] The loop is being entered multiple times and we are only counting since the last entry
+[00:01:02 -> 00:01:07] of the loop and so that's the loop iteration count for that particular invocation of that
+[00:01:07 -> 00:01:11] loop or that particular entry of the loop.
+[00:01:11 -> 00:01:17] And so our problem statement is find variables that are affine expressions of loop indices
+[00:01:17 -> 00:01:20] and also find loop invariant variables.
+[00:01:20 -> 00:01:25] Notice that loop invariant variables are just a special case of induction variables
+[00:01:25 -> 00:01:30] because loop invariant variables are variables where one of the constants is 0.
+[00:01:30 -> 00:01:35] The multiplier to i is 0 and so it becomes a loop invariant variable.
+[00:01:35 -> 00:01:39] And the way we are going to do this, we are going to solve this problem is by formulating
+[00:01:39 -> 00:01:43] this as a bottom-up region-based analysis and that's what we have been discussing
+[00:01:43 -> 00:01:45] all along.
+[00:01:45 -> 00:01:48] So for example, we are going to first formulate the transfer function of the
+[00:01:48 -> 00:01:52] loop body in our region-based analysis and we know how to do that.
+[00:01:52 -> 00:01:56] So we are going to summarize the transfer functions of basic blocks and based on that
+[00:01:56 -> 00:02:00] we are going to summarize the transfer function of the entire loop body.
+[00:02:00 -> 00:02:04] And then I am going to use it to formulate the transfer function for the loop and the
+[00:02:04 -> 00:02:09] loop is just the addition of the back edge or back edges to the loop body and I am
+[00:02:09 -> 00:02:14] going to have some way of saying what should the, if the loop body's transfer
+[00:02:14 -> 00:02:21] function is f, then what should be the loop, the entire loop's transfer function.
+[00:02:21 -> 00:02:26] The analysis would try and express variables in terms of loop iteration indices and loop
+[00:02:26 -> 00:02:32] invariant variables and so we have already seen this before.
+[00:02:32 -> 00:02:37] Now how do I, you know, how do I basically do the summarization for the entire loop
+[00:02:37 -> 00:02:41] and that's what's going to be the rest of the discussion in the module.
+[00:02:41 -> 00:02:45] And transfer function of a statement, so let's talk about what would be the
+[00:02:45 -> 00:02:47] transfer function of a statement.
+[00:02:47 -> 00:02:54] Let f be the transfer function of a statement x equals c0 plus c1 into y plus c2 into z.
+[00:02:54 -> 00:02:59] So let's say there is some statement like this, in a three address code you may say
+[00:02:59 -> 00:03:04] how can there be two variables y and z, or maybe c0 should be 0 but I am just taking
+[00:03:04 -> 00:03:08] the general case assuming that there are three additions and two multiplications
+[00:03:08 -> 00:03:10] in a single statement.
+[00:03:10 -> 00:03:13] You can even kind of think of this as a compound statement and as two or more
+[00:03:13 -> 00:03:18] statements but this is probably the summary transfer function, summary statement or I'm
+[00:03:18 -> 00:03:23] going to identify the summary transfer function of this combined statement.
+[00:03:23 -> 00:03:27] Now in this case, you know, this is how my transfer function f will be defined.
+[00:03:27 -> 00:03:32] That function takes an input map m and returns an output map m prime and you're
+[00:03:32 -> 00:03:36] going to specify what m prime is going to look like in terms of what m looks
+[00:03:36 -> 00:03:37] like.
+[00:03:37 -> 00:03:38] And that's easy.
+[00:03:38 -> 00:03:44] So each variable v in the program, if m prime, if v is not equal to x, then it
+[00:03:44 -> 00:03:49] remains unchanged and that's specified by saying m prime v equals m v if v is
+[00:03:49 -> 00:03:52] not equal to x.
+[00:03:52 -> 00:03:56] m prime v equals c0 plus c1 into my plus c2 into mz.
+[00:03:56 -> 00:04:02] Just taking this here and just replacing y with m y and z with mz.
+[00:04:02 -> 00:04:08] If v equals x and m y is not equal to unknown and mz is not equal to unknown.
+[00:04:08 -> 00:04:13] So recall in this analysis, we have a semi lattice of finite height and the bottom
+[00:04:13 -> 00:04:15] value here is the unknown value.
+[00:04:15 -> 00:04:20] And so if m y evaluates to the unknown value, then we don't really use this
+[00:04:20 -> 00:04:21] expression.
+[00:04:21 -> 00:04:25] But if m y does not evaluate to an unknown value and similarly m z does not
+[00:04:25 -> 00:04:32] evaluate to an unknown value, in which case it is evaluating to some expression,
+[00:04:32 -> 00:04:36] then it's basically the new expression would be formed by this expression c0 plus
+[00:04:36 -> 00:04:39] c1 into m y plus c2 into mz.
+[00:04:39 -> 00:04:42] Notice that we are only talking about affine expressions.
+[00:04:42 -> 00:04:46] If the original expression m y and m z were affine expressions, this combined total
+[00:04:46 -> 00:04:50] expression is also going to be an affine expression.
+[00:04:50 -> 00:04:55] And finally, the third case is otherwise, otherwise would include the case which is
+[00:04:55 -> 00:05:01] v equals x and either m y or m z are unknown, in which case I just say that
+[00:05:01 -> 00:05:08] v is also unknown or m v or m x is also unknown.
+[00:05:08 -> 00:05:12] Now, that is just the transfer function of a single statement.
+[00:05:12 -> 00:05:16] Now, to be able to do my region based analysis, recall that we need to
+[00:05:16 -> 00:05:21] specify the composition operator, the meet operator and the closure operator
+[00:05:21 -> 00:05:24] to be able to generate summary transfer functions of larger regions from
+[00:05:24 -> 00:05:25] smaller regions.
+[00:05:25 -> 00:05:29] And the leaf level here is a single statement and we just saw what the
+[00:05:29 -> 00:05:31] transfer function of a single statement is.
+[00:05:31 -> 00:05:35] Now, using that we want to construct transfer functions of larger regions.
+[00:05:35 -> 00:05:39] And for that we need, we first need the composition operator for
+[00:05:39 -> 00:05:40] the transfer functions.
+[00:05:40 -> 00:05:45] And so recall that the composition operator is f1 composed with f2.
+[00:05:45 -> 00:05:48] So let f1 and f2 be the transfer functions of statements or
+[00:05:48 -> 00:05:53] regions, s1 and s2, then f1 composed with f2 of m is nothing but
+[00:05:53 -> 00:05:57] first apply f1 to m and on the result you apply f2.
+[00:05:57 -> 00:06:03] And this is also going to be consistent with our affineness relation
+[00:06:03 -> 00:06:08] because if f1 is going to give out an affine map with affine mappings,
+[00:06:08 -> 00:06:13] then f2 will also give out a map which is going to have only affine mappings.
+[00:06:14 -> 00:06:16] So here is an example of composition.
+[00:06:16 -> 00:06:20] So let's say I have a statement s1 which has some statement and
+[00:06:20 -> 00:06:23] then I have s2 which has the same statement that we saw earlier,
+[00:06:23 -> 00:06:27] x equals c0 plus c1y plus c2z.
+[00:06:27 -> 00:06:30] And if I want to say what is the combined transfer function
+[00:06:30 -> 00:06:34] in terms of f1 and f2, so f1 is the transfer function of s1 and
+[00:06:34 -> 00:06:37] f2 let's say is the transfer function of s2.
+[00:06:37 -> 00:06:42] Then I want to define what is f1 composed with f2 and to define that,
+[00:06:42 -> 00:06:44] I'm going to say if the input is m, what is the output?
+[00:06:44 -> 00:06:48] So if the input is m, what is m prime in terms of m?
+[00:06:48 -> 00:06:52] And let me just assume that m1 is equals f1m, all right?
+[00:06:52 -> 00:06:55] So for the same m, if I give it to f1, then it gives me m1.
+[00:06:56 -> 00:07:01] And so the composition is nothing out of the ordinary.
+[00:07:01 -> 00:07:05] We just use the same thing for each variable v, m prime v is,
+[00:07:05 -> 00:07:09] now just that instead of mv, I'm using m1v,
+[00:07:09 -> 00:07:13] because m1 is the result of applying f1, if v is not equal to x.
+[00:07:13 -> 00:07:19] Similarly, c0 plus c1 into m1v, y, instead of my, plus c2 into m1z.
+[00:07:19 -> 00:07:22] If v equals x and m1y is not equal to unknown and
+[00:07:23 -> 00:07:26] m1z is not equal to unknown, otherwise it's unknown, all right?
+[00:07:26 -> 00:07:29] And we can now substitute for m1 similarly.
+[00:07:29 -> 00:07:33] So example m1, we can substitute the same expression,
+[00:07:33 -> 00:07:39] whatever it f1 has, we can substitute m1v in terms of f1 and m,
+[00:07:39 -> 00:07:44] just like that, and this is just the composition as we already know it.
+[00:07:45 -> 00:07:48] The other thing that we need to define is the meat of the two functions.
+[00:07:48 -> 00:07:54] What happens if there are two regions that basically have a joint point,
+[00:07:54 -> 00:07:58] what should be the transfer function of the larger region?
+[00:07:58 -> 00:08:02] And that's expressed as f1 meet f2.
+[00:08:02 -> 00:08:06] So let fm1 be f1m and let m2 be f2m.
+[00:08:06 -> 00:08:09] Then m prime, I want to define what is f1 meet f2, and
+[00:08:09 -> 00:08:13] I'm going to define that using an input m, and
+[00:08:13 -> 00:08:16] then specifying m prime, which is the output in terms of m.
+[00:08:16 -> 00:08:19] And so here, it's actually also easy.
+[00:08:19 -> 00:08:25] Let's say for each variable v, m prime v would be equal to mv.
+[00:08:25 -> 00:08:27] So this should be mv, not m1v.
+[00:08:29 -> 00:08:31] Sorry, this can be m1v, sorry.
+[00:08:31 -> 00:08:36] And this can be m prime v equals m1v if m1v equals m2v, and
+[00:08:36 -> 00:08:37] it's unknown otherwise, all right?
+[00:08:37 -> 00:08:38] So what does it mean?
+[00:08:38 -> 00:08:42] If the two functions get the same output for the variable, so
+[00:08:42 -> 00:08:46] if m1v equals m2v, the outputs of the two transfer functions,
+[00:08:46 -> 00:08:50] m1 and m2, gave the same answer for the variable v,
+[00:08:50 -> 00:08:57] then that's the answer that will be used for f1 meet f2, right?
+[00:08:57 -> 00:09:01] Recall, basically, this is f1's answer and this is f2's answer.
+[00:09:02 -> 00:09:06] And in a way, this is basically saying I want to take an intersection that if
+[00:09:06 -> 00:09:08] they basically have the same value, then use that value.
+[00:09:08 -> 00:09:10] And if they have different values, or
+[00:09:10 -> 00:09:15] either of them is an unknown value, then you just use unknown, okay?
+[00:09:15 -> 00:09:18] And so this is just the meet operator of the transfer functions.
+[00:09:18 -> 00:09:21] Actually, there's nothing spectacular here either.
+[00:09:21 -> 00:09:25] The meet of the function is basically similar to the meet of the values
+[00:09:25 -> 00:09:30] in using set intersection as you typically do for available expressions.
+[00:09:31 -> 00:09:34] Finally, the interesting part of this whole formulation,
+[00:09:34 -> 00:09:36] which is the closure of the transfer function.
+[00:09:36 -> 00:09:38] Recall that for region-based analysis,
+[00:09:38 -> 00:09:41] like the induction variable analysis, I want to summarize the transfer
+[00:09:41 -> 00:09:45] function of the entire loop based on the transfer function of the body of the loop.
+[00:09:45 -> 00:09:49] And that's where the closure function is going to help us.
+[00:09:49 -> 00:09:53] The closure is going to say, what happens if I just apply,
+[00:09:53 -> 00:09:59] if I just compose f with itself n number of times or an arbitrary number of times.
+[00:09:59 -> 00:10:02] And so given fb, which is the loop body's transfer function,
+[00:10:02 -> 00:10:05] we want to identify the value for
+[00:10:05 -> 00:10:09] each induction variable at the beginning of an iteration, of the i-th iteration,
+[00:10:10 -> 00:10:15] and the value of the variable after an unknown number of iterations, right?
+[00:10:15 -> 00:10:19] So I want to identify two things in my induction variable analysis.
+[00:10:19 -> 00:10:23] One is what is the value of every variable after a known number of iterations,
+[00:10:23 -> 00:10:25] let's say i number of iterations,
+[00:10:25 -> 00:10:28] and what is the value of every variable after an unknown number of iterations,
+[00:10:28 -> 00:10:32] where we can't really say how many iterations have already elapsed.
+[00:10:32 -> 00:10:38] And to do that, I'm going to basically define that this is going to be a part of my closure.
+[00:10:39 -> 00:10:44] And so if I have fb, then I'm going to define fb to the power i of m0.
+[00:10:44 -> 00:10:48] So m0 is the input map at the beginning of the first iteration of the loop.
+[00:10:48 -> 00:10:54] m1 is the map at the end of the first iteration of the loop.
+[00:10:54 -> 00:10:57] And the fb is basically relating m0 with m1,
+[00:10:57 -> 00:11:00] because that's the transfer function of one invocation of the loop body.
+[00:11:00 -> 00:11:06] Now, once I have this information, given such an fb,
+[00:11:06 -> 00:11:09] I want to construct fl, which is the loop transfer function.
+[00:11:09 -> 00:11:12] And so that's what it's going to look like.
+[00:11:12 -> 00:11:15] I'm going to define fb to the power i of m0,
+[00:11:15 -> 00:11:20] and that's just fb composed with fb to the power i minus 1 of m0.
+[00:11:20 -> 00:11:24] And then I'm going to define fb star, which is for unknown number of iterations.
+[00:11:24 -> 00:11:29] So fb to the power i is the value of the variables after a known number of iterations,
+[00:11:29 -> 00:11:31] i number of iterations,
+[00:11:31 -> 00:11:37] and fb star is the values of the variables after an unknown number of iterations.
+[00:11:37 -> 00:11:41] Notice that this star and this star, the closure star, are two different things.
+[00:11:41 -> 00:11:47] Here I'm using the star operator to represent the fact that this is an unknown number of iterations.
+[00:11:47 -> 00:11:52] Here I'm using the star to represent that this is a closure of the transfer function.
+[00:11:52 -> 00:11:55] This whole thing is the closure of a transfer function.
+[00:11:56 -> 00:12:03] This will be used, this whole thing will be used to define the closure of the transfer function for an induction variable analysis.
+[00:12:03 -> 00:12:06] So what would the closure look like?
+[00:12:06 -> 00:12:09] Well, once again, it's not going to be something unexpected.
+[00:12:09 -> 00:12:17] If I have m1v equals m0v, so the iteration of one loop basically preserves the value of a variable v,
+[00:12:17 -> 00:12:24] then even after i minus 1 iterations, I'm going to get mi minus 1v equals m0v.
+[00:12:24 -> 00:12:28] So I'm using the subscript to represent how many iterations have elapsed.
+[00:12:28 -> 00:12:32] So if after one iteration, the expression for the variable is identical,
+[00:12:32 -> 00:12:38] then after i minus 1 iterations also the expression for the variable would be identical.
+[00:12:38 -> 00:12:42] This basically means that the variable v was a loop invariant variable.
+[00:12:42 -> 00:12:45] And in fact, also m star v would be equal to m0,
+[00:12:45 -> 00:12:51] where m star v represents the value of a variable after an unknown number of iterations.
+[00:12:51 -> 00:12:53] It's a loop invariant variable.
+[00:12:53 -> 00:12:56] Even if we don't know how many iterations have been elapsed,
+[00:12:56 -> 00:13:02] we can be sure that the value of the variable would be the same as at the entry of the loop.
+[00:13:02 -> 00:13:05] Now, that was the loop invariant variable case.
+[00:13:05 -> 00:13:10] What if m1v equals m0v plus some constant c?
+[00:13:10 -> 00:13:13] And these type of variables are called basic induction variables.
+[00:13:13 -> 00:13:18] The reason they are called basic induction variables is because there is no multiplier to m0.
+[00:13:18 -> 00:13:21] The multiplier for m0 is only 1.
+[00:13:21 -> 00:13:23] And so these are called basic induction variables.
+[00:13:23 -> 00:13:29] And if I have such a transfer function for some variable inside the loop body,
+[00:13:29 -> 00:13:35] then for i minus 1 iterations, I can say that m0, mi minus 1v would be m0v plus
+[00:13:35 -> 00:13:41] whatever is the constant c multiplied by the number of iterations, in this case i minus 1.
+[00:13:41 -> 00:13:46] And m star v, unknown number of iterations, the answer would simply be unknown
+[00:13:46 -> 00:13:51] because the number of iterations is unknown and so we don't know how much to multiply c with.
+[00:13:51 -> 00:13:56] And so the answer for m star v will be unknown.
+[00:13:56 -> 00:14:02] Now, that was after the end of the i minus 1th iteration or at the beginning of the ith iteration.
+[00:14:02 -> 00:14:05] What about during the ith iteration?
+[00:14:05 -> 00:14:12] During the ith iteration, I'm going to see what is, let's say my transfer function for a certain statement
+[00:14:12 -> 00:14:25] is c0 plus summation ck of, so it's something like, let's say c0 plus c1 into x1 plus c2 into x2.
+[00:14:25 -> 00:14:30] But actually, it's not x1, m2, I want to say m0 x1 and m0 x2.
+[00:14:30 -> 00:14:34] And this is the transfer function of the loop body, right?
+[00:14:34 -> 00:14:39] Recall that example that we discussed last time, these m0s can accumulate.
+[00:14:39 -> 00:14:46] So for example, m0 is representing the value of, m0 x1 is representing the value of x1 at the beginning of the iteration.
+[00:14:46 -> 00:14:53] And if you've been manipulating x1, then m0 x1 can be different from the current value of x1.
+[00:14:53 -> 00:14:59] And based on that, you would have identified the transfer function for a loop body in some of this form.
+[00:14:59 -> 00:15:02] For example, you would have said c0 plus c1 into m0 x1.
+[00:15:02 -> 00:15:09] For example, c0 plus 2 into m0 x1 plus 3 into m0 x2 and so on, something like that.
+[00:15:09 -> 00:15:15] And so that I'm representing as c0 plus summation over k ck m0 vk, right?
+[00:15:15 -> 00:15:20] So v is some variable, c is some constant and I'm summing over k.
+[00:15:20 -> 00:15:27] But I'm only doing this, I'm only considering the case where vk's are loop invariant variables.
+[00:15:27 -> 00:15:33] So let's only look at those statements where the value v is actually, after that particular statement,
+[00:15:33 -> 00:15:40] is basically given by summation ck m0 vk where all the v's are loop invariant.
+[00:15:40 -> 00:15:44] That's one component of this requirement.
+[00:15:44 -> 00:15:49] The other component of the requirement is it's possible that it has more variables which are not loop invariant
+[00:15:49 -> 00:15:56] of the type summation j cj m0 vj, but those vj's need to be basic induction variables, alright?
+[00:15:56 -> 00:15:58] And what are basic induction variables?
+[00:15:58 -> 00:16:01] They need to have a transfer function for the loop body which looks like
+[00:16:01 -> 00:16:07] m1 vj equals m0 vj plus some constant capital Cj.
+[00:16:07 -> 00:16:10] I want to point out here that this is capital C and this is small c.
+[00:16:10 -> 00:16:15] And so this capital Cj is different from this small cj.
+[00:16:15 -> 00:16:21] Now, if my transfer function looks like this, that it is only made up of, it's an affine expression
+[00:16:21 -> 00:16:29] over loop invariant variables and basic induction variables with some constant multipliers, ck's and cj's.
+[00:16:29 -> 00:16:37] Then I can basically use this to compute a summary transfer function for the entire loop using miv
+[00:16:37 -> 00:16:44] which is after i iterations of the loop. It's going to be c0 plus summation over k ck m0 ck.
+[00:16:44 -> 00:16:49] So this part here remains identical because these are all the loop invariant variables.
+[00:16:49 -> 00:16:56] Vk's recall are the loop invariant variables plus summation cj, but instead of m0 vj,
+[00:16:56 -> 00:17:01] I'll have m0 vj plus capital Cj into i minus 1.
+[00:17:01 -> 00:17:13] So this is at the end of the statement i and so I already have i minus 1, iterations have elapsed.
+[00:17:13 -> 00:17:18] And so instead of m0, I want to basically substitute mi minus 1 here.
+[00:17:18 -> 00:17:22] And for mi minus 1, I basically know what is the expression.
+[00:17:22 -> 00:17:28] It is m0 plus Cj into i minus 1 because we know it's a basic induction variable.
+[00:17:28 -> 00:17:32] And so for basic induction variables, I know what should be the value
+[00:17:32 -> 00:17:37] at the end of the i minus 1th iteration at the beginning of the loop.
+[00:17:37 -> 00:17:47] And so this whole thing, let me just write it, is mi minus 1 of vj.
+[00:17:48 -> 00:17:51] All right, so that's what I have expanded here.
+[00:17:51 -> 00:17:56] And so from this, I can compute this summary for mi.
+[00:17:56 -> 00:17:59] Now, what about m star in this case?
+[00:17:59 -> 00:18:05] Well, for m star, I won't be able to say anything and so I'll just say unknown otherwise.
+[00:18:05 -> 00:18:11] So even for m star or if it is true that I cannot represent the transfer function of v
+[00:18:11 -> 00:18:15] as a summation of only loop invariant and basic induction variables,
+[00:18:15 -> 00:18:19] even then my analysis is going to just say that it is unknown.
+[00:18:19 -> 00:18:23] Now, of course, this is a conservative answer.
+[00:18:23 -> 00:18:24] Unknown is always a conservative answer.
+[00:18:24 -> 00:18:28] You may say, oh, why restrict ourselves to only basic induction variables?
+[00:18:28 -> 00:18:30] Why not also allow other induction variables?
+[00:18:30 -> 00:18:34] And in which case, I would have had to basically also have a multiplier effect.
+[00:18:34 -> 00:18:38] For example, I could have said that, you know, just keep raising it to a power
+[00:18:38 -> 00:18:42] because I'm multiplying and so if I accumulate the multiplication for i minus 1 iteration,
+[00:18:43 -> 00:18:47] it's like saying that I have an exponent of i minus 1 on that multiplier.
+[00:18:48 -> 00:18:53] Just that, you know, I'm just describing an analysis where I'm ignoring such things
+[00:18:53 -> 00:18:55] and it's always okay to do that.
+[00:18:55 -> 00:18:58] I'm going to lose some precision but it's not going to be incorrect
+[00:18:58 -> 00:19:00] because it's a conservative analysis.
+[00:19:00 -> 00:19:04] I'm just ignoring some things and which basically means I'm giving
+[00:19:04 -> 00:19:09] an unknown answer in cases where it may have been possible to give a known answer.
+[00:19:10 -> 00:19:15] We are going to discuss in the next module examples of analyses that generalize this idea
+[00:19:15 -> 00:19:21] to more types of patterns including induction variables that are not necessarily basic.
+[00:19:23 -> 00:19:27] All right, what about an unknown number of iterations?
+[00:19:27 -> 00:19:32] For the previous case, if there were some basic induction variables present
+[00:19:32 -> 00:19:36] inside the loop body's transfer function, then I would just use unknown.
+[00:19:36 -> 00:19:39] But if I have a case where the loop body's transfer function maps
+[00:19:40 -> 00:19:46] v to c0 plus summation over k ck m0 vk where all the vks are loop invariant which means
+[00:19:46 -> 00:19:50] that there is no basic induction variable in this affine expression.
+[00:19:50 -> 00:19:54] There are only loop invariant variables in which case even after an unknown number
+[00:19:54 -> 00:20:01] of iterations, I would be able to say that m star v equals c0 plus summation over k ck m0 vk.
+[00:20:02 -> 00:20:04] So what have I done?
+[00:20:04 -> 00:20:09] Using the transfer function of a single iteration which is the loop body's transfer function,
+[00:20:11 -> 00:20:16] I have given you rules to construct the transfer function of the entire loop and
+[00:20:20 -> 00:20:25] when I do that, I have basically specified what is the transfer function for high iterations
+[00:20:25 -> 00:20:30] of a loop for a known number of iterations i of the loop and what is the transfer function
+[00:20:30 -> 00:20:32] for an unknown number of iterations of the loop.
+[00:20:32 -> 00:20:35] When I am constructing the summary transfer function for the entire loop,
+[00:20:35 -> 00:20:41] I have been conservative using unknown values wherever I cannot be sure but for some common
+[00:20:41 -> 00:20:46] patterns which I can use algebraic properties of addition and multiplication.
+[00:20:46 -> 00:20:54] For example, I can just use these rules to compute my summary transfer function
+[00:20:54 -> 00:20:56] as I have shown in this particular rule.
+[00:20:56 -> 00:21:01] If I didn't use the summary transfer function, if I just used the basic
+[00:21:01 -> 00:21:06] dataflow analysis, the vanilla dataflow analysis, I would have got unknown everywhere
+[00:21:06 -> 00:21:10] and so that is the value that this analysis is adding to our framework.
+[00:21:11 -> 00:21:14] Here are some applications of induction variable analysis.
+[00:21:14 -> 00:21:18] We have already seen strength reduction so if I was able to identify that j equals c into i
+[00:21:18 -> 00:21:22] where i is the loop count, then I can replace multiplication with addition.
+[00:21:24 -> 00:21:25] Also we can do the inverse.
+[00:21:25 -> 00:21:31] If I have some loop carried dependencies, for example, I have sum equals sum plus 3
+[00:21:31 -> 00:21:35] and so the second iteration requires the result of the first iteration.
+[00:21:35 -> 00:21:38] So whatever is the value of sum in the previous iteration, I need it to be able
+[00:21:38 -> 00:21:42] to compute the value of sum in the new iteration but using our induction variable
+[00:21:42 -> 00:21:47] analysis, I was able to figure out that sum will be equal to 3 into i where i is the
+[00:21:47 -> 00:21:51] number of iterations that I have executed and using this, I can actually do a parallel
+[00:21:51 -> 00:21:57] for loop and I can implement loop parallelization and so that's a great win.
+[00:21:57 -> 00:22:00] So in many ways, strength reduction was going in the opposite direction.
+[00:22:00 -> 00:22:05] For parallelization, I want to express the variables in terms of the loop iteration
+[00:22:05 -> 00:22:09] variables and for strength reduction, I just want to reduce the strength and
+[00:22:09 -> 00:22:11] eliminate multiplication as much as possible.
+[00:22:12 -> 00:22:15] The loop parallelization is a very important application of induction variable analysis.
+[00:22:16 -> 00:22:20] Finally, there are several other loop transformations including polyhedral
+[00:22:20 -> 00:22:25] transformations that are enabled by such an induction variable analysis because it
+[00:22:25 -> 00:22:30] gives you more information about how the variables are evolving as the loop iterations
+[00:22:30 -> 00:22:38] proceed.

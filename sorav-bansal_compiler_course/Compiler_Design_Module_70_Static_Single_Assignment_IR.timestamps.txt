@@ -1,0 +1,210 @@
+Title: Compiler Design Module 70 : Static Single Assignment IR
+Video ID: uqTT3gI7KU8
+Detected language: en
+------------------------------------------------------------
+
+[00:00:00 -> 00:00:05] So we'll now discuss a category of IRs or intermediate representations called static
+[00:00:05 -> 00:00:08] single assignment IRs or SSAs.
+[00:00:08 -> 00:00:15] So to understand what is SSA IR, consider the following code, x equals y plus z, x equals
+[00:00:15 -> 00:00:19] x plus 1, w equals y plus z and v equals x plus 3.
+[00:00:19 -> 00:00:26] Now let's focus on the variable x and x is being assigned twice here and the first
+[00:00:26 -> 00:00:33] assignment is for value y plus z and the second assignment is for value x plus 1 and interestingly
+[00:00:33 -> 00:00:39] later on y plus z is a value that is recomputed but this time stored in w.
+[00:00:39 -> 00:00:46] Now the problem here is that I could have reused the computation of y plus z but only
+[00:00:46 -> 00:00:50] the problem is it has already been overwritten.
+[00:00:50 -> 00:00:55] So for example, this particular computation can be reused here.
+[00:00:56 -> 00:01:02] However, the problem is that this computation was available in the variable x but x has
+[00:01:02 -> 00:01:08] now been clobbered with some other value and so it's no longer reusable.
+[00:01:08 -> 00:01:12] So how do you solve this problem and one answer to this problem is the SSA form.
+[00:01:12 -> 00:01:13] So what is the SSA form?
+[00:01:13 -> 00:01:20] Well, it just creates different versions of every variable such that every version
+[00:01:20 -> 00:01:22] has only one assignment to it.
+[00:01:22 -> 00:01:29] So for example, for x, we have two versions x1 and x2 and for w and v because they are
+[00:01:29 -> 00:01:36] being only assigned once in this program, we just have w1 and v1 and when we do this
+[00:01:36 -> 00:01:38] then we also change the uses of x.
+[00:01:38 -> 00:01:45] So for example, x1, depending on what version is reaching there, so at this
+[00:01:45 -> 00:01:51] point of x, this version is reaching so we just label it x1, this is x2 and so
+[00:01:51 -> 00:01:56] everything below x2's assignment will basically get renamed to x2.
+[00:01:56 -> 00:02:01] Every use of x below this assignment is going to get used to x2 and so this
+[00:02:01 -> 00:02:06] particular assignment, this particular use of x gets renamed to x2.
+[00:02:06 -> 00:02:11] So this is called static single assignment because it's a single assignment for every
+[00:02:11 -> 00:02:15] variable in a static, when you're looking at the static program.
+[00:02:15 -> 00:02:19] It doesn't mean that dynamically every variable is going to get assigned only
+[00:02:19 -> 00:02:24] once because if there's a loop, for example, then the same static variable can
+[00:02:24 -> 00:02:29] get assigned twice, right, so the same version variable, for example, if there
+[00:02:29 -> 00:02:34] was a loop like this, then x1 can get assigned multiple times but in the
+[00:02:34 -> 00:02:40] static context, it's only being assigned once and using the static
+[00:02:40 -> 00:02:43] single assignment, we can create this optimization now and we can say w1
+[00:02:43 -> 00:02:51] equals x1, all right, instead of x1 equals y plus z and that's an
+[00:02:51 -> 00:02:55] optimization because we have saved the computation, re-computation of y
+[00:02:55 -> 00:03:00] plus z. So why do we care about SSA? We have already seen one example where
+[00:03:00 -> 00:03:05] there is an optimization enabled because of using SSA but
+[00:03:05 -> 00:03:08] basically, you know, we're going to see that optimization algorithms
+[00:03:08 -> 00:03:12] become simpler if each variable has only one definition because then we
+[00:03:12 -> 00:03:16] don't have to track the location or the different versions of every
+[00:03:16 -> 00:03:20] variable because every variable has only one definition, every variable has
+[00:03:20 -> 00:03:25] only one version and so, you know, it's easy to talk about variables
+[00:03:25 -> 00:03:29] from there on and not worry about the variable value at a particular
+[00:03:29 -> 00:03:34] location or anything like that. Also, unrelated uses of the same variable
+[00:03:34 -> 00:03:39] become independent. So, for example, we saw the use of x1 equals y plus z
+[00:03:39 -> 00:03:44] and x2 equals x1 plus 1. Now, x2 and x1 are now completely independent
+[00:03:44 -> 00:03:47] variables and they can be used independent of each other. For example,
+[00:03:47 -> 00:03:53] it is possible that x1 computation can get reused or similar thing
+[00:03:53 -> 00:03:59] could have happened for x2. And the third very important reason to
+[00:03:59 -> 00:04:03] use SSA is that more values become available at each program point.
+[00:04:03 -> 00:04:09] So even for the example that we just saw, when we do w equals y plus z,
+[00:04:09 -> 00:04:12] now there are two values available there. There's x1 and x2 which are both
+[00:04:12 -> 00:04:16] available and one of those values actually happens to be the same value
+[00:04:16 -> 00:04:20] that we want to compute into w at that program point. And so,
+[00:04:20 -> 00:04:26] because both x1 and x2 are available, that helps and we can just say w
+[00:04:26 -> 00:04:29] equals x1, right? On the other hand, if I didn't have SSA,
+[00:04:29 -> 00:04:32] only one of x1 or x2 would have been available at that particular
+[00:04:32 -> 00:04:36] program point and maybe I would have missed the optimization because of
+[00:04:36 -> 00:04:42] that. So these are some important advantages of SSA and that's why
+[00:04:42 -> 00:04:50] SSA is a very popular method to do IR design and many optimizations
+[00:04:50 -> 00:04:57] become easier on SSA IR. In fact, LLVM IR is also an SSA IR.
+[00:04:57 -> 00:05:04] Okay, so how do you convert to SSA? So when we did our code generation,
+[00:05:04 -> 00:05:09] we basically didn't have SSA. So we'll recall the IGEN function that
+[00:05:09 -> 00:05:13] would take abstract syntax tree and generate the IR code for that.
+[00:05:13 -> 00:05:18] And in that, we didn't really discuss how to generate an SSA IR.
+[00:05:18 -> 00:05:21] We're just generating a regular IR where it is possible for the
+[00:05:21 -> 00:05:25] same variable to be assigned more than once. But if I have such
+[00:05:25 -> 00:05:28] an IR, then it's possible to convert it into an SSA form.
+[00:05:28 -> 00:05:33] So any program that is not originally in SSA form can be converted
+[00:05:33 -> 00:05:36] into an SSA form and the idea is very simple. We're going to replace
+[00:05:36 -> 00:05:41] the target of each assignment with a new variable. So for example,
+[00:05:41 -> 00:05:45] x becomes x1 and if x is assigned again, then that becomes x2 and so
+[00:05:45 -> 00:05:48] on and so forth. And then we're going to replace each use of a
+[00:05:48 -> 00:05:52] variable with the version of the variable reaching that point.
+[00:05:52 -> 00:05:55] And this is exactly what we did in the example that we just saw.
+[00:05:55 -> 00:05:58] So for every use of that variable, we're going to see what is the
+[00:05:58 -> 00:06:01] version that is reaching here. And depending on the version that is
+[00:06:01 -> 00:06:05] reaching there, we are going to rename it with the appropriate
+[00:06:05 -> 00:06:10] versioned name of that particular variable.
+[00:06:10 -> 00:06:14] So let's again look at this example. We have this IR which is
+[00:06:14 -> 00:06:17] not in SSA form because you can see that x is being assigned
+[00:06:17 -> 00:06:21] twice in this particular program. And then what I'm going to do
+[00:06:21 -> 00:06:23] is I'm going to say, okay, for every assignment, we're going
+[00:06:23 -> 00:06:28] to rename it to new variable. So I basically say x becomes x1
+[00:06:28 -> 00:06:31] and the first assignment becomes x1 and the second assignment
+[00:06:31 -> 00:06:38] becomes x2. Similarly, the first use, the use of x in a
+[00:06:38 -> 00:06:42] equals b plus x is basically being reached by the
+[00:06:42 -> 00:06:46] definition x1 and so here it becomes x1. And similarly, in
+[00:06:46 -> 00:06:50] this particular statement, y equals x minus a, the use of
+[00:06:50 -> 00:06:58] x that is being used is x2 and so this becomes x2 minus a.
+[00:06:58 -> 00:07:02] All right, so but that was just for a single straight line
+[00:07:02 -> 00:07:05] sequence of code. Here is a slightly more complicated
+[00:07:05 -> 00:07:08] example, which has some control flow in it. So let's
+[00:07:08 -> 00:07:12] say the first instruction is x equals y plus z. Let's say
+[00:07:12 -> 00:07:15] the second instruction is x equals x plus 2 and then maybe
+[00:07:15 -> 00:07:18] I want to check whether x is less than 42 or not. If it
+[00:07:18 -> 00:07:21] is, then I want to go to this branch and say y equals a
+[00:07:21 -> 00:07:25] plus b and x equals 3. If not, then I say y equals 0.
+[00:07:25 -> 00:07:29] And here they both meet, these both paths meet and then
+[00:07:29 -> 00:07:33] here I want to say z equals x plus y. Now I want to know,
+[00:07:33 -> 00:07:37] you know, there are two variables here that are of
+[00:07:37 -> 00:07:41] interest, x and y. There's also z, but z is kind of
+[00:07:41 -> 00:07:44] only being assigned once. x is being assigned
+[00:07:44 -> 00:07:50] thrice actually, 1, 2 and 3 and y is being assigned twice,
+[00:07:50 -> 00:07:55] 1 and 2. All right, and question is what, how am I
+[00:07:55 -> 00:07:59] going to rename this? So for example, it could be easy.
+[00:07:59 -> 00:08:03] I could just say this is x1, this is x2. I could say
+[00:08:03 -> 00:08:07] this is y1, this is y2 and now I need to rename, right?
+[00:08:07 -> 00:08:10] So this, what is the, what is the version of x that's
+[00:08:10 -> 00:08:13] reaching this point? It's x2. So I'm going to say 2
+[00:08:13 -> 00:08:16] here and then what is the version of x that's reaching
+[00:08:16 -> 00:08:19] here? Well, it's again x2. So I'm going to say 2
+[00:08:19 -> 00:08:23] here as well and then the question is what is the
+[00:08:23 -> 00:08:28] version of x that is reaching here? And the answer is again 2
+[00:08:28 -> 00:08:32] because on both parts it is actually the same version x2
+[00:08:32 -> 00:08:37] that is reaching here. All right, so I'm going to say 2.
+[00:08:37 -> 00:08:40] Now I want to do the same thing for y. So y, y1
+[00:08:40 -> 00:08:44] and y2 and what are the uses of y? y is being used only at this
+[00:08:44 -> 00:08:48] particular location when we are assigning to z. But now
+[00:08:48 -> 00:08:51] we have a problem because on one path it's y1 that's
+[00:08:51 -> 00:08:54] reaching and in another path it's y2 that's reaching. So
+[00:08:54 -> 00:08:58] which one should I use? Actually it would be incorrect to use any
+[00:08:58 -> 00:09:00] one of them and so we need to do something about this,
+[00:09:00 -> 00:09:04] all right? And so before we are able to answer this
+[00:09:04 -> 00:09:07] question, let me just first pose this question. So question
+[00:09:07 -> 00:09:11] is what should be the version for y here, okay? And
+[00:09:11 -> 00:09:13] that's a big, that's a problem in this SSA
+[00:09:13 -> 00:09:15] representation and we're going to see what is the
+[00:09:15 -> 00:09:20] solution for this problem. But before we look at that, let's
+[00:09:20 -> 00:09:23] first use some definitions. So I'm going to
+[00:09:23 -> 00:09:26] define the notion of a basic block. What is a basic block?
+[00:09:26 -> 00:09:29] A basic block is a maximal sequence of instructions
+[00:09:29 -> 00:09:33] with no labels except at the first instruction. When I say no labels,
+[00:09:33 -> 00:09:36] it basically means that the internal instructions should have no labels,
+[00:09:36 -> 00:09:39] which means nobody should be able to jump to the middle
+[00:09:39 -> 00:09:43] of a basic block. Somebody can jump to the first
+[00:09:43 -> 00:09:46] instruction of the basic block but never to the middle
+[00:09:46 -> 00:09:50] of the basic block. Here I'm assuming that you can only,
+[00:09:50 -> 00:09:53] you know, the program can only jump to labels and that's what
+[00:09:53 -> 00:09:57] no labels are supposed to signify and no jumps except in the last instruction.
+[00:09:57 -> 00:10:04] So there should not be any outbound control
+[00:10:04 -> 00:10:06] flow from the basic block except at the
+[00:10:06 -> 00:10:11] last instruction, all right? So let's look at this.
+[00:10:11 -> 00:10:15] This whole, you know, in fact, the way I've drawn this, all these rectangles here
+[00:10:15 -> 00:10:21] represent basic blocks, okay? And actually I will show that, you know,
+[00:10:21 -> 00:10:24] no kind of bigger rectangles can be created here
+[00:10:24 -> 00:10:28] because if I try to create bigger rectangles, I'll have one or the one
+[00:10:28 -> 00:10:32] of the conditions being violated. For example, if I try to include
+[00:10:32 -> 00:10:35] y equals a plus b into the first basic block, then
+[00:10:35 -> 00:10:38] the second condition gets violated because the middle instruction is
+[00:10:38 -> 00:10:43] jumping out and similarly if I try to include,
+[00:10:43 -> 00:10:45] let's say,
+[00:10:46 -> 00:10:50] z equals x plus y into this one, then I add the first condition that's being
+[00:10:50 -> 00:10:54] violated because now I'll have a jump to the middle of that particular
+[00:10:54 -> 00:10:57] basic block and so this is the right basic block
+[00:10:57 -> 00:11:02] decomposition of this particular program. So what's the basic idea? The basic
+[00:11:02 -> 00:11:05] idea is that it should not be possible to jump
+[00:11:05 -> 00:11:09] into the middle of a basic block except at the beginning.
+[00:11:09 -> 00:11:13] You shouldn't be able to jump out of a basic block
+[00:11:13 -> 00:11:16] in the middle. You're allowed to jump at the end but not
+[00:11:16 -> 00:11:21] from the middle and basically it should be a single entry, single exit,
+[00:11:21 -> 00:11:24] straight line code segment, all right? So this is an easy way to remember.
+[00:11:24 -> 00:11:29] Single entry, single exit, straight line, all right? So these are the three
+[00:11:29 -> 00:11:32] adjectives. So any code segment which kind of
+[00:11:32 -> 00:11:37] satisfies these three adjectives is a basic block. So
+[00:11:37 -> 00:11:40] with that definition, let's try to understand what are the versions that
+[00:11:40 -> 00:11:45] are reaching for y. So for x we know it's x2
+[00:11:45 -> 00:11:49] but for y what are the versions that are reaching here and we want to
+[00:11:49 -> 00:11:53] say that if I'm on this path then it's 1 and if I'm on this path
+[00:11:53 -> 00:11:56] then it's 2, okay? And so how do I represent
+[00:11:56 -> 00:12:00] that? The solution is we have the notion of
+[00:12:00 -> 00:12:04] a phi node also known as the phi function, all right?
+[00:12:04 -> 00:12:09] And you can basically define a new version of y, y3
+[00:12:09 -> 00:12:16] and you say y3 equals phi, y1 comma y2, all right? Which means that
+[00:12:16 -> 00:12:21] y3 can be either y1 or y2 depending on whether it came from
+[00:12:21 -> 00:12:25] this path or from the second path. So these
+[00:12:25 -> 00:12:27] arguments are actually an ordered set, right?
+[00:12:28 -> 00:12:30] The order also represents the order of
+[00:12:30 -> 00:12:33] control flow edges. So we're also assuming that the
+[00:12:33 -> 00:12:37] incoming control flow edges are ordered. So this is the first edge, so let me
+[00:12:37 -> 00:12:38] just write it. Let's say this is the first edge
+[00:12:38 -> 00:12:43] and this is the second edge and so if I'm coming from the first edge
+[00:12:43 -> 00:12:49] then y3 is y1 and if I'm coming from the second edge then y3 is y2
+[00:12:49 -> 00:12:54] and now I can say z equals x2 plus y3, all right? So I'm using a
+[00:12:54 -> 00:12:59] special function or node called phi function or phi node
+[00:12:59 -> 00:13:02] and I'm defining the semantics so that it chooses
+[00:13:02 -> 00:13:05] appropriately depending on which incoming edge
+[00:13:05 -> 00:13:10] the value came from and then that's what gets assigned to a new
+[00:13:10 -> 00:13:13] version of the variable y3 in this case and that's the version
+[00:13:13 -> 00:13:18] that we get to use in all uses of y from there on
+[00:13:18 -> 00:13:22] because that's the version that reaches all the uses of y
+[00:13:22 -> 00:13:27] from there on. So phi function chooses the version
+[00:13:27 -> 00:13:30] depending on the incoming edge, all right? That's important, it's not a
+[00:13:30 -> 00:13:34] non-deterministic thing, it's a completely deterministic value return
+[00:13:34 -> 00:13:37] which is based on what is the incoming edge that was traversed
+[00:13:37 -> 00:13:41] to reach that particular basic block and one of the big very important
+[00:13:41 -> 00:13:45] properties is that it is only present at the beginning of a basic block,
+[00:13:45 -> 00:13:47] all right? So phi function is only present at the beginning of the
+[00:13:47 -> 00:13:50] basic block because that is the only place where there can be
+[00:13:50 -> 00:13:54] potentially multiple incoming edges and so the phi function problem can only
+[00:13:54 -> 00:13:57] happen when you have multiple incoming edges
+[00:13:57 -> 00:14:00] and there are different versions that are flowing
+[00:14:00 -> 00:14:03] on those two different incoming edges and so the phi function will
+[00:14:03 -> 00:14:06] basically help resolve that problem by
+[00:14:06 -> 00:14:09] letting you choose the version depending on which
+[00:14:09 -> 00:14:12] incoming edge was traversed.

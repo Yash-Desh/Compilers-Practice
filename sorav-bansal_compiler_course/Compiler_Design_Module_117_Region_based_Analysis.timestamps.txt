@@ -1,0 +1,616 @@
+Title: Compiler Design Module 117 : Region based Analysis
+Video ID: EVECYjwAtBQ
+Detected language: en
+------------------------------------------------------------
+
+[00:00:00 -> 00:00:06] Last time we discussed how a symbolic analysis at the loop level can produce more precise
+[00:00:06 -> 00:00:12] transfer functions or answers, values than what a regular vanilla DFA dataflow analysis
+[00:00:12 -> 00:00:13] would produce.
+[00:00:13 -> 00:00:18] Now, the question here is we want to somehow reason about both the dataflow analysis of
+[00:00:18 -> 00:00:24] the larger program and the loop level symbolic analysis in a single framework, right?
+[00:00:24 -> 00:00:29] Because loops are only a part of the larger program, we may want to use symbolic analysis
+[00:00:29 -> 00:00:33] for loops, but then we also want to integrate it with the dataflow analysis in the rest of
+[00:00:33 -> 00:00:34] the program.
+[00:00:34 -> 00:00:39] After all, when we talk about the loops symbolic analysis, we have to worry about what is the
+[00:00:39 -> 00:00:43] initial value that comes into the loop or what's the initial mapping that comes into
+[00:00:43 -> 00:00:44] the loop.
+[00:00:44 -> 00:00:47] And to get that initial mapping, we need the dataflow analysis on the rest of
+[00:00:47 -> 00:00:48] the program.
+[00:00:48 -> 00:00:52] So the question is, and then there can be multiple loops, there can be nested loops
+[00:00:52 -> 00:00:53] and things like that.
+[00:00:53 -> 00:00:57] And so the question is, how do you integrate them, how do you tie this all together
+[00:00:57 -> 00:01:01] into a single analysis framework?
+[00:01:01 -> 00:01:07] So the high level idea is that we are going to treat a loop as a single statement and
+[00:01:07 -> 00:01:10] define its transfer function for the DFA, right?
+[00:01:10 -> 00:01:15] So we're going to basically behave as though the whole loop is a single statement.
+[00:01:15 -> 00:01:19] And then we're going to do the DFA for the entire program.
+[00:01:19 -> 00:01:22] And then when we hit the loop, then we are going to basically find out what's
+[00:01:22 -> 00:01:27] the DFA, what's the transfer function of that loop statement, that compound statement
+[00:01:27 -> 00:01:31] that is representing the loop and why we are and to identify the transfer function
+[00:01:31 -> 00:01:35] of that single statement, we are going, we can use any sophisticated analysis.
+[00:01:35 -> 00:01:39] For example, we can use a symbolic analysis.
+[00:01:39 -> 00:01:44] So internally, to identify the transfer function of that statement that
+[00:01:44 -> 00:01:47] represents the loop, we're going to use symbolic analysis to identify a more
+[00:01:47 -> 00:01:50] precise transfer function than what a dataflow analysis would have given us.
+[00:01:50 -> 00:01:54] So this is a high level idea on how to tie this together into a single
+[00:01:54 -> 00:01:55] framework.
+[00:01:55 -> 00:01:59] And notice that this is somewhat similar to how we used to treat a basic block
+[00:01:59 -> 00:02:00] as a single statement.
+[00:02:00 -> 00:02:04] Recall that when we were discussing dataflow analysis and the first few
+[00:02:04 -> 00:02:09] modules of dataflow analysis, then we discussed how it may be easier to talk
+[00:02:09 -> 00:02:13] about every basic block as a single statement, especially when we are
+[00:02:13 -> 00:02:14] talking about gen and kill sets.
+[00:02:14 -> 00:02:18] And so we define gen and kill over the entire basic block instead of
+[00:02:18 -> 00:02:21] dealing with every statement separately.
+[00:02:21 -> 00:02:25] When we were discussing that treating a single basic block as a single
+[00:02:25 -> 00:02:29] statement, we were basically interested in efficiency, but this time we are
+[00:02:29 -> 00:02:30] interested in precision, all right?
+[00:02:30 -> 00:02:35] So when we were discussing basic block, you know, we were basically using
+[00:02:35 -> 00:02:37] gen and kill sets and just composing them together.
+[00:02:37 -> 00:02:40] It wasn't really giving us any different answer than what it would have
+[00:02:40 -> 00:02:44] given us if we didn't consider basic blocks as single statements.
+[00:02:44 -> 00:02:47] But here, when we treat the loop as a single statement, we are
+[00:02:47 -> 00:02:48] expecting different answers.
+[00:02:48 -> 00:02:53] In particular, we are expecting more precise answers than if we consider
+[00:02:53 -> 00:02:58] the loop as a general graph, as a general subgraph.
+[00:02:58 -> 00:03:04] OK, so you may say, OK, you consider a loop as a single statement,
+[00:03:04 -> 00:03:06] but then what if it has nested loops?
+[00:03:06 -> 00:03:09] So you also want to consider that those nested loops as a single
+[00:03:09 -> 00:03:10] statement and so on.
+[00:03:10 -> 00:03:13] And so this becomes a hierarchical structure, all right?
+[00:03:13 -> 00:03:16] And so what are we going to do is we are going to recursively divide
+[00:03:16 -> 00:03:21] the control flow graph into these subgraphs, which we are going to
+[00:03:21 -> 00:03:22] call regions.
+[00:03:22 -> 00:03:27] And so this kind of data flow analysis is also called region-based analysis.
+[00:03:27 -> 00:03:30] And then we are going to identify transfer functions for each
+[00:03:30 -> 00:03:31] region.
+[00:03:31 -> 00:03:34] Notice the word recursively because maybe at the high level, we
+[00:03:34 -> 00:03:38] just, you know, we just, we can just see every top level loop.
+[00:03:38 -> 00:03:41] Let's say there was, you know, there was one loop at the top level
+[00:03:41 -> 00:03:44] and there was another loop inside that, nested inside that top level
+[00:03:44 -> 00:03:45] loop.
+[00:03:45 -> 00:03:48] Then at the larger level, we just see the top level loop as a
+[00:03:48 -> 00:03:49] single statement.
+[00:03:49 -> 00:03:53] Then when I try to look within that loop, then I see another loop as a
+[00:03:53 -> 00:03:54] single statement.
+[00:03:54 -> 00:03:58] And then when I look within that loop, then I see an actual subgraph
+[00:03:58 -> 00:04:01] that we have to do symbolic analysis on, all right?
+[00:04:01 -> 00:04:05] So regions form hierarchical structure and that's why we
+[00:04:05 -> 00:04:09] recursively divide the control flow graph into regions.
+[00:04:09 -> 00:04:10] So here's an example.
+[00:04:10 -> 00:04:12] So this is an entire control flow graph.
+[00:04:12 -> 00:04:15] It's a pretty complex control flow graph.
+[00:04:15 -> 00:04:17] It is a reducible control flow graph.
+[00:04:17 -> 00:04:20] So we are only talking about reducible graphs as we have discussed
+[00:04:20 -> 00:04:21] earlier.
+[00:04:21 -> 00:04:24] We're going to focus our attention purely on reducible graphs
+[00:04:24 -> 00:04:29] because A, they are the most commonly common programs.
+[00:04:29 -> 00:04:31] Most common programs are reducible graphs.
+[00:04:31 -> 00:04:34] And B, even if some program is not reducible, it's possible to
+[00:04:34 -> 00:04:37] convert it into a reducible graph, all right?
+[00:04:37 -> 00:04:41] So the first thing is we can have a region for the entire
+[00:04:41 -> 00:04:44] procedure, okay?
+[00:04:44 -> 00:04:46] So that means that maybe I want to do some kind of symbolic
+[00:04:46 -> 00:04:50] analysis on the entire procedure and reason about the entire
+[00:04:50 -> 00:04:54] procedure in a, you know, about the transfer function of an
+[00:04:54 -> 00:04:56] entire procedure as the transfer function of a single
+[00:04:56 -> 00:04:57] statement.
+[00:04:57 -> 00:05:00] So maybe I have some other very sophisticated analysis that
+[00:05:00 -> 00:05:04] can reason about the entire procedure and I want to allow
+[00:05:04 -> 00:05:05] for that.
+[00:05:05 -> 00:05:08] And so the highest level region can be the region for
+[00:05:08 -> 00:05:11] the entire procedure, okay?
+[00:05:11 -> 00:05:14] Then we can have at the second level, a region, one
+[00:05:14 -> 00:05:17] region for every top level loop.
+[00:05:17 -> 00:05:19] So in this program, you can identify, you can see all
+[00:05:19 -> 00:05:22] these back edges that are basically edges that are going
+[00:05:22 -> 00:05:25] from bottom to top or these kind of things.
+[00:05:25 -> 00:05:27] And so all the green squares here are identifying the
+[00:05:27 -> 00:05:30] top level loops, okay?
+[00:05:30 -> 00:05:33] And notice that there are loops that are nested within
+[00:05:33 -> 00:05:36] these top level loops, for example, this loop here.
+[00:05:36 -> 00:05:37] But at the second level, I'm not, you know, I don't have
+[00:05:37 -> 00:05:40] visibility into the inner loops.
+[00:05:40 -> 00:05:44] I only have visibility to the top level loops.
+[00:05:44 -> 00:05:48] So this is the first level, this is the second level
+[00:05:48 -> 00:05:50] after the procedure level region.
+[00:05:50 -> 00:05:52] And so if I want to do a DFA on the procedure level
+[00:05:52 -> 00:05:55] region, I will summarize this entire top level loop as
+[00:05:55 -> 00:05:58] a single statement, maybe do symbolic analysis on this
+[00:05:58 -> 00:06:02] top level region and reason about the whole transfer
+[00:06:02 -> 00:06:06] function of this entire loop, all right?
+[00:06:06 -> 00:06:09] Then within each loop, within all these top level
+[00:06:09 -> 00:06:12] loops, there could be next level loops, right?
+[00:06:12 -> 00:06:15] So a region for every loop at the next depth levels.
+[00:06:15 -> 00:06:19] For example, this square drawn in orange is basically
+[00:06:19 -> 00:06:22] the next level loop that is nested within this
+[00:06:22 -> 00:06:23] top level loop, all right?
+[00:06:23 -> 00:06:25] So this is the third level of RRG.
+[00:06:25 -> 00:06:27] In this control flow graph, actually there is only
+[00:06:27 -> 00:06:30] one next level loop because all these loops are
+[00:06:30 -> 00:06:34] actually the same because they're sharing, oh,
+[00:06:34 -> 00:06:36] maybe I could have also drawn this one
+[00:06:36 -> 00:06:41] as a next level loop, all right?
+[00:06:41 -> 00:06:45] So, and this one maybe, right?
+[00:06:46 -> 00:06:51] Okay, so these are the next level loops for this graph.
+[00:06:51 -> 00:06:53] So this is the third level of RRG.
+[00:06:53 -> 00:06:56] And now when I'm reasoning about the control flow graph
+[00:06:56 -> 00:06:59] of this green box, then I can first reason about
+[00:06:59 -> 00:07:02] this entire orange box as a single statement,
+[00:07:02 -> 00:07:04] maybe using symbolic analysis, all right?
+[00:07:04 -> 00:07:07] So basically, I'm going to be, at any time,
+[00:07:07 -> 00:07:11] I'm reasoning about at some level of the RRG.
+[00:07:11 -> 00:07:13] And when I'm reasoning about that level of the hierarchy,
+[00:07:13 -> 00:07:16] I treat the region at the next level of the hierarchy
+[00:07:16 -> 00:07:18] as a single statement because that's going to give me
+[00:07:18 -> 00:07:20] a more precise analysis.
+[00:07:20 -> 00:07:21] That's the idea.
+[00:07:22 -> 00:07:24] Finally, I can have a region.
+[00:07:24 -> 00:07:26] So, first of all, you know, the loop nesting depth,
+[00:07:26 -> 00:07:27] nesting could be arbitrary.
+[00:07:27 -> 00:07:30] In this particular example, I'm showing,
+[00:07:30 -> 00:07:33] you know, only two levels of nesting.
+[00:07:33 -> 00:07:36] But maybe your control flow graph has N levels
+[00:07:36 -> 00:07:38] or K levels of nesting, in which case,
+[00:07:38 -> 00:07:40] this loop region hierarchy could be
+[00:07:40 -> 00:07:41] of depth K.
+[00:07:43 -> 00:07:46] And then, after I'm done with all the loops,
+[00:07:46 -> 00:07:47] I've reached the innermost loop,
+[00:07:47 -> 00:07:50] then basically, I can have a region
+[00:07:50 -> 00:07:51] for every basic block.
+[00:07:51 -> 00:07:54] So all these gray boxes here are basically
+[00:07:54 -> 00:07:56] representing basic blocks.
+[00:07:56 -> 00:07:58] In fact, these circles, these nodes,
+[00:07:58 -> 00:07:59] are also, in the control flow graph,
+[00:07:59 -> 00:08:02] are also intended to represent control flow graphs.
+[00:08:02 -> 00:08:05] So these gray boxes are just, you know,
+[00:08:05 -> 00:08:07] around every circle.
+[00:08:07 -> 00:08:10] And then the fifth level of hierarchy of these regions
+[00:08:10 -> 00:08:13] is basically every individual instruction.
+[00:08:13 -> 00:08:14] So that's the lowest level,
+[00:08:14 -> 00:08:16] that's the leaf node of my region tree,
+[00:08:16 -> 00:08:18] because anyway, I have to reason about
+[00:08:18 -> 00:08:20] the transfer function of an individual instruction
+[00:08:20 -> 00:08:23] as the transfer function of a single statement.
+[00:08:24 -> 00:08:25] Okay.
+[00:08:25 -> 00:08:29] So, now that I have divided my program
+[00:08:29 -> 00:08:32] into a hierarchy of regions,
+[00:08:32 -> 00:08:36] for any DFA, I need to assign a transfer function
+[00:08:36 -> 00:08:38] to every region, at every level, okay?
+[00:08:38 -> 00:08:42] So, somehow, let's say I'm able to identify
+[00:08:42 -> 00:08:46] a transfer function for every region, okay?
+[00:08:46 -> 00:08:48] So let me just complete this.
+[00:08:48 -> 00:08:51] So, let's say I have a transfer function
+[00:08:51 -> 00:08:52] for this green region.
+[00:08:52 -> 00:08:54] Then, let's say I have the transfer function
+[00:08:54 -> 00:08:56] for all of these green regions.
+[00:08:56 -> 00:08:58] Then when I'm trying to do the data flow analysis
+[00:08:58 -> 00:08:59] of the procedure level,
+[00:08:59 -> 00:09:01] then I just use the summarized transfer function
+[00:09:01 -> 00:09:04] of the green region to identify the values
+[00:09:04 -> 00:09:07] at all points in the control flow graph.
+[00:09:07 -> 00:09:10] However, because I had summarized the green region,
+[00:09:10 -> 00:09:12] what about the points that are internal
+[00:09:12 -> 00:09:13] to the green regions?
+[00:09:13 -> 00:09:15] So, if I want to identify what are the values
+[00:09:15 -> 00:09:17] that are internal to the green region,
+[00:09:17 -> 00:09:20] then based on the analysis of the higher level,
+[00:09:20 -> 00:09:22] I would be able to know what are the values
+[00:09:22 -> 00:09:24] at the entry of this green region.
+[00:09:24 -> 00:09:26] And using that, now I can go to the next level
+[00:09:26 -> 00:09:30] of hierarchy and run the DFA on inside the green box,
+[00:09:30 -> 00:09:33] which will have gray boxes and orange boxes.
+[00:09:34 -> 00:09:36] And once again, I can use summary functions,
+[00:09:36 -> 00:09:38] summary transfer functions for the orange boxes
+[00:09:38 -> 00:09:40] using some sophisticated analysis.
+[00:09:40 -> 00:09:42] And similarly, potentially I could use summary functions
+[00:09:42 -> 00:09:43] even for basic blocks.
+[00:09:43 -> 00:09:48] But basic blocks, we don't really usually have
+[00:09:50 -> 00:09:51] transfer functions or basic blocks
+[00:09:51 -> 00:09:52] that are more precise
+[00:09:52 -> 00:09:54] than the typical data flow analysis anyway,
+[00:09:54 -> 00:09:56] because basic blocks are the straight line
+[00:09:56 -> 00:09:57] sequences of code.
+[00:09:57 -> 00:09:59] But we've already seen that loops
+[00:09:59 -> 00:10:01] can have better, more precise transfer functions
+[00:10:01 -> 00:10:02] using symbolic analysis.
+[00:10:02 -> 00:10:05] So, we're going to have more precise transfer function
+[00:10:05 -> 00:10:07] for the orange boxes.
+[00:10:07 -> 00:10:08] And based on that, we are going to be able
+[00:10:08 -> 00:10:12] to compute the DFA values inside the green box.
+[00:10:12 -> 00:10:14] Now, once again, we have been able to identify
+[00:10:14 -> 00:10:17] all the DFA values inside the green box
+[00:10:17 -> 00:10:19] and at the orange box boundaries.
+[00:10:19 -> 00:10:22] But what about points within the orange box?
+[00:10:22 -> 00:10:25] Now, once again, we can go to the next level
+[00:10:25 -> 00:10:27] of the hierarchy and run the DFA
+[00:10:27 -> 00:10:29] inside the orange box,
+[00:10:29 -> 00:10:32] using the entry value of the orange box
+[00:10:32 -> 00:10:34] that we have computed by doing the DFA
+[00:10:34 -> 00:10:37] at the green box hierarchy level, and so on.
+[00:10:37 -> 00:10:39] So, this is basically, you know,
+[00:10:39 -> 00:10:42] this is just dividing my DFA,
+[00:10:42 -> 00:10:45] which was earlier organized as a flat structure
+[00:10:45 -> 00:10:47] over the entire control program
+[00:10:47 -> 00:10:49] into a hierarchical structure,
+[00:10:49 -> 00:10:51] where at any level of hierarchy,
+[00:10:51 -> 00:10:53] I assume summary transfer functions
+[00:10:53 -> 00:10:56] for the next level of hierarchy, okay?
+[00:10:57 -> 00:11:00] So, the region hierarchy can be organized as a tree,
+[00:11:00 -> 00:11:01] of course.
+[00:11:01 -> 00:11:04] The top level node of the region hierarchy
+[00:11:04 -> 00:11:05] is the procedure region.
+[00:11:05 -> 00:11:10] And let's say the procedure region has three children
+[00:11:10 -> 00:11:11] in this region hierarchy.
+[00:11:11 -> 00:11:13] The first child is a top level loop.
+[00:11:13 -> 00:11:16] The second child is just a basic block.
+[00:11:16 -> 00:11:19] And the third child is also a top level.
+[00:11:19 -> 00:11:22] And so, if I draw the graph of this top level
+[00:11:22 -> 00:11:25] relationship between the first level and the second level,
+[00:11:25 -> 00:11:27] maybe this is my graph, all right?
+[00:11:27 -> 00:11:29] And I'm using top level loop number one,
+[00:11:29 -> 00:11:33] basic block number one, and top level loop number two.
+[00:11:33 -> 00:11:35] And actually, this is, you know, in the figure,
+[00:11:35 -> 00:11:38] this is one, this is two, and this is three.
+[00:11:39 -> 00:11:41] So, if I look at the top level graph,
+[00:11:41 -> 00:11:43] it just looks like an acyclic graph.
+[00:11:43 -> 00:11:44] The one is going to two,
+[00:11:44 -> 00:11:47] and also there is an entry point.
+[00:11:47 -> 00:11:49] Let's say one is the entry point.
+[00:11:49 -> 00:11:52] One is going to two, two is going to three,
+[00:11:52 -> 00:11:53] and one is going to three.
+[00:11:53 -> 00:11:58] Now, two is actually not just a single statement.
+[00:11:58 -> 00:12:00] Two is actually a basic block.
+[00:12:00 -> 00:12:02] Similarly, one is not a single statement.
+[00:12:02 -> 00:12:04] One is actually a top level loop.
+[00:12:04 -> 00:12:06] So, inside this, there's a loop,
+[00:12:06 -> 00:12:08] but that is completely hidden
+[00:12:08 -> 00:12:09] at this level of region hierarchy.
+[00:12:09 -> 00:12:12] And so, now I can run the DFA on this,
+[00:12:12 -> 00:12:16] pretending that one has a transfer function of its own,
+[00:12:16 -> 00:12:19] as a summary transfer function of its own.
+[00:12:19 -> 00:12:22] And so, now I can run the DFA on this,
+[00:12:22 -> 00:12:24] assuming that one has a summary transfer function
+[00:12:24 -> 00:12:28] of its own, because recall that for region-based analysis
+[00:12:28 -> 00:12:30] I assigned a transfer function for every region.
+[00:12:30 -> 00:12:33] So, the top level loop number one is a region,
+[00:12:33 -> 00:12:36] and I'm pretending as though it's a single statement,
+[00:12:36 -> 00:12:38] and so it has a transfer function
+[00:12:38 -> 00:12:40] just like as though it was a single statement.
+[00:12:40 -> 00:12:41] And so, based on this,
+[00:12:41 -> 00:12:44] I can just do a data flow analysis on this,
+[00:12:44 -> 00:12:46] and I can get my other values at all these program points
+[00:12:46 -> 00:12:49] that are at the boundaries of these regions.
+[00:12:49 -> 00:12:50] But that may not be enough, right?
+[00:12:50 -> 00:12:55] Maybe I want to get into the loop,
+[00:12:55 -> 00:12:58] I want to know what is the value inside the loop,
+[00:12:58 -> 00:12:59] top level loop number one,
+[00:12:59 -> 00:13:01] at some program point within the loop.
+[00:13:01 -> 00:13:05] Now, at this level I didn't have that visibility,
+[00:13:05 -> 00:13:06] so I can't really do that.
+[00:13:06 -> 00:13:09] And so, for that I need to go to the next level.
+[00:13:09 -> 00:13:11] And so, I'm going to go to the next level.
+[00:13:11 -> 00:13:16] And here, top loop number one is basically,
+[00:13:17 -> 00:13:21] let's say, composed of next level loop number three
+[00:13:21 -> 00:13:24] and basic block number two, okay?
+[00:13:24 -> 00:13:25] Similarly, top loop number two
+[00:13:25 -> 00:13:27] is composed of basic block number three
+[00:13:27 -> 00:13:29] and basic block number four.
+[00:13:29 -> 00:13:30] And then basic block number one,
+[00:13:30 -> 00:13:32] I don't really divide anything.
+[00:13:32 -> 00:13:33] Let's say, I assume that basic block
+[00:13:33 -> 00:13:35] is the last level of hierarchy.
+[00:13:35 -> 00:13:36] Although in my previous slide,
+[00:13:36 -> 00:13:38] I had mentioned that an individual instruction
+[00:13:38 -> 00:13:40] is the last level of hierarchy.
+[00:13:40 -> 00:13:41] I can also choose the basic block
+[00:13:41 -> 00:13:43] to be the last level of hierarchy
+[00:13:43 -> 00:13:46] and assign that and just get done with that.
+[00:13:47 -> 00:13:49] Okay, so in this figure, just for simplicity,
+[00:13:49 -> 00:13:51] I'm assuming that I'm going to stop at basic blocks
+[00:13:51 -> 00:13:54] to make my slide less crowded.
+[00:13:55 -> 00:13:58] So in this loop, I basically identify
+[00:13:58 -> 00:14:00] that this is my control flow graph
+[00:14:00 -> 00:14:03] and I'm calling this 2.1 and 2.2.
+[00:14:03 -> 00:14:05] So 2.1 is a region and 2.2 is a region
+[00:14:05 -> 00:14:08] and this is the relationship between them.
+[00:14:08 -> 00:14:10] We enter at 2.1, okay?
+[00:14:10 -> 00:14:12] And we exit at 2.2, all right?
+[00:14:12 -> 00:14:13] So every place where we need to have,
+[00:14:13 -> 00:14:17] we need to know where we enter and where we exit.
+[00:14:17 -> 00:14:19] And then I can kind of,
+[00:14:19 -> 00:14:20] if I was interested in some value
+[00:14:20 -> 00:14:23] at either the beginning or end of 2.1
+[00:14:23 -> 00:14:25] or at the beginning and end of 2.2,
+[00:14:25 -> 00:14:29] I can run the data flow analysis at this level now.
+[00:14:29 -> 00:14:32] The entry value, the boundary condition for this region
+[00:14:32 -> 00:14:34] is going to be the boundary,
+[00:14:34 -> 00:14:36] is going to be the value that was computed
+[00:14:36 -> 00:14:39] through the data flow analysis at the higher level.
+[00:14:39 -> 00:14:42] So whatever is the data flow analysis computed
+[00:14:42 -> 00:14:46] on this graph, we are going to know,
+[00:14:46 -> 00:14:47] based on that, we're going to know
+[00:14:47 -> 00:14:50] what is the entry value at any node, right?
+[00:14:50 -> 00:14:52] So for example, top level loop number one
+[00:14:52 -> 00:14:54] is let's say node number one.
+[00:14:54 -> 00:14:56] So we know what is the entry value
+[00:14:56 -> 00:14:59] and so that's what we're going to use into this graph.
+[00:14:59 -> 00:15:02] Similarly, the basic top level loop number two,
+[00:15:02 -> 00:15:05] which was originally node number three,
+[00:15:05 -> 00:15:07] is getting divided into two basic blocks
+[00:15:07 -> 00:15:09] and this is its control flow graph.
+[00:15:09 -> 00:15:13] This particular is the entry and this is the exit.
+[00:15:13 -> 00:15:14] And so if I want to know
+[00:15:14 -> 00:15:17] what is the boundary condition for this subgraph,
+[00:15:17 -> 00:15:22] that is basically the value that is coming into three
+[00:15:23 -> 00:15:24] from these two different edges
+[00:15:24 -> 00:15:27] and a meet of them or something like that, right?
+[00:15:27 -> 00:15:29] So basically, what is the value
+[00:15:29 -> 00:15:31] that's coming into the three basic block?
+[00:15:31 -> 00:15:35] It's whatever possible value that can come into three
+[00:15:35 -> 00:15:38] and so I can pretend that there are two entries,
+[00:15:38 -> 00:15:40] which basically means that I'm going to meet
+[00:15:40 -> 00:15:43] the two answers and that's what I'm going to assume
+[00:15:43 -> 00:15:45] as the boundary condition for this subgraph.
+[00:15:45 -> 00:15:48] And then I can compute the dataflow analysis
+[00:15:48 -> 00:15:51] on this subgraph, okay?
+[00:15:51 -> 00:15:52] So what am I doing?
+[00:15:52 -> 00:15:56] I have hierarchically divided my dataflow analysis.
+[00:15:56 -> 00:15:58] I first do my dataflow analysis on the top level.
+[00:15:58 -> 00:16:03] Now based on that, I identify the boundary conditions
+[00:16:03 -> 00:16:06] for the next level regions
+[00:16:06 -> 00:16:08] and then using those boundary conditions,
+[00:16:08 -> 00:16:10] I can do dataflow analysis on the next level
+[00:16:10 -> 00:16:15] and I can keep doing this, okay?
+[00:16:15 -> 00:16:18] And finally, let's say this next level loop number three
+[00:16:18 -> 00:16:20] has one basic block and this is its structure.
+[00:16:20 -> 00:16:23] This is the entry and this is the exit
+[00:16:23 -> 00:16:25] and let's say it's called 2.1.1.
+[00:16:25 -> 00:16:28] These labels, I'm just using some labels
+[00:16:28 -> 00:16:31] to distinguish these different regions
+[00:16:31 -> 00:16:33] and in this region, once again,
+[00:16:33 -> 00:16:38] the entry value is going to be based on the value
+[00:16:39 -> 00:16:43] computed from the dataflow analysis
+[00:16:43 -> 00:16:45] and in this case, it's just going to be the entry value here
+[00:16:45 -> 00:16:48] that's going to come here and so on, right?
+[00:16:48 -> 00:16:51] So that's what the dataflow analysis is.
+[00:16:51 -> 00:16:53] I've just divided my dataflow analysis
+[00:16:53 -> 00:16:55] into a hierarchy of regions
+[00:16:55 -> 00:16:59] and I basically pretend as at any level of DFA,
+[00:16:59 -> 00:17:01] I pretend that the next level of regions
+[00:17:01 -> 00:17:04] are singular statements and then compute my DFA
+[00:17:04 -> 00:17:06] and using the DFA values,
+[00:17:06 -> 00:17:09] I can kind of dig into any particular region
+[00:17:09 -> 00:17:12] and compute values inside that DFA for it.
+[00:17:12 -> 00:17:14] Now, based on this region-based analysis,
+[00:17:14 -> 00:17:18] I expect that I can use more precise analysis
+[00:17:18 -> 00:17:21] at any stage at any level of this hierarchy.
+[00:17:21 -> 00:17:23] For example, if I see a loop region,
+[00:17:23 -> 00:17:30] then I can use symbolic analysis for that particular loop.
+[00:17:30 -> 00:17:34] Now, notice that this region-based analysis
+[00:17:34 -> 00:17:36] requires me to have a transfer function
+[00:17:36 -> 00:17:37] for every region.
+[00:17:38 -> 00:17:41] Recall that we basically,
+[00:17:41 -> 00:17:44] a dataflow analysis framework is made up of F,
+[00:17:44 -> 00:17:45] has a component F,
+[00:17:45 -> 00:17:47] which is basically the family of transfer functions.
+[00:17:47 -> 00:17:50] It basically says what is the transfer function
+[00:17:50 -> 00:17:53] that is possible for any entity, for example,
+[00:17:53 -> 00:17:57] a single instruction or a basic block and things like that.
+[00:17:57 -> 00:18:00] Now, trying to define transfer functions
+[00:18:00 -> 00:18:03] for any arbitrary subgraph, for example, a loop,
+[00:18:03 -> 00:18:08] seems rather tricky and you need these transfer functions
+[00:18:09 -> 00:18:11] in advance before you even start
+[00:18:11 -> 00:18:12] doing the dataflow analysis
+[00:18:12 -> 00:18:15] because if you're doing the dataflow analysis
+[00:18:15 -> 00:18:17] at the top level, you need to have the transfer functions
+[00:18:17 -> 00:18:21] of the regions at the next level and so on.
+[00:18:21 -> 00:18:24] So fortunately, there is a very trivial answer
+[00:18:24 -> 00:18:27] to the transfer function of any region
+[00:18:27 -> 00:18:31] and the trivial answer is just run the DFA algorithm
+[00:18:31 -> 00:18:34] inside the region to identify what is the end-to-end
+[00:18:34 -> 00:18:37] transfer function of that region.
+[00:18:37 -> 00:18:40] So a trivial transfer function of a region
+[00:18:40 -> 00:18:43] involves running the DFA fixed point iteration
+[00:18:43 -> 00:18:47] on the constituent subgraph of the next level regions.
+[00:18:47 -> 00:18:51] So for example, let's say this gray circle was a region.
+[00:18:51 -> 00:18:53] It has a single entry and a single exit.
+[00:18:53 -> 00:18:57] I want this region to behave as a single statement
+[00:18:57 -> 00:18:59] and talk about its transfer function,
+[00:18:59 -> 00:19:01] which I'm going to call FL.
+[00:19:01 -> 00:19:02] But if I dig inside this region,
+[00:19:02 -> 00:19:04] then there is one basic block
+[00:19:04 -> 00:19:07] and whose transfer function I know is FB.
+[00:19:08 -> 00:19:10] Then trivially, I can compute FL
+[00:19:10 -> 00:19:14] by just running DFA on this subgraph, right?
+[00:19:14 -> 00:19:15] And that DFA is just going to say,
+[00:19:15 -> 00:19:20] okay, let's say my initial value is X,
+[00:19:20 -> 00:19:24] then I'm just going to run DFA
+[00:19:24 -> 00:19:27] with this boundary condition until I reach a fixed point
+[00:19:27 -> 00:19:29] and then whatever is the value that comes out,
+[00:19:29 -> 00:19:32] let's say that's Y, that is basically going to say,
+[00:19:32 -> 00:19:36] I'll have Y in terms of X based on this function.
+[00:19:36 -> 00:19:38] So notice that the function FL
+[00:19:38 -> 00:19:39] does not need to be a closed form function
+[00:19:39 -> 00:19:40] or anything like that.
+[00:19:40 -> 00:19:42] It just needs to be a computable function
+[00:19:42 -> 00:19:45] and a fixed point iteration is a computable function.
+[00:19:45 -> 00:19:47] By computable, I mean it should terminate.
+[00:19:47 -> 00:19:48] The computation should terminate.
+[00:19:48 -> 00:19:51] And so the terminating computation for FL
+[00:19:51 -> 00:19:53] could be just keep applying FB
+[00:19:53 -> 00:19:55] until you reach a fixed point
+[00:19:55 -> 00:19:56] for this particular example.
+[00:19:56 -> 00:19:59] And so this is what a trivial implementation
+[00:19:59 -> 00:20:00] of FL can look like.
+[00:20:00 -> 00:20:04] Given an input X, you compute Y equals FBX
+[00:20:04 -> 00:20:05] and you keep doing this.
+[00:20:05 -> 00:20:09] You say Y old equals Y, Y equals FBY, meet with Y
+[00:20:09 -> 00:20:12] and you keep doing this until Y is not equal to Y old,
+[00:20:12 -> 00:20:14] which is just checking that
+[00:20:14 -> 00:20:16] we have reached a fixed point or not.
+[00:20:16 -> 00:20:18] Then notice that because of the finite height
+[00:20:18 -> 00:20:20] of the lattice, we would eventually reach a fixed point,
+[00:20:20 -> 00:20:22] the guarantee to reach a fixed point,
+[00:20:22 -> 00:20:24] at which point we are just going to return
+[00:20:24 -> 00:20:28] the current value of Y and we're going to pretend
+[00:20:28 -> 00:20:29] that this is my transfer function.
+[00:20:29 -> 00:20:32] So internally, although we have kind of divided this
+[00:20:32 -> 00:20:34] into a hierarchy, internally we can trivially
+[00:20:34 -> 00:20:36] just run the data flow analysis
+[00:20:36 -> 00:20:38] inside that particular region.
+[00:20:39 -> 00:20:42] You may say what is the advantage of running
+[00:20:42 -> 00:20:44] the whole data flow analysis inside the region,
+[00:20:44 -> 00:20:46] then what was the point of actually dividing
+[00:20:46 -> 00:20:48] hierarchically the control flow graph into regions?
+[00:20:48 -> 00:20:50] And you are absolutely right.
+[00:20:50 -> 00:20:51] That's why I use the word trivial.
+[00:20:51 -> 00:20:53] This is the trivial implementation
+[00:20:53 -> 00:20:55] of a transfer function for a region
+[00:20:55 -> 00:20:57] and the trivial implementation
+[00:20:57 -> 00:20:59] is not going to give you much benefit.
+[00:20:59 -> 00:21:01] But the point is that this region-based analysis
+[00:21:01 -> 00:21:03] and this hierarchical division
+[00:21:03 -> 00:21:04] at least gives you an opportunity
+[00:21:04 -> 00:21:07] to do more sophisticated transfer functions
+[00:21:07 -> 00:21:10] for loops or other regions.
+[00:21:10 -> 00:21:13] But if you don't have a more sophisticated answer,
+[00:21:13 -> 00:21:14] let's say you have not implemented it
+[00:21:14 -> 00:21:16] or you don't know how to do it,
+[00:21:16 -> 00:21:17] then you can always fall back
+[00:21:17 -> 00:21:19] to the trivial implementation.
+[00:21:19 -> 00:21:21] And the trivial implementation is already available,
+[00:21:21 -> 00:21:23] which is just to run the fixed point iteration
+[00:21:23 -> 00:21:30] on the internal subgraph of that particular region.
+[00:21:30 -> 00:21:34] The trivial function behaves like the original DFA.
+[00:21:34 -> 00:21:36] The trivial function is not going to give you any benefit,
+[00:21:36 -> 00:21:39] but at least it gives you an incremental path
+[00:21:39 -> 00:21:44] where you can kind of do your region-based analysis
+[00:21:44 -> 00:21:46] without having to actually have transfer functions
+[00:21:46 -> 00:21:48] for each and every region separately.
+[00:21:48 -> 00:21:50] If you don't have the transfer function for a region,
+[00:21:50 -> 00:21:53] you can always use the trivial transfer function
+[00:21:53 -> 00:21:54] for that region.
+[00:21:54 -> 00:21:59] It is important that when you actually define
+[00:22:00 -> 00:22:01] the transfer function of a region
+[00:22:01 -> 00:22:03] using your sophisticated analysis,
+[00:22:03 -> 00:22:05] such as symbolic analysis for loops,
+[00:22:05 -> 00:22:08] it is important that that particular transfer function
+[00:22:08 -> 00:22:12] produces more precise answers than the trivial function.
+[00:22:12 -> 00:22:14] Only then is this region-based analysis
+[00:22:14 -> 00:22:15] going to help you out.
+[00:22:15 -> 00:22:16] In other words, for all x,
+[00:22:16 -> 00:22:20] it must be true that flregionx is greater than equal
+[00:22:20 -> 00:22:23] to fltrivialx, where greater than equal to
+[00:22:23 -> 00:22:26] is the partial order operator of your semi lattice.
+[00:22:26 -> 00:22:29] And this particular statement here says
+[00:22:29 -> 00:22:32] that the region-based transfer function,
+[00:22:32 -> 00:22:34] which is based on some sophisticated analysis,
+[00:22:34 -> 00:22:37] such as symbolic analysis, should always be more precise
+[00:22:37 -> 00:22:39] than the trivial transfer function of the region.
+[00:22:39 -> 00:22:41] And only then would the region-based analysis
+[00:22:41 -> 00:22:43] give you more precise answers
+[00:22:43 -> 00:22:47] than the trivial flat data flow analysis.
+[00:22:47 -> 00:22:49] Notice that this is a greater than equal to sign.
+[00:22:49 -> 00:22:52] So even if it is equal to, it's okay.
+[00:22:52 -> 00:22:54] But hopefully at least for some loops,
+[00:22:54 -> 00:22:57] it should be greater than.
+[00:22:57 -> 00:23:02] Okay, this is a trivial data transfer function.
+[00:23:02 -> 00:23:05] So this is another example for available expressions.
+[00:23:05 -> 00:23:07] Let's say this is a loop, fl,
+[00:23:07 -> 00:23:08] and I want to talk about the transfer function
+[00:23:08 -> 00:23:13] of this loop, fl, and this is the body of my loop,
+[00:23:13 -> 00:23:16] i++, and check whether i is not equal to n.
+[00:23:16 -> 00:23:17] If it's true, then loop.
+[00:23:17 -> 00:23:19] If it's false, then come out.
+[00:23:19 -> 00:23:24] Then if the trivial transfer function maps m to mt,
+[00:23:24 -> 00:23:27] so m is supposed to represent a mapping
+[00:23:27 -> 00:23:29] from i to its expressions.
+[00:23:29 -> 00:23:34] So for example, i, capital I is an input mapping in m.
+[00:23:34 -> 00:23:36] And then I want to say what is the output mapping.
+[00:23:36 -> 00:23:41] And the trivial mapping is just going to map i to unknown.
+[00:23:41 -> 00:23:43] Because if I just run the data flow analysis
+[00:23:43 -> 00:23:44] on this particular subgraph,
+[00:23:44 -> 00:23:47] I'm going to get unknown value outside.
+[00:23:47 -> 00:23:49] Because the mean of i plus one with i
+[00:23:49 -> 00:23:51] is just going to give me bottom.
+[00:23:51 -> 00:23:53] That's what the available expression says.
+[00:23:53 -> 00:23:55] If the two expressions are different and you meet them,
+[00:23:55 -> 00:23:57] then it's going to give me a bottom.
+[00:23:57 -> 00:23:59] However, if I am able to do a symbolic analysis,
+[00:23:59 -> 00:24:02] then let's say if I have a separate transfer function,
+[00:24:02 -> 00:24:05] which is the fl symbolic of m, and it gives me ms.
+[00:24:05 -> 00:24:07] The trivial one was giving me mt.
+[00:24:07 -> 00:24:10] The symbolic transfer function gives me ms,
+[00:24:10 -> 00:24:12] the mapping ms.
+[00:24:12 -> 00:24:14] Then in the symbolic analysis,
+[00:24:14 -> 00:24:17] I can actually do a deeper analysis and say msi equals n.
+[00:24:17 -> 00:24:19] Because I know that by the time I come out,
+[00:24:19 -> 00:24:20] i must be equal to n.
+[00:24:20 -> 00:24:21] Because the only reason I can come out
+[00:24:21 -> 00:24:24] is when i equals n.
+[00:24:24 -> 00:24:26] Because i is not equal to n should be false.
+[00:24:26 -> 00:24:28] So by the time I come out, i should be n.
+[00:24:28 -> 00:24:29] And so in this particular case,
+[00:24:29 -> 00:24:32] it's very clear that fl symbolic is giving me
+[00:24:32 -> 00:24:35] a more precise map than fl trivial.
+[00:24:35 -> 00:24:39] And so this is giving me a benefit.
+[00:24:39 -> 00:24:41] The region-based analysis is giving me a benefit
+[00:24:41 -> 00:24:43] in this particular example.
+[00:24:44 -> 00:24:47] In general, a region is represented as a graph
+[00:24:47 -> 00:24:49] on the next level regions.
+[00:24:49 -> 00:24:51] We've already seen examples of this.
+[00:24:51 -> 00:24:53] The trivial transfer function for a region
+[00:24:53 -> 00:24:55] involves a DFA fixed point iteration
+[00:24:55 -> 00:24:58] on the graph of the next level regions.
+[00:24:59 -> 00:25:02] And it's okay when I do the DFA fixed point iteration
+[00:25:02 -> 00:25:04] for the trivial transfer function,
+[00:25:04 -> 00:25:06] I can always use more sophisticated transfer functions
+[00:25:06 -> 00:25:08] for the next level regions.
+[00:25:08 -> 00:25:09] But for this particular region,
+[00:25:09 -> 00:25:14] I may be okay with just doing a regular DFA.
+[00:25:15 -> 00:25:18] If I do a DFA for all levels of regions,
+[00:25:18 -> 00:25:20] then I have not really taken any advantage
+[00:25:20 -> 00:25:23] of the region hierarchy or the region-based analysis.
+[00:25:24 -> 00:25:25] During the fixed point iteration,
+[00:25:25 -> 00:25:27] we use the transfer function of the next level regions,
+[00:25:27 -> 00:25:30] which may or may not be trivial, right?
+[00:25:30 -> 00:25:32] So the next level, when we are doing the DFA,
+[00:25:32 -> 00:25:34] we use the transfer functions of the next level regions
+[00:25:34 -> 00:25:36] and which may or may not be trivial.
+[00:25:36 -> 00:25:38] And hopefully they are not trivial.
+[00:25:38 -> 00:25:39] If all the transfer functions
+[00:25:39 -> 00:25:40] of all the regions are trivial,
+[00:25:40 -> 00:25:42] then we haven't really gained anything
+[00:25:42 -> 00:25:43] by region-based analysis.
+[00:25:44 -> 00:25:46] Region-based analysis is helpful
+[00:25:46 -> 00:25:48] only if the region-level transfer functions
+[00:25:48 -> 00:25:50] are more precise than the trivial
+[00:25:50 -> 00:25:52] DFA-based transfer functions
+[00:25:52 -> 00:25:54] for at least some regions.
+[00:25:54 -> 00:25:57] For example, we may want to say,
+[00:25:57 -> 00:25:58] use symbolic analysis for loops.
+[00:25:58 -> 00:26:02] So recall that when we defined our region hierarchy
+[00:26:02 -> 00:26:05] for our program, we used procedure, loops,
+[00:26:05 -> 00:26:07] inner loops, and so on,
+[00:26:07 -> 00:26:09] and then basic blocks and then statements.
+[00:26:09 -> 00:26:11] And in these, we may want to only define
+[00:26:11 -> 00:26:13] more precise transfer functions
+[00:26:13 -> 00:26:15] for certain types of loops.
+[00:26:15 -> 00:26:16] And for everything else,
+[00:26:16 -> 00:26:18] we can just fall back to the trivial transfer function,
+[00:26:18 -> 00:26:21] which means running the DFA just like before.
+[00:26:22 -> 00:26:25] And it would be useful only if we have
+[00:26:25 -> 00:26:26] more precise transfer functions
+[00:26:26 -> 00:26:32] for at least some regions in this region hierarchy.
+[00:26:32 -> 00:26:37] So to summarize, we recursively divide the CFG into regions
+[00:26:37 -> 00:26:39] and we identify transfer functions for each region,
+[00:26:39 -> 00:26:42] and some of which can be trivial.
+[00:26:42 -> 00:26:44] And we need to do this for any DFA.
+[00:26:44 -> 00:26:46] So for any DFA,
+[00:26:46 -> 00:26:48] every region needs the corresponding transfer function.
+[00:26:48 -> 00:26:51] And the fallback is, of course,
+[00:26:51 -> 00:26:54] that we just use the trivial transfer function
+[00:26:54 -> 00:26:57] and that would just degenerate into the original DFA
+[00:26:57 -> 00:26:58] if trivial transfer functions are used
+[00:26:58 -> 00:27:01] for all the regions.

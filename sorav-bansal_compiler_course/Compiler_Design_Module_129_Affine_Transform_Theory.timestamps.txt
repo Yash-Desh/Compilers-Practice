@@ -1,0 +1,239 @@
+Title: Compiler Design Module 129 : Affine Transform Theory
+Video ID: uA_JiuwQdWM
+Detected language: en
+------------------------------------------------------------
+
+[00:00:00 -> 00:00:05] Now that we have been introduced to the idea of the polyhedral model, we're going to try and
+[00:00:05 -> 00:00:11] develop a theory for affine transforms and when we are going to talk about affine transforms,
+[00:00:11 -> 00:00:15] recall that in the polyhedral model we are basically talking about affine loops
+[00:00:15 -> 00:00:22] where the iteration space has some constraints, the accesses to memory through arrays have some
+[00:00:22 -> 00:00:28] constraints and then also you know there is the angle of parallelism and so to be able to
+[00:00:28 -> 00:00:34] capture this more formally we're going to define three spaces. The first space here is the iteration
+[00:00:34 -> 00:00:40] space and this basically represents the set of dynamic execution instances of a computation.
+[00:00:40 -> 00:00:46] So if I have a loop which says for i equals 0 to n something i plus plus and then something in
+[00:00:46 -> 00:00:52] the body then there are n different dynamic instances one for each possible value of i
+[00:00:52 -> 00:00:58] from 0 to n minus 1 and so these form the set of dynamic execution instances.
+[00:00:58 -> 00:01:04] If it's a depth two loop, it's a loop nest of depth two then maybe the first iterator variable
+[00:01:04 -> 00:01:10] is i going from 0 to n and maybe the second iterator variable is j going from some other
+[00:01:10 -> 00:01:18] bounds maybe 0 to m in which case the number of dynamic execution instances are m into n
+[00:01:19 -> 00:01:26] where i can range between 0 to m and j can range between 0 to n and also it's not necessary that
+[00:01:26 -> 00:01:33] this is a rectangular region for example I could say that for j equals i to m or something like
+[00:01:33 -> 00:01:40] that and that would also be a reasonable affine space iteration space that can be captured using
+[00:01:40 -> 00:01:45] the polyhedral model. In other words this is the iteration space which is the set of dynamic
+[00:01:45 -> 00:01:51] execution instances is basically the set of combinations of values taken on by the loop
+[00:01:51 -> 00:01:56] indices. So if I have a loop indices a i and j what are all the combinations of i and j that
+[00:01:56 -> 00:02:02] are possible in this loop nest. So in my example it would be 0 0 0 1 0 2 all the way till
+[00:02:02 -> 00:02:10] 0 m and now 1 1 1 2 1 3 and so on okay. So that's the iteration space and we discussed
+[00:02:10 -> 00:02:16] last time how the iteration space can be expressed as a convex polyhedron in a d dimensional space
+[00:02:16 -> 00:02:22] for a d depth loop nest. In other words for d iteration variables we're going to see that in
+[00:02:22 -> 00:02:26] a little bit more detail today. Then there's a second space which is the data space and this
+[00:02:26 -> 00:02:32] is the set of array elements accessed. Recall that we are confining ourselves to loops where
+[00:02:32 -> 00:02:38] those memory regions that are accessed can be expressed as affine expressions of the loop
+[00:02:38 -> 00:02:42] iteration indices surrounding loop iteration indices and so you know we can assume that these
+[00:02:42 -> 00:02:47] are arrays because arrays also have a very regular memory layout and so these are the set
+[00:02:47 -> 00:02:53] of array elements accessed and that's the data space and typically we would express the data
+[00:02:53 -> 00:02:58] space as a function as in a fine function of the iteration space because that is our
+[00:02:58 -> 00:03:02] that is our constraint for the polyhedral model that the set of memory locations that
+[00:03:02 -> 00:03:07] are accessed can be expressed as a fine expressions on the surrounding loop variables.
+[00:03:07 -> 00:03:10] In other words the data space can be expressed as an affine
+[00:03:11 -> 00:03:17] expression over the iteration space. So if I just morph the iteration space using some affine matrix
+[00:03:17 -> 00:03:21] I would get the data space. Once again we're going to look at this in more detail in the
+[00:03:21 -> 00:03:27] coming modules. And finally there is the processor space and what do I mean by the processor
+[00:03:27 -> 00:03:30] space? So we're going to be interested one of the things you're going to be interested in
+[00:03:30 -> 00:03:36] parallelization. We're going to want to map different points of the iteration space to
+[00:03:36 -> 00:03:41] different processors. For example affine partitioning that we discussed in the last module.
+[00:03:41 -> 00:03:46] When we do that we're going to create a map from points in the iteration space to points in the
+[00:03:46 -> 00:03:50] processor space. We're going to say that okay this particular iteration let's say zero comma
+[00:03:50 -> 00:03:55] zero is going to execute on processor two and zero comma one is going to execute on processor
+[00:03:55 -> 00:04:01] one and so on and so we need some way of being able to represent the processor space
+[00:04:01 -> 00:04:05] and so this is this we're going to have a third space to be able to do this
+[00:04:05 -> 00:04:09] and that's going to represent the set of processors in the system
+[00:04:09 -> 00:04:13] where each processor has been assigned a unique id. Now here's an interesting fact
+[00:04:13 -> 00:04:19] that even the processor space we would be basically you know in the polyhedral model
+[00:04:19 -> 00:04:24] be representing as a affine expression or an affine function of the iteration space.
+[00:04:24 -> 00:04:27] So given an iteration space we're going to have an affine function on the iteration space
+[00:04:27 -> 00:04:32] to identify what is the mapping. So the mapping from iteration space to the processor
+[00:04:32 -> 00:04:37] space is going to be in a fine function. Recall what is in a fine function something that can be
+[00:04:37 -> 00:04:46] written as you know summation ci xi plus c0 where xi's in this case would be the
+[00:04:46 -> 00:04:51] loop iteration variables. Okay once again we're going to see this in more detail in the
+[00:04:51 -> 00:04:57] coming modules. So for a D depth loop nest each variable each iteration variable has a lower
+[00:04:57 -> 00:05:01] bound and an upper bound. This is a constraint that we're going to work with in the polyhedral
+[00:05:01 -> 00:05:06] model but notice that these lower and upper bounds can potentially be a function of the
+[00:05:06 -> 00:05:10] iteration variables at lower depth. So for example if I have a two nest loop depth
+[00:05:10 -> 00:05:16] the first iteration variable is i for i equals 0 to n and the second iteration variable is j
+[00:05:16 -> 00:05:23] then i is the lower depth variable because it's at depth 0 and then j is the higher depth
+[00:05:23 -> 00:05:31] variable it has depth 1 and so the bounds of j can be expressed as functions of iteration
+[00:05:31 -> 00:05:36] variables at lower depth. In other words the upper bound and the lower bound for j can be
+[00:05:36 -> 00:05:42] functions of i in this particular example and that's why these iteration space need not
+[00:05:42 -> 00:05:46] be perfect cuboids or rectangles or anything like that they can be any potential convex
+[00:05:46 -> 00:05:52] polyhedron and so this can be represented as a convex polyhedron as we also saw in our last
+[00:05:52 -> 00:05:57] module and recall what is the definition of a convex polyhedron if two points are in the
+[00:05:57 -> 00:06:04] polyhedron that's you know this is the definition of convexity if a polyhedron is convex if and
+[00:06:04 -> 00:06:09] only if two points are if two points are in the polyhedron then all points are the line
+[00:06:09 -> 00:06:15] connecting those two points are also in the polyhedron and we saw an example last time.
+[00:06:15 -> 00:06:20] So let me take an example of a non-convex polyhedron to show the counter case.
+[00:06:20 -> 00:06:24] So here's an example let's say the first iteration once again I'm going to use a 2d
+[00:06:25 -> 00:06:29] loop nest and let's say the first iteration variable is x1 which goes from 1 to 6 now this
+[00:06:29 -> 00:06:35] looks very convex because if I take any point between x1 and between 1 and 6 and draw a line
+[00:06:35 -> 00:06:42] between them it's also going to be between 1 and 6 but now x2 goes from minimum of 3 comma
+[00:06:42 -> 00:06:51] 5 minus x1 comma 1 to maximum of 10 minus 3 x1 and x1 plus 6 by 2 now this basically I mean I'm
+[00:06:51 -> 00:06:55] not going to show how this is this you know how I'm going to draw in this picture but just
+[00:06:55 -> 00:07:00] take it from me that if I was to draw the iteration space for all possible values of x1
+[00:07:00 -> 00:07:06] and x2 all possible integer values of x1 and x2 that satisfy these constraints I'm going to
+[00:07:06 -> 00:07:11] get a figure something like this right so these different lines are basically representing
+[00:07:11 -> 00:07:15] all the linear combinations that I have for example x2 is greater than equal to 1 that's
+[00:07:15 -> 00:07:20] coming from the fact that the 1 present here or x2 is less than equal to x plus 6 by 2
+[00:07:20 -> 00:07:25] that's coming by x1 plus 6 by 2 and that's coming from this constraint here and so on
+[00:07:25 -> 00:07:31] but notice that this particular polyhedron that I get or polygon that I get in a 2d space
+[00:07:31 -> 00:07:36] is actually non-convex because if I draw a line from let's say this point to this point
+[00:07:36 -> 00:07:42] then there are some points in the middle that are not part of this polyhedron so how did we end up
+[00:07:42 -> 00:07:49] with such a non-convex polyhedron well notice that x2 goes from minimum of some values to
+[00:07:49 -> 00:07:57] maximum of some values and so the constraints are no longer specifiable only as linear
+[00:07:57 -> 00:08:03] inequalities because now I have to say that x2 is greater than equal to 3 depending on what
+[00:08:03 -> 00:08:07] is minimum among these x2 is less than greater than equal to the minimum of these things
+[00:08:07 -> 00:08:11] and that's not specifiable as only a set of inequalities on the other hand if I was going
+[00:08:11 -> 00:08:16] for from maximum of some things to minimum of some things it would have still been possible
+[00:08:16 -> 00:08:22] to represent as a convex polyhedron in any case here is an example of a convex polyhedron
+[00:08:22 -> 00:08:28] and this is an example that we have seen before for i equals 0 to 5 for j equals i to 7
+[00:08:29 -> 00:08:37] some loop body and this is the iteration space of this particular loop nest i is going from 0
+[00:08:37 -> 00:08:45] to 5 j is going from i to 7 and and notice that this particular polygon is a convex polygon
+[00:08:45 -> 00:08:51] now one quick check to figure out whether something is a convex polygon or not is that
+[00:08:51 -> 00:08:56] can I write the space the polygon space that is covered by the iteration variables
+[00:08:56 -> 00:09:02] as a conjunction of in equations or inequalities so in this case I can indeed do this because
+[00:09:02 -> 00:09:06] notice that i is greater than equal to 0 comes from the lower bound that i has a lower bound
+[00:09:06 -> 00:09:10] zero so i is greater than equal to zero i is less than equal to five so i has an upper
+[00:09:10 -> 00:09:16] bound of five j equals i so j equals i to seven so j's lower bound is i and j's upper
+[00:09:16 -> 00:09:21] bound is seven and so if I just use these inequalities and conjunct them you take the
+[00:09:21 -> 00:09:27] logical and of them then what I will get is a convex polygon so in fact any conjunction
+[00:09:27 -> 00:09:34] of inequalities a fine inequalities will always result in a convex polygon and or convex
+[00:09:34 -> 00:09:40] polyhedron even for a general D depth loop nest and one way to express these inequalities
+[00:09:40 -> 00:09:45] is to bring them in a kind of standard form where we try to bring it into the form summation
+[00:09:45 -> 00:09:51] Cixi plus C0 is greater than equal to zero and and so in this case this becomes i is
+[00:09:51 -> 00:09:56] greater than equal to zero this becomes minus i plus five is greater than equal to zero
+[00:09:56 -> 00:10:00] minus i plus j is greater than equal to zero and minus j plus seven is greater than
+[00:10:00 -> 00:10:06] equal zero notice that I have in my constraint I'm mandating that it should be a greater
+[00:10:06 -> 00:10:10] than equal to inequality and I can just rearrange my elements so that I always get
+[00:10:10 -> 00:10:14] a greater than equal to zero on the right hand side and I'm doing this so that I have an
+[00:10:14 -> 00:10:20] easier representation of these inequalities and here is a matrix method of representing
+[00:10:20 -> 00:10:26] these inequalities. I just basically, this matrix basically forms a set of coefficient
+[00:10:26 -> 00:10:32] matrices and these are the loop, this is the loop iteration space augmented with a
+[00:10:32 -> 00:10:38] one at the end. So i, j represents the loop iteration space and one is basically
+[00:10:38 -> 00:10:43] the constant element for which we, which represents, for which capture the C0 part
+[00:10:43 -> 00:10:48] of our affine expression and so if you read this, this becomes 1 into i plus 0
+[00:10:48 -> 00:10:52] into j plus 0 into 1 is greater than equal to 0 and that's exactly our first
+[00:10:52 -> 00:10:59] in equation and the second one is minus i minus 1 into i plus 0 into j plus 5
+[00:10:59 -> 00:11:02] into 1 is greater than equal to 0 and that's exactly our second in equation
+[00:11:02 -> 00:11:06] and similarly I have two more in equations corresponding to the two
+[00:11:06 -> 00:11:10] in equations that I have in the yellow color on the left. Now this is a
+[00:11:10 -> 00:11:17] standard form of writing the, an affine space, a conjunction of inequalities and
+[00:11:17 -> 00:11:22] such a representation also guarantees that what we get as a result is going
+[00:11:22 -> 00:11:26] to be a convex polyhedral. So all these things are interrelated and this
+[00:11:26 -> 00:11:30] may also makes the analysis of a program that behaves in this way
+[00:11:30 -> 00:11:35] easier and more higher level and so we can do transformations
+[00:11:35 -> 00:11:39] related to locality and parallelism. So I'm going to define, I'm going to
+[00:11:39 -> 00:11:44] use a standard notation to be able to represent such spaces, some such convex
+[00:11:44 -> 00:11:51] polyhedral spaces and here is the notation. I say i with the
+[00:11:51 -> 00:11:57] underline, this represents the i vector belongs to a d-dimensional integer
+[00:11:57 -> 00:12:02] space, so z here represents the set of integers to the part d. So i belongs
+[00:12:03 -> 00:12:09] to a d-dimensional integer space such that b i plus b, so b is a matrix which
+[00:12:09 -> 00:12:12] which looks something like this, this is the coefficient matrix, capital B is
+[00:12:12 -> 00:12:17] the coefficient matrix and small b is the C0 part of my affine expression.
+[00:12:17 -> 00:12:27] So this part, this column basically becomes small b and this
+[00:12:27 -> 00:12:32] part here becomes capital B alright and so this is another way of
+[00:12:32 -> 00:12:36] writing the same thing and basically say b i plus b greater than equal to 0,
+[00:12:36 -> 00:12:44] capital B becomes the multiplier of the iteration space variables i represented
+[00:12:44 -> 00:12:50] by the vector i vector which in this example the vector i is ij, the
+[00:12:50 -> 00:12:55] coefficient matrix is you know this first two columns 1 0 minus 1 0 minus
+[00:12:55 -> 00:13:00] 1 1 and 0 minus 1 and small b is the third column 0 5 0 7 which forms
+[00:13:00 -> 00:13:06] the multiplier for the unit elements 1 which basically represents the C0 of our
+[00:13:06 -> 00:13:13] affine expression and so this representation here i belonging to z to the
+[00:13:13 -> 00:13:18] part d b i plus b greater than equal to 0 is guaranteed to represent a
+[00:13:18 -> 00:13:22] convex polyhedron and because and you can represent any convex
+[00:13:22 -> 00:13:25] polyhedron using this this representation a d-depth convex
+[00:13:25 -> 00:13:29] polyhedron and so we're going to use this notation for representing our
+[00:13:29 -> 00:13:35] iteration spaces. Okay it is not enough however to just represent the set of
+[00:13:35 -> 00:13:39] iterations we also need to encode their execution order so it's not just
+[00:13:39 -> 00:13:43] enough to say that 0 0 is going to get executed and 1 1 is going to get
+[00:13:43 -> 00:13:47] executed but you also want to know what is going to get executed first so
+[00:13:47 -> 00:13:52] maybe 0 0 gets executed before 0 1 and 0 1 gets executed before 0 2 and so
+[00:13:52 -> 00:13:57] on and we need to have some way of encoding that execution order. Now
+[00:13:57 -> 00:14:02] notice that there are multiple ways of arranging my i comma j i could have you
+[00:14:02 -> 00:14:06] know it's just a convex polyhedron i could have switched i comma j to j
+[00:14:06 -> 00:14:11] comma i or something else and and and still i would have been able to
+[00:14:11 -> 00:14:14] represent it using i mean just change my capital B and small b matrices
+[00:14:14 -> 00:14:18] appropriately to be able to represent the same convex polyhedron but we
+[00:14:18 -> 00:14:22] just don't want any order we want that particular order that is also
+[00:14:22 -> 00:14:26] going to reflect the execution order and so we are going to encode an
+[00:14:26 -> 00:14:31] order in the i vector i with the underline and so the and we and this
+[00:14:31 -> 00:14:34] is going to be encoded in this way and it's just a convention that we will
+[00:14:34 -> 00:14:39] follow is that the execution order is the ascending lexicographic order on
+[00:14:39 -> 00:14:47] i okay so for example I could have said that you know so let's say 0
+[00:14:47 -> 00:14:52] comma 0 is the first thing and then 1 comma 0 is the second iteration and
+[00:14:52 -> 00:14:58] then it is 0 comma 1 and and then finally 1 comma 1 so let's say my
+[00:14:58 -> 00:15:03] iteration space is 0 0 and this is for you know and let me just say that
+[00:15:03 -> 00:15:06] this is i comma j I'm representing i comma j and let's say this is my
+[00:15:06 -> 00:15:17] iteration space 0 0 1 0 0 1 1 1 now it is not okay to basically use i j as
+[00:15:17 -> 00:15:21] the is this the lexicographic order so this is the execution order by
+[00:15:21 -> 00:15:26] the way right so this is the execution order and my question is is this also
+[00:15:26 -> 00:15:30] the lexicographic order of i comma j and the answer is no the lexicographic
+[00:15:30 -> 00:15:36] order of i comma j is actually 0 0 0 1 1 0 1 1 because we first increment
+[00:15:36 -> 00:15:41] the the second element the the least significant bit before incrementing the
+[00:15:41 -> 00:15:47] more significant bit and so i comma j is not encoding the execution order in
+[00:15:47 -> 00:15:52] fact I should probably make this j comma i and then this would you know j
+[00:15:52 -> 00:15:56] comma i would encode this particular execution order because now if I do j
+[00:15:56 -> 00:16:04] comma i then I'm going to get 0 0 0 1 1 0 and 1 1 and this is going to be
+[00:16:04 -> 00:16:08] my ascending lexicographic order and this is also the execution order that
+[00:16:08 -> 00:16:13] I desire and so I'm going to use j comma i instead of i comma j in this
+[00:16:13 -> 00:16:17] particular example in general I'm going to encode the order by encoding the
+[00:16:17 -> 00:16:21] order of variables or choosing the variables appropriately such that the
+[00:16:21 -> 00:16:25] order is encoded in the set of iteration space and that would make my
+[00:16:25 -> 00:16:29] future analysis simpler and because we also need this information of
+[00:16:29 -> 00:16:32] ordering because if there are data dependencies that we want to
+[00:16:32 -> 00:16:37] respect that particular order so once again we are going to encode the
+[00:16:37 -> 00:16:41] order in the vector of iteration variables i such that the execution
+[00:16:41 -> 00:16:45] order is equal to the ascending lexicographic order of the iteration
+[00:16:45 -> 00:16:53] variables in i now just for completeness sake let me define what is an
+[00:16:53 -> 00:16:57] ascending lexicographic order I think you should already know this let's say
+[00:16:57 -> 00:17:04] there are two vectors i and i prime i is i1 i2 i3 dot dot in and i prime
+[00:17:04 -> 00:17:11] is i1 i1 prime i2 prime dot dot dot i n prime prime okay so notice first of
+[00:17:11 -> 00:17:16] all that n and n prime can be different okay and this is also similar to our
+[00:17:16 -> 00:17:21] lexicographic order in a dictionary we can say that the word zebra is
+[00:17:21 -> 00:17:27] lexicographically later comes later than the word let's say Abra Kadabra
+[00:17:27 -> 00:17:31] right even though Abra Kadabra is a bigger word so Abra Kadabra the n in
+[00:17:31 -> 00:17:34] the Abra Kadabra is maybe 10 or something like that number of the
+[00:17:34 -> 00:17:38] length of the string whereas zebra is the n prime is 5 yet we can say
+[00:17:38 -> 00:17:46] that Abra Kadabra is lexicographically less than zebra right and so the
+[00:17:46 -> 00:17:51] definition of lexicographically ascending is identical i is
+[00:17:51 -> 00:17:57] lexicographically less than i prime if and only if there exists some index
+[00:17:57 -> 00:18:05] m so some index m here let's say m such that m is less than n and m is
+[00:18:05 -> 00:18:11] less than n prime such that all the elements till n are equal so these are
+[00:18:11 -> 00:18:20] all equal and the m plus 1th element is less okay and this is exactly what the
+[00:18:20 -> 00:18:24] dictionary order says right so if I have to compare let's say Abra
+[00:18:24 -> 00:18:30] Kadabra with ABBA then I say a there it's equal then I look at B it's
+[00:18:30 -> 00:18:34] equal and then I look at a third character or the third variable and
+[00:18:34 -> 00:18:38] that is B in one case and R in the other case and so we say ABBA is less
+[00:18:38 -> 00:18:42] than equal to is lexicographically less than Abra Kadabra and so that's
+[00:18:42 -> 00:18:45] exactly what's going on here we basically look for the first
+[00:18:45 -> 00:18:49] different element and then we check which one is less among them and that
+[00:18:49 -> 00:18:53] that one particular string is going to be less than the other one and
+[00:18:53 -> 00:18:57] that's exactly the ascending lexicographic order in the iteration space
+[00:18:57 -> 00:19:03] as well now one last thing how about loop invariant variable so so far
+[00:19:03 -> 00:19:07] my capital D and small d I have said that they need to be constants but what
+[00:19:07 -> 00:19:12] about i equals zero i is less than n i plus plus here n is neither a loop
+[00:19:12 -> 00:19:17] iteration index variable nor is it a constant how do I capture that does it
+[00:19:17 -> 00:19:21] fit in our framework or our representation of i belonging to z to
+[00:19:21 -> 00:19:25] the power d here d is just one so i belonging to the set of integers
+[00:19:25 -> 00:19:29] said that bi plus b is greater than equal to zero well it does the we
+[00:19:29 -> 00:19:36] just going to extend our our small b such that it can also have loop invariant
+[00:19:36 -> 00:19:40] variables in it so for example this would be in the value in this
+[00:19:40 -> 00:19:43] representation these would be the matrices B capital B and small b and
+[00:19:43 -> 00:19:49] this would and I would be just a single dimensional vector capital B
+[00:19:49 -> 00:19:53] would be 1 and minus 1 so that basically and small b would be 0 and
+[00:19:53 -> 00:19:57] n minus 1 so this would basically say so the first row is going to say i is
+[00:19:57 -> 00:20:01] greater than equal to zero and the second row is going to say minus i is
+[00:20:01 -> 00:20:07] greater than equal to n minus 1 which basically translates to i is less than
+[00:20:07 -> 00:20:14] equal to n minus 1 probably I should have said minus of n plus 1 and that
+[00:20:14 -> 00:20:18] would basically translate to i is less than equal to n minus 1 so even
+[00:20:18 -> 00:20:22] for loop invariant variables also this representation would work we just
+[00:20:22 -> 00:20:25] need to basically allow the addition of loop invariant variables I find some
+[00:20:25 -> 00:20:31] expression on loop invariant variables in the vector B

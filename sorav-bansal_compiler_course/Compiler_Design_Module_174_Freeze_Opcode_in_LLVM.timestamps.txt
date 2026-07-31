@@ -1,0 +1,284 @@
+Title: Compiler Design Module 174 : Freeze Opcode in LLVM
+Video ID: AReq0cHU7Kc
+Detected language: en
+------------------------------------------------------------
+
+[00:00:00 -> 00:00:06] we are familiar with both the undeaf value and the poison value and why those semantics
+[00:00:06 -> 00:00:11] have been chosen etc. But now let's look at some limitations of undeaf and poison,
+[00:00:11 -> 00:00:16] some of which we are already familiar with, but let's revisit them. The first limitation
+[00:00:16 -> 00:00:22] is that both undeaf and poison trigger UB with the branch. So if I use if A, and
+[00:00:22 -> 00:00:26] if A was an undeaf value or a poison value, then this basically means that the program
+[00:00:26 -> 00:00:31] exhibits UB. And this basically means that I cannot hoist any branches. So for example,
+[00:00:31 -> 00:00:36] I cannot convert if A and then followed by another if, so there's a nested if, I cannot
+[00:00:36 -> 00:00:45] invert the two ifs because if B was an undeaf value and A was false, then the first program
+[00:00:45 -> 00:00:51] is well behaved, but the second program is going to trigger UB. Similarly, I mean,
+[00:00:51 -> 00:00:54] I can replace if with while and the same thing, I can't implement, for example,
+[00:00:54 -> 00:01:00] loop unswitching. And this is a common example that we've used to basically motivate that why
+[00:01:00 -> 00:01:05] we need to be able to hoist branches because loop unswitching involves the hoisting of a
+[00:01:05 -> 00:01:09] branch condition. The if condition out inside the loop needs to be brought outside the loop
+[00:01:09 -> 00:01:16] and such hoisting is not acceptable if you have undeaf and poison values and the condition
+[00:01:16 -> 00:01:22] of the branch could potentially be either of these, either undeaf or poison. Okay,
+[00:01:22 -> 00:01:30] so here's another one. So we got introduced to this LLVM opcode called select, which is like
+[00:01:30 -> 00:01:38] the ternary operator in C, depending on the C language, depending on the condition C,
+[00:01:38 -> 00:01:46] this returns either X or Y. And it's not okay in the presence of undeaf and poison to
+[00:01:46 -> 00:01:54] basically convert this into an if-then-is because the select operation basically behaves
+[00:01:54 -> 00:02:00] differently for undeaf and poison versus what the if condition is. For example, select on an
+[00:02:00 -> 00:02:07] undeaf value can give either of the two values X and Y non-deterministically. So select on an
+[00:02:07 -> 00:02:12] undeaf value basically returns another undeaf value because it could be either of the two,
+[00:02:12 -> 00:02:17] whereas a branch on an undeaf value is just undefined behavior. And so this
+[00:02:17 -> 00:02:22] transformation becomes illegal. Here is another example. This is something that we have not,
+[00:02:22 -> 00:02:26] this is an example that we have not seen before, but it's in a similar spirit. The
+[00:02:26 -> 00:02:31] problem here that is exposed is that undeaf may return a different value on each observation.
+[00:02:31 -> 00:02:37] So let's say my code is basically A equals X divided by Y and then B equals X mod Y,
+[00:02:38 -> 00:02:43] and a common transformation that you would expect is that you can get rid of the second
+[00:02:43 -> 00:02:49] mod operation and instead strength reduce it using a subtraction operation. So it can be
+[00:02:49 -> 00:02:53] X minus A star Y because you already know what is the quotient. So using the quotient,
+[00:02:53 -> 00:03:00] you can identify the remainder. However, this is not a valid transformation. Consider the
+[00:03:00 -> 00:03:06] case in the presence of undeaf or poison because consider the case when X equals
+[00:03:06 -> 00:03:13] undeaf and Y equals one. If X equals undeaf and Y equals one, then undeaf divided by one is just
+[00:03:13 -> 00:03:19] undeaf. But undeaf mod one is going to give you zero because anything mod one is going to give
+[00:03:19 -> 00:03:24] you zero and undeaf is just a non-deterministic value pulled out of the type of X and whatever
+[00:03:24 -> 00:03:29] value I put out here, mod one is just going to give me zero. And so the answer here is
+[00:03:29 -> 00:03:36] zero. Whereas on the right-hand side, if I look at X minus A star Y, I basically get X is
+[00:03:36 -> 00:03:44] undeaf and A is also undeaf. So X minus undeaf star Y. And so undeaf star Y is also kind of
+[00:03:44 -> 00:03:49] partially undeaf or fully undeaf. And so undeaf minus undeaf will also potentially give me a
+[00:03:49 -> 00:03:53] partially undeaf or a fully undeaf value. So on the source, I have a deterministic value zero.
+[00:03:53 -> 00:03:59] On the target, I have a non-deterministic value, which is either undeaf or partially undeaf.
+[00:03:59 -> 00:04:07] But I should actually say this could be partially undeaf as well. All right. So we have already
+[00:04:08 -> 00:04:13] looked at all these kind of examples, most of these at least. And what is the solution?
+[00:04:13 -> 00:04:18] Because these transformations look like very common transformations and it seems like a pity
+[00:04:18 -> 00:04:25] if we cannot support such transformations at the intermediate representation level because
+[00:04:25 -> 00:04:31] that basically would really handicap us. So one solution that was proposed and has now been
+[00:04:31 -> 00:04:37] incorporated into LLVM is the freeze instruction, which is basically saying that you can say X
+[00:04:37 -> 00:04:44] equals freeze I8Y. So what does any other type, I'm using I8 as a canonical type,
+[00:04:44 -> 00:04:48] but you can use any other type and say freeze the value. What does it mean? Well,
+[00:04:48 -> 00:04:54] it means that if Y was already well-defined, then X is just equal to Y. It's no difference
+[00:04:54 -> 00:05:02] from just copying Y into X. But if Y was a non-deterministic value, for example, if it
+[00:05:02 -> 00:05:09] was either poison or undeaf, then you convert it into a well-defined value. And so basically
+[00:05:09 -> 00:05:12] you convert it into some well-defined value, which can be randomly chosen by you,
+[00:05:12 -> 00:05:18] all right, by the program at the time of executing. So if you execute this instruction,
+[00:05:18 -> 00:05:23] if Y turned out to be undeaf, then you can just choose random value. But now from here
+[00:05:23 -> 00:05:29] on X is a well-defined value, whatever value you chose. Similarly, if Y turned out to be poison,
+[00:05:29 -> 00:05:34] you can again choose some random value and put that into X. And the good thing here is that the
+[00:05:34 -> 00:05:39] value that you choose is of your own choice, I mean, of the machine's choice. But whatever
+[00:05:39 -> 00:05:42] value it is, it is going to be a constant value. It's not going to have the behavior
+[00:05:42 -> 00:05:46] of the undeaf value, for example, where each time it is observed, it can give you a
+[00:05:46 -> 00:05:52] different answer, right? Here, once you have given it, it has now become a well-defined
+[00:05:52 -> 00:05:58] deterministic value. So, which means X is now both poison free and undeaf free. We have
+[00:05:58 -> 00:06:03] picked an arbitrary well-defined value of the given type, but it's very different from
+[00:06:03 -> 00:06:07] an undeaf value. With undeaf value, recall, basically it could give you different answers on
+[00:06:07 -> 00:06:12] different observations. But here X is going to give you the same answer on different
+[00:06:12 -> 00:06:17] observations because it is a well-defined value, just like any other well-defined value in
+[00:06:17 -> 00:06:23] your program. So, for example, now it is legal to have this transformation. So,
+[00:06:23 -> 00:06:31] I'm showing the loop un-switching example, which is a canonical example of hoisting of
+[00:06:31 -> 00:06:36] a control flow branch of instruction. So, in this case, it was not okay to do this,
+[00:06:36 -> 00:06:44] but now I have added a freeze instruction here to be. And now this transformation becomes
+[00:06:44 -> 00:06:51] legal. Why does it become legal? Well, even if B was undeaf and A was false, then basically
+[00:06:51 -> 00:06:56] what happens is that in this case, I'm basically doing a freeze of B. So, freeze of B is
+[00:06:56 -> 00:07:02] already kind of a well-defined value and a branch on a well-defined value is not UB.
+[00:07:04 -> 00:07:08] Depending on the value, it can either take this branch or that branch. And now,
+[00:07:08 -> 00:07:13] consider the problematic case that we have been discussing all through, which is A
+[00:07:13 -> 00:07:19] equals false and B equals undeaf. Now, what happens is, or poison, then what happens is
+[00:07:19 -> 00:07:25] freeze B, this could be either undeaf or poison, should clarify. So, freeze B is going to give me
+[00:07:25 -> 00:07:31] some deterministic value, some well-defined value. So, let's say that value is, let's say C.
+[00:07:31 -> 00:07:37] So, now if that value that was chosen by the machine was false, then I'm going to come here
+[00:07:37 -> 00:07:41] and then I'm going to say while A and that's A recall is false. So, I'm not going to enter
+[00:07:41 -> 00:07:46] the loop and it's all okay. Similarly, if C was true, once again, I'm going to come to this loop
+[00:07:46 -> 00:07:52] and while A, once again A is false and so nothing happens. So, both these original program and the
+[00:07:53 -> 00:07:57] target program, the source program and the target program have the same behavior
+[00:07:57 -> 00:08:02] for this case when A equals false and B is a non-deterministic value, which is either
+[00:08:02 -> 00:08:07] undeaf or poison. Both these programs basically behave as no-ops, they don't really do anything.
+[00:08:08 -> 00:08:13] And so, for this problematic case also, these two programs are equal. For all the non-problematic
+[00:08:13 -> 00:08:18] case also, let's say if B was a well-defined value, then if freeze B just is the same value
+[00:08:18 -> 00:08:22] that comes back and now, I mean, you can show that for well-defined values,
+[00:08:22 -> 00:08:26] this transformation is equal, it's fine and that's what we talk about when we talk about
+[00:08:26 -> 00:08:31] the loop unswitching transformation in any case. The only problem case was these kind of
+[00:08:31 -> 00:08:35] non-deterministic values, which we have been able to handle using the freeze opcode.
+[00:08:35 -> 00:08:42] So, freeze looks good so far. Here's another example. So, let's say I have Z equals select C,
+[00:08:42 -> 00:08:49] X, Y. Now, I can just use if freeze C, Z equals X, else Z equals Y. Recall that without freeze,
+[00:08:49 -> 00:08:53] this was not a valid transformation, but with freeze, this becomes a valid transformation
+[00:08:53 -> 00:09:00] because you can show that for all possible inputs C, X and Y, they could potentially
+[00:09:00 -> 00:09:07] even be undefined poison, these two programs are going to yield the same observable behavior.
+[00:09:07 -> 00:09:10] In other words, they're going to set the Z to the same value.
+[00:09:11 -> 00:09:18] Okay. So, I mean, we have basically now been exposed to four different types of non-determinism
+[00:09:19 -> 00:09:25] in IR like LLVM. The first non-determinism we call undefined behavior, which just basically
+[00:09:25 -> 00:09:31] says that if this happens, then the program can do anything. In other words, this should never
+[00:09:31 -> 00:09:37] happen. And so, that's called undefined behavior or UB. The second non-determinism that we saw was
+[00:09:37 -> 00:09:42] poison value, which basically say, oh, it's an error value that was generated. The program is
+[00:09:42 -> 00:09:46] okay, but just that some values are error values or poison value and the poison value
+[00:09:46 -> 00:09:50] propagates and things like that. The third value that we discussed was an undef value.
+[00:09:50 -> 00:09:54] Undef value was a non-deterministic value for a given type and on every observation,
+[00:09:54 -> 00:09:59] it could return a different, you know, different concrete value. And finally,
+[00:09:59 -> 00:10:04] there was a frozen value, which is actually a well-defined value, just that it was frozen
+[00:10:04 -> 00:10:07] at the time of freeze instruction. And at the time of freezing, you can, you know,
+[00:10:07 -> 00:10:11] the abstract machine can basically pick any random value. But after that, it's kind of frozen
+[00:10:11 -> 00:10:16] and it just kind of remains like that. And it picks up an abstract value only in the case
+[00:10:16 -> 00:10:21] when the input value was either undef or poison. If the input value is already a
+[00:10:21 -> 00:10:24] well-defined value, then freeze does nothing. It just returns the same value back.
+[00:10:25 -> 00:10:32] And it's clear that, you know, basically I'm going from more non-determinism to less
+[00:10:32 -> 00:10:38] non-determinism. So this is, you know, this is more non-determinism, more ND to less ND.
+[00:10:39 -> 00:10:47] And that also means that if, you know, these values or these behaviors were on the LHS of
+[00:10:47 -> 00:10:52] or the source side of a transformation, then that gives me more optimization opportunities.
+[00:10:52 -> 00:10:56] So for example, you know, if there were cases of UB in the source side, then I can just kind of
+[00:10:56 -> 00:11:01] remove the whole code. Or if there were cases of poison value, that gives me more flexibility
+[00:11:01 -> 00:11:06] than if it was an undig value. And that in turn gives me more flexibility if it was a frozen
+[00:11:06 -> 00:11:10] value. So in general, if, you know, if I have more non-determinism on the source side
+[00:11:10 -> 00:11:15] or on the LHS, as I call it, then it's a good thing from optimization perspective.
+[00:11:15 -> 00:11:20] On the other hand, if the same values are generated on the RHS or on the target side,
+[00:11:20 -> 00:11:27] then it gives me less flexibility in terms of optimization from, you know, because basically
+[00:11:27 -> 00:11:33] on the target side, I have some non-determinism. I have to make sure that that non-determinism was
+[00:11:33 -> 00:11:37] also present originally in the source side. I cannot just introduce extra non-determinism
+[00:11:37 -> 00:11:42] on the target side. And so that gives me less flexibility when generated on the RHS.
+[00:11:42 -> 00:11:46] And so, so basically that's why we need to have a spectrum. I mean, you can't just go
+[00:11:46 -> 00:11:51] all the way to the left or all the way to the right as we kind of originally also motivated
+[00:11:51 -> 00:11:57] the need for such, such kind of semantics is basically because the IR designer needs to walk
+[00:11:57 -> 00:12:00] this tight line between the amount of non-determinism in the source and the
+[00:12:00 -> 00:12:05] amount of non-determinism in the target. And so, you know, this is what people have
+[00:12:05 -> 00:12:12] come up with so far in an IR like LLVM. They have all four types, UB, Poison,
+[00:12:12 -> 00:12:19] Undef and Freeze or frozen values. So the freeze opcode is a good thing on the target side.
+[00:12:19 -> 00:12:25] The freeze opcode, you know, is by far the least non-deterministic of all the four options.
+[00:12:25 -> 00:12:29] So it's great on the target side because it will enable more optimizations, but it will
+[00:12:29 -> 00:12:33] be bad on the source side, right? So when, if there's a transformation from source to target,
+[00:12:33 -> 00:12:36] then you would ideally like that, you know, you generate freeze on the right,
+[00:12:36 -> 00:12:40] you know, if freeze was being generated on the target side, you know, that makes,
+[00:12:40 -> 00:12:44] that makes, you know, it easier to kind of say that this transformation is legal.
+[00:12:44 -> 00:12:49] On the other hand, if it's on the source side, then actually disable some optimizations.
+[00:12:50 -> 00:12:53] In some, in all the examples that we've seen so far where freeze was used,
+[00:12:53 -> 00:12:58] the freeze opcode was being generated on the target side and that was actually enabling those
+[00:12:58 -> 00:13:03] transformations. And that was basically the reason, the whole motivation of introducing the
+[00:13:03 -> 00:13:09] freeze opcode because for example, we freeze the value before using it as an opcode for the branch
+[00:13:09 -> 00:13:13] instruction or things like, or the operand to the branch instruction and things like that.
+[00:13:13 -> 00:13:17] But the question of course is, you know, okay, freeze is great if it is used on the
+[00:13:17 -> 00:13:22] target side, but you know, of course there must be a flip side. What if freeze is used
+[00:13:22 -> 00:13:26] on the source side or freeze is present in the source side? What kind of transformations
+[00:13:26 -> 00:13:30] does it thwart? After all, there must be a reason that we don't use freeze all the time.
+[00:13:31 -> 00:13:35] All right, so let's look at some examples that we have looked at across the previous
+[00:13:35 -> 00:13:39] few modules to see, you know, which of these are getting, going to get thwarted and which
+[00:13:39 -> 00:13:43] of these are still going to remain valid. One of the examples that we used was this
+[00:13:43 -> 00:13:50] undefined behavior, you know, in a language like C for sign integer overflow.
+[00:13:50 -> 00:13:54] So if you have N, which is an integer and you do N plus one, of course, you know,
+[00:13:54 -> 00:14:00] you may be initializing N before you kind of do N plus one. And if N was equal to int max,
+[00:14:00 -> 00:14:06] then N plus one would basically overflow. And the question is what should happen in that case?
+[00:14:06 -> 00:14:11] And we said, oh, you know, if you consider that to be undefined behavior, then, you know,
+[00:14:11 -> 00:14:16] that then this transformation is legal. You can go from i is less than N plus one to i is
+[00:14:16 -> 00:14:20] less than equal to N. If you consider that to be poison, even then this transformation is
+[00:14:20 -> 00:14:25] legal because, you know, basically you're trying to branch on a poison value. If that happens,
+[00:14:25 -> 00:14:29] then you don't need to consider that case because that would again be undefined behavior.
+[00:14:29 -> 00:14:35] So for N equals int max, i is less than N plus one values to poison in LLVM.
+[00:14:35 -> 00:14:42] And so this transformation is actually legal. Now the question is what if, you know,
+[00:14:42 -> 00:14:46] what if I instead of doing i less than N plus one and actually freeze the value
+[00:14:47 -> 00:14:52] before I actually, you know, do the transformation? In other words, you know,
+[00:14:52 -> 00:14:57] what if I just kind of start eagerly freezing my value because after all freezes seems like
+[00:14:57 -> 00:15:01] pretty innocuous in the sense that, you know, if it was already a well-defined value,
+[00:15:01 -> 00:15:04] it's actually not changed anything. And if it was an undefined value, it just, you know,
+[00:15:04 -> 00:15:09] removes all the non-determinism. So in this case, I'm just kind of trying to freeze,
+[00:15:09 -> 00:15:14] let's say i is less than N plus one. And so what should happen, right?
+[00:15:14 -> 00:15:18] And so the question is firstly, this transformation is legal because I'm going
+[00:15:18 -> 00:15:24] from more non-determinism to less non-determinism. You know, when N plus one was all good and N plus
+[00:15:24 -> 00:15:29] one was a well-defined value, then, you know, nothing has changed. And if N plus one or if
+[00:15:29 -> 00:15:37] i is less than N plus one was a poison value or an undef value, then freeze is just, you know,
+[00:15:38 -> 00:15:43] determinizing it even more and you can always go from more non-determinism to less non-determinism.
+[00:15:43 -> 00:15:48] And so the behaviors of the second program are a subset of the behavior of the first program and
+[00:15:48 -> 00:15:54] so this transformation is legal. But the question we want to ask is, is it okay to go from this
+[00:15:54 -> 00:16:01] to this? All right. And so basically the question we want to ask is, can I go from
+[00:16:01 -> 00:16:08] freeze of i is less than N plus one to i is less than equal to N? And, you know, let's
+[00:16:08 -> 00:16:12] consider the case, the problematic case, which is when N equals int max, then N plus one will
+[00:16:12 -> 00:16:19] become poison. And so i is less than N plus one would also become poison. And now I'm freezing
+[00:16:19 -> 00:16:22] that value. So I'll get some values of, you know, because this is a Boolean type, so I'll
+[00:16:22 -> 00:16:27] either get true or I'll get false. And so depending, you know, depending on what I choose,
+[00:16:27 -> 00:16:33] I could either enter the loop on the first iteration or I could not enter the loop, right?
+[00:16:34 -> 00:16:38] There both options are open depending on what was the value that was returned by the
+[00:16:38 -> 00:16:43] machine. On the other hand, if I look at the target program, you know, for N equals int max,
+[00:16:43 -> 00:16:50] i is less than equal to N would be always true because everything is, you know, for all values
+[00:16:50 -> 00:16:55] which are integer type will be less than equal to int max. And so I will always enter the loop
+[00:16:55 -> 00:16:59] or even in the first iteration, I will enter the loop. Whereas in the first iteration,
+[00:16:59 -> 00:17:04] the first program may or may not enter the loop depending on what is the value returned by
+[00:17:05 -> 00:17:09] But the good thing here is that freeze is not completely deterministic, right? I mean,
+[00:17:09 -> 00:17:13] it's the abstract machine that can choose the value of freeze. And in this case,
+[00:17:13 -> 00:17:18] the compiler can, you know, basically assume that the value that has been chosen
+[00:17:18 -> 00:17:23] suits the optimization that it wants. And so what it can do is it can choose the frozen
+[00:17:23 -> 00:17:28] value for poison to be true each time. So if it sees a poison value here, it will basically
+[00:17:28 -> 00:17:33] choose true every time, right? Because after the freeze can choose any arbitrary value and
+[00:17:33 -> 00:17:39] that arbitrary value can be chosen by the runtime or by the compiler to suit its optimization
+[00:17:39 -> 00:17:44] goals, for example. And in this case, you can, you know, the compiler may choose to say that,
+[00:17:44 -> 00:17:49] oh, frozen value for poison should always be true for each time. Notice that this is going
+[00:17:49 -> 00:17:53] to be computed for each iteration of the loop. So if there were, you know,
+[00:17:53 -> 00:17:57] X iterations of the loop, this is going to get computed X times. And if I basically say,
+[00:17:57 -> 00:18:01] oh, each time it gets computed, I'm just going to basically return the true value for
+[00:18:01 -> 00:18:06] this arbitrary value that I need to choose. Then these two programs are actually equivalent
+[00:18:06 -> 00:18:10] because both of them are going to enter the loop and actually going to go into an infinite
+[00:18:10 -> 00:18:14] loop for the case when n equals int max. For the case when n is not equal to int max,
+[00:18:14 -> 00:18:19] you know, the loops behave as I expected. So that's not the interesting case for us.
+[00:18:19 -> 00:18:25] But on the other hand, notice that if I had basically changed this freeze i
+[00:18:26 -> 00:18:34] n plus one to, let's say, if i is less than freeze of n plus one, then that would have
+[00:18:34 -> 00:18:40] been a problem. And then it wouldn't have not been okay, not okay to do this transformation.
+[00:18:40 -> 00:18:44] All right. So this transformation would have been wrong. Okay. So this transformation would
+[00:18:44 -> 00:18:49] have been wrong because in this case, you know, I basically need to choose a value for
+[00:18:49 -> 00:18:55] n plus one in case of it was poison. And then it should be such a value then that for all
+[00:18:55 -> 00:19:00] possible i's, it always returns true. But, you know, I can't really find such a value
+[00:19:00 -> 00:19:04] because after all at some point i is going to become int max. And so whatever value I choose
+[00:19:04 -> 00:19:08] on the right hand side, you know, I'm not going to get int max less than that value.
+[00:19:09 -> 00:19:13] At best I could have chosen int max, but int max is not strictly less than int max. So
+[00:19:13 -> 00:19:16] it's going to return false. And so I won't be able to choose in that case,
+[00:19:17 -> 00:19:24] you know, a value which is always going to convert the condition to true. Right. So
+[00:19:25 -> 00:19:31] basically the point is that, you know, if I freeze the Boolean condition, then this
+[00:19:31 -> 00:19:35] transformation is okay. But if I was even more eager and I was kind of freezing the
+[00:19:36 -> 00:19:42] RHS of this relational operator less than, then this transformation becomes invalid. And so
+[00:19:42 -> 00:19:45] freeze is, you know, so this is where we basically see a case where freeze actually
+[00:19:45 -> 00:19:50] thwarts optimization. Right. I showed you a case where freeze didn't really make a
+[00:19:50 -> 00:19:55] difference, which was when I was froze the entire condition. But now here's a case when
+[00:19:55 -> 00:20:00] freeze makes a difference or it thwarts optimizations when I froze the RHS of
+[00:20:00 -> 00:20:06] the relational operator and then this transformation becomes illegal. Here's another example. So let's
+[00:20:06 -> 00:20:14] say I have A equals undef and say AF equals freeze A, and then B equals two into A and C
+[00:20:14 -> 00:20:19] equals A and three. This is an example that we've been using previously as well. And let's
+[00:20:19 -> 00:20:23] say A was undef, but now this time the only change I've made from the previous discussion
+[00:20:23 -> 00:20:28] is I've frozen the value of A. And earlier I was saying, oh, if you ever see B equals
+[00:20:28 -> 00:20:32] mul I 32 A comma two, and you can say that A is undef, you can always convert it into B
+[00:20:32 -> 00:20:37] equals two. And similarly you can convert this into C equals three. But now these
+[00:20:37 -> 00:20:41] transformations are not okay because you have chosen a single value of A and you know,
+[00:20:41 -> 00:20:47] let's say the value you chose was for A was two, then or let's say the value you
+[00:20:47 -> 00:20:55] chose for AF was one, then I should say this is AF. So then one into two is two,
+[00:20:55 -> 00:21:01] but then one into three, one and three is not three, that gives me one. And so
+[00:21:01 -> 00:21:07] so there exists no single value of AF that basically makes this transformation possible.
+[00:21:07 -> 00:21:12] And so this is an illegal transformation now. On the other hand, this may not be such a big
+[00:21:12 -> 00:21:16] deal because if the compiler can do more reasoning, then what it can figure out is
+[00:21:16 -> 00:21:21] let's choose a value for AF such that, you know, I can basically simplify both the instructions.
+[00:21:21 -> 00:21:26] For example, I can convert B equals this multiplication expression into B equals two
+[00:21:26 -> 00:21:31] and then AND of A comma three to C equals one. So I just chose a value. For example,
+[00:21:31 -> 00:21:35] I could choose a value AF equals one. So in this case, I'm choosing the value of AF equals one
+[00:21:35 -> 00:21:39] and that is going to give me this answer and this is a legal transformation.
+[00:21:39 -> 00:21:44] So freeze is still retaining some amount of non-determinism and that's allowing us to do
+[00:21:44 -> 00:21:49] transformations that would have been not possible if, for example, instead of saying AF
+[00:21:49 -> 00:21:54] equals freeze A, which to choose an arbitrary value, I have restricted to choose one
+[00:21:54 -> 00:21:58] particular value, let's say zero or some other value or something like that.
+[00:21:58 -> 00:22:03] So a good thing is that there's still some amount of non-determinism left and that allows the
+[00:22:03 -> 00:22:07] compiler to make these kinds of transformations. The bad news is the compiler now needs to work
+[00:22:07 -> 00:22:14] harder to identify such transformations. Here is another example. So, you know,
+[00:22:14 -> 00:22:19] we talked about how when we do common sub-expression elimination or global value
+[00:22:19 -> 00:22:24] numbering and an incarnation of that little algorithm, then if you do IF X equals V FX,
+[00:22:24 -> 00:22:33] can you convert it to IF X equals V F V? And the answer is, you know, when V was an undef value,
+[00:22:33 -> 00:22:36] then this is not a legal transformation. This is something we have discussed earlier,
+[00:22:36 -> 00:22:41] but the good thing is if you have frozen the value, so if you frozen the undef value,
+[00:22:41 -> 00:22:46] so that means V was undef free and poison free, then this becomes a legal transformation.
+[00:22:46 -> 00:22:54] Here is another example. So, let's say X equals C question mark U colon V. So,
+[00:22:54 -> 00:23:02] by this ternary operator, I'm representing the select operation. Similarly, A equals C2 question
+[00:23:02 -> 00:23:12] mark U colon B. Is it okay to convert it to X equals Y and A equals B, where U is basically
+[00:23:12 -> 00:23:18] the undef value. So, I should basically say undef colon Y and undef colon B.
+[00:23:19 -> 00:23:25] And the answer is yes, it's okay. So, this is okay. But now, if I basically change U to freeze
+[00:23:25 -> 00:23:30] of U, which means V is going to get some deterministic value, then it is no longer
+[00:23:30 -> 00:23:35] okay to do these transformations because in the first instruction, I'm expecting V to be
+[00:23:35 -> 00:23:41] equal to Y and in the second transformation, I'm expecting V to be equal to B and Y may not be
+[00:23:41 -> 00:23:45] equal to B and so it's not okay to do this transformation anymore. So, here's another
+[00:23:45 -> 00:23:51] example where freeze on the LHS is actually causing some transformations to get thwarted.
+[00:23:51 -> 00:23:59] The first example that we saw was this example where I say m equals n plus 1 and say
+[00:23:59 -> 00:24:12] if m2 equals freeze of m and then I say if i is less than m2, then do something.
+[00:24:13 -> 00:24:24] I cannot change this to if i is less than equal to n and so this is no longer true
+[00:24:24 -> 00:24:34] because consider the case when n was int max, then this becomes a problem. So, here's another
+[00:24:34 -> 00:24:39] example where the freeze of code if used in the wrong place can actually thwart a transformation.
+[00:24:39 -> 00:24:47] So, as with all the other examples that we have used, if we have a non-deterministic value
+[00:24:48 -> 00:24:54] which is on the LHS, the more non-determinism is good on the LHS, less non-determinism is
+[00:24:54 -> 00:25:00] good on the RHS and so compiler needs to walk this tight line between how much non-determinism
+[00:25:00 -> 00:25:08] to produce because if you produce more non-determinism than required, then maybe
+[00:25:08 -> 00:25:12] the current transformation is not going to be valid. If you produce less non-determinism
+[00:25:12 -> 00:25:17] or you kind of make things more deterministic, then maybe you're going to thwart future
+[00:25:17 -> 00:25:19] transformations.

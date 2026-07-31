@@ -1,0 +1,120 @@
+Title: Compiler Design Module 92 : Live Variable Analysis
+Video ID: GNVg1Bctkkw
+Detected language: en
+------------------------------------------------------------
+
+[00:00:00 -> 00:00:19] So last time we looked at the reaching definitions analysis and we basically talked about how we can have a common framework for DFA and then have some parameters like domain, meet operator, transfer function, direction, boundary value to basically characterize the DFA.
+[00:00:19 -> 00:00:23] So reaching definitions was an example of a forward data flow analysis.
+[00:00:23 -> 00:00:29] Let's also look at an example of a backward data flow analysis and try to fit it in the same framework
+[00:00:29 -> 00:00:36] just for completeness. So we are going to look at the live variable analysis. We have seen the live variable analysis in the context of a single variable.
+[00:00:36 -> 00:00:41] But this time we are going to look at the live variable analysis in the context of multiple variables.
+[00:00:41 -> 00:00:50] So the important thing about live variable analysis is the direction is backward because we are really interested in knowing what are the variables that are live going forward.
+[00:00:50 -> 00:00:56] And so to be able to know what happens in future, we need to do a backward data flow analysis.
+[00:00:56 -> 00:01:07] In other words, one way to think about it is forward data analysis is for stuff that has happened in the past and for backward data flow analysis is stuff that is going to happen in future.
+[00:01:07 -> 00:01:21] So live variable analysis, the direction is backward, which means that if there is a statement S, the value just before the statement is going to be in S, the value just after the statement is going to be out S.
+[00:01:21 -> 00:01:31] And the transfer function is going to be specified such that the value flows in from the bottom and goes to the top.
+[00:01:31 -> 00:01:41] So in S is represented as a function of out S. So the transfer function F relates or computes in S in terms of out S.
+[00:01:41 -> 00:01:45] That's what a backward data flow analysis basically means.
+[00:01:45 -> 00:01:49] What are the values? What is the domain of values for the live variable analysis?
+[00:01:49 -> 00:01:55] Well, it's the set of variables, right? Just like, for example, reaching definitions, it was a set of definitions.
+[00:01:55 -> 00:01:58] Constant propagation, it was the set of constant mappings.
+[00:01:58 -> 00:02:02] Here it is a set of variables that are live at a program point.
+[00:02:02 -> 00:02:07] For example, we would say variables X and Z are live at this particular program point.
+[00:02:07 -> 00:02:09] What is the transfer function?
+[00:02:10 -> 00:02:20] Well, if you have a statement like X equals Y plus Z, so this is an assignment which is basically assigning the expression Y plus Z to X,
+[00:02:20 -> 00:02:26] then this expression is using two variables, Y and Z, and it's defining one variable X.
+[00:02:26 -> 00:02:32] So if something was, if we have a value here, then what should be the value here?
+[00:02:32 -> 00:02:34] That's what a transfer function is supposed to say.
+[00:02:34 -> 00:02:39] And the answer is basically that if the value V is coming here at out S,
+[00:02:39 -> 00:02:46] then what is the value FV that's going to be the right value at in S?
+[00:02:46 -> 00:02:55] And that's supposed to, that's given by this transfer function FX equals use S union X minus def S, right?
+[00:02:55 -> 00:03:03] So all the variables that are being used by S are going to be live just before that, just before S, the statement S.
+[00:03:03 -> 00:03:11] And all the variables that are being defined by S, they are going to be killed because the value of that particular variable
+[00:03:11 -> 00:03:15] just before S is no longer live because it's going to be overwritten.
+[00:03:15 -> 00:03:23] So the propagation is basically X minus def S and the generation is use of S, right?
+[00:03:23 -> 00:03:31] And this has the same structure of our gen and kill for reaching definitions or for constant propagation or for available expressions,
+[00:03:31 -> 00:03:38] which is that there is some kill set for a statement, which is the variables that are defined by the statement.
+[00:03:38 -> 00:03:42] And then there is some gen set for the statement, which is the variables that are used by the statement.
+[00:03:42 -> 00:03:47] And this fits in our gen and kill pattern for a single statement.
+[00:03:47 -> 00:03:57] And so this is great because now we can use the same pattern and the same kind of logic can be used for all these different analyses,
+[00:03:57 -> 00:04:04] which is use S union X minus def S. In this case, gen is nothing but use and kill is nothing but def.
+[00:04:04 -> 00:04:11] Now I should point out that it's only for the live variable analysis that kill is def and gen is use.
+[00:04:11 -> 00:04:15] For some other analysis, it may be the opposite or something completely different, right?
+[00:04:15 -> 00:04:24] So just that in this particular case, it so happens that gen is use and kill is def.
+[00:04:24 -> 00:04:29] Alright, so similarly, we can now start defining transfer functions of entire basic blocks.
+[00:04:29 -> 00:04:32] So basic block is nothing but a sequence of statements.
+[00:04:32 -> 00:04:42] And so we want to specify in this case in B, which is the starting of this basic block value at the start of the basic block in terms of out B, the value at the end of the basic block.
+[00:04:42 -> 00:04:55] And this function FB is going to be called the transfer function of the basic block B is formed by nothing but just composing the transfer functions of S3, S2 and S1 in that order, right?
+[00:04:55 -> 00:04:59] First S3, then S2 and then S1. That's what the order is.
+[00:04:59 -> 00:05:05] And this is going to have the same structure that we saw for reaching definitions.
+[00:05:05 -> 00:05:10] And we're going to see that we can call something to be gen of B and something that can be called the kill of B.
+[00:05:10 -> 00:05:16] So gen of B or use of B in this case would be the set of locally exposed uses in B.
+[00:05:16 -> 00:05:20] That is uses that are not being hidden by other definitions.
+[00:05:20 -> 00:05:25] So uses that B makes, which are not being hidden or killed by def after them, right?
+[00:05:25 -> 00:05:32] For example, if S2 is using X and S1 does not define X, then X is live at in.
+[00:05:32 -> 00:05:36] But on the other hand, if S1 does define X, then X is not live at in.
+[00:05:37 -> 00:05:42] So we can define, so basically using that, we can basically define use B.
+[00:05:42 -> 00:05:52] For example, use B would be use S3 minus def S2, union use S2 and so on.
+[00:05:52 -> 00:05:57] And then we can kind of compose this with S1 as well.
+[00:05:57 -> 00:06:03] Out B is just coming from this is basically the input to the transfer function.
+[00:06:03 -> 00:06:06] And then def B is the set of variables that are defined in B.
+[00:06:06 -> 00:06:14] So anywhere in the basic log S1, S2, S3, if a variable has been defined, then it gets, you know, it becomes part of def B.
+[00:06:14 -> 00:06:16] And so we can specify.
+[00:06:16 -> 00:06:25] So this becomes the transfer function FB basically becomes use B union X minus def B, where X is the argument to the function.
+[00:06:25 -> 00:06:29] And use B and def B are summaries of the basic log.
+[00:06:29 -> 00:06:34] So you just basically summarize the use set of the basic log and the def set of the basic log.
+[00:06:35 -> 00:06:36] What is the meet operator?
+[00:06:36 -> 00:06:41] So recall that a variable is live if it is live on any of the program paths.
+[00:06:41 -> 00:06:48] And so whenever we see the word any, it basically means that the meet operator is going to be the set union operator.
+[00:06:48 -> 00:06:54] So out B is the union of in S1, in S2, dot, dot, in S n.
+[00:06:54 -> 00:07:00] Or in other words, it's a union over I of in S I for all successors S I of B.
+[00:07:00 -> 00:07:05] Now, when the meet operator is union, what does it tell us about the ordering?
+[00:07:05 -> 00:07:13] Well, if you recall, when the meet operator is union, it basically means that the less than equal to operator indicates superset, right?
+[00:07:13 -> 00:07:22] Because, you know, something is going to be less than equal to if it is a superset that basically is consistent with the meet operator being union.
+[00:07:22 -> 00:07:25] And what would be the top value for something like this?
+[00:07:25 -> 00:07:30] Well, the top value is going to be the value that is greater than equal to everything else, right?
+[00:07:30 -> 00:07:32] And what is such a value?
+[00:07:32 -> 00:07:36] When the meet operator is union, it's going to be the empty set.
+[00:07:36 -> 00:07:39] All right.
+[00:07:39 -> 00:07:40] And what is the bottom value?
+[00:07:40 -> 00:07:43] Bottom value is going to be the set of all variables, right?
+[00:07:43 -> 00:07:46] Because that's less than equal to all other values.
+[00:07:46 -> 00:07:49] And that will be consistent with the set union being the meet operator.
+[00:07:49 -> 00:07:53] We're going to see this more in more detail and more formally later on.
+[00:07:53 -> 00:07:54] What is the boundary condition?
+[00:07:54 -> 00:07:59] The boundary condition is what can I assume to be live at one end of the program?
+[00:07:59 -> 00:08:05] Now, because this is a backward data flow analysis, the boundary condition would typically be specified at the exit of the program.
+[00:08:05 -> 00:08:09] And so the boundary condition in this case is empty set at exit, right?
+[00:08:09 -> 00:08:12] So basically, I'm assuming that there's nothing live at exit.
+[00:08:12 -> 00:08:20] But, for example, if it was a method and you wanted to say that some variables are still live at the exit, you can also initialize the boundary condition accordingly, right?
+[00:08:20 -> 00:08:24] So we could assume that in of exit equals the empty set phi.
+[00:08:24 -> 00:08:35] Or we could assume that in of exit is some set of variables that we already know to be live because of some other analysis, maybe because we're just analyzing a single function at a time, perhaps.
+[00:08:35 -> 00:08:41] What does our fixed point iteration algorithm look like?
+[00:08:41 -> 00:08:43] Well, it's very similar.
+[00:08:43 -> 00:08:44] We have seen this before.
+[00:08:44 -> 00:08:50] It takes a CFG as input and which has nodes, edges, entry, exit.
+[00:08:50 -> 00:08:56] Entry and exit are special nodes which indicate the entry point and the exit point of the program.
+[00:08:56 -> 00:08:58] This is the initialization logic.
+[00:08:58 -> 00:09:00] This whole thing is the initialization logic.
+[00:09:00 -> 00:09:02] It initializes in of exit to the empty set.
+[00:09:02 -> 00:09:05] And for everything else, it sets it to top value.
+[00:09:05 -> 00:09:11] Now, it just so happens that the boundary condition and the top value are equal in this example.
+[00:09:11 -> 00:09:14] But in general, they need not be.
+[00:09:15 -> 00:09:22] In the general case, what will happen is that this value is the boundary value and this value is the top value.
+[00:09:22 -> 00:09:24] And in this case, both happen to be the empty set.
+[00:09:24 -> 00:09:36] And then this is the fixed point iteration loop, which basically say that while any changes occur to any in for any B, then for each basic block B, do this.
+[00:09:36 -> 00:09:37] Out B equals union.
+[00:09:37 -> 00:09:39] So this is the meet operator, right?
+[00:09:39 -> 00:09:40] So this is meet.
+[00:09:40 -> 00:09:45] Out B equals meet over in SI for all successors, SI of B.
+[00:09:45 -> 00:09:47] And this is the transfer.
+[00:09:47 -> 00:09:50] In B equals out FB of out B.
+[00:09:50 -> 00:09:52] All right.
+[00:09:52 -> 00:10:02] So to summarize, once again, we can represent the live variable analysis as a table of parameters for a generalized data flow analysis template.
+[00:10:02 -> 00:10:04] The domain is sets of variables.
+[00:10:04 -> 00:10:06] The direction is backward.
+[00:10:06 -> 00:10:14] The transfer function is basically use B union X minus def B for a basic block B.
+[00:10:14 -> 00:10:17] It has the same general structure.
+[00:10:17 -> 00:10:22] Recall that it's not necessary that all DFA is all data flow analysis have the same structure.
+[00:10:22 -> 00:10:26] But, you know, we just fortunate that live variable analysis does have that structure.
+[00:10:26 -> 00:10:33] Meet operator set union boundary condition in of exit equals the empty set.

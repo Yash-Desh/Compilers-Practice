@@ -1,0 +1,585 @@
+Title: Compiler Design Module 98.1 : Range Analysis of Integers
+Video ID: Gu0Mzm94op8
+Detected language: en
+------------------------------------------------------------
+
+[00:00:00 -> 00:00:01] Next, we are going to discuss an example
+[00:00:01 -> 00:00:02] of a data flow analysis,
+[00:00:02 -> 00:00:07] which involves bounding the range of an integer variable.
+[00:00:07 -> 00:00:09] And I'm going to call it the range analysis.
+[00:00:09 -> 00:00:10] And this is just an example,
+[00:00:10 -> 00:00:13] the effect is to review some of the concepts
+[00:00:13 -> 00:00:15] that we have learned so far.
+[00:00:15 -> 00:00:17] So let us say we are, a range analysis
+[00:00:17 -> 00:00:21] basically aims to bound the value
+[00:00:21 -> 00:00:25] that a variable X can take within a range,
+[00:00:25 -> 00:00:26] lower bound and upper bound.
+[00:00:26 -> 00:00:28] And let's say in my example,
+[00:00:28 -> 00:00:30] I'll just take one of those bounds
+[00:00:30 -> 00:00:32] and let me just take them lower bound.
+[00:00:32 -> 00:00:35] So I'm interested in what is the minimum integer value
+[00:00:35 -> 00:00:40] of a variable X that a variable X can take.
+[00:00:41 -> 00:00:44] Now, when I want to design a DFA for something like this,
+[00:00:44 -> 00:00:47] it's the first question that comes to mind
+[00:00:47 -> 00:00:50] is what should be the direction of the DFA.
+[00:00:50 -> 00:00:52] Now, because we are interested in the minimum value
+[00:00:52 -> 00:00:56] that integer X can take at any program point,
+[00:00:56 -> 00:00:57] the value that a program,
+[00:00:57 -> 00:00:59] that a variable takes at a program point
+[00:00:59 -> 00:01:01] depends on the assignments that happened before it.
+[00:01:01 -> 00:01:04] In other words, the information needs to flow forward
+[00:01:04 -> 00:01:05] in the direction of program execution.
+[00:01:05 -> 00:01:09] And for that reason, the direction of this DFA is forward.
+[00:01:10 -> 00:01:11] The next question we want to ask is
+[00:01:11 -> 00:01:14] what is the domain of values.
+[00:01:14 -> 00:01:15] And in this case,
+[00:01:15 -> 00:01:17] the lower bound could be as small
+[00:01:17 -> 00:01:19] as the minimum representable integer in your language.
+[00:01:19 -> 00:01:21] Let me call that int min.
+[00:01:22 -> 00:01:23] And then all the other integers,
+[00:01:23 -> 00:01:26] like minus three, minus two, minus one,
+[00:01:26 -> 00:01:28] and then all the positive integers, one, two,
+[00:01:28 -> 00:01:29] and all the way to the maximum
+[00:01:29 -> 00:01:31] possible representable integer.
+[00:01:31 -> 00:01:32] Let me call that int max.
+[00:01:33 -> 00:01:36] Now, although I'm using int min and int max later,
+[00:01:36 -> 00:01:41] I'm going to actually just coarsen this analysis
+[00:01:41 -> 00:01:44] and just for kind of ease of exposition,
+[00:01:44 -> 00:01:47] I'm just going to use minus infinity for int min
+[00:01:47 -> 00:01:50] and plus infinity for int max.
+[00:01:50 -> 00:01:53] Now, in general, it is not right.
+[00:01:53 -> 00:01:54] I mean, it's not right thing
+[00:01:54 -> 00:01:56] to actually use minus infinity and plus infinity
+[00:01:56 -> 00:01:58] in a programming language.
+[00:01:58 -> 00:01:59] All programming languages basically bound
+[00:01:59 -> 00:02:03] the set of representable values
+[00:02:03 -> 00:02:04] because they're after all finite,
+[00:02:04 -> 00:02:06] whereas the set of mathematical integers
+[00:02:06 -> 00:02:09] are actually infinite from minus infinity to infinity.
+[00:02:09 -> 00:02:10] But just for our analysis,
+[00:02:10 -> 00:02:12] let's just assume that our programming language
+[00:02:12 -> 00:02:13] supports mathematical integers.
+[00:02:13 -> 00:02:17] And so the values that a variable X of type integer
+[00:02:17 -> 00:02:18] can take are from minus infinity
+[00:02:18 -> 00:02:20] all the way to plus infinity.
+[00:02:20 -> 00:02:23] So the next question that comes forth
+[00:02:23 -> 00:02:26] is basically what is the meet operator for my DFA?
+[00:02:28 -> 00:02:29] And to answer this question,
+[00:02:29 -> 00:02:31] I want to basically ask the question
+[00:02:31 -> 00:02:33] that at any program point,
+[00:02:33 -> 00:02:36] if a value V1 is flowing from one branch
+[00:02:36 -> 00:02:38] and a value V2, lower bound V2
+[00:02:38 -> 00:02:39] is flowing from another branch,
+[00:02:39 -> 00:02:42] the same value X, variable X.
+[00:02:42 -> 00:02:45] So V1 is the lower bound on X from one branch
+[00:02:45 -> 00:02:48] and V2 is the lower bound on X on another branch.
+[00:02:48 -> 00:02:50] Then what can we say about the lower bound
+[00:02:50 -> 00:02:53] of X at the meet point?
+[00:02:53 -> 00:02:56] And the answer is we want to be accurate,
+[00:02:56 -> 00:02:58] we want to be conservatively accurate
+[00:02:58 -> 00:03:01] in the sense that we want a real lower bound.
+[00:03:01 -> 00:03:02] So in this case,
+[00:03:02 -> 00:03:04] the lower bound is going to be the minimum
+[00:03:04 -> 00:03:08] of V1 and V2 where min is the integer minimum operator.
+[00:03:09 -> 00:03:11] So the meet operator is minimum of two values.
+[00:03:11 -> 00:03:13] For example, the meet of minus one and minus two
+[00:03:13 -> 00:03:14] is minus two.
+[00:03:16 -> 00:03:18] Okay, so using this meet operator,
+[00:03:18 -> 00:03:21] I can now construct a semi-lattice.
+[00:03:21 -> 00:03:24] And in the semi-lattice,
+[00:03:24 -> 00:03:26] the partial order operator
+[00:03:26 -> 00:03:29] that kind of derives from the meet operator
+[00:03:29 -> 00:03:31] is just the integer less than equal to,
+[00:03:31 -> 00:03:33] this is just the integer comparison less than equal to.
+[00:03:33 -> 00:03:36] And if I was to draw this as a graph,
+[00:03:36 -> 00:03:40] then int max is the top value in this semi-lattice.
+[00:03:40 -> 00:03:44] And then all the positive values in decreasing order,
+[00:03:44 -> 00:03:45] maybe plus one, zero,
+[00:03:45 -> 00:03:47] and then all the negative values,
+[00:03:47 -> 00:03:48] minus one, minus two.
+[00:03:49 -> 00:03:51] And so on all the way to int min.
+[00:03:52 -> 00:03:55] And you can check for yourself that,
+[00:03:55 -> 00:03:57] actually in this semi-lattice,
+[00:03:57 -> 00:03:58] the meet operator is min.
+[00:04:00 -> 00:04:01] In fact, in this example,
+[00:04:01 -> 00:04:03] it so happens that this semi-lattice
+[00:04:03 -> 00:04:05] is actually also a total order,
+[00:04:05 -> 00:04:07] not just a partial order.
+[00:04:07 -> 00:04:08] But one of the things that's interesting
+[00:04:08 -> 00:04:09] about this semi-lattice
+[00:04:09 -> 00:04:11] is it's a very, very, very long height.
+[00:04:11 -> 00:04:13] And in our abstracted world of mathematical integers,
+[00:04:13 -> 00:04:15] it actually has an infinite height.
+[00:04:15 -> 00:04:16] So we're going to see what the implications
+[00:04:16 -> 00:04:17] of that can be.
+[00:04:19 -> 00:04:20] So once again,
+[00:04:20 -> 00:04:23] I'm basically going to assume that int max is plus infinity
+[00:04:23 -> 00:04:25] and int min is minus infinity.
+[00:04:25 -> 00:04:26] And now let's say I have this program
+[00:04:26 -> 00:04:29] which basically initializes at entry,
+[00:04:29 -> 00:04:31] the variable x to 10.
+[00:04:31 -> 00:04:33] And then inside the loop body,
+[00:04:33 -> 00:04:35] it says x equals x minus one.
+[00:04:35 -> 00:04:37] And then it says if x is greater than zero,
+[00:04:37 -> 00:04:39] then go to loop.
+[00:04:39 -> 00:04:40] And so this is a loop.
+[00:04:40 -> 00:04:42] And then when it exits the loop,
+[00:04:42 -> 00:04:43] then it just returns x.
+[00:04:44 -> 00:04:47] Now I want to analyze what are the possible values of x
+[00:04:47 -> 00:04:48] at every program point.
+[00:04:48 -> 00:04:50] Maybe I'm interested in figuring out
+[00:04:50 -> 00:04:51] what are the possible values of x
+[00:04:51 -> 00:04:53] that the program may return.
+[00:04:53 -> 00:04:56] So I'm going to use my data flow analysis.
+[00:04:56 -> 00:04:58] And the first thing I want to do is basically,
+[00:04:58 -> 00:05:00] I've already defined semi-lattice,
+[00:05:00 -> 00:05:01] but I also want to define
+[00:05:01 -> 00:05:03] what the boundary condition for x is at the entry.
+[00:05:03 -> 00:05:05] So what can I assume about the boundary condition?
+[00:05:05 -> 00:05:08] What is the lower bound of x at boundary condition?
+[00:05:08 -> 00:05:10] And let me assume that I don't know anything
+[00:05:10 -> 00:05:13] about what x could be at entry.
+[00:05:13 -> 00:05:14] So in that case,
+[00:05:15 -> 00:05:18] what is the most safest lower bound
+[00:05:18 -> 00:05:19] that you could think of
+[00:05:19 -> 00:05:22] where you don't know anything about x?
+[00:05:22 -> 00:05:23] That would be just Intmin
+[00:05:23 -> 00:05:25] because everything would be greater than equal to Intmin
+[00:05:25 -> 00:05:29] in my domain of values that x can take
+[00:05:29 -> 00:05:32] and which we are also assuming is minus infinities.
+[00:05:32 -> 00:05:36] And this is also the bottom value of our semi-lattice.
+[00:05:36 -> 00:05:38] So the boundary condition for x at entry
+[00:05:38 -> 00:05:40] is just that it is minus infinity or bottom.
+[00:05:42 -> 00:05:44] But when we initialize the interior points
+[00:05:45 -> 00:05:46] of our DFA,
+[00:05:46 -> 00:05:47] recall that we initialize them optimistically
+[00:05:47 -> 00:05:49] to the top value of the semi-lattice
+[00:05:49 -> 00:05:51] because as the DFA progresses,
+[00:05:51 -> 00:05:53] the values just become lesser and lesser.
+[00:05:53 -> 00:05:55] So initialization at all the interior points
+[00:05:55 -> 00:05:56] will be to the top value,
+[00:05:56 -> 00:05:59] which in this case is Intmax or plus infinity.
+[00:06:02 -> 00:06:04] Now, before I start executing the DFA
+[00:06:04 -> 00:06:05] on that particular example,
+[00:06:05 -> 00:06:07] I also need to define some transfer functions
+[00:06:07 -> 00:06:10] for the statements that appear in that example.
+[00:06:10 -> 00:06:11] So first of all,
+[00:06:11 -> 00:06:13] if I have a statement which says x colon equals
+[00:06:13 -> 00:06:15] some constant c,
+[00:06:15 -> 00:06:17] then whatever value is flowing in,
+[00:06:17 -> 00:06:19] I can be sure that at the out,
+[00:06:19 -> 00:06:21] the lower bound of x is actually c
+[00:06:21 -> 00:06:24] because I am sure that x will be equal to c.
+[00:06:24 -> 00:06:26] So out is just c in this example.
+[00:06:27 -> 00:06:30] Similarly, if I'm doing some arithmetic on x,
+[00:06:30 -> 00:06:33] such as x colon equals x plus minus c,
+[00:06:33 -> 00:06:37] then if in is some value that's flowing in,
+[00:06:37 -> 00:06:41] so let's say the value flowing in from in is in,
+[00:06:41 -> 00:06:43] then out is just in plus minus c.
+[00:06:43 -> 00:06:45] So for example, if in was two,
+[00:06:45 -> 00:06:47] then out is two plus minus c.
+[00:06:47 -> 00:06:49] So if c was, if it was,
+[00:06:49 -> 00:06:52] if this instruction was x colon equals x plus one,
+[00:06:52 -> 00:06:54] and if in was two, then out is three.
+[00:06:54 -> 00:06:56] That's what this means.
+[00:06:57 -> 00:07:00] And finally, I have in my loop operator,
+[00:07:00 -> 00:07:01] I had this conditional branch,
+[00:07:01 -> 00:07:05] which I'm representing as this if statement.
+[00:07:05 -> 00:07:08] So if x is greater than some constant,
+[00:07:08 -> 00:07:09] go to some label.
+[00:07:10 -> 00:07:12] In this case, there are actually two transfer functions
+[00:07:12 -> 00:07:16] that I should define ideally for the same value
+[00:07:16 -> 00:07:18] that for an input value that's flowing in,
+[00:07:18 -> 00:07:19] which is a lower bound of x.
+[00:07:19 -> 00:07:21] There may be one,
+[00:07:21 -> 00:07:24] I may want to use different values for the output,
+[00:07:24 -> 00:07:26] depending on which output I'm looking at,
+[00:07:26 -> 00:07:27] whether I'm going to the label
+[00:07:27 -> 00:07:29] or whether I'm going to the fall through branch.
+[00:07:29 -> 00:07:32] So either I'm going to go to the label,
+[00:07:32 -> 00:07:33] in which case,
+[00:07:33 -> 00:07:35] what should be the out value at the label,
+[00:07:35 -> 00:07:36] or I'm going to fall through,
+[00:07:36 -> 00:07:37] which means I'm not going to the label,
+[00:07:37 -> 00:07:39] which I'm going to the next instruction,
+[00:07:39 -> 00:07:41] in which case I'm going to get the out fall through.
+[00:07:41 -> 00:07:44] And what can I say about the transfer functions
+[00:07:44 -> 00:07:45] for both these branches?
+[00:07:45 -> 00:07:48] Well, maybe I want to say that out label,
+[00:07:48 -> 00:07:49] because nothing is changing,
+[00:07:49 -> 00:07:51] it's just branching,
+[00:07:51 -> 00:07:53] it's just a control flow structure,
+[00:07:53 -> 00:07:55] it's not changing the value of x.
+[00:07:55 -> 00:07:57] So maybe I want to say that out label is just in
+[00:07:57 -> 00:07:58] and out fall through is also just in.
+[00:07:58 -> 00:08:00] So the value just gets transferred.
+[00:08:00 -> 00:08:02] So whatever was the lower bound before this instruction
+[00:08:02 -> 00:08:04] is also the lower bound after this instruction
+[00:08:04 -> 00:08:06] on both the branches.
+[00:08:06 -> 00:08:07] Now with these transfer functions,
+[00:08:07 -> 00:08:11] let's start running our DFA on this example program
+[00:08:11 -> 00:08:12] that I showed you earlier.
+[00:08:12 -> 00:08:17] And recall that we initialize the value at the entry
+[00:08:17 -> 00:08:19] with the boundary condition, which is int min.
+[00:08:19 -> 00:08:22] But I initialize all the other interior points
+[00:08:22 -> 00:08:24] with the top value, which is int max.
+[00:08:25 -> 00:08:28] Now I run my work list algorithm
+[00:08:28 -> 00:08:33] and I figure out that this point here
+[00:08:33 -> 00:08:36] is basically violating my DFA constraints.
+[00:08:36 -> 00:08:39] And so I transfer values, right?
+[00:08:39 -> 00:08:41] So I transfer the value
+[00:08:42 -> 00:08:43] and because at entry it was int min
+[00:08:43 -> 00:08:46] and nothing has changed, it's just a no op instruction.
+[00:08:46 -> 00:08:47] So int min should also be law.
+[00:08:47 -> 00:08:50] So this value also becomes int min.
+[00:08:50 -> 00:08:52] Now the next time this value gets transferred
+[00:08:52 -> 00:08:54] across the statement x colon equals 10
+[00:08:54 -> 00:08:56] and recall that the transfer function
+[00:08:56 -> 00:08:59] for x colon equals c was just the output would be c.
+[00:08:59 -> 00:09:01] And so in this case, the next step,
+[00:09:01 -> 00:09:04] the value becomes 10 at the end
+[00:09:04 -> 00:09:05] of this particular statement.
+[00:09:05 -> 00:09:07] And this is the lower bound of x at this point
+[00:09:07 -> 00:09:09] as we have identified it so far.
+[00:09:10 -> 00:09:12] Now I continue this analysis
+[00:09:12 -> 00:09:14] and now I'm going to look at this point
+[00:09:14 -> 00:09:16] and this point has two predecessors.
+[00:09:16 -> 00:09:19] One is this point where the value is 10
+[00:09:19 -> 00:09:21] and the other is the loop point,
+[00:09:21 -> 00:09:22] which is where the value is int max
+[00:09:22 -> 00:09:24] and the recall that the meet operator
+[00:09:24 -> 00:09:25] is the minimum of the two values.
+[00:09:25 -> 00:09:27] So the value that I get assigned here
+[00:09:27 -> 00:09:29] is minimum of 10 and int max,
+[00:09:29 -> 00:09:33] which should be 10 again, okay?
+[00:09:33 -> 00:09:35] Now, once again, I transfer across
+[00:09:35 -> 00:09:37] x colon equals x minus one
+[00:09:37 -> 00:09:40] and now I use my second transfer function,
+[00:09:40 -> 00:09:42] which is going to decrement 10 by one.
+[00:09:42 -> 00:09:45] And so the value that comes here is now nine.
+[00:09:47 -> 00:09:48] Similarly, the value that flows
+[00:09:48 -> 00:09:50] to the next instruction here
+[00:09:50 -> 00:09:53] across this edge is just nine.
+[00:09:53 -> 00:09:56] And now I have this conditional branch instruction
+[00:09:56 -> 00:09:58] and we recall that the conditional branch
+[00:09:58 -> 00:09:59] was also just transferring the values
+[00:09:59 -> 00:10:01] across both its branches.
+[00:10:01 -> 00:10:02] So on both the branches,
+[00:10:02 -> 00:10:05] the one that's going back to the loop label
+[00:10:05 -> 00:10:06] and one that's falling through
+[00:10:06 -> 00:10:08] to the return statement,
+[00:10:08 -> 00:10:10] the value of x becomes nine.
+[00:10:10 -> 00:10:11] Are we done yet?
+[00:10:12 -> 00:10:13] Let's check.
+[00:10:13 -> 00:10:15] Well, indeed, if I look at this point,
+[00:10:15 -> 00:10:18] then the value here is 10.
+[00:10:18 -> 00:10:20] But if I look at its predecessors,
+[00:10:20 -> 00:10:21] one of the predecessors is 10,
+[00:10:21 -> 00:10:24] but the other predecessor is now nine.
+[00:10:24 -> 00:10:25] And so this, you know,
+[00:10:25 -> 00:10:27] I need to kind of meet nine with 10
+[00:10:27 -> 00:10:29] and recall that the meet operator is minimum.
+[00:10:29 -> 00:10:31] So this 10 becomes nine.
+[00:10:32 -> 00:10:35] And so now this is in the new state of my DFA.
+[00:10:35 -> 00:10:35] And once again,
+[00:10:35 -> 00:10:38] because of x colon equals x minus one,
+[00:10:38 -> 00:10:40] here nine becomes eight.
+[00:10:40 -> 00:10:42] That flows all the way through throughout the loop
+[00:10:42 -> 00:10:45] and the new state of the DFA becomes 10, nine,
+[00:10:45 -> 00:10:47] eight, eight, eight, eight, eight.
+[00:10:47 -> 00:10:48] Now, once again, the value eight
+[00:10:48 -> 00:10:50] will flow back into the loop
+[00:10:50 -> 00:10:51] and you will do a meet.
+[00:10:51 -> 00:10:54] And minimum of nine and eight will be eight.
+[00:10:54 -> 00:10:56] And so we get eight, seven, seven, seven, seven.
+[00:10:56 -> 00:10:57] And this will keep going on
+[00:10:57 -> 00:10:59] for another nine or 10 iterations
+[00:10:59 -> 00:11:03] until we get two at the loop head
+[00:11:03 -> 00:11:05] and we have one, one, one, one everywhere else.
+[00:11:06 -> 00:11:08] Now it's still not a stable state.
+[00:11:08 -> 00:11:10] If I, you know, I need to take the,
+[00:11:10 -> 00:11:12] I need to transfer the value one
+[00:11:12 -> 00:11:14] on this loop edge again
+[00:11:14 -> 00:11:16] and take a meet with 10.
+[00:11:16 -> 00:11:19] And so meet of one with 10 is actually one.
+[00:11:19 -> 00:11:21] So this two should now be changed to one.
+[00:11:21 -> 00:11:24] Now I'm at one, one, one, one, one.
+[00:11:24 -> 00:11:26] And now because one is here,
+[00:11:26 -> 00:11:27] then we again transfer it,
+[00:11:27 -> 00:11:30] it becomes zero and zero and so on
+[00:11:30 -> 00:11:32] and becomes one and all zeros.
+[00:11:34 -> 00:11:36] And then once again, zeros flows back
+[00:11:36 -> 00:11:39] and then min of 10 and zero is zero.
+[00:11:39 -> 00:11:41] So the loop head becomes zero
+[00:11:41 -> 00:11:44] and all the other values in the loop become minus one
+[00:11:44 -> 00:11:45] and similarly minus one
+[00:11:45 -> 00:11:47] and everything else becomes minus two.
+[00:11:47 -> 00:11:48] And this keeps going on
+[00:11:48 -> 00:11:52] until all the values become minus infinity, right?
+[00:11:52 -> 00:11:55] So then we can clearly see
+[00:11:55 -> 00:11:57] that there's a problem with this DFA.
+[00:11:57 -> 00:11:59] And the problem is, first of all,
+[00:11:59 -> 00:12:01] it takes a infinite number of iterations
+[00:12:01 -> 00:12:03] or steps to converge
+[00:12:03 -> 00:12:05] because I just kind of keep decrementing
+[00:12:05 -> 00:12:07] the value of X by one each time
+[00:12:07 -> 00:12:10] and number of values that X can take
+[00:12:10 -> 00:12:11] goes all the way to minus infinity
+[00:12:11 -> 00:12:13] from let's say 10 or something.
+[00:12:13 -> 00:12:17] And this is not acceptable
+[00:12:17 -> 00:12:19] because our DFA algorithm should terminate
+[00:12:19 -> 00:12:21] within a bounded time.
+[00:12:21 -> 00:12:23] Moreover, this is not a useful answer that we got
+[00:12:23 -> 00:12:26] because I mean, saying that the value of X
+[00:12:26 -> 00:12:28] at the return point is just minus infinity,
+[00:12:28 -> 00:12:30] but the lower bound on the value on X is minus infinity
+[00:12:30 -> 00:12:33] is actually conveying no information whatsoever
+[00:12:33 -> 00:12:34] because you already know that minus infinity
+[00:12:34 -> 00:12:36] is the lower bound on all possible integers
+[00:12:36 -> 00:12:38] that our language can represent.
+[00:12:38 -> 00:12:40] And so that's not a very useful answer.
+[00:12:40 -> 00:12:42] So not only do we take an infinite number of steps
+[00:12:42 -> 00:12:45] to converge, but we also don't get a useful answer.
+[00:12:45 -> 00:12:46] Now, why did this happen?
+[00:12:46 -> 00:12:47] Well, as we have already discussed,
+[00:12:47 -> 00:12:49] this happens because our infinite,
+[00:12:50 -> 00:12:52] well, the fact that it takes infinite number of steps
+[00:12:52 -> 00:12:55] to converge, the running time is not bounded
+[00:12:55 -> 00:12:58] is coming from the fact that the semi-latus height
+[00:12:58 -> 00:13:01] is not bounded and semi-latus height is infinity.
+[00:13:02 -> 00:13:05] Now I want to point out that although,
+[00:13:05 -> 00:13:07] the analysis that I showed you earlier
+[00:13:07 -> 00:13:09] was going to take infinite number of steps,
+[00:13:09 -> 00:13:11] the choice of the transfer function
+[00:13:11 -> 00:13:13] often makes a difference in the precision
+[00:13:13 -> 00:13:15] of the analysis and sometimes even on the running time
+[00:13:15 -> 00:13:16] of the analysis.
+[00:13:16 -> 00:13:18] So let's say I just chose a more precise
+[00:13:18 -> 00:13:20] transfer function for the conditional branch.
+[00:13:20 -> 00:13:22] All of the transfer functions remain the same,
+[00:13:22 -> 00:13:24] but for this conditional branch,
+[00:13:24 -> 00:13:27] I chose different transfer functions for the loop edge,
+[00:13:27 -> 00:13:29] which is outlabel and the fall through edge,
+[00:13:29 -> 00:13:31] which is outfall through.
+[00:13:31 -> 00:13:34] So for the outlabel, let's say I use the fact
+[00:13:34 -> 00:13:38] that I go to label only if X is greater than C.
+[00:13:38 -> 00:13:40] So that means X should be at least C plus one
+[00:13:40 -> 00:13:42] if I go to label.
+[00:13:42 -> 00:13:46] So if I look at the loop branch, then outlabel,
+[00:13:46 -> 00:13:49] outlabel should be, it could be in
+[00:13:49 -> 00:13:52] or if in was greater than C,
+[00:13:52 -> 00:13:54] then the best thing I can say about outlabel
+[00:13:54 -> 00:13:57] is that it could be in because I mean nothing has changed.
+[00:13:57 -> 00:13:59] But if it was less than C,
+[00:13:59 -> 00:14:02] then I wouldn't have gone to label.
+[00:14:02 -> 00:14:04] So the only reason I would have gone to label
+[00:14:04 -> 00:14:06] if X was greater than equal to C plus one
+[00:14:06 -> 00:14:08] or C plus two or something like that.
+[00:14:08 -> 00:14:10] So if I have gone to label,
+[00:14:10 -> 00:14:12] then I know that the value must be greater
+[00:14:12 -> 00:14:13] than equal to C plus one.
+[00:14:13 -> 00:14:15] And so from that, I can say
+[00:14:15 -> 00:14:17] a more precise transfer function could be
+[00:14:17 -> 00:14:20] that outlabel is maximum of in comma C plus one.
+[00:14:21 -> 00:14:25] Similarly, I can define a more precise transfer function
+[00:14:25 -> 00:14:26] for the fall through branch.
+[00:14:26 -> 00:14:28] For the fall through branch,
+[00:14:29 -> 00:14:32] I know that if in was greater than C,
+[00:14:32 -> 00:14:33] then I would never,
+[00:14:33 -> 00:14:34] that basically means that X must be,
+[00:14:34 -> 00:14:36] because I know that in is the lower bound of X
+[00:14:36 -> 00:14:38] and I know that in is greater,
+[00:14:38 -> 00:14:40] if I know that I see that in is greater than C,
+[00:14:40 -> 00:14:43] then I know that X must be always greater than C.
+[00:14:44 -> 00:14:47] And for that reason,
+[00:14:47 -> 00:14:52] I know that this branch will never go to the fall through.
+[00:14:52 -> 00:14:53] So if in is greater than C,
+[00:14:53 -> 00:14:55] then I can just say that, look,
+[00:14:55 -> 00:14:56] because it will never go to out fall through,
+[00:14:56 -> 00:15:01] I can just make the more precise answer,
+[00:15:03 -> 00:15:05] give the more precise answer.
+[00:15:05 -> 00:15:07] The maximum value, the minimum value that X can take
+[00:15:07 -> 00:15:09] is int max because, or in plus infinity.
+[00:15:09 -> 00:15:10] In other words, that's like saying
+[00:15:10 -> 00:15:12] that the program will never reach there.
+[00:15:12 -> 00:15:13] It'll never come to out fall through
+[00:15:13 -> 00:15:14] because so far in our analysis,
+[00:15:14 -> 00:15:16] we have identified that the lowest value
+[00:15:16 -> 00:15:18] that X can take, which is in,
+[00:15:18 -> 00:15:20] is always greater than C.
+[00:15:20 -> 00:15:22] So if the lowest value that X can take
+[00:15:22 -> 00:15:25] is greater than C in our analysis so far,
+[00:15:25 -> 00:15:27] then I can just use int max
+[00:15:27 -> 00:15:29] for the value at the transfer function
+[00:15:29 -> 00:15:31] of out fall through.
+[00:15:31 -> 00:15:34] However, if in was less than equal to C,
+[00:15:34 -> 00:15:37] then I could use the in value,
+[00:15:37 -> 00:15:39] just like I was doing earlier.
+[00:15:39 -> 00:15:41] Now these two transfer functions are more precise
+[00:15:41 -> 00:15:44] than the transfer functions that I used previously
+[00:15:44 -> 00:15:48] because in the previous transfer functions,
+[00:15:48 -> 00:15:52] recall that I was just using in in both situations.
+[00:15:52 -> 00:15:54] But now in the new transfer functions,
+[00:15:54 -> 00:15:59] I'm using, I may return values that are larger than in.
+[00:16:00 -> 00:16:03] For example, I could return max of in, C plus one,
+[00:16:03 -> 00:16:05] which is guaranteed to be larger than in,
+[00:16:05 -> 00:16:06] or I could either return in or int max,
+[00:16:06 -> 00:16:09] which are both guaranteed to be greater than equal to in.
+[00:16:09 -> 00:16:11] Same in both sides.
+[00:16:11 -> 00:16:14] So in other words, I'm returning better answers
+[00:16:15 -> 00:16:17] and being able to compute a better lower bound
+[00:16:17 -> 00:16:18] or a more precise lower bound.
+[00:16:18 -> 00:16:22] I'm conveying more information in my transfer function.
+[00:16:22 -> 00:16:23] Now with this transfer function,
+[00:16:23 -> 00:16:25] let's try to run our DFA once again.
+[00:16:25 -> 00:16:28] And once again, we initialize our values
+[00:16:28 -> 00:16:29] to int min at the boundary
+[00:16:29 -> 00:16:32] and int max everywhere else in the program.
+[00:16:33 -> 00:16:36] Now recall that eventually this,
+[00:16:36 -> 00:16:38] one of the states that we got in our DFA
+[00:16:38 -> 00:16:40] was that this becomes int min
+[00:16:40 -> 00:16:43] and then this becomes 10 to,
+[00:16:43 -> 00:16:45] this becomes 10 by the virtue of this assignment,
+[00:16:45 -> 00:16:46] x colon equals 10.
+[00:16:46 -> 00:16:50] But then slowly the values keep counting down
+[00:16:50 -> 00:16:54] and we eventually get to two, one, one, one here.
+[00:16:54 -> 00:16:56] Now, although the transfer function
+[00:16:56 -> 00:17:00] of the conditional branch is slightly different
+[00:17:00 -> 00:17:01] in this new setting,
+[00:17:02 -> 00:17:04] you can check for yourself that actually
+[00:17:04 -> 00:17:05] this still goes from,
+[00:17:05 -> 00:17:09] it still kind of counts down from 10 to nine to eight,
+[00:17:09 -> 00:17:12] all the way to two, and then one, one, one.
+[00:17:12 -> 00:17:14] But one of the things that is good about this analysis
+[00:17:14 -> 00:17:16] because of the promote precise transfer functions
+[00:17:16 -> 00:17:18] is that so far I have identified
+[00:17:19 -> 00:17:21] that I'll never get out of the loop.
+[00:17:21 -> 00:17:23] And that's why the value that I have
+[00:17:23 -> 00:17:25] for the return edge here is int max.
+[00:17:25 -> 00:17:29] Because if the minimum value that x can take is one,
+[00:17:29 -> 00:17:32] as my analysis has figured out so far,
+[00:17:32 -> 00:17:34] I know that this loop will always be taken
+[00:17:34 -> 00:17:35] or this loop edge will always be taken
+[00:17:35 -> 00:17:37] and the return edge will never be taken.
+[00:17:37 -> 00:17:40] And for that reason, I can use the most,
+[00:17:40 -> 00:17:41] the best possible answer that I can use here
+[00:17:42 -> 00:17:45] is int max for the lower bound of x.
+[00:17:47 -> 00:17:49] But this is still not a, you know,
+[00:17:49 -> 00:17:51] this is still not a fixed point solution
+[00:17:51 -> 00:17:54] because if I look at this point here,
+[00:17:54 -> 00:17:55] then its predecessors are,
+[00:17:55 -> 00:17:57] one of them is one and the other one is 10.
+[00:17:57 -> 00:17:59] And the, you know, the meat of 10 and one is one,
+[00:17:59 -> 00:18:02] whereas the value that I have here is two.
+[00:18:02 -> 00:18:03] So the next thing I need to do
+[00:18:03 -> 00:18:05] is change this value to one
+[00:18:05 -> 00:18:06] and everything else remains same.
+[00:18:06 -> 00:18:08] So one, one, one, and int max.
+[00:18:08 -> 00:18:11] And now this one gets transferred across the x minus one
+[00:18:12 -> 00:18:14] and becomes a zero.
+[00:18:14 -> 00:18:16] And this zero just gets transferred to another zero
+[00:18:16 -> 00:18:18] just before the conditional branch.
+[00:18:18 -> 00:18:20] And now we need to apply the more precise
+[00:18:22 -> 00:18:23] transfer functions of the conditional branch.
+[00:18:23 -> 00:18:25] And recall that on the loop edge,
+[00:18:25 -> 00:18:29] the transfer function was max of int,
+[00:18:29 -> 00:18:31] which is zero, and c plus one.
+[00:18:31 -> 00:18:33] So c here is zero.
+[00:18:33 -> 00:18:35] So c plus one is one.
+[00:18:35 -> 00:18:38] So the value that gets transferred on the loop edge
+[00:18:38 -> 00:18:41] is going to be max of zero comma zero plus one,
+[00:18:41 -> 00:18:43] which is one.
+[00:18:43 -> 00:18:46] And the value that will get transferred on the return edge
+[00:18:46 -> 00:18:47] or the fall through edge would be
+[00:18:48 -> 00:18:53] if in is greater than c, then int max,
+[00:18:55 -> 00:18:58] otherwise in, but it is not greater than c, right?
+[00:18:58 -> 00:19:00] Zero is not greater than zero.
+[00:19:00 -> 00:19:01] It's zero is equal to zero.
+[00:19:01 -> 00:19:04] So I'm not going to transfer in int max this time.
+[00:19:04 -> 00:19:06] Instead, the value that gets transferred outside
+[00:19:06 -> 00:19:09] is the same value that came in, which is zero.
+[00:19:09 -> 00:19:11] So this will be one and this will be zero.
+[00:19:11 -> 00:19:13] So this will be the new values
+[00:19:13 -> 00:19:15] after I use the more precise transfer functions.
+[00:19:15 -> 00:19:18] And so this becomes one and this becomes zero.
+[00:19:18 -> 00:19:20] So on the loop edge, I am getting the value,
+[00:19:20 -> 00:19:21] the lower bound is one,
+[00:19:21 -> 00:19:23] which is coming from max of in comma c plus one,
+[00:19:23 -> 00:19:26] in being zero and c being zero as well.
+[00:19:26 -> 00:19:28] And on the return edge, I'm getting zero
+[00:19:28 -> 00:19:29] because I'm using this transfer function.
+[00:19:29 -> 00:19:32] If in is greater than c, then int max is in.
+[00:19:32 -> 00:19:35] And recall that in is zero and c is zero also.
+[00:19:36 -> 00:19:40] And wow, the interesting thing is
+[00:19:40 -> 00:19:41] this is actually a fixed point solution
+[00:19:41 -> 00:19:43] and we have reached the fixed point.
+[00:19:43 -> 00:19:44] You can check for yourself.
+[00:19:44 -> 00:19:46] For example, if you look at the loop head,
+[00:19:46 -> 00:19:48] then the value that I have here is one.
+[00:19:48 -> 00:19:49] And if I look at its predecessors,
+[00:19:49 -> 00:19:51] one of the predecessors is 10
+[00:19:51 -> 00:19:54] and the other predecessor is one, right?
+[00:19:54 -> 00:19:58] So in this case, I have reached a fixed point solution
+[00:19:58 -> 00:20:01] in a bounded number of steps.
+[00:20:01 -> 00:20:02] For this particular example,
+[00:20:02 -> 00:20:06] even though I had an infinite height lattice.
+[00:20:08 -> 00:20:10] What this tells us is that more precise transfer functions
+[00:20:10 -> 00:20:12] can yield more precise answers.
+[00:20:12 -> 00:20:16] And also it tells us that it's not necessary
+[00:20:16 -> 00:20:19] that if the semi lattice is infinite height
+[00:20:19 -> 00:20:21] or unbounded height,
+[00:20:21 -> 00:20:24] then the fixed point solution must run forever
+[00:20:24 -> 00:20:28] in some fortunate settings or lucky step settings.
+[00:20:28 -> 00:20:29] We may have situations
+[00:20:29 -> 00:20:31] where the fixed point actually terminates,
+[00:20:31 -> 00:20:34] but we don't know what the program is ahead of time.
+[00:20:34 -> 00:20:36] So I can always construct a program
+[00:20:36 -> 00:20:40] in which the fixed point solution can take infinite steps
+[00:20:40 -> 00:20:42] if my semi lattice was infinite height.
+[00:20:42 -> 00:20:43] So in general, it's a very bad idea
+[00:20:43 -> 00:20:46] to have a semi lattice of unbounded height
+[00:20:46 -> 00:20:48] because you don't know what the program is going to be.
+[00:20:48 -> 00:20:50] For example, if I just change this program
+[00:20:50 -> 00:20:53] such that instead of this, if X greater than zero,
+[00:20:53 -> 00:20:55] if I had some other variable Y
+[00:20:55 -> 00:20:58] and then Y was basically some function of X,
+[00:20:58 -> 00:21:01] which was some complicated function,
+[00:21:02 -> 00:21:04] but which was actually going to be return a Boolean value
+[00:21:04 -> 00:21:07] that was equivalent to X is greater than zero,
+[00:21:07 -> 00:21:11] our compiler analysis will not be able to,
+[00:21:11 -> 00:21:12] look into this complex function F
+[00:21:12 -> 00:21:14] and say that, hey, this is actually X greater than zero,
+[00:21:14 -> 00:21:16] in which case also,
+[00:21:16 -> 00:21:18] even with the more precise transfer functions,
+[00:21:18 -> 00:21:19] I'm going to still end up
+[00:21:19 -> 00:21:20] with infinite number of steps
+[00:21:20 -> 00:21:23] in my fixed point solution or algorithm.
+[00:21:23 -> 00:21:26] And I'm going to end up with a very imprecise solution.
+[00:21:27 -> 00:21:29] So to conclude,
+[00:21:29 -> 00:21:30] a more sophisticated transfer function
+[00:21:31 -> 00:21:32] may yield more precise answers,
+[00:21:32 -> 00:21:34] but it's not a guarantee.
+[00:21:36 -> 00:21:37] It is always,
+[00:21:37 -> 00:21:40] in general, it is always possible to construct a program
+[00:21:40 -> 00:21:42] where the DFA yields an imprecise answer.
+[00:21:42 -> 00:21:44] So if you give me any DFA,
+[00:21:44 -> 00:21:45] recall that the transfer functions of a DFA
+[00:21:45 -> 00:21:48] are usually based on pattern matching,
+[00:21:48 -> 00:21:50] pattern matching on the structure of the instruction
+[00:21:50 -> 00:21:51] and so on.
+[00:21:51 -> 00:21:56] And if I create a program which has the same effect,
+[00:21:56 -> 00:21:57] but does not match the patterns
+[00:21:57 -> 00:21:59] that the transfer function uses,
+[00:21:59 -> 00:22:03] then I will be able to create a program
+[00:22:03 -> 00:22:05] in which the DFA will yield imprecise answers,
+[00:22:05 -> 00:22:07] as we saw in the example that we just saw.
+[00:22:07 -> 00:22:09] And in general,
+[00:22:09 -> 00:22:10] we should always ensure a bounded height
+[00:22:10 -> 00:22:12] last semi-latest so that
+[00:22:12 -> 00:22:13] even though the answers are imprecise,
+[00:22:13 -> 00:22:16] the running time of the algorithm is bounded
+[00:22:16 -> 00:22:17] because this has to run
+[00:22:17 -> 00:22:19] within the context of a particular program analysis
+[00:22:19 -> 00:22:20] or in the context of a compiler,
+[00:22:20 -> 00:22:23] and we cannot wait for a compiler to run forever
+[00:22:23 -> 00:22:24] or for a very long time.

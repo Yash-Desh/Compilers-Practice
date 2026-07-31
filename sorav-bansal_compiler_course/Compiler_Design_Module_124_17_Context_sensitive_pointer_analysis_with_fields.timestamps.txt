@@ -1,0 +1,196 @@
+Title: Compiler Design Module 124 17: Context sensitive pointer analysis with fields
+Video ID: vdxmmMo5H1s
+Detected language: en
+------------------------------------------------------------
+
+[00:00:00 -> 00:00:05] So I'm going to continue our discussion on call context sensitive point analysis,
+[00:00:05 -> 00:00:12] but this time I'm going to tackle fields or member values or in classes.
+[00:00:12 -> 00:00:17] So once again, I'm going to have this example where, you know, there's a base class which
+[00:00:17 -> 00:00:21] has a virtual function, virtual abstract function F, there are two derived classes
+[00:00:21 -> 00:00:26] D1 and D2 which implement different implementations of the virtual function F.
+[00:00:27 -> 00:00:32] And now, just like I had a copy class in my previous example, I'm going to have a memory
+[00:00:32 -> 00:00:37] class in this example, which has a field and this is the major difference, which has a
+[00:00:37 -> 00:00:41] field of type base, which is the memory of this class.
+[00:00:42 -> 00:00:45] And there it has two functions set and get.
+[00:00:45 -> 00:00:48] So setM basically sets this memory element.
+[00:00:48 -> 00:00:53] So setM takes SM and does M equals SM and getM just returns the current value of M.
+[00:00:53 -> 00:00:55] So that's why it's called a memory class.
+[00:00:56 -> 00:00:56] Okay.
+[00:00:56 -> 00:01:04] So now we want to basically look at an example and see how a call context sensitive analysis
+[00:01:04 -> 00:01:12] will tackle fields in classes and so let's get on with it.
+[00:01:12 -> 00:01:17] So let's say this is the main function and just like before, we have objects
+[00:01:17 -> 00:01:22] that basically represent the memory class, just like we had an object that used to
+[00:01:22 -> 00:01:24] represent the copy class in our previous example.
+[00:01:24 -> 00:01:32] So let's say memory1, m1 is allocated here, new memory at location lm1.
+[00:01:32 -> 00:01:35] Similarly, m2 is allocated location lm2.
+[00:01:35 -> 00:01:39] You say m1.setM new d1 at location ld1.
+[00:01:39 -> 00:01:45] So ld1 acts both as the allocation site for this new d1 object and it acts as
+[00:01:45 -> 00:01:48] a call site for this call to setM.
+[00:01:49 -> 00:01:56] Similarly, m2.setM with new d2, ld2 acts as the allocation site and the call site.
+[00:01:56 -> 00:02:02] And finally, we do base r1 equals m1.getM.
+[00:02:02 -> 00:02:05] So recall that we had done m1.setM new d1.
+[00:02:05 -> 00:02:12] So m1.getM will return whatever was set last based on the memory element M.
+[00:02:12 -> 00:02:16] And so in this case, we can see that r1 will get this d1 object.
+[00:02:17 -> 00:02:23] And similarly, r2 will also get the d2 object because we are doing the same r2 equals m2.getM.
+[00:02:24 -> 00:02:29] And then when we do r1.f, then we know that it's always going to be d1's f that's going
+[00:02:29 -> 00:02:35] to get called and here r2.f is d2's f implementation that's going to get called.
+[00:02:35 -> 00:02:39] So we can see this manually, but the question is can the compiler see it
+[00:02:39 -> 00:02:44] and can a call context sensitive analysis identify this information automatically?
+[00:02:44 -> 00:02:46] So let's see how a compiler is going to proceed with it.
+[00:02:47 -> 00:02:53] The interesting thing here is that this object is now going to live in a field of the memory
+[00:02:53 -> 00:03:03] class and we have to associate the points to information across this journey of this pointer.
+[00:03:03 -> 00:03:07] So the first thing I'm going to do is I'm going to label all the call sites and allocation
+[00:03:07 -> 00:03:15] sites. So for example, we already had lm1, lm2, ld1, ld2. And additionally, I'll also label these
+[00:03:15 -> 00:03:23] call sites getM and getM with lr1 and lr2. The second thing I need to do is I want to
+[00:03:23 -> 00:03:29] need to make the this keyword explicit. In C++ or Java, we usually use this which refers
+[00:03:29 -> 00:03:36] to the current object. And so for example, when you say m equals sm, it actually resolves
+[00:03:36 -> 00:03:43] to this dot m equals sm, right? Similarly, when you say getM, it resolves to return this dot m.
+[00:03:43 -> 00:03:49] So you make the this element explicit. And not just that, just to distinguish between the this
+[00:03:49 -> 00:03:56] in setM's context or setM's scope and this in getM's scope, we superscript this with setM's
+[00:03:56 -> 00:04:04] this or this superscript setM dot m equals sm and this superscript getM dot m is returned.
+[00:04:05 -> 00:04:09] So I mean, just to distinguish the two, when we draw the points to graph across these variables,
+[00:04:09 -> 00:04:14] we don't want to merge both of them and kind of treat them similarly. So that's why I label them
+[00:04:14 -> 00:04:19] using a superscript based on the function name in which the scope of the function name in which
+[00:04:19 -> 00:04:28] they appear. Now, the one important kind of difference between the previous example and this
+[00:04:28 -> 00:04:32] example is because we have state in the object, and that's why we need the this keyword,
+[00:04:32 -> 00:04:40] we need to figure out how the function called dispatch works and how correspondingly the transfer
+[00:04:40 -> 00:04:45] function across the dispatch works. So let's say I allocate a new object of type X and then I
+[00:04:45 -> 00:04:52] call a function foo with argument A on that. And let's say foo is declared in this class X.
+[00:04:52 -> 00:04:56] This is separate from the example that I was discussing earlier. I'm just using some pattern
+[00:04:57 -> 00:05:02] and then foo is declared here with let's say the formal argument B and inside it,
+[00:05:02 -> 00:05:06] you have somebody which says which refers to the this keyword just like we had in the previous
+[00:05:06 -> 00:05:13] exam. Now, notice that this function call dispatch basically involves copying the actual
+[00:05:13 -> 00:05:21] arguments to the formal argument. So that's B equals A, but also the receiving object,
+[00:05:21 -> 00:05:26] the this object is also just treated like just another argument of this function call.
+[00:05:26 -> 00:05:32] In fact, one way to think about such dispatches is that this object is the first argument
+[00:05:32 -> 00:05:39] of this member function call. So because it's treated just like an extra argument,
+[00:05:40 -> 00:05:47] the formal argument name is this keyword or more explicitly this foo. So this foo is the formal
+[00:05:47 -> 00:05:53] arguments name and the actual arguments name, which is at the call site is X. And so at the
+[00:05:53 -> 00:05:59] time of dispatch, the effective operation that's happening is that we are assigning whatever is in
+[00:05:59 -> 00:06:05] X to this variable to this formal argument this foo, just like you were assigning A to B
+[00:06:05 -> 00:06:11] for other arguments. So the receiving object is the first argument of the member function call
+[00:06:11 -> 00:06:17] in these object oriented languages. And this foo is the is its formal argument name. And that's
+[00:06:17 -> 00:06:23] why this dispatch basically behaves like this. So this has implications on how we are going
+[00:06:23 -> 00:06:29] to do transfer for points to analysis. We're just going to apply the copy rule for this foo
+[00:06:29 -> 00:06:33] and for B while we are doing the points to analysis. For example, if I'm using the
+[00:06:33 -> 00:06:41] Anderson's analysis, then recall that we had this inference rule for function call dispatch
+[00:06:41 -> 00:06:48] which said if small o has type capital O, where capital O is a class and small o is an object
+[00:06:48 -> 00:06:56] of that class. If I'm analyzing this statement, this function called dispatch statement o.foo
+[00:06:56 -> 00:07:03] with argument X, t colon equals o.foo with argument X at location L being analyzed in
+[00:07:03 -> 00:07:08] context C. So that means that this function called dispatch statement actually is being
+[00:07:08 -> 00:07:15] analyzed in context C. And this function definition exists as a part of the program.
+[00:07:15 -> 00:07:20] This function definition says that f is a member function of capital O which is the class.
+[00:07:20 -> 00:07:25] And it takes some formal arguments which let's say we say a and it has some body which we say
+[00:07:25 -> 00:07:36] e. Okay, so when we do this dispatch, then we basically copy the value of x to a. And when
+[00:07:36 -> 00:07:42] we are doing the points to analysis, then a will be analyzed in the context of this function
+[00:07:42 -> 00:07:49] body and which is which in our call context sensitive analysis with depth one is going to be
+[00:07:49 -> 00:07:56] L. So a L will be the corresponding version of a which is going to get updated because of the
+[00:07:56 -> 00:08:02] points to set of x in context C. In other words, we are going to update the outgoing
+[00:08:02 -> 00:08:11] edges of a L using the outgoing edges of x C. Set differently, the outgoing edges of
+[00:08:11 -> 00:08:16] written in a constraint form the outgoing edges of a L should be a subset of the outgoing edges of x
+[00:08:16 -> 00:08:24] C. Identically just like any other argument that this argument as we said is just another
+[00:08:24 -> 00:08:32] formal argument. And the O argument which is the receiving object here is the actual
+[00:08:32 -> 00:08:37] argument for corresponding to this. And so just like we did we updated a L using x C,
+[00:08:37 -> 00:08:43] we are going to update this F L using O L. In other words, the outgoing edges of this F L
+[00:08:43 -> 00:08:49] will be updated to include all the outgoing edges of O, I should have said O C. Okay,
+[00:08:49 -> 00:08:54] this is an error. This is this should be O C. Okay, so it should be because O is being
+[00:08:54 -> 00:08:59] analyzed in context C. Finally, because of this function called dispatch, we are going to
+[00:08:59 -> 00:09:05] analyze e in context L. And that's what this this expression means here with the turnstile.
+[00:09:05 -> 00:09:10] We had discussed this in our previous module. Okay, similarly, let's just for completeness
+[00:09:10 -> 00:09:14] discuss what the rule for return is going to be. So if a return statement is being analyzed
+[00:09:14 -> 00:09:21] in call context L, which means it must be a part of the e body inside F A equals e, then
+[00:09:22 -> 00:09:29] you know whatever B can point to will now get transferred to whatever T can point to.
+[00:09:29 -> 00:09:34] T is being analyzed in context C, B was being analyzed in context L.
+[00:09:34 -> 00:09:40] So we update T C based on B L. Or in other words, we update the outgoing edges of T C
+[00:09:40 -> 00:09:46] using the outgoing edges of B L. In a constraint form, that means that the outgoing edges of T C
+[00:09:46 -> 00:09:50] must be a superset in the final solution of the outgoing edges of B L. So this is the return
+[00:09:50 -> 00:09:55] rule. Okay, equipped with these rules, let's just look at our example once again and see
+[00:09:55 -> 00:10:00] how we are going to execute our points to analysis on this example, which has a memory
+[00:10:00 -> 00:10:08] element stored represented as a field M inside a class. So the first two statements are just
+[00:10:08 -> 00:10:13] allocating new memory objects at locations LM1 and LM2 using the allocation site abstraction
+[00:10:13 -> 00:10:19] that basically means M1 can point to LM1 and M2 can point to LM2. Let's assume that the main
+[00:10:19 -> 00:10:24] function is being analyzed in context 0. So then M1, the version of M1 that we are tracking
+[00:10:24 -> 00:10:31] is M10 and the allocation site that we are tracking is also LM10. So this is our points
+[00:10:31 -> 00:10:35] to graph because of the first statement and this is the points to graph for the due to
+[00:10:35 -> 00:10:39] the second statement. So M20 points to LM2 because of the first two statements here.
+[00:10:39 -> 00:10:45] Okay, now we are going to look at this dispatch M1.setM new D1 at location LD1.
+[00:10:45 -> 00:10:53] Now because we allocate a new location new D1 and then we call setM which is going to
+[00:10:53 -> 00:11:00] you know assign to SM at the formal argument SM is going to get this value new D1. New D1 is
+[00:11:00 -> 00:11:06] going to be the three address code variable that holds the pointer of new D1 is going
+[00:11:06 -> 00:11:13] to point to LD1 and that's going to be used to update SM. So SM in context LD1
+[00:11:15 -> 00:11:21] will now start pointing to whatever is allocated here, the allocation site here,
+[00:11:21 -> 00:11:28] which was LD1 in context 0. So SM in context LD1 because of setM is now pointing to
+[00:11:30 -> 00:11:36] an abstract object represented by the allocation site LD1 in context of main which is 0.
+[00:11:37 -> 00:11:41] This is because of the dispatch because of the copy of the actual argument which holds
+[00:11:42 -> 00:11:51] to the formal argument SM in context LD1. Okay similarly SM LD2 points to L0 D2.
+[00:11:52 -> 00:11:58] That's because of the second two statements. Now we're going to execute the body of setM
+[00:11:58 -> 00:12:03] and we're going to see how that behaves. So the only statement in the body is this
+[00:12:03 -> 00:12:11] dot M equals SM and more precisely I should have said this setM dot M equals SM all right
+[00:12:11 -> 00:12:17] and similarly this should have been this getM so more qualification. Okay so this setM is dot
+[00:12:17 -> 00:12:22] M is equal to SM. Now recall that this is just our assignment rule this is similar to saying
+[00:12:22 -> 00:12:32] that star this equals SM so this is equivalent to saying star this superscript setM equals
+[00:12:33 -> 00:12:38] SM just that we are just setting one field of that object. If you are doing a field
+[00:12:38 -> 00:12:43] sensitive analysis we'll track what that field is if you are not doing a field sensitive analysis
+[00:12:43 -> 00:12:47] then that's just equivalent to saying that you're just setting the contents to that.
+[00:12:47 -> 00:12:50] This is a different matter that only part of the contents are being set to it
+[00:12:50 -> 00:12:54] but we can just assume that the whole thing can also contain the pointer all right. That's
+[00:12:54 -> 00:12:59] an over approximation or that's a conservative analysis. So using that we are going to say
+[00:12:59 -> 00:13:07] okay so but before that I mean we don't have the points to set for this setM so just like
+[00:13:07 -> 00:13:13] we identified the points to set for SM ld1 we need to identify the points to set for this
+[00:13:13 -> 00:13:21] setM and that's our next thing. So this setM in context ld1 because that's where we are
+[00:13:21 -> 00:13:27] we are analyzing setM is now whatever the receiving object was at the call site which is
+[00:13:27 -> 00:13:34] m1 and whatever it was pointing to m1 0 was pointing to l0 m1 so now this setM ld1 can also
+[00:13:34 -> 00:13:40] point to l0 m1. Similarly this setM ld2 can also point to whatever m2 0 was pointing to
+[00:13:40 -> 00:13:45] and that's l0 m2. So this is our new points to graph because of the function called dispatch
+[00:13:45 -> 00:13:49] and now on this function called dispatch we are going to look at this body
+[00:13:49 -> 00:13:55] and update the points to graph. So let's do that next. So so far we have just
+[00:13:55 -> 00:13:59] implemented the dispatch rules that I had shown you earlier. We have copied the actual
+[00:13:59 -> 00:14:04] arguments to the formal arguments including the receiving object to the this keyword.
+[00:14:06 -> 00:14:12] Okay now we execute this interesting statement this.m equals SM and this is the most important
+[00:14:12 -> 00:14:19] part of this example and this.sm equals SM is just going to use the assignment
+[00:14:20 -> 00:14:24] rule that we had seen earlier which means that whatever this is pointing to
+[00:14:25 -> 00:14:31] that can now start pointing to whatever SM is pointing to. So this could point to l0 m1
+[00:14:31 -> 00:14:42] and SM ld1 could point to l0 d1. So now I draw an edge from l0 m1 to l0 d1 and so this is
+[00:14:43 -> 00:14:50] the effect of the transfer across this assignment statement which basically uses the
+[00:14:50 -> 00:15:01] assign rule which is star this equals SM. This.m equals SM is analogous to saying star this
+[00:15:02 -> 00:15:07] equals SM in a field and sensitive analysis. If you were doing a field sensitive analysis however
+[00:15:07 -> 00:15:13] then you would additionally label the edge with the field name which is m. Recall that field
+[00:15:13 -> 00:15:19] sensitive analysis can only be done for safe languages and if it's an unsafe language then
+[00:15:19 -> 00:15:22] maybe you don't want to do a field sensitive analysis. It doesn't matter the discussion of
+[00:15:22 -> 00:15:26] the example remains the same just that the label would have been removed that's all.
+[00:15:26 -> 00:15:32] Similarly for m2 we would have to draw an edge because of the transfer across the second
+[00:15:32 -> 00:15:39] when we analyze set m in this context ld2 then we say that there is an edge from l0 m2 to
+[00:15:39 -> 00:15:46] l0 d2 and optionally labeled with m depending on whether we're doing a field sensitive analysis.
+[00:15:48 -> 00:15:53] Finally when we do base r1 equals our m1.getm so we are going to analyze
+[00:15:55 -> 00:16:01] getm in the context lr1 and we are going to again do the same actual argument as m1
+[00:16:01 -> 00:16:08] and formal argument is this getm and so we say that whatever m1 was pointing to
+[00:16:08 -> 00:16:16] this getm would start pointing to this getm is being analyzed in context lr1 in this case
+[00:16:16 -> 00:16:23] so this getm is being analyzed in lr1 and so that's what we do so we say this getm
+[00:16:23 -> 00:16:30] lr1 points to whatever m1 in make context of main which is m10 is pointing to which basically
+[00:16:30 -> 00:16:37] means that this getm lr1 starts pointing to l0 m1 because that's what m10 is pointing to.
+[00:16:37 -> 00:16:43] Similarly this getm lr2 starts pointing to l0 m2 by virtue of transfer on the second instruction
+[00:16:43 -> 00:16:49] or second statement r2 equals m2.getm just the dispatch I've not yet executed the whole
+[00:16:49 -> 00:16:56] function. Okay based on that now this function is just going to return this dot m so I look
+[00:16:56 -> 00:17:03] at what is this what could this point to so this dot m is similar to saying star this so
+[00:17:03 -> 00:17:09] that's I mean that's as good as saying return star this from the perspective of a field
+[00:17:09 -> 00:17:13] insensitive points to analysis so I need to look at what is this going to point to so
+[00:17:13 -> 00:17:21] that's l0 m that's l0 m1 in case of the first call and then I look at what is that going
+[00:17:21 -> 00:17:28] to point to so that's l0 d1 that's what it may point to so now that's what gets returned
+[00:17:28 -> 00:17:34] and that's what gets assigned to r1 in context 0. Similarly that's what gets assigned to r2 in
+[00:17:34 -> 00:17:40] context 0 so we add two more edges r1 0 points to whatever you know whatever we figured out
+[00:17:40 -> 00:17:46] star this may point to which is l0 d1 and similarly r2 0 can point to whatever star this
+[00:17:46 -> 00:17:49] may point to and so it gets there. If it was a field sensitive analysis we would not
+[00:17:49 -> 00:17:56] say star this but we would say this dot f or this dot m and so in this case this is labeled
+[00:17:56 -> 00:18:01] with m so this would be considered and once again r2 0 we will get the same answer as it is in
+[00:18:01 -> 00:18:05] this example irrespective of whether we're doing a field sensitive or a field insensitive
+[00:18:05 -> 00:18:11] analysis. Finally the question that we wanted to answer which was whether this is you know
+[00:18:11 -> 00:18:18] statically resolvable we can see that indeed with a call context sensitive analysis of
+[00:18:18 -> 00:18:26] depth 1 for this example we are able to say confidently at compile time that r1 0 can only
+[00:18:26 -> 00:18:33] point to an abstract object l0 d1 which is of type capital d1 so this must be calling d1's f
+[00:18:33 -> 00:18:39] similarly r2 0 can only call can only point to an object which is of l0 d2 which is of type
+[00:18:39 -> 00:18:45] d2 so this must be calling d2's f and so we are able to resolve a virtual function call
+[00:18:45 -> 00:18:52] statically in this example. The key difference between this example and the previous example is
+[00:18:52 -> 00:18:59] the use is the modeling of the field m and notice that we are just modeling write or read to a
+[00:18:59 -> 00:19:05] field as a write or read to the receiving or to the actual object that contains that field
+[00:19:05 -> 00:19:10] so this is just like just like we were dealing with structs in c we are going to deal with
+[00:19:10 -> 00:19:16] these fields in an object-oriented language like c++ or java.

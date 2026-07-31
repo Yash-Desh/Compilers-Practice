@@ -1,0 +1,180 @@
+Title: Compiler Design Module 99 : Family of Transfer Functions
+Video ID: hNPqzwXXNrE
+Detected language: en
+------------------------------------------------------------
+
+[00:00:00 -> 00:00:05] So, we've been talking about the dataflow analysis framework and we specifically focused
+[00:00:05 -> 00:00:06] on the semi-lattice.
+[00:00:06 -> 00:00:11] We discussed how a semi-lattice can be represented, how it can be represented as a product of
+[00:00:11 -> 00:00:16] smaller semi-lattices and also we talked about one important property of a semi-lattice
+[00:00:16 -> 00:00:18] which is the height of semi-lattice.
+[00:00:18 -> 00:00:25] Now the other part of a dataflow framework, recall, is F. So, recall that a DFA is
+[00:00:25 -> 00:00:29] defined by F, V and the meet operator.
+[00:00:29 -> 00:00:36] V and the meet operator together basically form a semi-lattice and F is basically a family
+[00:00:36 -> 00:00:38] of transfer functions, right?
+[00:00:38 -> 00:00:43] So we haven't really discussed F at all so far and that's what we're going to do now.
+[00:00:43 -> 00:00:44] So what is F?
+[00:00:44 -> 00:00:46] F is a family of transfer functions.
+[00:00:46 -> 00:00:48] So what does that mean?
+[00:00:48 -> 00:00:50] What does a family of transfer functions mean?
+[00:00:51 -> 00:00:56] Well, it means that the transfer function for any instruction or any basic block in
+[00:00:56 -> 00:01:02] the program will be one of the functions in capital F. So capital F is a set of
+[00:01:02 -> 00:01:06] transfer functions and any transfer function that is used for any instruction for a
+[00:01:06 -> 00:01:13] particular dataflow analysis that is represented by F, V and the meet operator is basically,
+[00:01:13 -> 00:01:17] so any transfer function for any instruction for that particular dataflow analysis is
+[00:01:17 -> 00:01:19] drawn from F. That's what it means, alright?
+[00:01:19 -> 00:01:23] So that's why it's called a family of transfer functions or set of transfer functions.
+[00:01:23 -> 00:01:28] So the transfer function for an instruction or a basic block is one of the functions
+[00:01:28 -> 00:01:29] in F, alright?
+[00:01:29 -> 00:01:32] So we basically need to have a family of functions and we have a restriction that
+[00:01:32 -> 00:01:35] any transfer function should be one of these functions, right?
+[00:01:35 -> 00:01:37] It cannot be any arbitrary function, alright?
+[00:01:37 -> 00:01:43] Recall that if the function doesn't have certain properties then the dataflow analysis
+[00:01:43 -> 00:01:48] cannot terminate and so the reason for being able to define a family of functions
+[00:01:48 -> 00:01:54] is so that we can have properties for capital F and using those properties we can reason
+[00:01:54 -> 00:02:00] about the convergence and optimality properties of the DFA, alright?
+[00:02:00 -> 00:02:05] So what are the properties that the family of transfer functions F must have?
+[00:02:05 -> 00:02:08] Well, it must have the following properties.
+[00:02:08 -> 00:02:15] Every function small f in capital F should have the form V to V which means it takes
+[00:02:15 -> 00:02:21] a value from the set V which is the set of dataflow analysis values and then it turns
+[00:02:21 -> 00:02:26] a value V. So for example if it's reaching definitions then it takes a set of reaching
+[00:02:26 -> 00:02:30] definitions and returns an other set of reaching definitions.
+[00:02:30 -> 00:02:34] If it's constant propagation for a single variable it takes one of those values top,
+[00:02:34 -> 00:02:38] bottom or constant and then it returns one of these three values also.
+[00:02:38 -> 00:02:43] By three I mean it could be any constant, it's actually an infinite set of values
+[00:02:43 -> 00:02:48] but whatever those values are it takes one of those values and then it turns one of
+[00:02:48 -> 00:02:50] those values back.
+[00:02:50 -> 00:02:53] That's what a transfer function is supposed to do.
+[00:02:53 -> 00:02:56] For example if I'm talking about sets of constant definitions when I'm doing constant
+[00:02:56 -> 00:03:02] propagation for multiple variables in one go then it's a set of constant relationships
+[00:03:02 -> 00:03:07] or set of constant definitions and then that's what is going to be an element in
+[00:03:07 -> 00:03:08] the set V.
+[00:03:08 -> 00:03:12] And so every transfer function small f in capital F must have this form that takes
+[00:03:12 -> 00:03:17] a value from V and returns a value again drawn from V.
+[00:03:17 -> 00:03:21] So that's expected.
+[00:03:21 -> 00:03:27] The other property is that capital F there must be an identity function in capital
+[00:03:27 -> 00:03:34] F. So there must exist a small f in capital F such that fx is equal to x for all x
+[00:03:34 -> 00:03:40] belonging to V. So I should say for all x belonging to V.
+[00:03:40 -> 00:03:46] So there must be a special function which is the identity function and that's a
+[00:03:46 -> 00:03:52] necessity, that's a property that I need from capital F to be able to reason
+[00:03:52 -> 00:03:57] about interesting properties of the DFA.
+[00:03:57 -> 00:03:59] Intuitively why do I need the identity function?
+[00:03:59 -> 00:04:02] Well because it's possible that an instruction is a no op.
+[00:04:02 -> 00:04:07] And so if it's a no op basically I want to have this property that the
+[00:04:07 -> 00:04:08] output is equal to input.
+[00:04:08 -> 00:04:12] And so the transfer function for the no op instruction which means it does not not doing
+[00:04:12 -> 00:04:16] anything should be basically the identity function and that should be a part of my
+[00:04:16 -> 00:04:22] family of transfer functions that are permissible for this particular DFA.
+[00:04:22 -> 00:04:28] And the third important property is that f is closed under composition.
+[00:04:28 -> 00:04:30] So f is closed under composition.
+[00:04:30 -> 00:04:32] What does closed under composition mean?
+[00:04:32 -> 00:04:38] Well it means that if there are two functions f1 and f2, any two functions f1 and f2
+[00:04:38 -> 00:04:43] that I can draw from capital F, then it must be true that f1 composed with f2 also
+[00:04:43 -> 00:04:48] belongs to capital F. So I take any two functions from capital F and compose them
+[00:04:48 -> 00:04:50] the resulting function should also belong to capital F.
+[00:04:50 -> 00:04:52] That's what it means.
+[00:04:52 -> 00:04:55] That's what I mean when I say closed under composition.
+[00:04:55 -> 00:05:00] So just to elaborate more on what does composition mean, what does f1 composed
+[00:05:00 -> 00:05:01] with f2 mean?
+[00:05:01 -> 00:05:07] Well this is the definition f1 composed with f2 of an input x is nothing
+[00:05:07 -> 00:05:10] but first apply f1 then apply f2, right?
+[00:05:10 -> 00:05:11] So that's what composition means.
+[00:05:11 -> 00:05:15] First apply f1 then you apply f2 on the input value and whatever is the result
+[00:05:15 -> 00:05:17] that comes out as the resulting value.
+[00:05:17 -> 00:05:22] And recall notice that this is a valid application because f1 of x is also
+[00:05:22 -> 00:05:27] going to return some value in V and then you can apply f2 to it and once again
+[00:05:27 -> 00:05:29] you're going to get a value in V.
+[00:05:29 -> 00:05:32] So f needs to be closed under composition and that's another important
+[00:05:32 -> 00:05:38] property that I require from capital F to have a good DFA, to have a DFA for
+[00:05:38 -> 00:05:39] which I can reason about.
+[00:05:39 -> 00:05:42] So we're going to talk about what are the properties that I need, what are
+[00:05:42 -> 00:05:46] the properties I can prove using these facts for the DFA later on but let's
+[00:05:46 -> 00:05:50] at least understand what are the properties I need from capital F.
+[00:05:50 -> 00:05:53] Okay, so let's take an example.
+[00:05:53 -> 00:05:58] Recall that many of our data flow analyses are of the form kill
+[00:05:58 -> 00:06:02] something from x and then add something to it, all right?
+[00:06:02 -> 00:06:09] So f1 x equals x minus kill one in this case union gen one for let's say some
+[00:06:09 -> 00:06:13] instruction or statement S1 or some basic block B1, all right?
+[00:06:13 -> 00:06:18] So f1 x equals x minus kill one union gen one.
+[00:06:18 -> 00:06:22] So the kill and gen are basically properties of S1.
+[00:06:22 -> 00:06:26] So kill one is some property of S1, gen one is some property of S1 for some
+[00:06:26 -> 00:06:27] data flow analysis.
+[00:06:27 -> 00:06:30] Recall that many data flow analysis have this form.
+[00:06:30 -> 00:06:33] For example, reaching definitions, must reach definitions, liveness analysis,
+[00:06:33 -> 00:06:38] constant propagation, all of these at least there are some formulations for
+[00:06:38 -> 00:06:42] these problems which the transfer function can just be expressed using
+[00:06:42 -> 00:06:46] the kill and the gen functions, kill and the gen functions where these are
+[00:06:46 -> 00:06:49] just functions, kill and gen are just functions of the statement and
+[00:06:49 -> 00:06:49] nothing else.
+[00:06:49 -> 00:06:51] So kill and gen are independent of x, all right?
+[00:06:51 -> 00:06:53] So that's important.
+[00:06:53 -> 00:07:00] Similarly, f2 x can be x minus kill two union gen two for some statement S2,
+[00:07:00 -> 00:07:00] okay?
+[00:07:00 -> 00:07:07] And so I can say that, okay, f1 and f2 belong to capital F.
+[00:07:07 -> 00:07:09] So what is the family that I'm assuming here?
+[00:07:09 -> 00:07:14] The family of transfer functions is different functions for f1 and f2 and
+[00:07:14 -> 00:07:18] generally any f for different values of gen and kill, all right?
+[00:07:18 -> 00:07:23] So I can just say, okay, gen includes all the definitions or gen includes the
+[00:07:23 -> 00:07:26] empty set or gen includes 10 definitions or gen includes only one definition.
+[00:07:26 -> 00:07:28] Similarly, kill can have anything, right?
+[00:07:28 -> 00:07:34] So I can have any gen and any kill and all such functions that are formed by
+[00:07:34 -> 00:07:39] different combinations of gen and kill basically form the different functions
+[00:07:39 -> 00:07:42] that belong to capital F, all right?
+[00:07:42 -> 00:07:48] And so different functions are obtained for different values of gen and kill.
+[00:07:48 -> 00:07:51] And notice that the number of functions are actually pretty big, right?
+[00:07:51 -> 00:07:54] So for example, if I have gen, if I have reaching definitions,
+[00:07:54 -> 00:07:58] then what are the number of possible values for kill?
+[00:07:58 -> 00:08:01] Well, if I have n definitions, then the number of possible values for
+[00:08:01 -> 00:08:06] kill is all possible subsets of those n definitions, is 2 to the power n.
+[00:08:06 -> 00:08:09] Similarly, what is the number of values that are possible for gen?
+[00:08:09 -> 00:08:11] Once again, it is 2 to the power n.
+[00:08:11 -> 00:08:13] And so what is the total number of possible transfer functions?
+[00:08:13 -> 00:08:16] Well, you can take any combination of those.
+[00:08:16 -> 00:08:20] So that would be 2 to the power n x 2 to the power n, all right?
+[00:08:21 -> 00:08:27] And this entire set of functions basically forms a family of transfer functions
+[00:08:27 -> 00:08:30] for reaching definitions, for example, all right?
+[00:08:30 -> 00:08:35] So different functions are obtained for different values of gen and kill.
+[00:08:35 -> 00:08:40] My first question is, is this family, does this family obey the properties
+[00:08:40 -> 00:08:43] that we have listed out in the previous slide?
+[00:08:43 -> 00:08:49] So the first question here is, does it take a value in V and return a value in V?
+[00:08:49 -> 00:08:52] Well, the answer is yes, because x is supposed to be a set.
+[00:08:52 -> 00:08:57] And the return value is also the set of the same type, right?
+[00:08:57 -> 00:09:00] So whatever is the type of x is also going to be the return value, so
+[00:09:00 -> 00:09:01] that's clear.
+[00:09:01 -> 00:09:03] The second question is,
+[00:09:03 -> 00:09:07] does the family of transfer function have an identity function, all right?
+[00:09:07 -> 00:09:10] Does there belong a small f to that?
+[00:09:10 -> 00:09:13] Does there exist a small f which we have f x equals x?
+[00:09:13 -> 00:09:15] And the answer is yes.
+[00:09:15 -> 00:09:18] You just need to use gen equals the empty set and
+[00:09:18 -> 00:09:21] kill equals the empty set and there you go.
+[00:09:21 -> 00:09:24] That basically gives you the identity function and
+[00:09:24 -> 00:09:27] that indeed belongs to my capital F because as I said,
+[00:09:27 -> 00:09:31] I can take any value of gen and kill and
+[00:09:31 -> 00:09:34] such a function should belong to my set of transfer functions.
+[00:09:34 -> 00:09:38] The identity function indeed belongs to my family of transfer functions,
+[00:09:38 -> 00:09:42] capital F. And what about composition?
+[00:09:42 -> 00:09:44] So is it closed under composition?
+[00:09:44 -> 00:09:49] Well, for that we need to check what does f2 of f1 of x return?
+[00:09:49 -> 00:09:55] That's what the computation that would be formed by f1 composed with f2.
+[00:09:55 -> 00:09:58] And so first apply f1 and then apply f2.
+[00:09:58 -> 00:10:00] And that's going to be recall,
+[00:10:00 -> 00:10:02] this is something that we have discussed before.
+[00:10:02 -> 00:10:08] If I just represent that using, just substitute x,
+[00:10:08 -> 00:10:12] f1's expression into f2, and I just reorder and simplify.
+[00:10:12 -> 00:10:14] And then I'm going to get something like the following.
+[00:10:14 -> 00:10:20] X minus kill one union kill two union, gen two union, gen one minus kill one.
+[00:10:20 -> 00:10:25] All right, so this is what I get for f2 of f1 of x.
+[00:10:25 -> 00:10:29] And does this belong to my family of transfer functions f?
+[00:10:29 -> 00:10:33] The question is, the other way to pose this question is,
+[00:10:33 -> 00:10:38] is it possible to write this expression on the right as x minus
+[00:10:38 -> 00:10:42] kill three union gen three for some kill three and gen three?
+[00:10:42 -> 00:10:44] And the answer is actually, yes.
+[00:10:44 -> 00:10:51] This quantity here can be represented as kill of one composed with two.
+[00:10:51 -> 00:10:55] And this quantity here can be composed as gen of one union,
+[00:10:55 -> 00:10:56] one composed with two.
+[00:10:56 -> 00:10:59] Notice that both quantities are still independent of x.
+[00:10:59 -> 00:11:03] And they are only a function of x1 and x2.
+[00:11:03 -> 00:11:06] And so indeed, this family of transfer functions is closed under
+[00:11:06 -> 00:11:11] composition because the composed function also has the same form.
+[00:11:11 -> 00:11:15] And so it is also guaranteed to belong to the family of transfer functions f.

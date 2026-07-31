@@ -1,0 +1,664 @@
+Title: Compiler Design Module 146 : Solving Space Partitioning Constraints in General
+Video ID: XCH5bAT_wTw
+Detected language: en
+------------------------------------------------------------
+
+[00:00:00 -> 00:00:04] Now that we have seen how one could go about solving
+[00:00:04 -> 00:00:07] the space partitioning constraints
+[00:00:07 -> 00:00:09] in the context of a particular example,
+[00:00:09 -> 00:00:12] in this module, we are going to discuss the generalization
+[00:00:12 -> 00:00:17] that algorithm of solving space partitioning constraints.
+[00:00:17 -> 00:00:19] So recall that these are what space partitioning
+[00:00:19 -> 00:00:20] constraints look like.
+[00:00:20 -> 00:00:24] It says that whenever there is a data dependency
+[00:00:24 -> 00:00:27] for any pair of accesses or statements,
+[00:00:27 -> 00:00:30] in other words, whenever f1 i1 plus small f1
+[00:00:30 -> 00:00:34] for statement one equals f2 i2 plus small f2
+[00:00:34 -> 00:00:36] for statement two, then it must be true
+[00:00:36 -> 00:00:39] that those two both iterations points,
+[00:00:39 -> 00:00:42] i1 comma i2 map to the same processor ID.
+[00:00:42 -> 00:00:45] In other words, c1 i1 plus small c1
+[00:00:45 -> 00:00:47] equals c2 i2 plus small c2.
+[00:00:47 -> 00:00:49] Now notice that I have kind of condensed
+[00:00:49 -> 00:00:52] the space partitioning constraints.
+[00:00:52 -> 00:00:54] The actual space partitioning constraints
+[00:00:54 -> 00:00:59] also include things like b1 i1 plus b small b1
+[00:01:00 -> 00:01:02] greater than equal to zero and so on.
+[00:01:02 -> 00:01:05] But notice from the solution that we had
+[00:01:05 -> 00:01:08] in our previous module for that example,
+[00:01:08 -> 00:01:11] actually ignored those inequalities
+[00:01:11 -> 00:01:15] and we just use the equalities to arrive at a solution.
+[00:01:15 -> 00:01:16] Now it's not necessarily true
+[00:01:16 -> 00:01:19] that you can always ignore the inequalities.
+[00:01:19 -> 00:01:21] For example, if the inequalities evaluate
+[00:01:21 -> 00:01:22] only to a single point
+[00:01:22 -> 00:01:24] or evaluate to only a zero point,
+[00:01:24 -> 00:01:27] no points at all or something like that,
+[00:01:27 -> 00:01:30] then those inequalities are meaningful.
+[00:01:30 -> 00:01:33] But if the inequality is basically defined a large space,
+[00:01:33 -> 00:01:35] then it's the equality,
+[00:01:35 -> 00:01:37] which is basically really constraining the space.
+[00:01:37 -> 00:01:39] And so that's what's meaningful
+[00:01:39 -> 00:01:42] in identifying a solution.
+[00:01:42 -> 00:01:46] Also notice that inequalities are basically,
+[00:01:46 -> 00:01:47] getting rid of the inequality
+[00:01:47 -> 00:01:51] is not making my solution unsound or incorrect
+[00:01:51 -> 00:01:53] because even if I get rid of the inequalities,
+[00:01:53 -> 00:01:55] basically saying that,
+[00:01:55 -> 00:01:58] so it was recall that the inequalities
+[00:01:58 -> 00:01:59] were a part of the if clause.
+[00:01:59 -> 00:02:02] So now I have basically made the problem
+[00:02:02 -> 00:02:03] even more difficult now
+[00:02:03 -> 00:02:05] because I'm saying that whenever this is true,
+[00:02:05 -> 00:02:07] then this must be true.
+[00:02:07 -> 00:02:08] Earlier I was saying whenever this is true
+[00:02:08 -> 00:02:10] and some other conditions,
+[00:02:10 -> 00:02:11] which were the inequalities,
+[00:02:11 -> 00:02:12] then this should be true.
+[00:02:12 -> 00:02:16] So earlier I was saying that this should be true,
+[00:02:16 -> 00:02:18] the then clause should be true for a smaller set.
+[00:02:18 -> 00:02:20] Now I'm saying that the then clause should be true
+[00:02:20 -> 00:02:23] for a bigger set because in the if condition,
+[00:02:23 -> 00:02:25] I have removed some extra constraints.
+[00:02:25 -> 00:02:26] And so the solution that I'm going to get for this
+[00:02:26 -> 00:02:28] is always going to be a solution
+[00:02:28 -> 00:02:32] for the original space partitioning constraints as well.
+[00:02:32 -> 00:02:35] But we don't really, in our solution,
+[00:02:35 -> 00:02:39] we are not going to use typically the inequalities.
+[00:02:39 -> 00:02:42] And so I've just taken the liberty to ignore them
+[00:02:42 -> 00:02:46] in this particular formulation of the constraints.
+[00:02:46 -> 00:02:48] The good thing about this formulation
+[00:02:48 -> 00:02:49] is that these are all equalities
+[00:02:49 -> 00:02:51] and now I can use linear algebra techniques
+[00:02:51 -> 00:02:55] to basically solve this set of constraints
+[00:02:55 -> 00:02:58] exactly like we solved it for the example
+[00:02:58 -> 00:02:59] in our previous module.
+[00:03:00 -> 00:03:05] So now there's another way to write F1 I1 plus small i1
+[00:03:05 -> 00:03:08] and that method is basically that
+[00:03:08 -> 00:03:11] whatever is capital F1, it's a matrix,
+[00:03:11 -> 00:03:14] but I'm just writing it as a single symbol here.
+[00:03:14 -> 00:03:17] And then you just append small f1 as a single column,
+[00:03:17 -> 00:03:18] which is actually a vector.
+[00:03:18 -> 00:03:20] So just append that as a column
+[00:03:20 -> 00:03:22] and make this an extended matrix,
+[00:03:22 -> 00:03:25] which is formed by appending all the columns of F1
+[00:03:25 -> 00:03:29] with the single column of small f1.
+[00:03:29 -> 00:03:32] And then the vector just becomes I1 and one, right?
+[00:03:32 -> 00:03:35] So now if you just read this, this becomes F1,
+[00:03:35 -> 00:03:36] if you take the dot product,
+[00:03:36 -> 00:03:39] it becomes F1 I1 plus small f1 into one.
+[00:03:39 -> 00:03:41] So that's F1 I1 plus small f1.
+[00:03:41 -> 00:03:44] And similarly, I have done the similar transformation
+[00:03:44 -> 00:03:45] on the RHS as well.
+[00:03:45 -> 00:03:49] Now it is meaningful to kind of use this notation
+[00:03:49 -> 00:03:51] as opposed to the previous notation
+[00:03:51 -> 00:03:55] because we're going to do a lot of matrix kind of operations
+[00:03:55 -> 00:03:58] and becomes easier to talk in this notation
+[00:03:58 -> 00:04:00] rather than the previous notation.
+[00:04:00 -> 00:04:03] But eventually they all mean the same thing.
+[00:04:03 -> 00:04:05] So whenever this is true,
+[00:04:05 -> 00:04:07] it must be true that C1 I1 plus small c1
+[00:04:07 -> 00:04:11] equals C2 I2 plus small c2, okay?
+[00:04:11 -> 00:04:15] And so in other words, I can also in fact,
+[00:04:15 -> 00:04:19] rewrite this constraint by just bringing this RHS
+[00:04:19 -> 00:04:21] on the LHS on the if clause.
+[00:04:21 -> 00:04:24] And now I can write this as a single vector,
+[00:04:24 -> 00:04:28] I1 followed by I2, it's a single column,
+[00:04:28 -> 00:04:31] which has rows, first they have rows corresponding
+[00:04:31 -> 00:04:36] to the iteration vector I1 for statement S1.
+[00:04:36 -> 00:04:39] Then it has all the rows for iteration vector I2
+[00:04:39 -> 00:04:41] for statement S2.
+[00:04:41 -> 00:04:43] And then there's one which is just coming from the one
+[00:04:43 -> 00:04:46] that we had introduced in the previous slide.
+[00:04:46 -> 00:04:50] And because I moved the RHS to the LHS,
+[00:04:50 -> 00:04:52] I'll have the coefficient of minus one
+[00:04:52 -> 00:04:56] for all the elements that were originally on the RHS.
+[00:04:56 -> 00:04:59] So I have capital F1,
+[00:04:59 -> 00:05:01] which is going to get multiplied by small i1
+[00:05:01 -> 00:05:03] followed by minus capital F2,
+[00:05:03 -> 00:05:06] which is going to get multiplied by small i2.
+[00:05:06 -> 00:05:09] And then I have small f1 minus small f2,
+[00:05:09 -> 00:05:11] which is going to get multiplied by one
+[00:05:11 -> 00:05:16] because that's the common coefficient,
+[00:05:16 -> 00:05:20] a common variable, a common unit in all for others.
+[00:05:20 -> 00:05:23] For example, I1 and I2 are completely distinct
+[00:05:23 -> 00:05:26] because they represent two different iteration indices.
+[00:05:26 -> 00:05:28] Even if there was the same statement,
+[00:05:28 -> 00:05:30] they're basically supposed to represent
+[00:05:30 -> 00:05:31] different iteration indices,
+[00:05:31 -> 00:05:33] for example, i and i prime, j and j prime
+[00:05:33 -> 00:05:34] and stuff like that.
+[00:05:34 -> 00:05:35] So I1 and I2 are different,
+[00:05:35 -> 00:05:37] but one is common.
+[00:05:37 -> 00:05:41] And so the coefficients for one just get combined
+[00:05:41 -> 00:05:43] into F1 minus F2,
+[00:05:43 -> 00:05:45] but F1 is one set of columns,
+[00:05:45 -> 00:05:46] defines one set of columns
+[00:05:46 -> 00:05:49] and minus F2 defines another set of columns.
+[00:05:49 -> 00:05:50] And we order them in such a way
+[00:05:50 -> 00:05:53] so that I1 is the first set of rows
+[00:05:53 -> 00:05:55] in my iteration, in my new vector
+[00:05:55 -> 00:05:58] that I've formed in the combined vector of I1 and I2
+[00:05:58 -> 00:06:00] followed by I2, which is the next set of rows
+[00:06:00 -> 00:06:02] followed by one.
+[00:06:02 -> 00:06:05] Okay, so this is another way to write the if clause.
+[00:06:05 -> 00:06:08] And so now my equation becomes,
+[00:06:08 -> 00:06:11] if this is true, then it must be true
+[00:06:11 -> 00:06:13] that c1 i1 plus c2 i2 equals,
+[00:06:13 -> 00:06:17] c1 i1 plus c1, small c1 equals c2 i2 plus small c2.
+[00:06:17 -> 00:06:18] Now, once I have this,
+[00:06:18 -> 00:06:21] what I can do is I can use Gaussian elimination
+[00:06:21 -> 00:06:24] to eliminate as many unknown variables
+[00:06:24 -> 00:06:26] in I1 and I2 as possible.
+[00:06:26 -> 00:06:28] Now, this is what we did in our example as well.
+[00:06:28 -> 00:06:31] Recall that we had equations like i equals i prime,
+[00:06:31 -> 00:06:35] j equals j prime minus one and so on.
+[00:06:35 -> 00:06:37] And so when I know that i equals i prime,
+[00:06:37 -> 00:06:38] I can just eliminate i prime
+[00:06:38 -> 00:06:40] and replace it with i everywhere.
+[00:06:40 -> 00:06:43] Similarly, if I know that j equals j prime minus one,
+[00:06:43 -> 00:06:44] then I can eliminate j prime
+[00:06:44 -> 00:06:47] and replace it with j plus one everywhere.
+[00:06:47 -> 00:06:49] And so that's what I mean by use Gaussian elimination
+[00:06:49 -> 00:06:52] to eliminate as many unknown variables in I1, I2,
+[00:06:52 -> 00:06:54] which could be i, j, et cetera,
+[00:06:54 -> 00:06:57] or i prime, j prime, et cetera, as possible.
+[00:06:57 -> 00:06:58] Okay, and so when you,
+[00:06:58 -> 00:07:03] after you eliminate as many variables as possible
+[00:07:04 -> 00:07:06] based on these equalities that we know,
+[00:07:06 -> 00:07:08] then what we are left with
+[00:07:08 -> 00:07:11] is the number of free variables
+[00:07:11 -> 00:07:13] that can take on any value, right?
+[00:07:13 -> 00:07:15] Which are unconstrained because,
+[00:07:15 -> 00:07:17] for example, if I say i equals i prime,
+[00:07:17 -> 00:07:20] then if I represent i prime in terms of i,
+[00:07:20 -> 00:07:22] then i can take any value,
+[00:07:22 -> 00:07:23] but whatever value i takes,
+[00:07:23 -> 00:07:25] i prime must be the same value.
+[00:07:25 -> 00:07:28] And so if I say i equals i prime,
+[00:07:28 -> 00:07:30] and I use Gaussian elimination to eliminate i prime,
+[00:07:30 -> 00:07:32] then what I have remaining is just i,
+[00:07:32 -> 00:07:33] which is a free variable,
+[00:07:33 -> 00:07:35] and i prime has just been eliminated.
+[00:07:35 -> 00:07:37] So similarly, I have eliminated some variables,
+[00:07:37 -> 00:07:40] and what I'm left with are the free variables.
+[00:07:41 -> 00:07:42] And so that's what we want to do.
+[00:07:42 -> 00:07:46] And this is the standard method of Gaussian elimination.
+[00:07:46 -> 00:07:47] And so, in other words,
+[00:07:47 -> 00:07:49] what I'm basically going to do
+[00:07:49 -> 00:07:50] based on this equation
+[00:07:50 -> 00:07:51] is I'm going to rewrite this equation
+[00:07:51 -> 00:07:54] or transform this equation into an equivalent equation,
+[00:07:54 -> 00:07:56] which looks like,
+[00:07:56 -> 00:07:59] represent the vector i1, i2, 1,
+[00:07:59 -> 00:08:03] which is formed by having all the rows of the vector i1,
+[00:08:03 -> 00:08:05] followed by all the rows of vector i2,
+[00:08:05 -> 00:08:07] and then the unit one,
+[00:08:07 -> 00:08:09] equals some matrix U,
+[00:08:09 -> 00:08:13] multiplied with a vector of unknown variables T,
+[00:08:13 -> 00:08:14] followed by one, okay?
+[00:08:14 -> 00:08:17] So this may seem confusing.
+[00:08:17 -> 00:08:19] Where has U come from?
+[00:08:19 -> 00:08:21] Where has T come from?
+[00:08:21 -> 00:08:23] But basically what I'm saying is
+[00:08:23 -> 00:08:25] that I have identified
+[00:08:25 -> 00:08:29] what is the vector space of i1, i2, 1,
+[00:08:29 -> 00:08:31] which satisfies this equation.
+[00:08:31 -> 00:08:33] And then what are the,
+[00:08:33 -> 00:08:35] if I, let's say it's a one dimensional vector space,
+[00:08:35 -> 00:08:38] then it's a one dimensional degree of freedom.
+[00:08:38 -> 00:08:40] So there's only one free variable.
+[00:08:40 -> 00:08:43] And so T is going to be a single free variable.
+[00:08:43 -> 00:08:44] And so that's what it means.
+[00:08:44 -> 00:08:46] And then U is the multiplier
+[00:08:46 -> 00:08:48] to obtain the original iteration variables
+[00:08:48 -> 00:08:51] from the single free variable T, okay?
+[00:08:51 -> 00:08:54] So I'm going to use an example to show what is U,
+[00:08:54 -> 00:08:56] what is T, and what is one.
+[00:08:56 -> 00:08:58] One is just one, but what is U and what is T,
+[00:08:58 -> 00:09:00] with the example that we had,
+[00:09:00 -> 00:09:02] something similar to the example that we had earlier.
+[00:09:02 -> 00:09:04] So let's say this particular equation,
+[00:09:04 -> 00:09:09] f1 minus f2, and f1 minus f2, i1, i2, 1,
+[00:09:09 -> 00:09:10] evaluates to this, these values.
+[00:09:10 -> 00:09:14] We have, you know, i1 is ij,
+[00:09:14 -> 00:09:16] i2 is i prime j prime,
+[00:09:16 -> 00:09:18] and ij, i prime j prime are scalars.
+[00:09:18 -> 00:09:20] Notice that I'm not underlining them.
+[00:09:20 -> 00:09:21] And then there's one.
+[00:09:21 -> 00:09:23] So this becomes my vector.
+[00:09:23 -> 00:09:27] And now capital F1 is 1, 0, 0, 2.
+[00:09:28 -> 00:09:32] Minus capital F2 is minus 1, 0, 0, minus 1.
+[00:09:33 -> 00:09:37] And f1 minus f2 is, let's say, 0, 1, okay?
+[00:09:37 -> 00:09:39] Now, so this is my, you know,
+[00:09:39 -> 00:09:42] this is my matrix that is formed
+[00:09:42 -> 00:09:44] with five columns and two rows.
+[00:09:46 -> 00:09:48] Why is capital F1 1, 0, 0, 2?
+[00:09:48 -> 00:09:51] Because maybe the axis was something like
+[00:09:51 -> 00:09:52] i, 2j, all right?
+[00:09:52 -> 00:09:55] So that's what 1, 0, 0, 2 indicates.
+[00:09:55 -> 00:09:57] Why is this minus 1, 0, 0, minus 1?
+[00:09:57 -> 00:10:02] Because the matrix F2 was based on the axis,
+[00:10:02 -> 00:10:05] let's say, i, j, or i prime, j prime.
+[00:10:05 -> 00:10:07] And so that's how minus 1, minus 1 coming.
+[00:10:07 -> 00:10:10] Minus because we are bringing the RHS into LHS,
+[00:10:10 -> 00:10:12] and 1, 1 because the original axis
+[00:10:12 -> 00:10:14] was i prime, j prime.
+[00:10:14 -> 00:10:16] And similarly, how is this 0, 1 coming?
+[00:10:16 -> 00:10:18] Because, you know, one of the axes
+[00:10:18 -> 00:10:22] was just i, 2j, let's say, and the other was,
+[00:10:24 -> 00:10:27] so on one of the dimensions,
+[00:10:27 -> 00:10:28] there was no additive constant,
+[00:10:28 -> 00:10:29] and on the other dimension,
+[00:10:29 -> 00:10:31] there was an additive constant.
+[00:10:32 -> 00:10:35] So, okay, and the difference between
+[00:10:35 -> 00:10:37] the two additive constants,
+[00:10:37 -> 00:10:39] that's because it's f1 minus f2.
+[00:10:39 -> 00:10:42] So maybe both of them had additive constant 0
+[00:10:42 -> 00:10:44] on the first dimension,
+[00:10:44 -> 00:10:46] and maybe one of them had additive constant 1.
+[00:10:46 -> 00:10:48] The first one had 1, and the other one had 0,
+[00:10:48 -> 00:10:49] and that's why we get 0, 1,
+[00:10:49 -> 00:10:53] because it's the difference of the two additive constants.
+[00:10:53 -> 00:10:55] And then, this is my equation,
+[00:10:55 -> 00:10:57] and now I want to bring this to this form of ut1.
+[00:10:57 -> 00:11:00] So, you know, how do I simplify this
+[00:11:00 -> 00:11:03] into an expression which say,
+[00:11:03 -> 00:11:09] which represents i1, i21 in terms of ut1.
+[00:11:09 -> 00:11:11] We have already seen informally how this is going to work.
+[00:11:11 -> 00:11:14] We are going to say, oh, by the way, 1 into i,
+[00:11:14 -> 00:11:16] so I'm going to do the matrix vector multiplication,
+[00:11:16 -> 00:11:21] so 1 into i plus 0 into j plus minus 1 into i prime
+[00:11:21 -> 00:11:24] plus 0 into j prime plus 0 into 1 equals 0.
+[00:11:24 -> 00:11:26] It basically means the first row basically evaluates
+[00:11:26 -> 00:11:29] to i equals i prime, right?
+[00:11:29 -> 00:11:31] Because the coefficient of 1, i is 1,
+[00:11:31 -> 00:11:33] and coefficient of i prime is minus 1,
+[00:11:33 -> 00:11:36] and the coefficient of everything else is 0.
+[00:11:36 -> 00:11:38] Similarly, the second row evaluates to
+[00:11:38 -> 00:11:43] 2j equals j prime plus 1, okay?
+[00:11:43 -> 00:11:45] So these equations are very similar to the ones
+[00:11:45 -> 00:11:48] that we had seen in our previous example,
+[00:11:48 -> 00:11:49] in the previous module,
+[00:11:49 -> 00:11:50] just that I have represented them
+[00:11:50 -> 00:11:53] in this matrix vector multiplication form.
+[00:11:53 -> 00:11:54] And in this case,
+[00:11:54 -> 00:11:57] it's representing two different equations.
+[00:11:57 -> 00:12:00] Now, what did I do in my example?
+[00:12:00 -> 00:12:03] I just said, oh, let's represent i prime
+[00:12:03 -> 00:12:05] as just replace i prime with i,
+[00:12:05 -> 00:12:08] and replace j prime with 2 into j,
+[00:12:08 -> 00:12:10] let's say, or 2 into j minus 1, for example.
+[00:12:11 -> 00:12:13] And so that's what it's going to be.
+[00:12:13 -> 00:12:15] I'm going to say, you know,
+[00:12:15 -> 00:12:17] basically I'm going to say i1 equals something,
+[00:12:17 -> 00:12:18] i2 equals something.
+[00:12:20 -> 00:12:23] Basically, so if I have four unknowns,
+[00:12:23 -> 00:12:26] i, j, i prime, j prime,
+[00:12:26 -> 00:12:29] and I have two linearly independent equations
+[00:12:29 -> 00:12:30] on those four unknowns,
+[00:12:30 -> 00:12:32] what is the degree of freedom remaining?
+[00:12:32 -> 00:12:36] So four minus two, which is two, right?
+[00:12:36 -> 00:12:38] Because four was the original amount
+[00:12:38 -> 00:12:40] of freedom free variables.
+[00:12:40 -> 00:12:44] They were bound by two linearly independent equations.
+[00:12:44 -> 00:12:46] So that's four minus two, two.
+[00:12:46 -> 00:12:50] So I know that my dimension of p is going to be two.
+[00:12:50 -> 00:12:52] Now, notice that it's important
+[00:12:52 -> 00:12:53] that these two rows are linearly independent.
+[00:12:53 -> 00:12:55] If they were not linearly independent,
+[00:12:55 -> 00:12:58] then we would probably want to,
+[00:12:58 -> 00:13:01] then we will get a fewer number
+[00:13:01 -> 00:13:02] of linearly independent rows,
+[00:13:02 -> 00:13:05] which basically means larger number of free variables.
+[00:13:05 -> 00:13:07] For example, if the second row
+[00:13:07 -> 00:13:08] was exactly equal to the first row,
+[00:13:08 -> 00:13:11] then there's only one linearly independent row.
+[00:13:11 -> 00:13:14] So what matters is the rank of this matrix
+[00:13:14 -> 00:13:15] that we have created
+[00:13:15 -> 00:13:17] and not the actual number of rows
+[00:13:17 -> 00:13:20] because you can always kind of transform
+[00:13:20 -> 00:13:24] the matrix into a row echelon form
+[00:13:24 -> 00:13:26] where all the linearly dependent rows can become zero.
+[00:13:26 -> 00:13:28] And so in this case,
+[00:13:28 -> 00:13:30] these two, both these are independent rows
+[00:13:30 -> 00:13:31] and even the row echelon form,
+[00:13:31 -> 00:13:35] for example, is going to have two number of rows.
+[00:13:35 -> 00:13:38] Okay, anyway, so now that, you know,
+[00:13:38 -> 00:13:39] so that's what we want to do.
+[00:13:39 -> 00:13:41] And so how am I going to write this?
+[00:13:41 -> 00:13:42] Here is the solution, all right?
+[00:13:42 -> 00:13:43] So I'm going to say,
+[00:13:43 -> 00:13:47] I basically want to write i, j, i prime, j prime one.
+[00:13:47 -> 00:13:50] This is my vector in terms of a u and a t.
+[00:13:50 -> 00:13:53] And because I know that this is going to be,
+[00:13:53 -> 00:13:55] no, this is just basic Gaussian elimination,
+[00:13:55 -> 00:13:57] but I just want to make sure that you understand
+[00:13:57 -> 00:14:00] what we are talking about using the complete example.
+[00:14:00 -> 00:14:02] So t is going to have t1, t2,
+[00:14:02 -> 00:14:05] which are the two variables that are free variables
+[00:14:05 -> 00:14:07] that are remaining free variables
+[00:14:07 -> 00:14:10] because as I said, four minus two equals two,
+[00:14:10 -> 00:14:12] four original free variables, two constraints,
+[00:14:12 -> 00:14:14] so two remaining free variables.
+[00:14:14 -> 00:14:16] And then I represent the vector
+[00:14:16 -> 00:14:19] in terms of these two free variables.
+[00:14:19 -> 00:14:23] And I just choose, you know, t1 and t2 such that
+[00:14:23 -> 00:14:26] i equals t1 and j equals t2, right?
+[00:14:26 -> 00:14:27] Just like we were doing earlier.
+[00:14:27 -> 00:14:30] Basically in the previous example,
+[00:14:30 -> 00:14:32] we didn't use t1, t2, we just use i and j
+[00:14:32 -> 00:14:34] and we represented i prime and j prime
+[00:14:34 -> 00:14:36] in terms of i and j.
+[00:14:36 -> 00:14:38] Here I'm just, instead of calling them i and j,
+[00:14:38 -> 00:14:40] I'm calling them new variables t1 and t2.
+[00:14:40 -> 00:14:41] And I'm just saying, oh, by the way,
+[00:14:41 -> 00:14:43] i equals t1 and j equals t2.
+[00:14:43 -> 00:14:45] And now let's represent i prime and j prime
+[00:14:45 -> 00:14:49] also in terms of t1 and t2 and not in terms of i and j.
+[00:14:49 -> 00:14:52] So based on this, what I get is
+[00:14:52 -> 00:14:55] i equals one, zero, zero, zero, zero
+[00:14:55 -> 00:14:59] into t1, t2, one, okay?
+[00:14:59 -> 00:15:01] I think I had too many zeros.
+[00:15:01 -> 00:15:04] Actually, I don't need that many number of columns.
+[00:15:04 -> 00:15:05] It's just three columns, all right?
+[00:15:05 -> 00:15:10] So i equals one into t1 plus zero into t2 plus zero into one.
+[00:15:11 -> 00:15:13] So that's just saying i equals t1.
+[00:15:13 -> 00:15:18] J equals zero into t1 plus one into t2 plus zero into one.
+[00:15:18 -> 00:15:20] So that's just saying j equals t2.
+[00:15:20 -> 00:15:23] Similarly, i prime equals one into t1
+[00:15:23 -> 00:15:24] plus zero into everything else.
+[00:15:24 -> 00:15:26] And so i prime also equals t1.
+[00:15:26 -> 00:15:29] So now this equation is encoding the fact
+[00:15:29 -> 00:15:31] that i prime equals i,
+[00:15:31 -> 00:15:34] because i equals t1 and i prime also equals t1.
+[00:15:34 -> 00:15:37] Similarly, j prime equals zero into t1
+[00:15:37 -> 00:15:39] plus two into t2 plus zero into one.
+[00:15:39 -> 00:15:43] So that's basically saying j prime equals two into t2.
+[00:15:43 -> 00:15:44] Now actually this, I think once again,
+[00:15:44 -> 00:15:45] I've gotten this a little bit wrong
+[00:15:45 -> 00:15:49] because here I also had an additive constant here
+[00:15:49 -> 00:15:51] in my original equation, which was one.
+[00:15:51 -> 00:15:54] So j prime was equal to two j,
+[00:15:56 -> 00:15:59] two j minus j prime plus one was equal to zero.
+[00:15:59 -> 00:16:00] So two j plus one.
+[00:16:00 -> 00:16:03] So I should have basically had one here as well, all right?
+[00:16:03 -> 00:16:08] So j prime equals two t2 plus one.
+[00:16:08 -> 00:16:09] That's what I wanted to say.
+[00:16:09 -> 00:16:12] And so my fourth row here should have been zero to one
+[00:16:12 -> 00:16:15] to represent the fact that j prime equals
+[00:16:15 -> 00:16:20] zero t1 plus two t2 plus one, all right?
+[00:16:20 -> 00:16:22] And finally, one equals one.
+[00:16:22 -> 00:16:26] And so that's just the last row
+[00:16:26 -> 00:16:29] is not really meaningful, but for everything else,
+[00:16:29 -> 00:16:31] we have been able to write these iteration indices
+[00:16:31 -> 00:16:35] in terms of two free variables, t1 and t2.
+[00:16:35 -> 00:16:38] And this is important because now we have clearly
+[00:16:38 -> 00:16:43] delineated the free variables from the iteration indices.
+[00:16:43 -> 00:16:45] So number of iteration indices here was four,
+[00:16:45 -> 00:16:48] but the number of free variables is only two.
+[00:16:48 -> 00:16:49] And this is going to be useful
+[00:16:49 -> 00:16:51] because now when we are going to solve
+[00:16:51 -> 00:16:52] for our space partitioning constraints,
+[00:16:52 -> 00:16:54] we know that the degree of freedom
+[00:16:54 -> 00:16:57] is only two-dimensional or the space
+[00:16:57 -> 00:17:00] that we are solving for is a two-dimensional space
+[00:17:00 -> 00:17:01] and not a full four-dimensional space.
+[00:17:03 -> 00:17:04] I'll emphasize this again,
+[00:17:04 -> 00:17:06] the reduction from the four-dimensional space
+[00:17:06 -> 00:17:08] to the two-dimensional space was achieved
+[00:17:08 -> 00:17:12] using the data dependence equations,
+[00:17:12 -> 00:17:16] which are f1 i1 plus small f1 equals f2 i2 plus small f2.
+[00:17:16 -> 00:17:18] And so in this example, this whole matrix,
+[00:17:18 -> 00:17:22] this matrix of three columns and five rows forms U
+[00:17:22 -> 00:17:26] and this vector forms T, okay?
+[00:17:26 -> 00:17:31] All right, so now coming back to our generalization,
+[00:17:32 -> 00:17:34] I have been able to write these,
+[00:17:34 -> 00:17:37] the if clause of the space partitioning constraint
+[00:17:37 -> 00:17:39] or one of the space partitioning constraint
+[00:17:39 -> 00:17:44] or one pair of axes as i1 i2 1 equals some matrix U
+[00:17:45 -> 00:17:49] into some set of free variables T and a one row,
+[00:17:51 -> 00:17:53] single one scalar for the vector.
+[00:17:53 -> 00:17:56] Okay, so now that I have achieved this,
+[00:17:57 -> 00:17:58] what does it buy me?
+[00:17:58 -> 00:18:00] So now it basically means that I can rewrite
+[00:18:00 -> 00:18:02] my space partitioning constraints to say
+[00:18:02 -> 00:18:06] if U into T1 equals zero,
+[00:18:06 -> 00:18:10] then it must be true that c1 i1 plus,
+[00:18:10 -> 00:18:15] let me write that again, c1 i1 plus small c1 equals,
+[00:18:16 -> 00:18:19] so this is capital C1 and this is small c1
+[00:18:19 -> 00:18:23] equals capital C2 i2 plus small c2.
+[00:18:23 -> 00:18:26] And so notice that the change here is
+[00:18:26 -> 00:18:29] that instead of writing that entire f1 i1 plus small f1
+[00:18:29 -> 00:18:31] equals f2 i2 plus small f2,
+[00:18:31 -> 00:18:35] I'm basically writing it as U T1 equals zero for all T.
+[00:18:35 -> 00:18:38] And the important thing here is that the dimensionality
+[00:18:38 -> 00:18:42] of T is now smaller, either equal or typically smaller
+[00:18:42 -> 00:18:47] than the dimensionality of the original iteration space.
+[00:18:47 -> 00:18:50] The sum of the iteration space is i and i prime,
+[00:18:50 -> 00:18:51] or i1 and i2, okay?
+[00:18:51 -> 00:18:53] So that's what we have achieved so far.
+[00:18:53 -> 00:18:57] And now what I've done is I've just rewritten this c1 i1
+[00:18:57 -> 00:19:00] plus small c1 equals c2 i2 plus small c2,
+[00:19:00 -> 00:19:03] exactly just brought everything to the left-hand side,
+[00:19:03 -> 00:19:06] added a one row just like we had done for f's,
+[00:19:06 -> 00:19:09] and this is what I get, capital C1,
+[00:19:09 -> 00:19:11] all the columns of capital C1
+[00:19:11 -> 00:19:14] followed by all the columns of minus capital C2,
+[00:19:14 -> 00:19:19] and then the single column of vector C1 minus vector C2.
+[00:19:19 -> 00:19:24] Minus vector C2, multiplied with all the rows of i1
+[00:19:24 -> 00:19:28] followed by all the rows of i2 followed by one equals zero.
+[00:19:28 -> 00:19:31] So this is just a rewrite of this, right?
+[00:19:32 -> 00:19:35] And now the good thing is I already know
+[00:19:35 -> 00:19:40] that i1 i2 1 can be written as U of T1.
+[00:19:40 -> 00:19:47] Sorry, this should have been i1 i2 1,
+[00:19:48 -> 00:19:50] I mean not z, so I've written this by zero.
+[00:19:50 -> 00:19:54] Okay, so now that I know that i1 i2 1 equals U T1,
+[00:19:54 -> 00:19:57] I can just replace it, substitute, okay?
+[00:19:57 -> 00:19:59] And so I get the original,
+[00:19:59 -> 00:20:02] the equation that we got is c1 minus c2
+[00:20:02 -> 00:20:07] and small c1 minus small c2 into U into T1 equals zero.
+[00:20:08 -> 00:20:11] Okay, so I've been able to rewrite
+[00:20:11 -> 00:20:15] my space partitioning constraints in terms of U and T,
+[00:20:15 -> 00:20:17] and the important thing here is
+[00:20:17 -> 00:20:21] that the T is the minimum dimensional possible
+[00:20:21 -> 00:20:23] of three variables,
+[00:20:23 -> 00:20:28] considering that our data-dependent constraints,
+[00:20:28 -> 00:20:30] which are part of the space partitioning constraints,
+[00:20:30 -> 00:20:31] are true.
+[00:20:31 -> 00:20:35] Now, once I brought the equation into this form,
+[00:20:35 -> 00:20:38] T is a completely unhinged
+[00:20:38 -> 00:20:41] or unconstrained space of variables,
+[00:20:41 -> 00:20:46] and so this whole equation must be true for all T.
+[00:20:48 -> 00:20:51] And notice, unlike previous case
+[00:20:51 -> 00:20:54] where also I was saying for all i1 and i2,
+[00:20:54 -> 00:20:55] but i1 and i2 were constrained.
+[00:20:55 -> 00:20:57] Here, T is not constrained.
+[00:20:57 -> 00:21:00] I have, in fact, removed all the constraints from T,
+[00:21:00 -> 00:21:02] and in fact, T is basically the set
+[00:21:02 -> 00:21:04] of all the remaining three variables
+[00:21:04 -> 00:21:06] after you have removed the constraints
+[00:21:06 -> 00:21:09] that were coming through the data-dependent constraints.
+[00:21:09 -> 00:21:10] So this must hold for all T.
+[00:21:12 -> 00:21:14] And once I'm, and where T is completely unconstrained.
+[00:21:14 -> 00:21:17] So if this must hold for all T,
+[00:21:17 -> 00:21:20] then it must be true that this whole thing
+[00:21:20 -> 00:21:23] should be evaluating to zero, okay?
+[00:21:23 -> 00:21:26] Because, I mean, the only way this can hold
+[00:21:26 -> 00:21:29] for all possible T where T is unconstrained
+[00:21:29 -> 00:21:31] is if this whole thing evaluates to zero,
+[00:21:31 -> 00:21:35] and so that's what our space partitioning constraints
+[00:21:35 -> 00:21:37] have been reduced to.
+[00:21:37 -> 00:21:38] Now, I want to point out that there are many
+[00:21:38 -> 00:21:40] kind of steps in our solution
+[00:21:40 -> 00:21:42] of space partitioning constraints,
+[00:21:42 -> 00:21:43] and you may be wondering,
+[00:21:43 -> 00:21:45] oh, you're making so many approximations,
+[00:21:45 -> 00:21:48] but I will say all the approximations that we are making,
+[00:21:48 -> 00:21:50] such as getting rid of greater than equal
+[00:21:50 -> 00:21:53] to inequalities like d i plus small b,
+[00:21:53 -> 00:21:55] or here I'm making an approximation
+[00:21:55 -> 00:21:58] that if this is true for all possible T,
+[00:21:58 -> 00:22:00] then it must be true that the coefficient is zero.
+[00:22:00 -> 00:22:02] Now, this is basically, you may say,
+[00:22:02 -> 00:22:05] oh, what if small t was some inequality
+[00:22:05 -> 00:22:06] or something like that?
+[00:22:06 -> 00:22:08] All these approximations was bound by some inequality.
+[00:22:08 -> 00:22:12] So all these approximations are basically based on the fact
+[00:22:12 -> 00:22:14] that these are over approximations.
+[00:22:14 -> 00:22:17] So once I approximate, I'm sure that if the,
+[00:22:17 -> 00:22:19] if I find a solution to the approximate version,
+[00:22:19 -> 00:22:21] then that solution would always satisfy
+[00:22:21 -> 00:22:24] the original solution equation as well.
+[00:22:24 -> 00:22:28] I may get a more constrained solution than needed,
+[00:22:28 -> 00:22:31] but I'll never get an incorrect solution.
+[00:22:31 -> 00:22:33] And so any solution that basically says
+[00:22:33 -> 00:22:35] that this whole thing should be zero
+[00:22:35 -> 00:22:38] is going to satisfy the fact that
+[00:22:38 -> 00:22:41] this whole thing is zero for all possibility.
+[00:22:41 -> 00:22:43] Anything multiplied by zero is zero.
+[00:22:43 -> 00:22:47] And so if this is zero, then the whole thing is zero.
+[00:22:47 -> 00:22:50] And so that's what I have reduced the problem to.
+[00:22:50 -> 00:22:52] Once again, I want to point out that the trivial solution
+[00:22:52 -> 00:22:54] to this is that all the Cs are zero.
+[00:22:54 -> 00:22:56] And so that would work,
+[00:22:56 -> 00:22:58] but we are interested in finding the max rank solution
+[00:22:58 -> 00:23:01] such that this whole thing still evaluates to zero.
+[00:23:01 -> 00:23:04] And that's where we're going to rely on you
+[00:23:04 -> 00:23:06] to do that for us.
+[00:23:06 -> 00:23:08] So finally, we basically have,
+[00:23:08 -> 00:23:09] so let me just fix this.
+[00:23:09 -> 00:23:10] This was not zero.
+[00:23:10 -> 00:23:13] This was I1, I2, one.
+[00:23:14 -> 00:23:17] So basically now I've been able to reduce my solution
+[00:23:17 -> 00:23:22] to the fact that C1, capital C1 minus capital C2
+[00:23:22 -> 00:23:24] and small c1 minus small c2 into U
+[00:23:24 -> 00:23:26] must be equal to zero.
+[00:23:26 -> 00:23:29] And here U is a set of known constants
+[00:23:29 -> 00:23:32] and the only unknowns in the equation now
+[00:23:32 -> 00:23:36] are capital C1, capital C2 and C1 minus C2.
+[00:23:36 -> 00:23:38] So from here to here,
+[00:23:38 -> 00:23:40] we have made an over-approximation
+[00:23:40 -> 00:23:42] because we're saying that this must be true
+[00:23:42 -> 00:23:44] for all t, right?
+[00:23:44 -> 00:23:45] So for all t.
+[00:23:45 -> 00:23:48] And because it must be true for all t,
+[00:23:48 -> 00:23:49] let's just reduce this equation
+[00:23:49 -> 00:23:52] that the coefficient must be zero, okay?
+[00:23:54 -> 00:23:56] All right, so for one pair of accesses
+[00:23:56 -> 00:23:57] with the data dependence,
+[00:23:57 -> 00:24:00] we get this constraint that C1,
+[00:24:00 -> 00:24:02] capital C1 minus capital C2,
+[00:24:02 -> 00:24:04] C1 minus C2 into U equals zero.
+[00:24:04 -> 00:24:06] Recall this is exactly what we had done
+[00:24:06 -> 00:24:08] when we were also solving for an example.
+[00:24:08 -> 00:24:09] Once we have this,
+[00:24:09 -> 00:24:13] then for the example that we have been looking at,
+[00:24:13 -> 00:24:16] this is what this would look like.
+[00:24:16 -> 00:24:20] Say U in our case was this three cross five matrix,
+[00:24:20 -> 00:24:22] the example that we had just seen.
+[00:24:22 -> 00:24:24] Maybe I got a couple of values wrong here,
+[00:24:24 -> 00:24:26] so maybe this was one.
+[00:24:26 -> 00:24:28] And now basically I have this equation
+[00:24:28 -> 00:24:31] that C1, one into this whole thing
+[00:24:31 -> 00:24:34] into this whole thing should be equal to zero.
+[00:24:34 -> 00:24:36] So, I mean, just studying what this gives us
+[00:24:36 -> 00:24:38] is going to give you C1, one.
+[00:24:38 -> 00:24:41] So just vector matrix multiplication
+[00:24:41 -> 00:24:43] is going to give me C1, one into one
+[00:24:43 -> 00:24:47] plus C1, two into zero minus C2, one into one
+[00:24:47 -> 00:24:49] and everything else is zero, equals zero.
+[00:24:49 -> 00:24:52] So that basically gives me C1, one equals C2, one.
+[00:24:52 -> 00:24:54] Similarly, if I look at the second column,
+[00:24:54 -> 00:24:59] I'm going to get C1, two equals two into C2, two.
+[00:24:59 -> 00:25:00] All right?
+[00:25:00 -> 00:25:05] And finally, I'm going to get C1 minus C2
+[00:25:05 -> 00:25:07] plus C2, two minus C2, two equals zero.
+[00:25:07 -> 00:25:09] So these are exactly the equations
+[00:25:09 -> 00:25:12] that we had derived manually.
+[00:25:12 -> 00:25:14] And we just kind of doing this in a matrix vector form
+[00:25:14 -> 00:25:17] so that it becomes easily automatable.
+[00:25:17 -> 00:25:18] And so these are the equations
+[00:25:18 -> 00:25:22] that this equation kind of represents, all right?
+[00:25:22 -> 00:25:24] And so this is what we get.
+[00:25:24 -> 00:25:26] C1, one equals C2, one.
+[00:25:26 -> 00:25:29] C1 equals C2 and C1, two equals two into C2, two.
+[00:25:31 -> 00:25:33] All right, so based on all this,
+[00:25:33 -> 00:25:36] eventually we get an equation of the form AX equals zero
+[00:25:36 -> 00:25:39] where X is basically all the unknowns.
+[00:25:39 -> 00:25:44] A is from the U matrix and the unknowns contain values
+[00:25:44 -> 00:25:46] inside the coefficient matrix, capital Cij
+[00:25:46 -> 00:25:49] and the additive vectors, small cij
+[00:25:49 -> 00:25:52] and we have to solve for this solution.
+[00:25:52 -> 00:25:53] Now, once again, a simple solution,
+[00:25:53 -> 00:25:55] a trivial solution is X equals zero,
+[00:25:55 -> 00:25:58] but we are interested in the maximum rank solution.
+[00:25:58 -> 00:26:00] What is the maximum rank solution for X?
+[00:26:00 -> 00:26:02] It is the maximum rank solution
+[00:26:02 -> 00:26:06] would have the dimensionality of the null space of A.
+[00:26:06 -> 00:26:09] If you recall your matrix linear algebra.
+[00:26:09 -> 00:26:10] So basically we're interested
+[00:26:10 -> 00:26:13] in identifying the null space of A
+[00:26:13 -> 00:26:15] and whatever is the null space of A
+[00:26:15 -> 00:26:17] that's going to form, the vectors of that
+[00:26:17 -> 00:26:19] are going to form the coefficient,
+[00:26:19 -> 00:26:21] the rows of the coefficient matrix
+[00:26:21 -> 00:26:24] that we are interested in such that
+[00:26:24 -> 00:26:27] the space partitioning constraints are satisfied.
+[00:26:27 -> 00:26:32] So here is the remaining solution.
+[00:26:32 -> 00:26:33] You basically have AX equals zero,
+[00:26:33 -> 00:26:35] X represents a vector space,
+[00:26:35 -> 00:26:37] which is actually the null space of A
+[00:26:37 -> 00:26:39] and we can use Gaussian elimination
+[00:26:39 -> 00:26:43] to identify the minimum number of free unknowns
+[00:26:43 -> 00:26:44] in this vector space.
+[00:26:44 -> 00:26:48] Now, because we want to separately treat
+[00:26:48 -> 00:26:52] the coefficient matrixes and the additive unknowns,
+[00:26:52 -> 00:26:55] we first eliminate constant coefficient unknown small ci
+[00:26:55 -> 00:26:58] as they can take any value including zero
+[00:26:58 -> 00:27:00] because these are the remaining free variables
+[00:27:00 -> 00:27:02] in my small ci's.
+[00:27:02 -> 00:27:06] So I can just remove them after I have reduced it.
+[00:27:06 -> 00:27:07] So maybe I have some relationships
+[00:27:07 -> 00:27:09] saying C2 equals C1 plus one.
+[00:27:09 -> 00:27:11] So now C2 is dependent on C1
+[00:27:11 -> 00:27:12] but now I can just set C1 to zero
+[00:27:12 -> 00:27:16] because things that are independent can be set to zero.
+[00:27:17 -> 00:27:19] And so based on this transformation,
+[00:27:19 -> 00:27:21] I'll get A prime X prime equals zero.
+[00:27:21 -> 00:27:22] So these are just mechanics
+[00:27:22 -> 00:27:26] of how to solve this equation
+[00:27:26 -> 00:27:29] or how to identify the basis vectors of the null space.
+[00:27:29 -> 00:27:32] And finally, I identify the basis vectors B
+[00:27:32 -> 00:27:34] of the vector space formed by X prime.
+[00:27:34 -> 00:27:37] B stands the null space of A prime
+[00:27:37 -> 00:27:40] and so these basis vectors
+[00:27:40 -> 00:27:42] basically give me the max rank solution.
+[00:27:42 -> 00:27:44] Once again, if I don't use the basis vectors
+[00:27:44 -> 00:27:46] or if I only use one of the basis vectors,
+[00:27:46 -> 00:27:48] then I get a smaller rank solution.
+[00:27:48 -> 00:27:50] If I use none of the basis vectors,
+[00:27:50 -> 00:27:52] I get a zero rank solution.
+[00:27:52 -> 00:27:53] That's everything is zero, right?
+[00:27:53 -> 00:27:55] If I use all of the basis vectors,
+[00:27:55 -> 00:27:57] that's the max rank solution.
+[00:27:57 -> 00:27:59] So I use for a max rank solution,
+[00:27:59 -> 00:28:00] I use all the basis vectors
+[00:28:00 -> 00:28:03] and those form my rows of the coefficient matrix.
+[00:28:03 -> 00:28:06] That is the maximum rank matrix
+[00:28:06 -> 00:28:12] that is going to satisfy my space partitioning constraints.
+[00:28:12 -> 00:28:15] Finally, the coefficients,
+[00:28:15 -> 00:28:17] the only remaining question is what are the values
+[00:28:17 -> 00:28:20] of the remaining coefficients, small c's
+[00:28:20 -> 00:28:21] and they can be derived
+[00:28:21 -> 00:28:23] from the original equation AX equals zero.
+[00:28:23 -> 00:28:25] So once I have solved for the max rank solution
+[00:28:25 -> 00:28:27] for the capital C's,
+[00:28:27 -> 00:28:31] I can plug them in into the original AX equals zero solution
+[00:28:31 -> 00:28:33] where I had eliminated the small c's
+[00:28:33 -> 00:28:35] and I can solve for the small c's.
+[00:28:35 -> 00:28:38] So this is our general method of solving
+[00:28:38 -> 00:28:41] for the space partitioning constraints
+[00:28:41 -> 00:28:42] where we have generalized
+[00:28:42 -> 00:28:45] what we had learned for a single example
+[00:28:45 -> 00:28:48] to a general system of constraints.

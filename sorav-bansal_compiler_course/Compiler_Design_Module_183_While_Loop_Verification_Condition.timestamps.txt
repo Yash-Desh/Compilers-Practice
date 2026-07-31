@@ -1,0 +1,132 @@
+Title: Compiler Design Module 183 : While Loop Verification Condition
+Video ID: pjHEnzNVxQY
+Detected language: en
+------------------------------------------------------------
+
+[00:00:00 -> 00:00:05] So, we've looked at different constructs in an imperative programming language. For example,
+[00:00:05 -> 00:00:10] we looked at the assignment operator and we looked at the if-then-else constructor for a
+[00:00:10 -> 00:00:16] statement. Our next discussion is about the while constructor or the loop constructor found
+[00:00:16 -> 00:00:22] in a typical high-level programming language. So, here is the syntax of a while loop in our
+[00:00:22 -> 00:00:29] language while some Boolean condition b which is an expression that's a function of
+[00:00:30 -> 00:00:35] the machine state which involves let's say variable x and others and then you know you
+[00:00:35 -> 00:00:42] have some body and we know the meaning of a while loop. It basically when it first
+[00:00:42 -> 00:00:48] enters reaches this point, it basically checks b. If b is false, it doesn't even enter the
+[00:00:48 -> 00:00:53] while loop even once. If b is true, then it executes the body and again goes back to
+[00:00:53 -> 00:00:57] check the condition Boolean condition and it keeps repeating this loop until the Boolean
+[00:00:57 -> 00:01:02] condition evaluates to true. If the Boolean condition evaluates to false at any point,
+[00:01:02 -> 00:01:08] it exits and reaches the end of the loop. The whole triple that we are interested in
+[00:01:08 -> 00:01:14] proving is that if precondition p holds at the beginning of this loop, then postcondition
+[00:01:14 -> 00:01:20] q holds at the end of the loop. Both p and q are Boolean predicates which are expressions
+[00:01:20 -> 00:01:25] or functions on the current machine state which is represented with x dot dot dot.
+[00:01:26 -> 00:01:31] So, how do I go about discharging such a proof obligation and just like we've been
+[00:01:31 -> 00:01:36] doing all through, we're going to divide the program into smaller snippets and try to kind of
+[00:01:36 -> 00:01:43] reduce our proof a single proof step make our single proof step smaller and the way to do
+[00:01:43 -> 00:01:49] that is basically identify some Boolean predicates p1 and p2 at the beginning of the loop body
+[00:01:49 -> 00:01:57] and at the end of the loop body respectively and now we can basically identify what should
+[00:01:57 -> 00:02:03] be the verification conditions such that the end to end proof obligation can be proven.
+[00:02:04 -> 00:02:11] Notice that p1 and p2 are we don't know what p1 and p2 would be but let's say somebody gave
+[00:02:11 -> 00:02:17] us some p1 and p2 which satisfies the verification conditions that I'm going to discuss next
+[00:02:17 -> 00:02:22] then any such p1 and p2 that satisfy the verification conditions are good enough to
+[00:02:22 -> 00:02:28] complete this end to end proof. If we can find no such p1 and p2 then basically it means that
+[00:02:28 -> 00:02:34] this we were not able to discharge this proof obligation. Okay, so in this module I'm not
+[00:02:34 -> 00:02:40] going to discuss how to identify these p1 and p2 but I'm just going to assume that these
+[00:02:40 -> 00:02:46] p1 and p2 are coming to us through some oracle and once the p1 and p2 are given to us what should
+[00:02:46 -> 00:02:51] be the verification conditions that we should check to add it to basically be able to decide
+[00:02:51 -> 00:02:57] whether this proof obligation evaluates to true or not. So the first proof obligation here is
+[00:02:57 -> 00:03:02] that if I start with p at the beginning of the program and if the Boolean condition evaluates
+[00:03:02 -> 00:03:07] to true then I enter then I'm just at the beginning of the loop body and at that point
+[00:03:07 -> 00:03:18] p1 should hold. So the corresponding encoding of that is p and b implies p1 where p, b and p1
+[00:03:18 -> 00:03:22] are Boolean predicates on the current machine state which are functions of the current machine
+[00:03:22 -> 00:03:28] state and this forms a verification condition 1. I've written it in this logical form I
+[00:03:28 -> 00:03:32] could have even written this proof obligation in a whole triple form where I would have said
+[00:03:32 -> 00:03:39] that if p holds here then for this segment of the program to execute and the control reaches
+[00:03:39 -> 00:03:44] here then p1 must hold and the corresponding logical encoding for that would be this.
+[00:03:45 -> 00:03:52] Alright similarly the second proof condition is when b is false b value is to false so if I
+[00:03:52 -> 00:03:56] start from the beginning of the program and b value is to false then I straight away go to
+[00:03:56 -> 00:04:01] the end of the loop and in which case I'm going to end up with a proof obligation which
+[00:04:01 -> 00:04:09] says if p is true and not b which in b is false then q is true. So that basically is the second
+[00:04:09 -> 00:04:15] verification condition that we need to verify to be able to discharge this to end-to-end proof
+[00:04:15 -> 00:04:22] obligation. The third verification condition basically relates p1 and p2 across the body of
+[00:04:22 -> 00:04:26] the loop. Now I haven't shown the body of the loop I just used dot dot dot to denote the
+[00:04:26 -> 00:04:31] body of the loop but in general the body of the loop could be made up of assignment operators
+[00:04:32 -> 00:04:38] or maybe nested loops. Irrespective you know we can basically let's say the body of the loop was
+[00:04:38 -> 00:04:44] alpha then this whole thing here basically represents a whole triple which basically says
+[00:04:44 -> 00:04:50] that if I start with p1 and execute alpha then I end up with p2 to be true and that's
+[00:04:50 -> 00:04:55] a whole triple and that whole triple will form our VC3. For example if alpha was a single
+[00:04:55 -> 00:04:59] assignment statement then we can we know what the encoding of this whole triple should be
+[00:04:59 -> 00:05:05] it's basically p1 implies p2's there within p2 all the x's have been replaced with
+[00:05:05 -> 00:05:12] the RHS of that particular assignment. The fourth verification condition is basically going to
+[00:05:14 -> 00:05:19] check going to relate p2 and p1 on the backward edge on the loop edge.
+[00:05:19 -> 00:05:23] So the previous verification condition that was VC3 was basically talking about the condition
+[00:05:23 -> 00:05:32] from p1 to p2 VC4 is going to talk about p2 and back to p1 and notice that from p2 I go back
+[00:05:32 -> 00:05:38] to p1 only if I b evaluates to true so that's basically our fourth verification condition which
+[00:05:38 -> 00:05:46] says if p2 is true and b evaluates to true then p1 must be true and so that forms our
+[00:05:46 -> 00:05:52] fourth verification condition. The fifth verification condition is basically for the
+[00:05:52 -> 00:05:58] other case where b was false so if p2 is true and b evaluates to false then I come all the way
+[00:05:58 -> 00:06:04] to the end of the loop and so that's our fifth verification condition which says p2 and not v
+[00:06:04 -> 00:06:12] implies q where p2 b and q are Boolean functions Boolean valued functions on the
+[00:06:12 -> 00:06:19] machine state. So that's our VC5 and those are the five verification conditions that I need
+[00:06:19 -> 00:06:26] to discharge to be able to complete the proof from p2q. Once again I don't in this kind of
+[00:06:27 -> 00:06:32] proof I have assumed that somehow somebody has given me the p1 and p2 which satisfy all
+[00:06:32 -> 00:06:37] these five verification conditions. If I am able to find any such p1 and p2 which satisfy all
+[00:06:37 -> 00:06:43] these five verification conditions then I have completed my proof and we are assuming so far
+[00:06:43 -> 00:06:48] that this p1 and p2 are coming to us from an oracle. How we get this p1 and p2 we're
+[00:06:48 -> 00:06:54] going to discuss later. Recall that when we talked about assignment or sequencing or even if then else
+[00:06:54 -> 00:06:58] we followed the same strategy. We first broke them down and said some oracle is giving us the
+[00:06:58 -> 00:07:03] intermediate predicates. We don't know how they are coming and then we devised a strategy to
+[00:07:03 -> 00:07:07] identify what the intermediate predicates should be. We're going to do a similar thing for
+[00:07:07 -> 00:07:14] the loops as well except unlike the straight line unlike the acyclic code examples which
+[00:07:14 -> 00:07:19] were if then else an assignment where there was a definite strategy where we will always
+[00:07:19 -> 00:07:24] determine what p1 and p2 should be. The problem becomes harder in the presence of loops as we're
+[00:07:24 -> 00:07:32] going to discuss later. Alright so let me go through an example to show this algorithm in
+[00:07:32 -> 00:07:37] action which is you know let's say I have a loop I have a program with a loop in this case
+[00:07:37 -> 00:07:43] I have a very simple loop which says while ix is not equal to zero x is assigned x minus
+[00:07:43 -> 00:07:48] one so you just decrement keep decrementing x until it becomes zero and the whole triple I want
+[00:07:48 -> 00:07:53] to prove is that if I start with some x which was greater than equal to zero which is non which
+[00:07:53 -> 00:07:59] means x was non-negative then I end up with some x which is definitely zero and how do I
+[00:07:59 -> 00:08:04] kind of show that this this proof obligate this whole triple actually evaluates it true.
+[00:08:04 -> 00:08:09] First of all I want you to convince yourself that this whole triple evaluates it true indeed
+[00:08:09 -> 00:08:13] if you start with something which was non-negative and you execute this loop then you're going to
+[00:08:13 -> 00:08:18] keep decrementing it until it reaches zero and by the time you exit you're going to end up
+[00:08:18 -> 00:08:24] you're going to be in a state where x equals zero. So the first step is to identify the p1
+[00:08:24 -> 00:08:29] and p2 and so far I'm assuming that some oracle is giving me the p1 and p2 and so
+[00:08:29 -> 00:08:33] the p1 and p2 that I'm going to use here and once again this is given to us by a
+[00:08:33 -> 00:08:41] oracle is p1 is x greater than zero and p2 is x greater than equal to zero and now we can show
+[00:08:41 -> 00:08:47] that this choice of p1 and p2 satisfies all our five verification conditions. I'm going to quickly
+[00:08:47 -> 00:08:54] go through all those five verification conditions to convince you that indeed they are all old.
+[00:08:54 -> 00:08:58] The first verification condition was that if I start with p and the Boolean condition which
+[00:08:58 -> 00:09:04] is x not equal to zero evaluates it true then p1 holds so that's our first verification condition
+[00:09:04 -> 00:09:12] which says p and b implies p1 p is x is greater than equal to zero b is x is not equal to zero
+[00:09:12 -> 00:09:17] implies p1 which is x is greater than zero and you can see that this is actually true because
+[00:09:17 -> 00:09:21] if x is greater than equal to zero and it's not zero then it must be strictly greater than
+[00:09:21 -> 00:09:27] zero and that that's our vc1 that actually holds and similarly the vc2 is basically the
+[00:09:27 -> 00:09:34] case when b evaluates to false so if x is greater than equal to zero and x equals zero which means
+[00:09:34 -> 00:09:39] b evaluates to false then I go all the way to the end and so the proof obligation here is
+[00:09:39 -> 00:09:44] x is greater than equal to zero and x equals zero this is not b implies x equals zero which
+[00:09:44 -> 00:09:50] is q and once again this is this is easy to see because if x equals zero is on the left
+[00:09:50 -> 00:09:55] hand side then obviously x equals zero on the right hand side is also true for the implication.
+[00:09:56 -> 00:10:02] Now the third proof obligation basically relates p1 and p2 across the body of the loop the body of
+[00:10:02 -> 00:10:07] the loop in this case is x colon equals x minus one it's an assignment statement and we know what
+[00:10:07 -> 00:10:14] is the corresponding encoding for this whole triple which is p1 body p2 it's just p1 implies
+[00:10:14 -> 00:10:20] p2 where inside p2 you replace all x's with x minus one and so what is p1 that's just
+[00:10:21 -> 00:10:26] x is greater than zero what is p2 its x is greater than equal to zero but we want to replace all x's
+[00:10:26 -> 00:10:33] with x minus one so that becomes x minus one is greater than equal to zero so vc3 is x greater
+[00:10:33 -> 00:10:38] than zero implies x minus one is greater than equal to zero and once again this is you can
+[00:10:38 -> 00:10:45] see that this is true if x is strictly positive then x minus one can either be also strictly
+[00:10:45 -> 00:10:54] positive or it can be equal to zero all right so that's vc3 vc4 is basically relating p2 and p1
+[00:10:54 -> 00:11:02] across the loop edge so if p2 holds and b holds then p1 holds so p2 and b imply p1 and x is
+[00:11:02 -> 00:11:09] greater than equal to zero is p2 and x is not equal to zero is b and x is strictly greater
+[00:11:09 -> 00:11:14] than zero is p1 so x is greater than equal to zero and x is not equal to zero implies
+[00:11:14 -> 00:11:19] x is strictly greater than zero once again we can see that this vc this verification condition
+[00:11:19 -> 00:11:25] which is vc4 also holds because if it's non-negative and not zero then it's strictly
+[00:11:25 -> 00:11:32] positive and finally our last verification condition which is vc5 says if p2 if p2
+[00:11:32 -> 00:11:37] holds and b evaluates to false then i come all the way to the end of the loop so
+[00:11:38 -> 00:11:45] p2 and not b implies i should say q here and the corresponding expressions are x is greater than
+[00:11:45 -> 00:11:53] equal to zero for p2 x equals zero for not b implies x equals zero for q and once again it's
+[00:11:53 -> 00:11:58] easy to see that this vc5 also holds because x equals zero is on both sides of the implication
+[00:11:59 -> 00:12:04] so this is how you are going to go about proving a whole triple that involves a loop
+[00:12:05 -> 00:12:10] once again we are we have assumed here that the p1 and p2 which are the intermediate predicates
+[00:12:10 -> 00:12:14] have come to us through an oracle we have not really discussed what is the algorithm
+[00:12:14 -> 00:12:19] to identify these p1 and p2 but let's say somebody has given us this p1 and p2 such that
+[00:12:19 -> 00:12:25] all the five verification conditions hold then we have been able to complete the verification
+[00:12:25 -> 00:12:28] proof

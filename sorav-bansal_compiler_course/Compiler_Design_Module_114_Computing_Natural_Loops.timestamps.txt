@@ -1,0 +1,347 @@
+Title: Compiler Design Module 114 : Computing Natural Loops
+Video ID: 9VM-nJPwP-0
+Detected language: en
+------------------------------------------------------------
+
+[00:00:00 -> 00:00:06] Okay so we've been talking about natural loops and how we can define natural loops more formally.
+[00:00:06 -> 00:00:12] Now let's talk about how to have an algorithm that can identify the natural loops in a control
+[00:00:12 -> 00:00:13] flow graph.
+[00:00:13 -> 00:00:18] So here is the high level algorithm, we'll first find the dominator relations in a flow
+[00:00:18 -> 00:00:19] graph.
+[00:00:19 -> 00:00:23] Okay so we already know what is a dominator relation, it relates two different nodes
+[00:00:23 -> 00:00:26] of the control flow graph.
+[00:00:26 -> 00:00:29] Then based on the dominator relation it will be easy to identify the back edges,
+[00:00:29 -> 00:00:34] a back edge is an edge whose destination dominates its source.
+[00:00:34 -> 00:00:38] Then we will find the natural loop associated with each back edge, we already know how to
+[00:00:38 -> 00:00:39] do that.
+[00:00:39 -> 00:00:43] We know the header of the loop by looking at the destination of the back edge and
+[00:00:43 -> 00:00:47] then we also know how to find all the other nodes in the loop.
+[00:00:47 -> 00:00:52] Recall that these are all the nodes that can reach the source of the back edge without
+[00:00:52 -> 00:00:55] going through the head of the loop or the destination of the back edge.
+[00:00:55 -> 00:00:59] And then we will combine the natural loops that share the same header.
+[00:00:59 -> 00:01:05] So we also talked about what do I mean by nesting of one loop inside another, if the
+[00:01:05 -> 00:01:09] headers of the two loops are distinct or disjoint.
+[00:01:09 -> 00:01:14] But if the headers of the two loops are actually the same then it becomes hard to
+[00:01:14 -> 00:01:17] talk about which one is the inner loop and which one is the outer loop and so
+[00:01:17 -> 00:01:20] we just merge them into a single loop.
+[00:01:20 -> 00:01:27] Alright, so how do I identify the dominators?
+[00:01:27 -> 00:01:32] A node D, recall that a node D dominates node N if every path from the start node
+[00:01:32 -> 00:01:36] to end goes through D.
+[00:01:36 -> 00:01:43] So whenever you see something like this, if every path from the start node to end
+[00:01:43 -> 00:01:48] goes through D, what you should think is data flow analysis.
+[00:01:48 -> 00:01:53] And we have seen similar data flow analysis in the past, for example we have said,
+[00:01:53 -> 00:01:58] we talked about must reach definitions and we said a definition must reach a program
+[00:01:58 -> 00:02:03] point if all possible paths from the start node to that program point has that
+[00:02:03 -> 00:02:08] definition and it has not been killed subsequently on that path.
+[00:02:08 -> 00:02:12] So similarly, here we are, you know, that was the must reach definitions
+[00:02:12 -> 00:02:14] analysis that we have seen in the past.
+[00:02:14 -> 00:02:17] This can be thought of as the must reach basic blocks analysis, which is
+[00:02:17 -> 00:02:21] actually a simpler analysis where we want to say that what are the basic
+[00:02:21 -> 00:02:26] blocks that must reach this program point from all possible paths from the
+[00:02:26 -> 00:02:30] start node, right, and that's exactly our dominator analysis.
+[00:02:30 -> 00:02:33] So I'm going to just set up my dominator analysis or the data flow analysis,
+[00:02:33 -> 00:02:35] and it's really easy to do that.
+[00:02:35 -> 00:02:39] The domain of my data flow analysis is sets of basic blocks.
+[00:02:39 -> 00:02:44] These are the basic blocks that dominate the current program point.
+[00:02:44 -> 00:02:47] The direction is forward because we are interested in finding all the data.
+[00:02:47 -> 00:02:51] We are interested in finding properties on paths which are starting,
+[00:02:51 -> 00:02:54] which are from the beginning of the program, not from the end of the program.
+[00:02:54 -> 00:02:58] So the direction of this data flow analysis is forward.
+[00:02:58 -> 00:03:02] The transfer function is simple out B equals in B union B.
+[00:03:02 -> 00:03:06] So, you know, whatever are the, you know, whatever is the set of
+[00:03:06 -> 00:03:11] dominating basic blocks before this statement, just add the statement to it.
+[00:03:11 -> 00:03:18] And that's the set of basic blocks that dominate the point after the statement.
+[00:03:18 -> 00:03:21] In other words, if I was to write the transfer function, then FBX
+[00:03:21 -> 00:03:24] equals X union D.
+[00:03:24 -> 00:03:27] Meet operator set intersection, and that's coming from the requirement
+[00:03:27 -> 00:03:30] that it should be present on every possible path.
+[00:03:30 -> 00:03:35] And then the boundary condition is that the out of entry is the start node.
+[00:03:35 -> 00:03:38] Now, notice that I'm not saying out of entry is the empty node.
+[00:03:38 -> 00:03:41] I'm initializing it with a singleton set because I also have
+[00:03:41 -> 00:03:44] this nice property that a node dominates itself.
+[00:03:44 -> 00:03:46] I want to capture that.
+[00:03:46 -> 00:03:51] And so even for the entry block, you know, the start node dominates itself.
+[00:03:51 -> 00:03:54] So I should start with that.
+[00:03:54 -> 00:03:59] Okay, so there's an interesting fact about this dominator analysis,
+[00:03:59 -> 00:04:01] as I have set up as a data flow analysis.
+[00:04:01 -> 00:04:05] Unlike the must reach definitions analysis, where it was possible for
+[00:04:05 -> 00:04:11] the, for things to get killed, you know, here there is nothing,
+[00:04:11 -> 00:04:12] there's only a genset.
+[00:04:12 -> 00:04:15] We're just adding the basic block, never killing anything.
+[00:04:15 -> 00:04:17] And that lends an interesting property.
+[00:04:17 -> 00:04:20] We can actually compute the fixed point solution in a single reverse
+[00:04:20 -> 00:04:23] post order pass for this particular data flow analysis.
+[00:04:23 -> 00:04:27] So we don't need to actually, I mean, when I say fixed point, you know,
+[00:04:27 -> 00:04:31] we have a loop which basically keeps continuing until there's a fixed point.
+[00:04:31 -> 00:04:38] But actually that fixed point will finish in a single scan over the entire program.
+[00:04:38 -> 00:04:42] That means that the maximum number of iterations that I'm going to have to do
+[00:04:42 -> 00:04:46] in my fixed point iteration is equal to the number of nodes, right?
+[00:04:46 -> 00:04:49] Where each node is executed exactly once.
+[00:04:49 -> 00:04:55] And that can be achieved if I do this iteration in a reverse post order manner.
+[00:04:55 -> 00:04:57] Recall that when we talked about DFA,
+[00:04:57 -> 00:05:00] we said that the order can improve the efficiency.
+[00:05:00 -> 00:05:04] If it's a forward data flow analysis, reverse post order is the preferred thing.
+[00:05:04 -> 00:05:08] If it's a backward data flow analysis, post order is the preferred thing.
+[00:05:08 -> 00:05:12] But some data flow analyses are guaranteed to actually finish in
+[00:05:12 -> 00:05:16] a single pass if you do it in one, you know, if it's a forward one,
+[00:05:16 -> 00:05:18] then if you do it in reverse post order, or if it's a backward one,
+[00:05:19 -> 00:05:22] if you do it in post order or something like that.
+[00:05:22 -> 00:05:26] And so in this particular case, we are good, you know,
+[00:05:26 -> 00:05:30] we can compute the fixed point in a single reverse or post order pass.
+[00:05:30 -> 00:05:35] And that's just because of how the transfer function is set up, all right?
+[00:05:35 -> 00:05:39] So what is the reverse post order mean?
+[00:05:39 -> 00:05:41] What does reverse post order mean, all right?
+[00:05:41 -> 00:05:44] So for example, let's understand what reverse post order means
+[00:05:44 -> 00:05:46] using this particular example.
+[00:05:46 -> 00:05:49] Let's say I have three nodes, A, B, C, and D.
+[00:05:49 -> 00:05:56] And these are the edges, A to B, B to C, A to C, C to D, and then D to A.
+[00:05:56 -> 00:05:58] So what is the reverse post order?
+[00:05:58 -> 00:06:00] Well, what is the post order?
+[00:06:00 -> 00:06:05] I'm going to visit the two node before I kind of visit the from node.
+[00:06:05 -> 00:06:08] And so I'm going to, you know, let's say my post order is going to call A.
+[00:06:08 -> 00:06:13] Then before I actually print A, I'm going to, you know, visit D.
+[00:06:13 -> 00:06:15] And before I print B, I'm going to visit C
+[00:06:15 -> 00:06:17] because B has an edge to C.
+[00:06:17 -> 00:06:21] And then from C, I'm going to visit D.
+[00:06:21 -> 00:06:26] And so my post order would be first D, then C, then B, then A, all right?
+[00:06:26 -> 00:06:28] And also notice that from A, actually, I have a choice.
+[00:06:28 -> 00:06:32] I could have first visited D or I could have visited C.
+[00:06:32 -> 00:06:34] And you would find that irrespective of which one you visit
+[00:06:34 -> 00:06:38] in your post order traversal, you're going to get the same post order.
+[00:06:38 -> 00:06:43] Because let's say if I visit C first, then I visit D.
+[00:06:43 -> 00:06:44] So I'm going to print D first.
+[00:06:44 -> 00:06:47] Then I'm going to print C in my post order.
+[00:06:47 -> 00:06:49] Then I'm going to visit D.
+[00:06:49 -> 00:06:52] So I'm going to, it's still going to be D, C, B, A in my post order,
+[00:06:52 -> 00:06:56] irrespective of whether I visit B first or whether I visit C first.
+[00:06:56 -> 00:07:00] And so in my reverse post order, it will always be A, B, C, D, all right?
+[00:07:00 -> 00:07:04] And so my reverse post order for this particular program is A, B, C, D.
+[00:07:04 -> 00:07:08] Now, it is not necessary that reverse post order is unique.
+[00:07:08 -> 00:07:11] There could be multiple reverse post orders for the same control four graph.
+[00:07:11 -> 00:07:14] In this example, it happened, it so happened that irrespective of
+[00:07:14 -> 00:07:18] which branch you take, you're going to get the same reverse post order,
+[00:07:18 -> 00:07:21] which is A, B, C, D.
+[00:07:21 -> 00:07:26] Okay, and so based on this, I can compute my dominators.
+[00:07:26 -> 00:07:30] And so for A, the dominator is just going to be A itself.
+[00:07:30 -> 00:07:31] That's the entry node.
+[00:07:31 -> 00:07:35] Then for B, it's going to be A, B.
+[00:07:35 -> 00:07:37] Because if I look at, you know, what are all the parts coming in,
+[00:07:37 -> 00:07:41] and then I just do a center intersection of the values on the parts.
+[00:07:41 -> 00:07:43] Then for C, it's going to be an intersection
+[00:07:43 -> 00:07:46] of what is coming from B and what is coming from A.
+[00:07:46 -> 00:07:49] And so it's going to be A, just A.
+[00:07:49 -> 00:07:52] And then also you're going to union C with it, right?
+[00:07:52 -> 00:07:55] So A, C, notice that B is not present in C
+[00:07:55 -> 00:07:58] because it's an intersection on both the incoming parts.
+[00:07:58 -> 00:08:01] And on D, the dominators are A, C, D, all right?
+[00:08:01 -> 00:08:04] So notice that dominators also include the node itself.
+[00:08:04 -> 00:08:06] And that's just the property of the dominator relation
+[00:08:06 -> 00:08:08] because it's a reflexive relation.
+[00:08:08 -> 00:08:12] All right, so I'm claiming that this is a solution
+[00:08:12 -> 00:08:13] that you would get with the data flow analysis
+[00:08:14 -> 00:08:15] set up.
+[00:08:15 -> 00:08:18] I'm also claiming that you would be able to get the solution
+[00:08:18 -> 00:08:21] in a single pass, in a single reverse post-order pass
+[00:08:21 -> 00:08:26] of the data flow analysis fixed point iteration algorithm.
+[00:08:26 -> 00:08:29] So why do we kind of, you know,
+[00:08:29 -> 00:08:30] what is the intuition that, you know,
+[00:08:30 -> 00:08:32] we can get this solution in a single pass?
+[00:08:32 -> 00:08:36] We don't have to keep repeating the fixed point iteration.
+[00:08:36 -> 00:08:38] In any case, the fixed point iteration
+[00:08:38 -> 00:08:40] is going to finish in a finite number of iterations
+[00:08:40 -> 00:08:44] because once again, with the same kind of finite height
+[00:08:44 -> 00:08:49] of the lattice property, sets of basic blocks
+[00:08:49 -> 00:08:50] are going to have a finite height.
+[00:08:50 -> 00:08:53] And so the semi-lattice are going to have a finite height.
+[00:08:53 -> 00:08:54] And so anyway, it's going to finish
+[00:08:54 -> 00:08:57] in a finite number of iterations.
+[00:08:57 -> 00:08:58] But it's interesting that we can say
+[00:08:58 -> 00:08:59] that it's actually going to finish
+[00:08:59 -> 00:09:02] in a single reverse post-order pass.
+[00:09:02 -> 00:09:03] And so what is the idea?
+[00:09:03 -> 00:09:04] What's the intuition?
+[00:09:04 -> 00:09:07] It is because the potentially dominating predecessors
+[00:09:07 -> 00:09:08] in the reverse post-order,
+[00:09:08 -> 00:09:10] the potentially dominating predecessors
+[00:09:10 -> 00:09:13] are always visited before visiting node ends.
+[00:09:13 -> 00:09:16] Potentially dominating predecessors of node N
+[00:09:16 -> 00:09:19] are always visited before visiting node N.
+[00:09:19 -> 00:09:23] And with this invariant, we can make sure that, you know,
+[00:09:23 -> 00:09:25] the potentially dominating predecessors of node N
+[00:09:25 -> 00:09:28] have already kind of had their solutions fixed
+[00:09:28 -> 00:09:30] and now we are ready to compute the solution for N.
+[00:09:31 -> 00:09:33] And so what is, you know,
+[00:09:33 -> 00:09:35] how do I identify the reverse post-order?
+[00:09:35 -> 00:09:37] The reverse post-order can be identified
+[00:09:37 -> 00:09:40] through a depth-first search on the control flow graph.
+[00:09:40 -> 00:09:42] We saw an example where I said
+[00:09:42 -> 00:09:44] that this is the reverse post-order.
+[00:09:44 -> 00:09:46] I did this using the, you know,
+[00:09:46 -> 00:09:48] trying to do the post-order traversal.
+[00:09:48 -> 00:09:49] And that is not very different
+[00:09:49 -> 00:09:52] from actually doing a depth-first search of the graph.
+[00:09:52 -> 00:09:54] And so I'm going to show you an algorithm
+[00:09:54 -> 00:09:56] which is going to compute the reverse post-order
+[00:09:56 -> 00:09:58] for a graph.
+[00:09:58 -> 00:10:00] And so, and that's going to be look like
+[00:10:00 -> 00:10:01] very similar to a depth-first search.
+[00:10:01 -> 00:10:03] Actually, it is going to be a depth-first search,
+[00:10:03 -> 00:10:06] just a matter of how I start numbering or naming
+[00:10:06 -> 00:10:09] the nodes or ordering the node based on that search.
+[00:10:09 -> 00:10:10] And so for this reason,
+[00:10:10 -> 00:10:13] RPO or reverse post-order is also called
+[00:10:13 -> 00:10:15] depth-first ordering, all right?
+[00:10:15 -> 00:10:17] So I'm going to use these terms,
+[00:10:17 -> 00:10:19] reverse post-order and depth-first ordering
+[00:10:19 -> 00:10:23] interchangeably in the rest of this lecture
+[00:10:23 -> 00:10:24] and through the course.
+[00:10:25 -> 00:10:27] So here is a sketch of the algorithm,
+[00:10:27 -> 00:10:29] the depth-first search for RPO.
+[00:10:30 -> 00:10:31] Recall, in a depth-first search,
+[00:10:31 -> 00:10:34] I basically maintain a visited bit for every node.
+[00:10:34 -> 00:10:36] And initially I set the visited bit
+[00:10:36 -> 00:10:38] to false for every node, all right?
+[00:10:38 -> 00:10:41] So I say visited n equals false.
+[00:10:41 -> 00:10:43] And then I'm going to start from my start node
+[00:10:43 -> 00:10:46] and then explore my nodes in a depth-first order.
+[00:10:46 -> 00:10:49] I can do this easily using recursion.
+[00:10:49 -> 00:10:51] So for example, I could start with,
+[00:10:51 -> 00:10:53] I could call search entry node,
+[00:10:53 -> 00:10:55] entry node is the start node.
+[00:10:55 -> 00:10:56] And now before I do that,
+[00:10:56 -> 00:10:59] I'm also initializing a global variable called c,
+[00:10:59 -> 00:11:01] which is to the number of nodes in the graph.
+[00:11:01 -> 00:11:01] And why do I do that?
+[00:11:01 -> 00:11:04] I'm going to use this counter c
+[00:11:04 -> 00:11:08] to basically assign a number to every node
+[00:11:09 -> 00:11:11] and at the end of my algorithm,
+[00:11:11 -> 00:11:13] these numbers are going to dictate the order,
+[00:11:13 -> 00:11:16] the order in which those nodes should be placed
+[00:11:16 -> 00:11:18] to obtain a reverse post-order, all right?
+[00:11:18 -> 00:11:20] And so I deliberately pick c
+[00:11:20 -> 00:11:22] equals number of nodes in the graph
+[00:11:22 -> 00:11:23] because that's the maximum number,
+[00:11:23 -> 00:11:26] that's the last number that anybody could have.
+[00:11:26 -> 00:11:29] And so I'm going to identify the last node first, right?
+[00:11:29 -> 00:11:30] And that makes sense.
+[00:11:30 -> 00:11:31] I'm going to, I mean,
+[00:11:31 -> 00:11:33] because I'm starting from the entry node,
+[00:11:33 -> 00:11:36] the entry node is going to have,
+[00:11:38 -> 00:11:41] no, all right.
+[00:11:41 -> 00:11:42] No, that's not true, actually.
+[00:11:42 -> 00:11:45] So I'm going to identify the last node first.
+[00:11:45 -> 00:11:47] And because I'm doing a depth first search,
+[00:11:47 -> 00:11:51] I'm going to end up in a leaf node
+[00:11:51 -> 00:11:55] and that's where I'm going to assign the last number,
+[00:11:55 -> 00:11:56] right?
+[00:11:56 -> 00:11:57] A node which is not going to be able
+[00:11:57 -> 00:11:59] to reach any other non-visited node
+[00:11:59 -> 00:12:01] and that's the node
+[00:12:01 -> 00:12:02] which I'm going to assign the last number.
+[00:12:02 -> 00:12:04] And then the previous one,
+[00:12:04 -> 00:12:06] I'm going to assign the second last number,
+[00:12:07 -> 00:12:09] even previous one, the third last number and so on.
+[00:12:09 -> 00:12:12] And so that's going to give me the reverse post order.
+[00:12:12 -> 00:12:13] If I had done the other way,
+[00:12:13 -> 00:12:16] for example, if I initialize c to be one
+[00:12:16 -> 00:12:20] and then kind of done the numbering in that way,
+[00:12:20 -> 00:12:22] then I would have got the post order, all right?
+[00:12:22 -> 00:12:24] But I'm interested in the reverse post order.
+[00:12:24 -> 00:12:26] So what's the algorithm?
+[00:12:26 -> 00:12:27] So I start with search entry node
+[00:12:27 -> 00:12:29] and search is a recursive procedure.
+[00:12:29 -> 00:12:31] That's exactly our depth first search procedure.
+[00:12:31 -> 00:12:33] I just set visited end to true
+[00:12:33 -> 00:12:37] and then for all the successors S of N,
+[00:12:37 -> 00:12:39] if the successor has not been visited,
+[00:12:39 -> 00:12:41] then I call search on S, right?
+[00:12:41 -> 00:12:44] So this is exactly the depth first search.
+[00:12:44 -> 00:12:47] And now if I have exhausted all my successors,
+[00:12:47 -> 00:12:50] then whatever is the current value of the counter,
+[00:12:50 -> 00:12:52] that's what I assign to N.
+[00:12:52 -> 00:12:55] So I'm using this global array,
+[00:12:55 -> 00:12:59] a map from nodes to numbers
+[00:12:59 -> 00:13:03] to indicate the ordering, the position in the RT order.
+[00:13:03 -> 00:13:05] And so for this particular node N,
+[00:13:05 -> 00:13:09] the depth first number, DFN is c,
+[00:13:09 -> 00:13:10] whatever is the current value of c
+[00:13:10 -> 00:13:12] and then I decrement c by one.
+[00:13:12 -> 00:13:16] So anytime I assign c to the DFN of some node,
+[00:13:16 -> 00:13:18] I also decrement it so that node two nodes
+[00:13:18 -> 00:13:21] can have the same c, all right?
+[00:13:21 -> 00:13:24] And so this I claim is going to produce
+[00:13:24 -> 00:13:25] a reverse post order,
+[00:13:25 -> 00:13:27] which means that the node that is the numbered one,
+[00:13:27 -> 00:13:30] the node that has DFN one is going to be the first node.
+[00:13:30 -> 00:13:33] And I can claim here that the start node
+[00:13:33 -> 00:13:36] will always get number one in this case,
+[00:13:36 -> 00:13:38] assuming that it's a connected graph,
+[00:13:38 -> 00:13:43] because I would have visited all the other nodes
+[00:13:43 -> 00:13:46] before I actually come and start giving a number
+[00:13:46 -> 00:13:47] to the start node.
+[00:13:47 -> 00:13:49] And so if I visited all the nodes,
+[00:13:49 -> 00:13:52] I would have decremented c, all the other nodes.
+[00:13:52 -> 00:13:56] So I would have decremented c by that much amount,
+[00:13:56 -> 00:13:58] which is the number of nodes in the graph minus one,
+[00:13:58 -> 00:14:01] and then I would be left with just,
+[00:14:01 -> 00:14:02] c would be one at that point,
+[00:14:02 -> 00:14:04] and so the entry node in a connected graph
+[00:14:04 -> 00:14:07] would get number one in this example,
+[00:14:07 -> 00:14:08] in this algorithm.
+[00:14:08 -> 00:14:11] All right, so DFN, at the output,
+[00:14:11 -> 00:14:15] DFN will contain the RPO numbering of the graph,
+[00:14:15 -> 00:14:19] also called the depth first ordering number of the graph.
+[00:14:20 -> 00:14:24] Now, notice that it is possible
+[00:14:24 -> 00:14:26] that a node has multiple successors,
+[00:14:26 -> 00:14:28] and sometimes, depending on the order
+[00:14:28 -> 00:14:31] in which you enumerate these successors,
+[00:14:31 -> 00:14:33] you may get a different DFN numbering.
+[00:14:33 -> 00:14:36] Now, in the example that we had in the previous slide,
+[00:14:36 -> 00:14:40] it didn't matter whether I take this branch or that branch,
+[00:14:40 -> 00:14:43] I would have still got the same DFN numbering,
+[00:14:43 -> 00:14:45] but that was just a property of that particular example.
+[00:14:45 -> 00:14:48] In general, it is possible that depending on the order
+[00:14:48 -> 00:14:50] you picked the successors,
+[00:14:50 -> 00:14:52] the DFN numbering could be different, all right?
+[00:14:52 -> 00:14:55] So, just to illustrate that,
+[00:14:55 -> 00:14:56] here's a very simple example.
+[00:14:56 -> 00:15:00] Let's say this is a, this is b, and this is c.
+[00:15:00 -> 00:15:02] Now, if I pick b first,
+[00:15:02 -> 00:15:07] then my RPO order would be a, b, c,
+[00:15:07 -> 00:15:10] and another RPO order could be a, c, b,
+[00:15:10 -> 00:15:12] and both are valid RPO orders,
+[00:15:12 -> 00:15:15] and they are different because they are,
+[00:15:15 -> 00:15:17] the difference is based on the order
+[00:15:17 -> 00:15:20] in which I chose the successors of node a, all right?
+[00:15:20 -> 00:15:23] But both are valid legal RPO orders.
+[00:15:23 -> 00:15:25] So, an RPO order for a given graph is not unique,
+[00:15:25 -> 00:15:27] or it's not necessarily unique.
+[00:15:29 -> 00:15:32] So, multiple RPOs are possible for the same graph.
+[00:15:33 -> 00:15:35] Yeah, so here's another example.
+[00:15:35 -> 00:15:36] I just showed an example in the previous slide,
+[00:15:36 -> 00:15:38] but here's a more elaborate example.
+[00:15:38 -> 00:15:40] Let's have a, b, c,
+[00:15:40 -> 00:15:42] and let's say I have a cycle between b and c.
+[00:15:42 -> 00:15:45] Now, I claim that a, b, c, and a, c, b
+[00:15:45 -> 00:15:48] are both RPOs orders in this case.
+[00:15:48 -> 00:15:50] So, for example, if I start with a,
+[00:15:50 -> 00:15:54] let's say I pick b first, then c,
+[00:15:54 -> 00:15:59] then I'm going to get the RPO order a, b, c, right?
+[00:15:59 -> 00:16:02] On the other hand, if I pick a first, then c, then b,
+[00:16:02 -> 00:16:05] then I'm going to get the RPO order,
+[00:16:05 -> 00:16:07] so I pick a first, then c,
+[00:16:07 -> 00:16:10] and then of course the only third option is b,
+[00:16:10 -> 00:16:12] then I'm going to get the RPO order a, c, b.
+[00:16:13 -> 00:16:14] In either case,
+[00:16:14 -> 00:16:16] I'm going to get the same set of dominators,
+[00:16:16 -> 00:16:16] so that's a good thing.
+[00:16:16 -> 00:16:19] It doesn't really matter which RPO you pick,
+[00:16:20 -> 00:16:21] whatever RPO you pick,
+[00:16:21 -> 00:16:25] your DFA algorithm will finish in a single RPO pass,
+[00:16:25 -> 00:16:29] and you're going to get this dominator solution
+[00:16:29 -> 00:16:30] for that particular,
+[00:16:31 -> 00:16:34] irrespective of what RPO order you pick
+[00:16:34 -> 00:16:35] for this particular example.
+[00:16:35 -> 00:16:37] So, for example, a is dominated by a,
+[00:16:37 -> 00:16:38] b is dominated by a, b,
+[00:16:38 -> 00:16:41] and c is dominated by a, c.

@@ -1,0 +1,309 @@
+Title: Compiler Design Module 130 : Fourier Motzkin Method for Polyhedron Projection
+Video ID: S8cLRfPXnhk
+Detected language: en
+------------------------------------------------------------
+
+[00:00:00 -> 00:00:08] So, recall that the execution order of iterations depends on the order on which we represent
+[00:00:08 -> 00:00:10] our loop iteration variables.
+[00:00:10 -> 00:00:14] So, the execution order is the ascending lexicographic order of the loop iteration
+[00:00:14 -> 00:00:15] space.
+[00:00:15 -> 00:00:21] Now, what if I wanted to change the execution order or rewrite the loop such that the
+[00:00:21 -> 00:00:23] execution order changes, right?
+[00:00:23 -> 00:00:27] So, that's a question that we're going to try to address in this lecture module.
+[00:00:27 -> 00:00:33] What if we want to change the order and I'm going to assume here that when we do this,
+[00:00:33 -> 00:00:36] when we change the order, we are respecting the dependencies.
+[00:00:36 -> 00:00:40] Maybe there are no data dependencies across different iterations of the loop nest in
+[00:00:40 -> 00:00:43] which case it's okay to change the order any which way.
+[00:00:43 -> 00:00:47] In some cases, it may be possible that there are data dependencies, yet it may
+[00:00:47 -> 00:00:53] be possible to change the order such that the data dependencies are respected.
+[00:00:53 -> 00:00:58] What are the possible ways in which we can potentially change the execution order is
+[00:00:58 -> 00:01:01] something that we're going to discuss in later modules.
+[00:01:01 -> 00:01:06] But let's say we know that it is possible to change the execution order.
+[00:01:06 -> 00:01:11] Then what is the algorithm or how does one go about changing the execution order?
+[00:01:11 -> 00:01:15] That's the discussion that we're going to have in today's module.
+[00:01:15 -> 00:01:16] So here's an example.
+[00:01:16 -> 00:01:19] Let's say my loop nest is for i equals 0 to n.
+[00:01:19 -> 00:01:25] For j equals i, j is less than 7 and j is less than i plus 4.
+[00:01:25 -> 00:01:32] Recall that I can have multiple inequalities in my convex polyhedron and so this is j
+[00:01:32 -> 00:01:37] is less than 7 forms one upper bound and j is less than i plus 4 forms in other
+[00:01:37 -> 00:01:38] upper bound.
+[00:01:38 -> 00:01:41] And then you say j plus plus and then there is some body.
+[00:01:41 -> 00:01:45] In this case, I've deliberately chosen a body where there are no data dependencies
+[00:01:45 -> 00:01:48] across different iterations of this loop nest.
+[00:01:48 -> 00:01:53] Now if I was to pictorially draw the iteration space, it would look something like this.
+[00:01:53 -> 00:01:59] This particular line here is basically i equals j and we notice that because the lower bound
+[00:01:59 -> 00:02:05] of j is i, so everything on the left of this particular line represents j is greater
+[00:02:05 -> 00:02:06] than equal to i.
+[00:02:06 -> 00:02:09] Similarly, we want j is less than i plus 4.
+[00:02:09 -> 00:02:16] So that's just a parallel line going from 3 starting at i, this is just j is equal
+[00:02:16 -> 00:02:21] to i plus 3 and then everything on the right of this is basically j is less than equal
+[00:02:21 -> 00:02:24] to i plus 3 or j is less than i plus 4.
+[00:02:24 -> 00:02:29] And then there is also j is less than 7 is another upper bound and so everything
+[00:02:29 -> 00:02:36] marked with yellow in this particular polygon, convex polygon is basically the iteration
+[00:02:36 -> 00:02:37] space.
+[00:02:37 -> 00:02:40] All the points in this convex polygon represent the iteration space.
+[00:02:40 -> 00:02:43] Now the point that I want to make here is that it doesn't, this is the iteration
+[00:02:44 -> 00:02:49] space and the order in which this iteration space is being traversed by the current loop
+[00:02:49 -> 00:02:57] nest is that it first goes 0, 0 then it says 1, 0 and then 1, 1 and then 2, 0, 2 because
+[00:02:57 -> 00:03:03] recall that i is the x axis and i is the first index of my loop iteration vector
+[00:03:03 -> 00:03:10] and so it's going to go this then 1, 0, 1, 1 then 2, 0, 2, 1, 2, 2 then 3,
+[00:03:10 -> 00:03:13] 0, 3, 1, 3, 2, 3, 3 and so on.
+[00:03:13 -> 00:03:20] What if I wanted to switch the order of execution or switch the order of iteration over this
+[00:03:20 -> 00:03:25] iteration space and then in that case maybe I want to switch the axis such that it goes
+[00:03:25 -> 00:03:31] in the vertical direction first, so it goes 0, 1, 0, 0, 1, 0, 2, 0, 3, 0,
+[00:03:31 -> 00:03:37] 1, 1, 2, 1, 3, 1, 4, 1 and so on.
+[00:03:37 -> 00:03:42] So it's basically vertical first order in this particular diagram.
+[00:03:42 -> 00:03:47] Now if I want to do that and once again I'm assuming that it's okay to do that assuming
+[00:03:47 -> 00:03:50] there are no data dependencies that are getting violated by doing this.
+[00:03:50 -> 00:03:54] The question is if I want to do that how should I rewrite my loop so that it still
+[00:03:54 -> 00:04:01] captures the same convex polyhedral space and yet captures, changes the execution
+[00:04:01 -> 00:04:04] order or the iteration order of this space.
+[00:04:04 -> 00:04:08] In this example I'm going to discuss how to switch axis i and j.
+[00:04:08 -> 00:04:13] So here is the solution, I'm going to have the outer loop to be j of course that's
+[00:04:13 -> 00:04:17] what I wanted and the inner loop to be i but the important question here is what
+[00:04:17 -> 00:04:22] should be the minimum lower bound and the upper bound of j and then what should
+[00:04:22 -> 00:04:25] be the minimum lower bound and upper bound of i.
+[00:04:25 -> 00:04:30] Recall that in the original loop lower bound of i was 0 and the upper bound
+[00:04:30 -> 00:04:34] of i was 9 and because j was the inner variable, j is lower bound and upper
+[00:04:34 -> 00:04:39] bound could be specified as functions of i. Now when I switch the order then j's
+[00:04:39 -> 00:04:44] lower bound and upper bound need to be constants and i's lower bound and upper
+[00:04:44 -> 00:04:50] bounds can be functions of j. Okay so now question is how do I figure out
+[00:04:50 -> 00:04:52] what the upper bound and lower bound should be and here I give you the
+[00:04:52 -> 00:04:57] solution. So for j equals 0 to 6 how do I know that j needs to traverse
+[00:04:57 -> 00:05:03] from 0 to 6. Notice that this is the space from 0 to 6 for which the
+[00:05:03 -> 00:05:09] polyhedral space has a projection on j. Alright so I'm using the word projection
+[00:05:09 -> 00:05:14] it basically means what are all the possible values of j for which the
+[00:05:14 -> 00:05:18] polyhedral space has a non-zero element when you know when you kind
+[00:05:18 -> 00:05:25] of expand from j in the direction of i and then for every value of j I
+[00:05:25 -> 00:05:29] have a lower bound and an upper bound of i. So for example at this
+[00:05:29 -> 00:05:40] particular value of let's say for at value 2 of j I can range from 0 to 2.
+[00:05:40 -> 00:05:50] At value 5 I can range from 2 to 5 and so on. So that's the lower bound and
+[00:05:50 -> 00:05:56] upper bound that I need for i given a fixed value of j and I'll give you
+[00:05:56 -> 00:05:58] the solution and later we're going to discuss what the algorithm to get the
+[00:05:58 -> 00:06:05] solution is. i's lower bound is maximum of j minus 3 and 0. So i is greater than
+[00:06:05 -> 00:06:10] equal to both j minus 3 and 0 and i is less than equal to j. So upper bound
+[00:06:10 -> 00:06:16] is j and lower bound is j minus 3 comma 0. So how do I get from here to
+[00:06:16 -> 00:06:22] the solution from the original loop to the loop with the switched axis how
+[00:06:22 -> 00:06:25] do in a in particular how do I understand how do I know these lower
+[00:06:25 -> 00:06:30] bounds and upper bounds of i and j. That's the question that I'm going to
+[00:06:30 -> 00:06:34] answer in this particular lecture module. So I'm going to first identify
+[00:06:34 -> 00:06:38] what are all the potential values of j and this is done by projecting the
+[00:06:38 -> 00:06:43] convex polyhedron on the j-axis just like we discussed in the figure
+[00:06:43 -> 00:06:47] below a figure in the previous slide we just got project the convex
+[00:06:47 -> 00:06:51] polyhedron on the j-axis to see where all it casts the shadow so to
+[00:06:51 -> 00:06:56] say in other words what are all the values of j for which the convex
+[00:06:56 -> 00:07:01] polyhedron has a nonzero set of points and then for each value of j identify
+[00:07:01 -> 00:07:06] potential values of i. So for each value of j draw a line and figure out
+[00:07:06 -> 00:07:10] what are the points in the convex polyhedron that rely on that
+[00:07:10 -> 00:07:15] particular line and this itself must be expressible as a convex polyhedron
+[00:07:15 -> 00:07:20] on i. Notice that in a one-dimensional space a line segment is
+[00:07:20 -> 00:07:24] a convex polyhedron for a 1D space but in general I mean I'm using the
+[00:07:24 -> 00:07:27] example of a 2D space where I'm projecting on one first and then
+[00:07:27 -> 00:07:32] everything that remains but in general if I you know if I just take one
+[00:07:32 -> 00:07:35] dimension out and project on it and then for and then try to figure out
+[00:07:35 -> 00:07:40] what are what is the space for for the rest of the iteration variables
+[00:07:40 -> 00:07:44] the rest of the dimensions for a fixed value of the first value the
+[00:07:44 -> 00:07:48] projected out loop iteration variable in this case j then I'm going to I'm
+[00:07:48 -> 00:07:53] going to get a convex polyhedron on i and this is just a property of convex
+[00:07:53 -> 00:07:56] polyhedron all right and that's the reason we kind of restrict ourselves
+[00:07:56 -> 00:07:59] these are the these are some of the reasons we restrict ourselves to convex
+[00:07:59 -> 00:08:03] polyhedron because they have such nice properties what is the property if you
+[00:08:03 -> 00:08:08] project a convex polyhedron on one of the axes that basically means that
+[00:08:08 -> 00:08:12] you get a new convex polyhedron that has all the axes except that one
+[00:08:12 -> 00:08:19] axis and and this is a you know this is a good property to have okay so here
+[00:08:19 -> 00:08:25] is the definition a formal definition of projection let s be an n dimensional
+[00:08:25 -> 00:08:31] polyhedron the projection of s onto the first n dimensions so let's say you
+[00:08:31 -> 00:08:37] know my n dimensional polyhedron had dimensions x1, x2, x3, x4 all the way
+[00:08:37 -> 00:08:41] till xn but I want to project on the first m dimension by I mean I'm
+[00:08:41 -> 00:08:44] arbitrarily chosen the first n dimension so any m dimensions and let's
+[00:08:44 -> 00:08:51] call them x1, x2, xm without loss of generality such that for some of the
+[00:08:51 -> 00:08:59] other dimension values xm plus 1, xm plus 2, xm plus 3 dot dot xn for some
+[00:08:59 -> 00:09:02] value so I can choose any value I like for the other dimensions the
+[00:09:02 -> 00:09:07] vector the full vector x1, x2 dot dot dot xm, xm plus 1 dot dot dot xn
+[00:09:07 -> 00:09:13] which is which is represented by this is in s in other words what are some
+[00:09:13 -> 00:09:19] values in the projected in the m dimensions here what are some values in
+[00:09:19 -> 00:09:25] the m dimensions here for which there is some value for the other dimensions
+[00:09:25 -> 00:09:33] in this case I the I in this case m is the jth dimension and everything
+[00:09:33 -> 00:09:38] else is represented by the is dimension so what are some values of j for which
+[00:09:38 -> 00:09:45] j comma i belongs to for some value of i j comma i belong to s all right so for
+[00:09:45 -> 00:09:52] example this particular point here does not belong to the projection of s
+[00:09:52 -> 00:09:55] right so this point here does not belong to the projection of s because
+[00:09:55 -> 00:10:00] there is no value of i for which j comma i for this let's say this
+[00:10:00 -> 00:10:04] value was let's say 10 so there's no value of i for which 10 comma i
+[00:10:04 -> 00:10:10] belongs to s and so 10 does not belong to the projection of s on j okay
+[00:10:10 -> 00:10:16] whereas if I look at for example 5 or 3 then there are some values of i for
+[00:10:16 -> 00:10:21] which 3 comma i belongs to s and so 3 will belong to the projection of s
+[00:10:21 -> 00:10:26] so in other words once again the projection is basically all those
+[00:10:26 -> 00:10:33] points x1 dot dot dot xm such that for some values of the other dimensions the
+[00:10:33 -> 00:10:40] entire vector x1 dot dot dot xn include which includes xm x1 dot dot dot xm and
+[00:10:40 -> 00:10:46] then for some values xm plus 1 dot dot dot xn is in s okay so what's the
+[00:10:46 -> 00:10:55] algorithm to identify a projection of one polyhedron on one of the
+[00:10:55 -> 00:11:01] axes so notice that in my previous definition I used first n dimensions if I
+[00:11:01 -> 00:11:06] want to project on first n dimensions maybe I would first I can keep removing
+[00:11:06 -> 00:11:09] one dimension at a time for example the first time I can remove the xnth
+[00:11:09 -> 00:11:12] dimension and so I will get a projection on the first n minus 1
+[00:11:12 -> 00:11:15] dimensions then I can remove the n minus 1 dimension and I will get the
+[00:11:15 -> 00:11:19] projection on the first n minus 2 dimensions until I reach m in which
+[00:11:19 -> 00:11:23] case I will get a then a projection on the first n dimensions so we're
+[00:11:23 -> 00:11:27] going to you know approach the problem similarly we're going to try to project
+[00:11:27 -> 00:11:31] on one less dimension so if I have a polyhedron of n dimensions I'm going
+[00:11:31 -> 00:11:36] to try to project it on a polyhedron of n minus 1 dimension by removing
+[00:11:36 -> 00:11:39] one dimension and if I'm able to do this then I'm also going to be able
+[00:11:39 -> 00:11:43] to solve the original problem which is change the execution order so how
+[00:11:43 -> 00:11:46] am I going to do that well recall that my original polyhedron had
+[00:11:46 -> 00:11:53] let's say i and j so if I want to first have j at the outer loop and i
+[00:11:53 -> 00:11:58] in the inner loop what am I going to do I'm going to first project on j all
+[00:11:58 -> 00:12:04] right which means I'm going to remove i and then I'm going to basically see
+[00:12:04 -> 00:12:08] what is the projection of j and then from there I'm going to basically
+[00:12:08 -> 00:12:12] proceed and now I have a new conscious polyhedron which is on i and that
+[00:12:12 -> 00:12:15] conscious polyhedron maybe I want to remove another dimension in this case
+[00:12:15 -> 00:12:19] there's only one dimension so I don't basically a conscious polyhedron in 1
+[00:12:20 -> 00:12:24] d space is nothing but a lower bound and upper bound and that basically can be
+[00:12:24 -> 00:12:28] used as the upper bound and lower bound of the inner loop but if I had let's
+[00:12:28 -> 00:12:31] say three dimensions then what I would have got after projecting on j would
+[00:12:31 -> 00:12:35] be a two dimensional polygon convex polygon and once again I can choose
+[00:12:35 -> 00:12:40] to project on one other axis let's say i this time and then I would get
+[00:12:40 -> 00:12:44] another 1d space which would be a lower bound upper bound and so in
+[00:12:44 -> 00:12:53] this way I can choose to have any order to visit my convex polyhedron so we
+[00:12:53 -> 00:12:57] have reduced the problem of being able to switch axes to be able to project
+[00:12:57 -> 00:13:03] on dimensions one less dimension so remove one dimension and project it on
+[00:13:03 -> 00:13:07] the remaining dimensions so we're going to do this and so how we're
+[00:13:07 -> 00:13:11] going to do this you know we want an algorithm which takes as input a
+[00:13:11 -> 00:13:17] convex polyhedron s on n dimensions x1 dot dot xn and we want one variable xm
+[00:13:17 -> 00:13:22] that needs to be eliminated so that we can project s on everything else except
+[00:13:22 -> 00:13:27] xm and the output would be in a projection of s on dimensions other
+[00:13:27 -> 00:13:31] than the mth and we're going to call this new polyhedron s prime and this
+[00:13:31 -> 00:13:34] is also going to be a convex polyhedron by the property of convex
+[00:13:34 -> 00:13:38] polyhedra and here's the algorithm let you're going to have a
+[00:13:38 -> 00:13:42] representation for s and recall that we already discussed a representation for s
+[00:13:42 -> 00:13:51] s is basically all vectors x such that b times x the matrix multiplication
+[00:13:51 -> 00:13:54] plus a vector b is greater than equal to zero and this is a way to specify
+[00:13:54 -> 00:13:59] any convex polyhedron and so I'm going to represent s using this
+[00:13:59 -> 00:14:05] representation in this representation x is a n dimensional vector and let's
+[00:14:05 -> 00:14:09] say c are all the constraints in s that involve xm so some of these
+[00:14:09 -> 00:14:14] constraints in you know that come out of this these equations are going to
+[00:14:14 -> 00:14:18] involve xm by involve I mean the coefficient of xm is non-zero and some
+[00:14:18 -> 00:14:22] other constraints are not going to involve xm which means there in those
+[00:14:22 -> 00:14:28] particular constraints xm the coefficient of xm will be zero and so
+[00:14:28 -> 00:14:33] I'm going to first focus on all these constraints that involve xm the
+[00:14:33 -> 00:14:37] constraints that do not involve xm are already good enough for my s prime
+[00:14:37 -> 00:14:41] polyhedron because they already don't have xm and that's what I wanted I
+[00:14:41 -> 00:14:44] wanted to remove xm from these in equations and so that I can have
+[00:14:44 -> 00:14:49] upper bounds and lower bounds on everything else except xm and so things
+[00:14:49 -> 00:14:54] that already do not have xm they are already good to be added to my
+[00:14:54 -> 00:14:59] solution which is s prime but for and so that's what I do and this is
+[00:14:59 -> 00:15:01] something that I've written at the end of the slide but let me I just
+[00:15:01 -> 00:15:06] discussed earlier is that let's add everything that does not belong to C
+[00:15:06 -> 00:15:10] which means where the coefficient of xm is already zero to s prime and that
+[00:15:10 -> 00:15:14] would be my you know that would be form a part of my projection s prime
+[00:15:14 -> 00:15:20] but for the constraints that involve a non-zero coefficient for xm identify
+[00:15:20 -> 00:15:26] you know basically that's a system of equations or C is nothing but a
+[00:15:26 -> 00:15:29] system of in equations which has you know each of those in equations as
+[00:15:29 -> 00:15:35] xm in it so you bring them into a certain form which is either you write
+[00:15:35 -> 00:15:42] them as L is less than equal to C1 into xm where L can be some fine
+[00:15:42 -> 00:15:46] expression on all the variables except xm and then you know you bring xm
+[00:15:46 -> 00:15:50] here and here I'm assuming that C1 should be greater than equal to zero
+[00:15:50 -> 00:15:55] so that's why I mean it less than equal to C1 xm or if or you should
+[00:15:55 -> 00:16:00] be able to bring it into this form C2 xm is less than equal to U here L and U
+[00:16:00 -> 00:16:06] are arbitrary affine expressions on all the variables that x1 dot dot dot xn
+[00:16:06 -> 00:16:12] except xm okay so so I should be able to bring all these in equations in
+[00:16:12 -> 00:16:15] this form because after all they contain xm and they contain some
+[00:16:15 -> 00:16:19] other variables so what I do is I bring all the other variables to one
+[00:16:19 -> 00:16:23] side and xm to the other side I ensure that the coefficient of xm is
+[00:16:23 -> 00:16:27] positive and so either I'm going to have an equation of the form L is
+[00:16:27 -> 00:16:30] less than equal to C1 into xm or I'm going to have an equation of the form
+[00:16:30 -> 00:16:35] C2 into xm is less than equal to U depending on whether the coefficient
+[00:16:35 -> 00:16:42] of xm was negative or positive for the for a certain inequality like
+[00:16:42 -> 00:16:47] greater than equal to okay so so once I get this once I get all the
+[00:16:47 -> 00:16:53] in equations in C in this form I look at every pair of such in
+[00:16:53 -> 00:17:00] equations and add C2 L is less than equal to C1 U all right so basically
+[00:17:00 -> 00:17:04] this mathematically this is very easy to see if I just multiply this in
+[00:17:04 -> 00:17:11] equation with C2 and this in equation with C1 then what I get is C1 C2 xm
+[00:17:11 -> 00:17:16] here and then C1 C2 xm here and so I have two in equation which is C2 L
+[00:17:16 -> 00:17:23] is less than equal to C1 C2 xm and C1 C2 xm is less than equal to C1 U and so
+[00:17:23 -> 00:17:28] from that I can just infer that C2 L is less than equal to C1 U what have I
+[00:17:28 -> 00:17:32] done this this is just algebraic manipulation but basically what I'm
+[00:17:32 -> 00:17:37] doing is I'm trying to identify the projection on everything except xm so
+[00:17:37 -> 00:17:41] all the points that can potentially firstly I want to capture all points
+[00:17:41 -> 00:17:48] such that s you know for some value of xm there is you know there's a nonzero
+[00:17:48 -> 00:17:54] set of points for some value of xm in that case that point should belong to
+[00:17:54 -> 00:18:00] s prime and so so this is what I get you know I add C2 L is less than
+[00:18:00 -> 00:18:02] equal to C1 U and I don't want to add any other points I don't want to
+[00:18:02 -> 00:18:07] add points in s to s prime such that for which there is no value of xm
+[00:18:07 -> 00:18:12] such that you know the entire set belongs to s and and so this particular
+[00:18:12 -> 00:18:17] algorithm is called the Fourier Modeskin method Fourier Modeskin method
+[00:18:17 -> 00:18:22] based on the people who proposed this algorithm for the first time so
+[00:18:22 -> 00:18:27] overall you know once again I first identify those equations which do not
+[00:18:27 -> 00:18:30] involve xm and simply add them to s prime for those equations that
+[00:18:30 -> 00:18:34] involve xm I bring them to either the first form which is L is less than
+[00:18:34 -> 00:18:38] equal to C1 into xm or the second form which is C2 into xm is less than
+[00:18:38 -> 00:18:42] equal to U and for every such pair so I'm going to have to do a pair wise
+[00:18:42 -> 00:18:47] analysis for every such pair of for first and second I do C2 L is less
+[00:18:47 -> 00:18:51] than equal to C1 U and I get a bunch of constraints and I add all
+[00:18:51 -> 00:18:54] those constraints to s prime and whatever I get is my resulting
+[00:18:54 -> 00:18:59] projection s prime now let's look at an example to see this in action so
+[00:18:59 -> 00:19:03] this is our original example i is greater than equal to 0 i is less
+[00:19:03 -> 00:19:08] than equal to 8 or i is less than 9 j is greater than equal to i and j is less
+[00:19:08 -> 00:19:13] than less than equal to 6 or less than 7 and j is less than equal to i plus 3
+[00:19:13 -> 00:19:19] okay so these form are constraints for this particular polyhedron I have just
+[00:19:19 -> 00:19:23] written the lower bound and upper bounds as my matrices B and D for
+[00:19:23 -> 00:19:29] example I have this for the first row here says i is greater than equal
+[00:19:29 -> 00:19:34] to 0 right so my vector is ij my my iteration space vector is ij with i
+[00:19:34 -> 00:19:41] being first then my second one says minus i plus 8 is greater than equal
+[00:19:41 -> 00:19:44] to 0 which basically means i is less than equal to 8 and that's coming from
+[00:19:44 -> 00:19:49] this constraint that i is less than 9 similarly the third one says minus i
+[00:19:49 -> 00:19:53] plus j is greater than equal to 0 is just coming from j is greater than
+[00:19:53 -> 00:19:56] equal to i and that's minus i plus j is greater than equal to 0 is nothing
+[00:19:56 -> 00:20:03] but j is greater than equal to i the fourth one is saying minus j plus 6 is
+[00:20:03 -> 00:20:07] greater than equal to 0 which basically means j is less than equal to 6 and the
+[00:20:07 -> 00:20:13] last one says i minus j is greater than i minus j plus 3 is
+[00:20:13 -> 00:20:18] greater than equal to 0 which means i is greater than equal to or j is
+[00:20:18 -> 00:20:24] less than equal to i plus 3 okay so these matrices basically exactly in
+[00:20:24 -> 00:20:29] code the polyhedron defined by the iteration space in this particular loop
+[00:20:29 -> 00:20:34] and now I want to eliminate i so my first question here is which of these
+[00:20:34 -> 00:20:41] in equations involve 0 coefficient for i so what are the what are the the
+[00:20:41 -> 00:20:45] first one involves the coefficient 1 for i the second one minus 1 third
+[00:20:45 -> 00:20:52] is minus 1 fourth is 0 so this particular row here we can just add
+[00:20:52 -> 00:20:57] it directly to s prime because it already does not have i and what does
+[00:20:57 -> 00:21:01] this translate to it just translates to the fact that j is less than equal to
+[00:21:01 -> 00:21:12] 6 now here is here are the remaining equations which is apart from the one
+[00:21:12 -> 00:21:17] that just you know that comes from s minus c here is c c is basically all
+[00:21:17 -> 00:21:21] the remaining rows which is 1 0 minus 1 0 minus 1 1 1 minus 1 basically all
+[00:21:21 -> 00:21:26] the rows for which the i the coefficient for i is non zero and these
+[00:21:26 -> 00:21:30] are the corresponding values for the small b vector and from here we
+[00:21:30 -> 00:21:33] basically get these equations i is greater than equal to 0 I bring them
+[00:21:33 -> 00:21:39] bring it into those forms either c1 m c1 x m is greater than equal to l or
+[00:21:39 -> 00:21:43] u is less than or greater than equal to u or l is less than equal to c
+[00:21:43 -> 00:21:47] into x in this case it becomes i is greater than equal to 0 i is greater
+[00:21:47 -> 00:21:52] than equal to j minus 3 i is less than equal to 8 and i is less than
+[00:21:52 -> 00:21:58] equal to j and now we consider each pair all right so for example I come
+[00:21:58 -> 00:22:05] consider pair 1 and 2 and from there I'm going to get an equation that says j
+[00:22:05 -> 00:22:10] minus 3 is greater than equal oh sorry not 1 and 2 I'm going to I'm going to
+[00:22:10 -> 00:22:14] look at all the pairs which has l on one side and u on the other side so
+[00:22:14 -> 00:22:19] I'm going to consider pair 1 and 3 all right so I'm going to consider
+[00:22:19 -> 00:22:23] pair 1 and 3 I'm going to consider pair 2 and 3 then I'm going to consider
+[00:22:23 -> 00:22:29] pair 1 and 4 and consider pair 2 and 4 so for 1 and 4 I have i is greater
+[00:22:29 -> 00:22:33] than equal to 0 and i is less than equal to 8 what does that give me it
+[00:22:33 -> 00:22:36] gives me 0 is less than equal to 8 so this is coming from 1 comma 3
+[00:22:36 -> 00:22:41] similarly 1 comma 4 i is greater than equal to 0 i is less than equal to j
+[00:22:41 -> 00:22:45] that gives me 0 is less than equal to j right I'm just using the Fourier
+[00:22:46 -> 00:22:50] method then I look at i is greater than equal to j minus 3 i is less than
+[00:22:50 -> 00:22:55] equal to 8 so that just gives me j minus 3 is less than equal to 8 this
+[00:22:55 -> 00:23:01] coming from the second and the third equations here right and then I look
+[00:23:01 -> 00:23:04] at second and fourth which is which gives me j minus 3 is less than
+[00:23:04 -> 00:23:08] equal to j now notice that some of these in equations are trivial for
+[00:23:08 -> 00:23:12] example 0 is less than equal to 8 is really giving us no information
+[00:23:12 -> 00:23:16] whatsoever similarly j minus 3 is less than equal to j is also not giving us
+[00:23:16 -> 00:23:21] any information whatsoever so what are we left with we are left with 0 is
+[00:23:21 -> 00:23:26] less than equal to j and j minus 3 is less than equal to 8 and we add both
+[00:23:26 -> 00:23:30] of them to S prime in other words we add j is greater than equal to 0 and j
+[00:23:30 -> 00:23:34] is less than equal to 11 to S prime so these are the two constraints that
+[00:23:34 -> 00:23:39] we get from C and recall that we had one constraint from S minus C which
+[00:23:39 -> 00:23:45] was j is less than equal to 6 if you remember and overall we get j is
+[00:23:45 -> 00:23:49] greater than equal to 0 j is less than equal to 11 and j is less than equal
+[00:23:49 -> 00:23:54] to 6 all three basically we basically mean that j is less than equal to
+[00:23:54 -> 00:23:57] 11 becomes redundant right because if j is less than equal to 6 then
+[00:23:57 -> 00:24:01] obviously j is less than equal to 11 because 6 is less than 11 and so
+[00:24:01 -> 00:24:05] finally we get j is greater than equal to 0 and j is less than equal to 6
+[00:24:05 -> 00:24:09] and this forms our projection of the polyhedron on J.
+[00:24:09 -> 00:24:14] And so this also gives us the outer loop of lower and upper bounds for J.

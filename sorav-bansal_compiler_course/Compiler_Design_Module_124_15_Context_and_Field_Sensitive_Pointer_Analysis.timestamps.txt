@@ -1,0 +1,608 @@
+Title: Compiler Design Module 124 15: Context and Field Sensitive Pointer Analysis
+Video ID: X-Pcb9sL0Pg
+Detected language: en
+------------------------------------------------------------
+
+[00:00:00 -> 00:00:04] we are now ready to discuss a context-sensitive pointer
+[00:00:04 -> 00:00:08] analysis, which is a mid-path between a context-insensitive
+[00:00:08 -> 00:00:11] pointer analysis and a region-based analysis.
+[00:00:11 -> 00:00:14] So consider this function bar.
+[00:00:14 -> 00:00:17] And let's say it could be called in two different contexts.
+[00:00:17 -> 00:00:22] And recall that we can choose how we want to define context.
+[00:00:22 -> 00:00:25] For example, we could define context based
+[00:00:25 -> 00:00:28] on the call site of bar.
+[00:00:28 -> 00:00:30] So here, that would mean that maybe there
+[00:00:30 -> 00:00:32] are just two call sites of bar.
+[00:00:32 -> 00:00:35] And there could be multiple call sites of the function that
+[00:00:35 -> 00:00:37] calls bar, but we're not going to consider them
+[00:00:37 -> 00:00:39] as separate contexts.
+[00:00:39 -> 00:00:43] So that would mean that it's a depth one call context.
+[00:00:43 -> 00:00:45] Irrespective, let's just say that there
+[00:00:45 -> 00:00:48] were two contexts in which bar could be called.
+[00:00:48 -> 00:00:52] And I'm going to, for the rest of the discussion,
+[00:00:52 -> 00:00:56] assume that I'm using depth one call contexts
+[00:00:56 -> 00:00:57] for my context.
+[00:00:57 -> 00:00:59] So let's say there's a function foo
+[00:00:59 -> 00:01:03] that's being called at location f1.
+[00:01:03 -> 00:01:06] So foo can be called in context f1.
+[00:01:06 -> 00:01:08] And there's another location, f2,
+[00:01:08 -> 00:01:10] where foo can also be called with a different set
+[00:01:10 -> 00:01:13] of arguments and a different set of return values.
+[00:01:13 -> 00:01:16] So foo is this function which takes an argument.
+[00:01:16 -> 00:01:20] There's a formal argument name is z, and it has somebody.
+[00:01:20 -> 00:01:24] So when we do a context-sensitive pointer analysis,
+[00:01:24 -> 00:01:26] firstly, it's an interprocedural data flow
+[00:01:26 -> 00:01:27] analysis.
+[00:01:27 -> 00:01:30] And we analyze each function in the context
+[00:01:30 -> 00:01:32] that it occurs in.
+[00:01:32 -> 00:01:36] For example, bar is analyzed in context b1 and b2,
+[00:01:36 -> 00:01:37] as we said.
+[00:01:37 -> 00:01:41] And foo is analyzed in context f1 and f2.
+[00:01:41 -> 00:01:45] Now, notice that actually there are,
+[00:01:45 -> 00:01:48] if I look at depth two call contexts,
+[00:01:48 -> 00:01:53] then there are four different combinations in which you
+[00:01:53 -> 00:01:54] could analyze foo.
+[00:01:54 -> 00:01:57] For example, b1, f1, b1, f2, b2, f1, b2, f2.
+[00:01:57 -> 00:02:00] But we're going to restrict our call context
+[00:02:00 -> 00:02:03] and assuming that there are depth one call contexts.
+[00:02:03 -> 00:02:06] Then there are two call contexts for bar,
+[00:02:06 -> 00:02:09] or two contexts for bar, more generally,
+[00:02:09 -> 00:02:12] and two contexts for foo, f1 and f2.
+[00:02:12 -> 00:02:14] OK, so let's move on.
+[00:02:14 -> 00:02:17] Now, each variable, whether it's
+[00:02:17 -> 00:02:21] an argument, a local variable, return value,
+[00:02:21 -> 00:02:23] is analyzed in both call contexts.
+[00:02:23 -> 00:02:25] So that means, let's say there's an argument z in foo.
+[00:02:25 -> 00:02:29] Then z has two different, we analyze
+[00:02:29 -> 00:02:30] in two different contexts.
+[00:02:30 -> 00:02:35] So zf1 will be when z occurs in context f1,
+[00:02:35 -> 00:02:37] and zf2 will be when z occurs in context f2.
+[00:02:37 -> 00:02:41] For example, we will have different points
+[00:02:41 -> 00:02:44] to relationships for zf1 and zf2.
+[00:02:44 -> 00:02:48] For example, zf1 may point to some variable x or y,
+[00:02:48 -> 00:02:51] whereas zf2 may point to some other variables a or b.
+[00:02:51 -> 00:02:53] And these sites could be potentially intersecting.
+[00:02:53 -> 00:02:59] Similarly, x could occur in two different contexts, xb1
+[00:02:59 -> 00:03:03] and xb2, because x is a variable that's occurring in bar.
+[00:03:03 -> 00:03:05] So we look at bar's context when
+[00:03:05 -> 00:03:07] we version the variables.
+[00:03:07 -> 00:03:09] Similarly, y is yb1, yb2, because once again, it's
+[00:03:09 -> 00:03:11] occurring in bar.
+[00:03:11 -> 00:03:13] m and n are also variables, and those
+[00:03:13 -> 00:03:16] are also going to be versioned using the context.
+[00:03:16 -> 00:03:19] So mb1, mb2, nb1, nb2.
+[00:03:19 -> 00:03:22] And they become completely different quantities
+[00:03:22 -> 00:03:26] that get analyzed in their respective contexts
+[00:03:26 -> 00:03:29] while doing the interprocedural DFA.
+[00:03:29 -> 00:03:33] So let's get a sense of how these different quantities
+[00:03:33 -> 00:03:34] behave.
+[00:03:34 -> 00:03:39] So for example, when z is called from f1,
+[00:03:39 -> 00:03:42] then what we look at, the quantity that we consider
+[00:03:42 -> 00:03:43] is zf1.
+[00:03:43 -> 00:03:46] That's what the versioning means.
+[00:03:46 -> 00:03:49] But if z is called from f2, then we look at zf2.
+[00:03:49 -> 00:03:52] And from that, we can say that when we analyze and we
+[00:03:52 -> 00:03:54] do the data flow analysis, then when
+[00:03:54 -> 00:03:59] we do this dispatch from this statement f1 to the function
+[00:03:59 -> 00:04:04] foo, then whatever is the value that's
+[00:04:04 -> 00:04:06] being analyzed for x at that time,
+[00:04:06 -> 00:04:09] so let's say the points to set of x,
+[00:04:09 -> 00:04:11] then that gets copied to whatever
+[00:04:11 -> 00:04:14] is the value of z in the context in which it is called,
+[00:04:14 -> 00:04:15] which is f1.
+[00:04:15 -> 00:04:22] That means zf1 is updated using xb1.
+[00:04:22 -> 00:04:25] If I was analyzing bar in context b1,
+[00:04:25 -> 00:04:27] then when I hit this statement and transfer
+[00:04:27 -> 00:04:30] across this function call, then the value
+[00:04:30 -> 00:04:33] that I'm actually tracking for x is xb1,
+[00:04:33 -> 00:04:36] because I'm analyzing bar in b1.
+[00:04:36 -> 00:04:37] And then when I do the transfer,
+[00:04:37 -> 00:04:40] then I analyze foo in f1.
+[00:04:40 -> 00:04:45] So zf1 is updated using xb1.
+[00:04:45 -> 00:04:47] And in the case of points to graph,
+[00:04:47 -> 00:04:49] recall the updation basically involves
+[00:04:49 -> 00:04:51] addition of outgoing edges.
+[00:04:51 -> 00:04:52] So in other words, the outgoing edges
+[00:04:52 -> 00:04:54] of zf1 in the points to graph will
+[00:04:54 -> 00:05:00] be a superset of the outgoing edges of xb1.
+[00:05:00 -> 00:05:04] Now similarly, when I'm here, then let's say
+[00:05:04 -> 00:05:07] I'm again analyzing bar in context b1.
+[00:05:07 -> 00:05:10] Then zf2 this time, because this is being called,
+[00:05:10 -> 00:05:12] this time I'm analyzing it in context f2,
+[00:05:12 -> 00:05:14] because that's how I reached foo.
+[00:05:14 -> 00:05:17] So zf2 will be updated using yb1,
+[00:05:17 -> 00:05:20] because y was being analyzed in b1.
+[00:05:20 -> 00:05:22] Now the same thing will happen for b2.
+[00:05:22 -> 00:05:25] So let's say the same bar will be analyzed in b2.
+[00:05:25 -> 00:05:28] So then I'm going to be tracking xb2.
+[00:05:28 -> 00:05:32] And now I'll update zf1 using xb2.
+[00:05:32 -> 00:05:38] And similarly, I will update zf2 using yb2.
+[00:05:38 -> 00:05:41] And so I get these kind of set of constraints
+[00:05:41 -> 00:05:43] that the outgoing edges of zf1 should
+[00:05:43 -> 00:05:48] be a superset of the outgoing edges of xb1 and so on.
+[00:05:48 -> 00:05:50] And effectively, this means that zf1
+[00:05:50 -> 00:05:54] should be a superset of xb1 union xb2,
+[00:05:54 -> 00:05:56] because if I take these two constraints in conjunction,
+[00:05:56 -> 00:06:00] then that's equivalent to saying that zf1's outgoing
+[00:06:00 -> 00:06:03] edges are a superset of xb1 union xb2.
+[00:06:03 -> 00:06:05] Now this is where there's a precision loss,
+[00:06:05 -> 00:06:10] because I am combining the xb1 could be pointing to,
+[00:06:10 -> 00:06:12] let's say, some set of objects.
+[00:06:12 -> 00:06:16] And xb2 may be pointing to some different set of objects,
+[00:06:16 -> 00:06:19] overlapping or not overlapping, doesn't matter.
+[00:06:19 -> 00:06:22] And when I look at z, then I union both of them.
+[00:06:22 -> 00:06:25] And that's a loss of precision.
+[00:06:25 -> 00:06:26] For example, in contrast, if I
+[00:06:26 -> 00:06:28] was using a region-based analysis,
+[00:06:28 -> 00:06:30] then I would have tracked these separately.
+[00:06:30 -> 00:06:34] For example, I would say xb1, then execute the transfer
+[00:06:34 -> 00:06:38] function of foo on xb1,
+[00:06:38 -> 00:06:41] as though it's completely executing in isolation.
+[00:06:41 -> 00:06:44] And that would have been transferred the value to m,
+[00:06:44 -> 00:06:46] whatever it is.
+[00:06:46 -> 00:06:47] So I would have transferred,
+[00:06:47 -> 00:06:51] I would have treated foo as completely different functions
+[00:06:51 -> 00:06:53] in context b1 and b2.
+[00:06:53 -> 00:06:55] And they would have just been as though
+[00:06:55 -> 00:06:57] the whole function foo is in line
+[00:06:57 -> 00:06:59] separately for b1 and b2.
+[00:06:59 -> 00:07:02] But when I do a context-sensitive point analysis,
+[00:07:02 -> 00:07:03] not a region-based analysis,
+[00:07:03 -> 00:07:05] then I'm doing this approximation,
+[00:07:05 -> 00:07:07] where I'm taking the union,
+[00:07:07 -> 00:07:12] because zf1 is updated both using xb1 and xb2.
+[00:07:12 -> 00:07:17] Similarly, zf2 is updated using both yb1 and yb2.
+[00:07:17 -> 00:07:20] So this is a precision loss over region-based analysis,
+[00:07:20 -> 00:07:22] but this is a precision improvement
+[00:07:22 -> 00:07:24] over context-insensitive analysis,
+[00:07:24 -> 00:07:28] because now zf1 and zf2 can be pointing
+[00:07:28 -> 00:07:29] to different objects,
+[00:07:29 -> 00:07:32] because in a context-insensitive analysis,
+[00:07:32 -> 00:07:34] I would have had just one z,
+[00:07:34 -> 00:07:36] which would have been the union of all these four,
+[00:07:36 -> 00:07:39] xb1, xb2, yb1, yb2.
+[00:07:39 -> 00:07:42] Or in fact, let's say b1 and b2 were not in context,
+[00:07:42 -> 00:07:47] then even, so all arguments that appear at foo,
+[00:07:49 -> 00:07:51] as an argument to foo,
+[00:07:51 -> 00:07:52] actual argument to foo,
+[00:07:52 -> 00:07:54] will appear, will all of them,
+[00:07:54 -> 00:07:56] whatever their points to set are,
+[00:07:56 -> 00:07:58] will update the points to set of z.
+[00:07:58 -> 00:08:01] And there'll be interference across all sides
+[00:08:01 -> 00:08:02] because of that.
+[00:08:02 -> 00:08:04] So this is a precision improvement
+[00:08:04 -> 00:08:07] over context-insensitive analysis,
+[00:08:07 -> 00:08:11] because I'm tracking zf1 differently from zf2,
+[00:08:11 -> 00:08:13] but it's a precision loss over region-based analysis,
+[00:08:13 -> 00:08:18] because I am actually merging xb1 and xb2
+[00:08:18 -> 00:08:19] to obtain zf1,
+[00:08:19 -> 00:08:21] whereas region-based analysis would have tracked
+[00:08:21 -> 00:08:23] even xb1 and xb2 separately.
+[00:08:24 -> 00:08:27] Okay, so, all right,
+[00:08:27 -> 00:08:30] so let's take some examples of statements
+[00:08:30 -> 00:08:32] that can occur in the body of foo.
+[00:08:32 -> 00:08:34] So one of the statements that could occur
+[00:08:34 -> 00:08:36] in the body of foo is an allocation statement.
+[00:08:36 -> 00:08:39] So let's say at location L inside foo,
+[00:08:39 -> 00:08:42] I'm allocating a new object using this statement,
+[00:08:42 -> 00:08:44] p equals new something, some type.
+[00:08:45 -> 00:08:48] Now, in an inter-procedural DFA
+[00:08:48 -> 00:08:50] with context-sensitivity,
+[00:08:50 -> 00:08:52] we would say that L,
+[00:08:52 -> 00:08:56] the location L is being occurred
+[00:08:56 -> 00:08:57] in what context of my analysis?
+[00:08:57 -> 00:09:00] Did L occur in context f1
+[00:09:00 -> 00:09:03] when I came to f through this f1 call site,
+[00:09:03 -> 00:09:06] or did L occur when I was analyzing it
+[00:09:06 -> 00:09:08] through f2 call site?
+[00:09:08 -> 00:09:11] And so I will track L, f1, and Lf2
+[00:09:11 -> 00:09:14] as separate abstract objects in my analysis.
+[00:09:14 -> 00:09:17] And so that is also a source of precision improvement.
+[00:09:17 -> 00:09:20] So for example, I would say pf1,
+[00:09:20 -> 00:09:23] which is p occurring in f1,
+[00:09:24 -> 00:09:27] the points to set of pf1 would contain Lf1,
+[00:09:27 -> 00:09:29] and the points to set of pf2
+[00:09:29 -> 00:09:32] would contain the location Lf2.
+[00:09:32 -> 00:09:36] We're going to see later how this improves the precision.
+[00:09:36 -> 00:09:38] Recall that in a context-insensitive analysis,
+[00:09:38 -> 00:09:39] I would have just said that
+[00:09:39 -> 00:09:41] the points to set of p includes L.
+[00:09:41 -> 00:09:44] But here I'm kind of making a more fine-grained state.
+[00:09:44 -> 00:09:47] I'm saying if p occurs in f1,
+[00:09:47 -> 00:09:49] then it contains Lf1.
+[00:09:49 -> 00:09:51] If p occurs in f2, then it contains Lf2.
+[00:09:51 -> 00:09:53] But notice that I'm not drawing
+[00:09:53 -> 00:09:56] any diagonal relationships between these.
+[00:09:57 -> 00:09:58] Okay.
+[00:09:58 -> 00:10:00] Now let's say there were other statements
+[00:10:00 -> 00:10:05] like assignment, copy, or dereference.
+[00:10:05 -> 00:10:07] And I'm going to use my standard points
+[00:10:07 -> 00:10:09] to assign analysis rules.
+[00:10:09 -> 00:10:11] For example, if I'm analyzing the procedure
+[00:10:11 -> 00:10:13] in f1's context,
+[00:10:13 -> 00:10:15] then I'm going to say af1 should be updated
+[00:10:15 -> 00:10:17] using star zf1.
+[00:10:17 -> 00:10:19] I'm abusing notation a little bit.
+[00:10:19 -> 00:10:21] Star zf1 basically means look at all the outgoing edges
+[00:10:21 -> 00:10:24] of zf1, and then look at their outgoing edges.
+[00:10:24 -> 00:10:25] And all of them should be a part
+[00:10:25 -> 00:10:28] of the outgoing edges of af1.
+[00:10:28 -> 00:10:29] And so on, right?
+[00:10:29 -> 00:10:31] So for example, this d equals z
+[00:10:31 -> 00:10:35] basically updates df1 using zf1, and so on.
+[00:10:35 -> 00:10:36] And if I analyze the same body
+[00:10:36 -> 00:10:39] in a different context, say f2,
+[00:10:39 -> 00:10:43] then I update or draw constraints
+[00:10:43 -> 00:10:45] of the corresponding variables.
+[00:10:45 -> 00:10:47] For example, here I'm going to say af2
+[00:10:47 -> 00:10:49] is updated using star zf2.
+[00:10:49 -> 00:10:52] df2 is updated using zf2, and so on.
+[00:10:53 -> 00:10:54] So this is also a precision improvement
+[00:10:54 -> 00:10:59] because let us say that z was different.
+[00:10:59 -> 00:11:02] z had a different points to set because of f2.
+[00:11:02 -> 00:11:03] Then I'm going to have different values
+[00:11:03 -> 00:11:05] that are going to flow into af2
+[00:11:05 -> 00:11:08] than what will flow into af1.
+[00:11:08 -> 00:11:12] And so this will give me more precise information
+[00:11:12 -> 00:11:17] than a context insensitive analysis.
+[00:11:17 -> 00:11:20] Now, let us say that foo eventually has a return
+[00:11:20 -> 00:11:23] statement, and let's say it's returning a value,
+[00:11:23 -> 00:11:25] and let's say it's returning some variable e.
+[00:11:25 -> 00:11:29] Then depending on what context I was analyzing foo in,
+[00:11:29 -> 00:11:31] I would have two different values
+[00:11:31 -> 00:11:32] for two different points to set for e.
+[00:11:32 -> 00:11:35] So ef1 and ef2.
+[00:11:35 -> 00:11:37] And then when this return value goes back,
+[00:11:37 -> 00:11:40] then it goes back to the call site
+[00:11:40 -> 00:11:43] where there must be a variable
+[00:11:43 -> 00:11:44] which is being assigned to the return value.
+[00:11:44 -> 00:11:47] So in this case, let's say at f1 it is m,
+[00:11:47 -> 00:11:49] and at f2 it is n.
+[00:11:49 -> 00:11:52] So when I update, then if I was analyzing foo
+[00:11:52 -> 00:11:56] in context f1, and then the return happens,
+[00:11:56 -> 00:12:00] then we update m using ef1.
+[00:12:01 -> 00:12:04] And similarly, I update n using ef2,
+[00:12:06 -> 00:12:10] but I don't update, for example, m using ef2.
+[00:12:10 -> 00:12:13] So this is the precision improvement.
+[00:12:13 -> 00:12:14] Mathematically, this can be said
+[00:12:14 -> 00:12:17] as that md1 should be updated using ef1.
+[00:12:17 -> 00:12:20] So if I'm analyzing bar in b1,
+[00:12:20 -> 00:12:23] then mb1 should be updated using ef1.
+[00:12:23 -> 00:12:25] If I was analyzing bar in b2,
+[00:12:25 -> 00:12:29] then mb2 should be updated using ef1 as well.
+[00:12:29 -> 00:12:31] So these two represent the cases
+[00:12:31 -> 00:12:34] where the call happens through this f1 call site.
+[00:12:34 -> 00:12:39] And then nb1 should be updated using ef2,
+[00:12:39 -> 00:12:42] so because n is occurring at f2,
+[00:12:42 -> 00:12:45] and nb2 should also be updated using ef2.
+[00:12:45 -> 00:12:48] And because the additions are addition of edges,
+[00:12:49 -> 00:12:50] in constraint form, we can say nb2,
+[00:12:50 -> 00:12:53] the set of outgoing edges in the points to graph from nb2
+[00:12:53 -> 00:12:55] should be a superset of the set
+[00:12:55 -> 00:12:57] of outgoing edges from ef2.
+[00:12:58 -> 00:13:01] So once again, this is a precision improvement
+[00:13:01 -> 00:13:02] over context insensitive analysis
+[00:13:02 -> 00:13:04] because when I go back,
+[00:13:04 -> 00:13:07] when I do the return, function return,
+[00:13:07 -> 00:13:08] and I go back to the caller,
+[00:13:08 -> 00:13:12] then I can track more precisely
+[00:13:12 -> 00:13:15] what values should flow into the return value.
+[00:13:15 -> 00:13:19] So for example, m would only get influenced by ef1,
+[00:13:19 -> 00:13:22] but not ef2, and so you would avoid parts where,
+[00:13:22 -> 00:13:26] let's say, Fu on y could have returned
+[00:13:26 -> 00:13:28] some very large points to set,
+[00:13:28 -> 00:13:29] and Fu of x was going to return
+[00:13:29 -> 00:13:32] a very small points to set in its return value,
+[00:13:32 -> 00:13:34] then m would still have a small points to set,
+[00:13:34 -> 00:13:36] and n would have a large points to set.
+[00:13:36 -> 00:13:38] Whereas if I was doing a context insensitive analysis,
+[00:13:38 -> 00:13:41] both m and n would have had a large points to set.
+[00:13:41 -> 00:13:43] So in a context insensitive analysis,
+[00:13:43 -> 00:13:46] I would have said that m is a superset of E,
+[00:13:46 -> 00:13:48] and n is a superset of E,
+[00:13:48 -> 00:13:50] and those were the only two equations,
+[00:13:50 -> 00:13:53] but now I have four different quantities
+[00:13:53 -> 00:13:57] and four different constraints,
+[00:13:57 -> 00:14:01] which are tracking this more precisely.
+[00:14:01 -> 00:14:03] Okay, now let's take an example.
+[00:14:03 -> 00:14:05] So let's say one of the statements
+[00:14:05 -> 00:14:09] in the body of Fu was L colon E equals new.
+[00:14:09 -> 00:14:10] So this is an allocation statement,
+[00:14:10 -> 00:14:12] and then you return E.
+[00:14:12 -> 00:14:14] So if you return E,
+[00:14:14 -> 00:14:19] then recall that E is basically holding L,
+[00:14:21 -> 00:14:25] one of the points to elements or abstract objects
+[00:14:25 -> 00:14:28] that E can point to is L,
+[00:14:28 -> 00:14:29] and depending on which context it is,
+[00:14:29 -> 00:14:32] it will be either LF1 or LF2.
+[00:14:32 -> 00:14:36] And so that value will flow into the returned value.
+[00:14:36 -> 00:14:40] So if I was analyzing Fu in context F1,
+[00:14:40 -> 00:14:42] then the value that gets returned
+[00:14:42 -> 00:14:44] is going to be pointing to LF1,
+[00:14:44 -> 00:14:46] and that's what's going to flow into m.
+[00:14:46 -> 00:14:50] So m would be updated using LF1
+[00:14:50 -> 00:14:52] because we're tracking this precisely
+[00:14:52 -> 00:14:55] and saying that LF1 is what gets allocated
+[00:14:55 -> 00:14:57] when I get called through F1,
+[00:14:57 -> 00:14:59] and then that's what gets returned to m.
+[00:14:59 -> 00:15:02] Whereas if I get called through F2,
+[00:15:02 -> 00:15:06] then I allocate the abstract object is called LF2,
+[00:15:06 -> 00:15:09] and that's what gets returned into n.
+[00:15:09 -> 00:15:13] In other words, mB1 for context B1 and bar
+[00:15:13 -> 00:15:14] is updated using LF1.
+[00:15:14 -> 00:15:18] Similarly, mB2 is also updated using LF1,
+[00:15:18 -> 00:15:23] and nB1 and nB2 are both updated using LF2.
+[00:15:23 -> 00:15:27] Notice that this means that mB2 may not,
+[00:15:27 -> 00:15:30] it's possible for mB2 to not alias with nB2.
+[00:15:30 -> 00:15:34] If LF1 and LF2 are different allocations
+[00:15:34 -> 00:15:36] or abstract objects, which they are in this example,
+[00:15:36 -> 00:15:38] which basically means that I can kind of assert here
+[00:15:38 -> 00:15:42] that m does not alias with,
+[00:15:42 -> 00:15:47] or star m does not alias with star n.
+[00:15:47 -> 00:15:51] Now, this assertion was not statically possible
+[00:15:51 -> 00:15:55] to ensure with the context insensitive analysis.
+[00:15:55 -> 00:15:56] Because in a context insensitive analysis,
+[00:15:56 -> 00:15:57] we would have said, hey,
+[00:15:57 -> 00:15:59] they can both point to allocation site L objects.
+[00:15:59 -> 00:16:01] But in a context sensitive analysis,
+[00:16:01 -> 00:16:05] we are saying m can point to allocation site L in F1,
+[00:16:05 -> 00:16:09] but or abstract object called LF1,
+[00:16:09 -> 00:16:12] and n can point to abstract object called LF2.
+[00:16:12 -> 00:16:15] They are separate abstract objects
+[00:16:15 -> 00:16:19] and disjoint in the objects that they represent.
+[00:16:19 -> 00:16:21] And that's why the accesses
+[00:16:21 -> 00:16:24] through those two pointers cannot alias.
+[00:16:24 -> 00:16:26] This is how the precision improvement happens.
+[00:16:28 -> 00:16:32] Now I'm going to switch gears and make this more formal.
+[00:16:32 -> 00:16:36] So first of all, I'm going to define some notations.
+[00:16:36 -> 00:16:38] So let's say in our example,
+[00:16:38 -> 00:16:40] bar was being analyzed in two different contexts,
+[00:16:40 -> 00:16:41] B1 and B2.
+[00:16:41 -> 00:16:42] And similarly, foo was being analyzed
+[00:16:42 -> 00:16:45] in two different contexts, F1 and F2.
+[00:16:45 -> 00:16:47] Then I'm going to use this notation saying
+[00:16:47 -> 00:16:51] B1, turnstile operator, body of bar,
+[00:16:51 -> 00:16:54] which basically means that body of bar
+[00:16:54 -> 00:16:57] is analyzed in context B1.
+[00:16:57 -> 00:16:59] Body of bar is also analyzed in context B2.
+[00:16:59 -> 00:17:04] So B1 turnstile body bar basically represents
+[00:17:05 -> 00:17:10] that if body bar is being analyzed in B1,
+[00:17:13 -> 00:17:14] that's what this means.
+[00:17:14 -> 00:17:17] Or this represents the predicate
+[00:17:17 -> 00:17:20] that body bar is being analyzed in B1.
+[00:17:20 -> 00:17:21] This represents the predicate
+[00:17:21 -> 00:17:25] that body bar is being analyzed in B2.
+[00:17:25 -> 00:17:28] Similarly, body foo is being analyzed in a context F1
+[00:17:28 -> 00:17:32] and body foo is being analyzed in context F2.
+[00:17:33 -> 00:17:36] In general, if I write C,
+[00:17:36 -> 00:17:37] this turnstile operator E,
+[00:17:37 -> 00:17:39] I'm saying E is being evaluated
+[00:17:39 -> 00:17:43] or analyzed in context C.
+[00:17:43 -> 00:17:44] Okay.
+[00:17:44 -> 00:17:46] So using this, I'm going to formalize
+[00:17:46 -> 00:17:47] and give you some inference rules
+[00:17:47 -> 00:17:49] that basically complete
+[00:17:49 -> 00:17:52] this context-sensitive point analysis.
+[00:17:52 -> 00:17:56] So if an allocation statement of this form,
+[00:17:56 -> 00:17:57] P equals new something, something,
+[00:17:57 -> 00:17:59] at allocation site L,
+[00:17:59 -> 00:18:02] is being analyzed in context C,
+[00:18:03 -> 00:18:05] then this abstract object
+[00:18:05 -> 00:18:07] represented by this allocation site,
+[00:18:07 -> 00:18:10] which I'm going to call LC, in context C,
+[00:18:10 -> 00:18:12] so I'm going to call it LC,
+[00:18:12 -> 00:18:16] must belong to the points to set of PC.
+[00:18:16 -> 00:18:18] And I'm going to use this notation.
+[00:18:18 -> 00:18:20] So earlier I was not being very precise
+[00:18:20 -> 00:18:21] with my notation,
+[00:18:21 -> 00:18:23] but now I'm going to be more precise.
+[00:18:23 -> 00:18:25] So I'm going to use the square brackets notation.
+[00:18:25 -> 00:18:26] So square brackets of A
+[00:18:26 -> 00:18:28] represents the outgoing edges of A
+[00:18:28 -> 00:18:29] in the points to graph.
+[00:18:29 -> 00:18:31] So here this basically means
+[00:18:31 -> 00:18:34] that LC would belong to the outgoing edges of PC.
+[00:18:34 -> 00:18:37] So, I mean, PC would be pointing
+[00:18:37 -> 00:18:39] to the abstract object LC.
+[00:18:39 -> 00:18:42] And notice that both P and L have been versioned
+[00:18:42 -> 00:18:44] using the current context C.
+[00:18:44 -> 00:18:47] And this is what you saw using our examples as well.
+[00:18:48 -> 00:18:52] So once again, if this allocation statement
+[00:18:52 -> 00:18:54] is being analyzed in context C,
+[00:18:54 -> 00:18:59] then PC's outgoing edge includes LC.
+[00:19:02 -> 00:19:03] All right.
+[00:19:03 -> 00:19:07] Similarly, we can generalize for other points to rules,
+[00:19:07 -> 00:19:10] the standard Anderson's analysis
+[00:19:10 -> 00:19:11] that we previously discussed
+[00:19:11 -> 00:19:13] for an intra-procedural case.
+[00:19:13 -> 00:19:15] So let's say we have a copy statement
+[00:19:15 -> 00:19:19] P colon equals Q being executed in context C.
+[00:19:19 -> 00:19:23] Then we update the outgoing edges of PC
+[00:19:23 -> 00:19:24] using the outgoing edges of QC.
+[00:19:24 -> 00:19:27] Now notice that I'm using the subscript C in both sides.
+[00:19:27 -> 00:19:30] So for example, if there was another context D
+[00:19:30 -> 00:19:31] in which this was happening,
+[00:19:31 -> 00:19:34] then nothing gets changed or read
+[00:19:34 -> 00:19:37] from the value QD and PD.
+[00:19:37 -> 00:19:40] So this is only, so whatever is being held
+[00:19:40 -> 00:19:42] or whatever QC can point to,
+[00:19:42 -> 00:19:44] now PC can also point to.
+[00:19:44 -> 00:19:46] And that's what this update,
+[00:19:46 -> 00:19:49] this conclusion of this inference rule indicates.
+[00:19:49 -> 00:19:51] Similarly, let's look at a dereference.
+[00:19:51 -> 00:19:54] So P colon equals star Q.
+[00:19:54 -> 00:19:59] Then I look at all the points to set of Q in context C.
+[00:20:00 -> 00:20:03] That is, let's say QC and square brackets around that.
+[00:20:03 -> 00:20:05] If there's an abstract object R
+[00:20:05 -> 00:20:08] that belongs to this outgoing edges of QC,
+[00:20:08 -> 00:20:11] then we update the outgoing edges of PC
+[00:20:11 -> 00:20:13] using the outgoing edges of R.
+[00:20:13 -> 00:20:16] So, I mean, this is standard.
+[00:20:16 -> 00:20:17] We have already seen this.
+[00:20:17 -> 00:20:20] So if QC could point to R, that's what this means.
+[00:20:20 -> 00:20:24] And R could point to some other object CS,
+[00:20:24 -> 00:20:26] then PC should also point to S.
+[00:20:26 -> 00:20:28] That's what the conclusion says,
+[00:20:28 -> 00:20:30] that whatever is the outgoing edges of R
+[00:20:30 -> 00:20:34] should be added to the outgoing edges of PC.
+[00:20:34 -> 00:20:36] All right, that's dereference.
+[00:20:36 -> 00:20:37] And finally, assignment.
+[00:20:37 -> 00:20:39] So it's very similar.
+[00:20:39 -> 00:20:42] Whatever are the, so star P colon equals Q
+[00:20:42 -> 00:20:45] being executed or being analyzed in context C.
+[00:20:45 -> 00:20:47] So look at all the outgoing edges of P.
+[00:20:47 -> 00:20:52] Let us say R belongs to the outgoing edges of PC,
+[00:20:52 -> 00:20:54] P in C, context C.
+[00:20:54 -> 00:20:58] And then you update the outgoing edges of R
+[00:20:58 -> 00:21:00] because this is an assignment.
+[00:21:00 -> 00:21:02] You update the outgoing edges of R
+[00:21:02 -> 00:21:05] using the outgoing edges of Q in context C
+[00:21:05 -> 00:21:07] or the outgoing edges of QC.
+[00:21:09 -> 00:21:12] Okay, so the last four rules that we saw
+[00:21:12 -> 00:21:13] are pretty standard.
+[00:21:13 -> 00:21:14] They're the standard Anderson's algorithm
+[00:21:14 -> 00:21:17] just that this time I also introduced the context C.
+[00:21:17 -> 00:21:20] But there are two rules related to function call dispatch
+[00:21:20 -> 00:21:22] and return, which are special,
+[00:21:22 -> 00:21:25] or just kind of specific to the context sensitive analysis.
+[00:21:25 -> 00:21:28] So let's say I am analyzing a function call
+[00:21:28 -> 00:21:32] P colon equals FX occurring at location L.
+[00:21:32 -> 00:21:35] And this whole statement is being analyzed in context C.
+[00:21:35 -> 00:21:39] For example, if this was a bar function,
+[00:21:39 -> 00:21:42] then L would be F1, F would be foo,
+[00:21:42 -> 00:21:44] and C would be one of the contexts
+[00:21:44 -> 00:21:46] in which bar is being analyzed, B1.
+[00:21:47 -> 00:21:50] And let's say the body of F is E
+[00:21:50 -> 00:21:53] and the formal argument of F is A.
+[00:21:53 -> 00:21:56] So recall it was Z in our foo example.
+[00:21:56 -> 00:22:01] Then basically I was analyzing this X in context C.
+[00:22:02 -> 00:22:05] So whatever is the points to set of X in context C,
+[00:22:05 -> 00:22:10] I need to copy that to the points to set of A
+[00:22:10 -> 00:22:12] in context L.
+[00:22:12 -> 00:22:14] In other words, I need to update
+[00:22:15 -> 00:22:19] the points to set of AL using the points to set of XC,
+[00:22:19 -> 00:22:23] because that's what's going to happen in this transfer
+[00:22:23 -> 00:22:24] from the caller to the callee.
+[00:22:24 -> 00:22:27] The caller was executing in context C.
+[00:22:27 -> 00:22:30] The callee will start executing in context L,
+[00:22:30 -> 00:22:32] because I'm assuming a one depth call context.
+[00:22:32 -> 00:22:37] So, and then I have to simulate the calling,
+[00:22:37 -> 00:22:40] the dispatch, in the dispatch it basically copies
+[00:22:40 -> 00:22:42] the actual arguments to the formal arguments.
+[00:22:42 -> 00:22:46] So I use the copy rule and just say that update AL
+[00:22:46 -> 00:22:48] using XC.
+[00:22:48 -> 00:22:50] In other words, the outgoing edges of AL
+[00:22:50 -> 00:22:53] should be a superset of the outgoing edges of XC.
+[00:22:53 -> 00:22:56] Moreover, we add another conclusion.
+[00:22:56 -> 00:22:58] So there are two conclusions because of function call.
+[00:22:58 -> 00:23:01] The second conclusion is that the body of F
+[00:23:01 -> 00:23:03] can be analyzed in context L.
+[00:23:03 -> 00:23:07] And this is, you know, this is so, you know,
+[00:23:07 -> 00:23:11] and that would be used in by this fact
+[00:23:12 -> 00:23:13] the property can now be used
+[00:23:13 -> 00:23:16] when we are analyzing the body of F.
+[00:23:17 -> 00:23:19] Okay, similarly, when I return,
+[00:23:19 -> 00:23:20] so let's say there was a function call
+[00:23:20 -> 00:23:23] and inside L, there was a return statement.
+[00:23:23 -> 00:23:27] So I would analyze return, the return B
+[00:23:27 -> 00:23:30] inside the body of F, which is E in context L,
+[00:23:30 -> 00:23:32] because that's where, you know,
+[00:23:32 -> 00:23:34] let's say that's how I was.
+[00:23:34 -> 00:23:38] So if this function call dispatch occurred in context C,
+[00:23:39 -> 00:23:41] this was the body of the program
+[00:23:42 -> 00:23:44] of the function F in the program.
+[00:23:44 -> 00:23:49] And inside this program, there was a return statement
+[00:23:49 -> 00:23:52] that was kind of analyzed in context L,
+[00:23:52 -> 00:23:54] which means the dispatch actually happened here.
+[00:23:54 -> 00:23:57] Then whatever is the value that's being held in B
+[00:23:57 -> 00:24:01] should get copied to the returned value T.
+[00:24:01 -> 00:24:03] The value that's being held in B
+[00:24:03 -> 00:24:06] is being tracked using the corresponding version BL
+[00:24:07 -> 00:24:10] and that should get update,
+[00:24:10 -> 00:24:14] that should be used to update the value T in context C.
+[00:24:14 -> 00:24:19] In other words, TC should be updated using BL.
+[00:24:19 -> 00:24:22] So BL is the callee value, TC is the caller's value.
+[00:24:22 -> 00:24:24] The outgoing edges of TC should be a superset
+[00:24:24 -> 00:24:26] of the outgoing edges of BL.
+[00:24:26 -> 00:24:27] So this is the return rule.
+[00:24:29 -> 00:24:32] Finally, we can combine context sensitivity
+[00:24:32 -> 00:24:33] and field sensitivity.
+[00:24:33 -> 00:24:37] It's nothing out of the ordinary,
+[00:24:37 -> 00:24:39] but I'm just going to use some examples
+[00:24:39 -> 00:24:41] or I'm just going to show some rules
+[00:24:41 -> 00:24:44] to kind of concretize this.
+[00:24:44 -> 00:24:47] So first of all, I'm going to use a notation
+[00:24:47 -> 00:24:51] where it says outgoing edges of A subscript field
+[00:24:51 -> 00:24:53] represents the outgoing edges of A
+[00:24:53 -> 00:24:54] labeled with field FLD.
+[00:24:54 -> 00:24:57] Recall that when we do a field sensitive analysis,
+[00:24:57 -> 00:24:59] we label the outgoing edges saying that I can reach,
+[00:24:59 -> 00:25:03] I can point to this object using this field, right?
+[00:25:03 -> 00:25:08] So if I analyze P colon equals Q pointer dot field
+[00:25:08 -> 00:25:12] in context C, then this is equivalent to saying,
+[00:25:12 -> 00:25:17] for example, star Q, except so we do,
+[00:25:17 -> 00:25:18] the first thing we do is we look at
+[00:25:18 -> 00:25:20] all the outgoing edges of Q.
+[00:25:20 -> 00:25:22] So that's, let's say R belongs to the outgoing edges
+[00:25:22 -> 00:25:25] of QC, so Q in context C,
+[00:25:25 -> 00:25:29] so R belongs to the outgoing edges of QC.
+[00:25:29 -> 00:25:33] Then we update using the outgoing edges of R.
+[00:25:33 -> 00:25:36] So this is as good as a dereference.
+[00:25:36 -> 00:25:39] So we update using the outgoing edges of R,
+[00:25:39 -> 00:25:41] but with the caveat that I only update
+[00:25:41 -> 00:25:43] using those outgoing edges of R
+[00:25:43 -> 00:25:45] which are labeled with field.
+[00:25:45 -> 00:25:47] So that's what this notation means.
+[00:25:47 -> 00:25:49] So I update the outgoing edges of PC
+[00:25:49 -> 00:25:53] using the outgoing edges labeled with field of R.
+[00:25:53 -> 00:25:55] So in other words, in the constraint form,
+[00:25:55 -> 00:25:57] the outgoing edges of PC should be a superset
+[00:25:57 -> 00:26:00] of the outgoing edges labeled with field of R.
+[00:26:02 -> 00:26:05] And finally, actually the labels that I have written here
+[00:26:05 -> 00:26:07] are kind of mismatched.
+[00:26:07 -> 00:26:09] This should have been called deref,
+[00:26:09 -> 00:26:11] and this is assign.
+[00:26:11 -> 00:26:12] This is what we've been,
+[00:26:12 -> 00:26:14] these are the names we've been using all through.
+[00:26:14 -> 00:26:16] And here, this is basically similar.
+[00:26:16 -> 00:26:17] I'm just going to use the assign rule
+[00:26:17 -> 00:26:19] just that I'm going to use a field subscript
+[00:26:19 -> 00:26:21] for the outgoing edges once again.
+[00:26:21 -> 00:26:24] So if I have P dot FLD colon equals Q,
+[00:26:24 -> 00:26:29] this is similar to saying star P colon equals Q,
+[00:26:29 -> 00:26:30] except that this is in a field-sensitive way,
+[00:26:30 -> 00:26:32] I need to do it.
+[00:26:32 -> 00:26:35] So I look at all the outgoing edges of PC,
+[00:26:36 -> 00:26:37] because this is a dereference,
+[00:26:37 -> 00:26:38] I do a star P,
+[00:26:38 -> 00:26:41] so I look at all the outgoing edges of PC.
+[00:26:41 -> 00:26:45] Let's say R is one of those outgoing pointies
+[00:26:45 -> 00:26:48] or the destination of the outgoing edge.
+[00:26:48 -> 00:26:52] Then I update its outgoing edge,
+[00:26:52 -> 00:26:55] R's outgoing edges using Q.
+[00:26:55 -> 00:26:56] But I don't,
+[00:26:56 -> 00:26:59] and all the new edges that I add
+[00:26:59 -> 00:27:03] because of this assignment will be labeled with FLD.
+[00:27:04 -> 00:27:05] If they already existed,
+[00:27:05 -> 00:27:07] then I just add this label to those edges.
+[00:27:07 -> 00:27:08] That's pretty much it.
+[00:27:08 -> 00:27:10] And so that basically means
+[00:27:10 -> 00:27:14] that the outgoing edges of QC
+[00:27:14 -> 00:27:18] are used to update the outgoing edges of R,
+[00:27:18 -> 00:27:19] but only those outgoing edges of R,
+[00:27:20 -> 00:27:24] all the new edges are annotated FLD,
+[00:27:24 -> 00:27:25] and if those edges already existed,
+[00:27:25 -> 00:27:28] then the FLD label is added to those edges
+[00:27:28 -> 00:27:30] if that label already didn't exist.
+[00:27:31 -> 00:27:32] So differently,
+[00:27:32 -> 00:27:35] I just add all the new edges that I add
+[00:27:35 -> 00:27:36] to my outgoing edges of R
+[00:27:36 -> 00:27:38] should have the label FLD.
+[00:27:38 -> 00:27:41] So this is how you can combine context sensitivity
+[00:27:41 -> 00:27:42] and field sensitivity.
+[00:27:42 -> 00:27:45] Recall that field sensitivity requires you
+[00:27:45 -> 00:27:46] to have certain amount of type safety,
+[00:27:46 -> 00:27:48] you cannot do pointer arithmetic
+[00:27:48 -> 00:27:49] or address taken fields,
+[00:27:49 -> 00:27:51] but then you can do field sensitive analysis,
+[00:27:51 -> 00:27:56] it's a very useful way of improving precision.

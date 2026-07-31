@@ -1,0 +1,670 @@
+Title: Compiler Design Module 169 : Poison Value Operational Semantics
+Video ID: xitEQJoAic4
+Detected language: en
+------------------------------------------------------------
+
+[00:00:00 -> 00:00:04] So we continue our discussion on the semantics,
+[00:00:04 -> 00:00:06] more specifically the operational semantics
+[00:00:06 -> 00:00:08] of Poisson values.
+[00:00:08 -> 00:00:10] And this is something that we're going to pick off
+[00:00:10 -> 00:00:11] from our last module.
+[00:00:11 -> 00:00:13] We started discussing the operational semantics
+[00:00:13 -> 00:00:15] of the Poisson value and said,
+[00:00:15 -> 00:00:19] what are the possibilities if I add to the Poisson value
+[00:00:19 -> 00:00:22] or if I divide by the Poisson value
+[00:00:22 -> 00:00:25] or from the Poisson value, and so on.
+[00:00:25 -> 00:00:27] So overall, the problem is that we need to define
+[00:00:27 -> 00:00:28] the operational semantics.
+[00:00:28 -> 00:00:31] And while we looked at one or two examples
+[00:00:31 -> 00:00:34] in our previous module, we're going to study this topic
+[00:00:34 -> 00:00:37] in more depth in this particular module.
+[00:00:37 -> 00:00:42] And the guiding principle in defining the semantics
+[00:00:42 -> 00:00:44] for the Poisson value is that,
+[00:00:44 -> 00:00:46] notice that if a Poisson value has been generated,
+[00:00:46 -> 00:00:50] that basically means that the original program had UB.
+[00:00:50 -> 00:00:53] Because if we are lowering something
+[00:00:53 -> 00:00:57] like a source language, like C, into LLVM IR,
+[00:00:57 -> 00:01:00] then if LLVM IR is generating Poisson,
+[00:01:00 -> 00:01:03] then the original program must have been generating
+[00:01:03 -> 00:01:05] undefined behavior or must have been triggering
+[00:01:05 -> 00:01:06] undefined behavior.
+[00:01:06 -> 00:01:10] And so, and we just decided to generate a Poisson value
+[00:01:10 -> 00:01:11] instead of actually triggering undefined behavior
+[00:01:11 -> 00:01:14] so that I can do more transformations
+[00:01:14 -> 00:01:16] like Poisting and other things.
+[00:01:16 -> 00:01:18] And so if a Poisson value has been generated,
+[00:01:18 -> 00:01:21] that indicates that there was UB in the original program.
+[00:01:21 -> 00:01:24] And so any choice for semantics is okay.
+[00:01:24 -> 00:01:26] I mean, from a correctness point of view,
+[00:01:26 -> 00:01:28] it doesn't matter what I choose.
+[00:01:28 -> 00:01:31] I can choose, for example, that a Poisson
+[00:01:31 -> 00:01:33] should be converted to some random value
+[00:01:33 -> 00:01:35] or something like that, and that would be okay.
+[00:01:35 -> 00:01:37] Because after all, generation of a Poisson value
+[00:01:37 -> 00:01:39] already means that the original program had UB.
+[00:01:39 -> 00:01:40] And if the original program had UB,
+[00:01:40 -> 00:01:42] then anything is okay.
+[00:01:42 -> 00:01:45] Basically, the program was illegal.
+[00:01:45 -> 00:01:47] But we want to pick a choice
+[00:01:47 -> 00:01:50] which maximizes the optimization opportunities.
+[00:01:50 -> 00:01:51] As we have discussed in the past,
+[00:01:51 -> 00:01:55] the IR designer needs to basically carefully walk
+[00:01:55 -> 00:01:59] a tight rope between optimization opportunity in the source
+[00:01:59 -> 00:02:01] and the optimization opportunity thwarted
+[00:02:01 -> 00:02:05] because of the UB semantics in the destination.
+[00:02:05 -> 00:02:07] And that was the whole motivation
+[00:02:07 -> 00:02:09] of introducing Poisson values.
+[00:02:09 -> 00:02:11] So let's take an example.
+[00:02:11 -> 00:02:15] So let's say I have this opcode in my IR level.
+[00:02:15 -> 00:02:20] It looks like add NSW, which NSW signs no signed overflow.
+[00:02:20 -> 00:02:25] And then there is this constant, and then I add one.
+[00:02:25 -> 00:02:27] Now, the NSW keyword is important
+[00:02:27 -> 00:02:31] because this basically means that if there is an overflow,
+[00:02:32 -> 00:02:35] then it returns a Poisson value.
+[00:02:35 -> 00:02:38] And in this particular example,
+[00:02:38 -> 00:02:39] assuming it's a signed integer,
+[00:02:39 -> 00:02:44] 7FFFFFF is basically int max
+[00:02:47 -> 00:02:49] in my 32-bit representation.
+[00:02:49 -> 00:02:53] And if I add one to it, that indeed triggers overflow.
+[00:02:53 -> 00:02:58] And so what gets returned to P is not eight and seven zeros,
+[00:02:58 -> 00:03:00] but what gets returned to P for this particular instruction
+[00:03:00 -> 00:03:02] would be a Poisson value.
+[00:03:03 -> 00:03:05] And that's because of NSW.
+[00:03:05 -> 00:03:07] If, for example, I remove the NSW,
+[00:03:07 -> 00:03:11] then this becomes a regular add with a wraparound semantics.
+[00:03:11 -> 00:03:12] And that would basically mean
+[00:03:12 -> 00:03:14] that this becomes eight and seven zeros
+[00:03:14 -> 00:03:16] and things like that.
+[00:03:16 -> 00:03:18] And then let's say I basically start using
+[00:03:18 -> 00:03:19] this Poisson value.
+[00:03:19 -> 00:03:22] So let's say I subtract one from the Poisson value,
+[00:03:22 -> 00:03:25] or I add zero to the Poisson value,
+[00:03:25 -> 00:03:27] or I all the Poisson value with one
+[00:03:27 -> 00:03:28] and things like that.
+[00:03:28 -> 00:03:32] And the question is, what do I get on the left-hand side?
+[00:03:32 -> 00:03:34] And I'm deliberately naming these variables
+[00:03:34 -> 00:03:36] or registers as P2, P3, P4,
+[00:03:36 -> 00:03:39] to basically indicate that all these operations
+[00:03:39 -> 00:03:41] will also yield a Poisson value.
+[00:03:41 -> 00:03:45] So irrespective of what the other operand is,
+[00:03:45 -> 00:03:47] for example, if I do P minus one,
+[00:03:47 -> 00:03:48] that's just going to lead,
+[00:03:48 -> 00:03:52] if P was Poisson, then P2 will also be Poisson.
+[00:03:52 -> 00:03:54] If I do P plus, P and zero,
+[00:03:54 -> 00:03:57] now notice that when I say P and zero,
+[00:03:57 -> 00:03:58] you may be tempted to say,
+[00:03:58 -> 00:04:01] oh, anything with anded with zero is just zero.
+[00:04:01 -> 00:04:05] But actually, anything anded with zero is,
+[00:04:05 -> 00:04:06] in this case, is not zero
+[00:04:06 -> 00:04:09] because the Poisson value anded with zero
+[00:04:09 -> 00:04:10] returns a Poisson value.
+[00:04:10 -> 00:04:12] So that is slightly counterintuitive
+[00:04:12 -> 00:04:15] because you would imagine that with 32-bit integers,
+[00:04:15 -> 00:04:17] if you and with zero,
+[00:04:17 -> 00:04:21] then you should get zero.
+[00:04:21 -> 00:04:23] But if you and Poisson with zero,
+[00:04:23 -> 00:04:25] then you get a Poisson value.
+[00:04:25 -> 00:04:28] And I'm gonna show later that it's a good idea
+[00:04:28 -> 00:04:30] to actually return Poisson in this case
+[00:04:30 -> 00:04:31] rather than returning zero
+[00:04:31 -> 00:04:34] because Poisson actually gives you more flexibility.
+[00:04:34 -> 00:04:35] A Poisson value basically means
+[00:04:35 -> 00:04:38] that it should never be used in the future.
+[00:04:38 -> 00:04:41] And so you can always replace a Poisson value with zero
+[00:04:41 -> 00:04:44] because after all, if it was never going to get used,
+[00:04:44 -> 00:04:46] then how does it matter whether it was zero
+[00:04:46 -> 00:04:48] or one or two or three or whatever?
+[00:04:48 -> 00:04:51] And so it's always okay to replace a Poisson value with zero.
+[00:04:51 -> 00:04:55] And keeping it Poisson is basically a good idea
+[00:04:55 -> 00:04:56] because it gives you more flexibility
+[00:04:56 -> 00:04:58] when you talk about optimization.
+[00:04:58 -> 00:05:01] Similarly, let's say I do or I32 P1.
+[00:05:01 -> 00:05:04] Now P is Poisson in this case because of this,
+[00:05:04 -> 00:05:06] but when I'm oring it with one,
+[00:05:06 -> 00:05:10] you can say, oh, the last bit will always be one.
+[00:05:10 -> 00:05:13] The least significant bit would always be one.
+[00:05:13 -> 00:05:16] But we don't really track that.
+[00:05:16 -> 00:05:20] The operational semantics that IR like LLVM uses
+[00:05:20 -> 00:05:23] is that if you or anything with Poisson,
+[00:05:23 -> 00:05:24] you'll get another Poisson value.
+[00:05:24 -> 00:05:26] So all these values,
+[00:05:26 -> 00:05:27] you started with a Poisson value
+[00:05:27 -> 00:05:29] because of this operation.
+[00:05:29 -> 00:05:31] And then anything, any operation
+[00:05:31 -> 00:05:35] from these kind of operations also return a Poisson value.
+[00:05:35 -> 00:05:38] P2, P3, P4 are also going to return Poisson values
+[00:05:38 -> 00:05:40] in this particular example.
+[00:05:41 -> 00:05:45] So why did I choose these particular semantics?
+[00:05:45 -> 00:05:47] I could have chosen any other semantics.
+[00:05:47 -> 00:05:49] For example, I could have said that,
+[00:05:49 -> 00:05:51] if you add one to a Poisson value,
+[00:05:51 -> 00:05:53] then it's undefined behavior.
+[00:05:53 -> 00:05:55] Alternatively, I could have said that
+[00:05:55 -> 00:05:58] if you add zero with a Poisson value,
+[00:05:58 -> 00:06:02] then either I could have said it's undefined behavior
+[00:06:02 -> 00:06:04] or I could have said it always returns zero.
+[00:06:04 -> 00:06:06] But I'm choosing my semantics
+[00:06:06 -> 00:06:09] to maximize the optimization opportunity.
+[00:06:09 -> 00:06:12] If I choose AND of P with zero to be undefined behavior,
+[00:06:12 -> 00:06:15] that basically disallows me
+[00:06:15 -> 00:06:18] from hoisting that particular instruction above
+[00:06:18 -> 00:06:20] because now I have to be very careful
+[00:06:20 -> 00:06:21] because this particular instruction
+[00:06:21 -> 00:06:23] would now call undefined behavior.
+[00:06:23 -> 00:06:26] Whereas if I just say that it returns a Poisson value,
+[00:06:26 -> 00:06:27] that's just saying, okay, I mean,
+[00:06:27 -> 00:06:29] I can generate this value speculatively
+[00:06:29 -> 00:06:30] and if I don't use it,
+[00:06:30 -> 00:06:33] the program would still be okay, equivalent.
+[00:06:33 -> 00:06:37] The two south-posed and target programs would be equivalent.
+[00:06:37 -> 00:06:39] Similarly, why not just say that
+[00:06:39 -> 00:06:41] AND of Poisson with zero is zero?
+[00:06:41 -> 00:06:44] Why do we want to keep that
+[00:06:44 -> 00:06:46] AND of Poisson with zero is Poisson?
+[00:06:46 -> 00:06:48] Because Poisson value, return value,
+[00:06:48 -> 00:06:50] gives me more flexibility.
+[00:06:50 -> 00:06:51] A Poisson value is an error value
+[00:06:51 -> 00:06:54] which basically says that this value should never be used.
+[00:06:54 -> 00:06:56] If I force it to be zero,
+[00:06:56 -> 00:06:58] then in some cases,
+[00:06:58 -> 00:07:00] I may want to kind of just change it to one
+[00:07:00 -> 00:07:01] or something like that,
+[00:07:01 -> 00:07:03] but I'm not going to be able to do that.
+[00:07:03 -> 00:07:04] So keeping it Poisson
+[00:07:04 -> 00:07:07] is actually keeping more flexibility intact.
+[00:07:07 -> 00:07:09] And if you have more flexibility,
+[00:07:09 -> 00:07:11] you have more space for transformation
+[00:07:11 -> 00:07:14] and that's more optimization opportunity.
+[00:07:14 -> 00:07:17] So, anyway, because we have generated a Poisson value,
+[00:07:17 -> 00:07:19] if I'm operating on a Poisson value,
+[00:07:19 -> 00:07:21] irrespective of what the operation is,
+[00:07:21 -> 00:07:23] as long as it's not a dangerous operation,
+[00:07:23 -> 00:07:24] we're going to look at
+[00:07:24 -> 00:07:26] what are dangerous operations later on,
+[00:07:26 -> 00:07:27] we just return Poisson value
+[00:07:27 -> 00:07:29] and that's a conscious choice
+[00:07:29 -> 00:07:32] to maximize optimization opportunity.
+[00:07:33 -> 00:07:38] Now let's look at a slightly more difficult operator,
+[00:07:38 -> 00:07:40] which is the branching operator.
+[00:07:40 -> 00:07:42] So what if there is a conditional branch,
+[00:07:42 -> 00:07:43] like an if then else,
+[00:07:43 -> 00:07:45] or in a three address code, ir,
+[00:07:45 -> 00:07:47] it would look like branch equal to
+[00:07:47 -> 00:07:49] or branch not equal to or something like that.
+[00:07:49 -> 00:07:52] But overall, basically the idea is that
+[00:07:52 -> 00:07:54] if some variable P
+[00:07:54 -> 00:07:57] and this P could potentially be a Poisson value,
+[00:07:57 -> 00:07:59] then do this, else do this.
+[00:07:59 -> 00:08:01] Now, because this is a Poisson value,
+[00:08:01 -> 00:08:03] you could have said, oh, you know,
+[00:08:03 -> 00:08:04] there are multiple options here.
+[00:08:04 -> 00:08:06] You could have said, oh,
+[00:08:07 -> 00:08:09] I'm going to assume that
+[00:08:09 -> 00:08:11] Poisson value can take any of the branches.
+[00:08:11 -> 00:08:14] You know, if you try to branch on a Poisson value,
+[00:08:14 -> 00:08:15] then any of the branches
+[00:08:15 -> 00:08:17] can be taken non-deterministically.
+[00:08:17 -> 00:08:20] But that is a little bit, you know,
+[00:08:20 -> 00:08:23] there are examples where that would cause difficulties
+[00:08:23 -> 00:08:26] in optimization.
+[00:08:26 -> 00:08:27] The other option is,
+[00:08:27 -> 00:08:29] if you branch on a Poisson value,
+[00:08:29 -> 00:08:34] then everything that is in the if and the else block
+[00:08:34 -> 00:08:36] is basically becomes Poisson also.
+[00:08:36 -> 00:08:38] But that again becomes really hard to track
+[00:08:38 -> 00:08:40] because there are memory operations,
+[00:08:40 -> 00:08:42] there are stores and loads.
+[00:08:42 -> 00:08:43] What do I mean by saying that
+[00:08:43 -> 00:08:45] everything that is generated in the if block
+[00:08:45 -> 00:08:47] and the else block become Poisson values?
+[00:08:47 -> 00:08:49] Once again, I'd like to point out that,
+[00:08:49 -> 00:08:51] you know, if I'm doing this operation,
+[00:08:51 -> 00:08:53] it already, and this value was a Poisson value,
+[00:08:53 -> 00:08:54] P was a Poisson value,
+[00:08:54 -> 00:08:55] that basically means the program
+[00:08:55 -> 00:08:57] has already exhibited undefined behavior.
+[00:08:57 -> 00:08:59] So I'm really free to choose any semantics
+[00:08:59 -> 00:09:00] in this case,
+[00:09:00 -> 00:09:01] but I'm trying to choose semantics
+[00:09:01 -> 00:09:03] that are first, easy to model,
+[00:09:03 -> 00:09:08] and second, maximize the optimization opportunity.
+[00:09:08 -> 00:09:10] Now let's look at another example.
+[00:09:10 -> 00:09:12] Let's say I say X equals int max,
+[00:09:12 -> 00:09:14] and this Y equals X plus one.
+[00:09:14 -> 00:09:16] So here, Y will definitely be Poisson.
+[00:09:16 -> 00:09:18] And then if I say, if Y equals 10,
+[00:09:18 -> 00:09:19] then something, something.
+[00:09:19 -> 00:09:21] So firstly, I would say, you know,
+[00:09:21 -> 00:09:24] I'll do a comparison operation between Y and 10.
+[00:09:24 -> 00:09:26] And if Y was Poisson,
+[00:09:26 -> 00:09:27] then the comparison result,
+[00:09:27 -> 00:09:29] which would be a Boolean value,
+[00:09:29 -> 00:09:29] would also be Poisson.
+[00:09:29 -> 00:09:32] It would not be neither false nor true.
+[00:09:32 -> 00:09:34] And then when I branch on a Poisson value,
+[00:09:34 -> 00:09:36] then I would have to use the semantics
+[00:09:36 -> 00:09:38] of whatever I want branch on Poisson to me.
+[00:09:40 -> 00:09:41] Here's another example.
+[00:09:41 -> 00:09:43] I just basically have some arbitrary expression,
+[00:09:43 -> 00:09:44] X equals dot dot dot.
+[00:09:44 -> 00:09:47] I don't know whether X is Poisson or not.
+[00:09:47 -> 00:09:49] And now I just branch on X.
+[00:09:49 -> 00:09:51] And now I have to worry about the fact
+[00:09:51 -> 00:09:53] that X may be Poisson.
+[00:09:53 -> 00:09:56] And the question is, what should I do if X is Poisson?
+[00:09:56 -> 00:09:58] Now I'll give you an example.
+[00:09:58 -> 00:10:01] Let's say if I say that if X was Poisson,
+[00:10:01 -> 00:10:04] then non-deterministically one of the branches is chosen.
+[00:10:06 -> 00:10:07] And in my compiler analysis,
+[00:10:07 -> 00:10:12] I was able to figure out that X is either zero or Poisson.
+[00:10:12 -> 00:10:13] Then if I, if, you know,
+[00:10:13 -> 00:10:15] my compiler analysis has told me that X,
+[00:10:15 -> 00:10:16] by zero, I mean false.
+[00:10:16 -> 00:10:17] So if the compiler analysis has told me
+[00:10:17 -> 00:10:20] that X is definitely either false or Poisson,
+[00:10:20 -> 00:10:22] then I would basically say, okay,
+[00:10:22 -> 00:10:25] let's get rid of the if block completely
+[00:10:25 -> 00:10:28] and kind of just get rid of the if condition
+[00:10:28 -> 00:10:29] and just execute the else block.
+[00:10:29 -> 00:10:32] But if I use the non-deterministic semantics
+[00:10:32 -> 00:10:33] for Poisson value,
+[00:10:33 -> 00:10:35] then that basically means that the program
+[00:10:35 -> 00:10:37] can actually also execute the if block
+[00:10:37 -> 00:10:41] because Poisson can cause the if condition
+[00:10:41 -> 00:10:44] to non-deterministically choose either of them.
+[00:10:44 -> 00:10:46] And so that doesn't sound like a very good option
+[00:10:46 -> 00:10:49] from an optimization opportunity perspective.
+[00:10:49 -> 00:10:51] So what is typically chosen?
+[00:10:51 -> 00:10:53] The easy option and the one that is actually chosen
+[00:10:53 -> 00:10:56] by an IR like LLVM is that
+[00:10:56 -> 00:10:58] whenever there's a branch on Poisson,
+[00:10:58 -> 00:11:00] you declare that to be UV.
+[00:11:00 -> 00:11:02] So if there's a branch on Poisson,
+[00:11:02 -> 00:11:03] then you declare that to be UV.
+[00:11:03 -> 00:11:05] And that's basically going back
+[00:11:05 -> 00:11:06] to kind of the C semantics saying,
+[00:11:06 -> 00:11:07] okay, you know,
+[00:11:07 -> 00:11:10] I tried to kind of contain my error
+[00:11:10 -> 00:11:12] so that I could do hoisting optimizations.
+[00:11:12 -> 00:11:14] But as soon as you try to kind of
+[00:11:14 -> 00:11:16] do some complex operations like branching
+[00:11:16 -> 00:11:18] on the Poisson value,
+[00:11:18 -> 00:11:19] then that's just UV,
+[00:11:19 -> 00:11:20] which means that it should never happen
+[00:11:20 -> 00:11:23] that you try to branch on a Poisson value.
+[00:11:23 -> 00:11:24] And if you do that,
+[00:11:24 -> 00:11:27] then many of your optimizations become valid.
+[00:11:27 -> 00:11:29] So for example, if I look at this example,
+[00:11:29 -> 00:11:31] if I say X equals some random value,
+[00:11:31 -> 00:11:32] which could be Poisson and say,
+[00:11:32 -> 00:11:34] if X, then this, else this.
+[00:11:34 -> 00:11:37] If my compiler analysis has been able to figure out
+[00:11:37 -> 00:11:39] that X is always false,
+[00:11:39 -> 00:11:41] then I can completely ignore the Poisson value
+[00:11:41 -> 00:11:42] because if X was Poisson,
+[00:11:42 -> 00:11:43] then this is anyway UV,
+[00:11:43 -> 00:11:44] so I can do anything.
+[00:11:44 -> 00:11:47] And now it becomes okay to completely get rid
+[00:11:47 -> 00:11:51] of the if block using dead code elimination
+[00:11:51 -> 00:11:53] and just execute the else block.
+[00:11:54 -> 00:11:56] So that's the easy option that an IR uses,
+[00:11:56 -> 00:11:59] branch on Poisson triggers UV.
+[00:11:59 -> 00:12:02] And so basically, you know,
+[00:12:02 -> 00:12:06] these IRs like LLVM has this keyword called unreachable.
+[00:12:06 -> 00:12:08] So there's an instruction called unreachable.
+[00:12:08 -> 00:12:10] If the unreachable instruction basically means
+[00:12:10 -> 00:12:12] that this point of the program should never be reached,
+[00:12:12 -> 00:12:14] or the compiler can assume that this point of the program
+[00:12:14 -> 00:12:17] will never be reached for all legal inputs.
+[00:12:17 -> 00:12:21] So what I mean by saying that branch on Poisson
+[00:12:22 -> 00:12:25] triggers UV basically means that I can kind of
+[00:12:25 -> 00:12:28] replace this whole block with the unreachable statement
+[00:12:28 -> 00:12:31] if I'm sure that P is Poisson.
+[00:12:31 -> 00:12:33] If I'm not sure that P is Poisson,
+[00:12:33 -> 00:12:35] then I can kind of assume that P is not Poisson
+[00:12:35 -> 00:12:38] because if I'm branching on P,
+[00:12:38 -> 00:12:42] then it is only legal to branch on P
+[00:12:42 -> 00:12:44] if P was not Poisson.
+[00:12:45 -> 00:12:47] This is similar to how we discussed undefined behavior
+[00:12:47 -> 00:12:50] when we were talking about the source language.
+[00:12:50 -> 00:12:53] Now, although this is an easy option,
+[00:12:53 -> 00:12:56] which is branch on Poisson causes UV,
+[00:12:56 -> 00:13:00] it causes some loss of optimization opportunity.
+[00:13:00 -> 00:13:01] And this is something that, you know,
+[00:13:01 -> 00:13:04] as I've been emphasizing,
+[00:13:04 -> 00:13:06] designer needs to walk a tight line,
+[00:13:06 -> 00:13:09] a tight rope between optimization opportunity
+[00:13:09 -> 00:13:11] and thwarting of optimization opportunity.
+[00:13:11 -> 00:13:13] And this is a choice that LLVM designers
+[00:13:13 -> 00:13:15] have had to make.
+[00:13:15 -> 00:13:16] And I'm going to show you a couple of examples
+[00:13:16 -> 00:13:19] where this actually is not such a great choice
+[00:13:19 -> 00:13:20] from optimization opportunity,
+[00:13:21 -> 00:13:22] but we have to live with it.
+[00:13:22 -> 00:13:23] And here's an example.
+[00:13:23 -> 00:13:25] So let's say if I say if A,
+[00:13:25 -> 00:13:27] then I say, you know, inside if A,
+[00:13:27 -> 00:13:29] I say if B and then something,
+[00:13:29 -> 00:13:34] then can I transform this into if A and B,
+[00:13:35 -> 00:13:37] this double ampersand operator
+[00:13:37 -> 00:13:39] represents the logical and operator.
+[00:13:40 -> 00:13:41] And the answer is no,
+[00:13:41 -> 00:13:44] because consider the case when B is Poisson
+[00:13:44 -> 00:13:46] and A is false.
+[00:13:46 -> 00:13:47] In the source program,
+[00:13:47 -> 00:13:50] the first if condition is just going to return,
+[00:13:50 -> 00:13:51] say if false,
+[00:13:51 -> 00:13:54] and it's never going to execute if Poisson, right?
+[00:13:54 -> 00:13:56] But in this destination program,
+[00:13:56 -> 00:13:57] in the target program,
+[00:13:57 -> 00:13:59] I'm going to say A and B
+[00:13:59 -> 00:14:02] because A is false and B is Poisson,
+[00:14:02 -> 00:14:04] A and B is going to give me Poisson.
+[00:14:04 -> 00:14:06] And now I'm going to say if Poisson something,
+[00:14:06 -> 00:14:08] and that's just going to trigger UB.
+[00:14:08 -> 00:14:10] So for this particular input,
+[00:14:10 -> 00:14:11] when B is Poisson and A is false,
+[00:14:11 -> 00:14:14] the source program is well-defined
+[00:14:14 -> 00:14:16] and it basically does nothing.
+[00:14:16 -> 00:14:20] And the target program is triggers undefined behavior.
+[00:14:21 -> 00:14:24] This becomes an illegal transformation.
+[00:14:24 -> 00:14:26] In general, because branching on Poisson
+[00:14:26 -> 00:14:28] is undefined behavior,
+[00:14:28 -> 00:14:31] it is not okay to hoist such instructions
+[00:14:31 -> 00:14:33] that branch on Poisson.
+[00:14:33 -> 00:14:34] So in this case,
+[00:14:34 -> 00:14:36] I'm trying to hoist this if B
+[00:14:36 -> 00:14:38] and kind of merge it with if A, right?
+[00:14:38 -> 00:14:40] An alternate kind of transformation
+[00:14:40 -> 00:14:42] that I could have also used for this example
+[00:14:42 -> 00:14:46] is if B, if A, and then dot dot dot, right?
+[00:14:46 -> 00:14:48] And this would again be illegal
+[00:14:48 -> 00:14:50] because once again,
+[00:14:50 -> 00:14:54] I can't hoist the branch on B before branch on A
+[00:14:54 -> 00:14:58] because if the branch on B was actually causing UB,
+[00:14:58 -> 00:15:00] then in the source program,
+[00:15:00 -> 00:15:02] that UB is caused only conditionally,
+[00:15:02 -> 00:15:03] that is when A is true,
+[00:15:03 -> 00:15:06] whereas in the target program
+[00:15:06 -> 00:15:08] that UB gets caused unconditionally
+[00:15:08 -> 00:15:10] and so they don't remain equal.
+[00:15:10 -> 00:15:14] And this is a price we have to pay at the IR level.
+[00:15:14 -> 00:15:15] Why are we paying this price?
+[00:15:15 -> 00:15:18] Because we want to kind of restrict
+[00:15:18 -> 00:15:21] our transformation space to such that
+[00:15:21 -> 00:15:24] the transformations are from the same IR to the same IR.
+[00:15:24 -> 00:15:26] If, for example, we were allowed to use
+[00:15:26 -> 00:15:30] different languages for transformation purposes,
+[00:15:30 -> 00:15:31] then it would have been much easier.
+[00:15:31 -> 00:15:32] But if I use different languages,
+[00:15:32 -> 00:15:34] then my compiler pipeline design
+[00:15:34 -> 00:15:35] becomes even more complex.
+[00:15:35 -> 00:15:37] So we want to have the same IR
+[00:15:37 -> 00:15:38] and we want to have lots of transformations
+[00:15:38 -> 00:15:41] that does two IR to IR transformations.
+[00:15:41 -> 00:15:43] And that basically means that I have to define,
+[00:15:43 -> 00:15:45] I have to choose some semantics for my IR
+[00:15:45 -> 00:15:47] for error conditions.
+[00:15:47 -> 00:15:49] And when I choose those semantics for my IR,
+[00:15:49 -> 00:15:52] then I sometimes have to sacrifice
+[00:15:52 -> 00:15:54] some optimization opportunity.
+[00:15:54 -> 00:15:58] Here's another example for loop un-switching.
+[00:15:58 -> 00:15:59] So let's say I have a loop
+[00:15:59 -> 00:16:02] while C, if D, S1, else S2.
+[00:16:02 -> 00:16:05] And I want to hoist,
+[00:16:05 -> 00:16:06] I want to kind of do loop un-switching.
+[00:16:06 -> 00:16:10] So basically I want to hoist the check of if D
+[00:16:10 -> 00:16:12] and assuming that D is basically loop invariant,
+[00:16:12 -> 00:16:15] then I can do if D at the very beginning
+[00:16:15 -> 00:16:19] and say while C, S1, else while C, S2.
+[00:16:19 -> 00:16:21] This is basically the transformation I want to do.
+[00:16:21 -> 00:16:26] And if in the absence of Poisson value,
+[00:16:26 -> 00:16:28] this transformation is actually a legal transformation.
+[00:16:28 -> 00:16:30] It's a very useful transformation
+[00:16:30 -> 00:16:33] because inside the loop, now we are avoiding a branch.
+[00:16:33 -> 00:16:36] Inside the loop is going to be executing
+[00:16:36 -> 00:16:38] most of the time and in the target program,
+[00:16:38 -> 00:16:39] we are avoiding a branch.
+[00:16:39 -> 00:16:42] But when I look at this particular transformation,
+[00:16:42 -> 00:16:44] if I look at the Poisson semantics,
+[00:16:44 -> 00:16:46] then if D could be Poisson,
+[00:16:46 -> 00:16:51] if D was Poisson and C was false,
+[00:16:51 -> 00:16:53] then this transformation is wrong
+[00:16:53 -> 00:16:57] because the source program would never enter the loop
+[00:16:57 -> 00:16:58] if C was false, always.
+[00:16:58 -> 00:17:01] And so the source program would never enter the loop
+[00:17:01 -> 00:17:04] and so the program would be well-defined.
+[00:17:04 -> 00:17:05] Whereas the target program,
+[00:17:05 -> 00:17:07] because D was Poisson,
+[00:17:07 -> 00:17:09] is going to straight away trigger undefined behavior.
+[00:17:09 -> 00:17:12] And so this transformation is not correct
+[00:17:12 -> 00:17:15] because for inputs D equals Poisson and C equals false,
+[00:17:15 -> 00:17:17] they don't yield the same behavior.
+[00:17:19 -> 00:17:21] All right, so that was branch on Poisson.
+[00:17:21 -> 00:17:24] Now let's look at some more examples of operators
+[00:17:24 -> 00:17:26] related to Poisson value.
+[00:17:26 -> 00:17:29] So what if I store a Poisson value to memory?
+[00:17:29 -> 00:17:31] So I say star X equals P,
+[00:17:31 -> 00:17:33] and let's say X I know is not Poisson.
+[00:17:33 -> 00:17:37] Then if I try to load from the same address,
+[00:17:37 -> 00:17:40] star X, then what do I get back?
+[00:17:40 -> 00:17:42] All right, mostly are these supposed to be,
+[00:17:46 -> 00:17:49] are they well-defined operations or do they trigger UB?
+[00:17:49 -> 00:17:51] And if they don't trigger UB,
+[00:17:51 -> 00:17:54] then what are the values that are getting returned?
+[00:17:54 -> 00:17:56] So here, this is actually an easy case.
+[00:17:56 -> 00:17:58] And the answer is that basically
+[00:17:58 -> 00:18:01] when you store a Poisson value to a certain address,
+[00:18:01 -> 00:18:02] where the address is not Poisson,
+[00:18:02 -> 00:18:06] then you're basically setting the memory bytes
+[00:18:06 -> 00:18:09] corresponding to X to the Poisson value P.
+[00:18:09 -> 00:18:11] And then if you load it back,
+[00:18:11 -> 00:18:12] then you get the Poisson value back.
+[00:18:12 -> 00:18:15] So if you say P two equals star X,
+[00:18:15 -> 00:18:18] and the last time you stored a Poisson value to X,
+[00:18:18 -> 00:18:19] then whatever is the last value that you stored
+[00:18:19 -> 00:18:22] is get kind of loaded back because of memory semantics.
+[00:18:22 -> 00:18:26] And so what you will get back is the Poisson value back.
+[00:18:26 -> 00:18:29] Notice that I'm talking about the operational semantics
+[00:18:29 -> 00:18:32] and which is the runtime operational semantics
+[00:18:32 -> 00:18:34] of what happens if the Poisson value is stored,
+[00:18:34 -> 00:18:36] and then later on at some later point,
+[00:18:36 -> 00:18:38] the same value is loaded.
+[00:18:38 -> 00:18:41] What is the value that I should assume I have got back?
+[00:18:41 -> 00:18:43] And I'm saying that a Poisson value is stored
+[00:18:43 -> 00:18:45] to the memory, then you remember this fact
+[00:18:45 -> 00:18:47] that at this particular location,
+[00:18:47 -> 00:18:48] the Poisson value was stored.
+[00:18:48 -> 00:18:50] Just like you remember any other value,
+[00:18:50 -> 00:18:51] Poisson is no different.
+[00:18:51 -> 00:18:54] And then when you load it back, you get it back.
+[00:18:55 -> 00:18:57] But what happens if you try to store
+[00:18:57 -> 00:18:58] to a Poisson pointer?
+[00:18:58 -> 00:19:02] So let's say this P was actually potentially Poisson,
+[00:19:02 -> 00:19:05] and let's say it was, and I say star P equals X.
+[00:19:05 -> 00:19:09] Now if P was Poisson, then this becomes a big problem
+[00:19:09 -> 00:19:12] because Poisson basically means it was an error value.
+[00:19:12 -> 00:19:14] And so the error value, we haven't been keeping track
+[00:19:14 -> 00:19:15] what the error value is actually,
+[00:19:15 -> 00:19:17] it actually triggered UB,
+[00:19:17 -> 00:19:19] and that's why we generated this Poisson value.
+[00:19:19 -> 00:19:20] And now I'm trying to de-reference it.
+[00:19:20 -> 00:19:23] So what should I really have semantics for?
+[00:19:23 -> 00:19:25] And the easy option once again,
+[00:19:25 -> 00:19:27] just like we had the easy option for branch on Poisson,
+[00:19:27 -> 00:19:30] the easy option for storing to Poisson pointer
+[00:19:30 -> 00:19:32] is that this also triggers UB
+[00:19:33 -> 00:19:34] because we don't know where to store.
+[00:19:34 -> 00:19:37] And so we just take this easy option.
+[00:19:37 -> 00:19:39] Once again, whenever we take an easy option
+[00:19:39 -> 00:19:42] that something triggers UB, we pay the price.
+[00:19:42 -> 00:19:44] We pay the price that this particular,
+[00:19:44 -> 00:19:47] such as instructions can now no longer be hoisted
+[00:19:47 -> 00:19:50] because if they trigger UB,
+[00:19:50 -> 00:19:52] then you want to make sure that the target
+[00:19:52 -> 00:19:54] is not going to trigger UB
+[00:19:54 -> 00:19:59] in places where source would not have triggered UB.
+[00:19:59 -> 00:20:02] Similarly, if I try to load from a Poisson pointer,
+[00:20:02 -> 00:20:04] so if I say X equals star P once again,
+[00:20:04 -> 00:20:08] because P is Poisson, then that would also trigger UB.
+[00:20:08 -> 00:20:11] Just like store to a Poisson pointer triggers UB,
+[00:20:11 -> 00:20:13] a load from a Poisson pointer also triggers UB
+[00:20:13 -> 00:20:15] because the pointer itself is an error value
+[00:20:15 -> 00:20:17] you don't know where to load from.
+[00:20:18 -> 00:20:20] Finally, this is an example that we have discussed
+[00:20:20 -> 00:20:21] in the previous module.
+[00:20:21 -> 00:20:24] If you try to divide by a Poisson value,
+[00:20:24 -> 00:20:25] even that triggers UB
+[00:20:25 -> 00:20:27] because you have to conservatively assume
+[00:20:27 -> 00:20:30] that the Poisson value could potentially be zero.
+[00:20:30 -> 00:20:32] Y divided by Poisson value
+[00:20:32 -> 00:20:34] is also something that triggers UB,
+[00:20:35 -> 00:20:36] and that's something that we've discussed
+[00:20:36 -> 00:20:38] in our previous module.
+[00:20:40 -> 00:20:42] There are consequences to these decisions.
+[00:20:42 -> 00:20:46] If I say X equals star P
+[00:20:46 -> 00:20:49] and star P could potentially be a Poisson value,
+[00:20:49 -> 00:20:52] then it's not okay to transform this
+[00:20:52 -> 00:20:55] to hoist this X equals star P,
+[00:20:55 -> 00:20:58] this memory access above the loop,
+[00:20:58 -> 00:20:59] if it was loop invariant.
+[00:21:00 -> 00:21:01] This becomes illegal
+[00:21:01 -> 00:21:05] because now in the original program,
+[00:21:06 -> 00:21:08] if P could have been Poisson,
+[00:21:08 -> 00:21:13] then I wouldn't have executed this statement
+[00:21:13 -> 00:21:16] that triggers UB in the source program
+[00:21:16 -> 00:21:18] if the loop was never entered,
+[00:21:18 -> 00:21:20] whereas here, irrespective of whether
+[00:21:20 -> 00:21:21] the loop is entered or not,
+[00:21:21 -> 00:21:24] X equals star P is going to trigger UB.
+[00:21:26 -> 00:21:28] I want to point out that this is different
+[00:21:28 -> 00:21:30] from, let's say, saying X equals AN.
+[00:21:30 -> 00:21:33] So here, I was actually dereferencing a pointer
+[00:21:33 -> 00:21:36] that could potentially be Poisson.
+[00:21:36 -> 00:21:37] Now let's look at another example.
+[00:21:37 -> 00:21:39] Let's say A was an array,
+[00:21:39 -> 00:21:41] which was 256 bytes,
+[00:21:41 -> 00:21:43] and I know that my compiler analysis
+[00:21:43 -> 00:21:44] was able to figure out
+[00:21:44 -> 00:21:47] that N is between zero and 256, right?
+[00:21:47 -> 00:21:51] So which means that N belongs to the range of A.
+[00:21:51 -> 00:21:54] Now when I do that, then if I say AN,
+[00:21:54 -> 00:21:55] then basically this AN is nothing
+[00:21:55 -> 00:22:00] but star of A plus N into size of int.
+[00:22:06 -> 00:22:08] So let me just assume that A,
+[00:22:08 -> 00:22:08] size of int is four,
+[00:22:08 -> 00:22:10] so this has become star of,
+[00:22:10 -> 00:22:12] dereference of A plus N into four.
+[00:22:12 -> 00:22:16] Now the good thing is that A plus N into four
+[00:22:17 -> 00:22:18] is not Poisson, all right?
+[00:22:18 -> 00:22:20] Because this, I know,
+[00:22:20 -> 00:22:23] is basically belonging to this address range,
+[00:22:23 -> 00:22:25] and this is perfectly okay.
+[00:22:26 -> 00:22:30] This case is not the same as saying X equals star P,
+[00:22:30 -> 00:22:33] because here, P was known to be,
+[00:22:34 -> 00:22:36] was not known to be not Poisson.
+[00:22:36 -> 00:22:38] So P could have been Poisson in this example,
+[00:22:38 -> 00:22:40] but here we know that AN,
+[00:22:40 -> 00:22:42] or A plus four into N is not Poisson,
+[00:22:42 -> 00:22:44] and so here, it is actually okay
+[00:22:44 -> 00:22:47] to hoist the computation,
+[00:22:47 -> 00:22:50] say X equals AN can be brought up above,
+[00:22:50 -> 00:22:52] hoisted above using loop invariant code motion
+[00:22:52 -> 00:22:53] above the loop.
+[00:22:53 -> 00:22:54] And this would be okay,
+[00:22:54 -> 00:22:56] because the compiler has been able to determine
+[00:22:56 -> 00:22:59] that the access AN, the memory access AN,
+[00:22:59 -> 00:23:01] the pointer is not a Poisson value.
+[00:23:02 -> 00:23:05] Notice that it is still possible
+[00:23:05 -> 00:23:08] for the value that was read from AN to be Poisson,
+[00:23:08 -> 00:23:11] so X can still be Poisson, right?
+[00:23:11 -> 00:23:12] The pointer should not be Poisson,
+[00:23:12 -> 00:23:14] but the value that was returned can still be Poisson,
+[00:23:14 -> 00:23:17] and yet, this transformation would,
+[00:23:17 -> 00:23:19] this loop invariant code motion transformation
+[00:23:19 -> 00:23:23] would be legal.
+[00:23:23 -> 00:23:27] And so we've already seen how a memory load
+[00:23:27 -> 00:23:29] or a memory store can have constrained motion.
+[00:23:29 -> 00:23:31] There are some more examples like divide by zero.
+[00:23:31 -> 00:23:32] So let's say in my loop,
+[00:23:32 -> 00:23:34] I have X equals Y by Z.
+[00:23:34 -> 00:23:35] It's not okay now,
+[00:23:35 -> 00:23:36] because Y by Z,
+[00:23:36 -> 00:23:38] if Z could potentially be Poisson,
+[00:23:38 -> 00:23:41] then I cannot just basically hoist X equals Y by Z
+[00:23:41 -> 00:23:42] above the loop,
+[00:23:42 -> 00:23:45] because Y by Z can potentially cause undefined behavior,
+[00:23:45 -> 00:23:48] can potentially trigger undefined behavior.
+[00:23:48 -> 00:23:50] If you contrast that with integer overflow,
+[00:23:50 -> 00:23:53] so for example, if I just change the divide operator
+[00:23:53 -> 00:23:54] with plus operator,
+[00:23:54 -> 00:23:56] then it becomes okay, right?
+[00:23:56 -> 00:23:58] So plus is okay,
+[00:23:58 -> 00:23:59] but divide is not okay.
+[00:23:59 -> 00:24:00] And this is on purpose,
+[00:24:00 -> 00:24:03] because division on many architectures
+[00:24:03 -> 00:24:06] basically causes actually an exception,
+[00:24:06 -> 00:24:08] whereas a plus is silently ignored
+[00:24:08 -> 00:24:10] using wraparound semantics
+[00:24:10 -> 00:24:14] and all saturating semantics or something like that,
+[00:24:14 -> 00:24:16] and the value is stored in the destination.
+[00:24:16 -> 00:24:19] So some opcodes have constrained motion,
+[00:24:19 -> 00:24:21] and some other opcodes like addition,
+[00:24:21 -> 00:24:23] subtraction, multiplication, et cetera,
+[00:24:23 -> 00:24:24] or other logical operations,
+[00:24:24 -> 00:24:26] don't have constrained motion.
+[00:24:26 -> 00:24:29] And these are basically conscious design choices
+[00:24:29 -> 00:24:32] made by the IR designer.
+[00:24:32 -> 00:24:34] Finally, I would like to point out
+[00:24:34 -> 00:24:38] that a Poisson value is a non-deterministic value.
+[00:24:38 -> 00:24:39] It's an error value.
+[00:24:39 -> 00:24:42] Basically means that if a Poisson value was generated,
+[00:24:42 -> 00:24:44] then I'm sure that the program
+[00:24:44 -> 00:24:45] and triggered undefined behavior,
+[00:24:45 -> 00:24:47] and if the program triggered undefined behavior,
+[00:24:47 -> 00:24:49] I could basically do anything.
+[00:24:49 -> 00:24:52] And so it is always okay to determinize a Poisson value
+[00:24:53 -> 00:24:55] for example, if there's some program
+[00:24:55 -> 00:24:56] which basically generates Poisson,
+[00:24:56 -> 00:24:59] for example, by adding int max,
+[00:24:59 -> 00:25:01] adding one to int max,
+[00:25:01 -> 00:25:03] I'm just writing it shorthand for x equals Poisson,
+[00:25:03 -> 00:25:05] or there is nothing like Poisson,
+[00:25:05 -> 00:25:10] there's no Poisson value typically in an IR like LLVM.
+[00:25:10 -> 00:25:12] You just basically generate Poisson values
+[00:25:12 -> 00:25:14] by using some particular operations
+[00:25:14 -> 00:25:16] like addition to int max,
+[00:25:16 -> 00:25:18] addition of one to int max.
+[00:25:18 -> 00:25:21] But then it is always okay to kind of change this
+[00:25:21 -> 00:25:22] to let's say a deterministic value
+[00:25:23 -> 00:25:25] let's say 10 or zero or whatever else.
+[00:25:25 -> 00:25:26] Because after all it's a Poisson,
+[00:25:26 -> 00:25:29] a Poisson value means that's an error value.
+[00:25:29 -> 00:25:31] It should never be used for branching.
+[00:25:31 -> 00:25:34] It should never be used for divide by
+[00:25:34 -> 00:25:36] as a denominator of a division operation.
+[00:25:36 -> 00:25:39] It should never be used as an address of a memory access.
+[00:25:39 -> 00:25:41] And so because it is pretty much never used
+[00:25:41 -> 00:25:42] and anywhere it is used,
+[00:25:42 -> 00:25:43] it just propagates the Poisson value,
+[00:25:43 -> 00:25:46] which means it just creates more Poisson values.
+[00:25:46 -> 00:25:48] You can always kind of change that
+[00:25:48 -> 00:25:50] to some deterministic value 10.
+[00:25:50 -> 00:25:52] And that would just mean that you have
+[00:25:53 -> 00:25:54] reduced your optimization opportunity
+[00:25:54 -> 00:25:58] because you basically picked one deterministic value,
+[00:25:58 -> 00:26:02] but that is not illegal from a correctness point of view.
+[00:26:02 -> 00:26:05] So it's always legal to determinize a Poisson value.
+[00:26:05 -> 00:26:06] Here's another example,
+[00:26:06 -> 00:26:08] let's say Y is some value
+[00:26:08 -> 00:26:10] and then you figured out that X is Poisson.
+[00:26:10 -> 00:26:13] Then the compiler may want is well within its rights
+[00:26:13 -> 00:26:16] to change X equals Poisson to X equals Y.
+[00:26:16 -> 00:26:18] Compilers will typically not do this.
+[00:26:18 -> 00:26:21] I'm just using these examples to illustrate
+[00:26:21 -> 00:26:25] that it's okay to determinize Poisson.
+[00:26:25 -> 00:26:28] Poisson basically is a non-deterministic error value.
+[00:26:28 -> 00:26:29] And so it's always okay to do this.
+[00:26:29 -> 00:26:32] These are not real examples that compilers do,
+[00:26:32 -> 00:26:35] but they are well within its rights
+[00:26:35 -> 00:26:38] to do this if it requires to do this.

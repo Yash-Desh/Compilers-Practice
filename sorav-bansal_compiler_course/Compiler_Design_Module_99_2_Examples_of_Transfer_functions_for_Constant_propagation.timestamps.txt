@@ -1,0 +1,106 @@
+Title: Compiler Design Module 99 2 : Examples of Transfer functions for Constant propagation
+Video ID: 0xbOvctz-94
+Detected language: en
+------------------------------------------------------------
+
+[00:00:00 -> 00:00:04] we're going to continue our discussion on the family of transfer functions and we're going to
+[00:00:04 -> 00:00:10] again take the example of constant propagation. Last time we looked at a family of transfer
+[00:00:10 -> 00:00:14] functions which had three functions but let's say I was interested in making my
+[00:00:14 -> 00:00:19] transfer functions more precise and so this time I just like I had three different functions
+[00:00:19 -> 00:00:25] so I had x colon equals c in this case out was just you know so the first transfer function
+[00:00:25 -> 00:00:30] that I used here which is one which is what fx equals if x is top then top otherwise constant
+[00:00:31 -> 00:00:38] the second transfer function we used was if x colon equals ex then you know I just say that look
+[00:00:38 -> 00:00:43] I mean because ex can be non-constant so I just use bottom for it so if in is top then out is
+[00:00:43 -> 00:00:47] top if in is bottom then out is bottom so the second transfer function says that if x
+[00:00:47 -> 00:00:54] is top then top otherwise bottom okay because you know x is being assigned some arbitrary value
+[00:00:55 -> 00:01:01] similarly if I was assigning some value to another variable an unrelated variable y then
+[00:01:02 -> 00:01:06] the transfer function that I was using was the third transfer function which was the identity
+[00:01:06 -> 00:01:12] function fx equals x and finally if I was doing I was assigning some arbitrary expression
+[00:01:12 -> 00:01:16] so in this case the right hand side would be let's say y plus z the difference between
+[00:01:16 -> 00:01:20] this case and this case is that here the right hand side is an expression on x so for
+[00:01:20 -> 00:01:25] example x plus one or x plus two on here the right hand side would be an arbitrary expression
+[00:01:25 -> 00:01:30] that may involve other variables like y z etc and so in this case also I'm using the second
+[00:01:30 -> 00:01:37] transfer function which is if x is top then use top otherwise use bottom so this is the
+[00:01:37 -> 00:01:42] family of transfer functions that we looked at in our last module lecture module but let's
+[00:01:42 -> 00:01:47] say I was interested in making this family of transfer functions more precise in particular
+[00:01:47 -> 00:01:53] I'm interested in looking at this instruction which is basically doing x colon equals ex
+[00:01:53 -> 00:01:58] and for example if I know that n is giving me a constant value for x for example if n was
+[00:01:58 -> 00:02:05] saying that x is 3 and this ex was an expression on x is just x plus 1 then I can
+[00:02:05 -> 00:02:13] say that output the output should be 3 plus 1 which is 4 but you know our current transfer
+[00:02:13 -> 00:02:17] function is too imprecise and just lowers it down all the way to bottom but you know
+[00:02:17 -> 00:02:20] you could have done better and let's try to do it better and then again check whether
+[00:02:21 -> 00:02:26] the new transfer functions actually satisfy our requirements for them to be a DFA family of
+[00:02:26 -> 00:02:33] transfer functions okay so let's say I use this more precise transfer function for this
+[00:02:33 -> 00:02:38] particular case and in this case I'm using the transfer function called the fourth transfer
+[00:02:38 -> 00:02:43] function number four and this is what number four would look would look like if x is top
+[00:02:43 -> 00:02:51] so if n is top then out is also top if x is bottom then out is also bottom but if x is some
+[00:02:51 -> 00:03:00] constant c then the out is you know e evaluated on that constant c so for example if e was
+[00:03:00 -> 00:03:06] x plus 1 then e of c would be c plus 1 and so this is a more precise transfer function
+[00:03:06 -> 00:03:13] and the question is does this set of four transfer functions also satisfy the rules for
+[00:03:13 -> 00:03:18] it to be a DFA family of transfer functions so the answer I mean to answer this question I
+[00:03:18 -> 00:03:22] need to first say like what are the all the possible ease that I will support
+[00:03:22 -> 00:03:27] for example will I support arbitrarily complicated expressions like or am I going
+[00:03:27 -> 00:03:33] to do something different so let me for argument safe say that I'm only going to support
+[00:03:34 -> 00:03:40] that case where ex was a simple expression x plus 1 and I'm not going to support anything else for
+[00:03:40 -> 00:03:44] example I'm not going to support 2 into x or I'm not going to support x plus 2 or things like
+[00:03:44 -> 00:03:51] that only if ex is x plus 1 am I going to change c to c plus 1 all other cases I'm just going to
+[00:03:51 -> 00:03:57] change c to bottom all right just like I was doing earlier so in this case what it means is
+[00:03:57 -> 00:04:02] that for if this statement was x colon equals x plus 1 then indeed I'm going to do fc equals
+[00:04:02 -> 00:04:08] c plus 1 but if it was some other statement which was not amenable to the transfer function of x
+[00:04:08 -> 00:04:15] plus 1 for example x colon equals x plus 2 then the transfer function fc would just be bottom
+[00:04:15 -> 00:04:22] if even if the input value is coming in is a constant c so if I use this you know if
+[00:04:22 -> 00:04:27] this is a valid set of functions but the question is is it a valid DFA family of functions
+[00:04:27 -> 00:04:33] so again once again I need to check all my three rules and the first two rules are actually still
+[00:04:33 -> 00:04:37] satisfied because you know after all we are still mapping the domain of values through domain of
+[00:04:37 -> 00:04:41] values the fourth function is also mapping domain of values domain of values the last
+[00:04:41 -> 00:04:45] case is actually never going to happen so we don't need to worry about it because I mean either
+[00:04:45 -> 00:04:49] its input is going to be top or bottom or c so the last case is never going to happen so
+[00:04:49 -> 00:04:55] and the outputs are also either top bottom or c so it does follow this fourth second first
+[00:04:55 -> 00:04:58] rule also follows the second rule because the id function is still available in my family of
+[00:04:58 -> 00:05:03] functions is the third function but the fourth the third rule which involved checking whether
+[00:05:03 -> 00:05:07] the composition of two transfer functions also yields a function in the family of functions
+[00:05:07 -> 00:05:13] so if I for example compose four with itself then I get you know I get something like this
+[00:05:13 -> 00:05:18] if I simplify it further and I basically get something like this I get e composed with itself
+[00:05:19 -> 00:05:26] so is e composed with itself or e2 e square applied on c now if the only function that I'm
+[00:05:26 -> 00:05:34] applying aligned for e is x plus one then e square would become x plus two and that actually
+[00:05:34 -> 00:05:43] is not so actually this should have been not c but x so now that function will become x plus
+[00:05:44 -> 00:05:50] two but x plus two is no longer present in my family of transfer functions and so this becomes
+[00:05:50 -> 00:05:56] c plus two sure and and this does not belong to f this does not belong to a because this
+[00:05:56 -> 00:06:01] function four composed with four is a function that's not equal equivalent to any of the
+[00:06:01 -> 00:06:07] four functions that I have in my family because of the presence of c plus two here but c plus one
+[00:06:07 -> 00:06:14] here now so here ec is you know I'm assuming that ec can only take the value c plus one and
+[00:06:14 -> 00:06:19] that's it so so this is not a valid family of transfer functions I just wanted to give you an
+[00:06:19 -> 00:06:24] example of a family of transfer or set of transfer function it does not satisfy those
+[00:06:24 -> 00:06:31] three rules so how does it matter I mean how does it matter if if this set of functions
+[00:06:31 -> 00:06:37] does not satisfy the three rules well note I mean because compositions are no longer present in my
+[00:06:37 -> 00:06:43] say family of transfer functions it creates all kinds of weird weird situations for example
+[00:06:43 -> 00:06:48] you know let's say my original program was you know a sequence of two assignments x
+[00:06:48 -> 00:06:53] colon equals x plus one followed by x colon equals x plus one if I apply my transfer functions
+[00:06:53 -> 00:06:59] then I use the best possible transfer functions then across zero and one program points I would
+[00:06:59 -> 00:07:06] get you know let's say initially the input value was zero then across this first instruction I will
+[00:07:06 -> 00:07:11] get c plus one which is zero plus one which I'll get the value one for x and then once again I
+[00:07:11 -> 00:07:16] apply the second instruction and I will get one plus one which is again two and this is all this
+[00:07:16 -> 00:07:22] is permissive permitted by my family of transfer functions because it includes this
+[00:07:23 -> 00:07:29] special handling for x plus one but let's say you know the DFA analysis kind of wanted to
+[00:07:29 -> 00:07:32] treat both these instructions as a single instruction for example if they were in the
+[00:07:32 -> 00:07:36] same basic block they want to define the transfer function of an entire basic block
+[00:07:36 -> 00:07:41] and so it wanted to change this x colon equals x plus one and another x colon equals x plus
+[00:07:41 -> 00:07:46] one to x colon equals x plus two in which case now you know the transfer function across
+[00:07:46 -> 00:07:51] this entire compound instruction is not we don't have x plus two in our set of family of
+[00:07:51 -> 00:07:56] transfer functions and so the only possible transfer functions that can work across this
+[00:07:56 -> 00:08:04] compound instruction is the one that assigns bottom to the output value and so this is not
+[00:08:04 -> 00:08:12] a very happy situation because just because I decided to use certain you know just group
+[00:08:12 -> 00:08:16] the instruction in a certain way the answers that I'm getting are very different and there
+[00:08:16 -> 00:08:20] is no way I can get the same answer that I was getting earlier and that's for the reason
+[00:08:20 -> 00:08:24] why we want that the composition of two functions should also be present in the family of transfer
+[00:08:24 -> 00:08:30] functions and here's an example where it's you know here's an example of functions
+[00:08:30 -> 00:08:34] where e is restricted to x plus one which that's not true and which can cause all these
+[00:08:34 -> 00:08:41] kinds of instabilities in our beta flow analysis however if I just change my e to
+[00:08:41 -> 00:08:46] support not just x plus one but x plus any constant k where k could be any constant
+[00:08:47 -> 00:08:53] in the set of integers the values that x can potentially take then you know four composed
+[00:08:53 -> 00:08:58] with four still belongs to f because if you compose four with four and let's say the first
+[00:08:58 -> 00:09:04] four had the value k1 for c plus k1 and the second one at k2 then k1 plus k2 is still greater
+[00:09:04 -> 00:09:10] than equal to zero and and so you are you're still okay so you know it's always these
+[00:09:10 -> 00:09:17] mathematical properties actually help us make the problem more structured and easier to tackle
+[00:09:17 -> 00:09:21] so that we can have better properties and stricter properties on them so that we can
+[00:09:21 -> 00:09:23] have stricter properties on our data flow analysis.

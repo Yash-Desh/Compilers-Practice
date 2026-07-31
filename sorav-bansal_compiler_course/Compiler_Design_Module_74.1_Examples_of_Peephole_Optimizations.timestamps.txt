@@ -1,0 +1,463 @@
+Title: Compiler Design Module 74.1 : Examples of Peephole Optimizations
+Video ID: hJBaO9bTPqE
+Detected language: en
+------------------------------------------------------------
+
+[00:00:00 -> 00:00:03] Now we will discuss examples of people optimizations
+[00:00:05 -> 00:00:08] and some subtleties associated with them.
+[00:00:08 -> 00:00:10] So we've seen this example.
+[00:00:10 -> 00:00:12] So let's say my original people optimization
+[00:00:12 -> 00:00:15] was if you move from R2 to R1,
+[00:00:15 -> 00:00:18] the first operand is the destination in these examples,
+[00:00:18 -> 00:00:20] and then you move from R1 to R2,
+[00:00:20 -> 00:00:23] then you don't need to do the second instruction at all
+[00:00:23 -> 00:00:25] because, you know, at this point,
+[00:00:25 -> 00:00:27] we know that both R1 and R2 have the same contents,
+[00:00:27 -> 00:00:29] so we can just replace it with a single instruction,
+[00:00:29 -> 00:00:30] and move R2 to R1.
+[00:00:31 -> 00:00:33] But can we generalize this to, let's say,
+[00:00:33 -> 00:00:35] both registers and memory locations?
+[00:00:35 -> 00:00:37] So for example, we want to say, if you move R1,
+[00:00:37 -> 00:00:39] you can move the memory location,
+[00:00:39 -> 00:00:41] the contents of the memory location,
+[00:00:41 -> 00:00:43] addressed by R2, so that's written,
+[00:00:43 -> 00:00:46] parentheses dollar R2, which basically means,
+[00:00:46 -> 00:00:47] you know, in the C parlance,
+[00:00:47 -> 00:00:49] that would mean star R2,
+[00:00:49 -> 00:00:52] which means the contents at the location
+[00:00:52 -> 00:00:56] addressed by R2, then you move that to R1.
+[00:00:56 -> 00:00:59] But you want to say that I wanted the single rule
+[00:01:00 -> 00:01:02] which tackles both register and memory locations,
+[00:01:02 -> 00:01:05] and so maybe you have a rule like this,
+[00:01:05 -> 00:01:07] where you have the slash to say,
+[00:01:07 -> 00:01:10] this could be either a register or a memory operand,
+[00:01:10 -> 00:01:12] and similarly, this could either be a register
+[00:01:12 -> 00:01:15] or a memory operand, but then you have to be careful
+[00:01:15 -> 00:01:17] that when you are using a memory operand here,
+[00:01:17 -> 00:01:18] then you're also using a memory operand here,
+[00:01:18 -> 00:01:22] not the register, and then you can replace it with this.
+[00:01:22 -> 00:01:25] Well, it's possible to generalize these people
+[00:01:25 -> 00:01:26] optimizations in this way,
+[00:01:26 -> 00:01:29] and there are advantages and disadvantages of doing that.
+[00:01:29 -> 00:01:30] The advantages are, of course,
+[00:01:30 -> 00:01:32] that you increase the optimization opportunity,
+[00:01:32 -> 00:01:37] you can now capture more patterns through a single rule.
+[00:01:37 -> 00:01:39] However, generality comes out,
+[00:01:39 -> 00:01:41] comes at the cost of more complexity,
+[00:01:41 -> 00:01:42] because it becomes harder to ascertain
+[00:01:42 -> 00:01:44] the correctness of a rule,
+[00:01:44 -> 00:01:46] as the rule becomes more and more complicated,
+[00:01:46 -> 00:01:47] it becomes harder to check
+[00:01:47 -> 00:01:50] whether it's correct or not manually,
+[00:01:50 -> 00:01:53] and people have done formal verification tools
+[00:01:53 -> 00:01:55] that will check whether people optimizations
+[00:01:55 -> 00:01:56] are correct or not,
+[00:01:56 -> 00:01:59] to kind of alleviate this problem at least.
+[00:01:59 -> 00:02:01] But more importantly, it's harder for the compiler
+[00:02:01 -> 00:02:04] to pattern match while applying the rule.
+[00:02:04 -> 00:02:07] So when the compiler is basically looking at a program
+[00:02:07 -> 00:02:10] and using a people and dragging it across the program,
+[00:02:10 -> 00:02:14] it needs to make a decision on whether it has
+[00:02:14 -> 00:02:15] an opportunity to optimize
+[00:02:15 -> 00:02:18] a particular snippet of code or not.
+[00:02:18 -> 00:02:21] And if a people optimization becomes complicated,
+[00:02:21 -> 00:02:25] then the pattern matching becomes complicated as well.
+[00:02:25 -> 00:02:26] In this example,
+[00:02:26 -> 00:02:28] the pattern matching would need to check
+[00:02:28 -> 00:02:32] whether it's a register R2 or a memory location R2
+[00:02:32 -> 00:02:34] and make sure that's the same thing
+[00:02:34 -> 00:02:37] that's being used in the second instruction
+[00:02:37 -> 00:02:41] and use the same thing at the replacement.
+[00:02:41 -> 00:02:42] More importantly,
+[00:02:42 -> 00:02:46] should it be matching a memory access
+[00:02:46 -> 00:02:49] that is addressed through only a register,
+[00:02:49 -> 00:02:53] or what if there was a displacement associated with it
+[00:02:53 -> 00:02:54] and so on?
+[00:02:54 -> 00:02:57] So once we start generalizing it further,
+[00:02:57 -> 00:02:59] it becomes more complicated.
+[00:02:59 -> 00:03:02] This part of pattern matching becomes more complicated.
+[00:03:03 -> 00:03:05] A preferable alternative in many situations
+[00:03:05 -> 00:03:07] is just to use multiple people optimization
+[00:03:07 -> 00:03:09] so that the pattern matching remains easy.
+[00:03:09 -> 00:03:10] So for example,
+[00:03:10 -> 00:03:13] if I wanted to generalize registers to memory locations,
+[00:03:13 -> 00:03:15] maybe I just have three different rules,
+[00:03:15 -> 00:03:16] one for registers,
+[00:03:16 -> 00:03:18] one where the register is this,
+[00:03:18 -> 00:03:21] one where the memory location is the source operand,
+[00:03:21 -> 00:03:22] and one where the memory location
+[00:03:22 -> 00:03:25] is the destination operand in the first instruction.
+[00:03:25 -> 00:03:28] And notice that when I use the memory operand,
+[00:03:28 -> 00:03:30] I use this displacement mode.
+[00:03:30 -> 00:03:35] So zero parentheses R2 basically represents R2 plus zero
+[00:03:36 -> 00:03:39] and then access that location.
+[00:03:39 -> 00:03:42] So that's what this operand here represents.
+[00:03:42 -> 00:03:45] And so in this example,
+[00:03:45 -> 00:03:46] I have generalized,
+[00:03:46 -> 00:03:49] I have three different people optimization rules
+[00:03:49 -> 00:03:52] that tackle different patterns.
+[00:03:52 -> 00:03:54] In fact, having more people optimization rules
+[00:03:54 -> 00:03:55] is not that much of an issue
+[00:03:55 -> 00:03:58] because when the compiler is actually pattern matching,
+[00:03:58 -> 00:04:01] it can use some kind of order one lookup mechanism,
+[00:04:01 -> 00:04:03] for example, a hash table
+[00:04:03 -> 00:04:06] to identify what's the right pattern to match with.
+[00:04:06 -> 00:04:09] And so the complexity of pattern matching
+[00:04:09 -> 00:04:11] does not necessarily increase by a lot
+[00:04:11 -> 00:04:14] if you have lots of people optimization rules,
+[00:04:14 -> 00:04:15] but it does increase significantly
+[00:04:15 -> 00:04:20] by the complexity of a single people optimization rule.
+[00:04:20 -> 00:04:23] All right, also there are ways to generalize
+[00:04:24 -> 00:04:27] that do not make it significantly harder to pattern match.
+[00:04:27 -> 00:04:28] So for example, in the previous example,
+[00:04:28 -> 00:04:32] we saw how a memory location had an offset
+[00:04:32 -> 00:04:34] or a displacement argument zero,
+[00:04:34 -> 00:04:36] but we can easily generalize it
+[00:04:36 -> 00:04:38] to any displacement argument I.
+[00:04:38 -> 00:04:40] So for example, just say that if it was a memory operand,
+[00:04:40 -> 00:04:45] then you can pattern match any image at operand,
+[00:04:45 -> 00:04:49] any displacement operand, or any constant I,
+[00:04:49 -> 00:04:51] and I can also take the value zero.
+[00:04:51 -> 00:04:53] And in which case this becomes
+[00:04:53 -> 00:04:55] my generalized people optimization rule.
+[00:04:55 -> 00:04:57] The pattern matcher now only needs to check
+[00:04:57 -> 00:04:58] whether this is a constant or not,
+[00:04:58 -> 00:05:03] and then create an association between I and that constant
+[00:05:03 -> 00:05:05] and make sure that the same constant is used
+[00:05:05 -> 00:05:07] in the second instruction as well.
+[00:05:07 -> 00:05:10] And so the two rules that I showed
+[00:05:10 -> 00:05:12] in the previous slide with memory operands
+[00:05:12 -> 00:05:14] can be generalized using the displacement constant I
+[00:05:14 -> 00:05:16] instead of the displacement constant zero
+[00:05:16 -> 00:05:17] that was shown on the previous slide.
+[00:05:17 -> 00:05:20] Notice that I may match any constant.
+[00:05:21 -> 00:05:23] Now, some people optimization rules
+[00:05:23 -> 00:05:24] are more general than others.
+[00:05:24 -> 00:05:25] So there are other ways to generalize
+[00:05:25 -> 00:05:27] people optimization rules.
+[00:05:27 -> 00:05:28] Let's take this example where we say
+[00:05:28 -> 00:05:33] that if you add one to A and kind of put it in A,
+[00:05:34 -> 00:05:36] and then you add one again to A
+[00:05:36 -> 00:05:38] and then put it in A again,
+[00:05:38 -> 00:05:40] then that's similar to saying that you add two to A
+[00:05:40 -> 00:05:42] and then put it in A.
+[00:05:42 -> 00:05:44] Well, a more general version is that
+[00:05:44 -> 00:05:46] instead of saying that it's the same register,
+[00:05:46 -> 00:05:49] maybe you want to say that the register
+[00:05:49 -> 00:05:53] that you add first from A to one,
+[00:05:53 -> 00:05:57] as you add one to A and put it in B.
+[00:05:57 -> 00:06:02] And the second rule probably says that you add one to B.
+[00:06:02 -> 00:06:03] There was an error in the slide.
+[00:06:03 -> 00:06:07] So now you add one to B and you put it in B.
+[00:06:07 -> 00:06:08] And now you can say that this,
+[00:06:08 -> 00:06:10] if you see this sequence of instructions,
+[00:06:10 -> 00:06:13] you can change it to add two to A and put it in B.
+[00:06:15 -> 00:06:18] I hope it's clear that this and this are equivalent
+[00:06:18 -> 00:06:20] if we assume that the only thing
+[00:06:20 -> 00:06:21] that the additional instruction is doing
+[00:06:21 -> 00:06:23] is adding the second and third operands
+[00:06:23 -> 00:06:26] and putting the result in the first operand.
+[00:06:26 -> 00:06:27] Now notice, why do I say that
+[00:06:27 -> 00:06:28] this is more general than this?
+[00:06:28 -> 00:06:31] Because in this, B is allowed to match
+[00:06:31 -> 00:06:33] either a different register than A
+[00:06:33 -> 00:06:35] or the same register as A.
+[00:06:35 -> 00:06:38] If B is matched with the same register
+[00:06:38 -> 00:06:40] as what A matched with,
+[00:06:40 -> 00:06:42] let's say A matched with R1 and B also matched with R1,
+[00:06:42 -> 00:06:46] then this rule actually captures the semantics
+[00:06:46 -> 00:06:49] of the rule that we discussed on the top.
+[00:06:49 -> 00:06:51] But it also allows the possibility
+[00:06:51 -> 00:06:52] for B to match with a different register.
+[00:06:52 -> 00:06:55] And so this is a more general version than this version.
+[00:06:59 -> 00:07:00] Here's another way you could generalize
+[00:07:00 -> 00:07:01] the people optimization rule.
+[00:07:01 -> 00:07:03] You can generalize the constants.
+[00:07:03 -> 00:07:07] So for example, instead of saying add AA3 and add AA4
+[00:07:07 -> 00:07:11] and doing the constant folding by saying add AA7,
+[00:07:11 -> 00:07:15] you can say add AAi for any arbitrary constant i,
+[00:07:15 -> 00:07:18] add AAj for any arbitrary constant j,
+[00:07:18 -> 00:07:22] and then use this compile time addition operation
+[00:07:22 -> 00:07:25] called i plus j, which is computed by the compiler
+[00:07:25 -> 00:07:27] because i and j are constants,
+[00:07:27 -> 00:07:30] and then use that as the replacement.
+[00:07:31 -> 00:07:34] And so this is more general
+[00:07:34 -> 00:07:36] because i can now pattern match with three
+[00:07:36 -> 00:07:37] and j can pattern match with four
+[00:07:37 -> 00:07:42] and i plus j would be equivalent to seven in that case.
+[00:07:42 -> 00:07:44] But i and j can also pattern match
+[00:07:44 -> 00:07:46] with different other constants as well.
+[00:07:47 -> 00:07:50] Similarly, let's say you had a people optimization rule
+[00:07:50 -> 00:07:53] which says if you multiply A by four and store it in A,
+[00:07:53 -> 00:07:56] then you can just shift A by two and shift it left.
+[00:07:56 -> 00:07:59] Well, instead of that, you can just say that,
+[00:07:59 -> 00:08:02] oh, the first argument here should pattern match
+[00:08:02 -> 00:08:03] with some power of two.
+[00:08:03 -> 00:08:05] So one way to write that is two to the power i,
+[00:08:05 -> 00:08:09] in which case you can shift left by the log of that number
+[00:08:09 -> 00:08:11] in which that one way to write that
+[00:08:11 -> 00:08:14] is that it should be shifted left by i.
+[00:08:14 -> 00:08:19] Now, notice that I am using these constants i, j,
+[00:08:19 -> 00:08:22] two to the power i in my patterns,
+[00:08:22 -> 00:08:25] which means my pattern matcher does increase,
+[00:08:25 -> 00:08:28] there's some complexity increase in my pattern matcher
+[00:08:28 -> 00:08:30] because now when it looks at two to the power i,
+[00:08:30 -> 00:08:33] it needs to know that when it sees two to the power i
+[00:08:33 -> 00:08:35] in a people optimization,
+[00:08:35 -> 00:08:37] then it needs to match it with a power of two
+[00:08:37 -> 00:08:40] in the actual constant that appears in the code.
+[00:08:40 -> 00:08:41] And so there is some increase,
+[00:08:41 -> 00:08:44] but these increases are usually practical enough
+[00:08:44 -> 00:08:48] and simple enough to be practically useful.
+[00:08:48 -> 00:08:50] And so these kinds of things are done
+[00:08:50 -> 00:08:55] in production compilers.
+[00:08:55 -> 00:08:57] Now, I also want to point out here that,
+[00:08:57 -> 00:08:59] look, I mean, these rules that I showed you,
+[00:08:59 -> 00:09:02] for example, multiply A by four and store it in A
+[00:09:02 -> 00:09:05] can be also generalized in other dimension,
+[00:09:05 -> 00:09:09] which is you can rename the registers to generalize them
+[00:09:09 -> 00:09:12] to take both the same register or different registers.
+[00:09:12 -> 00:09:13] But I haven't done that in this slide,
+[00:09:13 -> 00:09:15] but we could do that as well.
+[00:09:15 -> 00:09:19] And I'll leave that as an exercise for you.
+[00:09:19 -> 00:09:21] We've already seen that you can do constant
+[00:09:21 -> 00:09:23] or copy propagation and represent those kinds
+[00:09:23 -> 00:09:26] of transformations or as people optimizations.
+[00:09:26 -> 00:09:27] Here, I'm doing constant folding.
+[00:09:27 -> 00:09:30] So if I move i to register A
+[00:09:30 -> 00:09:32] and then I move register A to register B,
+[00:09:32 -> 00:09:34] then I can just move i to register A
+[00:09:34 -> 00:09:37] and register B one after another.
+[00:09:37 -> 00:09:40] The advantage of this is that we are eliminating
+[00:09:40 -> 00:09:44] read after write dependencies on the register A.
+[00:09:44 -> 00:09:46] So there's a read after write dependency,
+[00:09:46 -> 00:09:48] but there is no read after write dependency here.
+[00:09:48 -> 00:09:52] And usually if you remove such dependencies,
+[00:09:52 -> 00:09:55] it means that it enables more optimizations
+[00:09:55 -> 00:10:00] further downstream in my compilation pipeline.
+[00:10:00 -> 00:10:02] For example, it can allow these two instructions
+[00:10:02 -> 00:10:03] to now get reordered,
+[00:10:03 -> 00:10:04] whereas these instructions
+[00:10:04 -> 00:10:05] could not get reordered originally.
+[00:10:07 -> 00:10:10] Also, you can generalize through other mechanisms.
+[00:10:10 -> 00:10:11] And this is another common approach
+[00:10:11 -> 00:10:13] that is used by production compilers.
+[00:10:13 -> 00:10:15] So for example, let's say I had
+[00:10:15 -> 00:10:17] a people optimization rule that said
+[00:10:17 -> 00:10:19] if you move a constant i to register A
+[00:10:19 -> 00:10:23] and then you move the register B to register A,
+[00:10:23 -> 00:10:25] which basically means that the value of A
+[00:10:25 -> 00:10:29] wasn't even used before it was overwritten,
+[00:10:29 -> 00:10:31] then you can just ignore the first instruction
+[00:10:31 -> 00:10:34] and just simply move the value of register B to register A
+[00:10:34 -> 00:10:38] because the constant i in register A was never used.
+[00:10:38 -> 00:10:40] Well, you can generalize this in this way.
+[00:10:40 -> 00:10:42] You can say that if you ever move
+[00:10:42 -> 00:10:45] a constant i to register A
+[00:10:45 -> 00:10:49] and at the end of this instruction,
+[00:10:49 -> 00:10:52] which is represented by a post condition,
+[00:10:52 -> 00:10:55] so I'm using the post keyword to say that,
+[00:10:55 -> 00:10:57] it says at the end of this instruction,
+[00:10:57 -> 00:11:00] if the value stored in register A is not live,
+[00:11:00 -> 00:11:03] which means the value cannot be used in the future.
+[00:11:03 -> 00:11:05] In this example, the value cannot be used in the future
+[00:11:05 -> 00:11:07] because it's being immediately overwritten
+[00:11:07 -> 00:11:09] by another value, dollar B.
+[00:11:09 -> 00:11:12] So if the value cannot be used in the future,
+[00:11:12 -> 00:11:15] then you can replace this instruction by an empty sequence,
+[00:11:15 -> 00:11:17] which means you can eliminate this instruction.
+[00:11:17 -> 00:11:19] And so this is more general than this
+[00:11:19 -> 00:11:21] because it captures this,
+[00:11:21 -> 00:11:23] but it captures many other cases
+[00:11:23 -> 00:11:25] where the instruction after this
+[00:11:25 -> 00:11:27] may not have been moved,
+[00:11:27 -> 00:11:29] but could have been add or something else
+[00:11:29 -> 00:11:33] because it basically ensures that A is not going to be live
+[00:11:33 -> 00:11:36] or the value in A is not going to be used.
+[00:11:36 -> 00:11:40] To be able to kind of do such pattern matching,
+[00:11:40 -> 00:11:41] so let's say this is a people optimization rule
+[00:11:41 -> 00:11:43] that my compiler has,
+[00:11:43 -> 00:11:45] then the compiler, when it's trying to pattern match
+[00:11:45 -> 00:11:48] a piece of code against this people optimization,
+[00:11:48 -> 00:11:50] then you need to check whether the register
+[00:11:50 -> 00:11:52] that has been pattern matched with dollar A,
+[00:11:52 -> 00:11:55] is it live or not at the end of this instruction.
+[00:11:55 -> 00:11:56] And for that, we need a prior analysis
+[00:11:56 -> 00:11:58] that identifies the live registers,
+[00:11:58 -> 00:12:00] or in other words, the registers,
+[00:12:00 -> 00:12:03] whose value could potentially be used in the future
+[00:12:03 -> 00:12:05] at every program point.
+[00:12:05 -> 00:12:07] We're going to later study about data flow analysis
+[00:12:07 -> 00:12:09] and we're going to study about liveness analysis
+[00:12:09 -> 00:12:14] on how to do this in an efficient and an effective way.
+[00:12:16 -> 00:12:19] But the point here is that people optimization
+[00:12:19 -> 00:12:22] can have such extra predicates.
+[00:12:22 -> 00:12:25] For example, here the predicate is a post condition
+[00:12:25 -> 00:12:28] that makes use of other analyses
+[00:12:29 -> 00:12:31] that had been done before the people optimization
+[00:12:31 -> 00:12:32] was applied.
+[00:12:32 -> 00:12:35] In this example, we're using the liveness analysis.
+[00:12:36 -> 00:12:37] Here's another example.
+[00:12:37 -> 00:12:40] So just like we said that a register is not live,
+[00:12:40 -> 00:12:42] maybe a post condition says that the zero bit
+[00:12:42 -> 00:12:44] of the register is not live.
+[00:12:44 -> 00:12:46] And so here's the people optimization rule
+[00:12:46 -> 00:12:49] that is correct only if we are sure
+[00:12:49 -> 00:12:53] that the bit zero of the register A is not live.
+[00:12:53 -> 00:12:57] And so the reason I put up this example
+[00:12:57 -> 00:13:00] is because I just want to say that,
+[00:13:00 -> 00:13:01] in general, you can make the post condition
+[00:13:01 -> 00:13:03] arbitrarily more complicated.
+[00:13:04 -> 00:13:06] In this example, I'm just going from liveness
+[00:13:06 -> 00:13:09] of whole registers to liveness of single bits
+[00:13:09 -> 00:13:10] within registers.
+[00:13:10 -> 00:13:12] And to support such post conditions,
+[00:13:12 -> 00:13:14] we firstly need a bit granular liveness analysis.
+[00:13:14 -> 00:13:17] So we need some analysis that says which bit
+[00:13:17 -> 00:13:18] of which register is live.
+[00:13:18 -> 00:13:21] This is possible, but it increases the running time
+[00:13:21 -> 00:13:24] of the compiler and also the complexity of the compiler.
+[00:13:24 -> 00:13:26] Moreover, you need to pattern match
+[00:13:26 -> 00:13:27] on this bit granular information.
+[00:13:28 -> 00:13:29] So the people optimizer,
+[00:13:29 -> 00:13:30] which is going to use these people optimizations
+[00:13:30 -> 00:13:31] to optimize your code,
+[00:13:31 -> 00:13:33] needs to pattern match on this bit granular information,
+[00:13:33 -> 00:13:38] which is a design decision that a programmer
+[00:13:38 -> 00:13:40] or compiler developer will need to make.
+[00:13:40 -> 00:13:42] Typically, such bit granular post conditions
+[00:13:42 -> 00:13:46] are not allowed in production compilers.
+[00:13:47 -> 00:13:48] Here's another example
+[00:13:48 -> 00:13:50] of a very impractical post condition.
+[00:13:50 -> 00:13:51] So for example, if I want to say dollar A
+[00:13:51 -> 00:13:53] plus dollar B is live,
+[00:13:53 -> 00:13:55] but the contents of dollar A and dollar B
+[00:13:55 -> 00:13:56] do not matter otherwise.
+[00:13:56 -> 00:13:59] For example, one comma two,
+[00:13:59 -> 00:14:02] if A is one and B is two,
+[00:14:02 -> 00:14:04] that is indistinguishable from A is zero
+[00:14:04 -> 00:14:06] and B is three.
+[00:14:06 -> 00:14:08] So while A and B are both live,
+[00:14:08 -> 00:14:11] it's only the value of A plus B that matters.
+[00:14:11 -> 00:14:14] And if that's a post condition that I want,
+[00:14:14 -> 00:14:18] then that is much harder to both compute
+[00:14:18 -> 00:14:20] as a liveness analysis
+[00:14:20 -> 00:14:22] and to pattern match for the people optimizer.
+[00:14:22 -> 00:14:25] And so we've seen three different examples
+[00:14:25 -> 00:14:27] of post conditions.
+[00:14:27 -> 00:14:30] The first one was something that is relatively easy
+[00:14:30 -> 00:14:31] to implement and pattern match
+[00:14:31 -> 00:14:35] and is used by production compilers.
+[00:14:35 -> 00:14:37] And the third one, which is on this slide,
+[00:14:37 -> 00:14:40] is one that is completely impractical
+[00:14:40 -> 00:14:41] and does not make sense.
+[00:14:41 -> 00:14:43] And I don't know of any compiler
+[00:14:43 -> 00:14:48] that will ever use such these kinds of post conditions.
+[00:14:48 -> 00:14:49] And the second one,
+[00:14:49 -> 00:14:50] which was a bit granular liveness analysis,
+[00:14:50 -> 00:14:53] something that different compiler developers
+[00:14:53 -> 00:14:55] may decide to use or not use.
+[00:14:56 -> 00:14:58] Here's another example of a pre-condition.
+[00:14:58 -> 00:15:01] So let's say my architecture has an instruction
+[00:15:01 -> 00:15:02] which takes constants,
+[00:15:02 -> 00:15:04] but the constants are limited to,
+[00:15:04 -> 00:15:06] let's say, 16-bit constants.
+[00:15:06 -> 00:15:07] And let's say the machine was 32-bit,
+[00:15:07 -> 00:15:10] which means these registers are 32-bit.
+[00:15:10 -> 00:15:12] So when I write an instruction
+[00:15:12 -> 00:15:14] like MUL $A, $B, I,
+[00:15:14 -> 00:15:18] it means you multiply I by the contents of $B,
+[00:15:18 -> 00:15:21] and then you store that into register $A.
+[00:15:21 -> 00:15:24] And similarly, you can do that with J.
+[00:15:24 -> 00:15:26] And here is a peephole optimization
+[00:15:26 -> 00:15:28] which says if you see these together,
+[00:15:28 -> 00:15:30] then you can replace this with I star J.
+[00:15:30 -> 00:15:32] This is similar to the constant folding optimization
+[00:15:32 -> 00:15:34] that we saw with the addition instruction,
+[00:15:34 -> 00:15:37] thus that here I have replaced it with a multiplication
+[00:15:37 -> 00:15:39] with the twist that these constants
+[00:15:39 -> 00:15:42] can only be 16-bit on a 32-bit machine.
+[00:15:42 -> 00:15:43] So the registers are 32-bit,
+[00:15:43 -> 00:15:45] but the constants are 16-bit.
+[00:15:45 -> 00:15:50] Now notice that this transformation is not correct
+[00:15:50 -> 00:15:53] unless I have a precondition that I star J,
+[00:15:53 -> 00:15:55] the multiplication of the constants I into J,
+[00:15:55 -> 00:15:56] do not overflow,
+[00:15:56 -> 00:15:58] because if they overflow the 16-bit value,
+[00:15:58 -> 00:15:59] then the value that I have here
+[00:15:59 -> 00:16:01] and the value that I will compute
+[00:16:01 -> 00:16:03] by the sequence of these two instructions
+[00:16:03 -> 00:16:05] will be different.
+[00:16:05 -> 00:16:07] And so these kind of conditions
+[00:16:07 -> 00:16:10] are also possible to write
+[00:16:10 -> 00:16:11] in peephole optimizations
+[00:16:11 -> 00:16:13] available in production compilers,
+[00:16:13 -> 00:16:15] which means that the peephole optimizer
+[00:16:15 -> 00:16:16] needs to pattern match the constants
+[00:16:16 -> 00:16:21] and also check whether these pattern-matched constants
+[00:16:21 -> 00:16:24] meet the desired preconditions or not.
+[00:16:25 -> 00:16:27] So to summarize,
+[00:16:27 -> 00:16:32] peephole optimizers are an important piece
+[00:16:32 -> 00:16:34] of the compiler infrastructure.
+[00:16:34 -> 00:16:36] They can appear at every level.
+[00:16:36 -> 00:16:39] For example, if I take the example of a tensor flow
+[00:16:39 -> 00:16:40] or a PyTorch program,
+[00:16:40 -> 00:16:44] which involves a compilation of graph neural networks
+[00:16:44 -> 00:16:45] or neural networks in general
+[00:16:45 -> 00:16:48] to optimize code,
+[00:16:48 -> 00:16:50] then you can do peephole optimizations
+[00:16:50 -> 00:16:51] on the graph of the ML operators,
+[00:16:51 -> 00:16:53] the machine learning operators,
+[00:16:53 -> 00:16:57] or on the MLIR or TVM representations
+[00:16:57 -> 00:16:59] of those programs,
+[00:16:59 -> 00:17:00] which involve matrix operations
+[00:17:00 -> 00:17:02] like matrix multiplication,
+[00:17:02 -> 00:17:03] matrix inverse, et cetera.
+[00:17:03 -> 00:17:04] So you can, for example,
+[00:17:04 -> 00:17:05] say here's a peephole optimization
+[00:17:05 -> 00:17:08] that says that if you multiply a matrix
+[00:17:08 -> 00:17:09] by its inverse,
+[00:17:09 -> 00:17:10] then you can place it with the identity
+[00:17:10 -> 00:17:11] or something like that.
+[00:17:11 -> 00:17:13] These kind of things can also be represented
+[00:17:13 -> 00:17:15] as peephole optimizations.
+[00:17:15 -> 00:17:16] You can write peephole optimizations
+[00:17:16 -> 00:17:18] at the IR level.
+[00:17:18 -> 00:17:19] For example, LLVM,
+[00:17:19 -> 00:17:22] which is something similar to three
+[00:17:22 -> 00:17:24] or any other three address code IR.
+[00:17:24 -> 00:17:25] You can write peephole optimizations
+[00:17:25 -> 00:17:27] at the machine IR level,
+[00:17:27 -> 00:17:29] which is after the IR,
+[00:17:29 -> 00:17:30] there is some IR
+[00:17:30 -> 00:17:32] that is just before the assembly code
+[00:17:32 -> 00:17:36] where you can do your last ditch efforts
+[00:17:36 -> 00:17:37] to optimize code.
+[00:17:37 -> 00:17:40] And this is where most peephole optimizers
+[00:17:40 -> 00:17:42] were originally written for,
+[00:17:42 -> 00:17:45] which is at the last very end
+[00:17:45 -> 00:17:46] of the compilation pipeline,
+[00:17:46 -> 00:17:49] you basically write these peephole optimizations
+[00:17:49 -> 00:17:51] and a pattern matcher
+[00:17:51 -> 00:17:53] to tighten up the code before emitting it,
+[00:17:53 -> 00:17:55] although over the years
+[00:17:55 -> 00:17:56] and over the decades,
+[00:17:56 -> 00:17:58] this idea of peephole optimizations
+[00:17:58 -> 00:17:59] have been generalized,
+[00:17:59 -> 00:18:01] not just to the last pass,
+[00:18:01 -> 00:18:03] but also to other transformation passes
+[00:18:03 -> 00:18:06] within the compiler.
+[00:18:06 -> 00:18:08] And finally, you can also write peephole optimizers
+[00:18:08 -> 00:18:10] that directly work on the binary code
+[00:18:10 -> 00:18:12] or x86 assembly code,
+[00:18:12 -> 00:18:13] which is often written
+[00:18:13 -> 00:18:15] as a standalone peephole optimizer.
+[00:18:15 -> 00:18:16] So you are given an executable
+[00:18:16 -> 00:18:18] that has been generated by a compiler,
+[00:18:18 -> 00:18:19] let's say, or maybe written manually.
+[00:18:19 -> 00:18:20] And then you have a peephole optimization
+[00:18:20 -> 00:18:23] that parses that binary
+[00:18:23 -> 00:18:25] and does peephole optimization
+[00:18:25 -> 00:18:26] and generates a new binary.
+[00:18:26 -> 00:18:27] So that's another way
+[00:18:27 -> 00:18:29] of doing peephole optimizations.

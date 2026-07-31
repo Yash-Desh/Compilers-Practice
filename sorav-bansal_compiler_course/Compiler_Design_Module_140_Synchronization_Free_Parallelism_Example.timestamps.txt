@@ -1,0 +1,212 @@
+Title: Compiler Design Module 140 : Synchronization Free Parallelism Example
+Video ID: oGuHyykAzZ0
+Detected language: en
+------------------------------------------------------------
+
+[00:00:00 -> 00:00:03] we have been talking about data dependencies and how to figure
+[00:00:03 -> 00:00:08] out whether two statements in a loop nest or across different loop nests,
+[00:00:08 -> 00:00:09] have a data dependency or not.
+[00:00:09 -> 00:00:15] One of the reasons we talk about data dependency is to find parallelism in the program.
+[00:00:15 -> 00:00:17] For example, if there is no data dependency in
+[00:00:17 -> 00:00:22] the loop body across different iterations of
+[00:00:22 -> 00:00:25] the same statement or across different statements in the loop body,
+[00:00:25 -> 00:00:28] then we can call that loop embarrassingly parallel,
+[00:00:28 -> 00:00:32] and we can parallelize that loop on the number of available processors.
+[00:00:32 -> 00:00:36] However, there are cases where even if there
+[00:00:36 -> 00:00:42] are data dependencies across different static accesses or statements,
+[00:00:42 -> 00:00:46] still there is a possibility of parallelization.
+[00:00:46 -> 00:00:49] To see that, I'm going to discuss an example in this module.
+[00:00:49 -> 00:00:53] So consider this loop nest for i equals 0,
+[00:00:53 -> 00:00:56] i is less than 1,000, i plus plus.
+[00:00:56 -> 00:00:59] For j equals 0, j is less than 1,000,
+[00:00:59 -> 00:01:04] j plus plus, aij equals ai plus 1, j minus 1.
+[00:01:04 -> 00:01:05] Now, if I ask you,
+[00:01:05 -> 00:01:08] is there a data dependency between aij,
+[00:01:08 -> 00:01:13] the static access aij and the static access ai plus 1, j minus 1?
+[00:01:13 -> 00:01:15] The answer is yes,
+[00:01:15 -> 00:01:21] because there exist many instances where both of them basically access the same memory location,
+[00:01:21 -> 00:01:23] and of course, one of them is the right,
+[00:01:24 -> 00:01:30] the aij memory access or the static access or statement involves a right,
+[00:01:30 -> 00:01:32] and the one on the right involves a read,
+[00:01:32 -> 00:01:36] and so there are all kinds of read after write,
+[00:01:36 -> 00:01:39] data dependencies in this particular loop nest.
+[00:01:39 -> 00:01:45] However, I claim that it is possible to parallelize this loop still,
+[00:01:45 -> 00:01:50] and the amount of parallelism that we have is almost on the order of 1,000.
+[00:01:50 -> 00:01:53] That means I can actually have 1,000 processors that are
+[00:01:53 -> 00:02:01] busy to process this loop and I can get similar orders or speed up by parallelizing this loop.
+[00:02:01 -> 00:02:06] One of the important things here is when I say that the loop is parallelizable,
+[00:02:06 -> 00:02:09] I'm really saying that it is parallelizable without having to do
+[00:02:09 -> 00:02:15] any synchronization between the different threads or processors that are going to execute in parallel,
+[00:02:15 -> 00:02:20] and that's why this is also called synchronization-free parallelism.
+[00:02:20 -> 00:02:22] There are different types of parallelism.
+[00:02:22 -> 00:02:24] There's synchronization-free parallelism,
+[00:02:24 -> 00:02:29] in which case each of the thread or each of the process or each of the processor logic
+[00:02:29 -> 00:02:33] is completely independent and does not need to synchronize with any other thread,
+[00:02:33 -> 00:02:35] and that's what I'm going to discuss in this module.
+[00:02:35 -> 00:02:40] Later on, you're also going to see examples of parallelism which involves synchronization
+[00:02:40 -> 00:02:44] and how a compiler can automatically transform programs
+[00:02:44 -> 00:02:47] into parallel programs with or without synchronization.
+[00:02:47 -> 00:02:51] In this case, the compiler is interested in parallelizing this particular program
+[00:02:52 -> 00:02:55] over a number of cores, and the question is how could a compiler do that?
+[00:02:55 -> 00:02:59] Once again, this loop is not embarrassingly parallel because there
+[00:02:59 -> 00:03:03] exist data dependencies between aij and ai plus one j minus one.
+[00:03:06 -> 00:03:11] To understand why there is the possibility of parallelism in this particular program,
+[00:03:11 -> 00:03:14] let's draw our iteration space, and in this iteration space,
+[00:03:14 -> 00:03:18] because it's a 2D loop, I can easily draw it on a slide,
+[00:03:18 -> 00:03:21] and it starts from 0, 0, i, j.
+[00:03:21 -> 00:03:24] j is on the y-axis and i is on the x-axis,
+[00:03:24 -> 00:03:29] and then this is 0, 1, 0, 2, 0, 3, 0, 4, and so on,
+[00:03:29 -> 00:03:32] and then this is 1, 0, 1, 1, 1, 2, 1, 3, and so on,
+[00:03:32 -> 00:03:38] and on the x-axis, it goes till i equals 999, just one less than 1000,
+[00:03:38 -> 00:03:44] and on the y-axis also, it goes till j equals 999, just one less than 1000.
+[00:03:45 -> 00:03:50] Now if I look at what are the dynamic instances that actually have a data dependence,
+[00:03:50 -> 00:03:55] I basically see that there are data dependencies between two dynamic instances
+[00:03:56 -> 00:04:06] of iterations i1, j1 and i2, j2, if and only if i1, j1 is the instance of the first axis aij
+[00:04:06 -> 00:04:11] and i2, j2 is an instance of the second axis ai plus one j minus one,
+[00:04:11 -> 00:04:18] and so i1, j1 and i2, j2 have a data dependency if i2 plus one equals i1,
+[00:04:19 -> 00:04:22] basically they need to access the same location.
+[00:04:22 -> 00:04:27] First of all, the constraint is that both i1 and j1 and i2 and j2,
+[00:04:27 -> 00:04:29] all four of these variables should lie between,
+[00:04:30 -> 00:04:33] should be greater than equal to zero and less than equal to 999.
+[00:04:34 -> 00:04:39] So that's the first constraint which basically comes from the constraint of the loop iteration
+[00:04:39 -> 00:04:46] space and mathematically is specified using the capital B and small b matrix and vector
+[00:04:46 -> 00:04:53] respectively. And then the third constraint is capital F1 i1 plus small f1 equals capital F2
+[00:04:53 -> 00:05:01] i2 plus small f2 and that gives us this set of equations which says i2 plus one equals i1
+[00:05:02 -> 00:05:07] and j2 minus one equals j1. So these are the conditions under
+[00:05:07 -> 00:05:11] which the two static axes would access the same location.
+[00:05:11 -> 00:05:17] And so notice that i1 is i2 plus one and j1 is j2 minus one.
+[00:05:17 -> 00:05:24] And if I was to draw this relationship, what are the pairs of i1, j1 and i2, j2
+[00:05:24 -> 00:05:27] that have this relationship, it's going to look something like this.
+[00:05:27 -> 00:05:40] So for example, this point can be i1, j1 and this point can be i1, j1,
+[00:05:44 -> 00:05:58] this is i1, j1 and this is i2, j2. And notice that i2 equals i1 minus one or i1
+[00:05:58 -> 00:06:06] equals i2 plus one and j1 equals j2 minus one. And so I draw an edge between the two points to
+[00:06:06 -> 00:06:14] indicate that there is a data dependency between these two points in the iteration space.
+[00:06:14 -> 00:06:20] Similarly, there is a data dependency between these two points. So this was i2, j2 is equal
+[00:06:20 -> 00:06:33] to 1, 0. So if I say i2, j2, it would be 0, 1, maybe I should say j2, i2 and this is j1, i1.
+[00:06:35 -> 00:06:42] So j2, i2 would be 1, 0 here and this was 0, 1. Here it would be
+[00:06:43 -> 00:06:48] 1, 1 and this one, this point here would be
+[00:06:51 -> 00:07:03] 2, 0 and so on. This would be 2, 1 and this would be 3, 0 and so on. So all these points
+[00:07:03 -> 00:07:07] basically in the iteration space have a data dependency and any two points between which there
+[00:07:07 -> 00:07:12] is a data dependency, I am drawing an edge. And notice that these are some edges that I would
+[00:07:12 -> 00:07:18] draw. If I was to complete this figure and draw edges between all pairs of points that
+[00:07:18 -> 00:07:24] satisfies this relationship, then this is what the diagram that I'm going to get. 0, 0 has
+[00:07:24 -> 00:07:30] no data dependency with anything else. 0, 1 has a data dependency with 1, 0. 0, 2 has a
+[00:07:30 -> 00:07:37] data dependency with 1, 1 and 1, 1 has a data dependency with 2, 0 and so on. And so
+[00:07:37 -> 00:07:42] these are my dependency chains. Notice that in my dependency chains, I'm not drawing arrows because
+[00:07:42 -> 00:07:47] these are just data dependencies. They're just saying that these two iterations, these two
+[00:07:47 -> 00:07:51] points in the iteration space have a conflict, have a dependency. In other words, they access
+[00:07:51 -> 00:07:56] the same location and so because they access the same location, I'm drawing an edge between
+[00:07:56 -> 00:08:01] them and it's not, I mean I'm not basically attributing an order. Actually, I could have
+[00:08:01 -> 00:08:05] drawn an edge by saying you know which one in the original program, which one was executed
+[00:08:05 -> 00:08:11] first and depending on that, I could have drawn an arrow from the one that occurs earlier to the
+[00:08:11 -> 00:08:17] one that occurs later. So for example, in this case, j is the innermost index and so
+[00:08:19 -> 00:08:23] because j is the innermost index, the iteration space is basically being traversed
+[00:08:23 -> 00:08:31] first along the vertical y-axis, then along the second y-axis. So basically the
+[00:08:31 -> 00:08:36] order of iteration is first this direction, then this, then this and then this and so the
+[00:08:37 -> 00:08:42] arrow if I was to draw from an earlier iteration to a later iteration would basically be pointing
+[00:08:42 -> 00:08:50] in these directions. But in my figure, I'm deliberately not drawing the arrows. It doesn't
+[00:08:50 -> 00:08:55] matter, you could have drawn the arrows, you may leave them alone but in any case, these
+[00:08:55 -> 00:09:02] represent my data dependencies across actual iteration indices and now as soon as I draw this
+[00:09:02 -> 00:09:06] picture in this particular example, this 2D picture in this simple example that we are taking,
+[00:09:06 -> 00:09:13] it is very clear that there are these linear chains of dependencies and it is a, and so
+[00:09:13 -> 00:09:18] these linear chains of dependencies need to be accessed, need to be executed sequentially
+[00:09:19 -> 00:09:25] you know based on the ordering based on the arrows that we have defined but across these
+[00:09:25 -> 00:09:30] chains, all these chains are completely independent of all the other chains. So for example,
+[00:09:30 -> 00:09:36] this particular chain here is independent of this particular chain or this particular chain
+[00:09:36 -> 00:09:42] and so on and so these chains can be executed in parallel with respect to each other.
+[00:09:42 -> 00:09:46] Each chain can be executed in parallel with respect to each other. How many chains there
+[00:09:46 -> 00:09:52] are? Well, if I look at, you know, so if I consider every even this point as a chain,
+[00:09:52 -> 00:09:56] so this is a chain of length one, this is a chain of length two, this is a chain of length
+[00:09:56 -> 00:10:01] three points and so on and then it will go all the way. So this is basically like if I
+[00:10:01 -> 00:10:07] were for the square, then the number of diagonals and so then each side of the square
+[00:10:07 -> 00:10:11] has thousand points. So what and it's a square, so if each side of a square has thousand
+[00:10:11 -> 00:10:19] points, how many diagonals will there be? Well, there will be almost 2000 minus one maybe,
+[00:10:19 -> 00:10:25] number of diagonals or minus or plus one maybe number of diagonals. Okay, so that's what it's
+[00:10:25 -> 00:10:30] going to be and each of these diagonals can be executed in parallel. So I can keep that many
+[00:10:30 -> 00:10:35] number of processors busy. Of course, these diagonals are not equal lengths, some diagonals
+[00:10:35 -> 00:10:40] are shorter and so those jobs will finish faster and the one some diagonals are really
+[00:10:40 -> 00:10:44] big like the one that basically is the longest diagonal that connects the two
+[00:10:44 -> 00:10:48] corners of the square, that's the longest one and that's going to take longer and so,
+[00:10:48 -> 00:10:55] you know, each of these chains are kind of different size but there are a total of,
+[00:10:55 -> 00:11:02] you know, order 2000 number of these chains and if I have let's say a thousand processors
+[00:11:02 -> 00:11:08] then it is possible to pack these 2000 independent jobs on thousand processors so that
+[00:11:08 -> 00:11:17] all the processors are kept equally busy. All right, so this is the idea that I'm going to
+[00:11:17 -> 00:11:23] have an outer parallel for loop. So I'm going to transform this program into an outer loop and
+[00:11:23 -> 00:11:29] an inner loop. The outer loop can be a loop that can be executed in parallel. So in other
+[00:11:29 -> 00:11:32] words, each iteration of that can be assumed to have been parallel. In other words,
+[00:11:33 -> 00:11:38] one iteration of that outer loop is data independent of another iteration of the
+[00:11:38 -> 00:11:44] outer loop, okay and so in other words, the outer loop is embarrassingly parallel and I can basically
+[00:11:45 -> 00:11:50] use threads to spawn threads for every iteration. This is also, for example,
+[00:11:50 -> 00:11:54] if you are familiar with the OpenMP model of programming, it basically means that the outer
+[00:11:54 -> 00:11:59] loop is parallel, parallelized using OpenMP pragmas or something like that and then there
+[00:11:59 -> 00:12:03] will be an inner loop which will have data dependencies and these would be basically
+[00:12:03 -> 00:12:08] the loop that's going to iterate over the length of every chain and because it has data dependencies
+[00:12:08 -> 00:12:13] it needs to be a sequential loop because I cannot execute the next iteration before I execute
+[00:12:13 -> 00:12:17] the first iteration and recall and although I've been drawing the arrows in this direction,
+[00:12:17 -> 00:12:20] actually the right way of drawing the arrows should have been in the other direction,
+[00:12:21 -> 00:12:30] okay because j was the innermost index in the original loop. Okay, so with that let me just fix
+[00:12:30 -> 00:12:37] the arrows in this slide as well. So that's what I'm going to do and in fact, this is
+[00:12:38 -> 00:12:46] one way of writing the program. The outer loop is basically a parallel for loop so I use
+[00:12:46 -> 00:12:53] the keyword par for k equals 0, k is less than equal to 1998 so that's a total of 1999
+[00:12:53 -> 00:13:01] iterations, 1 less than 2000, k++ for l equals 0 so l also starts from 0 and then l is less
+[00:13:01 -> 00:13:11] than equal to minimum of k comma 1999 minus k right and l++ so this basically means that
+[00:13:12 -> 00:13:18] as k increases the length of the chain increases till a certain point till let's say 1000 in which
+[00:13:18 -> 00:13:24] case k becomes 1000 and 199 minus k becomes 999 and then it starts decreasing so the inner loop
+[00:13:24 -> 00:13:33] basically has a curve like this, l increases first till it reaches let's say 999 and then
+[00:13:33 -> 00:13:40] from 1000 on it basically starts decreasing. Okay, so that's what this is my new
+[00:13:40 -> 00:13:45] transform loop. How I arrived at this new transform loop I haven't really told you so far
+[00:13:45 -> 00:13:49] and this will be the subject of the discussion in our next few modules. So this is really a
+[00:13:49 -> 00:13:54] motivating module that basically discusses what is the significance or what is the end result we
+[00:13:54 -> 00:14:00] can expect from doing synchronization free parallelism transformations. I think it is
+[00:14:00 -> 00:14:06] pretty cool that a compiler can potentially transform a loop that we had earlier into
+[00:14:06 -> 00:14:11] a loop like this completely automatically and I claim that this particular program is equivalent
+[00:14:11 -> 00:14:18] to the program that I showed you in the previous slide. Notice that here basically I'm doing a k
+[00:14:18 -> 00:14:26] minus l comma l so which is for every chain basically I for every chain for every element of
+[00:14:26 -> 00:14:32] the chain the memory access that it does is a k minus l so I'm just basically redefining the
+[00:14:32 -> 00:14:38] indices from i comma j to k comma l and indeed what really I have done is i equals k minus l
+[00:14:38 -> 00:14:45] and j equals l or in other words that you know that's how I have kind of changed my axis
+[00:14:45 -> 00:14:51] and once I have changed my axis I get a k minus l comma l equals a k minus l comma l minus
+[00:14:51 -> 00:14:58] 1 and notice that here the element that was written in the previous iteration would be a k
+[00:14:58 -> 00:15:04] minus l comma l minus 1 and it's in the next iteration it would be red again and so what
+[00:15:04 -> 00:15:09] I have done is that you know I create I let's say I take this particular chain here
+[00:15:10 -> 00:15:14] so let's say I take this particular chain here I'm going to first write let's say
+[00:15:15 -> 00:15:21] a zero comma four then I'm sorry I'm going to start with j so I'm going to first write
+[00:15:21 -> 00:15:31] four comma zero right okay let's say I'm doing j comma i so then I'm going to first write four
+[00:15:31 -> 00:15:39] comma zero then I'm going to write three comma one using four comma zero then I'm going to write
+[00:15:39 -> 00:15:45] two comma two using three comma one then I'm going to write one comma three using two comma
+[00:15:45 -> 00:15:50] two and then finally I'm going to write zero comma four using one comma three and so what
+[00:15:50 -> 00:15:54] I have done is everything that was written just previous iteration is being read in the
+[00:15:54 -> 00:15:59] next iteration so what I have done is I have decreased the reused distance by doing this
+[00:15:59 -> 00:16:06] transformation of axes I have reduced the reused distance and this can also be seen
+[00:16:06 -> 00:16:12] in this code where basically in the previous iteration just in the iteration just before
+[00:16:12 -> 00:16:19] the current one in the ascending lexicographic order the value that I wrote was k minus
+[00:16:19 -> 00:16:25] l l minus 1 because just in the previous lexicographic order it was l minus 1 and in
+[00:16:25 -> 00:16:29] the new this iteration I'm reading that same value and so I have really reduced my
+[00:16:29 -> 00:16:33] reused distance across iteration although there were data dependencies I
+[00:16:33 -> 00:16:37] have reduced the distance between those data dependencies as well moreover
+[00:16:37 -> 00:16:42] I have basically been able to ensure that my outer loop is completely data
+[00:16:42 -> 00:16:46] parallel how do I know that my outer loop is completely data parallel well
+[00:16:46 -> 00:16:53] if I now look at what are the iteration you know what are the what is the set of memory
+[00:16:53 -> 00:17:00] locations that are accessed by this statement and basically say is there
+[00:17:00 -> 00:17:05] across different values of k I'm going to find that the two locations are going to
+[00:17:05 -> 00:17:12] be totally disjoint okay so that's basically the reason why I say that the outer loop is
+[00:17:12 -> 00:17:18] data parallel from from a pictorial point of view it is very clear all these chains are
+[00:17:18 -> 00:17:22] basically completely disjoint in other words they don't have anything in common they don't have a
+[00:17:22 -> 00:17:27] memory location that is in common and so what have I achieved with this transformation I have
+[00:17:27 -> 00:17:31] been able to once again I think these arrows are in the wrong direction so I'm just going
+[00:17:31 -> 00:17:36] to invert them but what I've been able to achieve is parallelism across multiple
+[00:17:36 -> 00:17:41] processors using the outer loop and so if I have multiple processors I've been able to parallelize
+[00:17:41 -> 00:17:46] this loop if this loop was iterating over a larger number of iterations then you know I
+[00:17:46 -> 00:17:52] may have had a significant speed up because of this parallelization almost the speed up
+[00:17:52 -> 00:17:58] which is ordered the number of processors moreover even if you didn't have more than
+[00:17:58 -> 00:18:04] one processor let's say you had a unique processor system even then this transformation
+[00:18:04 -> 00:18:08] has helped you significantly because what it has done is it has decreased the reuse
+[00:18:08 -> 00:18:14] distance between accesses that were being that had data dependencies so that this is something
+[00:18:14 -> 00:18:20] that I just discussed in my in my previous discussion the element that was written in
+[00:18:20 -> 00:18:24] the previous iteration is being read in the next iteration in the inner loop and so what
+[00:18:24 -> 00:18:29] I've done is I have much I have basically increased the locality of reference on a
+[00:18:29 -> 00:18:35] unique processor because I have decreased the reuse distance between the write and the read
+[00:18:35 -> 00:18:41] of the same memory location and so these are the kind of transformations that we basically want to
+[00:18:41 -> 00:18:46] do automatically using our polyhedral framework that we have developed so far and these
+[00:18:46 -> 00:18:50] transformations fall in the realm of synchronization free parallelism and we're
+[00:18:50 -> 00:18:54] going to discuss how this can be done automatically in our next few lecture modules.

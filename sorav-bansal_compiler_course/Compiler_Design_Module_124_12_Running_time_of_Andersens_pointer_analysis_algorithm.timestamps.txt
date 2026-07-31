@@ -1,0 +1,187 @@
+Title: Compiler Design Module 124 12: Running time of Andersen's pointer analysis algorithm
+Video ID: ARdBOLL2F10
+Detected language: en
+------------------------------------------------------------
+
+[00:00:00 -> 00:00:07] So now we are ready to discuss the running time of Anderson's algorithm for point analysis.
+[00:00:07 -> 00:00:12] So and when we talk about running time, we are going to obviously make some approximations.
+[00:00:12 -> 00:00:20] We are going to do a worst case analysis of what can, you know, how much time it
+[00:00:20 -> 00:00:26] can take and also, you know, what is the typical time that an analysis may take.
+[00:00:26 -> 00:00:33] So for example, you know, the first thing we want to fix is the n, which we are going to
+[00:00:33 -> 00:00:34] take as a program size.
+[00:00:34 -> 00:00:38] We are going to say what is the running time of Anderson's algorithm for a program of
+[00:00:38 -> 00:00:44] size n, where n could be the number of statements in the program.
+[00:00:44 -> 00:00:50] And so we are going to also from that get or assume that the number of abstract
+[00:00:50 -> 00:00:52] objects in the program are also order n.
+[00:00:52 -> 00:01:00] So roughly the number of allocation statements in the program grows with the size of the
+[00:01:00 -> 00:01:04] program. And also, you know, if you're doing a field sensitive analysis or things like
+[00:01:04 -> 00:01:12] that, then maybe the, you know, the number of fields, et cetera, get multiplied and so
+[00:01:12 -> 00:01:16] with the number of allocation sites in terms of how many different possibilities there
+[00:01:16 -> 00:01:19] are. And so that's also order n.
+[00:01:19 -> 00:01:23] And then this, roughly the number of abstract objects will form the number of nodes in
+[00:01:23 -> 00:01:31] the points to graph, which we are going to assume is order n.
+[00:01:31 -> 00:01:34] Further, an instruction may generate constraints of the form.
+[00:01:34 -> 00:01:40] So if it's a copy instruction, p equals q, then we're going to say that the whatever
+[00:01:40 -> 00:01:42] q may point to p may point to.
+[00:01:42 -> 00:01:47] In other words, the points to set p of the points to set of p is a superset of
+[00:01:47 -> 00:01:49] the points to set of q.
+[00:01:49 -> 00:01:54] And I'm using this shorthand notation is just representing the points to set of p using
+[00:01:54 -> 00:01:59] p and the points to set of q using q and set p is a superset of q.
+[00:01:59 -> 00:02:04] Similarly, the points to set of star p is a superset, you know, for a for a for
+[00:02:04 -> 00:02:08] an assignment of the form star p equals q, the points to set of star p must be
+[00:02:08 -> 00:02:10] a superset of the points to set of q.
+[00:02:10 -> 00:02:17] So which means that whatever q may point to, all those things now start p may also
+[00:02:17 -> 00:02:21] point to. And similarly, the dereference, which we say that, you know, if it is an
+[00:02:21 -> 00:02:25] assignment of form p equals star q, then anything that star q may point to now p
+[00:02:25 -> 00:02:27] can point to.
+[00:02:27 -> 00:02:32] And the number of such statements in the program is also order n, because
+[00:02:32 -> 00:02:37] after all, most of the program will be made up of statements that look resemble
+[00:02:37 -> 00:02:40] either assignment, copy or dereference.
+[00:02:40 -> 00:02:44] And so there will be order n such constraints as well.
+[00:02:44 -> 00:02:47] So with that, let's move on.
+[00:02:47 -> 00:02:52] So the Anderson's algorithm involves identifying a fixed point solution for
+[00:02:52 -> 00:02:56] these order n constraints of these types.
+[00:02:56 -> 00:03:01] Right. And OK, so that's that's one.
+[00:03:01 -> 00:03:05] Whenever a constraint is not satisfied, we relax the current solutions.
+[00:03:05 -> 00:03:10] For example, if I if I'm doing a flow insensitive analysis, if I kind of look
+[00:03:10 -> 00:03:13] at the copy statement, then I check whether this constraint is already
+[00:03:13 -> 00:03:14] satisfied or not.
+[00:03:14 -> 00:03:19] If it is not satisfied, then I add elements to the points to set of p such
+[00:03:19 -> 00:03:23] that they start at the using the points to set of q such that this
+[00:03:23 -> 00:03:25] constraint starts getting satisfied.
+[00:03:25 -> 00:03:29] So we and this this addition of.
+[00:03:29 -> 00:03:35] Elements to the points to set of p is is called relaxing the solution.
+[00:03:35 -> 00:03:40] Recall that the addition of these abstract objects from the points to set
+[00:03:40 -> 00:03:46] of q to the points to set of p is is basically similar is is equivalent to
+[00:03:46 -> 00:03:50] saying that we are adding edges to the points to graph.
+[00:03:50 -> 00:03:54] And recall that there could be the points to graph as order n nodes
+[00:03:54 -> 00:03:56] because that's the number of abstract objects.
+[00:03:56 -> 00:04:00] And then because there are order n nodes, they could be as at most
+[00:04:00 -> 00:04:04] order n square edges in a graph.
+[00:04:04 -> 00:04:07] Now, relaxing involves growing the points to set for some pointers.
+[00:04:07 -> 00:04:11] For example, I may want to grow the points to set of star p using this
+[00:04:11 -> 00:04:12] constraint.
+[00:04:12 -> 00:04:16] That basically is equivalent to saying that we are adding edges to the points
+[00:04:16 -> 00:04:18] to graph.
+[00:04:18 -> 00:04:23] So now, next, we're going to see how much time will take to perform this
+[00:04:23 -> 00:04:26] relaxation and we're going to look at each of these constraints individually
+[00:04:26 -> 00:04:33] and see how much time in the worst case it may take to relax any one such
+[00:04:33 -> 00:04:33] constraint.
+[00:04:33 -> 00:04:38] But before I do that, I want to point out that the points to set of any
+[00:04:38 -> 00:04:42] single pointer, for example, the points to set of q or the points to set of
+[00:04:42 -> 00:04:49] star p can contain at most order n elements or an order n abstract
+[00:04:49 -> 00:04:52] object because that's the total number of abstract objects anyway.
+[00:04:52 -> 00:04:57] In other words, the number of outgoing edges in the points to graph
+[00:04:57 -> 00:05:02] of a node can be at most order n because the number of total number
+[00:05:02 -> 00:05:05] of nodes in the points to graph is order n.
+[00:05:05 -> 00:05:06] So, OK.
+[00:05:06 -> 00:05:07] So with that, let's start.
+[00:05:08 -> 00:05:13] If I relax the copy instruction, so if I have to relax this constraint using
+[00:05:13 -> 00:05:17] this constraint p is a superset of q, this may involve the addition of
+[00:05:17 -> 00:05:20] order n edges, I claim.
+[00:05:20 -> 00:05:20] So why?
+[00:05:20 -> 00:05:24] Because anything that belongs to q, so anything that q may point to or
+[00:05:24 -> 00:05:29] all the outgoing edges of q, we need to also ensure that p also has
+[00:05:29 -> 00:05:32] outgoing edges to those elements.
+[00:05:32 -> 00:05:38] And q may point to up to order n abstract objects or in other words,
+[00:05:38 -> 00:05:41] q may have order n outgoing edges.
+[00:05:41 -> 00:05:45] So all those outgoing edges need to be checked or inserted to the
+[00:05:45 -> 00:05:46] outgoing edges set of p.
+[00:05:46 -> 00:05:50] And so that could be, in the worst case, order n time.
+[00:05:50 -> 00:05:52] Now, similarly, let's look at another constraint.
+[00:05:52 -> 00:05:57] Relaxing star p is a superset of q, may require the addition of
+[00:05:57 -> 00:05:58] order n square edges, I claim.
+[00:05:58 -> 00:06:00] So let's understand this.
+[00:06:00 -> 00:06:05] So q may have order n outgoing edges.
+[00:06:05 -> 00:06:09] Similarly, p may have order n outgoing edges.
+[00:06:09 -> 00:06:17] But for each of the outgoing edges of p, we need to add everything in
+[00:06:17 -> 00:06:21] the outgoing edges of q to the outgoing edges of whatever p was
+[00:06:21 -> 00:06:21] pointing to.
+[00:06:21 -> 00:06:27] In other words, for all l belonging to q, outgoing edges of q, for
+[00:06:27 -> 00:06:31] all m belonging to the points to set of p or the outgoing edges of p,
+[00:06:31 -> 00:06:33] we need to add l to m.
+[00:06:33 -> 00:06:35] And because there are two quantifiers here and each of them
+[00:06:35 -> 00:06:39] could be at, in the worst case, order n, I may need to add
+[00:06:39 -> 00:06:46] order n elements to each set where the number of sets on which
+[00:06:46 -> 00:06:50] I need to add those order n elements could be also order n.
+[00:06:50 -> 00:06:53] So making a total of order n square extra edges.
+[00:06:53 -> 00:06:55] So just to clarify this.
+[00:06:55 -> 00:07:00] So let's say q was pointing to order n stuff.
+[00:07:00 -> 00:07:05] p was pointing to order n stuff.
+[00:07:05 -> 00:07:09] Then each of these elements here, let's say 1, 2, 3, need to get
+[00:07:09 -> 00:07:10] added to a.
+[00:07:10 -> 00:07:13] Similarly, each of these elements, 1, 2, 3, need to be added to b.
+[00:07:13 -> 00:07:15] And each of these elements, 1, 2, 3, need to be added to c,
+[00:07:15 -> 00:07:16] and so on.
+[00:07:16 -> 00:07:20] And so that's order n square.
+[00:07:20 -> 00:07:23] Similarly, relaxing p as a superset of star q may require
+[00:07:23 -> 00:07:24] addition of order n square edges.
+[00:07:24 -> 00:07:26] And this is a similar argument.
+[00:07:26 -> 00:07:30] q may point to order n abstract objects, which in turn, each
+[00:07:30 -> 00:07:35] of which may in turn point to order n abstract objects,
+[00:07:35 -> 00:07:38] making a total of order n square things
+[00:07:38 -> 00:07:39] that it may point to.
+[00:07:39 -> 00:07:41] I mean, although the total number of abstract objects
+[00:07:41 -> 00:07:43] that they may point to obviously cannot be more than
+[00:07:43 -> 00:07:46] order n, because after all, the total number of nodes in
+[00:07:46 -> 00:07:50] the graph are at most order n, but you need to check
+[00:07:50 -> 00:07:54] that each of those outgoing edges, two-hop outgoing edges
+[00:07:54 -> 00:07:57] need to be checked for making sure that this constraint is
+[00:07:57 -> 00:07:58] satisfied.
+[00:07:58 -> 00:08:00] And that itself is an order n square operation.
+[00:08:00 -> 00:08:04] And so relaxing this p as a superset of star q for the
+[00:08:04 -> 00:08:07] dereference may require the addition of order n square
+[00:08:07 -> 00:08:09] edges.
+[00:08:09 -> 00:08:12] So to summarize, the worst-case time to relax the
+[00:08:12 -> 00:08:16] solution so it satisfies one constraint, and these two are
+[00:08:16 -> 00:08:20] the culprits, the second and third constraints, can be at
+[00:08:20 -> 00:08:21] most order n square.
+[00:08:21 -> 00:08:22] So the worst-case time can be order n square to just
+[00:08:22 -> 00:08:24] relax one constraint.
+[00:08:24 -> 00:08:27] And the number of constraints that we need to relax in
+[00:08:27 -> 00:08:29] the worst case could be order n, and each of them
+[00:08:29 -> 00:08:34] needs to be checked for relaxation at least once.
+[00:08:34 -> 00:08:37] And so the worst-case time can be order n cubed.
+[00:08:37 -> 00:08:40] Now this is a very rough analysis, and a more precise
+[00:08:40 -> 00:08:47] and kind of clearer analysis is available in this paper on
+[00:08:47 -> 00:08:49] the complexity analysis of static analysis by David
+[00:08:49 -> 00:08:52] McElester, where he has a theorem which says the
+[00:08:52 -> 00:08:55] fixed-point solution can be obtained in order n cubed
+[00:08:55 -> 00:08:57] time using Anderson's algorithm.
+[00:08:57 -> 00:08:59] Now I want to point out that although we've been
+[00:08:59 -> 00:09:03] talking about the worst-case time being order n cubed,
+[00:09:03 -> 00:09:06] first of all, order n cubed is a very disappointing
+[00:09:07 -> 00:09:10] time because programs can be very large, thousands to
+[00:09:10 -> 00:09:13] millions of lines of code, and an order n cubed time
+[00:09:13 -> 00:09:18] complexity is often not going to work for many programs.
+[00:09:18 -> 00:09:20] And if you're doing a compilation, if a
+[00:09:20 -> 00:09:23] compilation is going to take hours or days because of
+[00:09:23 -> 00:09:26] the order n cubed time complexity, that's a non-starter.
+[00:09:26 -> 00:09:31] So Anderson's algorithm, for this reason, is not all that
+[00:09:31 -> 00:09:34] practical for the purposes of compilation, but it is
+[00:09:34 -> 00:09:37] often used for other purposes, like verification or
+[00:09:37 -> 00:09:38] program analysis, et cetera.
+[00:09:38 -> 00:09:41] We're going to see in our next module a faster
+[00:09:41 -> 00:09:44] alternative to Anderson's algorithm.
+[00:09:44 -> 00:09:48] But the other thing here to point out is that even
+[00:09:48 -> 00:09:51] though I've been doing the worst-case analysis, even
+[00:09:51 -> 00:09:54] the average of the typical case analysis is roughly
+[00:09:54 -> 00:09:59] quadratic to cubic, because after all, I need to relax
+[00:09:59 -> 00:10:02] order n constraints, irrespective, and each
+[00:10:02 -> 00:10:07] constraint, even if I assume that it takes on average order
+[00:10:07 -> 00:10:09] n time, then it's already order n squared time
+[00:10:09 -> 00:10:10] complexity.
+[00:10:10 -> 00:10:12] If not cubic, it's already quadratic.
+[00:10:12 -> 00:10:16] So the typical time is quadratic to cubic.
+[00:10:16 -> 00:10:17] The worst case can be cubic.
+[00:10:17 -> 00:10:19] And even quadratic is very bad.
+[00:10:19 -> 00:10:21] So if you have a million line program, quadratic time
+[00:10:21 -> 00:10:24] is also going to take hours or more than that.
+[00:10:24 -> 00:10:28] And so for that reason, it would be OK if the worst
+[00:10:28 -> 00:10:30] case was cubic, but the average or the typical case
+[00:10:30 -> 00:10:31] was linear.
+[00:10:31 -> 00:10:34] But in this case, even the typical case
+[00:10:34 -> 00:10:35] is at least quadratic.
+[00:10:35 -> 00:10:37] And so for this reason, Anderson's algorithm
+[00:10:37 -> 00:10:39] is considered one of the heavyweight or expensive
+[00:10:39 -> 00:10:43] algorithms to do for point analysis.

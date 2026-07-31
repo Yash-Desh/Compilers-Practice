@@ -1,0 +1,509 @@
+Title: Compiler Design Module 163 : Fully Permutable Loops
+Video ID: vSp5rHBiXTk
+Detected language: en
+------------------------------------------------------------
+
+[00:00:00 -> 00:00:07] Last time you were talking about an example which was not possible to pipeline and this
+[00:00:07 -> 00:00:15] was a successive over-relaxation example or the SOAR example and so the problem there
+[00:00:15 -> 00:00:22] was that if I pipeline using the iterations of the outer loop as tasks then between
+[00:00:22 -> 00:00:27] different stages of the task there were dependencies on in both directions.
+[00:00:27 -> 00:00:34] For example, the stages in the first task are dependent, the stages in the second task are
+[00:00:34 -> 00:00:39] dependent on the stages of the first task and vice versa. For pipelining what we
+[00:00:39 -> 00:00:44] require is that these dependencies are one way. For example, it's okay for
+[00:00:44 -> 00:00:48] stages in the second task to depend on the stages in the first task but
+[00:00:48 -> 00:00:50] it shouldn't be the other way around and so if that's true then what can
+[00:00:50 -> 00:00:54] happen is that I can keep executing the first task and then as
+[00:00:54 -> 00:00:59] the stages keep completing I can just keep signaling the second task in which
+[00:00:59 -> 00:01:04] can basically now execute in this waterfall or wavefront kind of manner
+[00:01:04 -> 00:01:10] which is also called the pipelining execution model. So how do we
+[00:01:10 -> 00:01:14] distinguish between a loop that is pipelinable and a loop that is not
+[00:01:14 -> 00:01:19] pipelinable and this concept of fully permutable loops is basically a very
+[00:01:19 -> 00:01:22] useful one when you're talking about pipelining. So what is a fully
+[00:01:22 -> 00:01:27] permutable loop? A loop is fully permutable if it can be permuted arbitrarily
+[00:01:27 -> 00:01:33] without changing the meaning of the program or if it's loop, if the
+[00:01:33 -> 00:01:38] different kind of iteration indices that form the different loops of
+[00:01:38 -> 00:01:41] the loop nest can be permuted. So to take an example let's say I have a
+[00:01:41 -> 00:01:46] loop for i equals something something for j equals something something for
+[00:01:46 -> 00:01:52] k equals dot dot dot s1 then this loop nest should be equivalent to if I
+[00:01:52 -> 00:01:57] permute let's say j and k or let's say I permute i and j so example here I
+[00:01:57 -> 00:02:02] permute i and j so I say for j equals dot dot dot for i equals dot dot dot for k
+[00:02:02 -> 00:02:07] equals dot dot dot s1 and these two programs should be equivalent which
+[00:02:07 -> 00:02:11] means the meaning of the program should be equivalent and it should be
+[00:02:11 -> 00:02:17] possible to do this for any two or three or four indices and repeat at least
+[00:02:17 -> 00:02:22] for example I could say for k I could make k the outer loop, j the middle loop
+[00:02:22 -> 00:02:27] and i the inner loop and still the program should retain its meaning. So
+[00:02:27 -> 00:02:31] now the question is what kind of programs or what kind of properties
+[00:02:31 -> 00:02:37] that and do I need on s1 or in general the whole loop nest such
+[00:02:37 -> 00:02:41] that that loop nest becomes fully permutable. Now of course if s1 was
+[00:02:41 -> 00:02:45] completely data independent then all this is okay to do but I mean data
+[00:02:45 -> 00:02:50] independence is kind of you know a sufficient condition but not a
+[00:02:50 -> 00:02:58] necessary condition I can basically have a more relaxed set of constraints on s1
+[00:02:58 -> 00:03:03] such that these kind of permutations still preserve the meaning of the
+[00:03:03 -> 00:03:08] program. So what are this kind of what is the most relaxed meaning what is the
+[00:03:08 -> 00:03:12] most relaxed constraint that I need to put on the program such that it is okay
+[00:03:12 -> 00:03:18] to permute these loops and yet retain the meaning of the program. So here
+[00:03:18 -> 00:03:24] is what it is okay notice that let p be the permutations for example if my
+[00:03:24 -> 00:03:29] original loop nest was ijk let p be the permutation which converts ijk to
+[00:03:29 -> 00:03:34] let's say jik or maybe it permutes it to kji or whatever right so p
+[00:03:34 -> 00:03:41] represents some permutation and so there's p so p of i basically tells
+[00:03:41 -> 00:03:46] give me a new permutation. For example if it's you know i was equal to 1 j
+[00:03:46 -> 00:03:50] was equal to 2 then a permutation would be j equals 2 and i equals 1
+[00:03:50 -> 00:03:54] okay and because j executes in the outer loop and i executes in the inner
+[00:03:54 -> 00:03:59] loop. So if there were two different iteration points in the iteration indices
+[00:03:59 -> 00:04:06] i1 and i2 then if i1 preceded i2 in the ascending lexicographic order in
+[00:04:06 -> 00:04:12] the execution order in the original program and in the new program in the
+[00:04:12 -> 00:04:17] permuted program i2 preceded i1 all right so basically i2 was going to get
+[00:04:17 -> 00:04:24] executed before i1 in the new series. So for example if it is 1, 0 and 0, 1
+[00:04:24 -> 00:04:32] right so let's say i, j is 1, 0 and 0, 1 or let me just take an
+[00:04:32 -> 00:04:37] example 0, 2 so 1, 0 and 0, 2 so which one precedes which one in
+[00:04:37 -> 00:04:46] ascending lexicographic order well it's clear that 0, 2 precedes 1, 0
+[00:04:46 -> 00:04:50] but now if I look at the permutation then permutation let's say this
+[00:04:50 -> 00:04:57] switches the order then 1, 0 precedes sorry if I if I switch the
+[00:04:57 -> 00:05:06] order then 1, 0 becomes 0, 1 so 0, 1 precedes 2, 0 in ascending
+[00:05:06 -> 00:05:11] lexicographic order and so whenever this is true whenever it is true that you
+[00:05:11 -> 00:05:15] know for any i1 and i2 and it is true for 1, 0 and 0, 2 that 0, 2
+[00:05:15 -> 00:05:22] precedes 1, 0 and the permutation 0, 1 precedes 2, 0 whenever this is
+[00:05:22 -> 00:05:26] true it should be true that i1 and i2 don't have any data dependence in other
+[00:05:26 -> 00:05:30] words there should not be any data dependence between 0, 2 and 1, 0
+[00:05:30 -> 00:05:36] if I was to draw this diagram diagrammatically 0, 2 so this is 0, 0
+[00:05:36 -> 00:05:45] 0, 1 0, 2 right and then this is 1, 0 so there should not be any data
+[00:05:45 -> 00:05:51] dependency between these two locations okay and if there is no data
+[00:05:51 -> 00:05:55] dependency then it is okay to basically do this permutation for all possible i1
+[00:05:55 -> 00:06:02] and i2 okay so which basically so for all possible i1 and i2 whenever the
+[00:06:02 -> 00:06:06] order have relative orders of those i1 and i2 have changed it should be
+[00:06:06 -> 00:06:09] true that there was no data dependence and if that is if this
+[00:06:09 -> 00:06:12] condition is true then it basically means that the loop is fully
+[00:06:12 -> 00:06:17] permutable because even with respect to the permutation P and then we can also
+[00:06:17 -> 00:06:21] quantify over all possible permutations P but with with respect to the
+[00:06:21 -> 00:06:25] permutation P whenever this is true then there should be no data
+[00:06:25 -> 00:06:28] dependence that basically means that the permutation preserved the meaning
+[00:06:28 -> 00:06:34] of the program because for all the iterations which were reordered there
+[00:06:34 -> 00:06:37] was no data dependence and for iterations that had data dependence
+[00:06:37 -> 00:06:44] there was no reordering so to understand this using a picture let's say it's a
+[00:06:44 -> 00:06:50] 2d loop then this loop here which I've shown in you know with blue
+[00:06:50 -> 00:06:54] crosses and the inner loop is on the x-axis and the outer loop is on the
+[00:06:54 -> 00:06:59] y-axis then these green arrows represent the data dependencies and I
+[00:06:59 -> 00:07:04] claim that this particular loop is fully permutable you can see that you
+[00:07:04 -> 00:07:13] know whenever there is an iteration two iteration pairs such that the their
+[00:07:13 -> 00:07:18] relative order would change in case I switch the axis then either they would
+[00:07:18 -> 00:07:22] retain their relative ordering for example if I take 0 comma 0 and 1
+[00:07:22 -> 00:07:26] comma 1 so 0 comma 0 and 1 comma 1 irrespective of which one I make the
+[00:07:26 -> 00:07:30] inner loop would always have the same relative order which means 0 comma 0
+[00:07:30 -> 00:07:35] would always execute before 1 comma 1 irrespective of whether i is the inner loop
+[00:07:35 -> 00:07:40] or whether j is the inner loop however if I take 1 comma 0 and or let's say 1
+[00:07:40 -> 00:07:44] comma 0 and 0 comma 2 just the example that we used in the previous slide
+[00:07:44 -> 00:07:48] then you can see that there is no data dependency if I look at this one
+[00:07:48 -> 00:07:51] and this one there is no data dependency between the two why do I
+[00:07:51 -> 00:07:54] say that there is no data dependency between this one and this one
+[00:07:54 -> 00:07:59] because there is no path from either one to the other okay so there is no
+[00:07:59 -> 00:08:03] path that basically I can take in this dependency chain that basically takes me
+[00:08:03 -> 00:08:07] from one to the other in either direction and so these two are data
+[00:08:07 -> 00:08:11] independent and and I claim that this is basically a fully permutable loop
+[00:08:11 -> 00:08:17] an easier way to think about this is that all the data dependency edges in
+[00:08:17 -> 00:08:22] this 2d diagram should have an angle between 0 and 90 degrees inclusive of
+[00:08:22 -> 00:08:27] 90 and 0 right so and this basically means that you know all my data
+[00:08:27 -> 00:08:31] dependencies are from lower values of i comma j strictly lower values of i
+[00:08:31 -> 00:08:36] comma j which means both i and j are lower to strictly higher values of i
+[00:08:36 -> 00:08:40] comma j and so that's that's exactly the condition that the angle of
+[00:08:40 -> 00:08:45] these data dependency edges is between 0 degrees and 90 degrees it
+[00:08:45 -> 00:08:49] should not be greater than 90 degrees and if it is between it if it is
+[00:08:49 -> 00:08:53] greater than 90 degrees then I would basically have edges of this type
+[00:08:53 -> 00:08:58] right and then I have edges of this type I basically have problem and the
+[00:08:58 -> 00:09:02] loop does not remain fully permutable anymore because between if I look at
+[00:09:02 -> 00:09:05] these two pairs then if I switch the axes then the relative order of these
+[00:09:05 -> 00:09:10] two pairs basically changes and because I have a data dependency edge
+[00:09:10 -> 00:09:14] that basically violates my fully permutable loop condition that I had
+[00:09:14 -> 00:09:20] on my previous life so this is an example of a loop that has that is
+[00:09:20 -> 00:09:24] not fully permutable where the red edges basically show data dependencies
+[00:09:24 -> 00:09:29] and for non permutable loops non fully permutable loops the theta
+[00:09:29 -> 00:09:33] angle can be greater than 90 in general it can be anywhere between
+[00:09:33 -> 00:09:37] 0 and 180 if the theta all the dependency edges are between 0 and
+[00:09:37 -> 00:09:43] 90 then the loop is fully permutable if some of the dependency
+[00:09:43 -> 00:09:47] edges have angle greater than 90 for a 2d loop then the loop is
+[00:09:47 -> 00:09:54] not fully permutable so we have this loop for i equals 0 to m j equals 0
+[00:09:54 -> 00:10:00] to n xj plus 1 equals xj plus xj plus 1 plus xj plus 2 by 3
+[00:10:00 -> 00:10:06] this is our successive over relaxation or sor program and in this
+[00:10:06 -> 00:10:11] program we saw in our previous module that the dependency edges are
+[00:10:11 -> 00:10:16] basically at an angle also at an angle of 135 degrees including
+[00:10:16 -> 00:10:19] angle 90 and 0 and stuff like that there are some dependency edges
+[00:10:19 -> 00:10:24] that kind of go beyond 90 degrees and we say that such a loop
+[00:10:24 -> 00:10:29] is not fully permutable because because if you permute the
+[00:10:29 -> 00:10:33] ing axis then you get you violate some of the data dependencies
+[00:10:34 -> 00:10:37] and so what we did was we just converted we just change the
+[00:10:37 -> 00:10:41] axis so that we basically make it fully permutable and recall that
+[00:10:41 -> 00:10:45] the changing of axis basically involved a new set of axes i prime
+[00:10:45 -> 00:10:50] and j prime which was basically formed by i prime equals i so i
+[00:10:50 -> 00:10:53] prime and i are the same and in fact i'm going to use just
+[00:10:53 -> 00:10:56] i and not i prime anymore because i prime is just equal to
+[00:10:56 -> 00:11:00] i and j prime equals i plus j right and so this is my
+[00:11:01 -> 00:11:05] axis transformation matrix and so with that the program that
+[00:11:05 -> 00:11:10] i get is for i equals 0 i is less than equal to m i plus
+[00:11:10 -> 00:11:15] plus for j prime equals i because you know j was from 0
+[00:11:15 -> 00:11:19] to n so j prime is i plus j so j prime starts from i
+[00:11:19 -> 00:11:23] plus 0 to i plus n right so that's just j prime equals
+[00:11:23 -> 00:11:27] i to i plus n j prime plus plus now i'm not showing all
+[00:11:27 -> 00:11:30] the steps involved in figuring this out we'll use the
+[00:11:30 -> 00:11:33] Fourier mode skin method to identify the bounds and stuff
+[00:11:33 -> 00:11:37] like that but but this is what it's going to be and finally
+[00:11:37 -> 00:11:41] we need to write j in terms of j prime and i prime or just
+[00:11:41 -> 00:11:45] i and so j prime minus i plus 1 equals x of j prime
+[00:11:45 -> 00:11:48] minus i plus 1 equals the right hand side where once
+[00:11:48 -> 00:11:52] again j has been replaced with j prime minus i so this
+[00:11:52 -> 00:11:53] is my new program.
+[00:11:53 -> 00:11:57] This is a program in which I have modified the axis
+[00:11:57 -> 00:11:59] change the axis in fact what I've done is I just kind
+[00:11:59 -> 00:12:05] of used the 135 degree angle line which is i plus j as
+[00:12:05 -> 00:12:08] my new y-axis right so I just kind of squished and
+[00:12:08 -> 00:12:13] rotated the the whole kind of iteration space such
+[00:12:13 -> 00:12:16] that the 135 degree angle now becomes a 90 degree
+[00:12:16 -> 00:12:20] angle and to see this if I draw the iteration
+[00:12:20 -> 00:12:24] space now with this transformed program where i is
+[00:12:24 -> 00:12:27] on the y-axis and j prime to the inner loop is on
+[00:12:27 -> 00:12:31] the x-axis then i goes from zero to m and for every
+[00:12:31 -> 00:12:36] i j prime goes from i to i plus n so for example
+[00:12:36 -> 00:12:39] when i equals zero then j prime goes from zero to
+[00:12:39 -> 00:12:44] n when i equals 1 then j prime goes to 1 to n
+[00:12:44 -> 00:12:48] plus 1 and i equals 2 then j prime goes from 2
+[00:12:48 -> 00:12:50] to j plus 2 and so on and so I get this
+[00:12:50 -> 00:12:54] parallelogram style figure of my iteration space
+[00:12:54 -> 00:12:57] and that's because I have rotated my y-axis
+[00:12:57 -> 00:13:00] right from 135 to 90 originally I had kind of a
+[00:13:00 -> 00:13:03] rectangular shape of my iteration space but once I
+[00:13:03 -> 00:13:05] change my axis I kind of change my 135 degree
+[00:13:05 -> 00:13:08] angle to 90 degree then I basically get this
+[00:13:08 -> 00:13:12] parallelogram shaped iteration space and now
+[00:13:12 -> 00:13:14] when I draw the dependency edges on this new
+[00:13:14 -> 00:13:17] iteration space transformed iteration space all
+[00:13:17 -> 00:13:21] the dependency edges have also rotated because of
+[00:13:21 -> 00:13:23] this transformation axis transformation and all
+[00:13:23 -> 00:13:26] the 135 degree angle edges in my previous figure
+[00:13:26 -> 00:13:29] that I showed in the previous module have now
+[00:13:29 -> 00:13:32] become 90 degree angles in my new figure and all
+[00:13:32 -> 00:13:34] my 90 degree angles in the previous figure have
+[00:13:34 -> 00:13:37] become a 45 degree angle in the new figure and
+[00:13:37 -> 00:13:39] the 0 degree angles remain the same and so this
+[00:13:39 -> 00:13:43] is my new dependency edge figure and notice
+[00:13:43 -> 00:13:48] here that because all dependency edges are either
+[00:13:48 -> 00:13:52] 90 degrees angle or less you know this 45
+[00:13:52 -> 00:13:54] this is 90 and this is zero so all dependency
+[00:13:54 -> 00:13:58] edges have theta less than equal to 90 this
+[00:13:58 -> 00:14:00] particular transform loop now becomes a fully
+[00:14:00 -> 00:14:03] permutable loop so this is a nice trick that
+[00:14:03 -> 00:14:05] you can play for some programs not all programs
+[00:14:05 -> 00:14:07] I'm going to discuss which program we cannot
+[00:14:07 -> 00:14:10] play this trick with later on but for some
+[00:14:10 -> 00:14:11] programs you can play this trick by just
+[00:14:11 -> 00:14:14] rotating the axis and basically ensuring that
+[00:14:14 -> 00:14:17] we have a fully pipeline a fully permutable
+[00:14:17 -> 00:14:19] loop and recall that if you have a fully
+[00:14:19 -> 00:14:22] permutable loop then it is possible I claim to
+[00:14:22 -> 00:14:25] do the pipelining for that particular loop so
+[00:14:25 -> 00:14:28] how will pipelining work well in this case
+[00:14:28 -> 00:14:32] basically what we do is we use tasks as you
+[00:14:32 -> 00:14:34] know every iteration of the outer loop as
+[00:14:34 -> 00:14:37] one task so for example for i equals 0 I
+[00:14:37 -> 00:14:39] have this first task which is you know which
+[00:14:39 -> 00:14:41] is I know which is basically labeled as the
+[00:14:41 -> 00:14:43] i equals 0 task then for i equals 1 I have
+[00:14:43 -> 00:14:46] another task i equals 2 I have another task
+[00:14:46 -> 00:14:49] and so on so I have m different tasks so
+[00:14:49 -> 00:14:52] capital N number of different tasks and
+[00:14:52 -> 00:14:55] within each task I have stages so for
+[00:14:55 -> 00:14:59] example this is j equals 0 stage I'm just
+[00:14:59 -> 00:15:02] using j and cross j prime just to make
+[00:15:02 -> 00:15:06] the discussion simpler so j equals 0 is
+[00:15:06 -> 00:15:10] the first stage of the first task j equals
+[00:15:10 -> 00:15:12] 1 is the second stage of the first task
+[00:15:12 -> 00:15:15] j equals 2 is the second third stage of
+[00:15:15 -> 00:15:16] the first task and so on right so these
+[00:15:16 -> 00:15:19] stages are now labeled with the j values
+[00:15:19 -> 00:15:21] stage j equals 0 stage j equals 1 stage
+[00:15:21 -> 00:15:23] j equals 2 and these are all the stages
+[00:15:23 -> 00:15:25] of the different tasks and recall what
+[00:15:25 -> 00:15:28] is the idea of pipelining the idea
+[00:15:28 -> 00:15:30] of pipelining is that I specialize a
+[00:15:30 -> 00:15:32] processor for a particular stage and so
+[00:15:32 -> 00:15:35] the idea is that you know CPU 0
+[00:15:35 -> 00:15:37] will basically specialize on stage j
+[00:15:37 -> 00:15:39] equals 0 CPU 1 will specialize on
+[00:15:39 -> 00:15:42] stage j equals 1 CPU 2 will specialize
+[00:15:42 -> 00:15:44] on stage j equals 2 and see for example
+[00:15:44 -> 00:15:48] CPU 2 will first execute stage j equals 2
+[00:15:48 -> 00:15:51] for the first task then stage j equals
+[00:15:51 -> 00:15:53] 2 for the second task then stage j
+[00:15:53 -> 00:15:54] equals 2 for the third task so it's
+[00:15:54 -> 00:15:56] going to execute all these points in
+[00:15:56 -> 00:15:58] the iteration space that's formed by
+[00:15:58 -> 00:16:01] the vertical line and similarly so you
+[00:16:01 -> 00:16:02] know I just showed the stages for
+[00:16:02 -> 00:16:04] task i equals 0 these are the
+[00:16:04 -> 00:16:06] stages for task i equals 1 for task
+[00:16:06 -> 00:16:09] i equals 1 I start with stage j
+[00:16:09 -> 00:16:11] equals 1 I don't start with stage
+[00:16:11 -> 00:16:13] j equals 0 I start with stage j
+[00:16:13 -> 00:16:15] equals 1 because that's what my
+[00:16:15 -> 00:16:17] iteration space looks like and then
+[00:16:17 -> 00:16:19] stage j equals 2 and so on but I
+[00:16:19 -> 00:16:22] end at stage j equals n plus 1
+[00:16:22 -> 00:16:24] instead no task i equals 0 was
+[00:16:24 -> 00:16:26] ending at j equals n but task i
+[00:16:26 -> 00:16:29] equals 1 is going to end at task
+[00:16:30 -> 00:16:35] j plus task n plus 1 and so on
+[00:16:35 -> 00:16:36] right so I mean so there are all
+[00:16:36 -> 00:16:38] these different tasks task i equals
+[00:16:38 -> 00:16:40] 0 task i equals 1 task i equals 2
+[00:16:40 -> 00:16:42] and so on all the way till task i
+[00:16:43 -> 00:16:46] equals m and then each of these
+[00:16:46 -> 00:16:48] tasks has multiple stages and the
+[00:16:48 -> 00:16:50] processor is supposed to specialize
+[00:16:50 -> 00:16:53] on the stages so for example CPU
+[00:16:53 -> 00:16:55] 0 is going to execute stage j
+[00:16:55 -> 00:16:56] equals 0 and actually at stage j
+[00:16:56 -> 00:16:58] equals 0 there's only one task
+[00:16:58 -> 00:16:59] that executes so that's okay CPU
+[00:16:59 -> 00:17:01] 0 is not going to have to do
+[00:17:01 -> 00:17:04] much work so you know CPU 0 only
+[00:17:04 -> 00:17:06] has one thing to do one iteration
+[00:17:06 -> 00:17:09] point to execute state CPU 1 will
+[00:17:09 -> 00:17:12] execute two points two iteration
+[00:17:12 -> 00:17:14] points see CPU 2 will execute
+[00:17:14 -> 00:17:16] three iteration points and so on
+[00:17:16 -> 00:17:17] right CPU 3 and onwards will
+[00:17:17 -> 00:17:19] execute four iteration points
+[00:17:19 -> 00:17:21] each in this particular figure
+[00:17:21 -> 00:17:23] until you know we reach this
+[00:17:23 -> 00:17:26] point where at CPU n where you
+[00:17:26 -> 00:17:28] know it's going to be again we
+[00:17:28 -> 00:17:30] going to have fewer and fewer
+[00:17:30 -> 00:17:32] points as we go along in the
+[00:17:32 -> 00:17:33] CPU but these are all the
+[00:17:33 -> 00:17:36] CPUs that I can execute in a
+[00:17:36 -> 00:17:38] pipeline fashion and so for
+[00:17:38 -> 00:17:40] example CPU 1 would first
+[00:17:40 -> 00:17:45] execute stage 1 of task i equals
+[00:17:45 -> 00:17:47] 0 so stage j equals 1 of task
+[00:17:47 -> 00:17:50] i equals 0 but it cannot just
+[00:17:50 -> 00:17:52] executed straight away it has
+[00:17:52 -> 00:17:55] to wait for stage j equals 0
+[00:17:55 -> 00:17:56] of task i equals 0 to tell
+[00:17:56 -> 00:17:59] it that it is done that's
+[00:17:59 -> 00:18:01] my synchronization only then
+[00:18:01 -> 00:18:03] the CPU 1 can execute stage
+[00:18:03 -> 00:18:06] 1 i j equals 1 of task i
+[00:18:06 -> 00:18:09] equals 0 and then similarly
+[00:18:09 -> 00:18:11] you know let's so in general
+[00:18:11 -> 00:18:13] basically if I look at any
+[00:18:13 -> 00:18:14] particular point so let's say
+[00:18:14 -> 00:18:15] I look at this particular
+[00:18:15 -> 00:18:18] point which is stage j equals
+[00:18:18 -> 00:18:21] 1 of task i equals 0 so stage
+[00:18:21 -> 00:18:22] j this particular point that
+[00:18:22 -> 00:18:24] are circled in red before
+[00:18:24 -> 00:18:26] the CPU 1 executes this
+[00:18:26 -> 00:18:29] point it should wait for CPU
+[00:18:29 -> 00:18:32] 0 to say that it has already
+[00:18:32 -> 00:18:35] executed stage j equals 0 of
+[00:18:35 -> 00:18:37] this particular task right so
+[00:18:37 -> 00:18:40] CPU j equals 1 needs to wait
+[00:18:40 -> 00:18:42] for CPU j equals 0 to say I'm
+[00:18:42 -> 00:18:46] done in general CPU j waits
+[00:18:46 -> 00:18:48] for CPU j minus 1 to signal
+[00:18:48 -> 00:18:49] before executing what it needs
+[00:18:49 -> 00:18:51] to do all right so in this
+[00:18:51 -> 00:18:53] case j equals 1 so CPU 1 needs
+[00:18:53 -> 00:18:55] to wait for CPU 0 to signal
+[00:18:55 -> 00:18:56] before it can execute this
+[00:18:56 -> 00:18:58] particular iteration point so
+[00:18:58 -> 00:19:00] similarly CPU you know if
+[00:19:00 -> 00:19:01] I just generalize it for
+[00:19:01 -> 00:19:02] example if I look at this
+[00:19:02 -> 00:19:04] particular point here so let's
+[00:19:04 -> 00:19:05] say I look at this particular
+[00:19:05 -> 00:19:07] point here let me just you
+[00:19:07 -> 00:19:09] know circle it in red then
+[00:19:09 -> 00:19:11] this particular before it can
+[00:19:11 -> 00:19:12] execute this particular point
+[00:19:12 -> 00:19:15] it has to wait for this
+[00:19:15 -> 00:19:17] point to execute before it
+[00:19:17 -> 00:19:18] can execute this right so it
+[00:19:18 -> 00:19:20] has to execute wait for this
+[00:19:20 -> 00:19:21] point before it can execute
+[00:19:21 -> 00:19:23] this so in general any CPU
+[00:19:23 -> 00:19:25] j so in this case j is 4
+[00:19:25 -> 00:19:27] so any CPU 4 needs to wait
+[00:19:27 -> 00:19:29] for CPU 3 to signal and this
+[00:19:29 -> 00:19:31] has to happen for each task
+[00:19:31 -> 00:19:32] so for example it has to wait
+[00:19:32 -> 00:19:33] for CPU 3 to signal before
+[00:19:33 -> 00:19:35] it executes this then it has
+[00:19:35 -> 00:19:36] to wait for CPU 3 to signal
+[00:19:36 -> 00:19:38] again for task i equals 2
+[00:19:38 -> 00:19:39] before it executes this
+[00:19:39 -> 00:19:41] point and so on right so
+[00:19:41 -> 00:19:42] every CPU just keeps
+[00:19:42 -> 00:19:43] executing you know just
+[00:19:43 -> 00:19:45] keeps climbing this
+[00:19:45 -> 00:19:47] vertical chain but before
+[00:19:47 -> 00:19:48] it executes any point in
+[00:19:48 -> 00:19:49] this vertical chain it
+[00:19:49 -> 00:19:51] waits for the CPU on its
+[00:19:51 -> 00:19:53] left to signal before it
+[00:19:53 -> 00:19:54] can execute and that's the
+[00:19:54 -> 00:19:56] whole idea of pipelining
+[00:19:56 -> 00:19:57] where we basically do order
+[00:19:57 -> 00:19:58] and synchronization on every
+[00:19:58 -> 00:20:01] CPU because you know CPU 4
+[00:20:01 -> 00:20:02] basically waits for
+[00:20:02 -> 00:20:04] synchronization at every
+[00:20:04 -> 00:20:06] point before it executes
+[00:20:07 -> 00:20:09] so CPU j waits for CPU j
+[00:20:09 -> 00:20:10] minus 1 to signal before
+[00:20:10 -> 00:20:11] exec and this is for every
+[00:20:11 -> 00:20:14] task and there are m
+[00:20:14 -> 00:20:15] different tasks in this
+[00:20:15 -> 00:20:16] particular example and
+[00:20:16 -> 00:20:17] that's why we say this
+[00:20:17 -> 00:20:19] is order m synchronization
+[00:20:20 -> 00:20:22] how do i wait well how
+[00:20:22 -> 00:20:23] so basically there needs
+[00:20:23 -> 00:20:24] to be some signal wait
+[00:20:24 -> 00:20:26] mechanism and if this if
+[00:20:26 -> 00:20:28] this particular CPU is
+[00:20:28 -> 00:20:29] waiting for the CPU on its
+[00:20:29 -> 00:20:30] left to signal then it's
+[00:20:30 -> 00:20:32] the job of the CPU on the
+[00:20:32 -> 00:20:33] left to actually do a
+[00:20:33 -> 00:20:34] signal so there needs to
+[00:20:34 -> 00:20:35] be a message that CPU 3
+[00:20:35 -> 00:20:36] saying saying okay I'm
+[00:20:36 -> 00:20:38] done and you know you
+[00:20:38 -> 00:20:39] whenever you are ready
+[00:20:39 -> 00:20:40] you can also execute now
+[00:20:40 -> 00:20:42] right but unless CPU 3
+[00:20:42 -> 00:20:43] is done CPU 4 cannot
+[00:20:43 -> 00:20:45] exit execute and so there
+[00:20:45 -> 00:20:46] needs to be some way of
+[00:20:46 -> 00:20:47] doing the signal so for
+[00:20:47 -> 00:20:49] each task I so first of
+[00:20:49 -> 00:20:50] all I want to point out
+[00:20:50 -> 00:20:51] that this this wait and
+[00:20:51 -> 00:20:52] signal has to happen for
+[00:20:52 -> 00:20:53] each task I have been
+[00:20:53 -> 00:20:54] saying this but also
+[00:20:54 -> 00:20:56] written it here and
+[00:20:56 -> 00:20:57] moreover after the
+[00:20:57 -> 00:21:00] execution CPU j signals
+[00:21:00 -> 00:21:02] CPU j plus 1 all right so
+[00:21:02 -> 00:21:04] CPU j signals CPU j plus
+[00:21:04 -> 00:21:05] 1 so after I have
+[00:21:05 -> 00:21:07] executed this I should
+[00:21:07 -> 00:21:09] signal CPU 2 that okay
+[00:21:09 -> 00:21:10] I'm done with you know
+[00:21:10 -> 00:21:14] stage 1 of task 0 now
+[00:21:14 -> 00:21:16] you can execute stage 2
+[00:21:16 -> 00:21:19] of the same task 0 and
+[00:21:19 -> 00:21:20] so that's what's going
+[00:21:20 -> 00:21:21] to be you know done
+[00:21:21 -> 00:21:23] for every point I'm going
+[00:21:23 -> 00:21:26] to wait for the CPU
+[00:21:26 -> 00:21:27] on my left to signal
+[00:21:28 -> 00:21:28] after I receive that
+[00:21:28 -> 00:21:29] signal I'm going to
+[00:21:29 -> 00:21:30] actually execute that
+[00:21:30 -> 00:21:32] particular point and then
+[00:21:32 -> 00:21:34] I'm going to signal
+[00:21:34 -> 00:21:35] the CPU on my right and
+[00:21:35 -> 00:21:36] I'm going to do this for
+[00:21:36 -> 00:21:38] every horizontal row in
+[00:21:38 -> 00:21:39] other words every task
+[00:21:39 -> 00:21:40] which is the every
+[00:21:41 -> 00:21:42] iteration of the outer
+[00:21:42 -> 00:21:44] loop there are only
+[00:21:44 -> 00:21:45] there are some
+[00:21:45 -> 00:21:46] exceptions some places
+[00:21:46 -> 00:21:47] I don't need to wait
+[00:21:47 -> 00:21:49] for the CPU on the
+[00:21:49 -> 00:21:49] left and those are
+[00:21:49 -> 00:21:51] the boundary points for
+[00:21:51 -> 00:21:52] example on the left
+[00:21:52 -> 00:21:54] boundary I don't need
+[00:21:54 -> 00:21:55] to wait for the CPU
+[00:21:55 -> 00:21:56] on the left like
+[00:21:56 -> 00:21:57] example at CPU 1 when
+[00:21:57 -> 00:21:58] I'm at this point that
+[00:21:58 -> 00:22:00] this is j equals 1 and
+[00:22:00 -> 00:22:02] i equals 1 then there
+[00:22:02 -> 00:22:04] is no left point here
+[00:22:04 -> 00:22:04] and so I don't need to
+[00:22:04 -> 00:22:06] wait for CPU 0 to
+[00:22:06 -> 00:22:07] basically signal me
+[00:22:07 -> 00:22:08] similarly at this point
+[00:22:08 -> 00:22:09] here I don't need to
+[00:22:09 -> 00:22:11] wait for CPU 1 to
+[00:22:11 -> 00:22:12] signal me I can just
+[00:22:12 -> 00:22:13] start executing if I
+[00:22:13 -> 00:22:14] have reached this point
+[00:22:14 -> 00:22:15] right so in general
+[00:22:15 -> 00:22:16] every CPU is going
+[00:22:16 -> 00:22:17] to execute these points
+[00:22:17 -> 00:22:19] sequentially climb up
+[00:22:19 -> 00:22:19] this chain
+[00:22:21 -> 00:22:22] sequentially but when
+[00:22:22 -> 00:22:23] it reaches this point
+[00:22:23 -> 00:22:25] it no longer for
+[00:22:25 -> 00:22:26] example when it's here
+[00:22:26 -> 00:22:26] then it needs to wait
+[00:22:26 -> 00:22:28] for CPU 1 to signal
+[00:22:28 -> 00:22:29] once again when it's
+[00:22:29 -> 00:22:30] here then it needs to
+[00:22:30 -> 00:22:31] again wait for CPU 1
+[00:22:31 -> 00:22:32] to signal but when
+[00:22:32 -> 00:22:34] it's here at the
+[00:22:34 -> 00:22:35] boundary point at the
+[00:22:35 -> 00:22:36] left boundary point
+[00:22:36 -> 00:22:37] then it does not need
+[00:22:37 -> 00:22:39] to wait for the CPU
+[00:22:39 -> 00:22:40] 1 to signal because
+[00:22:40 -> 00:22:41] it is a boundary point
+[00:22:41 -> 00:22:42] and so when we are
+[00:22:42 -> 00:22:42] going to do our
+[00:22:42 -> 00:22:43] code generation we
+[00:22:43 -> 00:22:44] need to be careful
+[00:22:44 -> 00:22:45] about these boundary
+[00:22:45 -> 00:22:46] conditions as you
+[00:22:46 -> 00:22:48] are going to see in
+[00:22:48 -> 00:22:50] the next module similarly
+[00:22:50 -> 00:22:51] at the right boundary
+[00:22:51 -> 00:22:52] there is no need to
+[00:22:52 -> 00:22:53] signal just like on
+[00:22:53 -> 00:22:53] the left boundary
+[00:22:53 -> 00:22:54] there's no need to
+[00:22:54 -> 00:22:56] wait similarly on the
+[00:22:56 -> 00:22:56] right boundary there
+[00:22:56 -> 00:22:57] is no need to
+[00:22:57 -> 00:22:58] signal I don't need
+[00:22:58 -> 00:22:59] to send any message
+[00:22:59 -> 00:22:59] because I know that
+[00:22:59 -> 00:23:00] there's nobody on my
+[00:23:00 -> 00:23:01] right that's going to
+[00:23:01 -> 00:23:02] wait for a message for
+[00:23:02 -> 00:23:03] this particular task
+[00:23:03 -> 00:23:05] similarly this is
+[00:23:05 -> 00:23:06] the right boundary
+[00:23:06 -> 00:23:06] point and this is
+[00:23:06 -> 00:23:07] the right boundary
+[00:23:07 -> 00:23:08] point and this is
+[00:23:08 -> 00:23:08] the right boundary
+[00:23:08 -> 00:23:09] point for all the
+[00:23:09 -> 00:23:10] internal points which
+[00:23:10 -> 00:23:11] are non-boundary I
+[00:23:11 -> 00:23:12] need to do both
+[00:23:12 -> 00:23:14] wait and signal for
+[00:23:14 -> 00:23:15] the left boundary
+[00:23:15 -> 00:23:16] points in this figure
+[00:23:16 -> 00:23:17] I don't need to
+[00:23:17 -> 00:23:18] do a wait for the
+[00:23:18 -> 00:23:19] right boundary points
+[00:23:19 -> 00:23:20] in this figure I
+[00:23:20 -> 00:23:21] don't need to do
+[00:23:21 -> 00:23:22] a signal

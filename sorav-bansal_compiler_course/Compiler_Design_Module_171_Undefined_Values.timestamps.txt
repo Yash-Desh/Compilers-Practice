@@ -1,0 +1,530 @@
+Title: Compiler Design Module 171 : Undefined Values
+Video ID: LbQ6OvehOao
+Detected language: en
+------------------------------------------------------------
+
+[00:00:00 -> 00:00:03] So we've been looking at the design of
+[00:00:03 -> 00:00:07] an IR with respect to undefined behavior or non-determinism.
+[00:00:07 -> 00:00:10] Notice that an IR like
+[00:00:10 -> 00:00:13] LLVM actually needs to cater to multiple languages
+[00:00:13 -> 00:00:17] because the way we typically design our compilation pipelines
+[00:00:17 -> 00:00:22] is that multiple source languages lower down to the same IR,
+[00:00:22 -> 00:00:24] and then you do optimizations on the IR.
+[00:00:24 -> 00:00:28] Many languages, different languages may have different semantics.
+[00:00:28 -> 00:00:32] So C is one of the most aggressive languages
+[00:00:32 -> 00:00:35] in terms of the non-deterministic semantics.
+[00:00:35 -> 00:00:36] So let's take an example.
+[00:00:36 -> 00:00:39] Let's say this variable called
+[00:00:39 -> 00:00:42] X is uninitialized and then I try to print X.
+[00:00:42 -> 00:00:46] Now a language like C says that if you try to access
+[00:00:46 -> 00:00:50] an uninitialized value such as you try to print it,
+[00:00:50 -> 00:00:51] then that's undefined behavior.
+[00:00:51 -> 00:00:54] So it is perfectly okay to say that X is poison,
+[00:00:54 -> 00:00:57] or you just say that reading
+[00:00:57 -> 00:00:59] X is going to trigger undefined behavior.
+[00:00:59 -> 00:01:04] But many languages would just say that you expect a random value to be printed.
+[00:01:04 -> 00:01:10] It should not be that the program is treated as uninitialized or undefined.
+[00:01:10 -> 00:01:14] The program is not really going to exhibit UB,
+[00:01:14 -> 00:01:19] but what you expect in the language semantics is that a random value is printed.
+[00:01:19 -> 00:01:21] Now notice that printing of
+[00:01:21 -> 00:01:25] a random value is very different from triggering undefined behavior.
+[00:01:25 -> 00:01:28] Triggering undefined behavior means anything can happen.
+[00:01:28 -> 00:01:33] Whereas printing a random value just gives a very small set of possible behaviors,
+[00:01:33 -> 00:01:36] which is let's say if int was 32 bit,
+[00:01:36 -> 00:01:39] then maybe two to the power 32 different behavior, then that's it.
+[00:01:39 -> 00:01:42] Whereas undefined behavior expands
+[00:01:42 -> 00:01:45] that set of non-determinism to a much larger degree.
+[00:01:45 -> 00:01:49] In other words, there are more deterministic languages
+[00:01:49 -> 00:01:54] that allow lesser degree of non-determinism,
+[00:01:54 -> 00:01:59] and here is an example which involves printing of an uninitialized value.
+[00:01:59 -> 00:02:01] Here are some more examples.
+[00:02:01 -> 00:02:06] So let's say I have an uninitialized value and say Y equals X multiplied with zero.
+[00:02:06 -> 00:02:10] Now, once again, a language like C would just say this is undefined behavior.
+[00:02:10 -> 00:02:12] But in other language,
+[00:02:12 -> 00:02:17] X is supposed to be just some random integer which has not been initialized.
+[00:02:17 -> 00:02:19] In fact, some languages may even go to the extent that
+[00:02:19 -> 00:02:22] any newly allocated variable must be assumed to have
+[00:02:22 -> 00:02:25] the initial value of zero or some fixed constant.
+[00:02:25 -> 00:02:29] That typically adds more burden on the runtime and the compiler,
+[00:02:29 -> 00:02:35] because you have to emit an extra instruction to zero out that particular variable.
+[00:02:35 -> 00:02:39] So a more performant alternative is that you say
+[00:02:39 -> 00:02:43] that reading an uninitialized value can return a random value,
+[00:02:43 -> 00:02:46] and that's what I'm trying to show in this example.
+[00:02:46 -> 00:02:48] C takes the other extreme,
+[00:02:48 -> 00:02:51] which says that reading an uninitialized value is just undefined behavior.
+[00:02:51 -> 00:02:53] So that basically means anything can happen.
+[00:02:53 -> 00:02:55] In any case, this particular language,
+[00:02:55 -> 00:02:57] which is more conservative than C,
+[00:02:57 -> 00:03:02] one may say that reading X is basically going to return a random bit string,
+[00:03:02 -> 00:03:07] in which case multiplication of a random bit string with zero should yield zero.
+[00:03:07 -> 00:03:10] Similarly, if I say X minus X,
+[00:03:10 -> 00:03:14] then maybe that should yield zero for some other language.
+[00:03:14 -> 00:03:18] Similarly, X divided by X may should probably yield one,
+[00:03:18 -> 00:03:20] assuming X is not zero or something like that.
+[00:03:20 -> 00:03:23] Maybe this particular example is not so good,
+[00:03:23 -> 00:03:24] so I'll just remove it.
+[00:03:24 -> 00:03:27] But when I print YZW,
+[00:03:27 -> 00:03:31] maybe I expect, let's get rid of the one,
+[00:03:31 -> 00:03:33] maybe I expect zero, zero.
+[00:03:35 -> 00:03:37] Depends on the language semantics,
+[00:03:37 -> 00:03:40] and the IR needs to support such semantics.
+[00:03:40 -> 00:03:45] An LLVM IR, because it is the middle end for many languages,
+[00:03:45 -> 00:03:49] it needs to support such behavior, such semantics.
+[00:03:50 -> 00:03:53] Today, I'm going to tackle this first issue,
+[00:03:53 -> 00:03:56] which is if I take an initialized value and multiply it by zero,
+[00:03:56 -> 00:03:59] I expect a zero value to be printed out.
+[00:03:59 -> 00:04:01] For the other things, for example,
+[00:04:01 -> 00:04:03] subtracting X from itself,
+[00:04:03 -> 00:04:06] should it yield a zero value or not?
+[00:04:06 -> 00:04:08] I'm not going to talk about that today.
+[00:04:08 -> 00:04:13] Because different languages may have different options here.
+[00:04:13 -> 00:04:16] They may say, X minus X can potentially,
+[00:04:16 -> 00:04:20] different reads of the same initialized value,
+[00:04:20 -> 00:04:23] X may give you different valuations, and so on.
+[00:04:23 -> 00:04:26] And why such semantics are used,
+[00:04:26 -> 00:04:30] will also become clear in this particular module.
+[00:04:30 -> 00:04:32] But I want to point out again
+[00:04:32 -> 00:04:35] that I'm only going to tackle this particular semantics,
+[00:04:35 -> 00:04:40] which is you use X in some arithmetic operation,
+[00:04:40 -> 00:04:40] and based on that,
+[00:04:40 -> 00:04:44] you expect the value returned to be some value.
+[00:04:44 -> 00:04:46] So in this example, if you multiply it with zero,
+[00:04:46 -> 00:04:47] you should get zero.
+[00:04:47 -> 00:04:50] And these things where you read the same initialized value
+[00:04:50 -> 00:04:52] twice or more than once,
+[00:04:52 -> 00:04:54] then what happens, I'm not going to discuss.
+[00:04:54 -> 00:04:56] I mean, that issue,
+[00:04:56 -> 00:05:00] expecting Z to be zero is asking for too much
+[00:05:00 -> 00:05:02] for the kind of thing that I'm going to discuss today.
+[00:05:02 -> 00:05:04] I'm going to discuss the other thing,
+[00:05:04 -> 00:05:05] which is if you do X minus X,
+[00:05:05 -> 00:05:07] you should expect zero later on
+[00:05:07 -> 00:05:11] in my discussion on IR semantics.
+[00:05:12 -> 00:05:14] So let's look at this particular example,
+[00:05:15 -> 00:05:16] int X, Y equals X star zero.
+[00:05:16 -> 00:05:18] The first thing I want to point out
+[00:05:18 -> 00:05:19] is that the Poisson value is insufficient.
+[00:05:19 -> 00:05:22] If I say that an uninitialized variable
+[00:05:22 -> 00:05:25] basically is initialized to the Poisson value,
+[00:05:25 -> 00:05:27] which represents the error value
+[00:05:27 -> 00:05:28] that should never be used,
+[00:05:28 -> 00:05:30] then if I say Poisson star zero,
+[00:05:30 -> 00:05:33] then that's just going to give me Poisson into Y.
+[00:05:33 -> 00:05:36] But that's not what I expect in my language semantics,
+[00:05:36 -> 00:05:37] this new language that I have defined.
+[00:05:37 -> 00:05:39] What I expect is that if I print Y,
+[00:05:39 -> 00:05:40] you should get zero,
+[00:05:40 -> 00:05:43] not some error value or not some undefined behavior
+[00:05:43 -> 00:05:44] or anything like that.
+[00:05:45 -> 00:05:46] And so if the uninitialized X
+[00:05:46 -> 00:05:48] is assumed to be the Poisson value,
+[00:05:48 -> 00:05:50] then Y will also get the Poisson value.
+[00:05:50 -> 00:05:52] And so the Poisson value is insufficient
+[00:05:52 -> 00:05:54] for the kind of behavior I'm expecting,
+[00:05:54 -> 00:05:57] which is that Y should get zero in this example.
+[00:05:57 -> 00:05:59] So what is the solution?
+[00:05:59 -> 00:06:01] The solution is that we want to introduce a new value
+[00:06:01 -> 00:06:04] that has less non-determinism than the Poisson value.
+[00:06:05 -> 00:06:09] And this value I'm going to call the undefined value.
+[00:06:09 -> 00:06:11] Just like we have undefined behavior,
+[00:06:11 -> 00:06:13] this value, this is undefined value.
+[00:06:13 -> 00:06:15] Undefined behavior and undefined value
+[00:06:15 -> 00:06:16] are two very different things.
+[00:06:16 -> 00:06:19] Undefined behavior is a characteristic of the program.
+[00:06:19 -> 00:06:21] Undefined value is a characteristic
+[00:06:21 -> 00:06:24] of a particular variable in the program.
+[00:06:24 -> 00:06:27] And so undefined behavior means
+[00:06:27 -> 00:06:29] the program can now do anything.
+[00:06:29 -> 00:06:30] Undefined value basically means
+[00:06:30 -> 00:06:33] that this particular variable can have any value.
+[00:06:33 -> 00:06:34] We don't know what it is,
+[00:06:34 -> 00:06:37] but it could take any value that is permissible
+[00:06:37 -> 00:06:40] under the type of that particular variable.
+[00:06:40 -> 00:06:42] So that's what I'm going to call the undefined value.
+[00:06:42 -> 00:06:45] And I'm going to use the undef short form
+[00:06:45 -> 00:06:46] for the undefined value.
+[00:06:46 -> 00:06:49] I'm also going to call it undef for short.
+[00:06:50 -> 00:06:54] So let's see how undef is going to help us out
+[00:06:54 -> 00:06:56] in the example that we wanted.
+[00:06:56 -> 00:06:58] So if I say int X,
+[00:06:58 -> 00:07:00] then I'm going to assume that any uninitialized value
+[00:07:00 -> 00:07:01] is an undefined value,
+[00:07:01 -> 00:07:02] which basically means
+[00:07:02 -> 00:07:04] that that particular uninitialized value
+[00:07:04 -> 00:07:07] can potentially have any bit string
+[00:07:07 -> 00:07:10] that is representative of the integer type.
+[00:07:10 -> 00:07:13] And then if I say Y equals X plus one,
+[00:07:13 -> 00:07:16] then again, I'm going to get an undefined value into Y
+[00:07:16 -> 00:07:19] because if X could have been any bit string,
+[00:07:19 -> 00:07:21] then plus one of that
+[00:07:21 -> 00:07:23] is also going to have any bit string.
+[00:07:23 -> 00:07:24] And so by any bit string,
+[00:07:24 -> 00:07:28] I mean if int was a 32-bit representation,
+[00:07:28 -> 00:07:30] then two to the power 32 different values.
+[00:07:30 -> 00:07:31] So if X could take
+[00:07:31 -> 00:07:33] any of the two to the power 32 different values,
+[00:07:33 -> 00:07:34] then in this case,
+[00:07:34 -> 00:07:37] Y can also take any of the two to the power 32
+[00:07:37 -> 00:07:38] different values.
+[00:07:38 -> 00:07:41] And so an undef represents an unspecified bit pattern.
+[00:07:41 -> 00:07:42] However, if I have,
+[00:07:42 -> 00:07:45] let's say Z equals X star zero,
+[00:07:45 -> 00:07:49] then I can say Z equals zero
+[00:07:49 -> 00:07:52] because you take any bit pattern
+[00:07:52 -> 00:07:53] and you multiply it with zero,
+[00:07:53 -> 00:07:54] you're going to get zero.
+[00:07:54 -> 00:07:57] And so these operators are going to obey
+[00:07:57 -> 00:08:00] that kind of semantics.
+[00:08:00 -> 00:08:01] In other words,
+[00:08:01 -> 00:08:04] an undef value is basically representing an unknown value
+[00:08:04 -> 00:08:08] which can take any of the two to the power 32
+[00:08:08 -> 00:08:10] different concrete deterministic values
+[00:08:10 -> 00:08:11] that the type allows.
+[00:08:12 -> 00:08:13] All right.
+[00:08:13 -> 00:08:16] So let's look at some examples of undefined value
+[00:08:16 -> 00:08:19] and how they behave
+[00:08:19 -> 00:08:20] in terms of their operational semantics.
+[00:08:20 -> 00:08:25] So if I add any variable B to an undef,
+[00:08:25 -> 00:08:28] it is okay to say A equals undef.
+[00:08:28 -> 00:08:30] Because undef can be any bit variable,
+[00:08:30 -> 00:08:33] irrespective of what value B has,
+[00:08:33 -> 00:08:36] I can always choose a value for undef
+[00:08:36 -> 00:08:38] such that I get any particular value.
+[00:08:38 -> 00:08:39] So if I say,
+[00:08:39 -> 00:08:43] I want to put A to 10 and let's say B was three,
+[00:08:43 -> 00:08:45] then I can choose this undef to be seven, right?
+[00:08:45 -> 00:08:47] So if I wanted this undef to be 10,
+[00:08:47 -> 00:08:49] then I can choose this undef to be seven.
+[00:08:49 -> 00:08:51] And in other words,
+[00:08:51 -> 00:08:53] any value that I want for A,
+[00:08:53 -> 00:08:56] I can choose some value for undef here
+[00:08:56 -> 00:09:00] such that these two programs are equivalent.
+[00:09:00 -> 00:09:02] And because the two programs have equivalent behaviors,
+[00:09:02 -> 00:09:05] it's okay to transform A equals B plus undef
+[00:09:05 -> 00:09:09] into A equals undef.
+[00:09:09 -> 00:09:10] You know, other examples,
+[00:09:10 -> 00:09:12] just like I do B plus undef,
+[00:09:12 -> 00:09:13] I could have done B minus undef
+[00:09:13 -> 00:09:15] and it would have been okay to convert this
+[00:09:15 -> 00:09:16] to A equals undef.
+[00:09:16 -> 00:09:18] If I did B XOR undef, let's say,
+[00:09:18 -> 00:09:21] which is the logical XOR operator, bitwise XOR,
+[00:09:21 -> 00:09:23] then even then it is okay to convert
+[00:09:23 -> 00:09:26] B XOR undef to undef because once again,
+[00:09:26 -> 00:09:29] no matter what value I expect A to take,
+[00:09:29 -> 00:09:31] I would always be able to find some value
+[00:09:31 -> 00:09:35] of this undef that gives me that value of A
+[00:09:35 -> 00:09:37] in the final scheme of things.
+[00:09:37 -> 00:09:38] Similarly, if I, let's say,
+[00:09:38 -> 00:09:40] do the comparison relational operator,
+[00:09:40 -> 00:09:42] say I'd say B is less than undef,
+[00:09:42 -> 00:09:45] it's okay to convert this into A equals,
+[00:09:45 -> 00:09:47] you know, a single bit variable,
+[00:09:47 -> 00:09:50] which is I one of undef because I can, you know,
+[00:09:50 -> 00:09:52] give me any B and I can choose undef
+[00:09:52 -> 00:09:56] such that undef could be either bigger than B
+[00:09:56 -> 00:09:57] or smaller than B.
+[00:09:57 -> 00:09:59] And so I can get either true or false
+[00:09:59 -> 00:10:01] or either zero or one.
+[00:10:01 -> 00:10:03] And so A can,
+[00:10:03 -> 00:10:05] this kind of expression can be simplified
+[00:10:05 -> 00:10:07] to A equals I one undef.
+[00:10:07 -> 00:10:09] So these are, you know,
+[00:10:09 -> 00:10:10] we define undef in a certain way,
+[00:10:10 -> 00:10:13] which basically means that undef represents
+[00:10:13 -> 00:10:15] the case where this variable can take
+[00:10:15 -> 00:10:18] any of the allowable values
+[00:10:18 -> 00:10:20] that that particular type supports.
+[00:10:20 -> 00:10:22] So for an I 32, that would be two to the power 32.
+[00:10:22 -> 00:10:25] For an I one, that would be two, zero and one.
+[00:10:25 -> 00:10:28] For I two, it will be four and so on.
+[00:10:28 -> 00:10:31] And then basically based on that meaning
+[00:10:31 -> 00:10:33] of the undef variable,
+[00:10:33 -> 00:10:34] I'm basically defining, you know,
+[00:10:34 -> 00:10:36] what are the legal transformations.
+[00:10:36 -> 00:10:37] So for example, B is less than undef
+[00:10:37 -> 00:10:40] because undef could have taken any value.
+[00:10:40 -> 00:10:43] It's okay to change this to B, A equals undef.
+[00:10:43 -> 00:10:45] In this case, A equals I one undef
+[00:10:45 -> 00:10:48] because A is basically a Boolean value variable.
+[00:10:49 -> 00:10:50] Now let's take some other examples
+[00:10:50 -> 00:10:54] which are not so easy from a transformation perspective.
+[00:10:54 -> 00:10:58] Let's say I say or I 32 B undef.
+[00:10:58 -> 00:10:58] In my previous slide,
+[00:10:58 -> 00:11:00] I had the example of XOR,
+[00:11:00 -> 00:11:02] but this time I have a different example
+[00:11:02 -> 00:11:04] and say or instead of XOR.
+[00:11:04 -> 00:11:07] Now notice that depending on the value of B,
+[00:11:07 -> 00:11:09] the result of the set of values
+[00:11:09 -> 00:11:10] that A can take is now restrictive.
+[00:11:10 -> 00:11:13] For example, if B was all ones,
+[00:11:13 -> 00:11:15] so, you know, a 32 bit value,
+[00:11:15 -> 00:11:18] which has all 32 bit bit string,
+[00:11:18 -> 00:11:20] a 32 bit bit vector, which has all ones,
+[00:11:20 -> 00:11:21] then all of, you know,
+[00:11:21 -> 00:11:24] all ones with undef would only give me a single value,
+[00:11:24 -> 00:11:25] which is all ones.
+[00:11:26 -> 00:11:28] Similarly, if, you know, B was something
+[00:11:28 -> 00:11:31] which only the least significant bit was one
+[00:11:31 -> 00:11:34] and everything else was zero,
+[00:11:34 -> 00:11:37] then or of B with undef will give me a set,
+[00:11:37 -> 00:11:39] you know, can give me a set of values
+[00:11:39 -> 00:11:40] which has one in the least significant bit.
+[00:11:40 -> 00:11:44] It can never have a zero in the least significant bit.
+[00:11:44 -> 00:11:45] And so even there,
+[00:11:45 -> 00:11:47] it's not okay to just say that A is undef
+[00:11:47 -> 00:11:49] because undef basically means
+[00:11:49 -> 00:11:51] that all the possible values are possible.
+[00:11:51 -> 00:11:54] Like two to the, if it's an I 32 type,
+[00:11:54 -> 00:11:56] then all the possible two to the power 32 values
+[00:11:56 -> 00:11:56] are possible.
+[00:11:57 -> 00:11:59] You know, for some values of B,
+[00:11:59 -> 00:12:01] like the examples that I just used,
+[00:12:01 -> 00:12:03] only some of the values of the set
+[00:12:03 -> 00:12:05] of two to the power 32 are possible.
+[00:12:05 -> 00:12:06] You know, if for example,
+[00:12:06 -> 00:12:09] the least significant bit of B was one,
+[00:12:09 -> 00:12:12] then only those values are possible in A
+[00:12:12 -> 00:12:15] for which the least significant bit is also one.
+[00:12:15 -> 00:12:18] And so it is not okay to transform
+[00:12:18 -> 00:12:21] or of B comma undef to undef.
+[00:12:21 -> 00:12:23] All right, so it's not okay to say A equals or,
+[00:12:23 -> 00:12:26] it's not okay to do this transformation
+[00:12:26 -> 00:12:30] because the source had lower non-determinism.
+[00:12:30 -> 00:12:32] For example, if, you know,
+[00:12:32 -> 00:12:33] let me just make this concrete.
+[00:12:33 -> 00:12:35] Let's say this was one, right?
+[00:12:35 -> 00:12:36] So this B was one.
+[00:12:36 -> 00:12:38] So if B was one,
+[00:12:38 -> 00:12:41] then basically the set of values
+[00:12:41 -> 00:12:43] that A could have in the original program
+[00:12:43 -> 00:12:46] was basically two to the power 31
+[00:12:46 -> 00:12:49] because the least significant bit
+[00:12:49 -> 00:12:51] is being constrained to be one.
+[00:12:51 -> 00:12:53] Everything else can be anything else,
+[00:12:53 -> 00:12:54] but you know,
+[00:12:54 -> 00:12:56] the least significant bit is constrained to be one.
+[00:12:56 -> 00:12:59] In other words, this statement says
+[00:12:59 -> 00:13:01] that A can only hold an odd value.
+[00:13:01 -> 00:13:03] It can never hold an even value.
+[00:13:03 -> 00:13:05] Whereas this statement says A can hold any value
+[00:13:05 -> 00:13:08] because it could be either an odd or an even value.
+[00:13:08 -> 00:13:11] And now I'm going from lower non-determinism
+[00:13:11 -> 00:13:13] because the set of values that A could hold
+[00:13:13 -> 00:13:15] in the original program were smaller,
+[00:13:15 -> 00:13:16] it's two to the power 31,
+[00:13:16 -> 00:13:18] to higher non-determinism
+[00:13:18 -> 00:13:20] because here it's two to the power 32.
+[00:13:20 -> 00:13:21] And this is not legal.
+[00:13:21 -> 00:13:23] You can't go from lower non-determinism
+[00:13:23 -> 00:13:24] to higher non-determinism.
+[00:13:24 -> 00:13:26] And so this kind of transformation
+[00:13:26 -> 00:13:28] is illegal for the undef value.
+[00:13:28 -> 00:13:29] And so once again,
+[00:13:29 -> 00:13:31] I'm trying to define the operational semantics
+[00:13:31 -> 00:13:32] of the undef value
+[00:13:32 -> 00:13:35] and these examples are telling us something
+[00:13:35 -> 00:13:38] about what we are expecting the results to be.
+[00:13:39 -> 00:13:40] On the other hand,
+[00:13:40 -> 00:13:43] it is okay to say that, you know,
+[00:13:43 -> 00:13:45] or I-32, it's okay to simplify
+[00:13:45 -> 00:13:48] or I-32 B, undef to A equals B.
+[00:13:48 -> 00:13:50] Whatever I take B to be,
+[00:13:50 -> 00:13:53] I can always choose undef to be all zeros.
+[00:13:53 -> 00:13:55] And if I choose undef to be all zeros,
+[00:13:55 -> 00:13:58] then or of I-32 B, all zeros is just B.
+[00:13:58 -> 00:13:59] So in this case,
+[00:13:59 -> 00:14:01] I'm going from higher non-determinism,
+[00:14:01 -> 00:14:02] higher non-determinism
+[00:14:02 -> 00:14:03] because undef could have taken
+[00:14:03 -> 00:14:05] any of the two to the power 32 values
+[00:14:05 -> 00:14:07] to lower non-determinism
+[00:14:07 -> 00:14:09] because I forced the undef
+[00:14:09 -> 00:14:12] to take one particular value that is all zeros.
+[00:14:12 -> 00:14:14] And so I can always, you know,
+[00:14:14 -> 00:14:14] as a compiler,
+[00:14:14 -> 00:14:16] I can always go from higher non-determinism
+[00:14:16 -> 00:14:18] to lower non-determinism,
+[00:14:18 -> 00:14:19] but not the other way around.
+[00:14:19 -> 00:14:20] This is also called refinement.
+[00:14:20 -> 00:14:22] I can always refine the behaviors of the program.
+[00:14:22 -> 00:14:25] I can always cut the behaviors of the program.
+[00:14:25 -> 00:14:27] I can always reduce the behaviors of the program,
+[00:14:27 -> 00:14:29] but I can never increase the behaviors of the program
+[00:14:29 -> 00:14:31] because if you increase the behaviors of the program,
+[00:14:31 -> 00:14:33] you're basically saying that, you know,
+[00:14:33 -> 00:14:36] the new program is not really, you know,
+[00:14:36 -> 00:14:38] working under this envelope of the original program.
+[00:14:38 -> 00:14:40] It's actually going outside the envelope.
+[00:14:40 -> 00:14:43] And that's not something that a compiler can do legally.
+[00:14:45 -> 00:14:47] Similarly, just like I used the example of or,
+[00:14:47 -> 00:14:48] here's an example of and,
+[00:14:48 -> 00:14:50] which behaves, you know, similarly,
+[00:14:50 -> 00:14:54] I can convert and i32 b, undeaf to b,
+[00:14:54 -> 00:14:58] but I cannot convert and i32 b, undeaf to undeaf.
+[00:14:58 -> 00:15:01] Just again, because if b was all zeros, for example,
+[00:15:01 -> 00:15:04] or the last significant bit of b was zero,
+[00:15:04 -> 00:15:05] then, you know,
+[00:15:05 -> 00:15:07] the original program has less non-determinism,
+[00:15:07 -> 00:15:09] but the new program would have more non-determinism
+[00:15:09 -> 00:15:13] and that's not acceptable.
+[00:15:13 -> 00:15:13] Here's another example.
+[00:15:13 -> 00:15:15] Let's say I just said a equals undeaf.
+[00:15:15 -> 00:15:17] It's always okay to change it to some constant.
+[00:15:17 -> 00:15:19] I'm just using minus 42 as an example,
+[00:15:19 -> 00:15:21] but you can always change it to some arbitrary constant
+[00:15:21 -> 00:15:24] because you're going from high non-determinism
+[00:15:24 -> 00:15:25] to lower non-determinism.
+[00:15:26 -> 00:15:27] But you can't, for example,
+[00:15:27 -> 00:15:30] change multiplication of four into undeaf to undeaf
+[00:15:30 -> 00:15:32] because once again, four into undeaf
+[00:15:32 -> 00:15:34] is going to return a value that, you know,
+[00:15:34 -> 00:15:37] a set of values that are multiples of four,
+[00:15:37 -> 00:15:40] whereas undeaf basically means it can be any number
+[00:15:40 -> 00:15:42] irrespective of whether it is a multiple of four or not.
+[00:15:42 -> 00:15:45] And so I cannot go from this direction to this direction,
+[00:15:45 -> 00:15:47] although it is okay to go in the other direction,
+[00:15:47 -> 00:15:49] as I'm going to show in the previous slide.
+[00:15:49 -> 00:15:51] Subsequent slides.
+[00:15:51 -> 00:15:52] Now let's look at this example.
+[00:15:52 -> 00:15:55] Let's say a equals undeaf and say b equals
+[00:15:55 -> 00:15:58] multiply of a by two.
+[00:15:58 -> 00:16:00] So this is basically saying b equals a star two
+[00:16:00 -> 00:16:02] and a is in I-32 type.
+[00:16:02 -> 00:16:06] And then c equals a and three, right?
+[00:16:06 -> 00:16:09] And we already seen that a star two
+[00:16:09 -> 00:16:13] can be changed to two even if,
+[00:16:13 -> 00:16:14] because a is just undeaf.
+[00:16:14 -> 00:16:15] So that's just, you know,
+[00:16:15 -> 00:16:17] I can just choose any value for a,
+[00:16:17 -> 00:16:19] so I can just change a star two
+[00:16:20 -> 00:16:21] which is just undeaf star two to two.
+[00:16:21 -> 00:16:22] This is something that we've already seen.
+[00:16:22 -> 00:16:24] I mean, I can just choose, for example,
+[00:16:24 -> 00:16:27] the value one for the undeaf value.
+[00:16:27 -> 00:16:29] And then that's just one star two,
+[00:16:29 -> 00:16:30] that's going to be two.
+[00:16:30 -> 00:16:33] Similarly, I can say and of a comma three
+[00:16:33 -> 00:16:34] gives me three.
+[00:16:34 -> 00:16:37] In this case, I'm choosing the value all ones for a
+[00:16:37 -> 00:16:39] or something like that.
+[00:16:39 -> 00:16:42] Or I can even choose the value three for a
+[00:16:42 -> 00:16:44] and that would also give me and of three comma three.
+[00:16:44 -> 00:16:46] And that's going to be three.
+[00:16:46 -> 00:16:49] But notice that this such transformations,
+[00:16:49 -> 00:16:52] now I transformed both b and c and simplified them,
+[00:16:52 -> 00:16:56] but such transformation required different valuations of a
+[00:16:56 -> 00:16:57] at different program points.
+[00:16:57 -> 00:17:00] At here, when I was doing this,
+[00:17:00 -> 00:17:03] the valuation of a was one.
+[00:17:03 -> 00:17:07] Whereas here, the valuation of a was let's say three.
+[00:17:07 -> 00:17:08] And so at different program points,
+[00:17:08 -> 00:17:09] I use different valuations of a.
+[00:17:09 -> 00:17:12] It's not even necessary that, you know,
+[00:17:12 -> 00:17:15] I basically have the same valuation of a
+[00:17:15 -> 00:17:16] all through the program.
+[00:17:16 -> 00:17:19] It's not necessary that I fix a particular valuation,
+[00:17:19 -> 00:17:22] let's say one or three or five or anything like that.
+[00:17:22 -> 00:17:24] It's basically means that, you know,
+[00:17:24 -> 00:17:25] if it's an undef value,
+[00:17:25 -> 00:17:27] then every time it is read,
+[00:17:27 -> 00:17:29] it can basically give me a different value.
+[00:17:29 -> 00:17:32] And so that is basically the difference between,
+[00:17:32 -> 00:17:34] you know, x star zero and x minus x,
+[00:17:34 -> 00:17:36] the something that we had in our initial slide.
+[00:17:36 -> 00:17:39] I'm going to talk more about that soon.
+[00:17:39 -> 00:17:43] So here's a new interesting fact about the undef value
+[00:17:43 -> 00:17:47] that that's part of the LLVM IR, for example.
+[00:17:47 -> 00:17:49] Each time an undefined value is observed,
+[00:17:49 -> 00:17:52] in this case, a was an undefined value,
+[00:17:52 -> 00:17:55] it can return a different bit pattern, right?
+[00:17:55 -> 00:17:59] So for example, if I do XOR I32 undef, undef,
+[00:17:59 -> 00:18:01] then it's not necessary that at the end of it,
+[00:18:01 -> 00:18:03] I get, you know, a equals zero, right?
+[00:18:03 -> 00:18:05] Because this undef can return a different value
+[00:18:05 -> 00:18:07] and that undef can return a different value.
+[00:18:07 -> 00:18:09] In fact, I can make this even more interesting.
+[00:18:09 -> 00:18:11] I can say b equals undef,
+[00:18:12 -> 00:18:16] I said a equals XOR b, b.
+[00:18:16 -> 00:18:20] Once again, I cannot say that a can be not equal to zero
+[00:18:20 -> 00:18:23] is a valid possible behavior.
+[00:18:23 -> 00:18:25] Because each time b was observed,
+[00:18:25 -> 00:18:27] I was basically observing an undef value.
+[00:18:27 -> 00:18:30] And each time an undef value is observed,
+[00:18:30 -> 00:18:32] I can basically get a different valuation.
+[00:18:32 -> 00:18:35] And so it's not necessary that XOR of undef, undef
+[00:18:35 -> 00:18:39] basically yields zero, it can be an arbitrary value.
+[00:18:40 -> 00:18:43] In fact, you know, XOR of undef, undef,
+[00:18:43 -> 00:18:45] I can choose the two undef such that
+[00:18:45 -> 00:18:47] any new value can be generated.
+[00:18:47 -> 00:18:49] So it's okay to simplify, for example,
+[00:18:49 -> 00:18:53] XOR of undef, undef to undef, you know,
+[00:18:53 -> 00:18:54] but not to zero.
+[00:18:55 -> 00:18:57] All right, now let's take another example.
+[00:18:57 -> 00:19:01] So say a equals undef and say b equals a plus a.
+[00:19:01 -> 00:19:03] And then I say c equals b mod two.
+[00:19:03 -> 00:19:06] It's not necessary that b was even
+[00:19:06 -> 00:19:08] and it's not necessary that c equals zero
+[00:19:08 -> 00:19:10] because once again, each time a is observed,
+[00:19:10 -> 00:19:12] I could get a different value.
+[00:19:12 -> 00:19:13] I could have a different valuation.
+[00:19:13 -> 00:19:18] And these semantics for allowing different valuations
+[00:19:18 -> 00:19:21] of the undef value at different observation points,
+[00:19:21 -> 00:19:23] basically, the motivation for this
+[00:19:23 -> 00:19:25] is basically what I used in the previous slide
+[00:19:25 -> 00:19:27] because for different program points,
+[00:19:27 -> 00:19:30] I may choose to use different values of the undef value
+[00:19:30 -> 00:19:33] and because that gives me better optimization opportunity.
+[00:19:33 -> 00:19:37] And so that's what, you know, we use
+[00:19:37 -> 00:19:39] and because of that, we, you know,
+[00:19:39 -> 00:19:41] some of the things that we would have imagined
+[00:19:41 -> 00:19:46] to be obvious, obvious theorems that, you know,
+[00:19:46 -> 00:19:49] a plus a should always yield an even number
+[00:19:49 -> 00:19:51] now no longer hold true.
+[00:19:52 -> 00:19:53] Here's another example.
+[00:19:53 -> 00:19:55] In this case, I have a equals undef
+[00:19:55 -> 00:19:56] and I say, instead of saying k plus a,
+[00:19:56 -> 00:19:58] I said two star a.
+[00:19:58 -> 00:20:01] Now in this example, a is observed only once
+[00:20:01 -> 00:20:03] and irrespective of what that value is used,
+[00:20:03 -> 00:20:06] what value is used for that particular valuation,
+[00:20:06 -> 00:20:07] twice of that, a two into that
+[00:20:07 -> 00:20:09] is going to give me an even value.
+[00:20:09 -> 00:20:11] And this time, if I say c equals b mod two,
+[00:20:11 -> 00:20:14] I'm okay because this time b is going to be
+[00:20:14 -> 00:20:15] an even number.
+[00:20:15 -> 00:20:17] So the difference between this example
+[00:20:17 -> 00:20:20] and this example is here a is being observed twice
+[00:20:20 -> 00:20:21] and each time it's observed,
+[00:20:21 -> 00:20:23] it can return a different bit pattern.
+[00:20:23 -> 00:20:25] Here a is being observed only once
+[00:20:25 -> 00:20:27] and so it returns only one bit pattern
+[00:20:27 -> 00:20:29] and you multiply it by two and you get an even number.
+[00:20:30 -> 00:20:32] All right, here are some, you know,
+[00:20:32 -> 00:20:34] if I look at the original example that I use,
+[00:20:34 -> 00:20:36] let's say y equals x star zero
+[00:20:36 -> 00:20:39] and z equals x minus x.
+[00:20:39 -> 00:20:43] So x star zero would still give me zero if x was undef
+[00:20:43 -> 00:20:46] but x minus x can give me any random bit string
+[00:20:46 -> 00:20:48] because once again, I'm observing x twice
+[00:20:48 -> 00:20:51] and so I could get any random bit string.
+[00:20:51 -> 00:20:53] In fact, x by x can give me
+[00:20:53 -> 00:20:54] potentially undefined behavior
+[00:20:54 -> 00:20:56] because it will be divided by zero.
+[00:20:56 -> 00:20:58] So this could even be undefined behavior.
+[00:20:59 -> 00:21:03] All right, so my last example,
+[00:21:03 -> 00:21:07] I cannot, for example, change two into undef
+[00:21:07 -> 00:21:08] to undef plus undef
+[00:21:08 -> 00:21:12] because two into undef returns only even values
+[00:21:12 -> 00:21:14] whereas undef plus undef returns both odd
+[00:21:14 -> 00:21:16] and even values because in this case,
+[00:21:16 -> 00:21:18] undef is being observed twice.
+[00:21:18 -> 00:21:20] Whereas I can always go back,
+[00:21:20 -> 00:21:22] I can always convert undef plus undef into two
+[00:21:22 -> 00:21:25] into undef because in this direction I am,
+[00:21:25 -> 00:21:30] in this direction, I am reducing non-determinism
+[00:21:30 -> 00:21:33] and in the downward direction,
+[00:21:33 -> 00:21:36] I am increasing non-determinism.
+[00:21:36 -> 00:21:40] And a compiler can always go in the reduction direction
+[00:21:40 -> 00:21:41] or the refinement direction
+[00:21:41 -> 00:21:43] but never in the other direction.

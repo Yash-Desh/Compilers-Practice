@@ -1,0 +1,704 @@
+Title: Compiler Design Module 124 5: Computing Dominance Frontiers
+Video ID: q3YexEYB_ko
+Detected language: en
+------------------------------------------------------------
+
+[00:00:00 -> 00:00:06] Now we are ready to discuss an algorithm that computes the dominance frontiers of all the
+[00:00:06 -> 00:00:08] nodes in the graph.
+[00:00:08 -> 00:00:15] So before I do that, I want to recap this concept of a control flow graph, which we
+[00:00:15 -> 00:00:19] are already familiar with of a program and the dominator tree.
+[00:00:19 -> 00:00:24] Recall that a dominator tree, so for example, the dominator tree shown on the right is
+[00:00:24 -> 00:00:33] the tree, dominator tree for the control flow graph on the left and the idea is that some
+[00:00:33 -> 00:00:40] node X in the dominator tree dominates another node Y in this tree, if and only if there
+[00:00:40 -> 00:00:43] exists a path from X to Y.
+[00:00:43 -> 00:00:50] So for example, in this tree, A dominates itself, A dominates pretty much everybody,
+[00:00:50 -> 00:00:54] C dominates E, but C does not dominate, let's say B or D, because there's no path from
+[00:00:54 -> 00:00:57] C to B or C to D.
+[00:00:57 -> 00:01:02] So that's the idea of a dominator tree and in fact, more precisely, basically we have
+[00:01:02 -> 00:01:07] this relationship called the immediate dominator, recall, we had discussed this when we introduced
+[00:01:07 -> 00:01:18] the notion of domination and you draw an edge between two nodes if B is immediately
+[00:01:18 -> 00:01:24] dominated by A or A immediately dominates B, immediately domination relation or IDOM relation
+[00:01:24 -> 00:01:32] basically says that A dominates B, but there is, but A is not equal to B, so it's not
+[00:01:32 -> 00:01:39] a reflexive relation and there exists no other node C such that A dominates C and
+[00:01:39 -> 00:01:40] C dominates B.
+[00:01:40 -> 00:01:44] So for example, A dominates D, but A does not immediately dominate D because there
+[00:01:44 -> 00:01:52] exists a node B in the middle, which is dominated by A and which dominates D and so the immediate
+[00:01:52 -> 00:01:59] dominator relation is basically the immediate form of the dominator relation and because
+[00:01:59 -> 00:02:06] the immediate dominator is unique, we can also represent this relation as a function
+[00:02:06 -> 00:02:10] where for every node we say what is its immediate dominator, for example, the immediate
+[00:02:10 -> 00:02:15] dominator of D is B, the immediate dominator of C is A, the immediate dominator of B is
+[00:02:15 -> 00:02:22] also A and so on, so basically the immediate dominator of a node is the parent node in
+[00:02:22 -> 00:02:29] the dominator tree, so IDOM D is B, IDOM F is A, IDOM B is A and so on and we
+[00:02:29 -> 00:02:36] can represent this IDOM as a function from nodes to nodes.
+[00:02:36 -> 00:02:42] So given a dominator tree or I'm also going to call it an IDOM tree or immediate dominator
+[00:02:42 -> 00:02:48] tree, some properties simply fall out from this tree representation of the immediate
+[00:02:48 -> 00:02:54] dominator function, if X dominates Y, so which means that there exists a path from
+[00:02:54 -> 00:03:00] X to Y in the dominator tree, then IDOM of X also dominates Y because IDOM is
+[00:03:00 -> 00:03:05] the ancestor of X or the parent of X, so if there's a path from X to Y, then there's
+[00:03:05 -> 00:03:09] a path from the parent of X to Y as well.
+[00:03:09 -> 00:03:15] Similarly, if X strictly dominates Y, which means X dominates Y but X is not equal to
+[00:03:15 -> 00:03:20] Y, once again that basically means that there's a path from X to Y and just that
+[00:03:20 -> 00:03:25] we discard the epsilon path, the empty path, we don't consider X to strictly
+[00:03:25 -> 00:03:29] dominate itself, then IDOM of X also strictly dominates Y because there is a
+[00:03:29 -> 00:03:36] non-empty path from IDOM of X to Y as well in the dominator tree, so some
+[00:03:36 -> 00:03:43] examples, so okay, so I guess there's no need for examples there, but I want to
+[00:03:43 -> 00:03:49] say something more here, so if X does not dominate Y, then we can't be sure
+[00:03:49 -> 00:03:56] whether IDOM X dominates Y or does not dominate Y etc, for example C does
+[00:03:56 -> 00:04:08] not dominate F, but C's parent which is IDOM A, so IDOM of C which is A dominates
+[00:04:08 -> 00:04:14] F, but if I take another example, E, E does not dominate F either, but E's
+[00:04:14 -> 00:04:18] parent also does not dominate F, so it's not necessary that if X does not
+[00:04:18 -> 00:04:22] dominate Y, then IDOM X does not dominate Y or definitely dominates Y,
+[00:04:22 -> 00:04:27] it depends on, you know, it depends on the tree and it may or may not
+[00:04:27 -> 00:04:31] dominate and that's why I show this as a question mark, similarly if X does not
+[00:04:31 -> 00:04:35] strictly dominate Y, then IDOM of X also cannot, we cannot find a
+[00:04:35 -> 00:04:39] relationship between IDOM of X and Y in terms of whether it strictly
+[00:04:39 -> 00:04:45] dominates Y or not, once again E does not strictly dominate F and C does not,
+[00:04:45 -> 00:04:50] the parent of E which is C does not strictly dominate F either, but if I
+[00:04:50 -> 00:04:53] look at C, then C does not strictly dominate F, but the parent of C which
+[00:04:53 -> 00:04:57] is A strictly dominates F, so we have examples of both kinds in this
+[00:04:57 -> 00:05:02] example. Now I'm interested in computing the dominance frontier of a
+[00:05:02 -> 00:05:07] node X and here is a naive algorithm to do this, the naive algorithm
+[00:05:07 -> 00:05:12] takes every node X one by one and tries to compute the dominance
+[00:05:12 -> 00:05:15] frontier of that node, so for example, let's say I take the node
+[00:05:15 -> 00:05:19] X, I simply perform some kind of a depth first search traversal on
+[00:05:19 -> 00:05:23] the control flow graph starting at X because I'm interested in
+[00:05:23 -> 00:05:28] exploring all the paths and on all the paths I stop at any node that
+[00:05:28 -> 00:05:34] is not strictly dominated by X and that I put in the dominance
+[00:05:34 -> 00:05:36] frontier, recall that that was the definition of dominance
+[00:05:36 -> 00:05:41] frontier, basically on the path, all the nodes on the path
+[00:05:41 -> 00:05:46] are dominated by X except for this node which is not strictly
+[00:05:46 -> 00:05:48] dominated by X in which case I just put it in my dominance
+[00:05:48 -> 00:05:52] frontier and stop there. So to compute the dominance frontier
+[00:05:52 -> 00:05:55] of X, I perform a depth first search on this control flow graph
+[00:05:55 -> 00:05:59] starting at X and stop at any node during that depth first search
+[00:06:00 -> 00:06:03] that is not strictly dominated by X and that node on which
+[00:06:03 -> 00:06:05] I stop I put it in the result which is the dominance frontier
+[00:06:05 -> 00:06:09] of X and I do this for every node X. Now, what is the
+[00:06:09 -> 00:06:12] running time of this naive algorithm? Well, I need to look
+[00:06:12 -> 00:06:17] at every node separately and for each node I have to do
+[00:06:17 -> 00:06:20] a linear amount of work which is either linear in the number
+[00:06:20 -> 00:06:24] of edges or the number of nodes, whatever is the maximum
+[00:06:24 -> 00:06:29] and so linear amount of work for every node and there
+[00:06:29 -> 00:06:32] are a linear number of nodes which is n number of nodes
+[00:06:32 -> 00:06:36] so then that's quadratic running time. Now, it's clear
+[00:06:37 -> 00:06:42] that this naive algorithm has a lot of repeated work.
+[00:06:42 -> 00:06:45] For example, if I'm computing the dominance frontier
+[00:06:45 -> 00:06:52] of X, then maybe that has some relation to the dominance
+[00:06:52 -> 00:06:56] frontier of the parent of X but when I say parent, I mean
+[00:06:56 -> 00:07:00] the immediate dominator of X and so I'm not using
+[00:07:00 -> 00:07:03] that information at all. I'm recomputing the dominance
+[00:07:03 -> 00:07:06] frontier for every node from scratch and because I'm
+[00:07:06 -> 00:07:08] interested in computing the dominance frontier of all
+[00:07:08 -> 00:07:11] nodes, I can perhaps do better and that's what I'm
+[00:07:11 -> 00:07:16] going to discuss in this module. So first of all, I want
+[00:07:16 -> 00:07:20] to point out that if a node Y belongs to the dominance
+[00:07:20 -> 00:07:25] frontier of X, then it's not clear whether Y also belongs
+[00:07:25 -> 00:07:27] to the dominance frontier of the parent of X or the
+[00:07:27 -> 00:07:31] immediate dominator of X. So for example, in this example
+[00:07:31 -> 00:07:35] B belongs to the dominance frontier of B, right?
+[00:07:35 -> 00:07:41] We have seen this before but the B does not belong to
+[00:07:41 -> 00:07:45] the dominance frontier of the parent of the
+[00:07:45 -> 00:07:47] parent of B which is A. So B does not belong to the
+[00:07:47 -> 00:07:49] dominance frontier of A but B belongs to the dominance
+[00:07:49 -> 00:07:53] frontier of B. Whereas if I look at D, then B belongs
+[00:07:53 -> 00:07:57] to the dominant frontier of D but B also belongs
+[00:07:57 -> 00:08:01] to the dominance frontier of B. So I cannot
+[00:08:01 -> 00:08:03] say for sure it depends on the structure of the
+[00:08:03 -> 00:08:06] control flow graph and on the dominator tree to be able
+[00:08:06 -> 00:08:09] to say that, you know, whether if Y belongs to the dominance
+[00:08:09 -> 00:08:12] frontier of X, then is it true whether it still belongs
+[00:08:12 -> 00:08:15] to the dominance frontier of the parent or the immediate
+[00:08:15 -> 00:08:19] dominator of X. So example, F belongs to the dominance
+[00:08:19 -> 00:08:23] frontier of B but F does not belong to the dominance
+[00:08:23 -> 00:08:26] frontier of A. So here's one more thing that I want
+[00:08:26 -> 00:08:30] to bring out which is that if Y belongs to the dominance
+[00:08:30 -> 00:08:34] frontier of X, then it's not necessary that Y also
+[00:08:34 -> 00:08:37] belongs to the dominance frontier of I dom X. It's also
+[00:08:37 -> 00:08:41] not so, you know, it may or may not. So for
+[00:08:41 -> 00:08:47] example, F belongs to the dominance frontier of B
+[00:08:48 -> 00:08:51] but F does not belong to the dominance frontier of
+[00:08:51 -> 00:08:53] A because A's dominance frontier recall is empty
+[00:08:53 -> 00:08:56] because A pretty much strictly dominates everything.
+[00:08:56 -> 00:08:59] But on the same, on the other hand, F belongs to
+[00:08:59 -> 00:09:03] the dominance frontier of D yet F belongs to the dominance
+[00:09:03 -> 00:09:06] frontier of B which B is the parent of D or the
+[00:09:06 -> 00:09:10] immediate dominator of B. So if Y belongs to the dominance
+[00:09:10 -> 00:09:14] frontier of X, Y may or may not belong to the dominance
+[00:09:14 -> 00:09:20] frontier of I dom X. So I'm going to define a couple
+[00:09:20 -> 00:09:26] more terms or relations and basically move on
+[00:09:26 -> 00:09:29] to my actual algorithm to compute the dominance
+[00:09:29 -> 00:09:33] frontiers efficiently. So dom F up for a given node
+[00:09:33 -> 00:09:36] X is all the set of nodes Y such that Y belongs to
+[00:09:36 -> 00:09:40] the dominance frontier of X and Y belongs to the dominance
+[00:09:40 -> 00:09:43] frontier of the parent of X or the immediate dominator
+[00:09:43 -> 00:09:47] of X. In other words, dom F up X are the nodes in
+[00:09:47 -> 00:09:50] dom F X in the dominance frontier of X that are
+[00:09:50 -> 00:09:53] passed up to the parent of X to the dominance
+[00:09:53 -> 00:10:00] frontier of I dom X. And this will be helpful in
+[00:10:02 -> 00:10:04] doing the dominance frontier computation for all the
+[00:10:04 -> 00:10:07] nodes. Recall that our naive algorithm had this
+[00:10:07 -> 00:10:10] wasteful computation where the dominance frontier of
+[00:10:10 -> 00:10:13] the child nodes were not being used in computing
+[00:10:13 -> 00:10:16] the dominance frontier of the parent nodes. But
+[00:10:16 -> 00:10:19] this this quantity here, this relation here dom F
+[00:10:19 -> 00:10:23] up will help us do that. So dom F up are the
+[00:10:23 -> 00:10:26] nodes in dom F X that are passed up to the dom F
+[00:10:26 -> 00:10:32] of the parent of X. Okay, so in other words,
+[00:10:33 -> 00:10:36] this is the set of all nodes Y such that Y
+[00:10:36 -> 00:10:40] belongs to the dominance frontier of X and the
+[00:10:40 -> 00:10:43] immediate dominator of X does not strictly dominate
+[00:10:43 -> 00:10:47] Y. Now I'm saying so I'm saying that these
+[00:10:47 -> 00:10:49] two sets the set that I've written in gray here
+[00:10:49 -> 00:10:52] and the set that I have written in orange here
+[00:10:52 -> 00:10:55] they are the same things Y belongs to
+[00:10:55 -> 00:10:58] dominator of dominance frontier of X is common in
+[00:10:58 -> 00:11:01] both the sets. The only difference is that here
+[00:11:01 -> 00:11:03] I'm checking whether the immediate dominator of
+[00:11:03 -> 00:11:06] X strictly dominates Y or not and I'm saying
+[00:11:06 -> 00:11:09] that the immediate dominator of X will strictly
+[00:11:09 -> 00:11:13] dominate Y if and only if Y does not belong
+[00:11:13 -> 00:11:15] to the dominance frontier of I dom X. In other
+[00:11:15 -> 00:11:18] words, if immediate dominator of X does not
+[00:11:18 -> 00:11:22] strictly dominate Y then Y belongs to the
+[00:11:22 -> 00:11:24] dominance frontier of I dom X and it's easy
+[00:11:24 -> 00:11:28] to see that because if Y belongs to the
+[00:11:28 -> 00:11:30] dominance frontier of X then there is some
+[00:11:30 -> 00:11:33] predecessor P of Y that is dominated by
+[00:11:33 -> 00:11:36] X and if something is dominated by X then it
+[00:11:36 -> 00:11:39] must be dominated by I dom X as well and
+[00:11:39 -> 00:11:42] so there is some predecessor P of Y that
+[00:11:42 -> 00:11:46] is dominated by I dom X and if I dom X does
+[00:11:46 -> 00:11:48] not strictly dominate Y then we know that Y
+[00:11:48 -> 00:11:50] must belong to the dominance frontier of
+[00:11:50 -> 00:11:53] I dom X which is what we wanted here and
+[00:11:53 -> 00:11:56] you can you can do the other side of this
+[00:11:57 -> 00:12:00] equivalence as well and so the dominance
+[00:12:00 -> 00:12:04] frontier the dom F up of X is basically all
+[00:12:04 -> 00:12:06] the nodes that belong to the dominance frontier
+[00:12:06 -> 00:12:09] of X and they are not strictly dominated
+[00:12:09 -> 00:12:12] by the parent of X or the immediate dominator
+[00:12:12 -> 00:12:14] of X and so this is much this is pretty
+[00:12:14 -> 00:12:16] easy to check once I have the dominance
+[00:12:16 -> 00:12:19] frontier of X all I need to do is I need to
+[00:12:19 -> 00:12:22] check which of these nodes are strictly
+[00:12:22 -> 00:12:26] dominated by I dom X and if a node is not
+[00:12:26 -> 00:12:29] strictly dominated by I dom X then it is surely
+[00:12:29 -> 00:12:33] in the dominance frontier of of I dom X and
+[00:12:33 -> 00:12:36] this is this is a this is a key idea
+[00:12:36 -> 00:12:39] that I'm going to use to be able to pass
+[00:12:39 -> 00:12:41] on the information of the dominance frontier
+[00:12:41 -> 00:12:43] of one node to the dominance frontier
+[00:12:43 -> 00:12:49] of its parent. So for example the dominance
+[00:12:49 -> 00:12:53] frontier up of E which is this node is G.
+[00:12:53 -> 00:12:57] So what is the parent of G E it's C and
+[00:12:57 -> 00:13:00] what is the dominance frontier of E well
+[00:13:00 -> 00:13:05] dominance frontier of E was E and G but E
+[00:13:05 -> 00:13:09] is not strictly dominated by C E is
+[00:13:09 -> 00:13:11] strictly dominated by C. So E is not in
+[00:13:11 -> 00:13:14] the dominance frontier of C but G is not
+[00:13:14 -> 00:13:17] strictly dominated by C. So G is in the
+[00:13:17 -> 00:13:20] dominance frontier of C and so dom F up
+[00:13:20 -> 00:13:23] of E is G. So how did I figure this out?
+[00:13:23 -> 00:13:28] Well, I mean once again dom F of E is E
+[00:13:28 -> 00:13:32] comma G. Now I want to check which of
+[00:13:32 -> 00:13:35] these is strictly dominated by the
+[00:13:35 -> 00:13:38] parent of E which is C. So E is strictly
+[00:13:38 -> 00:13:43] dominated by the parent of E which is
+[00:13:43 -> 00:13:46] C. So E is strictly dominated by C and
+[00:13:46 -> 00:13:48] so E does not appear here but G is not
+[00:13:48 -> 00:13:51] strictly dominated by C. So G appears
+[00:13:51 -> 00:13:54] here. Okay, let's take another example
+[00:13:54 -> 00:13:58] dominance frontier dom F up of D dom F
+[00:13:58 -> 00:14:00] up of D is all the nodes that are in
+[00:14:00 -> 00:14:02] the dominance frontier of D. Recall that
+[00:14:02 -> 00:14:04] the dominance frontier of D was F G
+[00:14:04 -> 00:14:08] and D. So F G and D and of these all
+[00:14:08 -> 00:14:09] the three nodes actually are also in
+[00:14:09 -> 00:14:11] the dominance frontier of the parent
+[00:14:11 -> 00:14:13] of D which is B. So all the three
+[00:14:13 -> 00:14:15] nodes are actually passed up to the
+[00:14:15 -> 00:14:17] parent's dominance frontier because all
+[00:14:17 -> 00:14:19] the three nodes are not strictly
+[00:14:19 -> 00:14:22] dominated by B. Neither is F strictly
+[00:14:22 -> 00:14:26] dominated by B nor is G nor is B. B is
+[00:14:26 -> 00:14:28] dominated by B but B is not strictly
+[00:14:28 -> 00:14:31] dominated by B. Okay, so that was
+[00:14:31 -> 00:14:33] one relation that I defined. This is
+[00:14:33 -> 00:14:35] dom F up. Similarly, I'm going to
+[00:14:35 -> 00:14:36] define another relation called dom F
+[00:14:36 -> 00:14:39] local. Dom F local is all the
+[00:14:39 -> 00:14:41] nodes that are in the dominance
+[00:14:41 -> 00:14:44] frontier of X and they are in the
+[00:14:44 -> 00:14:46] immediate successors of X in the
+[00:14:46 -> 00:14:49] control flow graph. So dom F local X
+[00:14:49 -> 00:14:51] are the nodes in the dom F X that
+[00:14:51 -> 00:14:53] are the immediate successors of
+[00:14:53 -> 00:14:55] X in the control flow graph. So by
+[00:14:55 -> 00:14:58] immediate outgoing edges, which of
+[00:14:58 -> 00:15:00] those are in my dominance frontier?
+[00:15:00 -> 00:15:03] In other words, when will a node
+[00:15:03 -> 00:15:04] be in the dominance frontier and
+[00:15:04 -> 00:15:07] outgoing edge to PC be in the
+[00:15:07 -> 00:15:08] dominance frontier? If I don't
+[00:15:08 -> 00:15:10] strictly dominate it. If I strictly
+[00:15:10 -> 00:15:11] dominate it then it cannot be in
+[00:15:11 -> 00:15:13] this dominance frontier but if I
+[00:15:13 -> 00:15:15] don't strictly dominate it then I
+[00:15:15 -> 00:15:16] dominate its predecessor which is
+[00:15:16 -> 00:15:18] myself because I domination is a
+[00:15:18 -> 00:15:20] reflexive relation. So that would
+[00:15:20 -> 00:15:22] mean that it is in the dominance
+[00:15:22 -> 00:15:25] frontier of that dom F local of
+[00:15:25 -> 00:15:28] node X. So in other words, Y is
+[00:15:28 -> 00:15:31] in the dom F local of node X if
+[00:15:31 -> 00:15:33] X does not strictly dominate Y and
+[00:15:33 -> 00:15:36] Y is a successor of X and you
+[00:15:36 -> 00:15:37] can check for yourself that these
+[00:15:37 -> 00:15:39] two relations are equivalent. As I
+[00:15:39 -> 00:15:40] said earlier, if Y is in the
+[00:15:40 -> 00:15:42] successor set of X which is the
+[00:15:42 -> 00:15:44] common thing here and X does not
+[00:15:44 -> 00:15:46] strictly dominate Y then I know
+[00:15:46 -> 00:15:48] that Y must be in the dom F of X
+[00:15:48 -> 00:15:49] because after all a predecessor
+[00:15:49 -> 00:15:54] of Y is X and X dominates X.
+[00:15:54 -> 00:15:56] So it satisfies the dom F condition
+[00:15:57 -> 00:15:58] and you can also check the
+[00:15:58 -> 00:16:00] other side of this equivalence.
+[00:16:00 -> 00:16:01] So this is also very helpful
+[00:16:01 -> 00:16:03] because if I want to check what
+[00:16:03 -> 00:16:06] are my immediate successors, which
+[00:16:06 -> 00:16:07] of my immediate successors are
+[00:16:07 -> 00:16:09] in my dominance frontier? I only
+[00:16:09 -> 00:16:10] need to check which of them I
+[00:16:10 -> 00:16:13] strictly dominate and the ones
+[00:16:13 -> 00:16:14] that I don't strictly dominate
+[00:16:14 -> 00:16:16] are in my dominance frontier and
+[00:16:16 -> 00:16:18] that forms my dom F local set.
+[00:16:20 -> 00:16:22] So here are some examples. The
+[00:16:22 -> 00:16:25] dom F local of B is the empty
+[00:16:25 -> 00:16:27] set. So notice that the immediate
+[00:16:27 -> 00:16:30] successor of B is only D, that's
+[00:16:30 -> 00:16:32] the only successor and D is
+[00:16:32 -> 00:16:34] strictly dominated by B. So dom F
+[00:16:34 -> 00:16:36] local of B is just the empty
+[00:16:36 -> 00:16:40] set. Recall that the dom F of B
+[00:16:40 -> 00:16:42] is actually made up of three
+[00:16:42 -> 00:16:44] nodes, which is B, F and G, but
+[00:16:44 -> 00:16:46] when I say dom F local I'm only
+[00:16:46 -> 00:16:47] interested in the immediate
+[00:16:47 -> 00:16:48] successor and there's only one
+[00:16:48 -> 00:16:49] candidate in immediate successor
+[00:16:49 -> 00:16:50] which is D and D is not
+[00:16:50 -> 00:16:52] strictly dominant, D is not
+[00:16:52 -> 00:16:53] in the dominance frontier of
+[00:16:53 -> 00:16:56] B, hence it is in, not in
+[00:16:56 -> 00:16:58] the dom F local of B. Said
+[00:16:58 -> 00:16:59] differently, D is not
+[00:16:59 -> 00:17:00] strictly dominated by B and
+[00:17:00 -> 00:17:03] hence it is not in dom F. D
+[00:17:03 -> 00:17:05] is strictly dominated by B and
+[00:17:05 -> 00:17:06] hence it is not in the dom F
+[00:17:06 -> 00:17:08] local of B. Similarly, if I look
+[00:17:08 -> 00:17:12] at dom F local of D, then B, F
+[00:17:12 -> 00:17:13] and G are the immediate
+[00:17:13 -> 00:17:14] successors and all three of
+[00:17:14 -> 00:17:16] them are also in the dominance
+[00:17:16 -> 00:17:18] frontier of D and all three
+[00:17:18 -> 00:17:19] of them are also not strictly
+[00:17:19 -> 00:17:21] dominated by D and hence all
+[00:17:21 -> 00:17:23] of them are part of the
+[00:17:23 -> 00:17:25] dom F local of D. Similarly,
+[00:17:25 -> 00:17:29] dom F local of E is E and G.
+[00:17:30 -> 00:17:31] These are both of them are
+[00:17:31 -> 00:17:32] successors and they are both
+[00:17:32 -> 00:17:33] also part of the dominance
+[00:17:33 -> 00:17:38] frontier of E. Okay, so here
+[00:17:38 -> 00:17:40] is our final interesting
+[00:17:40 -> 00:17:41] property that we are going to
+[00:17:41 -> 00:17:43] use to compute the dominance
+[00:17:43 -> 00:17:44] frontier efficiently for all
+[00:17:44 -> 00:17:47] the nodes. Dom F, the dominance
+[00:17:47 -> 00:17:50] frontier of any node X is
+[00:17:50 -> 00:17:52] formed by the local dom F,
+[00:17:52 -> 00:17:54] which is the dom F of the
+[00:17:54 -> 00:17:55] from the immediate successors
+[00:17:55 -> 00:18:00] of X and union with the
+[00:18:00 -> 00:18:02] dom F up of all the
+[00:18:02 -> 00:18:04] successors Z, of all the
+[00:18:04 -> 00:18:05] children of Z in the
+[00:18:05 -> 00:18:06] dominator tree. So when I
+[00:18:06 -> 00:18:07] say children, I mean in the
+[00:18:07 -> 00:18:09] dominator tree. When I say
+[00:18:09 -> 00:18:10] successor, I mean in the
+[00:18:10 -> 00:18:11] control flow graph. So if I
+[00:18:11 -> 00:18:13] look at all the children of
+[00:18:13 -> 00:18:15] X and let's say one of
+[00:18:15 -> 00:18:17] those children is Z, then I
+[00:18:17 -> 00:18:19] look at the dom F up of
+[00:18:19 -> 00:18:21] Z and take the union of
+[00:18:21 -> 00:18:23] all of them and then take
+[00:18:23 -> 00:18:24] that union with dom F
+[00:18:24 -> 00:18:26] local and all this will
+[00:18:26 -> 00:18:28] basically constitute my dom
+[00:18:28 -> 00:18:31] F X. To see why this is
+[00:18:31 -> 00:18:32] true, let's take a few
+[00:18:32 -> 00:18:35] examples. So dom F A is
+[00:18:36 -> 00:18:38] the empty set because it's
+[00:18:38 -> 00:18:40] immediate set. The dom F
+[00:18:40 -> 00:18:41] local is basically look at
+[00:18:41 -> 00:18:42] the immediate successors,
+[00:18:42 -> 00:18:45] which are B and C and both
+[00:18:45 -> 00:18:47] of them are not in the
+[00:18:47 -> 00:18:48] dominance frontier of A
+[00:18:48 -> 00:18:49] because both of them are
+[00:18:49 -> 00:18:50] strictly dominated by A.
+[00:18:50 -> 00:18:51] So that becomes the empty
+[00:18:51 -> 00:18:52] set. So dom F local of
+[00:18:52 -> 00:18:54] A is just the empty set
+[00:18:54 -> 00:18:56] and then I say dom F up
+[00:18:56 -> 00:18:58] of Z for B, C, F and G.
+[00:18:58 -> 00:19:01] So if I look at B, C, F
+[00:19:01 -> 00:19:08] and G, B, C, F and G.
+[00:19:08 -> 00:19:09] These are the children in
+[00:19:09 -> 00:19:10] the dominator tree.
+[00:19:10 -> 00:19:11] So I look at all the
+[00:19:11 -> 00:19:12] children in the dominator
+[00:19:12 -> 00:19:14] tree, which is B, C, F and
+[00:19:14 -> 00:19:16] G and if I look at their
+[00:19:16 -> 00:19:17] dominance frontiers, then
+[00:19:17 -> 00:19:19] their dominance frontiers
+[00:19:19 -> 00:19:20] are pretty large, but
+[00:19:20 -> 00:19:21] which of these are passed
+[00:19:21 -> 00:19:23] up, which means which of
+[00:19:23 -> 00:19:25] them are not strictly
+[00:19:25 -> 00:19:27] dominated by their
+[00:19:27 -> 00:19:28] parent, which is A and
+[00:19:28 -> 00:19:30] that actually also turns
+[00:19:30 -> 00:19:31] out to be an empty set
+[00:19:31 -> 00:19:32] and so the final answer
+[00:19:32 -> 00:19:33] is empty set because A
+[00:19:33 -> 00:19:34] pretty much strictly
+[00:19:34 -> 00:19:35] dominates everything.
+[00:19:35 -> 00:19:36] So anything that is in
+[00:19:36 -> 00:19:37] the dominance frontier of
+[00:19:37 -> 00:19:39] B, C, F and G will be
+[00:19:39 -> 00:19:40] strictly dominated by A
+[00:19:40 -> 00:19:41] and so the dominance
+[00:19:41 -> 00:19:43] frontier of A is the
+[00:19:43 -> 00:19:43] empty set.
+[00:19:44 -> 00:19:46] Let's look at dominance
+[00:19:46 -> 00:19:47] frontier of B using
+[00:19:47 -> 00:19:48] this formula.
+[00:19:48 -> 00:19:49] The dominance frontier
+[00:19:49 -> 00:19:51] of B is whatever is
+[00:19:51 -> 00:19:52] the dominance frontier
+[00:19:52 -> 00:19:53] local. So in this case,
+[00:19:53 -> 00:19:54] that's the empty set
+[00:19:54 -> 00:19:56] because the only outgoing
+[00:19:56 -> 00:19:57] edge is D, but D is
+[00:19:57 -> 00:19:58] strictly dominated by B.
+[00:19:58 -> 00:19:59] So D is not in the
+[00:19:59 -> 00:20:00] dominance frontier of B.
+[00:20:00 -> 00:20:01] So that's the empty set.
+[00:20:01 -> 00:20:03] Union, whatever is
+[00:20:03 -> 00:20:04] in the dominance frontier
+[00:20:04 -> 00:20:06] of D and is passed up
+[00:20:06 -> 00:20:07] to B.
+[00:20:07 -> 00:20:08] So in other words, whatever
+[00:20:08 -> 00:20:09] is in the dominance frontier
+[00:20:09 -> 00:20:10] of D and is not
+[00:20:10 -> 00:20:11] strictly dominated by B.
+[00:20:11 -> 00:20:12] What is in the dominance
+[00:20:12 -> 00:20:13] frontier of D?
+[00:20:13 -> 00:20:14] Recall that the dominance
+[00:20:14 -> 00:20:17] frontier of D is B, F
+[00:20:17 -> 00:20:19] and G and which of these
+[00:20:19 -> 00:20:20] are not strictly
+[00:20:20 -> 00:20:20] dominated by B?
+[00:20:20 -> 00:20:21] Well, all of them are
+[00:20:21 -> 00:20:22] not strictly dominated
+[00:20:22 -> 00:20:24] by B and so that
+[00:20:24 -> 00:20:26] becomes FGB and that
+[00:20:26 -> 00:20:27] becomes my final answer.
+[00:20:28 -> 00:20:30] So the idea behind this
+[00:20:30 -> 00:20:31] statement or this
+[00:20:31 -> 00:20:32] theorem that Dom Fx is
+[00:20:32 -> 00:20:34] equal to Dom F local x
+[00:20:34 -> 00:20:36] union Dom F up z for
+[00:20:36 -> 00:20:38] all children z of x in
+[00:20:38 -> 00:20:39] the dominated tree.
+[00:20:39 -> 00:20:41] Either the node in the
+[00:20:41 -> 00:20:41] dominance frontier will
+[00:20:41 -> 00:20:43] be an immediate successor,
+[00:20:43 -> 00:20:44] not strictly dominated
+[00:20:44 -> 00:20:46] or is passed up from a
+[00:20:46 -> 00:20:47] node immediately
+[00:20:47 -> 00:20:50] dominated by x children.
+[00:20:50 -> 00:20:51] And this is, you know,
+[00:20:51 -> 00:20:52] if I think about it
+[00:20:52 -> 00:20:54] from my naive
+[00:20:54 -> 00:20:55] algorithm point of view,
+[00:20:55 -> 00:20:57] then when I do a DFS
+[00:20:57 -> 00:20:58] starting from x, I do
+[00:20:58 -> 00:20:59] a depth first search
+[00:20:59 -> 00:21:00] starting from x, either
+[00:21:00 -> 00:21:02] I find the dominated
+[00:21:03 -> 00:21:04] frontier node right in
+[00:21:04 -> 00:21:06] my first step itself,
+[00:21:06 -> 00:21:06] which is my immediate
+[00:21:06 -> 00:21:08] successors or I do a
+[00:21:08 -> 00:21:10] DFS on my children of
+[00:21:10 -> 00:21:13] the of the dominated
+[00:21:14 -> 00:21:15] tree and and whatever
+[00:21:15 -> 00:21:17] I get there, I check
+[00:21:17 -> 00:21:18] whether those the
+[00:21:18 -> 00:21:19] answers, whether I
+[00:21:19 -> 00:21:21] dominate any of them
+[00:21:21 -> 00:21:22] or strictly dominate
+[00:21:22 -> 00:21:23] any of them or not
+[00:21:23 -> 00:21:24] and if I don't
+[00:21:24 -> 00:21:24] strictly dominate them,
+[00:21:24 -> 00:21:26] then they become a part
+[00:21:26 -> 00:21:27] of my dominance
+[00:21:27 -> 00:21:28] frontier. So either the
+[00:21:28 -> 00:21:28] node will be an
+[00:21:28 -> 00:21:29] immediate successor,
+[00:21:29 -> 00:21:30] not strictly dominated
+[00:21:30 -> 00:21:31] for it to be in the
+[00:21:31 -> 00:21:33] dominance frontier or
+[00:21:33 -> 00:21:34] passed up from a node
+[00:21:34 -> 00:21:35] I dominated by x.
+[00:21:35 -> 00:21:36] One of the children in
+[00:21:36 -> 00:21:37] the dominated tree.
+[00:21:38 -> 00:21:40] So my final algorithm
+[00:21:40 -> 00:21:40] looks like the following.
+[00:21:40 -> 00:21:41] I'm going to do a
+[00:21:42 -> 00:21:43] bottom up traversal of
+[00:21:43 -> 00:21:44] the dominated tree
+[00:21:44 -> 00:21:45] for each node x in
+[00:21:45 -> 00:21:46] a bottom up traversal
+[00:21:46 -> 00:21:47] of the dominated tree.
+[00:21:47 -> 00:21:48] So this is the
+[00:21:48 -> 00:21:49] dominated tree.
+[00:21:50 -> 00:21:51] You compute the
+[00:21:51 -> 00:21:52] dominance frontier in
+[00:21:52 -> 00:21:53] this order of each
+[00:21:53 -> 00:21:54] node x. For example,
+[00:21:54 -> 00:21:55] I'll first compute
+[00:21:55 -> 00:21:55] the dominance frontier
+[00:21:55 -> 00:21:56] of D, then I'll
+[00:21:56 -> 00:21:57] compute the dominance
+[00:21:57 -> 00:21:59] frontier of E and
+[00:21:59 -> 00:22:00] then I will see which
+[00:22:00 -> 00:22:01] of the nodes in the
+[00:22:01 -> 00:22:02] dominance frontier of
+[00:22:02 -> 00:22:04] D pass up to B.
+[00:22:05 -> 00:22:05] Plus when I do that,
+[00:22:05 -> 00:22:06] I'm also going to
+[00:22:06 -> 00:22:08] consider the Df local,
+[00:22:08 -> 00:22:09] the Domf local of B.
+[00:22:10 -> 00:22:11] Similarly, I'm going
+[00:22:11 -> 00:22:12] to pass up the dominance
+[00:22:12 -> 00:22:14] frontier of E to C and
+[00:22:14 -> 00:22:15] see which of those
+[00:22:15 -> 00:22:16] actually pass up.
+[00:22:16 -> 00:22:17] Plus I'm going to look
+[00:22:17 -> 00:22:19] at the local dominance
+[00:22:19 -> 00:22:19] frontier, which is the
+[00:22:19 -> 00:22:20] immediate successor of C.
+[00:22:21 -> 00:22:22] So that's how I'm going
+[00:22:22 -> 00:22:24] to share the work
+[00:22:24 -> 00:22:25] that I'm doing for
+[00:22:25 -> 00:22:25] different nodes.
+[00:22:26 -> 00:22:27] So for each x in a
+[00:22:27 -> 00:22:27] bottom up traversal of
+[00:22:27 -> 00:22:29] a dominated tree do
+[00:22:29 -> 00:22:30] initialize the dominance
+[00:22:30 -> 00:22:32] frontier Df to the
+[00:22:32 -> 00:22:33] empty set.
+[00:22:33 -> 00:22:34] For each y belonging
+[00:22:34 -> 00:22:36] to successor of x,
+[00:22:36 -> 00:22:36] which in the control
+[00:22:36 -> 00:22:37] flow graph, the successor
+[00:22:37 -> 00:22:39] relation is based on
+[00:22:39 -> 00:22:39] the control flow graph.
+[00:22:40 -> 00:22:42] If idom y is not
+[00:22:42 -> 00:22:43] equal to x.
+[00:22:44 -> 00:22:47] So if the immediate
+[00:22:47 -> 00:22:49] dominator of my successor
+[00:22:49 -> 00:22:51] is not x, if the
+[00:22:51 -> 00:22:52] immediate dominator of
+[00:22:53 -> 00:22:55] x's successor is not
+[00:22:55 -> 00:22:56] x itself, that basically
+[00:22:56 -> 00:22:59] means that y is not
+[00:22:59 -> 00:23:01] strictly dominated by
+[00:23:01 -> 00:23:05] x because if y was
+[00:23:05 -> 00:23:06] strictly dominated by x
+[00:23:06 -> 00:23:07] then idom y would have
+[00:23:07 -> 00:23:08] been equal to x because
+[00:23:08 -> 00:23:09] after all y is the
+[00:23:09 -> 00:23:10] successor of x in the
+[00:23:10 -> 00:23:11] control flow graph.
+[00:23:12 -> 00:23:13] And then we basically
+[00:23:13 -> 00:23:14] add y to the dominance
+[00:23:14 -> 00:23:15] frontier.
+[00:23:15 -> 00:23:16] This is the local part
+[00:23:16 -> 00:23:17] of the dominance
+[00:23:17 -> 00:23:18] frontier computation.
+[00:23:19 -> 00:23:20] Otherwise I look at
+[00:23:20 -> 00:23:21] each, I trade over all
+[00:23:21 -> 00:23:22] the children of x in
+[00:23:22 -> 00:23:24] the dominated tree and
+[00:23:24 -> 00:23:25] for each child, for
+[00:23:25 -> 00:23:27] each child, I look at
+[00:23:27 -> 00:23:28] its dominance frontier.
+[00:23:28 -> 00:23:28] So let's say the
+[00:23:28 -> 00:23:29] child is z.
+[00:23:29 -> 00:23:30] So for each child I
+[00:23:30 -> 00:23:30] look at the dominance
+[00:23:30 -> 00:23:32] frontier and I see
+[00:23:32 -> 00:23:33] which of them pass up to
+[00:23:33 -> 00:23:35] x and to check which
+[00:23:35 -> 00:23:36] of them pass up I again
+[00:23:36 -> 00:23:37] check whether the
+[00:23:37 -> 00:23:38] immediate dominator of
+[00:23:38 -> 00:23:40] y is x or not.
+[00:23:40 -> 00:23:41] So once again x will
+[00:23:41 -> 00:23:42] strictly dominate y if
+[00:23:42 -> 00:23:45] and only if y's immediate
+[00:23:45 -> 00:23:46] dominator is x because
+[00:23:47 -> 00:23:48] y is in the dominance
+[00:23:48 -> 00:23:49] frontier of a child of
+[00:23:49 -> 00:23:49] x.
+[00:23:50 -> 00:23:51] So this, I mean checking
+[00:23:51 -> 00:23:53] whether y is strictly
+[00:23:53 -> 00:23:54] dominated by x or not
+[00:23:54 -> 00:23:55] is equivalent to saying
+[00:23:55 -> 00:23:55] checking whether the
+[00:23:55 -> 00:23:56] immediate dominator of
+[00:23:56 -> 00:23:58] y is equal to x or not.
+[00:23:58 -> 00:23:59] And so if immediate
+[00:23:59 -> 00:24:00] dominator of y is not
+[00:24:00 -> 00:24:02] equal to x then I add
+[00:24:02 -> 00:24:03] y to the dominance
+[00:24:03 -> 00:24:04] frontier of x.
+[00:24:06 -> 00:24:07] So this is the
+[00:24:07 -> 00:24:09] algorithm to compute
+[00:24:09 -> 00:24:10] the dominance frontiers
+[00:24:10 -> 00:24:11] in a single bottom-up
+[00:24:11 -> 00:24:14] pass and compared to
+[00:24:14 -> 00:24:15] the naive algorithm
+[00:24:15 -> 00:24:16] we are reusing the
+[00:24:16 -> 00:24:17] words. For example,
+[00:24:17 -> 00:24:18] we are reusing the
+[00:24:19 -> 00:24:19] effort that we spent
+[00:24:19 -> 00:24:20] for computing the
+[00:24:20 -> 00:24:21] dominance frontier of
+[00:24:21 -> 00:24:22] D in computing the
+[00:24:22 -> 00:24:23] dominance frontier of
+[00:24:23 -> 00:24:25] B and from there in
+[00:24:25 -> 00:24:25] computing the dominance
+[00:24:25 -> 00:24:26] frontier of A and so
+[00:24:26 -> 00:24:28] on and because of
+[00:24:28 -> 00:24:29] that we can get better
+[00:24:29 -> 00:24:30] running times than the
+[00:24:30 -> 00:24:31] quadratic running time.
+[00:24:32 -> 00:24:32] How much better we
+[00:24:32 -> 00:24:33] can get?
+[00:24:33 -> 00:24:35] Well, let's look and
+[00:24:35 -> 00:24:36] analyze the running
+[00:24:36 -> 00:24:37] complexities.
+[00:24:37 -> 00:24:39] So we are for each
+[00:24:39 -> 00:24:40] node x in the graph
+[00:24:41 -> 00:24:42] in bottom-up traversal
+[00:24:42 -> 00:24:42] but doesn't matter
+[00:24:42 -> 00:24:43] we're going to look
+[00:24:43 -> 00:24:44] at each node and we
+[00:24:44 -> 00:24:44] are going to look at
+[00:24:44 -> 00:24:45] all the outgoing
+[00:24:45 -> 00:24:46] edges of that node.
+[00:24:47 -> 00:24:48] So for each node we
+[00:24:48 -> 00:24:49] look at all the
+[00:24:49 -> 00:24:50] outgoing edges exactly
+[00:24:50 -> 00:24:51] once in this step.
+[00:24:51 -> 00:24:52] So that is that
+[00:24:52 -> 00:24:53] basically means that
+[00:24:53 -> 00:24:53] each edge is looked
+[00:24:53 -> 00:24:55] at exactly once.
+[00:24:55 -> 00:24:56] So this this this
+[00:24:56 -> 00:24:57] statement here the
+[00:24:57 -> 00:24:59] local the check here
+[00:24:59 -> 00:25:00] is going to be executed
+[00:25:00 -> 00:25:01] at least order e times
+[00:25:02 -> 00:25:04] so that's order e and
+[00:25:04 -> 00:25:05] this statement here
+[00:25:05 -> 00:25:06] is executed for all
+[00:25:06 -> 00:25:08] the children of every
+[00:25:08 -> 00:25:10] node x but recall
+[00:25:10 -> 00:25:11] that because this is
+[00:25:11 -> 00:25:12] a tree if I sum up
+[00:25:12 -> 00:25:13] of all the children
+[00:25:13 -> 00:25:14] then that's just the
+[00:25:14 -> 00:25:15] number of nodes in
+[00:25:15 -> 00:25:17] the graph for every
+[00:25:17 -> 00:25:19] node x and for each
+[00:25:19 -> 00:25:21] child I iterate over
+[00:25:21 -> 00:25:21] all the dominance
+[00:25:21 -> 00:25:22] frontiers of that
+[00:25:22 -> 00:25:23] child.
+[00:25:23 -> 00:25:25] So that basically means
+[00:25:25 -> 00:25:27] that if there are if
+[00:25:27 -> 00:25:29] for a node x I look
+[00:25:29 -> 00:25:30] at every node x and I
+[00:25:30 -> 00:25:32] do the amount of work
+[00:25:32 -> 00:25:33] that I do is basically
+[00:25:33 -> 00:25:33] the size of the dominance
+[00:25:33 -> 00:25:35] frontier of x because
+[00:25:35 -> 00:25:35] that's the number of
+[00:25:35 -> 00:25:36] times this inner loop
+[00:25:36 -> 00:25:38] is going to iterate.
+[00:25:38 -> 00:25:39] So the total amount
+[00:25:39 -> 00:25:40] of work that I do is
+[00:25:40 -> 00:25:42] summation over x which
+[00:25:42 -> 00:25:43] x represents the nodes
+[00:25:43 -> 00:25:45] in the graph size of
+[00:25:45 -> 00:25:47] dfx so mod dfx and
+[00:25:47 -> 00:25:48] that basically represents
+[00:25:48 -> 00:25:49] the amount of work that
+[00:25:49 -> 00:25:50] I'm doing at this
+[00:25:50 -> 00:25:52] step here in domf up.
+[00:25:54 -> 00:25:55] So overall because of
+[00:25:55 -> 00:25:56] these two steps df local
+[00:25:56 -> 00:25:58] and df up the total
+[00:25:58 -> 00:25:59] amount of work that's
+[00:25:59 -> 00:25:59] being done in this
+[00:25:59 -> 00:26:01] algorithm is order E
+[00:26:01 -> 00:26:03] plus summation dfx over
+[00:26:03 -> 00:26:04] all the nodes x.
+[00:26:05 -> 00:26:06] Now we know that now
+[00:26:06 -> 00:26:08] in the order E is
+[00:26:08 -> 00:26:09] basically linear in
+[00:26:09 -> 00:26:09] the size of the
+[00:26:09 -> 00:26:11] graph but how big is
+[00:26:11 -> 00:26:14] summation dfx well in
+[00:26:14 -> 00:26:18] the in a good case
+[00:26:18 -> 00:26:18] this could be linear
+[00:26:18 -> 00:26:19] as well because assuming
+[00:26:19 -> 00:26:20] that all the dominance
+[00:26:20 -> 00:26:21] frontiers are small
+[00:26:21 -> 00:26:23] let's say constant sized
+[00:26:23 -> 00:26:24] but if dfx could be
+[00:26:24 -> 00:26:26] larger and how large
+[00:26:26 -> 00:26:27] can it be the dominance
+[00:26:27 -> 00:26:28] frontier of a node can
+[00:26:28 -> 00:26:29] be as large as the size
+[00:26:29 -> 00:26:30] of the number of nodes
+[00:26:30 -> 00:26:31] in the graph in which
+[00:26:31 -> 00:26:31] case this could
+[00:26:31 -> 00:26:32] potentially become
+[00:26:32 -> 00:26:34] quadratic but we are
+[00:26:34 -> 00:26:34] going to characterize
+[00:26:34 -> 00:26:36] this in more depth
+[00:26:36 -> 00:26:38] and detail in the
+[00:26:38 -> 00:26:39] subsequent modules.

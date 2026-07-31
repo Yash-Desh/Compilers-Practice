@@ -1,0 +1,99 @@
+Title: Compiler Design Module 79 : DFA Loop Example
+Video ID: hZhCq67DxJk
+Detected language: en
+------------------------------------------------------------
+
+[00:00:00 -> 00:00:11] So now that we have looked at an example of DFA for an A-cyclic program, let's also for completeness sake look at an example of a program which has loops in it.
+[00:00:11 -> 00:00:21] Now, our algorithm, you know, I'm making some claims about my algorithm A that it's guaranteed to converge irrespective of whether the program has loops or not.
+[00:00:21 -> 00:00:28] Second, it doesn't really matter if there are multiple options to choose for the statement S to be updated.
+[00:00:28 -> 00:00:33] It doesn't really matter which one you choose first. You're always going to get the same answer.
+[00:00:33 -> 00:00:37] And third, the answer is going to be going to have some precision guarantees.
+[00:00:37 -> 00:00:46] So it's going to be, you know, by some definition of precision, the most precise answer that you can get for that system of equations that we want to solve.
+[00:00:47 -> 00:00:54] So here's an example of a program that has four basic blocks, just like before.
+[00:00:54 -> 00:01:01] It's a familiar example. So you assign 3 to x, and then depending on whether b is greater than 0, you go here or here.
+[00:01:01 -> 00:01:10] Here you say y, you assign y to b, z plus w, x to 4, here you assign y to 0, and you say a is equal to 2 into x.
+[00:01:10 -> 00:01:20] And maybe you have another condition, say c equals 0 or not, and if it is yes, true, then maybe you go and do, or maybe if it's false, then you do a loop.
+[00:01:20 -> 00:01:24] And if it's true, then you exit this program.
+[00:01:24 -> 00:01:38] So the only difference now is that there is an other edge that's going from the fourth basic block to this basic block on the right, and that forms a cycle in our control flow graph, which I'm also calling a loop.
+[00:01:39 -> 00:01:46] And the question is, how would our data flow analysis algorithm run on this particular program?
+[00:01:46 -> 00:01:52] I'm claiming that it's guaranteed to converge, so let's see how it's going to converge.
+[00:01:52 -> 00:01:59] And we're going to look at two different variants of this particular program to just kind of try and see how things work.
+[00:01:59 -> 00:02:19] We're not making any formal proofs or arguments to basically support our claims, but just kind of looking at examples to try and build an intuition on why this algorithm is going to converge and why it's going to give you a precise answer.
+[00:02:19 -> 00:02:24] We're going to deal with all the formalisms later on in the course.
+[00:02:24 -> 00:02:28] Okay, so this is the program.
+[00:02:28 -> 00:02:31] And once again, we have to first figure out what are all the program points.
+[00:02:31 -> 00:02:32] So these are all the program points.
+[00:02:32 -> 00:02:42] And then this is the initial state where the in of this entry statement is set to bottom and all of the program points are set to top.
+[00:02:42 -> 00:02:48] Now, at our next step, we are going to identify statements which do not follow the rules.
+[00:02:48 -> 00:02:53] And it's going to be the first statement, x is equal to 3, as we've seen on our previous example.
+[00:02:53 -> 00:02:55] And so we're going to update this value to 3.
+[00:02:55 -> 00:03:01] And also I'm doing multiple steps in one slide, so I'm also updating the next value to 3.
+[00:03:01 -> 00:03:04] And again, I'm going to do this for the next few basic blocks.
+[00:03:05 -> 00:03:08] So the 3 value is going to flow here and this becomes 3.
+[00:03:08 -> 00:03:10] And as a result, this becomes 3.
+[00:03:10 -> 00:03:16] And finally, because of x is equal to 4, we get 4 at the out of that particular state.
+[00:03:16 -> 00:03:24] On the right hand side, we just get 3 before and after the only statement in the basic block.
+[00:03:24 -> 00:03:33] Finally, at this meet point where we are having two different edges flowing into the same basic block,
+[00:03:33 -> 00:03:40] we are going to set this value top to bottom because the two different values that are flowing in from two different edges.
+[00:03:40 -> 00:03:42] And so this becomes bottom.
+[00:03:42 -> 00:03:48] And as a result, all the other point program points in this basic block also become bottom by our root.
+[00:03:48 -> 00:03:49] Now, are we done?
+[00:03:49 -> 00:03:50] Well, no.
+[00:03:50 -> 00:04:02] In this new program, now we are still not reach the fixed point because there exists a statement where the rules are not being obeyed.
+[00:04:02 -> 00:04:07] And that point is this point just before y is equal to 0.
+[00:04:07 -> 00:04:10] On one edge, the value that's flowing in is 3.
+[00:04:10 -> 00:04:14] And on the other edge, earlier, the value that was flowing in was top.
+[00:04:14 -> 00:04:16] And so it was OK to set it to 3.
+[00:04:16 -> 00:04:19] But this time, the value that's flowing in from here is actually bottom.
+[00:04:19 -> 00:04:27] And so recall the first rule, it says that if any of the predecessors is bottom, then the value is going to be set to bottom.
+[00:04:27 -> 00:04:32] And so we're going to have to set this value before y is equal to 0 to bottom.
+[00:04:32 -> 00:04:34] And this is what our new state is going to be.
+[00:04:34 -> 00:04:37] And now, once again, we are going to see if it's a fixed point.
+[00:04:37 -> 00:04:41] And for all of the statement, it looks like all the rules are being satisfied.
+[00:04:41 -> 00:04:44] But for this particular statement, y is equal to 0.
+[00:04:44 -> 00:04:49] The rules are not satisfied because the out of this is 3 and the in is bottom.
+[00:04:49 -> 00:04:53] And the statement actually doesn't really modify x.
+[00:04:53 -> 00:04:55] So we need to change this 3 to bottom.
+[00:04:55 -> 00:04:57] And so we're going to change this to bottom.
+[00:04:57 -> 00:04:59] Now, have we reached a fixed point?
+[00:04:59 -> 00:05:01] Well, let's look at this particular point.
+[00:05:01 -> 00:05:03] And this is bottom.
+[00:05:03 -> 00:05:07] And one of the predecessors is bottom and the other is 4.
+[00:05:07 -> 00:05:09] And indeed, this is OK.
+[00:05:09 -> 00:05:10] This is fine.
+[00:05:10 -> 00:05:17] And actually, if you look at the program, all the program points are actually satisfying all my rules.
+[00:05:17 -> 00:05:19] And this is indeed a fixed point.
+[00:05:19 -> 00:05:23] So this is a fixed point solution.
+[00:05:23 -> 00:05:25] Notice that this fixed point solution is different.
+[00:05:25 -> 00:05:31] Also notice that it took us a few iterations to actually find the actual values.
+[00:05:31 -> 00:05:35] The first values that we found for this particular basic block were 3 and 3.
+[00:05:35 -> 00:05:41] But the final values for this data flow analysis set them to bottom and bottom.
+[00:05:41 -> 00:05:43] Now, let's just change the program a little bit.
+[00:05:43 -> 00:05:47] And let's say that I change this statement from 4 to 3.
+[00:05:47 -> 00:05:52] So instead of x being assigned to 4, let's just change the program so that x is being assigned 3.
+[00:05:52 -> 00:05:57] So I'm just using a different example to show how things would work in that case.
+[00:05:57 -> 00:05:59] So I just change from 4 to 3.
+[00:05:59 -> 00:06:06] And once again, the initial state is that the initial entry point is set to bottom and everything else is set to top.
+[00:06:06 -> 00:06:08] Now, the values are going to flow just like before.
+[00:06:08 -> 00:06:11] I'm going to set this to 3 and 3.
+[00:06:11 -> 00:06:13] Then we're going to set all these values to 3.
+[00:06:13 -> 00:06:18] And notice that this time you're going to set this to 3 and not 4 because the assignment is to value 3.
+[00:06:18 -> 00:06:20] Here also, this value is set to 3.
+[00:06:20 -> 00:06:23] And I want to emphasize that on one edge, the value is 3.
+[00:06:23 -> 00:06:26] On the other edge, the value is top.
+[00:06:26 -> 00:06:35] And so recall the rule that if one of the values is 3 and all other values are either 3 or top, then the value is 3, the constant C.
+[00:06:35 -> 00:06:36] And so it's going to be 3.
+[00:06:36 -> 00:06:39] And based on that, this value is going to be 3.
+[00:06:39 -> 00:06:42] And now these two values are going to flow in.
+[00:06:42 -> 00:06:45] And notice this time both these values are 3.
+[00:06:45 -> 00:06:47] And so what's the value that's going to come here?
+[00:06:47 -> 00:06:48] It's still going to be 3.
+[00:06:48 -> 00:06:51] And it's going to be 3 for the entire basic block.
+[00:06:51 -> 00:06:53] Have we reached a fixed point now?
+[00:06:53 -> 00:06:56] Well, actually it turns out that we have reached a fixed point.
+[00:06:56 -> 00:07:01] Because even if I look at this particular point here, the value that's flowing in from one edge is 3.
+[00:07:01 -> 00:07:04] And the value that's flowing in from the other edge is also 3.
+[00:07:04 -> 00:07:10] And so the value of 3 here is actually something that follows our rules.
+[00:07:10 -> 00:07:12] And so this is actually a fixed point.
+[00:07:12 -> 00:07:15] And notice that this time we have reached the fixed point earlier.
+[00:07:15 -> 00:07:20] And the fixed point solution is also different from what it was in the other example that we saw.

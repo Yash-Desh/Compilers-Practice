@@ -1,0 +1,647 @@
+Title: Compiler Design Module 168 : Introduction to Poison Values
+Video ID: cIJ9pea8gSk
+Detected language: en
+------------------------------------------------------------
+
+[00:00:00 -> 00:00:05] So last time we talked about how undefined behavior semantics
+[00:00:05 -> 00:00:09] are both a boon and a bane for optimization.
+[00:00:09 -> 00:00:11] Undefined semantics in the source language
+[00:00:11 -> 00:00:14] help optimization, but undefined behavior
+[00:00:14 -> 00:00:17] in the target language or the target program
+[00:00:17 -> 00:00:21] actually thwarts transformations and thus optimizations.
+[00:00:21 -> 00:00:25] And many optimizations in our compiler pipeline
+[00:00:25 -> 00:00:27] are IR to IR transformations,
+[00:00:27 -> 00:00:29] which means whatever undefined behavior
+[00:00:29 -> 00:00:32] is present in the source is also present in the target.
+[00:00:32 -> 00:00:35] And so the IR designer needs to walk a tight rope
+[00:00:35 -> 00:00:40] between optimization opportunity in the source
+[00:00:40 -> 00:00:45] and avoiding the thwarting of optimization opportunity
+[00:00:45 -> 00:00:50] due to UB in the target while designing the IR.
+[00:00:50 -> 00:00:54] And so we are going to discuss one such example
+[00:00:54 -> 00:00:58] of undefined behavior semantics in an IR like LLVM
+[00:00:59 -> 00:01:01] which are called Poisson values.
+[00:01:01 -> 00:01:04] So Poisson values are also undefined behavior semantics
+[00:01:04 -> 00:01:07] but they are a weaker form of undefined behavior semantics
+[00:01:07 -> 00:01:10] and it will become clear in the discussion
+[00:01:10 -> 00:01:13] and the rest of this module what I mean by weaker.
+[00:01:14 -> 00:01:17] So recall that when we talk about UB
+[00:01:17 -> 00:01:18] or undefined behavior,
+[00:01:18 -> 00:01:21] we say that if there is an error condition that occurs
+[00:01:21 -> 00:01:24] the error condition could be integer overflow
+[00:01:24 -> 00:01:26] for a signed integer arithmetic operation
+[00:01:26 -> 00:01:29] or it could be out of bounds memory access
+[00:01:29 -> 00:01:32] or it could be divided by zero or anything like that.
+[00:01:32 -> 00:01:34] Then the error condition, if that happens
+[00:01:34 -> 00:01:37] then that basically means that the program is wrong
+[00:01:37 -> 00:01:41] which means that the compiler can do anything,
+[00:01:41 -> 00:01:42] the runtime can do anything
+[00:01:42 -> 00:01:45] because what the programmer is basically given
+[00:01:45 -> 00:01:47] as a program is actually an incorrect program
+[00:01:47 -> 00:01:49] because this program can have an illegal behavior
+[00:01:49 -> 00:01:53] because this program actually executes an error condition.
+[00:01:53 -> 00:01:58] Poisson value semantics or I'm gonna call it Poisson value
+[00:01:59 -> 00:02:02] or Poisson value semantics interchangeably
+[00:02:02 -> 00:02:05] says that if there's an error condition
+[00:02:05 -> 00:02:08] for example, because of signed integer overflow
+[00:02:08 -> 00:02:10] then it's not that the program is wrong,
+[00:02:10 -> 00:02:11] the program is still be correct
+[00:02:11 -> 00:02:16] just that an error value is generated into the target.
+[00:02:16 -> 00:02:18] So if I'm saying X equals Y plus Z
+[00:02:18 -> 00:02:20] and if Y plus Z is an arithmetic operation
+[00:02:20 -> 00:02:23] that triggers an error condition
+[00:02:23 -> 00:02:25] for example, due to an overflow
+[00:02:25 -> 00:02:27] then it's not like the program is incorrect
+[00:02:27 -> 00:02:31] we just return an error value into the destination variable
+[00:02:31 -> 00:02:33] which in this example is X.
+[00:02:33 -> 00:02:35] So this is a weaker form of undefined behavior
+[00:02:35 -> 00:02:38] we basically saying that the program is correct
+[00:02:38 -> 00:02:41] program is incorrect means anything can happen
+[00:02:41 -> 00:02:42] out of that anything can happen
+[00:02:42 -> 00:02:44] we pick one particular behavior,
+[00:02:44 -> 00:02:47] the particular behavior is that this particular value
+[00:02:47 -> 00:02:48] is an error value, in other words
+[00:02:48 -> 00:02:50] that value should not be used
+[00:02:50 -> 00:02:51] or should not be printed out
+[00:02:51 -> 00:02:53] or should not be sent,
+[00:02:53 -> 00:02:55] should not be used to do some critical stuff
+[00:02:55 -> 00:02:57] or anything like that.
+[00:02:57 -> 00:02:58] And so that particular error value
+[00:02:58 -> 00:03:00] I'm going to call the Poisson value.
+[00:03:00 -> 00:03:02] Why is it called a Poisson value?
+[00:03:02 -> 00:03:04] We're going to discuss later in this module
+[00:03:04 -> 00:03:06] but just bear with me
+[00:03:06 -> 00:03:09] and basically let's call it a Poisson value
+[00:03:09 -> 00:03:10] from now on.
+[00:03:10 -> 00:03:11] So if there is an error condition
+[00:03:11 -> 00:03:14] that figure that occurs in the program
+[00:03:14 -> 00:03:16] then a Poisson value is returned
+[00:03:16 -> 00:03:18] into the destination register.
+[00:03:18 -> 00:03:19] And this I'm talking in the context
+[00:03:19 -> 00:03:21] of an intermediate representation
+[00:03:21 -> 00:03:23] and in fact the Poisson value concept
+[00:03:23 -> 00:03:25] was introduced in the LLVM IR.
+[00:03:26 -> 00:03:29] Okay, so let's say I have a source language
+[00:03:29 -> 00:03:31] and I have a source program
+[00:03:31 -> 00:03:33] written in the IR
+[00:03:33 -> 00:03:35] and I'm going to use a C-like syntax for my IR
+[00:03:35 -> 00:03:37] just like I was doing in my previous module.
+[00:03:37 -> 00:03:39] Similarly I have a target program
+[00:03:39 -> 00:03:41] again written in a C-like syntax
+[00:03:41 -> 00:03:43] but it's actually an IR program.
+[00:03:43 -> 00:03:46] And in this we basically have a while loop
+[00:03:46 -> 00:03:48] and say y equals x plus one
+[00:03:48 -> 00:03:50] and then I'm using y
+[00:03:50 -> 00:03:52] and the transformation is that
+[00:03:52 -> 00:03:53] I do loop invariant code motion
+[00:03:53 -> 00:03:55] and I have watched this entire computation
+[00:03:55 -> 00:03:57] y equals x plus one
+[00:03:57 -> 00:04:00] above the loop and bring it to y equals x plus one
+[00:04:00 -> 00:04:01] before the while loop.
+[00:04:01 -> 00:04:03] And this is the standard loop invariant
+[00:04:03 -> 00:04:05] code motion algorithm.
+[00:04:05 -> 00:04:06] However, we saw last time
+[00:04:06 -> 00:04:09] that under UB semantics,
+[00:04:09 -> 00:04:11] undefined D-way semantics,
+[00:04:11 -> 00:04:13] this transformation is not valid
+[00:04:13 -> 00:04:15] because if you consider the situation
+[00:04:15 -> 00:04:17] where x equals int max
+[00:04:17 -> 00:04:20] which means int max plus one will definitely overflow
+[00:04:20 -> 00:04:22] and the loop was actually never entered
+[00:04:22 -> 00:04:24] in the original program
+[00:04:24 -> 00:04:26] then in the new program
+[00:04:26 -> 00:04:29] you are basically computing x plus one anyway
+[00:04:29 -> 00:04:31] and you're basically triggering the error condition
+[00:04:31 -> 00:04:34] and that's basically causing the program to be incorrect.
+[00:04:34 -> 00:04:36] So the original program was correct
+[00:04:36 -> 00:04:38] but the transform program is incorrect
+[00:04:38 -> 00:04:40] for a particular input
+[00:04:40 -> 00:04:42] and that is not a valid transformation.
+[00:04:42 -> 00:04:43] If for any input,
+[00:04:43 -> 00:04:45] if the original program was correct
+[00:04:45 -> 00:04:48] then the transfer program should also be correct
+[00:04:48 -> 00:04:49] and if you have the same behavior
+[00:04:49 -> 00:04:51] but that's not true in this case
+[00:04:51 -> 00:04:53] and this is not a valid transformation
+[00:04:53 -> 00:04:55] and this is actually a big disappointment
+[00:04:55 -> 00:04:56] because these are the kind of transformations
+[00:04:56 -> 00:04:58] that we've been discussing all through the course.
+[00:04:58 -> 00:05:02] So how do we manage to still do these transformations?
+[00:05:03 -> 00:05:06] And the answer is Poisson value semantics.
+[00:05:06 -> 00:05:08] Something that we've already discussed.
+[00:05:08 -> 00:05:09] In the Poisson value semantics
+[00:05:09 -> 00:05:12] if x plus one causes an overflow
+[00:05:12 -> 00:05:14] that means there's an error condition
+[00:05:14 -> 00:05:16] then it's not like the program is incorrect.
+[00:05:16 -> 00:05:18] It just means that y is assigned an error value
+[00:05:19 -> 00:05:22] and so if I look at my target program
+[00:05:22 -> 00:05:24] then if x plus one overflows
+[00:05:24 -> 00:05:26] if I look at this particular instance
+[00:05:26 -> 00:05:29] when x was int max and the loop is never entered
+[00:05:29 -> 00:05:31] then x plus one will overflow
+[00:05:31 -> 00:05:33] but that doesn't mean the program is incorrect.
+[00:05:33 -> 00:05:37] It just returns an error value into this variable y
+[00:05:37 -> 00:05:39] and that's okay because now the error value
+[00:05:39 -> 00:05:40] has been returned into y
+[00:05:40 -> 00:05:42] but the loop will still not be entered
+[00:05:42 -> 00:05:44] assuming we have maintained the semantics
+[00:05:45 -> 00:05:46] of the loop and so the loop will not be entered
+[00:05:46 -> 00:05:48] and y will never be used
+[00:05:48 -> 00:05:50] so it's as good as a know-how.
+[00:05:50 -> 00:05:54] So in this case if I use the Poisson value semantics
+[00:05:54 -> 00:05:57] these two programs are actually equivalent
+[00:05:57 -> 00:05:59] because the target generates an equivalent value.
+[00:05:59 -> 00:06:01] The target generates an error value
+[00:06:01 -> 00:06:04] that is into y that is never used
+[00:06:04 -> 00:06:06] and so that's okay even though I'm generating
+[00:06:06 -> 00:06:08] an extra error value in the target
+[00:06:08 -> 00:06:10] that I was not going to generate in the source
+[00:06:10 -> 00:06:13] that error value is never used and we are doing okay
+[00:06:14 -> 00:06:16] and so the target program is actually equivalent
+[00:06:16 -> 00:06:19] and so I can say this is okay.
+[00:06:19 -> 00:06:21] All right so this transformation is actually okay
+[00:06:21 -> 00:06:24] and this transformation becomes available
+[00:06:24 -> 00:06:26] and becomes possible using the Poisson value semantics
+[00:06:26 -> 00:06:28] but was not possible using
+[00:06:28 -> 00:06:30] the undefined behavior semantics.
+[00:06:30 -> 00:06:32] So what is typically happening
+[00:06:32 -> 00:06:33] in programming language design
+[00:06:33 -> 00:06:36] is that a source language like C
+[00:06:36 -> 00:06:37] would use undefined behavior semantics
+[00:06:37 -> 00:06:39] because compiler pipelines
+[00:06:39 -> 00:06:42] don't typically transform C to C
+[00:06:42 -> 00:06:45] but an intermediate representation like LLVM
+[00:06:45 -> 00:06:47] would typically use semantics
+[00:06:47 -> 00:06:49] similar to the Poisson value semantics
+[00:06:49 -> 00:06:50] where it allows such transformations
+[00:06:50 -> 00:06:52] like loop invariant code motion
+[00:06:52 -> 00:06:55] or in general code hoisting transformations
+[00:06:55 -> 00:06:56] to become possible.
+[00:06:57 -> 00:06:59] Let's look at another example
+[00:06:59 -> 00:07:01] that we also saw in our last module
+[00:07:01 -> 00:07:04] which is let's say there's a variable called x
+[00:07:04 -> 00:07:06] and I have if C y equals x plus one
+[00:07:06 -> 00:07:08] and then I have you know
+[00:07:08 -> 00:07:10] because this is an IR representation of the program
+[00:07:10 -> 00:07:14] I have a phi node recall that my IR is SSA form
+[00:07:14 -> 00:07:16] and so in the phi node I say that
+[00:07:16 -> 00:07:18] if I come through this path
+[00:07:18 -> 00:07:21] then I get some value I'm calling it dot dot dot
+[00:07:21 -> 00:07:23] and if I come through the if path
+[00:07:23 -> 00:07:24] then I get the y value
+[00:07:24 -> 00:07:27] which was assigned on that particular branch
+[00:07:27 -> 00:07:30] which is y equals x plus one.
+[00:07:30 -> 00:07:32] Now let's say I want you to transform it
+[00:07:32 -> 00:07:33] so I will transform it as such
+[00:07:33 -> 00:07:35] I'll say y one equals x plus one
+[00:07:35 -> 00:07:38] unconditionally I will do the transform
+[00:07:38 -> 00:07:39] I'll do the arithmetic x plus one
+[00:07:39 -> 00:07:41] and then I would say if not C
+[00:07:41 -> 00:07:44] then revert that I mean kind of you know
+[00:07:44 -> 00:07:46] revert that computation
+[00:07:46 -> 00:07:49] and say y two equals y one minus one
+[00:07:49 -> 00:07:51] and now in this case again
+[00:07:51 -> 00:07:53] if I say z equals phi
+[00:07:53 -> 00:07:56] on this path which is the path of C
+[00:07:56 -> 00:07:59] I'm going to say that it is taking the value y one
+[00:07:59 -> 00:08:01] and on the path of not C
+[00:08:01 -> 00:08:05] I'm going to take this dot dot dot value okay
+[00:08:05 -> 00:08:07] and are these two programs equivalent
+[00:08:07 -> 00:08:08] and we have already seen
+[00:08:08 -> 00:08:10] that these programs are not equivalent
+[00:08:10 -> 00:08:13] under the undefined behavior semantics
+[00:08:13 -> 00:08:14] that C language has
+[00:08:14 -> 00:08:17] because in this case y equals x plus one
+[00:08:17 -> 00:08:21] is executed only if condition was true
+[00:08:21 -> 00:08:24] and so if x plus one was causing an undefined behavior
+[00:08:24 -> 00:08:27] it would only cause an undefined behavior if C was true
+[00:08:27 -> 00:08:30] so if you consider the case when x was int max
+[00:08:30 -> 00:08:32] which means x plus one would have caused ub
+[00:08:32 -> 00:08:34] and C was false
+[00:08:34 -> 00:08:36] that means this would never have executed
+[00:08:36 -> 00:08:39] then the source program basically never causes ub
+[00:08:39 -> 00:08:40] it actually does nothing
+[00:08:40 -> 00:08:43] whereas the target program actually causes ub
+[00:08:43 -> 00:08:45] unconditionally because it's doing x plus one
+[00:08:45 -> 00:08:48] irrespective of whether C is true or not
+[00:08:48 -> 00:08:52] so but when I look at the poison value semantics
+[00:08:52 -> 00:08:54] these this transformation becomes okay
+[00:08:54 -> 00:08:57] because if you consider this case
+[00:08:57 -> 00:09:00] this problematic case that we had discussed earlier
+[00:09:00 -> 00:09:03] which is x equals int max and not C
+[00:09:03 -> 00:09:06] then the target does have an error condition
+[00:09:06 -> 00:09:08] but the error condition just generates an error value
+[00:09:08 -> 00:09:11] or a poison value into y one
+[00:09:11 -> 00:09:13] and in this case and it will never be used
+[00:09:13 -> 00:09:15] because if C was false
+[00:09:15 -> 00:09:17] then I'm going to use this particular path
+[00:09:17 -> 00:09:20] and I'm going to use this dot dot dot value right
+[00:09:20 -> 00:09:23] so it's okay to do this transformation
+[00:09:23 -> 00:09:25] because even though I did an exerisimative operation
+[00:09:25 -> 00:09:28] that caused an error condition which was overflow
+[00:09:28 -> 00:09:30] that didn't mean that the program is wrong
+[00:09:30 -> 00:09:33] it just kind of returned an error value into y one
+[00:09:33 -> 00:09:37] and because you know I'm assuming that not C is true
+[00:09:37 -> 00:09:39] because that's why x plus was never executed
+[00:09:39 -> 00:09:40] in the source program
+[00:09:42 -> 00:09:45] I'm going to end up with a dot dot dot value into z
+[00:09:45 -> 00:09:47] that means y one is never going to use
+[00:09:47 -> 00:09:50] the error value is never going to get used in z
+[00:09:50 -> 00:09:51] so that's basically the idea
+[00:09:51 -> 00:09:55] the basic idea is that for some kind of operations
+[00:09:55 -> 00:09:58] the error conditions basically cause a poison value
+[00:09:58 -> 00:10:00] to get returned into the destination register
+[00:10:00 -> 00:10:03] instead of just saying that the program is wrong
+[00:10:03 -> 00:10:05] because if you just say that the program is wrong
+[00:10:05 -> 00:10:07] then it becomes very difficult
+[00:10:07 -> 00:10:09] to hoist competition above
+[00:10:09 -> 00:10:11] because if you hoist competition above
+[00:10:11 -> 00:10:13] you have to worry about all those error conditions
+[00:10:13 -> 00:10:15] and if those error conditions
+[00:10:15 -> 00:10:17] can cause the program to be incorrect
+[00:10:17 -> 00:10:19] then many of those hoistings become illegal
+[00:10:19 -> 00:10:21] but on the other hand if those hoistings
+[00:10:21 -> 00:10:24] just cause an extra error value
+[00:10:24 -> 00:10:27] then it's okay because in just in case
+[00:10:27 -> 00:10:28] that error value was not getting used
+[00:10:28 -> 00:10:30] or generated in the source program
+[00:10:30 -> 00:10:32] hopefully your transformation is ensuring
+[00:10:32 -> 00:10:34] that the error value is not going to get used
+[00:10:34 -> 00:10:37] or in this target program also
+[00:10:37 -> 00:10:41] even though it may get generated
+[00:10:41 -> 00:10:42] all right so that is the
+[00:10:42 -> 00:10:44] that's basically my introduction
+[00:10:44 -> 00:10:46] on what are poison values
+[00:10:46 -> 00:10:48] and how do they model undefined behavior
+[00:10:48 -> 00:10:49] in a weaker form
+[00:10:49 -> 00:10:50] because here we are not saying
+[00:10:50 -> 00:10:51] that the program is wrong
+[00:10:51 -> 00:10:55] we are just saying that an error value is generated
+[00:10:55 -> 00:10:58] now the question is this poison value is a special value
+[00:10:58 -> 00:11:00] it is not one of your integer values
+[00:11:00 -> 00:11:02] 0 to 2 to the power 32 minus 1
+[00:11:02 -> 00:11:03] or anything like that
+[00:11:03 -> 00:11:05] it is actually a special value
+[00:11:05 -> 00:11:07] that is part of the operational semantics
+[00:11:07 -> 00:11:10] of my intermediate representation language
+[00:11:10 -> 00:11:10] the IR language
+[00:11:10 -> 00:11:12] the IR itself is a syntax
+[00:11:12 -> 00:11:13] and it has it is associated
+[00:11:13 -> 00:11:16] with its own operational semantics
+[00:11:16 -> 00:11:18] and so just like a source language
+[00:11:18 -> 00:11:19] like C would be associated
+[00:11:19 -> 00:11:21] with its own operational semantics
+[00:11:21 -> 00:11:23] and similarly the assembly language
+[00:11:23 -> 00:11:24] would be associated
+[00:11:24 -> 00:11:26] with its own operational semantics
+[00:11:26 -> 00:11:29] so now that we know that the IR contains
+[00:11:29 -> 00:11:31] an extra value called the poison value
+[00:11:31 -> 00:11:34] which is distinct from all other values in the program
+[00:11:34 -> 00:11:36] then what should be the operational semantics
+[00:11:36 -> 00:11:37] of the poison value
+[00:11:37 -> 00:11:38] for example what should happen
+[00:11:38 -> 00:11:40] if I add one to a poison
+[00:11:40 -> 00:11:41] or I divide poison by two
+[00:11:41 -> 00:11:44] or multiply two to a poison
+[00:11:44 -> 00:11:45] or any other number
+[00:11:45 -> 00:11:46] do any other kind of arithmetic operation
+[00:11:46 -> 00:11:47] or poison
+[00:11:47 -> 00:11:48] or what should happen
+[00:11:48 -> 00:11:50] if I divide something by poison
+[00:11:50 -> 00:11:52] so if I say two divide by poison
+[00:11:52 -> 00:11:54] as opposed to poison divide by two
+[00:11:54 -> 00:11:55] so these are the kind of questions
+[00:11:55 -> 00:11:56] that immediately arise
+[00:11:56 -> 00:11:58] as soon as we introduce a new value
+[00:11:58 -> 00:11:59] into my language
+[00:11:59 -> 00:12:01] in this case the IR language
+[00:12:02 -> 00:12:03] so let's look at an example
+[00:12:03 -> 00:12:04] to understand and motivate
+[00:12:04 -> 00:12:06] what should the semantics be
+[00:12:06 -> 00:12:07] and so in this case
+[00:12:07 -> 00:12:09] let's say I have int x
+[00:12:09 -> 00:12:10] and then I have while dot dot dot
+[00:12:10 -> 00:12:12] and y equals x plus one
+[00:12:12 -> 00:12:13] and z equals y by two
+[00:12:13 -> 00:12:16] now we've already seen that x plus one
+[00:12:16 -> 00:12:18] can potentially generate a poison value
+[00:12:18 -> 00:12:20] if x was int max
+[00:12:20 -> 00:12:21] and so in that case
+[00:12:21 -> 00:12:24] y would basically go get the poison value
+[00:12:25 -> 00:12:27] and now z is equal to y by two
+[00:12:27 -> 00:12:29] so basically that would basically mean
+[00:12:29 -> 00:12:31] that z would get poison by two
+[00:12:32 -> 00:12:33] and the question is
+[00:12:33 -> 00:12:33] what should I want
+[00:12:33 -> 00:12:36] what would I want the abstract machine
+[00:12:36 -> 00:12:37] of the IR language
+[00:12:37 -> 00:12:38] to do in this case
+[00:12:38 -> 00:12:41] should I return zero
+[00:12:41 -> 00:12:44] should I return a poison value into z
+[00:12:44 -> 00:12:47] should I consider it as undefined behaviour
+[00:12:47 -> 00:12:49] and so I'm going to
+[00:12:49 -> 00:12:49] discuss this
+[00:12:49 -> 00:12:51] by looking at a potential transformation
+[00:12:51 -> 00:12:52] of this program
+[00:12:52 -> 00:12:54] and the transformation is again
+[00:12:54 -> 00:12:56] the loop invariant code motion transformation
+[00:12:57 -> 00:12:58] that we find to be very profitable
+[00:12:58 -> 00:13:00] and that we've been using as our
+[00:13:00 -> 00:13:02] motivating example all through
+[00:13:02 -> 00:13:05] while discussing undefined behaviour
+[00:13:05 -> 00:13:06] and poison values
+[00:13:06 -> 00:13:08] so let's say y equals x plus one
+[00:13:08 -> 00:13:09] was loop invariant
+[00:13:09 -> 00:13:11] and so was z equals y by two
+[00:13:11 -> 00:13:13] which means it's possible to hoist
+[00:13:13 -> 00:13:14] the entire computation
+[00:13:14 -> 00:13:16] which is loop invariant
+[00:13:16 -> 00:13:16] above the loop
+[00:13:17 -> 00:13:21] now I want this transformation to be possible
+[00:13:21 -> 00:13:23] because this is a very profitable transformation
+[00:13:23 -> 00:13:24] if there is a block of code
+[00:13:24 -> 00:13:26] which is entirely loop invariant
+[00:13:26 -> 00:13:27] in this case the block is
+[00:13:27 -> 00:13:29] made by these two statements
+[00:13:29 -> 00:13:30] then I should be able to hoist
+[00:13:30 -> 00:13:33] the entire block of code above the loop
+[00:13:33 -> 00:13:36] but let's look at different options
+[00:13:36 -> 00:13:38] for what should be the operational semantics
+[00:13:38 -> 00:13:39] of the poison value
+[00:13:39 -> 00:13:41] option one is any operation
+[00:13:41 -> 00:13:43] be it addition, subtraction, multiplication
+[00:13:43 -> 00:13:45] on a poison value should trigger ub
+[00:13:45 -> 00:13:47] which means if you do try to add something
+[00:13:47 -> 00:13:48] to a poison value
+[00:13:48 -> 00:13:49] then that should just mean
+[00:13:49 -> 00:13:50] that the program is wrong
+[00:13:50 -> 00:13:52] which means you should never add
+[00:13:52 -> 00:13:55] or subtract or do any other operation
+[00:13:55 -> 00:13:56] on a poison value
+[00:13:56 -> 00:13:57] but if you do that
+[00:13:57 -> 00:14:00] then what happens to this transformation
+[00:14:00 -> 00:14:01] is it legal
+[00:14:01 -> 00:14:02] the answer is no
+[00:14:02 -> 00:14:04] this transformation is no longer legal
+[00:14:04 -> 00:14:05] because once again
+[00:14:05 -> 00:14:06] if I consider the case
+[00:14:06 -> 00:14:08] when x equals int max
+[00:14:08 -> 00:14:10] and let's say the loop was never entered
+[00:14:10 -> 00:14:11] in the source program
+[00:14:11 -> 00:14:14] then the source program would have done nothing
+[00:14:14 -> 00:14:16] it wouldn't have done nothing
+[00:14:16 -> 00:14:17] because the loop was never entered
+[00:14:17 -> 00:14:19] so it's almost like the source program does nothing
+[00:14:19 -> 00:14:21] but if I look at the target program
+[00:14:21 -> 00:14:23] then it computes x plus one
+[00:14:23 -> 00:14:24] so int max plus one
+[00:14:24 -> 00:14:25] that's an error
+[00:14:25 -> 00:14:28] and so y would contain the poison value
+[00:14:28 -> 00:14:30] and then I would do z equals poison by two
+[00:14:30 -> 00:14:33] and if poison by two triggers ub
+[00:14:33 -> 00:14:35] then my target program is triggering ub
+[00:14:35 -> 00:14:38] and this is similar to how we had earlier
+[00:14:38 -> 00:14:40] said that you can't hoist computation
+[00:14:40 -> 00:14:42] if it triggers ub
+[00:14:42 -> 00:14:44] and so in this case z equals y by two
+[00:14:44 -> 00:14:45] if I use this particular option
+[00:14:45 -> 00:14:48] for my poison value operational semantics
+[00:14:48 -> 00:14:50] then I cannot hoist this computation
+[00:14:50 -> 00:14:53] z equals y by two above the loop
+[00:14:53 -> 00:14:54] so the option two is not very good
+[00:14:54 -> 00:14:55] because this is a transformation
+[00:14:55 -> 00:14:58] that we would ideally like to support in IR
+[00:14:58 -> 00:15:02] this is a very profitable and meaningful transformation
+[00:15:02 -> 00:15:05] option two is that any operation on a poison value
+[00:15:05 -> 00:15:06] results in a poison value
+[00:15:06 -> 00:15:08] and this is the second option
+[00:15:08 -> 00:15:09] in this case
+[00:15:09 -> 00:15:12] when I do y equals x plus one
+[00:15:12 -> 00:15:14] and x was actually int max
+[00:15:14 -> 00:15:16] then I may generate a poison value into y
+[00:15:16 -> 00:15:18] and then when I do z equals y by two
+[00:15:18 -> 00:15:20] that's just poison by two
+[00:15:20 -> 00:15:22] and poison by two should just return poison
+[00:15:22 -> 00:15:23] into z
+[00:15:23 -> 00:15:25] but because the loop was never entered
+[00:15:25 -> 00:15:27] in the source and in the target
+[00:15:27 -> 00:15:28] the z will never get used
+[00:15:28 -> 00:15:30] neither y nor z will ever get used
+[00:15:30 -> 00:15:31] and that's okay
+[00:15:31 -> 00:15:33] it's just similar to our previous example
+[00:15:33 -> 00:15:34] where a poison value
+[00:15:34 -> 00:15:37] or multiple poison values are getting generated
+[00:15:37 -> 00:15:38] but they're never getting used
+[00:15:38 -> 00:15:39] and so in this case
+[00:15:39 -> 00:15:42] the programs would be okay
+[00:15:42 -> 00:15:44] the transformation would be okay
+[00:15:44 -> 00:15:45] because even if I consider this case
+[00:15:45 -> 00:15:47] when x equals int max
+[00:15:47 -> 00:15:48] and loop never returns
+[00:15:48 -> 00:15:50] the target just returns poison in z
+[00:15:50 -> 00:15:51] which is never used
+[00:15:52 -> 00:15:54] and we can show that the source and target programs
+[00:15:54 -> 00:15:56] are actually still equivalent
+[00:15:56 -> 00:15:58] under the poison value semantics
+[00:15:58 -> 00:15:59] under these semantics
+[00:15:59 -> 00:16:01] that any operation on a poison value
+[00:16:01 -> 00:16:03] returns a poison value
+[00:16:03 -> 00:16:04] and does not trigger ub
+[00:16:05 -> 00:16:08] so what are the value operational semantics
+[00:16:08 -> 00:16:09] of my poison value
+[00:16:09 -> 00:16:11] based on that motivating example
+[00:16:11 -> 00:16:12] that I showed on a previous slide
+[00:16:12 -> 00:16:14] and these are actually the semantics
+[00:16:14 -> 00:16:16] in the LLVM IR as well
+[00:16:16 -> 00:16:18] which is z equals x operation y
+[00:16:18 -> 00:16:19] for any such operation
+[00:16:19 -> 00:16:22] on in my three address code
+[00:16:22 -> 00:16:25] if either x or y is poison
+[00:16:25 -> 00:16:28] then z also gets poison
+[00:16:28 -> 00:16:28] all right
+[00:16:28 -> 00:16:30] so that it doesn't trigger ub
+[00:16:30 -> 00:16:33] but it just returns a poison value into z
+[00:16:33 -> 00:16:34] and now I come to the reason
+[00:16:34 -> 00:16:36] why this is called the poison value
+[00:16:36 -> 00:16:37] because it's almost like
+[00:16:37 -> 00:16:39] if one value gets poisoned
+[00:16:39 -> 00:16:42] then whatever derives from that particular poison value
+[00:16:42 -> 00:16:43] also gets poisoned
+[00:16:43 -> 00:16:45] so basically any operation
+[00:16:45 -> 00:16:47] it could be arithmetic operation
+[00:16:47 -> 00:16:48] logical operation
+[00:16:48 -> 00:16:50] or any other operation
+[00:16:50 -> 00:16:51] that the IR supports
+[00:16:51 -> 00:16:53] any operation on a poison value
+[00:16:53 -> 00:16:56] just returns a poison value on itself
+[00:16:56 -> 00:16:56] okay
+[00:16:56 -> 00:16:58] we're going to study more semantics
+[00:16:58 -> 00:16:59] of the poison value
+[00:16:59 -> 00:17:01] in our next module
+[00:17:01 -> 00:17:02] there are many more subtleties
+[00:17:02 -> 00:17:03] that we have not covered in this module
+[00:17:03 -> 00:17:05] but I'm going to introduce them
+[00:17:05 -> 00:17:07] briefly in this module
+[00:17:07 -> 00:17:09] and so to look at that
+[00:17:09 -> 00:17:11] let's look at this particular example
+[00:17:11 -> 00:17:12] similar to the example
+[00:17:12 -> 00:17:13] that we have previously seen
+[00:17:13 -> 00:17:15] which is y equals x plus one
+[00:17:15 -> 00:17:17] and z equals two by y
+[00:17:17 -> 00:17:19] this time instead of y by two
+[00:17:19 -> 00:17:20] I just kind of switch the order
+[00:17:20 -> 00:17:22] of the division operator operands
+[00:17:22 -> 00:17:24] and z two by y
+[00:17:24 -> 00:17:25] and so once again
+[00:17:25 -> 00:17:26] let's assume that y equals x plus one
+[00:17:26 -> 00:17:28] and z equals two by y are loop invariant
+[00:17:28 -> 00:17:31] which means they can be hoisted up
+[00:17:31 -> 00:17:32] and the question is
+[00:17:32 -> 00:17:34] should we allow this kind of hoisting
+[00:17:34 -> 00:17:36] which is y equals x plus one
+[00:17:36 -> 00:17:38] and z equals two by y
+[00:17:38 -> 00:17:39] and the answer is
+[00:17:39 -> 00:17:41] these are the kind of transformations
+[00:17:41 -> 00:17:43] we typically do not want
+[00:17:43 -> 00:17:45] because many architectures
+[00:17:45 -> 00:17:47] would basically just throw
+[00:17:47 -> 00:17:49] an error and completely abort the program
+[00:17:49 -> 00:17:53] on a division by a zero value
+[00:17:53 -> 00:17:56] and so unlike for example
+[00:17:56 -> 00:17:57] sign integer overflow
+[00:17:57 -> 00:17:59] where the machines
+[00:17:59 -> 00:18:00] typical hardware machines
+[00:18:00 -> 00:18:03] would just ignore the overflow
+[00:18:03 -> 00:18:05] and just maybe wrap around semantics
+[00:18:05 -> 00:18:07] or maybe act saturating arithmetic
+[00:18:07 -> 00:18:08] or something like that
+[00:18:08 -> 00:18:10] they won't really terminate the program
+[00:18:10 -> 00:18:12] some operations like division by zero
+[00:18:12 -> 00:18:14] often just terminate the program
+[00:18:14 -> 00:18:16] and this is just a fact of how
+[00:18:16 -> 00:18:18] typical hardware is implemented
+[00:18:18 -> 00:18:19] and based on that
+[00:18:19 -> 00:18:20] this kind of transformation
+[00:18:20 -> 00:18:22] actually is very dangerous
+[00:18:22 -> 00:18:24] because if on the original source program
+[00:18:24 -> 00:18:26] I never entered the loop
+[00:18:26 -> 00:18:28] then even if y was zero
+[00:18:28 -> 00:18:29] it doesn't matter
+[00:18:29 -> 00:18:31] but in my target program
+[00:18:31 -> 00:18:33] if y was evaluated to zero
+[00:18:33 -> 00:18:35] then a two divided by zero
+[00:18:35 -> 00:18:38] can basically cause a divide by zero exception
+[00:18:38 -> 00:18:40] and the program would terminate
+[00:18:40 -> 00:18:41] and so while the source program
+[00:18:41 -> 00:18:42] would have executed correctly
+[00:18:42 -> 00:18:45] which means it would have executed till the end
+[00:18:45 -> 00:18:47] maybe it would have done nothing in the program
+[00:18:47 -> 00:18:48] or maybe it would have done something
+[00:18:48 -> 00:18:49] because of these dot dot dot
+[00:18:49 -> 00:18:51] the target program would definitely throw an error
+[00:18:51 -> 00:18:54] if y evaluated to zero
+[00:18:54 -> 00:18:57] and so we don't want this transformation to be valid
+[00:18:57 -> 00:18:58] we don't want the compiler
+[00:18:58 -> 00:19:00] to be able to do these transformations
+[00:19:00 -> 00:19:03] these transformations are called unsound transformations
+[00:19:03 -> 00:19:05] because the behavior of the target program
+[00:19:05 -> 00:19:08] can be different from the behavior of the source program
+[00:19:08 -> 00:19:09] in this case the source program
+[00:19:09 -> 00:19:11] would do the right thing
+[00:19:11 -> 00:19:13] but the target program would actually
+[00:19:13 -> 00:19:16] potentially depending on the hardware machine
+[00:19:16 -> 00:19:18] actually terminate the program
+[00:19:19 -> 00:19:21] in other words we want that two by y
+[00:19:21 -> 00:19:22] or divide by zero
+[00:19:22 -> 00:19:24] should still remain undefined behavior
+[00:19:24 -> 00:19:25] we don't want divide by zero
+[00:19:25 -> 00:19:27] to actually turn a poison value
+[00:19:27 -> 00:19:28] because divide by zero
+[00:19:28 -> 00:19:33] is actually a more sinister type of undefined behavior
+[00:19:33 -> 00:19:35] it is actually causing the program
+[00:19:35 -> 00:19:37] I mean it is likely to cause the program
+[00:19:37 -> 00:19:39] to actually terminate
+[00:19:39 -> 00:19:42] and as opposed to things like signed integer overflow
+[00:19:42 -> 00:19:45] so basically what we are trying to do
+[00:19:45 -> 00:19:46] is we are trying to disambiguate
+[00:19:46 -> 00:19:48] between different types of error conditions
+[00:19:48 -> 00:19:50] there are some error conditions
+[00:19:50 -> 00:19:53] that are more dangerous than others
+[00:19:53 -> 00:19:55] divide by zero for example is more dangerous
+[00:19:55 -> 00:19:57] than signed integer overflow
+[00:19:57 -> 00:19:59] and so for these dangerous conditions
+[00:19:59 -> 00:20:03] we don't want to basically be able to
+[00:20:03 -> 00:20:05] execute them speculatively in this case
+[00:20:05 -> 00:20:07] because when I execute them speculatively
+[00:20:07 -> 00:20:10] if I actually do a division by zero
+[00:20:10 -> 00:20:11] in that case I am going to end up
+[00:20:11 -> 00:20:14] with a different behavior from my source program
+[00:20:15 -> 00:20:18] and so what happens to model this
+[00:20:18 -> 00:20:20] basically because we don't want
+[00:20:20 -> 00:20:21] that particular transformation
+[00:20:21 -> 00:20:23] we basically say that some operations
+[00:20:23 -> 00:20:25] on the poison value actually trigger UV
+[00:20:25 -> 00:20:28] so because the poison value is an error value
+[00:20:28 -> 00:20:30] and that error value
+[00:20:30 -> 00:20:32] when I go all the way down to the hardware
+[00:20:32 -> 00:20:34] can actually be implemented using a zero value
+[00:20:34 -> 00:20:37] because for example if I say int max plus one
+[00:20:37 -> 00:20:39] with wraparound semantics int max plus one
+[00:20:39 -> 00:20:41] it may give you actually zero
+[00:20:41 -> 00:20:43] and the IR is giving you the poison value
+[00:20:44 -> 00:20:48] and so X divided by poison should
+[00:20:48 -> 00:20:49] we should conservatively assume
+[00:20:49 -> 00:20:52] that X divided by poison can evaluate
+[00:20:52 -> 00:20:56] to X divided by zero which should trigger UV
+[00:20:56 -> 00:20:59] because we don't want that X divided by zero
+[00:20:59 -> 00:21:00] should execute speculatively
+[00:21:00 -> 00:21:03] because that's going to produce a different output
+[00:21:03 -> 00:21:05] than in the source program
+[00:21:05 -> 00:21:06] on the other hand we have already seen
+[00:21:06 -> 00:21:08] that poison divided by something
+[00:21:08 -> 00:21:09] which is non-poison X
+[00:21:09 -> 00:21:11] let's assume here that X is non-poison
+[00:21:11 -> 00:21:13] just returns poison into Y
+[00:21:13 -> 00:21:16] so here's then some brief introduction
+[00:21:16 -> 00:21:19] to some of the issues that we are going to elaborate on
+[00:21:19 -> 00:21:20] in the next module
+[00:21:20 -> 00:21:23] about what are the semantics of the poison value
+[00:21:23 -> 00:21:26] and operational semantics of the poison value in the IR
+[00:21:26 -> 00:21:29] some operations which can trigger
+[00:21:29 -> 00:21:31] this more dangerous form of UB
+[00:21:31 -> 00:21:35] is basically should trigger UB immediately
+[00:21:35 -> 00:21:38] whereas there are some types of operations
+[00:21:38 -> 00:21:42] like addition or poison being in the numerator
+[00:21:42 -> 00:21:43] of a division in which case
+[00:21:43 -> 00:21:45] we just return the poison into Y
+[00:21:45 -> 00:21:47] which means it's okay to hoist these kinds
+[00:21:47 -> 00:21:50] of transformations and these kinds of competitions
+[00:21:50 -> 00:21:54] but it's not okay to hoist these kinds of computations
+[00:21:54 -> 00:21:56] and so using those semantics
+[00:21:56 -> 00:21:59] which say that if you divide by poison
+[00:21:59 -> 00:22:01] which means poison is in the numerator
+[00:22:01 -> 00:22:02] then it triggers UB
+[00:22:02 -> 00:22:04] this transformation becomes invalid
+[00:22:04 -> 00:22:07] because if I look at X equals int max
+[00:22:07 -> 00:22:09] and loop never entered in the source program
+[00:22:09 -> 00:22:11] then the source program does nothing
+[00:22:11 -> 00:22:12] as we've already discussed
+[00:22:12 -> 00:22:15] but the target program actually triggers UB
+[00:22:15 -> 00:22:18] and so this transformation becomes incorrect
+[00:22:18 -> 00:22:20] in the IR to IR rate
+[00:22:20 -> 00:22:21] so what I'm doing here is
+[00:22:21 -> 00:22:23] or what the IR designer is really doing here is
+[00:22:23 -> 00:22:26] the IR designer is picking and choosing carefully
+[00:22:26 -> 00:22:29] the semantics of the IR operations
+[00:22:29 -> 00:22:32] and also sometimes introducing some extra values
+[00:22:32 -> 00:22:33] like the poison values
+[00:22:33 -> 00:22:36] so that some transformations remain correct
+[00:22:36 -> 00:22:39] and some transformations remain incorrect
+[00:22:39 -> 00:22:41] and we've already seen transformations
+[00:22:41 -> 00:22:43] that just involve sign integer overflow
+[00:22:43 -> 00:22:44] and things like that
+[00:22:44 -> 00:22:46] hoisting of those computations
+[00:22:46 -> 00:22:50] like sign integer overflow above should be okay
+[00:22:50 -> 00:22:52] but hoisting of divide by zero
+[00:22:52 -> 00:22:54] for example should not be okay
+[00:22:54 -> 00:22:56] and that's what poison value semantics
+[00:22:56 -> 00:22:58] that we discussed so far are providing us.

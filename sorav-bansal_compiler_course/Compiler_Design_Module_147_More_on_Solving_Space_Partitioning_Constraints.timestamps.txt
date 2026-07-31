@@ -1,0 +1,487 @@
+Title: Compiler Design Module 147 : More on Solving Space Partitioning Constraints
+Video ID: T4LvxAmglvE
+Detected language: en
+------------------------------------------------------------
+
+[00:00:00 -> 00:00:02] So let's look at the process of solving
+[00:00:02 -> 00:00:06] space partition constraints in a bit more detail.
+[00:00:06 -> 00:00:10] So recall that for one pair of accesses with the data dependency,
+[00:00:10 -> 00:00:13] we get some kind of relation which says,
+[00:00:13 -> 00:00:17] capital C1 is the first set of columns,
+[00:00:17 -> 00:00:20] minus capital C2 is the second set of columns,
+[00:00:20 -> 00:00:24] C1 minus C2 is the last column, single column.
+[00:00:24 -> 00:00:26] This is small c1 minus small c2,
+[00:00:26 -> 00:00:28] multiplied with the matrix U,
+[00:00:28 -> 00:00:31] and this U is coming from Gaussian elimination
+[00:00:31 -> 00:00:36] of basically by first representing I1,
+[00:00:36 -> 00:00:39] I2, 1 as some UT through
+[00:00:39 -> 00:00:41] Gaussian elimination to reduce the degrees of freedom.
+[00:00:41 -> 00:00:45] So whatever is the U which is a multiplier of T,
+[00:00:45 -> 00:00:49] which is the set of free variables is basically coming here.
+[00:00:49 -> 00:00:52] Basically, we said that because this must hold for every T,
+[00:00:52 -> 00:00:55] we basically are interested in finding
+[00:00:55 -> 00:00:58] the solutions for the coefficient being equal to zero,
+[00:00:58 -> 00:01:00] and the coefficient is this whole thing.
+[00:01:00 -> 00:01:04] So that's what our space partitioning constraints look like.
+[00:01:04 -> 00:01:06] I should point out that for another pair,
+[00:01:06 -> 00:01:08] we may get another set of constraints,
+[00:01:08 -> 00:01:10] and this time instead of capital U,
+[00:01:10 -> 00:01:12] you may get some other matrix,
+[00:01:12 -> 00:01:14] let's call it U2, and similarly,
+[00:01:14 -> 00:01:17] you could get another matrix U3 and so on,
+[00:01:17 -> 00:01:18] and you could collect all these constraints.
+[00:01:18 -> 00:01:20] Notice that in these constraints,
+[00:01:20 -> 00:01:24] the unknowns are capital C1 minus capital C2,
+[00:01:24 -> 00:01:26] small c1, small c2.
+[00:01:26 -> 00:01:27] Those are the unknowns.
+[00:01:27 -> 00:01:28] And so you could collect all these unknowns
+[00:01:28 -> 00:01:31] and represent them as the following.
+[00:01:31 -> 00:01:34] Some matrix A, which is made up of all constants,
+[00:01:34 -> 00:01:37] and then you basically say capital C1, capital C2,
+[00:01:37 -> 00:01:38] small c1, small c2.
+[00:01:38 -> 00:01:41] I should point out that capital C1, capital C2,
+[00:01:41 -> 00:01:44] small c1, small c2 represent one row
+[00:01:44 -> 00:01:47] of their corresponding matrices or vectors.
+[00:01:47 -> 00:01:48] We're going to see an example.
+[00:01:48 -> 00:01:51] So for example, if capital C1 had,
+[00:01:51 -> 00:01:54] capital C1 represents the mapping
+[00:01:54 -> 00:01:59] for some loopness depth i, j,
+[00:01:59 -> 00:02:01] then capital C1 would have two elements.
+[00:02:01 -> 00:02:05] One for C1, one which is for i,
+[00:02:05 -> 00:02:06] i's coefficient, and then there'll be C1, too,
+[00:02:06 -> 00:02:08] which is j's coefficient, and so on.
+[00:02:08 -> 00:02:11] Similarly, capital C2 would have two coefficients,
+[00:02:11 -> 00:02:11] or two values.
+[00:02:11 -> 00:02:14] One is capital C2, one and C2, two
+[00:02:14 -> 00:02:16] for i and j respectively.
+[00:02:16 -> 00:02:20] And similarly, small c1 would be basically,
+[00:02:20 -> 00:02:22] depending on how many,
+[00:02:22 -> 00:02:24] so small c1 would basically represent single value
+[00:02:24 -> 00:02:26] because it's just an additive constant.
+[00:02:26 -> 00:02:28] Also, the other thing I want to point out especially
+[00:02:28 -> 00:02:30] is that I'm talking about one row.
+[00:02:30 -> 00:02:33] So actually, the capital C1, capital C2
+[00:02:33 -> 00:02:34] are supposed to be matrices,
+[00:02:34 -> 00:02:36] but we're just looking at the first row,
+[00:02:36 -> 00:02:38] and we're basically saying what should be the constraint
+[00:02:38 -> 00:02:39] on the first row.
+[00:02:39 -> 00:02:41] And eventually, if you recall,
+[00:02:41 -> 00:02:43] basically we're going to find out
+[00:02:43 -> 00:02:45] the maximum rank of the null space,
+[00:02:45 -> 00:02:47] and so that's going to give me different rows,
+[00:02:47 -> 00:02:48] different possible solutions
+[00:02:48 -> 00:02:50] for these capital C1 and capital C2,
+[00:02:50 -> 00:02:53] and that's how we're going to basically represent
+[00:02:53 -> 00:02:55] as matrices and not a single row or multiple rows.
+[00:02:55 -> 00:02:56] We're going to see an example
+[00:02:56 -> 00:02:59] and that will make it even clearer.
+[00:02:59 -> 00:03:00] So let's look at this example.
+[00:03:00 -> 00:03:02] And this example is very similar to the example
+[00:03:02 -> 00:03:04] that we've been using earlier,
+[00:03:04 -> 00:03:07] except that I have changed the program a little.
+[00:03:07 -> 00:03:10] Let's look at the program for i equals one to 100,
+[00:03:10 -> 00:03:14] for j equals one to 100, xij plus equals yij.
+[00:03:14 -> 00:03:16] So this is completely data independent.
+[00:03:16 -> 00:03:20] But then I have yij plus one plus equals zij.
+[00:03:21 -> 00:03:23] And so now there's a clear data dependency
+[00:03:23 -> 00:03:25] between these two statements, right?
+[00:03:25 -> 00:03:27] And so basically I want to say
+[00:03:27 -> 00:03:29] that whenever there's a data dependency,
+[00:03:29 -> 00:03:30] it should so happen
+[00:03:30 -> 00:03:33] that they're basically mapping to the same processor.
+[00:03:33 -> 00:03:35] And so in this case, there are two statements.
+[00:03:35 -> 00:03:38] Let's say this is S1 and let's say this is S2,
+[00:03:38 -> 00:03:39] and the two statements
+[00:03:39 -> 00:03:41] have corresponding mapping functions.
+[00:03:41 -> 00:03:44] Let's say capital C1, small c1 for S1,
+[00:03:44 -> 00:03:46] and then capital C2, small c2
+[00:03:47 -> 00:03:48] for S2.
+[00:03:48 -> 00:03:49] So if I kind of write down
+[00:03:49 -> 00:03:50] the space partitioning constraints,
+[00:03:50 -> 00:03:53] I want to say for all pairs of accesses,
+[00:03:53 -> 00:03:55] i comma j and i prime comma j prime,
+[00:03:55 -> 00:03:58] such that the i comma j and i prime comma j prime
+[00:03:58 -> 00:04:02] belong to the polyhedron of the iteration space.
+[00:04:02 -> 00:04:04] Whenever the two accesses access the same location,
+[00:04:04 -> 00:04:07] so which means whenever y i comma j
+[00:04:07 -> 00:04:10] equals y i prime comma j prime plus one.
+[00:04:10 -> 00:04:12] In other words, whenever i equals i prime
+[00:04:12 -> 00:04:14] and j equals j prime plus one,
+[00:04:14 -> 00:04:16] because that's when the two accesses
+[00:04:16 -> 00:04:18] are going to access the same location,
+[00:04:18 -> 00:04:20] then it should be true that S1 and S2
+[00:04:20 -> 00:04:22] map to the same processor.
+[00:04:22 -> 00:04:27] In other words, capital C1 into ij plus small c1
+[00:04:27 -> 00:04:30] should equal capital C2 into i prime j prime
+[00:04:30 -> 00:04:31] plus small c2.
+[00:04:31 -> 00:04:34] And notice that here I have expanded capital C1
+[00:04:34 -> 00:04:38] into two scalar values, capital C11 and capital C12.
+[00:04:38 -> 00:04:41] Similarly, capital C21 and capital C22.
+[00:04:42 -> 00:04:44] And so I want to solve these space partitioning constraints
+[00:04:44 -> 00:04:46] and we already know what's the first step here.
+[00:04:46 -> 00:04:49] The first step is to basically do Gaussian elimination
+[00:04:49 -> 00:04:50] based on the if clause.
+[00:04:50 -> 00:04:53] And so in the if clause, we know i prime equals i,
+[00:04:53 -> 00:04:55] so I can just replace i prime with i everywhere
+[00:04:55 -> 00:04:59] and I can replace j prime with j minus one
+[00:04:59 -> 00:05:00] or something like that.
+[00:05:00 -> 00:05:02] Actually, in this case,
+[00:05:02 -> 00:05:05] I have actually replaced it with j plus one.
+[00:05:05 -> 00:05:07] So let me just change my example a little bit
+[00:05:07 -> 00:05:09] so that it agrees with the working that I have done.
+[00:05:09 -> 00:05:11] So let's assume that this was j minus one
+[00:05:11 -> 00:05:16] and so then j prime becomes j plus one, all right?
+[00:05:16 -> 00:05:20] And so these are my new kind of constraints
+[00:05:20 -> 00:05:22] and in these constraints,
+[00:05:22 -> 00:05:25] basically I have two free variables, ij, right?
+[00:05:25 -> 00:05:29] And then all these unknowns which are C21, C11, C12,
+[00:05:29 -> 00:05:33] C22, and then small c1 and small c2.
+[00:05:33 -> 00:05:34] Once again, the free variable,
+[00:05:34 -> 00:05:35] i and j are free variables,
+[00:05:35 -> 00:05:37] which means that this constraint should hold
+[00:05:37 -> 00:05:39] for all possible values of i and j.
+[00:05:39 -> 00:05:42] Actually, they need to hold only for this range of i and j,
+[00:05:42 -> 00:05:44] but we're going to over approximate by saying,
+[00:05:44 -> 00:05:47] it should hold for all possible values of i and j.
+[00:05:47 -> 00:05:48] And when we say it should hold
+[00:05:48 -> 00:05:49] for all possible values of i and j,
+[00:05:49 -> 00:05:51] how do we solve for it?
+[00:05:51 -> 00:05:54] We basically bring it to the form ut equals zero,
+[00:05:54 -> 00:05:56] where t is basically i and j
+[00:05:56 -> 00:05:59] and then basically set u to be zero.
+[00:05:59 -> 00:06:03] So this is what my constraint is going to look like.
+[00:06:03 -> 00:06:06] I'm going to say, so if I just kind of rewrite this,
+[00:06:06 -> 00:06:08] I'm going to get C11.
+[00:06:08 -> 00:06:11] So if I kind of bring all the RHS into LHS
+[00:06:11 -> 00:06:14] and collect all the coefficients of let's say i,
+[00:06:14 -> 00:06:16] then I get C11 minus C21.
+[00:06:16 -> 00:06:17] That's the coefficient of i.
+[00:06:17 -> 00:06:21] Similarly, the coefficient of j is C12 minus C22.
+[00:06:21 -> 00:06:23] So that's the coefficient of j.
+[00:06:23 -> 00:06:26] And then the constant value or the coefficient of one
+[00:06:26 -> 00:06:29] here, which is, I should have written one here,
+[00:06:29 -> 00:06:34] is basically small c1 minus capital C22 minus small c2.
+[00:06:35 -> 00:06:37] And this should hold for all possible values of i and j.
+[00:06:37 -> 00:06:39] And basically for it to hold
+[00:06:39 -> 00:06:42] for all possible values of i and j, I want to say,
+[00:06:42 -> 00:06:44] so before I even talk about that,
+[00:06:44 -> 00:06:49] this is my T and this is my capital C1 minus capital C2,
+[00:06:49 -> 00:06:50] small c1 minus small c2 into u.
+[00:06:50 -> 00:06:52] So this whole thing is basically representing
+[00:06:52 -> 00:06:55] the multiplication of the two matrices.
+[00:06:55 -> 00:06:57] And I want to say that, you know,
+[00:06:57 -> 00:06:58] and first of all,
+[00:06:58 -> 00:07:00] this is only for a single pair of accesses.
+[00:07:00 -> 00:07:02] So we collect more such constraints
+[00:07:02 -> 00:07:04] for more pairs of accesses.
+[00:07:04 -> 00:07:06] And eventually what we really have
+[00:07:06 -> 00:07:08] is basically constraints on the unknowns,
+[00:07:08 -> 00:07:12] which are capital C11, capital C21, and so on.
+[00:07:12 -> 00:07:14] And so we collect all those constraints
+[00:07:14 -> 00:07:16] and we basically get a constraint
+[00:07:16 -> 00:07:17] which looks like the following,
+[00:07:17 -> 00:07:21] which says capital C11, capital C12,
+[00:07:21 -> 00:07:24] capital C21, capital C22, small c1, small c2.
+[00:07:24 -> 00:07:26] This forms our x.
+[00:07:26 -> 00:07:28] And these are the multipliers of x
+[00:07:28 -> 00:07:29] which represent all the different constraints.
+[00:07:29 -> 00:07:32] So for example, the first constraints,
+[00:07:32 -> 00:07:33] in my example, let's assume that this
+[00:07:33 -> 00:07:34] was the only constraint.
+[00:07:34 -> 00:07:36] There could have been more pairs of accesses
+[00:07:36 -> 00:07:38] which could have had data dependencies.
+[00:07:38 -> 00:07:39] But recall that in our example,
+[00:07:39 -> 00:07:41] there was only one pair of accesses
+[00:07:41 -> 00:07:42] that had a data dependency.
+[00:07:42 -> 00:07:43] So in our example,
+[00:07:43 -> 00:07:46] we want to say that C11 minus C21 equals zero.
+[00:07:46 -> 00:07:48] And so that's our first row.
+[00:07:48 -> 00:07:50] Now, basically our first row is one, zero,
+[00:07:50 -> 00:07:52] minus one, zero, zero, zero.
+[00:07:52 -> 00:07:55] So one into C11 plus zero,
+[00:07:55 -> 00:07:59] minus C21 and everything else is zero.
+[00:07:59 -> 00:08:02] So that basically means C11 minus C21 equals zero.
+[00:08:03 -> 00:08:06] Similarly, the second row encodes the second constraint,
+[00:08:06 -> 00:08:08] which is C12 minus C22 equals zero.
+[00:08:08 -> 00:08:10] So if you look at this,
+[00:08:10 -> 00:08:15] the zero plus C12 minus C22 plus zero equals zero.
+[00:08:15 -> 00:08:18] That's basically saying that C12 minus C22 equals zero.
+[00:08:18 -> 00:08:21] And the third row is saying that small c1
+[00:08:21 -> 00:08:23] minus capital C22.
+[00:08:23 -> 00:08:26] So this is minus capital C22 plus small c1
+[00:08:26 -> 00:08:29] minus small c2 equals zero.
+[00:08:29 -> 00:08:32] And so this basically is the ax equals zero form
+[00:08:32 -> 00:08:36] that we have been talking about in our previous module.
+[00:08:36 -> 00:08:39] Once we bring it into this ax equals zero form,
+[00:08:39 -> 00:08:41] the next kind of interesting thing
+[00:08:41 -> 00:08:44] to note basically use here is
+[00:08:44 -> 00:08:46] that these small c1 and small c2
+[00:08:46 -> 00:08:49] are actually not that important.
+[00:08:49 -> 00:08:51] I mean, what we were interested in
+[00:08:51 -> 00:08:54] is maximizing the rank of these values,
+[00:08:54 -> 00:08:58] capital C11, capital C12, capital C21 and capital C22.
+[00:08:58 -> 00:09:00] We're interested in maximizing the rank of these,
+[00:09:00 -> 00:09:03] which basically means as many possible values
+[00:09:03 -> 00:09:04] that we can potentially have,
+[00:09:04 -> 00:09:06] we want to have for these coefficients.
+[00:09:06 -> 00:09:09] And the small c1s can just follow from there.
+[00:09:09 -> 00:09:11] We really don't care about small c1s.
+[00:09:11 -> 00:09:14] So the next step is to basically convert this constraint
+[00:09:14 -> 00:09:16] into a constraint that only relates
+[00:09:16 -> 00:09:19] the first four variables, which are the capital Cs
+[00:09:19 -> 00:09:23] and kind of removes the small c's from the equation.
+[00:09:23 -> 00:09:25] So how do you do that in general?
+[00:09:25 -> 00:09:27] Well, so we are only interested in the constraints
+[00:09:27 -> 00:09:28] between the capital Cs
+[00:09:28 -> 00:09:30] and we really don't care about the small c's
+[00:09:30 -> 00:09:32] to basically be able to maximize the rank
+[00:09:32 -> 00:09:33] of the capital Cs.
+[00:09:33 -> 00:09:35] And so how do you do that in general?
+[00:09:35 -> 00:09:36] There could be many methods.
+[00:09:36 -> 00:09:38] Here's one simple method.
+[00:09:38 -> 00:09:40] You choose the order so that capital Cs
+[00:09:40 -> 00:09:43] are at the bottom and the small c's are at the top.
+[00:09:43 -> 00:09:44] That's step number one.
+[00:09:44 -> 00:09:47] And then you bring the resulting A.
+[00:09:47 -> 00:09:49] So when you change the order of the variables,
+[00:09:49 -> 00:09:52] you also change the order of the columns
+[00:09:52 -> 00:09:54] in capital A to basically preserve
+[00:09:54 -> 00:09:55] the meaning of the equation.
+[00:09:55 -> 00:09:57] And then you bring the capital A
+[00:09:57 -> 00:09:58] into row reduced echelon form.
+[00:09:58 -> 00:10:01] And recall that in the row reduced echelon form,
+[00:10:01 -> 00:10:04] you have a lower triangular matrix, which is all zeros.
+[00:10:04 -> 00:10:05] And then you have an upper triangular matrix,
+[00:10:05 -> 00:10:08] which has potentially non-zero values
+[00:10:08 -> 00:10:09] and the diagonal,
+[00:10:09 -> 00:10:11] or basically all these kinds of leading elements
+[00:10:11 -> 00:10:14] in each row are basically ones.
+[00:10:14 -> 00:10:16] And so once you bring it in this form,
+[00:10:16 -> 00:10:21] if you look at this particular quadrant
+[00:10:21 -> 00:10:23] of this row reduced echelon form,
+[00:10:23 -> 00:10:26] this encodes the constraints on capital Cs
+[00:10:26 -> 00:10:29] and completely ignores small c's altogether.
+[00:10:29 -> 00:10:30] So if there were, for example,
+[00:10:30 -> 00:10:34] transitive constraints between one capital C,
+[00:10:34 -> 00:10:36] another small c and another capital C,
+[00:10:36 -> 00:10:39] and because of that, there was a transitive constraint
+[00:10:39 -> 00:10:41] that's going to get handled by this
+[00:10:41 -> 00:10:43] conversion to row reduced echelon form.
+[00:10:43 -> 00:10:45] And so once we solve for all the capital Cs,
+[00:10:45 -> 00:10:47] it's easy to get the small c's from there
+[00:10:47 -> 00:10:49] because notice that in this constraint,
+[00:10:49 -> 00:10:51] I mean, if I just put this whole thing to zero,
+[00:10:51 -> 00:10:53] once I know the capital Cs,
+[00:10:53 -> 00:10:56] then I can just get small c two
+[00:10:56 -> 00:10:57] in terms of the capital Cs.
+[00:10:57 -> 00:10:59] And similarly, I can get small c one
+[00:10:59 -> 00:11:01] in terms of the capital Cs and so on.
+[00:11:02 -> 00:11:04] All right, so that's basically the idea.
+[00:11:04 -> 00:11:06] I mean, so from there, from ax equals zero,
+[00:11:06 -> 00:11:10] we get to a prime, x prime equals zero,
+[00:11:10 -> 00:11:12] where x prime is basically only the capital Cs
+[00:11:12 -> 00:11:14] and ignore the small c's.
+[00:11:15 -> 00:11:17] So in our particular example,
+[00:11:17 -> 00:11:18] I mean, we don't even need to do
+[00:11:18 -> 00:11:21] all the row reduced echelon form, et cetera.
+[00:11:21 -> 00:11:23] It's already in a form where it's easy to see
+[00:11:24 -> 00:11:27] that the last row is basically relating the small c's
+[00:11:27 -> 00:11:30] and it's only the first two rows,
+[00:11:30 -> 00:11:32] the first four columns of the first two rows
+[00:11:32 -> 00:11:33] that are relating the capital Cs.
+[00:11:33 -> 00:11:36] And so these eight elements,
+[00:11:36 -> 00:11:39] which have four columns and two rows form our a prime.
+[00:11:40 -> 00:11:44] And so the new kind of a prime, x prime equals zero
+[00:11:44 -> 00:11:46] constraints looks like this.
+[00:11:46 -> 00:11:49] One, zero, minus one, zero, that's our first row.
+[00:11:49 -> 00:11:51] Zero, one, zero, minus one, that's our second row.
+[00:11:51 -> 00:11:55] And multiplier, the unknowns are capital C one,
+[00:11:55 -> 00:11:57] capital C one, two, capital C two, one,
+[00:11:57 -> 00:11:58] and capital C two, two.
+[00:11:58 -> 00:12:00] And now we want to maximize.
+[00:12:00 -> 00:12:04] So this is my a prime, x equals zero.
+[00:12:04 -> 00:12:08] And I want to maximize the rank of the null space
+[00:12:08 -> 00:12:10] of a prime, because I want to maximize the rank
+[00:12:10 -> 00:12:13] of the solution space for this particular equation.
+[00:12:13 -> 00:12:16] And so the maximizing of rank of the solution space
+[00:12:16 -> 00:12:18] basically means what are the possible,
+[00:12:18 -> 00:12:21] all the possible values for which this constraint holds.
+[00:12:21 -> 00:12:22] And that would basically mean,
+[00:12:22 -> 00:12:25] let's maximize the null space of a prime.
+[00:12:25 -> 00:12:27] And so if I look at the,
+[00:12:27 -> 00:12:30] if I try to identify the null space of a prime
+[00:12:30 -> 00:12:31] and its basis vectors,
+[00:12:31 -> 00:12:32] and I could choose any basis vectors,
+[00:12:32 -> 00:12:34] it doesn't really matter as long as it represents
+[00:12:34 -> 00:12:36] the same base null space.
+[00:12:36 -> 00:12:38] Then I'm going to find that in this particular case,
+[00:12:38 -> 00:12:41] the null space is one, zero, one, zero,
+[00:12:41 -> 00:12:43] for C one, one, C one, two, C two, one,
+[00:12:43 -> 00:12:44] C two, two respectively,
+[00:12:44 -> 00:12:46] and zero, one, zero, one,
+[00:12:46 -> 00:12:48] again for the same set of vectors.
+[00:12:48 -> 00:12:50] So how do I know that this is a null space?
+[00:12:50 -> 00:12:53] Well, you can just kind of multiply this matrix
+[00:12:53 -> 00:12:53] with this matrix,
+[00:12:53 -> 00:12:57] this matrix and you would basically get end up with zero.
+[00:12:57 -> 00:12:59] So you look at any vector.
+[00:12:59 -> 00:13:02] So let's say I multiply the first row
+[00:13:02 -> 00:13:03] with the first column,
+[00:13:03 -> 00:13:05] I'm going to get zero because one into one
+[00:13:05 -> 00:13:07] plus zero into zero plus minus one into one.
+[00:13:07 -> 00:13:09] So that's one plus zero into zero.
+[00:13:09 -> 00:13:11] So that's one minus one, that's zero.
+[00:13:11 -> 00:13:13] Similarly, if I multiply the first row
+[00:13:13 -> 00:13:14] with the second column,
+[00:13:14 -> 00:13:16] I'm again going to get a zero.
+[00:13:16 -> 00:13:18] If I multiply the second row with the first column,
+[00:13:18 -> 00:13:19] I'm again going to get a zero.
+[00:13:19 -> 00:13:21] And if I multiply the second row with the second column,
+[00:13:21 -> 00:13:24] I'm all again going to get a zero.
+[00:13:24 -> 00:13:26] In fact, if I take any linear combination of this,
+[00:13:26 -> 00:13:28] for example, if I took, for example,
+[00:13:28 -> 00:13:32] another null space, which was let's say one, zero, one,
+[00:13:32 -> 00:13:34] zero, but the second one was just an addition
+[00:13:34 -> 00:13:35] of the first row and the second row
+[00:13:35 -> 00:13:40] and get one, one, one, one.
+[00:13:40 -> 00:13:41] Even this would have been a set,
+[00:13:41 -> 00:13:42] valid set of basis vectors.
+[00:13:42 -> 00:13:45] It doesn't really matter what basis vectors you pick.
+[00:13:45 -> 00:13:47] Irrespective of the basis vectors you pick,
+[00:13:47 -> 00:13:48] the solution you're going to get
+[00:13:48 -> 00:13:51] has going to have the exact similar properties.
+[00:13:51 -> 00:13:52] So let's for now assume
+[00:13:52 -> 00:13:54] that we are going to go with this solution
+[00:13:54 -> 00:13:56] for my null space of A prime.
+[00:13:56 -> 00:13:58] And so these are basically going to form
+[00:13:58 -> 00:14:01] my solution for capital C's.
+[00:14:01 -> 00:14:04] So basically C one, one can,
+[00:14:04 -> 00:14:06] so these are the values for C one, one,
+[00:14:06 -> 00:14:08] possible values of C one, one.
+[00:14:08 -> 00:14:10] These are the two possible values for C one, two.
+[00:14:10 -> 00:14:12] These are the two possible values for C two, one.
+[00:14:12 -> 00:14:15] And these are the two possible values for C two, two.
+[00:14:15 -> 00:14:16] And so from here, we know
+[00:14:16 -> 00:14:18] because there are two possible values
+[00:14:18 -> 00:14:21] or two columns for this null space in this form,
+[00:14:21 -> 00:14:24] then rank of null of A prime is actually two.
+[00:14:24 -> 00:14:27] In the example that we had discussed previously,
+[00:14:27 -> 00:14:29] which had two data dependent constraints,
+[00:14:29 -> 00:14:32] the rank of the resulting solution was actually one.
+[00:14:32 -> 00:14:34] In this example, the rank is actually two.
+[00:14:34 -> 00:14:38] So how do I use this null space solution
+[00:14:38 -> 00:14:41] to basically finally generate a mapping
+[00:14:41 -> 00:14:45] from the iteration space to the processor space?
+[00:14:45 -> 00:14:48] Because the rank of the solution is two,
+[00:14:48 -> 00:14:50] basically that means that we are going to get
+[00:14:50 -> 00:14:51] a two dimensional processor space.
+[00:14:51 -> 00:14:53] And we now need a function
+[00:14:53 -> 00:14:55] from the two dimensional iteration space
+[00:14:55 -> 00:14:59] to the two dimensional processor space.
+[00:14:59 -> 00:15:01] Finally, we need to also kind of find the values
+[00:15:01 -> 00:15:03] for small C one and small C two.
+[00:15:03 -> 00:15:07] Now that we have identified the maximum rank solution
+[00:15:07 -> 00:15:10] for the capital C's and identified
+[00:15:10 -> 00:15:11] what are the corresponding rows going to be
+[00:15:11 -> 00:15:13] corresponding to basis vectors.
+[00:15:13 -> 00:15:16] Now we can now find out what are the corresponding
+[00:15:16 -> 00:15:18] small C's and small C one and small C two
+[00:15:18 -> 00:15:20] by using the original capital A.
+[00:15:20 -> 00:15:21] Recall in the original capital A,
+[00:15:21 -> 00:15:23] if you use the row reduced echelon form,
+[00:15:23 -> 00:15:25] then basically have the top two rows
+[00:15:25 -> 00:15:28] are basically telling us the values of small C one
+[00:15:28 -> 00:15:30] and small C two in terms of the other variables.
+[00:15:30 -> 00:15:33] So in this case, basically if you recall,
+[00:15:33 -> 00:15:36] it was basically saying that C one one minus C two two
+[00:15:36 -> 00:15:39] is equal to minus C one minus C,
+[00:15:39 -> 00:15:41] sorry small C one minus small C two
+[00:15:41 -> 00:15:43] is equal to minus C two two.
+[00:15:43 -> 00:15:46] And so that's basically going to be zero
+[00:15:46 -> 00:15:48] for the first row or for the first column
+[00:15:48 -> 00:15:50] and minus one for the second column
+[00:15:50 -> 00:15:52] because capital C two two is zero.
+[00:15:52 -> 00:15:54] So minus of zero is just zero.
+[00:15:54 -> 00:15:57] And here it is one and so minus of one is minus one.
+[00:15:57 -> 00:15:59] And without loss of generality,
+[00:15:59 -> 00:16:01] we can set one of the constants to zero
+[00:16:01 -> 00:16:04] because one of the constants can just be set to zero.
+[00:16:04 -> 00:16:05] It doesn't matter because after all,
+[00:16:05 -> 00:16:08] just when we shift the processor space,
+[00:16:08 -> 00:16:11] linearly and it doesn't really change the solution.
+[00:16:11 -> 00:16:14] And so that basically means that small C one
+[00:16:14 -> 00:16:17] is always zero and small C two is zero and one
+[00:16:17 -> 00:16:20] because that's how we're going to get C one minus C two
+[00:16:20 -> 00:16:22] to be zero and minus one.
+[00:16:23 -> 00:16:24] All right, so with that,
+[00:16:24 -> 00:16:28] we are ready to basically identify our fine functions
+[00:16:28 -> 00:16:30] which map iteration space to processor space.
+[00:16:30 -> 00:16:34] So P one equals C one one, C one two,
+[00:16:34 -> 00:16:35] I J plus C one.
+[00:16:35 -> 00:16:39] And C one one recall we started with a single row
+[00:16:39 -> 00:16:41] when we were kind of trying to solve the AX equals zero
+[00:16:41 -> 00:16:44] but now we have realized that C one one, C one two,
+[00:16:44 -> 00:16:45] solution for C one one, C one two
+[00:16:45 -> 00:16:46] is a rank two solution.
+[00:16:46 -> 00:16:49] So this becomes a two row matrix.
+[00:16:49 -> 00:16:50] And in this case,
+[00:16:50 -> 00:16:53] we just take the first two rows of this null space
+[00:16:53 -> 00:16:56] and basically because C one one can take two values.
+[00:16:56 -> 00:16:57] So it becomes one zero.
+[00:16:57 -> 00:16:59] So that comes here one zero
+[00:16:59 -> 00:17:03] and then zero one that comes here zero one for C one two.
+[00:17:03 -> 00:17:05] Right, so this zero goes here
+[00:17:06 -> 00:17:08] and this one goes here, for example.
+[00:17:08 -> 00:17:13] And so that's P one plus small c one, small c one.
+[00:17:14 -> 00:17:15] Small c one we are assuming to be zero.
+[00:17:15 -> 00:17:17] So that's just zero zero.
+[00:17:17 -> 00:17:21] All right, so that's the mapping function for S one.
+[00:17:21 -> 00:17:23] Similarly, what's the mapping function for S two?
+[00:17:23 -> 00:17:26] Once again, I say C two one, C two two, I J
+[00:17:26 -> 00:17:27] plus small c two.
+[00:17:27 -> 00:17:32] And so once again, C two one has values one and zero.
+[00:17:32 -> 00:17:33] So that comes here.
+[00:17:33 -> 00:17:36] And C two two has value zero and one.
+[00:17:36 -> 00:17:37] And that comes as a second column
+[00:17:37 -> 00:17:41] and that gets multiplied with I J and plus
+[00:17:41 -> 00:17:43] what do I want here is C two.
+[00:17:43 -> 00:17:47] So C two is zero for the first row, which is zero here.
+[00:17:47 -> 00:17:49] And then C two is one for the second row
+[00:17:49 -> 00:17:50] and that comes here.
+[00:17:50 -> 00:17:53] And so this is basically our final solution
+[00:17:53 -> 00:17:58] for our mapping function from the iteration space,
+[00:17:58 -> 00:18:01] I J to the processor space P one.
+[00:18:01 -> 00:18:03] And in the second case, it's P two.
+[00:18:03 -> 00:18:05] And notice that P one and P two are both basically
+[00:18:05 -> 00:18:09] two dimensional spaces because we have a rank two solution
+[00:18:09 -> 00:18:12] for our capital C's.
+[00:18:12 -> 00:18:14] All right, finally, I'm going to leave you
+[00:18:14 -> 00:18:17] with an interesting fact.
+[00:18:17 -> 00:18:20] What is the maximum rank solution
+[00:18:20 -> 00:18:21] for capital C's that you can get?
+[00:18:21 -> 00:18:23] In other words, what is the maximum rank
+[00:18:23 -> 00:18:26] of the null space of A prime that we had constructed?
+[00:18:26 -> 00:18:29] And I claim that rank of null of A prime
+[00:18:29 -> 00:18:32] can never be greater than D.
+[00:18:32 -> 00:18:33] It has to be less than equal to D
+[00:18:33 -> 00:18:36] where D is the depth of the iteration space,
+[00:18:36 -> 00:18:37] maximum depth of the iteration space,
+[00:18:37 -> 00:18:40] which is in two in our example, I and J, right?
+[00:18:40 -> 00:18:45] So it can be shown that the space,
+[00:18:45 -> 00:18:48] the rank of the maximum rank that you get
+[00:18:48 -> 00:18:50] from this method that we have applied
+[00:18:50 -> 00:18:54] for the capital C's matrix for any capital C,
+[00:18:54 -> 00:18:56] whether it's for S one or S two doesn't matter,
+[00:18:56 -> 00:18:59] but it's capital C one or capital C two doesn't matter.
+[00:18:59 -> 00:19:01] The rank will never be greater than D
+[00:19:01 -> 00:19:03] where D is the loop nest depth.
+[00:19:04 -> 00:19:06] I'm not going to discuss the reason for this.
+[00:19:06 -> 00:19:08] I'm going to leave this as a homework exercise
+[00:19:08 -> 00:19:10] for you to figure out.
+[00:19:11 -> 00:19:12] Just think about what could be,
+[00:19:12 -> 00:19:14] just try to construct a matrix
+[00:19:14 -> 00:19:16] which is greater than rank D
+[00:19:16 -> 00:19:19] and identify what would be the corresponding
+[00:19:19 -> 00:19:21] space partitioning constraints
+[00:19:21 -> 00:19:23] and you would find that it's just not possible
+[00:19:23 -> 00:19:25] and from there, the proof will follow.

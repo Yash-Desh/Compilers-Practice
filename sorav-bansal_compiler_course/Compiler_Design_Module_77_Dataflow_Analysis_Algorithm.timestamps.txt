@@ -1,0 +1,291 @@
+Title: Compiler Design Module 77 : Dataflow Analysis Algorithm
+Video ID: qDxLWXHDvBY
+Detected language: en
+------------------------------------------------------------
+
+[00:00:00 -> 00:00:07] So now we need to discuss how we could implement a data flow analysis to identify the abstract
+[00:00:07 -> 00:00:12] values of interest. So for example, last time we discussed how constant propagation values,
+[00:00:13 -> 00:00:18] abstract values would capture the behavior of the program at a programmable program point.
+[00:00:18 -> 00:00:22] Recall that we discussed three different types of values. One is top, one is bottom,
+[00:00:22 -> 00:00:28] and one is a constant C for some constant C. And the question is, how do I identify what
+[00:00:28 -> 00:00:34] the value should be at every program point? And recall that we are only looking at one particular
+[00:00:34 -> 00:00:38] variable X for now, but very later we're going to generalize it for all possible variables.
+[00:00:39 -> 00:00:45] So the insight is that the data flow analysis of a complex and large program can be expressed
+[00:00:45 -> 00:00:51] as a combination of simple rules relating the change in information between adjacent statements.
+[00:00:51 -> 00:00:57] So we're going to just see, okay, what is the value just before me? And then I'm going
+[00:00:57 -> 00:01:01] to look at what is the current statement. And then based on that, I'm going to have a rule
+[00:01:01 -> 00:01:06] about what should be the value after the statement. So I look at the value before the
+[00:01:06 -> 00:01:11] statement. I look at the statement itself. And then from that, I basically form a rule
+[00:01:11 -> 00:01:15] which says, oh, in this situation, the value after the statement should be this.
+[00:01:15 -> 00:01:22] And after I form these rules, I can just keep applying these rules across the program.
+[00:01:22 -> 00:01:26] And that way I can start computing values across the entire program. So that's basically
+[00:01:26 -> 00:01:33] the idea and the insight here. And so one way to think about it is that you're pushing
+[00:01:33 -> 00:01:38] or transferring the information from one statement to the other. And you keep doing this.
+[00:01:38 -> 00:01:42] It's almost like program execution. Even execution, you could have a large program,
+[00:01:42 -> 00:01:46] but the transfer control is just transferring from one program point to the other.
+[00:01:47 -> 00:01:51] You can think of data flow analysis as also an execution over the program,
+[00:01:51 -> 00:01:57] just that this time, the values are not concrete values, just as they are in the case of
+[00:01:58 -> 00:02:03] an execution, executing program. Here, the values are abstract values, for example,
+[00:02:03 -> 00:02:07] top, bottom, and C. So we're going to see that in more detail and maybe it'll become clearer.
+[00:02:09 -> 00:02:13] All right. So what should be this function for constant information?
+[00:02:13 -> 00:02:19] So we know that the values are top, bottom, and constant. But then let's define a function
+[00:02:19 -> 00:02:25] that basically evaluates to one of these values. And that function is, let's call that capital C.
+[00:02:26 -> 00:02:31] It takes a variable X, the variable X for which we are interested in computing these values,
+[00:02:31 -> 00:02:37] these abstract values. The statement S in the program, which defines the program point.
+[00:02:39 -> 00:02:42] And it's not enough to just say statement S, you have to also say whether it's the input
+[00:02:42 -> 00:02:47] of the statement or output of the statement, just before the statement or just after the
+[00:02:47 -> 00:02:53] statement. So in and out, in represents just before the statement and out represents just
+[00:02:53 -> 00:03:02] after the statement. So we define the function CXS in or out, and CXS in is the value of X
+[00:03:02 -> 00:03:08] before S, the abstract value of X. And CXS out is the value of X just after S.
+[00:03:10 -> 00:03:16] And recall that the abstract values belong to either top, constant, or bottom. All right.
+[00:03:16 -> 00:03:20] So we're going to use this function, and we're going to define this function for every X
+[00:03:20 -> 00:03:24] and for every S. All right. So that's the idea. For now, we're just going to concentrate
+[00:03:24 -> 00:03:29] on one single X. And just so basically in that case, we are defining this function for
+[00:03:29 -> 00:03:33] every S. All right. And both in and out for that particular S.
+[00:03:34 -> 00:03:38] So we're going to do this using the notion of a transfer function. Recall that we said
+[00:03:38 -> 00:03:43] that data flow analysis involves pushing or transferring information from one statement to
+[00:03:43 -> 00:03:49] the other. And so we're going to define how this information is going to get transformed
+[00:03:49 -> 00:03:53] as it kind of gets transferred from one statement to the other. And this function
+[00:03:53 -> 00:03:57] that's going to define this change is going to be called transfer function.
+[00:03:57 -> 00:04:03] The transfer function transfers information from one statement to another. All right.
+[00:04:03 -> 00:04:10] So for example, if I have a point in my program where there is a statement S3
+[00:04:11 -> 00:04:17] that has two incoming edges to it from statements S1 and S2, then I'm going to
+[00:04:17 -> 00:04:25] say, okay, then I'm going to ask the question, what does C evaluate to at the out of S1?
+[00:04:25 -> 00:04:31] All right. So out of S1 is this point. So what is the value here? Then what is the
+[00:04:31 -> 00:04:37] value of C at out of S2? And that is the value at this point. And based on that,
+[00:04:37 -> 00:04:44] I'm going to find what is the value of C at in of S3. All right. Which is the value at this
+[00:04:44 -> 00:04:50] point. So my rules are going to look like the following, that if the value at out of S1 is
+[00:04:50 -> 00:04:58] V1 and out of S2 is V2, then the value of in of S3 is going to be V3. And the function
+[00:04:58 -> 00:05:05] is going to specify how V3 is going to relate to V1 and V2. And that relation may also
+[00:05:05 -> 00:05:12] depend on different things. For example, how many edges are coming in or what is the nature of S1,
+[00:05:12 -> 00:05:16] S2, or what is the nature of property being computed? In this case, the property we've been
+[00:05:16 -> 00:05:19] computing is the constant information. And that's why I'm calling it a capital C function.
+[00:05:20 -> 00:05:26] Similarly, there would be another type of transfer, which is across a statement.
+[00:05:26 -> 00:05:30] Notice that this was just transfer from out of one statement to the end of the other
+[00:05:30 -> 00:05:34] statement. And this case was only interesting because there were two outs that were meeting
+[00:05:34 -> 00:05:39] into the same in. Within a basic block, it would be the same thing. Whatever is the out of one
+[00:05:39 -> 00:05:44] statement is actually going to be the end of the other statement because there's only one
+[00:05:44 -> 00:05:48] option. But in this particular case here, there's actually two things that are coming in,
+[00:05:48 -> 00:05:53] flowing in. And so you want to basically specify in a transfer function, how these
+[00:05:53 -> 00:05:59] two values are going to be combined to form a single value, which is the value at in of
+[00:05:59 -> 00:06:05] S3. Now, the other component of the transfer function is, how does the value flow across
+[00:06:05 -> 00:06:12] a statement? So if the value at the end of S, for some statement S, is V, then what should
+[00:06:12 -> 00:06:18] be the value of that function, of that C function at the out of S? So if this is V,
+[00:06:19 -> 00:06:26] then what is the output of that value? So notice that this is very similar to execution
+[00:06:26 -> 00:06:31] because even in execution, you say, oh, if input is 10 and statement is plus one,
+[00:06:31 -> 00:06:37] is going to do X plus one, then output is 11. Just that now the input is not a concrete value
+[00:06:37 -> 00:06:43] like 10, it's just an abstract value, which is either top, bottom, or a constant C. And so
+[00:06:44 -> 00:06:49] just that the environment of the execution has changed and this environment basically
+[00:06:50 -> 00:06:56] lets us implement a data flow analysis. So transfer function for global constant
+[00:06:56 -> 00:07:01] propagation, we will define the function using case analysis. So we're going to consider all
+[00:07:01 -> 00:07:08] possible cases. So for example, we will say, oh, if S is this, if S looks like this,
+[00:07:09 -> 00:07:13] and the input value is this, then the output value is going to be that. And there are not
+[00:07:13 -> 00:07:17] that many cases. So the good thing about using abstract values and not concrete values
+[00:07:18 -> 00:07:22] is that there is only a limited number of values. For example, there's only three values,
+[00:07:22 -> 00:07:26] three different values. Actually, there are actually infinite number of values because
+[00:07:26 -> 00:07:30] the constant C can be any possible constant. It could be one, two, three, four, whatever.
+[00:07:30 -> 00:07:35] Not infinite, but large number of values depending on whatever is the range that X can
+[00:07:35 -> 00:07:43] take. But basically, as we're going to show later, that it's going to be only taking
+[00:07:43 -> 00:07:49] three different unique values at any point in my execution of the data flow analysis,
+[00:07:49 -> 00:07:53] because once it has taken, let's say three, it cannot now take four. It can only take some
+[00:07:53 -> 00:07:57] other value, let's say bottom or something like that. So we're going to discuss that later.
+[00:07:57 -> 00:08:00] But the point is that there are a few number of values. In this case, only three different
+[00:08:00 -> 00:08:09] types of values. And so because of that, the execution is possible to define the transfer
+[00:08:09 -> 00:08:13] function in a small way and just say that, okay, this is what the transfer function looks
+[00:08:13 -> 00:08:18] like and do all the possible case analysis for the small number of different values that exist.
+[00:08:18 -> 00:08:25] So in this case, for example, you say if C, X, P out is bottom. So I'm just taking examples
+[00:08:25 -> 00:08:29] of what the rules are going to look like. So I'm saying that, okay, if it is true that,
+[00:08:29 -> 00:08:35] so if there is a predecessor P and then it has multiple successors, let's say
+[00:08:36 -> 00:08:43] S1 and S2, then this rule is saying that if the value here is bottom, then the value at the
+[00:08:43 -> 00:08:48] top, at the beginning of S1 and S2 is also going to be bottom. That's what the first example rule
+[00:08:48 -> 00:08:54] is saying. So typically these rules will make intuitive sense. And so you won't have to
+[00:08:54 -> 00:08:59] remember them, but it's important to list them out to make sure that the function is
+[00:09:00 -> 00:09:08] defined. Similarly, there is another rule. So you say if X in is C and S does not modify
+[00:09:08 -> 00:09:12] X, then S C X S out is equal to C. So this is basically saying that, let's say if I have a
+[00:09:12 -> 00:09:20] statement S and at the in point, the value is small c, then the out point and S does not
+[00:09:20 -> 00:09:26] modify X, then the out point, the value is still going to be C. And this also makes
+[00:09:26 -> 00:09:31] intuitive sense. So now we are ready to actually define our transfer function rules.
+[00:09:31 -> 00:09:34] And the first case I'm going to take is that we have a successor
+[00:09:36 -> 00:09:42] statement S and then we have n different predecessor statements that are reaching S
+[00:09:42 -> 00:09:48] through these different edges that are pointing to S. And so I'm going to,
+[00:09:48 -> 00:09:52] this is just a generalization of the case where there's some statement that has
+[00:09:52 -> 00:09:56] one or more predecessors, including the case where there's only one predecessor.
+[00:09:56 -> 00:10:01] And the first rule says that if any of these statements, if any of the outs of this,
+[00:10:01 -> 00:10:09] if CPIX out is bottom for any i, then CSXN is also bottom. So if it is, let's say bottom
+[00:10:09 -> 00:10:14] and it could be anything here, so let's say C1, C2, but if one of them is bottom,
+[00:10:14 -> 00:10:19] then this is going to be bottom. So if any of them is bottom, if any of the
+[00:10:19 -> 00:10:25] predecessor out points evaluates the value to bottom, then the input value at S is also
+[00:10:25 -> 00:10:30] going to be bottom. And this is because it is possible for the execution to reach S
+[00:10:30 -> 00:10:35] through that particular path of PI, where the value is bottom. And recall that bottom
+[00:10:35 -> 00:10:40] basically means we are not sure that it's a constant. And so because on that path,
+[00:10:40 -> 00:10:44] we are not sure it's a constant. And so we have to basically take the conservative safe
+[00:10:44 -> 00:10:49] answer and say, oh, we are not sure even at S whether it's a constant or not. Even if it was
+[00:10:49 -> 00:10:54] constant on all other predecessors, but even if there was one predecessor where it was bottom,
+[00:10:54 -> 00:10:57] which means we are not sure on this particular predecessor whether it's a constant,
+[00:10:57 -> 00:11:01] then we have to say that at the beginning of S, the value is also bottom.
+[00:11:02 -> 00:11:06] So that's our first rule. So we have already done our first rule now.
+[00:11:06 -> 00:11:13] Let's look at our second rule. It says if CPIX out is C and CPJX out is D,
+[00:11:13 -> 00:11:19] such that C is not equal to D, then CSXN equals bottom. So it's basically saying that if there
+[00:11:19 -> 00:11:26] exists two different predecessors, let's say P2 and let's say PN, and they basically evaluate
+[00:11:26 -> 00:11:34] to C and D, then irrespective of what other predecessors evaluate to, the value at the
+[00:11:34 -> 00:11:39] beginning of S is going to be bottom. And what's the rationale for this? Well, once again,
+[00:11:39 -> 00:11:44] there are two predecessors and which execution could flow in from any of those predecessors.
+[00:11:44 -> 00:11:51] Sometimes it may flow in from PI, in which case it would be C. Sometimes it may flow in from
+[00:11:51 -> 00:11:56] PJ, in which case it would be D. And so clearly there are some paths on which it's either C
+[00:11:56 -> 00:12:00] and there are some paths on which it is D. So I cannot definitely say that it's going to be
+[00:12:00 -> 00:12:06] always a constant. Sometimes it's not C, sometimes it's not B. So we cannot say that
+[00:12:06 -> 00:12:11] it's a constant. So it's just the safe answer here is just bottom.
+[00:12:13 -> 00:12:20] Let's look at the third rule. It says if CPIX out is C, so for some predecessor,
+[00:12:20 -> 00:12:30] the out value is small c, or CPIX out is top. On some predecessor, it is top.
+[00:12:31 -> 00:12:37] And this is true for all i. So either it is C or it is top. So let's say this is C, this is top,
+[00:12:37 -> 00:12:41] this is C, and maybe there's some C, some top, some C, some top. But notice that it's
+[00:12:41 -> 00:12:49] all Cs, it's the same C everywhere, first of all. And then it's either all Cs or all tops,
+[00:12:49 -> 00:12:55] or some Cs and some tops, but the Cs are the same. In that case, we can say that CSXN
+[00:12:55 -> 00:12:59] is equal to C. In that case, we can say that this value here is also C.
+[00:12:59 -> 00:13:04] Now, what is the rationale here? The rationale here is that some of the predecessors are
+[00:13:04 -> 00:13:10] reachable, but I'm sure that if they are reached, then the value of X at that point,
+[00:13:10 -> 00:13:15] of the out of that point is definitely small c. Some other predecessors are unreachable
+[00:13:15 -> 00:13:20] because they value to top. And so all the reachable predecessors are always going to
+[00:13:21 -> 00:13:25] give me C. And then there are some predecessors that are unreachable, which are going to just,
+[00:13:26 -> 00:13:30] I don't know the answer. So it's not going to be even reachable. So the ones that are
+[00:13:30 -> 00:13:35] unreachable, I can just ignore because I'm sure that they're not reachable. So I'm basically
+[00:13:35 -> 00:13:39] saying that execution cannot flow from that path. They're unreachable because they're
+[00:13:39 -> 00:13:43] evaluating X to top. And top recall is basically that the statement is unreachable,
+[00:13:43 -> 00:13:50] at least unreachable so far. And so at least so far, I can say confidently that
+[00:13:50 -> 00:13:55] by the time the execution is going to reach the beginning of S, then the value is going to be C
+[00:13:55 -> 00:13:59] because either it's not reachable through some of the paths or the other paths where it is
+[00:13:59 -> 00:14:05] reachable, it's going to value X to C. So that's the third rule. And the fourth rule is
+[00:14:05 -> 00:14:16] if CPIX out is top for all I, so for all I, the value is top, then the value is top in
+[00:14:16 -> 00:14:21] the beginning of S as well. So in the previous rule and third rule, we said there are at least
+[00:14:21 -> 00:14:29] one PI in which it is small c and the others could be top or small c, then the value is c.
+[00:14:29 -> 00:14:34] But if all of the predecessors are top, then the value computed at the beginning of S
+[00:14:35 -> 00:14:40] is also top. So what is the rationale for this? It's basically that if all my predecessors
+[00:14:40 -> 00:14:48] are unreachable, then I am also unreachable. Now our next few rules, our first four rules
+[00:14:48 -> 00:14:52] were basically relating the out of the predecessor to the in of the successor.
+[00:14:52 -> 00:14:58] Our next few rules are going to relate the in of the statement for some statement S to the
+[00:14:58 -> 00:15:06] out of that statement. So this point to this point. So our first rule says that if CSX in,
+[00:15:06 -> 00:15:14] which is the value just before the statement is top, then CSX out is also top. And the idea is
+[00:15:14 -> 00:15:19] that if the input of the statement is unreachable, then the output of that statement is also
+[00:15:19 -> 00:15:23] unreachable because the statement is not going to get executed and so the output is also
+[00:15:23 -> 00:15:31] unreachable. The sixth rule says that if it is not true that rule five applies, which means
+[00:15:31 -> 00:15:39] CSX in is not top, then if the statement is of the form X is colon equal to C, which means a
+[00:15:39 -> 00:15:48] constant C is assigned to the variable X, then the value of X at the out of the statement X is
+[00:15:48 -> 00:15:52] colon equal to C, recall that this is basically representing my statement S. So the value
+[00:15:53 -> 00:16:02] of capital C at the out point of small s is small c, where small c is a constant.
+[00:16:04 -> 00:16:10] So this also makes sense. Irrespective of what is the value before X is colon equal to C,
+[00:16:10 -> 00:16:15] it could be top, bottom, some other constant B doesn't matter or even C doesn't matter.
+[00:16:16 -> 00:16:22] Because it's assigning a constant C, the value just after this assignment is going to be C
+[00:16:22 -> 00:16:27] and that's just coming from the execution semantics of the program because I'm sure
+[00:16:27 -> 00:16:31] that just after this particular statement, the value of X is going to be a constant C.
+[00:16:33 -> 00:16:37] Our seventh rule says once again, if five does not apply, so five does not apply means
+[00:16:37 -> 00:16:46] that CSX in is not equal to top, then C of a statement X equals some other function,
+[00:16:46 -> 00:16:53] which is not a constant. So something like Y plus Z or Y into Z or whatever. So if there's some
+[00:16:53 -> 00:17:00] X is equal to F of something and then I can say that this is just going to evaluate to bottom.
+[00:17:02 -> 00:17:07] So because it's assigning some value to X, I cannot say what is the value that's being
+[00:17:07 -> 00:17:11] assigned because if it's some combination of some expression, maybe it's some Y plus Z or
+[00:17:11 -> 00:17:16] something like that, then the value that's going to be computed just after the statement
+[00:17:16 -> 00:17:21] is going to be bottom irrespective of what was the value at the input. So maybe the value at input
+[00:17:21 -> 00:17:27] was something, let's say it was some capital C, then the output is always going to be bottom
+[00:17:27 -> 00:17:32] in this case because the statement itself is just assigning to X some random value that I
+[00:17:32 -> 00:17:37] cannot figure out just by looking at the program. And so I'm just going to conservatively
+[00:17:37 -> 00:17:43] I cannot say that it's a constant and that's my bottom value that I'm using for the out of
+[00:17:43 -> 00:17:51] the statement S. And finally, our last rule is that if there is a statement
+[00:17:52 -> 00:18:00] S which is assigning to some other variable Y, where Y is not equal to X, then the value
+[00:18:00 -> 00:18:04] that was flowing in is the same value that's going to flow out of that particular statement.
+[00:18:04 -> 00:18:11] So C of Y colon equal to something, X comma out is going to be the same value that was
+[00:18:11 -> 00:18:18] flowing in to this particular statement. So whatever is the in value is also the out value.
+[00:18:20 -> 00:18:28] So C of the statement comma X comma out is equal to C of the same statement X comma
+[00:18:28 -> 00:18:33] in. If that statement is just assigning to some other variable Y and not really modifying
+[00:18:33 -> 00:18:39] X and that also makes intuitive sense. All right, so we have these eight rules relating
+[00:18:40 -> 00:18:47] S relating the values of X at different program points and that's basically
+[00:18:48 -> 00:18:56] captured by this function called C S X and in or out to the value. So in other words,
+[00:18:56 -> 00:19:00] these eight rules are relating these values to the value of this function at a predecessor
+[00:19:00 -> 00:19:07] point. So for some S it's basically saying and for some value in or out it's basically saying
+[00:19:07 -> 00:19:11] what should be this value related to the value at some predecessor point. That predecessor
+[00:19:11 -> 00:19:17] could be in the case of out it's going to be the in of the same statement and in the case
+[00:19:17 -> 00:19:23] of in it's going to be the out of a predecessor statement P I. And I claim that
+[00:19:23 -> 00:19:27] these rules are exhaustive that is they cover all possibilities and you can check that for
+[00:19:27 -> 00:19:34] yourself. And so now I'm interested in solving for the solutions. These are just rules saying
+[00:19:34 -> 00:19:38] okay if this is this then this will be this this will be this and this will be this.
+[00:19:38 -> 00:19:42] And so you can think of this as a system of equations all right. Just like you may have
+[00:19:42 -> 00:19:46] studied about systems of equations in linear algebra and you say okay this is a system
+[00:19:46 -> 00:19:50] of equations you want to find a solution that satisfies the system of equations.
+[00:19:50 -> 00:19:54] Just like that this is also a system of equations that basically say relating
+[00:19:54 -> 00:19:58] the C values the capital C values at different program points.
+[00:19:58 -> 00:20:04] And we are interested in identifying values for this function C such that all eight rules
+[00:20:04 -> 00:20:09] are satisfied. So we're just interested in some solution to this system of equations okay.
+[00:20:11 -> 00:20:14] And that solution is going to be our answer hopefully and then we can just
+[00:20:14 -> 00:20:19] use that answer to do our constant propagation. So now how do I find a solution
+[00:20:19 -> 00:20:23] to this system of equations? Now the first thing I would like to point out here is that
+[00:20:23 -> 00:20:28] there's a trivial solution to this system of equations which is I just assign bottom
+[00:20:28 -> 00:20:34] to all values of C. So I just say C Sx in out is equal to bottom for all S.
+[00:20:35 -> 00:20:39] And that's you can check for yourself that all the eight rules are going to get satisfied
+[00:20:39 -> 00:20:45] with this particular solution. But this solution is not this solution is a trivial solution
+[00:20:45 -> 00:20:50] because basically I'm saying that I cannot be sure about anything about any point and that's
+[00:20:51 -> 00:20:56] a solution that satisfies all these equations. But it's not a very useful solution because that
+[00:20:56 -> 00:21:01] solution doesn't really allow me to do any transformation because I have to just safely
+[00:21:01 -> 00:21:05] assume that nothing can be a constant anyway. And but the point is that this system of
+[00:21:05 -> 00:21:10] equations actually has a trivial solution which is a set every point program point to bottom.
+[00:21:11 -> 00:21:15] We are not just interested in any solution because this trivial solution is also one
+[00:21:15 -> 00:21:20] solution so that's not that's not useful. We are interested in the most precise solution
+[00:21:20 -> 00:21:25] for some notion of precision right. So we are interested in the most precise solution
+[00:21:25 -> 00:21:28] a solution that is going to give me the most try to give me the as precise
+[00:21:28 -> 00:21:32] answer as possible for this system of equations. So for example whatever I mean
+[00:21:32 -> 00:21:37] the precision if I can say for sure that some you know if there was a solution which actually
+[00:21:37 -> 00:21:43] gives three a constant value to some program points then that's a more precise solution
+[00:21:43 -> 00:21:49] than something that just gives bottom to all program points right. Similarly if I can be sure
+[00:21:49 -> 00:21:53] that some program points are not reachable then that's useful information because then I can just
+[00:21:53 -> 00:21:58] remove that part of the code completely as dead code right. So those are more precise
+[00:21:58 -> 00:22:03] solutions than just saying that everything is bottom. So we are interested in the most precise
+[00:22:03 -> 00:22:08] solution how we define precision how do we arrive at the most precise solutions these are
+[00:22:08 -> 00:22:13] all you know questions that we're going to answer later on in the course but we just need
+[00:22:13 -> 00:22:18] to know that we are interested in some solution that is not just the trivial solution hopefully
+[00:22:18 -> 00:22:24] the most precise solution. Okay so here is the algorithm to try and identify the most precise
+[00:22:24 -> 00:22:33] solution at every at every entry s to the program set c s x in to bottom. So at all entry
+[00:22:33 -> 00:22:39] points of the program conservatively set the value to bottom because we don't know what the
+[00:22:39 -> 00:22:43] value of x could be at the entry point of a program. So just conservatively set it to
+[00:22:43 -> 00:22:50] I don't know that's bottom right and then at every other statement s which is non-entry
+[00:22:50 -> 00:22:58] set c s x in to top. Okay so initially just assume that now everything else is not reachable
+[00:22:58 -> 00:23:02] it's just the entry points that are reachable all right and then as we are going to start
+[00:23:02 -> 00:23:07] executing our analysis then some points are going to start becoming reachable and so on
+[00:23:07 -> 00:23:12] and we are going to you know modify the values accordingly. I'm just giving you an algorithm
+[00:23:12 -> 00:23:16] we're going to analyze this algorithm later in the course but let's at least first understand
+[00:23:16 -> 00:23:25] what the algorithm is and then for every statement s set c s x out to top. So notice
+[00:23:25 -> 00:23:30] that in the first two rules I'm just setting the in values and just disambiguated between
+[00:23:30 -> 00:23:35] entry point statements and non-entry statements. So for entry statements I'm setting the in to
+[00:23:35 -> 00:23:41] bottom for non-entry I'm setting the in to top and for all other for all statements irrespective
+[00:23:41 -> 00:23:46] of whether they're entry or non-entry I'm setting the out to top. So pretty much the
+[00:23:46 -> 00:23:52] entire program is set to top except the in points of the entry statements all right
+[00:23:53 -> 00:23:58] and finally this is the important point I'm going to repeat until all points satisfy rules
+[00:23:58 -> 00:24:05] 128. So I'm going to keep repeating the following step which is you know which is I'm going to talk
+[00:24:05 -> 00:24:09] about it until all points satisfy rules 128. So first the first thing I want to point out is
+[00:24:09 -> 00:24:13] this particular initialization state where the entry points are set to bottom and everything else
+[00:24:13 -> 00:24:18] is set to top does not really satisfy rules 128 right because it would actually fail one
+[00:24:18 -> 00:24:24] of the first four rules because the entry is bottom then how can the you know how can the
+[00:24:25 -> 00:24:30] in of entry is bottom then how can the out of entry be top right because now in is reachable
+[00:24:30 -> 00:24:35] then out should also be reachable and it should probably depending on what the input statement
+[00:24:35 -> 00:24:40] is it could be either c or bottom or something like that and so we're going to be going to
+[00:24:40 -> 00:24:44] keep modifying this in this way so we're going to repeat until all points satisfy rules
+[00:24:44 -> 00:24:51] 128 we pick some statement s that does not satisfy the rules 128 and update using the
+[00:24:51 -> 00:24:56] appropriate rule right so for example I just gave you this example that there's a statement s
+[00:24:56 -> 00:25:04] at entry the input of that the input value of that s is bottom the output value is top and so
+[00:25:04 -> 00:25:09] here is a statement s that does not satisfy some rule and so we're going to update the
+[00:25:09 -> 00:25:13] out value so that it starts satisfying that rule all right so that's what we're going to do
+[00:25:14 -> 00:25:20] and and we're going to keep repeating this until all points satisfy rules 128 okay and this
+[00:25:20 -> 00:25:27] is my algorithm what is the guarantee that eventually I will find all points that satisfy
+[00:25:27 -> 00:25:33] all rules 128 well let me just claim that there is a guarantee that this will eventually converge
+[00:25:33 -> 00:25:36] and we are going to get an answer what is the guarantee that this is going to give us the
+[00:25:36 -> 00:25:42] most precise answer well once again we'll have to define precision but there are some
+[00:25:42 -> 00:25:49] properties that that can be proven about this particular algorithm okay so for example in the
+[00:25:49 -> 00:25:54] worst case for example this this algorithm could converge to a solution to the trivial solution
+[00:25:54 -> 00:25:59] where it just sets all the values to bottom but hopefully this algorithm is going to converge
+[00:25:59 -> 00:26:03] something better and we're going to see examples where it does does better
+[00:26:04 -> 00:26:10] this algorithm is called the fixed point iteration algorithm all right so because it's
+[00:26:10 -> 00:26:15] called a fixed point iteration algorithm because you keep applying the same rule which is you
+[00:26:15 -> 00:26:20] pick some s which does not satisfy rules and then you change it so that it starts satisfying the
+[00:26:20 -> 00:26:25] rules right and you keep doing this till all the points start satisfying the rules so that's my
+[00:26:25 -> 00:26:30] algorithm the such algorithms are called fixed point iterations because you basically have a
+[00:26:30 -> 00:26:34] set of rules which basically say what should be true and then if it's not true then you make
+[00:26:34 -> 00:26:39] it true and you keep doing this until you make everything true and that that point where
+[00:26:39 -> 00:26:45] you make everything true is basically called the fixed point solution or just the fixed point for
+[00:26:45 -> 00:26:52] short

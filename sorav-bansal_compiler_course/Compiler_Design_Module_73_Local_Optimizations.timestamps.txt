@@ -1,0 +1,540 @@
+Title: Compiler Design Module 73 : Local Optimizations
+Video ID: bS5otSEVBRo
+Detected language: en
+------------------------------------------------------------
+
+[00:00:00 -> 00:00:02] Now we're going to look at local optimizations
+[00:00:02 -> 00:00:03] in more detail.
+[00:00:03 -> 00:00:06] Recall that local optimizations are optimizations
+[00:00:06 -> 00:00:08] that can be performed by looking at a basic block
+[00:00:08 -> 00:00:10] in isolation.
+[00:00:10 -> 00:00:12] So this is the simplest form of isolation
+[00:00:12 -> 00:00:14] and it optimizes one basic block at a time
+[00:00:14 -> 00:00:17] and no need to analyze the whole procedure body.
+[00:00:18 -> 00:00:21] So here's one example of local optimization,
+[00:00:21 -> 00:00:23] elimination of no ops, all right?
+[00:00:23 -> 00:00:25] So by no ops, I mean instructions
+[00:00:25 -> 00:00:28] that basically have no effect, no operation.
+[00:00:28 -> 00:00:30] So some statements, like the following,
+[00:00:30 -> 00:00:30] can be deleted.
+[00:00:30 -> 00:00:33] For example, X is assigned X plus zero.
+[00:00:33 -> 00:00:35] Now this is a no op because it's really
+[00:00:35 -> 00:00:39] not making any difference to the program
+[00:00:39 -> 00:00:40] and so we can remove this.
+[00:00:40 -> 00:00:44] Or similarly, X equals X into one
+[00:00:44 -> 00:00:48] or X equals X logical or zero.
+[00:00:48 -> 00:00:49] So these are all instructions
+[00:00:49 -> 00:00:52] that basically are not making any difference whatsoever
+[00:00:52 -> 00:00:56] and so they can be just eliminated, right?
+[00:00:56 -> 00:00:59] Okay, some statements can be simplified
+[00:00:59 -> 00:01:02] by using algebraic properties of the operators.
+[00:01:02 -> 00:01:05] For example, if I have X equals X into zero,
+[00:01:05 -> 00:01:08] then I can replace it with X equals zero.
+[00:01:08 -> 00:01:10] Now this is interesting because here,
+[00:01:10 -> 00:01:11] this was an arithmetic operation
+[00:01:11 -> 00:01:14] but now I have replaced it with a constant
+[00:01:14 -> 00:01:15] on the right hand side.
+[00:01:15 -> 00:01:18] And so this means that anywhere that X is being used
+[00:01:19 -> 00:01:21] and this definition is reaching that use,
+[00:01:21 -> 00:01:23] then that X can be replaced with zero
+[00:01:23 -> 00:01:25] and this is something that we call
+[00:01:25 -> 00:01:27] constant propagation and we're going to see that
+[00:01:27 -> 00:01:28] in our next slide.
+[00:01:29 -> 00:01:32] So no, it's not just the fact that we have eliminated
+[00:01:32 -> 00:01:35] one star, one multiplication operator,
+[00:01:35 -> 00:01:38] but also because of this, we have enabled
+[00:01:38 -> 00:01:41] constants to be propagated in the rest of the program.
+[00:01:42 -> 00:01:45] Also, Y equals X star star two.
+[00:01:45 -> 00:01:47] Here this double star is supposed to mean
+[00:01:47 -> 00:01:49] exponents, the exponent operator.
+[00:01:49 -> 00:01:52] So this basically means Y equals X square
+[00:01:52 -> 00:01:54] and this can be replaced with Y equals X
+[00:01:54 -> 00:01:56] multiplied with X.
+[00:01:56 -> 00:01:59] Now why is this a simplification or an optimization?
+[00:01:59 -> 00:02:02] Well, because many architectures will provide
+[00:02:02 -> 00:02:04] the exponent operator in their op codes
+[00:02:04 -> 00:02:06] but it will typically be more expensive
+[00:02:06 -> 00:02:08] than let's say the multiplication operator.
+[00:02:08 -> 00:02:12] And so in this case, if the exponent was just two,
+[00:02:12 -> 00:02:14] then it will be cheaper to do multiplication
+[00:02:14 -> 00:02:17] than to actually execute the exponentiation circuit
+[00:02:17 -> 00:02:20] inside the hardware or the software
+[00:02:20 -> 00:02:22] wherever it has been implemented.
+[00:02:22 -> 00:02:25] Similarly, you can have X equals X into eight.
+[00:02:25 -> 00:02:28] Now, once again, this is a multiplication
+[00:02:28 -> 00:02:30] and I can replace this with a left shift of three.
+[00:02:30 -> 00:02:33] Once again, the idea is that executing a multiplication
+[00:02:33 -> 00:02:35] would typically be more expensive
+[00:02:37 -> 00:02:39] in hardware or in software
+[00:02:39 -> 00:02:40] than just implementing a shift
+[00:02:40 -> 00:02:42] because the shift is just a shift register
+[00:02:42 -> 00:02:45] where the multiplication is a complex arithmetic circuit.
+[00:02:46 -> 00:02:49] Or I could have X equals X into 15
+[00:02:49 -> 00:02:51] and once again, this is a multiplication operator
+[00:02:51 -> 00:02:52] and depending on the machine,
+[00:02:52 -> 00:02:54] it may be actually cheaper
+[00:02:54 -> 00:02:55] to replace it with two instructions.
+[00:02:55 -> 00:02:57] So sometimes you want to replace one instruction
+[00:02:57 -> 00:02:59] with two instructions provided
+[00:02:59 -> 00:03:02] as the sum of those two instructions.
+[00:03:02 -> 00:03:04] The sum of the cost of those two instructions
+[00:03:04 -> 00:03:06] is smaller than the sum cost of the original instruction.
+[00:03:06 -> 00:03:08] In this case, what you can do
+[00:03:08 -> 00:03:12] is you can first shift X by four to the left.
+[00:03:12 -> 00:03:15] So that's equivalent to basically multiplying it by 16
+[00:03:15 -> 00:03:18] and then just subtracting X from it.
+[00:03:18 -> 00:03:21] So T equals X left shift by four
+[00:03:22 -> 00:03:24] and then X equals T minus X.
+[00:03:24 -> 00:03:26] So these are some algebraic simplifications
+[00:03:26 -> 00:03:29] that you can do to rewrite code
+[00:03:29 -> 00:03:30] and some of these rewrites
+[00:03:30 -> 00:03:33] are likely to give you performance improvements
+[00:03:33 -> 00:03:35] and once again, these performance improvements
+[00:03:35 -> 00:03:38] are a function of the underlying architecture
+[00:03:38 -> 00:03:40] on which we are executing.
+[00:03:40 -> 00:03:43] So for example, some architecture may implement
+[00:03:43 -> 00:03:45] really fast multiplication in which case
+[00:03:45 -> 00:03:47] this last rule is not going to be
+[00:03:47 -> 00:03:48] a meaningful optimization
+[00:03:48 -> 00:03:51] but some other architecture may,
+[00:03:51 -> 00:03:54] it may be a meaningful optimization.
+[00:03:54 -> 00:03:56] All right, the next optimization that we're going to look at
+[00:03:56 -> 00:03:58] is called constant folding.
+[00:03:58 -> 00:04:01] It's also known as constant propagation.
+[00:04:02 -> 00:04:05] So what's constant propagation or constant folding?
+[00:04:05 -> 00:04:08] Well, if you have an instruction in your program
+[00:04:08 -> 00:04:12] which looks like X is assigned Y operation Z
+[00:04:12 -> 00:04:17] for some operation OP and Y and Z are both constants
+[00:04:17 -> 00:04:20] then this statement can be computed at compile time
+[00:04:20 -> 00:04:21] because they're just constants
+[00:04:21 -> 00:04:24] you don't need to compute them at runtime.
+[00:04:24 -> 00:04:27] Recall that compilation is just a partial evaluation
+[00:04:27 -> 00:04:29] of the interpreter and so why to interpret it at runtime
+[00:04:29 -> 00:04:34] why not just partially evaluate these values at compile time
+[00:04:34 -> 00:04:36] and so at compile time you can compute Y OP Z
+[00:04:36 -> 00:04:38] and then just replace this whole instruction
+[00:04:38 -> 00:04:39] with a constant assignment.
+[00:04:39 -> 00:04:42] So for example, if it's X equals two plus two
+[00:04:42 -> 00:04:45] then I can just say X equals four, all right?
+[00:04:45 -> 00:04:49] Or similarly if I have, if two is less than zero,
+[00:04:49 -> 00:04:51] jump L, this can be just eliminated, right?
+[00:04:51 -> 00:04:56] Because I know that two is less than zero is just false
+[00:04:57 -> 00:05:00] and so I'm pretty sure that this instruction
+[00:05:00 -> 00:05:02] will never jump to L, it will just fall through
+[00:05:02 -> 00:05:06] forever and so this instruction can be just eliminated.
+[00:05:06 -> 00:05:08] Or another example, if two is greater than zero
+[00:05:08 -> 00:05:12] then jump L and so this is just going to be always true
+[00:05:12 -> 00:05:13] because two is always greater than zero
+[00:05:13 -> 00:05:15] and then I could just jump L.
+[00:05:15 -> 00:05:19] Now I want to point out here that constant propagation
+[00:05:19 -> 00:05:23] is basically the idea that once you have X equals four
+[00:05:23 -> 00:05:27] then if subsequently we have if X is less than zero
+[00:05:27 -> 00:05:30] because we know that by this time we know that
+[00:05:30 -> 00:05:34] all paths that reach here are going to put X equals four
+[00:05:34 -> 00:05:36] then I can just replace X by four
+[00:05:36 -> 00:05:38] and then kind of do the constant folding.
+[00:05:38 -> 00:05:40] So constant propagation and constant folding
+[00:05:40 -> 00:05:43] are actually different optimizations
+[00:05:43 -> 00:05:44] but they're very related optimizations
+[00:05:44 -> 00:05:47] because propagation is about propagating constants
+[00:05:47 -> 00:05:49] through the program, folding is about using
+[00:05:49 -> 00:05:51] the constant values to make the,
+[00:05:51 -> 00:05:56] to do the computation at compile time.
+[00:05:56 -> 00:05:58] Here's another type of optimization
+[00:05:58 -> 00:06:00] is called dead code elimination.
+[00:06:00 -> 00:06:01] So what is dead code?
+[00:06:01 -> 00:06:03] Code that is unreachable from the initial block.
+[00:06:03 -> 00:06:07] So example, a CFG node which has no incoming edges.
+[00:06:07 -> 00:06:10] All right, so node has no incoming edges
+[00:06:10 -> 00:06:12] basically means that this node can never be reached
+[00:06:12 -> 00:06:17] during the execution of the method body
+[00:06:17 -> 00:06:19] except the initial node which will be always executed
+[00:06:19 -> 00:06:21] when the method body executes
+[00:06:21 -> 00:06:23] but except the initial node if there's any other node
+[00:06:23 -> 00:06:26] in the CFG which does not have any incoming edges
+[00:06:26 -> 00:06:28] then that would be dead code.
+[00:06:28 -> 00:06:29] And we can eliminate that node
+[00:06:29 -> 00:06:32] and maybe because of eliminating that node
+[00:06:32 -> 00:06:36] all its successes, all the nodes that were being pointed
+[00:06:36 -> 00:06:39] to by this node are also becoming dead and so on
+[00:06:39 -> 00:06:42] and so dead code elimination is typically
+[00:06:42 -> 00:06:46] has a cascading effect on other nodes in the CFG.
+[00:06:46 -> 00:06:48] What is the advantage of such elimination?
+[00:06:48 -> 00:06:50] Well, removing unreachable code actually
+[00:06:50 -> 00:06:51] makes the program smaller
+[00:06:52 -> 00:06:55] and so of course it is a code size improvement
+[00:06:55 -> 00:06:57] but often it also makes the code faster
+[00:06:57 -> 00:06:59] and this may be counter-intuitive
+[00:06:59 -> 00:07:01] but the reason here is because of caching effects.
+[00:07:01 -> 00:07:03] Because the code becomes smaller
+[00:07:03 -> 00:07:08] it can now start fitting more into the cache
+[00:07:08 -> 00:07:10] and so you can have fewer cache misses
+[00:07:10 -> 00:07:15] and so you will have more faster runtime.
+[00:07:16 -> 00:07:19] Okay, but then why would such unreachable blocks occur?
+[00:07:19 -> 00:07:23] Well, actually dead code occurs a lot in practice
+[00:07:23 -> 00:07:26] so one basic very common reason that it can occur
+[00:07:26 -> 00:07:28] is for example in C you have these macros
+[00:07:28 -> 00:07:32] like debug or whatever macro you want to define
+[00:07:32 -> 00:07:33] and maybe let's say in my program
+[00:07:33 -> 00:07:37] I define debug to be zero for my actual run
+[00:07:37 -> 00:07:39] which is going to go into production
+[00:07:39 -> 00:07:41] and then in my code I have basically some
+[00:07:41 -> 00:07:43] if then else statements say
+[00:07:43 -> 00:07:46] if debug then print this, this, this, this, right?
+[00:07:46 -> 00:07:47] Now because debug is zero
+[00:07:49 -> 00:07:51] that's just a flag that the programmer is using
+[00:07:51 -> 00:07:54] all this code that is going in the if body
+[00:07:54 -> 00:07:57] is just dead, right?
+[00:07:57 -> 00:07:58] And so how do I figure this out?
+[00:07:58 -> 00:08:01] Well, I'll need to first do constant propagation
+[00:08:01 -> 00:08:04] which basically means that wherever debug is being used
+[00:08:04 -> 00:08:05] I'm going to put zero there
+[00:08:05 -> 00:08:09] and then I'm going to do constant folding
+[00:08:09 -> 00:08:10] so I'm going to say if zero
+[00:08:10 -> 00:08:12] then everything else is basically
+[00:08:12 -> 00:08:15] then jump to L that statement will go away
+[00:08:15 -> 00:08:18] so I'm going to remove this particular statement here
+[00:08:18 -> 00:08:21] and then whatever was in the body of L
+[00:08:21 -> 00:08:24] so whatever L was basically representing
+[00:08:24 -> 00:08:25] all that now becomes dead code
+[00:08:25 -> 00:08:27] because nobody's pointing to it anymore
+[00:08:27 -> 00:08:29] because the conditional branch that was pointing to it
+[00:08:29 -> 00:08:32] has been eliminated due to constant folding
+[00:08:32 -> 00:08:33] and so that becomes dead code
+[00:08:33 -> 00:08:34] and that can be now removed
+[00:08:34 -> 00:08:37] so it's basically constant propagation,
+[00:08:37 -> 00:08:42] constant folding followed by dead code elimination.
+[00:08:42 -> 00:08:44] Why would unreachable blocks occur?
+[00:08:44 -> 00:08:46] Here's another reason why unreachable blocks occur
+[00:08:46 -> 00:08:48] so when you link a library
+[00:08:48 -> 00:08:50] let's say I link the C library
+[00:08:50 -> 00:08:52] or I link the SSL library
+[00:08:52 -> 00:08:55] it will have let's say hundreds of functions
+[00:08:55 -> 00:08:56] but maybe my program is only using
+[00:08:56 -> 00:08:58] two or three of the functions
+[00:08:58 -> 00:09:02] and so the other 97 functions are just lying there idle
+[00:09:02 -> 00:09:03] and so they are just dead code
+[00:09:03 -> 00:09:05] because they don't have any incoming edge
+[00:09:05 -> 00:09:07] nobody's really calling them
+[00:09:07 -> 00:09:09] and so because nobody's calling them
+[00:09:09 -> 00:09:10] that's all dead code
+[00:09:10 -> 00:09:13] and the compiler can potentially eliminate them.
+[00:09:13 -> 00:09:16] So usually often other optimizations
+[00:09:16 -> 00:09:17] also result in dead code
+[00:09:17 -> 00:09:20] we already saw an example where constant folding
+[00:09:20 -> 00:09:23] and constant propagation resulted in dead code
+[00:09:23 -> 00:09:25] and we're going to see more examples
+[00:09:25 -> 00:09:30] where other optimizations basically result in dead code.
+[00:09:30 -> 00:09:32] Here's another type of optimization
+[00:09:32 -> 00:09:36] which is called common sub-expression elimination.
+[00:09:36 -> 00:09:38] Here's an example to show what it means.
+[00:09:38 -> 00:09:41] So you say if there's a statement says x is y plus z
+[00:09:41 -> 00:09:42] and then there's some other code
+[00:09:42 -> 00:09:45] and say w is y plus z.
+[00:09:45 -> 00:09:47] Now notice that the same expression y plus z
+[00:09:47 -> 00:09:48] that's being computed here
+[00:09:48 -> 00:09:51] then I can potentially replace it
+[00:09:51 -> 00:09:54] with x equals y plus z remains intact
+[00:09:54 -> 00:09:56] everything else remains intact
+[00:09:56 -> 00:09:58] but w now can be assigned just x
+[00:09:58 -> 00:10:02] and that's it we don't need to recompute y plus z.
+[00:10:02 -> 00:10:04] Well is this always possible to two?
+[00:10:04 -> 00:10:06] What am I assuming here?
+[00:10:06 -> 00:10:08] Well, I'm assuming for example
+[00:10:08 -> 00:10:13] that x is not modified in the middle.
+[00:10:14 -> 00:10:18] I'm also assuming that y and z are not modified.
+[00:10:19 -> 00:10:20] Right?
+[00:10:22 -> 00:10:25] And so I'm basically assuming that in this area
+[00:10:25 -> 00:10:27] x and y and z are not modified
+[00:10:27 -> 00:10:29] only then I can make this transformation
+[00:10:29 -> 00:10:31] and so I will need to check that
+[00:10:31 -> 00:10:34] and that's one big advantage of the SSA IR form
+[00:10:35 -> 00:10:37] so if this was in SSA IR
+[00:10:37 -> 00:10:38] so by the way all the optimization
+[00:10:38 -> 00:10:39] that we've discussed so far
+[00:10:39 -> 00:10:42] could be either in SSA or in non-SSA
+[00:10:42 -> 00:10:43] it doesn't matter.
+[00:10:43 -> 00:10:46] SSA is just an extra restriction over the program
+[00:10:46 -> 00:10:48] that there can be only one assignment
+[00:10:48 -> 00:10:51] to any variable in the static program
+[00:10:51 -> 00:10:54] and so if it was SSA
+[00:10:54 -> 00:10:55] then I can be 100% sure
+[00:10:55 -> 00:10:57] I don't even need to check anything
+[00:10:57 -> 00:10:59] that x, y and z are not modified
+[00:10:59 -> 00:11:01] because y and z already have values
+[00:11:01 -> 00:11:04] in the first instruction here
+[00:11:04 -> 00:11:06] and so in the static program
+[00:11:06 -> 00:11:07] they cannot be modified
+[00:11:07 -> 00:11:09] and similarly x cannot be modified
+[00:11:09 -> 00:11:10] because by the property of SSA
+[00:11:10 -> 00:11:12] these variables should only be modified once.
+[00:11:13 -> 00:11:14] All right?
+[00:11:14 -> 00:11:16] So SSA IR makes more values available
+[00:11:16 -> 00:11:19] so even if let's say x was modified
+[00:11:19 -> 00:11:20] in the middle somewhere
+[00:11:20 -> 00:11:23] but then SSA format would have basically
+[00:11:23 -> 00:11:25] renamed them to different versions
+[00:11:25 -> 00:11:27] so this would have become x1
+[00:11:27 -> 00:11:28] and this would have become x2
+[00:11:28 -> 00:11:30] and now it would have been okay
+[00:11:30 -> 00:11:32] to say w equals x1
+[00:11:32 -> 00:11:34] so recall that one of the big advantages
+[00:11:34 -> 00:11:36] of SSA form was that there were more values
+[00:11:36 -> 00:11:38] that were becoming available
+[00:11:38 -> 00:11:39] at every program point
+[00:11:39 -> 00:11:41] and that's also being seen here.
+[00:11:42 -> 00:11:46] Here both x1 and x2 are becoming available
+[00:11:46 -> 00:11:48] and one of them now becomes a candidate
+[00:11:48 -> 00:11:50] for common sub-expression elimination.
+[00:11:50 -> 00:11:51] So what is the common sub-expression
+[00:11:51 -> 00:11:53] that has been eliminated in this example?
+[00:11:53 -> 00:11:55] It is y plus z, all right?
+[00:11:55 -> 00:11:57] So y plus z is the common sub-expression
+[00:11:57 -> 00:11:58] that has been eliminated.
+[00:11:58 -> 00:12:00] Also this is a good property
+[00:12:00 -> 00:12:01] of the three address code, right?
+[00:12:01 -> 00:12:04] It's easy to identify these common sub-expressions.
+[00:12:04 -> 00:12:05] In the three address code,
+[00:12:05 -> 00:12:07] basically on the right hand side
+[00:12:07 -> 00:12:09] I just have two operands and one operator
+[00:12:09 -> 00:12:11] and so I can just check
+[00:12:11 -> 00:12:12] whether there's any other instruction
+[00:12:12 -> 00:12:14] that also has the same operands
+[00:12:14 -> 00:12:15] and the same operator
+[00:12:15 -> 00:12:18] and it's easy to check common sub-expressions
+[00:12:18 -> 00:12:21] in this way.
+[00:12:21 -> 00:12:23] Okay, now let's take another example
+[00:12:23 -> 00:12:25] of common sub-expression elimination.
+[00:12:25 -> 00:12:29] Let's say my original code was x equals y plus z,
+[00:12:29 -> 00:12:31] w equals y plus three
+[00:12:31 -> 00:12:32] and there's some code in the middle.
+[00:12:34 -> 00:12:35] Then there's some other code
+[00:12:35 -> 00:12:37] and then there's a v equals y plus z
+[00:12:37 -> 00:12:40] and there's a u equals v plus three.
+[00:12:41 -> 00:12:42] Now the first thing here is that,
+[00:12:42 -> 00:12:44] let's assume that this is SSA form
+[00:12:44 -> 00:12:46] and so the first thing I can do is
+[00:12:46 -> 00:12:47] I can see, oh, this is y plus z,
+[00:12:47 -> 00:12:49] this is y plus z,
+[00:12:49 -> 00:12:50] so this is a common sub-expression
+[00:12:50 -> 00:12:53] and so I can potentially eliminate
+[00:12:54 -> 00:12:58] the second expression,
+[00:12:58 -> 00:12:59] which is y plus z
+[00:12:59 -> 00:13:03] and so I can make that v equals x, right?
+[00:13:03 -> 00:13:05] I'm assuming SSA form here.
+[00:13:05 -> 00:13:08] Okay, so now that I do v equals x,
+[00:13:08 -> 00:13:11] now am I done or can I do more?
+[00:13:11 -> 00:13:12] Actually if you look at it,
+[00:13:12 -> 00:13:15] v equals x and then u equals v plus three,
+[00:13:15 -> 00:13:16] v plus three is the same as x plus three
+[00:13:16 -> 00:13:18] because v is equal to x
+[00:13:18 -> 00:13:20] and so I could have potentially done u equals w
+[00:13:20 -> 00:13:23] but then how do I do this algorithmically?
+[00:13:23 -> 00:13:25] What's the right way to do it algorithmically?
+[00:13:25 -> 00:13:29] And so for that we need one other kind of transformation
+[00:13:29 -> 00:13:31] which is called copy propagation.
+[00:13:31 -> 00:13:32] So what is copy propagation?
+[00:13:32 -> 00:13:34] Well, it's a very simple idea.
+[00:13:34 -> 00:13:37] If in our code we ever have a copy,
+[00:13:37 -> 00:13:40] by a copy I mean a statement of the form w
+[00:13:40 -> 00:13:42] is colon equal to x, right?
+[00:13:42 -> 00:13:45] So w has been assigned the value x.
+[00:13:45 -> 00:13:46] It's just a copy.
+[00:13:46 -> 00:13:47] There's no operation being performed,
+[00:13:47 -> 00:13:48] it's just a copy
+[00:13:48 -> 00:13:50] and often copies are created
+[00:13:50 -> 00:13:51] because of common sub-expression elimination
+[00:13:51 -> 00:13:54] as we saw in our last example.
+[00:13:54 -> 00:13:57] Then we replace all subsequent uses of w with x
+[00:13:57 -> 00:13:59] and we eliminate this statement.
+[00:13:59 -> 00:14:01] For example, in this particular code
+[00:14:01 -> 00:14:05] we had v equals x, u equals v plus three.
+[00:14:05 -> 00:14:07] Now this is a copy
+[00:14:08 -> 00:14:10] and I can eliminate the copy
+[00:14:10 -> 00:14:13] and propagate it by just removing this
+[00:14:13 -> 00:14:18] and replacing the v by x everywhere where it follows.
+[00:14:18 -> 00:14:20] And so the new code basically looks like the one
+[00:14:20 -> 00:14:21] on the right-hand side
+[00:14:21 -> 00:14:24] where I just said u equals x plus three.
+[00:14:24 -> 00:14:26] What is the advantage of copy propagation?
+[00:14:26 -> 00:14:28] Well, we have removed one copy
+[00:14:28 -> 00:14:30] which was unnecessary.
+[00:14:30 -> 00:14:32] We have also gotten rid of one temporary variable.
+[00:14:32 -> 00:14:35] So when we actually do code generation
+[00:14:35 -> 00:14:36] to the actual architecture
+[00:14:36 -> 00:14:38] where there are finite number of registers,
+[00:14:38 -> 00:14:40] recall in our IR we are assuming
+[00:14:40 -> 00:14:41] infinite number of registers.
+[00:14:41 -> 00:14:42] So when we actually do that
+[00:14:42 -> 00:14:44] then we will have to use fewer registers
+[00:14:44 -> 00:14:47] because now we have fewer temporary registers.
+[00:14:47 -> 00:14:49] And also, because of the copy propagation
+[00:14:49 -> 00:14:51] we can now find more common sub-expressions.
+[00:14:51 -> 00:14:54] So notice that there's this nice cyclic dependency.
+[00:14:54 -> 00:14:59] Because of common sub-expression elimination
+[00:14:59 -> 00:15:01] some copies were created.
+[00:15:01 -> 00:15:04] Because of those copies copy propagation was possible
+[00:15:04 -> 00:15:05] and because of copy propagation
+[00:15:05 -> 00:15:09] again some more common sub-expressions were identified.
+[00:15:09 -> 00:15:10] In this case, the new common sub-expressions
+[00:15:10 -> 00:15:12] are x plus three.
+[00:15:12 -> 00:15:14] And so one of these common sub-expressions
+[00:15:14 -> 00:15:15] can be eliminated.
+[00:15:15 -> 00:15:16] The second one.
+[00:15:16 -> 00:15:21] And so this can be basically replaced by just u equals w.
+[00:15:21 -> 00:15:23] And now we have yet another opportunity
+[00:15:23 -> 00:15:25] for doing copy propagation.
+[00:15:25 -> 00:15:28] So it's almost like one optimization is helping the other
+[00:15:28 -> 00:15:30] and then that optimization is helping the first one
+[00:15:30 -> 00:15:31] and so on and so forth.
+[00:15:31 -> 00:15:34] And there's almost like a nice interplay
+[00:15:34 -> 00:15:36] of these optimizations.
+[00:15:37 -> 00:15:40] So I'm not going to work out this example
+[00:15:40 -> 00:15:42] but I have some example on the left
+[00:15:42 -> 00:15:45] which has one, two, three, four, five, six, seven
+[00:15:45 -> 00:15:47] instructions or seven statements.
+[00:15:47 -> 00:15:49] And then if I optimize it using all the rules
+[00:15:49 -> 00:15:50] that I have discussed so far,
+[00:15:50 -> 00:15:52] all the optimization strategies
+[00:15:52 -> 00:15:54] like common sub-expression elimination,
+[00:15:54 -> 00:15:56] copy propagation, dead code elimination,
+[00:15:56 -> 00:15:58] constant folding, constant propagation,
+[00:15:59 -> 00:16:03] algebraic simplification and the no-up elimination.
+[00:16:03 -> 00:16:05] If I keep doing all these things
+[00:16:05 -> 00:16:07] then I'm going to eventually end up
+[00:16:07 -> 00:16:09] with this particular code on the right.
+[00:16:11 -> 00:16:12] Okay, and notice that this code
+[00:16:12 -> 00:16:15] has only three statements.
+[00:16:15 -> 00:16:18] A equals X into X, F equals A plus A
+[00:16:18 -> 00:16:20] and G equals six into F.
+[00:16:20 -> 00:16:22] Now, here's an interesting thing.
+[00:16:23 -> 00:16:26] This A plus A is probably coming
+[00:16:26 -> 00:16:28] due to algebraic simplification
+[00:16:28 -> 00:16:30] because somewhere I must have used the rule
+[00:16:30 -> 00:16:32] that if you have two into A
+[00:16:32 -> 00:16:36] then you should replace it with A plus A, right?
+[00:16:36 -> 00:16:41] Because maybe addition is cheaper on my machine
+[00:16:41 -> 00:16:43] than multiplication, which it typically is.
+[00:16:43 -> 00:16:46] And so it's a good thing to replace
+[00:16:46 -> 00:16:50] a multiplication with two with an addition, right?
+[00:16:51 -> 00:16:56] However, now we have a problem
+[00:16:56 -> 00:16:59] because now that I have A plus A here,
+[00:16:59 -> 00:17:01] I cannot do anything more with it.
+[00:17:01 -> 00:17:05] On the other hand, if I just had retained two into A,
+[00:17:05 -> 00:17:06] right, so if I had retained two into A
+[00:17:06 -> 00:17:09] and just said F equals two into A,
+[00:17:09 -> 00:17:11] then I had an opportunity
+[00:17:11 -> 00:17:13] of doing constant propagation and folding
+[00:17:13 -> 00:17:14] because I could have said,
+[00:17:14 -> 00:17:18] oh, F equals two into A, G equals six into F.
+[00:17:18 -> 00:17:20] So that's just six into two into A
+[00:17:20 -> 00:17:22] and that's just 12 into A, right?
+[00:17:22 -> 00:17:25] And so I could have replaced six into F with 12 into A
+[00:17:25 -> 00:17:28] and if F was not being used anywhere else later on,
+[00:17:28 -> 00:17:30] then I could have just eliminated F,
+[00:17:30 -> 00:17:33] this statement I've just gotten with two statements.
+[00:17:33 -> 00:17:36] So we have a problem of a local minima.
+[00:17:36 -> 00:17:39] We just apply these rules in some haphazard manner
+[00:17:39 -> 00:17:41] and while you're applying these rules,
+[00:17:41 -> 00:17:43] sometimes because of the applying of the rules,
+[00:17:43 -> 00:17:45] some other optimizations became enabled,
+[00:17:45 -> 00:17:47] but sometimes because of applying some rules,
+[00:17:47 -> 00:17:50] some other optimizations became disabled.
+[00:17:50 -> 00:17:52] So for example, this algebraic simplification
+[00:17:52 -> 00:17:54] from two into A to A plus A
+[00:17:54 -> 00:17:57] disabled constant propagation for us.
+[00:17:57 -> 00:18:00] And so this is a problem of local minima.
+[00:18:00 -> 00:18:02] While we were really searching for the optimal program,
+[00:18:02 -> 00:18:03] we are not really,
+[00:18:05 -> 00:18:07] our algorithms are not designed to find the optimal answer.
+[00:18:07 -> 00:18:10] They're just basically trying something
+[00:18:10 -> 00:18:12] and maybe they can get stuck in a local minima.
+[00:18:14 -> 00:18:18] So yeah, this is what could have happened
+[00:18:18 -> 00:18:20] if I had F equals two into A,
+[00:18:20 -> 00:18:23] then I could have just replaced G equals six into F
+[00:18:23 -> 00:18:25] with 12 into A
+[00:18:25 -> 00:18:27] and maybe this statement F equals two into A
+[00:18:27 -> 00:18:29] would now become dead code
+[00:18:29 -> 00:18:31] because of the constant propagation
+[00:18:31 -> 00:18:33] because F is not getting used anywhere
+[00:18:33 -> 00:18:35] and now I could have removed this particular statement
+[00:18:35 -> 00:18:38] because it would have become a new one.
+[00:18:38 -> 00:18:42] Okay, and that could have been a better option,
+[00:18:42 -> 00:18:45] but we can start in a local minima.
+[00:18:45 -> 00:18:46] So to summarize,
+[00:18:46 -> 00:18:49] each local optimization does little by itself.
+[00:18:49 -> 00:18:53] It's just looks like a very small thing, small change,
+[00:18:53 -> 00:18:56] but often these optimizations interact.
+[00:18:56 -> 00:18:58] Usually performing one optimization
+[00:18:58 -> 00:19:00] enables the other optimization,
+[00:19:00 -> 00:19:02] but sometimes performing one optimization
+[00:19:02 -> 00:19:05] may disable other optimizations as well
+[00:19:05 -> 00:19:07] and we have seen examples of both.
+[00:19:07 -> 00:19:08] For example, constant propagation
+[00:19:08 -> 00:19:11] was enabling copy propagation and vice versa,
+[00:19:11 -> 00:19:14] whereas algebraic simplification
+[00:19:14 -> 00:19:16] was disabling constant propagation.
+[00:19:17 -> 00:19:19] Optimizing compilers can be thought of
+[00:19:19 -> 00:19:20] as a big bag of tricks.
+[00:19:20 -> 00:19:22] So today's optimizing compilers
+[00:19:22 -> 00:19:24] are basically just a bunch of these tricks
+[00:19:24 -> 00:19:27] and these tricks are just applied one after another.
+[00:19:27 -> 00:19:29] Also, there is some heuristic orderings
+[00:19:29 -> 00:19:31] on what to apply after what
+[00:19:31 -> 00:19:35] and there's sometimes some small search things
+[00:19:35 -> 00:19:37] where you would do backtracking and try this
+[00:19:38 -> 00:19:39] and then come back and try something else and so on,
+[00:19:39 -> 00:19:41] but there's nothing optimal
+[00:19:41 -> 00:19:43] about the way these things are organized.
+[00:19:43 -> 00:19:45] They're just supposed to work for the common cases,
+[00:19:45 -> 00:19:47] but you can always construct examples
+[00:19:47 -> 00:19:49] where they'll work suboptimally
+[00:19:49 -> 00:19:50] and get stuck in a local minima.
+[00:19:52 -> 00:19:54] Typical structure of a compiler,
+[00:19:54 -> 00:19:55] optimizing compiler,
+[00:19:55 -> 00:20:00] repeat, repeatedly apply an optimization rule
+[00:20:00 -> 00:20:03] until no improvement is possible.
+[00:20:03 -> 00:20:05] So until there's no improvement that's possible,
+[00:20:05 -> 00:20:07] you just keep repeatedly applying it.
+[00:20:07 -> 00:20:08] Typically in practice,
+[00:20:08 -> 00:20:11] this loop is not run till infinity,
+[00:20:11 -> 00:20:13] but more like a fixed number of iterations
+[00:20:13 -> 00:20:17] so that you bound the compilation time as well.
+[00:20:17 -> 00:20:20] So what is the guarantee that this loop will converge,
+[00:20:20 -> 00:20:21] which means it will terminate.
+[00:20:21 -> 00:20:24] What's the, why can't it just go on forever?
+[00:20:24 -> 00:20:27] It's possible, it can keep oscillating
+[00:20:27 -> 00:20:29] between this and that and this and that
+[00:20:29 -> 00:20:32] and the reason we can,
+[00:20:32 -> 00:20:35] one way to kind of guarantee convergence
+[00:20:36 -> 00:20:37] is to ensure that all transformations
+[00:20:37 -> 00:20:40] are going in a particular direction
+[00:20:40 -> 00:20:42] of improvement of the metric.
+[00:20:42 -> 00:20:44] So for example, if you are improving runtime,
+[00:20:44 -> 00:20:48] then you may have some notion of what has what runtime
+[00:20:48 -> 00:20:49] and then every time you're making a transformation,
+[00:20:49 -> 00:20:52] you're only going in one direction of that improvement.
+[00:20:52 -> 00:20:53] You're only reducing the runtime.
+[00:20:53 -> 00:20:55] And so if you're just reducing,
+[00:20:55 -> 00:20:55] you can never oscillate
+[00:20:55 -> 00:20:58] because you can never come back and increase the runtime.
+[00:20:58 -> 00:21:01] For oscillation, you will have to have a cycle
+[00:21:01 -> 00:21:03] and that won't never happen.
+[00:21:03 -> 00:21:05] One way to ensure convergence
+[00:21:05 -> 00:21:06] is that you basically ensure
+[00:21:06 -> 00:21:10] that all your transformations are just monotonic.
+[00:21:10 -> 00:21:12] They're just taking the program
+[00:21:12 -> 00:21:15] from a higher metric value of the metric
+[00:21:15 -> 00:21:17] to the lower value of the metric.
+[00:21:17 -> 00:21:22] Metric could be your chosen quantity of choice, right?
+[00:21:23 -> 00:21:25] For example, execution time, code size
+[00:21:25 -> 00:21:26] or whatever you like.
+[00:21:27 -> 00:21:28] What is the guarantee
+[00:21:28 -> 00:21:31] that this procedure is going to be optimal?
+[00:21:31 -> 00:21:32] None.
+[00:21:32 -> 00:21:33] Okay, so there's no optimality guarantee.
+[00:21:33 -> 00:21:36] We already saw examples where this kind of procedure
+[00:21:36 -> 00:21:38] can get stuck in local minimas
+[00:21:38 -> 00:21:40] and we're just going to say, okay, we are done,
+[00:21:40 -> 00:21:41] whereas there could have been more things
+[00:21:41 -> 00:21:42] that were possible.

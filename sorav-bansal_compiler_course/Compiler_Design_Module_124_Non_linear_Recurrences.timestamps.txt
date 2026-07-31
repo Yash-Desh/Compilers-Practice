@@ -1,0 +1,228 @@
+Title: Compiler Design Module 124 : Non linear Recurrences
+Video ID: Uy4moXWJkzs
+Detected language: en
+------------------------------------------------------------
+
+[00:00:00 -> 00:00:05] So, last time we discussed how induction variable analysis proceeds.
+[00:00:05 -> 00:00:11] It proceeds by first identifying loop invariant variables and basic induction variables and
+[00:00:11 -> 00:00:18] then representing other variables in the loop iteration as functions of either loop
+[00:00:18 -> 00:00:23] invariant variables or basic induction variables and then based on that identifying what
+[00:00:23 -> 00:00:30] those variables are as affine expressions on the loop iteration indices.
+[00:00:30 -> 00:00:36] But that is a little bit limited exposition of how the induction variable analysis works
+[00:00:36 -> 00:00:42] because we are limiting ourselves to basic induction variables and affine expressions
+[00:00:42 -> 00:00:47] and also loop invariant variables but in practice actually the induction variable analysis
+[00:00:47 -> 00:00:53] or similar kind of symbolic analysis has become significantly more sophisticated and
+[00:00:53 -> 00:00:56] is actually very useful in producing compiler transformations.
+[00:00:56 -> 00:01:01] So one of the analysis is related to loop trip count and we have discussed this in
+[00:01:01 -> 00:01:05] some in a brief in previous modules.
+[00:01:05 -> 00:01:07] So and how would this work?
+[00:01:07 -> 00:01:13] This would again be similar to the symbolic analysis or that is involved in identifying
+[00:01:13 -> 00:01:14] induction variables.
+[00:01:14 -> 00:01:19] So using the symbolic analysis first we identify all the loops, regions and stuff
+[00:01:19 -> 00:01:25] like that and then for every loop we are going to basically generate the data flow
+[00:01:25 -> 00:01:30] values using either data flow analysis or symbolic analysis and in this particular
+[00:01:30 -> 00:01:32] analysis we are going to have a map.
+[00:01:32 -> 00:01:39] So let's say the m0 x represents the map m0 represents the map at before the first
+[00:01:39 -> 00:01:46] iteration of the loop and x is the it maps x to a so m0 x equals a so the first
+[00:01:47 -> 00:01:53] before the first iteration the map of variables to expressions maps x to a constant a let's
+[00:01:53 -> 00:01:58] say and then if I look at the loop transfer function the summarized transfer function
+[00:01:58 -> 00:02:05] of the loop body I see that m1 x equals m0 x plus c so this is basically the summary
+[00:02:05 -> 00:02:11] for the transfer function for x of the loop body where c is also a constant.
+[00:02:11 -> 00:02:17] Now if we assume that and then we basically see what is the loop termination condition
+[00:02:17 -> 00:02:21] and so the loop termination condition can be just syntactically identified from the
+[00:02:21 -> 00:02:27] loop body basically figuring out what are the conditions under which the loop exit
+[00:02:27 -> 00:02:34] edges are taken edges that are going out of the loop recall that an exit edge is
+[00:02:34 -> 00:02:38] basically an edge whose source is part of the loop but the destination is not
+[00:02:39 -> 00:02:43] and once we are able to figure that and let's say it is of this form x is less than b
+[00:02:44 -> 00:02:51] then if a is less than b then loop trip count is b minus a by c right so if a b and c are
+[00:02:51 -> 00:02:55] constant if I am able to do the symbolic analysis to figure out what is the loop
+[00:02:55 -> 00:02:59] termination condition if I am able to do the induction variable analysis to figure out what
+[00:02:59 -> 00:03:05] is that you know x let's say is a is a basic induction variable with an increment of c
+[00:03:05 -> 00:03:11] then I can do the loop then I can basically claim or analyze using my symbolic analysis
+[00:03:11 -> 00:03:18] that the loop trip count is b minus a by c so when I say using symbolic analysis I mean that
+[00:03:18 -> 00:03:24] there is some kind of axiomatic structure in which I basically you know do some pattern
+[00:03:24 -> 00:03:28] matching and say okay if this is the pattern then I can say that the loop trip count is b
+[00:03:28 -> 00:03:35] minus a by c and here a d and c could be substituted with arbitrary constant
+[00:03:35 -> 00:03:40] expressions or constant values all right so this is the kind of I mean I'm just giving
+[00:03:40 -> 00:03:46] you a flavor of the kind of analysis that goes on in a modern compiler to identify the loop
+[00:03:46 -> 00:03:51] trip count all right why do I care about the loop trip count well if I am able so of course
+[00:03:51 -> 00:03:55] you know one conservative answer for the loop trip count is that it's bottom where bottom
+[00:03:55 -> 00:04:00] basically means I don't know how many iterations the loop is going to take but in cases where
+[00:04:00 -> 00:04:05] I'm able to identify the loop trip count precisely that really helps because now I can
+[00:04:05 -> 00:04:10] predict what are the values at the exit of the loop as potentially affine expressions on the
+[00:04:10 -> 00:04:14] values at the entry of the loop recall that the induction variable analysis gives you
+[00:04:15 -> 00:04:22] the values of every variable as a function of the loop iteration index and if I know the
+[00:04:22 -> 00:04:28] number of loop iterations then I also know what are the value of the affine variable at loop exit
+[00:04:29 -> 00:04:35] all right so this is another example of a symbolic analysis which uses induction
+[00:04:35 -> 00:04:41] variable analysis to identify the loop trip count here are some other types of recurrences
+[00:04:41 -> 00:04:47] so one of the very common themes in a compiler is canonicalization there are many
+[00:04:47 -> 00:04:52] ways that you can write the same logic for example we have seen strength reduction so inside
+[00:04:52 -> 00:04:58] the loop I could say x equals i into three or I could just say x equals x plus three and
+[00:04:59 -> 00:05:03] let's say x is initialized to zero before the start of the loop and both these things are
+[00:05:03 -> 00:05:07] going to produce the same set of values for x on every iteration it's going to be
+[00:05:07 -> 00:05:13] incremented by three every time and and so you know our induction variable analysis is
+[00:05:13 -> 00:05:17] able to canonicalize which means give a canonical representation of what is actually
+[00:05:17 -> 00:05:24] happening for x canonical way of representing how x is evolving as the loop is proceeding
+[00:05:24 -> 00:05:29] and so the canonical representation could be that let's just use a plus c into i and this
+[00:05:29 -> 00:05:33] is going to capture both the cases where x is getting incremented by three using the plus
+[00:05:33 -> 00:05:37] operator or where x is being explicitly computed using this particular expression
+[00:05:37 -> 00:05:45] a plus c into i on every iteration of the loop now here is one way of representing such
+[00:05:45 -> 00:05:52] canonical structures so a plus c into i this is I'm borrowing the notation from the scalar
+[00:05:52 -> 00:05:58] evolution analysis of LLVM this involves so let me just write it down so you can also study
+[00:05:58 -> 00:06:05] it on your own this is called the scalar evolution analysis in LLVM and this basically
+[00:06:05 -> 00:06:11] involves writing and variable x which is known to be an induction variable as three
+[00:06:11 -> 00:06:18] tuple the first one is first element says what is the start value before the entry of the first
+[00:06:18 -> 00:06:25] iteration the second says what is the operator that is with which it gets with which it evolves
+[00:06:25 -> 00:06:29] so in this case it says that it something gets added on every iteration so that's why it's a
+[00:06:29 -> 00:06:34] plus operator and then what is the value that gets added on every iteration that's c
+[00:06:34 -> 00:06:41] so a plus c a represents the start operate a start value c represents a stride and plus
+[00:06:41 -> 00:06:46] represents what is the operator with which it is striding right the significance of the operator
+[00:06:46 -> 00:06:51] is that I can now not only limit myself to affine expressions but maybe other types of
+[00:06:51 -> 00:06:56] expressions such as multiplication so I could say that it's getting multiplied by two on
+[00:06:56 -> 00:07:03] every iteration in which case I could replace plus with star also this notation has you
+[00:07:03 -> 00:07:07] know so they are curly braces for this three tuple but then it also has an annotation which
+[00:07:07 -> 00:07:12] says what is the loop or the loop name and this basically represents the innermost loops header
+[00:07:13 -> 00:07:20] with respect to which this tuple is has been written so basically this means that
+[00:07:20 -> 00:07:27] in the ith iteration of this particular loop the value of x would be a plus c into i so
+[00:07:28 -> 00:07:33] this notation here basically represents this sentence at iteration i of loop name so I should
+[00:07:33 -> 00:07:43] be very at iteration i of loop name x equals a plus c into i and that's basically represented
+[00:07:43 -> 00:07:48] succinctly using this notation now why am I interested in representing this sentence in a
+[00:07:48 -> 00:07:54] succinct notation it'll become very clear as I'm going to make this more elaborate this notation
+[00:07:54 -> 00:07:59] and use be able to specify more complex properties more complex sentences using this particular
+[00:07:59 -> 00:08:06] notation so here is an example where this particular property would hold that x equals
+[00:08:06 -> 00:08:12] a comma plus comma c loop name and so this is my let's say loop it has this name by the way
+[00:08:12 -> 00:08:19] how do I name a loop I name typically name a loop using the program point or the program
+[00:08:19 -> 00:08:25] counter value or add the header of the loop recall that a loop is uniquely identified by
+[00:08:25 -> 00:08:30] the header of a loop we have already talked about how we identify inner inner loops outer
+[00:08:30 -> 00:08:34] loops and things like that merge loops with the same header so every loop you know two
+[00:08:34 -> 00:08:39] different loops would always have different headers and so if I just name the header of
+[00:08:39 -> 00:08:43] a loop that's as good as naming the loop itself and so typically we just name the
+[00:08:43 -> 00:08:47] header of the loop to name the loop and so let's say this is my loop in the let's
+[00:08:47 -> 00:08:52] say in the intermediate representation I'm just showing the high level c like representation
+[00:08:52 -> 00:08:57] and in this you have x equals a and then inside the loop I have x equals x plus c
+[00:08:57 -> 00:09:03] and so this my induction variable analysis is going to identify this property from this loop
+[00:09:04 -> 00:09:09] right so that's that's very helpful I should also point out that let's say I had instead
+[00:09:09 -> 00:09:17] of this if I had x equals a plus c into i it would have still used the same representation
+[00:09:17 -> 00:09:22] so my induction variable analysis would have got the same answer irrespective of what syntax
+[00:09:22 -> 00:09:28] I use and that's what I mean by canonicalization this kind of representation of how this variable
+[00:09:28 -> 00:09:35] x is evolving as with the iteration count of the loop is basically you know a way to
+[00:09:35 -> 00:09:40] canonicalize the operation of the loop and with the canonicalization we can now do pattern
+[00:09:40 -> 00:09:46] matching on the canonical representation of the loop to basically do transformations or analyses
+[00:09:46 -> 00:09:54] or things like that so here is another example so let's say in my in my loop I also had y
+[00:09:54 -> 00:10:02] equals read and then I had x2 some other variable equals a plus i into c plus y now in
+[00:10:02 -> 00:10:10] this case it's no longer an induction variable but it says you know because y is completely
+[00:10:10 -> 00:10:17] unknown it's it's being read from some ios source let's say the keyboard and so this this value
+[00:10:17 -> 00:10:23] x2 is unknown it's not an induction variable yet it is expressible in this in this format
+[00:10:23 -> 00:10:28] by just saying that oh x is a plus c loop name so this part is the induction variable
+[00:10:28 -> 00:10:36] part which says that it's incrementing by site stride c on every iteration and plus y
+[00:10:36 -> 00:10:42] and where y is kind of you know some variable which is available at the point where x2 is
+[00:10:43 -> 00:10:47] being used so at this particular point I mean the canonical representation for this
+[00:10:47 -> 00:10:54] statement here is this so this is the canonical so this is the canonicalization of this statement
+[00:10:55 -> 00:10:59] okay I could have for example in this example had a different code for example I could have
+[00:10:59 -> 00:11:09] said x2 equals a and then instead of this I could have just said x2 equals x2 plus equals c
+[00:11:09 -> 00:11:16] and then I could say x2 equals yeah it would be a little complicated but even if I had a
+[00:11:16 -> 00:11:23] different representation for this it would have still given me the same canonical answer I
+[00:11:23 -> 00:11:26] couldn't really construct an example where it would have given me a different representation
+[00:11:26 -> 00:11:33] but the point is that you know I have hidden what the actual syntax was to obtain this
+[00:11:34 -> 00:11:42] you know to obtain this canonical form of how x2 is value can be computed for an ith iteration
+[00:11:42 -> 00:11:45] of a loop right so this is a canonical representation this forms part of my
+[00:11:45 -> 00:11:51] symbolic analysis one part of the symbolic analysis to canonically represent every variable
+[00:11:51 -> 00:11:59] in the loop in terms of the loop iteration index here is another example so let's say I have z
+[00:11:59 -> 00:12:03] equals something which is a loop invariant it's not going to change in the loop then I have x
+[00:12:03 -> 00:12:10] equals a and then inside the loop I have x equals x plus c and then I had x2 equals x plus
+[00:12:10 -> 00:12:16] z now once again this is you know there's some way that the values x and x2 are evolving
+[00:12:16 -> 00:12:23] we've already seen how x is evolving x would be just a comma plus comma c with loop name
+[00:12:23 -> 00:12:29] but x2 would be a plus z comma plus comma c because it's not just the initial value
+[00:12:29 -> 00:12:34] but it's basically represents what's the constant value that can be so this is basically
+[00:12:34 -> 00:12:42] the constant part and this is the stride and so this basically is now this representation here
+[00:12:42 -> 00:12:52] is basically saying that in the ith iteration of this loop I have x2 equals x2 equals a plus z
+[00:12:53 -> 00:13:00] plus i into c and my symbolic analysis should be able to figure this out on its own and this is
+[00:13:00 -> 00:13:04] a representation of how I'm going to represent it we have already discussed how the symbolic
+[00:13:04 -> 00:13:09] analysis proceeds in the previous module the induction variable analysis but here I'm really
+[00:13:09 -> 00:13:17] discussing how to represent such inferences in a canonical form so that they become easy to read
+[00:13:17 -> 00:13:25] manipulate and use for transformations so a plus z comma plus comma c loop name and this basically
+[00:13:25 -> 00:13:32] stands for x at the ith iteration x2 is a plus z plus i into c because this is just the
+[00:13:32 -> 00:13:36] constant part and this is the stripe all right so that's what this representation means
+[00:13:36 -> 00:13:44] now here's another example let's say I have a character array a of two-dimensional array where
+[00:13:44 -> 00:13:53] there are 100 rows and 200 columns and then I say for i equals 1 to 100 for j equals 1 to 200
+[00:13:53 -> 00:14:02] p equals ampersand a i j all right now in this case I want to represent p as functions
+[00:14:02 -> 00:14:10] as functions of loop indices j and i right so we have discussed how induction variable analysis
+[00:14:10 -> 00:14:15] works for a single loop and I want to generalize it to multiple groups I'm not discussing how that
+[00:14:15 -> 00:14:21] generalization will happen it's actually very similar there's nothing you know there's nothing
+[00:14:21 -> 00:14:25] different for doing it for multiple loops but I'm going to discuss how am I going to
+[00:14:25 -> 00:14:30] represent the result in this notation because that itself is going to give you a sense of
+[00:14:30 -> 00:14:35] how this the analysis may have proceeded to basically get this representation and so
+[00:14:35 -> 00:14:41] basically if you look at how p is evolving p is basically the address of a i j
+[00:14:43 -> 00:14:49] i is the loop iteration index of l0 j is the loop iteration index of l1
+[00:14:50 -> 00:14:56] and what is p if I look at if I assume that p is stored in a row major order then this
+[00:14:56 -> 00:15:08] is basically p plus 200 into i plus j all right sorry a plus so p is nothing but a plus 200 into
+[00:15:08 -> 00:15:15] i plus j and I expect my symbolic induction variable analysis to identify this that for
+[00:15:15 -> 00:15:24] the ith iteration in l0 and the jth iteration of l1 p is a plus 200 into i plus j and I will
+[00:15:24 -> 00:15:30] represent it in this form in my notation and this becomes even more interesting because I'm
+[00:15:30 -> 00:15:37] saying that p equals now I have two parts to this representation one is related to the outer
+[00:15:37 -> 00:15:46] loop so a plus 200 l0 so this is a is that if I am in the ith iteration of l0 then it is
+[00:15:46 -> 00:15:55] a plus 200 into i this is exactly what we had comma plus one of l1 so plus if I'm in the jth
+[00:15:55 -> 00:16:02] iteration of l1 then plus one into j and so this representation here represents the fact
+[00:16:02 -> 00:16:11] that a plus at the ith iteration of l0 and the jth iteration of l1 p is a plus 200 into i
+[00:16:11 -> 00:16:18] and plus two plus one into j now notice that I have kind of simplified here that I'm using i
+[00:16:18 -> 00:16:23] equals one two hundred and j equals one two two hundred and so I'm kind of assuming that the
+[00:16:23 -> 00:16:31] loop indices of l0 and l1 are i and j respectively but you know in general that may not be true for
+[00:16:31 -> 00:16:36] example I may have used a while loop maybe the loop in iteration index is not relate not
+[00:16:36 -> 00:16:43] directly equal to one of the program variables like in this case in this case I'm assuming that
+[00:16:43 -> 00:16:49] the program variable i is equal to the loop iteration index of l0 and which case also
+[00:16:49 -> 00:16:54] this representation holds so notice that neither i nor j find mention in this representation it's
+[00:16:54 -> 00:16:59] just mentions that whatever is the loop l0 whatever is the loop iteration index of l0
+[00:17:00 -> 00:17:06] with respect to that this is what the value is one part of the value for p plus
+[00:17:07 -> 00:17:14] one into whatever is the loop iteration index of l1 so exactly a plus 200 into i plus one into
+[00:17:14 -> 00:17:23] j okay that's interesting one more idea here is non-linear recurrences so I could for example
+[00:17:24 -> 00:17:29] let's say have a program it says j equals zero then for i equals zero i is less than n i plus
+[00:17:29 -> 00:17:34] plus now here notice that I can first represent i what is i i is nothing but
+[00:17:36 -> 00:17:43] zero that's the initial value plus because it gets incremented by one every time plus one
+[00:17:43 -> 00:17:50] and whatever is the loop right so let's say this loop is l then I just say l here now that's
+[00:17:50 -> 00:17:55] i but what about j can I say something about j and the answer is yes we can say something
+[00:17:55 -> 00:18:00] about j because j gets incremented by i on every iteration and we know that i is already
+[00:18:01 -> 00:18:09] zero plus one l and so j becomes zero plus and whatever is the value of i that we know
+[00:18:09 -> 00:18:14] in terms of the loop iteration index so that's called zero plus one l and notice now I am
+[00:18:14 -> 00:18:20] going beyond the fine expressions now I can say that it's possible to increment the value
+[00:18:20 -> 00:18:28] of j by a non-constant value as long as that non-constant value is itself in a fine expression
+[00:18:28 -> 00:18:33] of the loop iteration index or not necessarily in a fine expression something that
+[00:18:33 -> 00:18:37] fits in this framework all right and so this becomes zero plus and then this becomes an
+[00:18:37 -> 00:18:42] increment and notice that the increment now is variable however even though it's not completely
+[00:18:42 -> 00:18:50] unknown it's actually representable in terms of the loop iteration index so and that is zero
+[00:18:50 -> 00:18:54] plus one l and so this becomes the value of j this becomes a representation of j
+[00:18:55 -> 00:19:01] zero plus and then this whole thing becomes zero plus one l and then this whole thing also is
+[00:19:02 -> 00:19:06] annotated with it so in both cases we are basically just saying that this
+[00:19:06 -> 00:19:11] note so this whole thing just represents a value as it evolves so this represents an
+[00:19:11 -> 00:19:22] evolving value for the for some variable at some program point with respect to the loop
+[00:19:22 -> 00:19:29] iteration index of the loop and this a shorthand for this is just have because they have the
+[00:19:29 -> 00:19:37] same loop loop annotation the shorthand is in scalar evolution zero plus zero plus one l
+[00:19:37 -> 00:19:43] and this basically means that j is at the ith iteration of the loop it is basically
+[00:19:43 -> 00:19:46] zero plus and then what is
+[00:19:49 -> 00:20:06] this becomes zero plus one into i into into i right because this is basically the
+[00:20:06 -> 00:20:14] so no not into i and this becomes summation over i from zero to whatever the current
+[00:20:14 -> 00:20:20] loop iteration index is right so which is the i prime and this should be i prime and from zero
+[00:20:20 -> 00:20:27] to i so if the current loop iteration index is i then j is zero plus summation of zero plus
+[00:20:27 -> 00:20:32] one into i prime from i prime going from zero to i and that's exactly what this loop is
+[00:20:32 -> 00:20:38] doing right it's just computing the sum of the first i numbers and that's exactly what
+[00:20:38 -> 00:20:45] this expression represents zero plus summation of one into i prime where i prime goes from zero
+[00:20:45 -> 00:20:58] to i and that's just going to evaluate to basically i into i plus one by two all right
+[00:20:58 -> 00:21:03] so we can now do non-linear represent recurrences using such a representation
+[00:21:03 -> 00:21:07] and such an analysis and such analyses are actually present in modern compilers
+[00:21:08 -> 00:21:13] here is another example let's say instead of the previous case where it was very explicit
+[00:21:13 -> 00:21:18] that on every iteration i'm adding i where i is getting incremented by also by one by
+[00:21:18 -> 00:21:24] you know every iteration here i just say j equals i into i all right so i say for i equals
+[00:21:24 -> 00:21:30] zero i is less than n i plus plus j equals i into i now i again expect my symbolic analysis
+[00:21:30 -> 00:21:36] to be able to identify that actually this is also a non-linear recurrence with respect
+[00:21:36 -> 00:21:44] to the iteration count of l and the new non-linear recurrence is going to be zero plus and the
+[00:21:44 -> 00:21:49] increment the stride is going to be one comma plus comma two for l and then all right so
+[00:21:49 -> 00:21:54] notice that this is non-trivial to identify i'm not discussing the algorithm to identify
+[00:21:54 -> 00:22:00] such relationships but i'm just trying to tell you what the representation of such
+[00:22:00 -> 00:22:08] evolving values is could be and is in you know modern compilers which have such known
+[00:22:08 -> 00:22:12] patterns with respect to the loop iteration index and once again the shorthand for this
+[00:22:12 -> 00:22:22] is zero plus one plus two l what this means is that the value of j is basically zero plus
+[00:22:23 -> 00:22:33] summation over i prime equals zero to i one plus two into i prime
+[00:22:34 -> 00:22:39] okay and if you just evaluate this expression you would see that this is going to be valued
+[00:22:39 -> 00:22:45] to just i square and that's exactly what we have in the loop and so this is again an
+[00:22:45 -> 00:22:49] example of canonicalization irrespective of what i had in the loop the way i had it
+[00:22:49 -> 00:22:54] i have canonicalized that i have a canonical representation which is this and then now i can
+[00:22:54 -> 00:23:00] understand what this canonical representation is and use it for further analysis and transformation

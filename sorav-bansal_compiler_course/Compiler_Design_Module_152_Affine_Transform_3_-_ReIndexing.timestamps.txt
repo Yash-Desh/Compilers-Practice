@@ -1,0 +1,95 @@
+Title: Compiler Design Module 152 : Affine Transform #3 - ReIndexing
+Video ID: -m3MLxBwDLA
+Detected language: en
+------------------------------------------------------------
+
+[00:00:00 -> 00:00:05] I'm going to discuss our third affine transform the third primitive affine transform and this
+[00:00:05 -> 00:00:10] is called re-indexing and here is an example to show the third primitive affine transform.
+[00:00:10 -> 00:00:17] So let's say I have for i equals 0 to n y i plus plus y i equals z i and this forms my
+[00:00:17 -> 00:00:24] statement s 1 and x i equals y i minus 1. So if I was to draw the dependency the iteration
+[00:00:24 -> 00:00:31] space and the dependency edges then basically I have this brown line that indicates the
+[00:00:31 -> 00:00:36] progression of the loop iterations and for each iteration point I have two statements
+[00:00:37 -> 00:00:46] by s 1 denoted by the circle and s 2 denoted by the cross and so I have multiple instances
+[00:00:47 -> 00:00:58] and multiple instances of s 2 and in this case there is a dependency from y 0 to y 0 in other words
+[00:00:58 -> 00:01:04] the 0th iteration of s 1 has a dependency on the first iteration of s 2 because that's when both
+[00:01:04 -> 00:01:09] of them access y 0. So I draw an edge from the 0th iteration of s 1 to the first iteration of
+[00:01:09 -> 00:01:14] s 2. Similarly I can draw an edge from the first iteration of s 1 to the second iteration
+[00:01:14 -> 00:01:22] of s 2 and so on and so this becomes my iteration space with dependency edges pictorially speaking.
+[00:01:22 -> 00:01:28] If I was to basically say the same thing using constraints space partitioning constraints
+[00:01:28 -> 00:01:33] I would have to say that whenever there is a data dependence so in other words whenever
+[00:01:33 -> 00:01:41] i 1 for s 1 equals i 2 for s 2 minus 1 then p of i 1 must be equal to p of i 2 in other
+[00:01:41 -> 00:01:49] words then both iterations i 1 and i 2 must map to the same processor id p and this basically
+[00:01:49 -> 00:01:54] when I solve these constraints these space partitioning constraints I get p equals i for
+[00:01:54 -> 00:02:02] s 1 and p equals i minus 1 for s 2 and so basically this circle and this cross must be
+[00:02:04 -> 00:02:08] allocated to the same processor and this is you know pictorially speaking this makes sense
+[00:02:09 -> 00:02:15] all these chains should be present in the same processor the rank the max the rank of the
+[00:02:15 -> 00:02:22] solution of the mapping function is basically one which is equal to the rank of the iteration
+[00:02:22 -> 00:02:27] space as well. So we are we are good on that part and we have found the maximum rank solution
+[00:02:27 -> 00:02:32] and now we are going to do the code generation. So this is another example small example of a
+[00:02:32 -> 00:02:39] space partitioning constraint problem that solves this kind of example and that constructs
+[00:02:39 -> 00:02:44] a fine transform that that which we are going to call indexing. So let's see how the code
+[00:02:44 -> 00:02:48] generated code would look like for this solution to the space partitioning constraints
+[00:02:49 -> 00:02:54] and here is the generated code my simple code generator I basically have my outer loop on p
+[00:02:54 -> 00:02:59] which is the processor space the lower bound of the processor space is minus one because
+[00:02:59 -> 00:03:04] that's the lowest value that p can take the lowest value that i can take is zero and because
+[00:03:04 -> 00:03:11] for s 2 i have p equals i minus one the lowest value for p that this outer loop can take is
+[00:03:11 -> 00:03:16] minus one the largest value that p can take is n because that's coming from p equals i
+[00:03:16 -> 00:03:22] because i can take n as the largest value so p can also take n as the largest value
+[00:03:22 -> 00:03:27] and then p plus plus and then i just paste the original program as the body of this loop
+[00:03:27 -> 00:03:34] except that i predicate each statement with if p equals the corresponding function so in this
+[00:03:34 -> 00:03:41] case it becomes if p this if p equals i only then execute x i equals y i equals z i if p
+[00:03:41 -> 00:03:47] equals i minus one only then execute x i equals y i minus one so this is my simple
+[00:03:47 -> 00:03:52] code generator and now i'm going to tighten the code so my first attempt at tightening the
+[00:03:52 -> 00:03:59] code is just that i basically tighten the loop iteration indices of i and so what i get is i
+[00:03:59 -> 00:04:06] equals maximum of zero comma p because you know p is already known so either i is going to be
+[00:04:06 -> 00:04:11] equal to p or i is going to be equal to p plus one and from that i say that i is greater than
+[00:04:11 -> 00:04:17] equal to p and i is less than equal to p plus one and so that i basically change my
+[00:04:17 -> 00:04:23] loop iteration bounds for the inner loop on i from zero to n to max of zero comma p
+[00:04:24 -> 00:04:30] to min of p plus one comma n and notice when i write it like this the inner loop can have
+[00:04:30 -> 00:04:36] at most two iterations start at p and end at p plus one and at min it can have one iteration
+[00:04:37 -> 00:04:44] and so this is my code generated code with tightened loops it is almost perfect except that
+[00:04:44 -> 00:04:50] we have this for loop and then we have these extra tests and we can eliminate these extra tests
+[00:04:50 -> 00:04:54] by specializing the code by potentially duplicating the statements code and so that's
+[00:04:54 -> 00:05:01] what we're going to do at the very end and i basically find the iterations i try to partition
+[00:05:01 -> 00:05:06] the iteration space of the outermost loop which is p and there are three different partitions that
+[00:05:06 -> 00:05:13] i create one is minus the singleton point minus one for which only s2 would execute then
+[00:05:13 -> 00:05:18] we have the points from zero to n minus one where both s1 and s2 would execute and then i have the
+[00:05:18 -> 00:05:26] singleton point n comma n which basically only s1 executes and then specializing the code for each
+[00:05:26 -> 00:05:33] of these three partitions for minus one comma minus one i only execute x s1 s2 and so this is
+[00:05:33 -> 00:05:37] the code that i get if n is greater than equal to zero x1 equals y0 how do i get n is greater
+[00:05:37 -> 00:05:44] than zero well if i just use you know if i just say that p should iterate from minus one to minus
+[00:05:44 -> 00:05:49] one and then when i try to identify the condition for the inner loop i basically get
+[00:05:49 -> 00:05:55] that the inner loop will execute either zero or one iterations and the condition for it to
+[00:05:55 -> 00:06:00] execute one iteration of s2 would be if n was greater than equal to zero all right and then
+[00:06:00 -> 00:06:07] i also notice that i substitute for p equals minus one in this statement of s2 xi equals
+[00:06:08 -> 00:06:16] yi minus one and that basically gives me x1 equals y0 okay you know because you know the
+[00:06:16 -> 00:06:21] i that we get would be equal to p plus one or something like that and so that if you work
+[00:06:21 -> 00:06:28] this out we are going to get x1 equals y0 okay now we're going to look at the then we
+[00:06:28 -> 00:06:33] are going to have the second partition from zero to n minus one and here we basically
+[00:06:33 -> 00:06:39] iterate from p equals zero to n minus one p plus plus and we just paste the original code
+[00:06:39 -> 00:06:47] because both the statements will execute we just paste the statements without actually
+[00:06:47 -> 00:06:54] doing the test predicate test and say yi yp equals zp because p equals i and yi equals zi
+[00:06:54 -> 00:07:01] so you can just say yp equals zp and then if p equals i minus one xi equals yi minus one and
+[00:07:01 -> 00:07:09] this translates to xp plus one equals yp okay because you know i becomes p plus one so i just
+[00:07:09 -> 00:07:15] substitute i for p plus one and i get x of p plus one equals yp and finally i add the
+[00:07:15 -> 00:07:21] third partition where i say if n is greater than equal to zero yn equals zn once again
+[00:07:21 -> 00:07:25] the if n is greater than equal to zero is the simplified form of the fact that
+[00:07:25 -> 00:07:32] p is equal to n p is equal to n and it's the s1 statement that executes in this case which
+[00:07:32 -> 00:07:36] just which is yi equals zi and because p was equal to n and i was equal to p
+[00:07:36 -> 00:07:44] i can just replace that with yn equals zn i want to make a correction it should be probably
+[00:07:44 -> 00:07:53] x0 equals y minus one one here right so this should have been x0 equals y minus one this
+[00:07:53 -> 00:08:03] would have been the right boundary condition at the entry of the loop okay let me also fix
+[00:08:03 -> 00:08:11] this here and if i look at it you know pictorially then this was my original
+[00:08:11 -> 00:08:17] iteration space let's say this is iteration i equals zero so i have x and z s2 and s1
+[00:08:17 -> 00:08:24] but i have these diagonal lines of iterations so first i'm going to execute s1 then s2
+[00:08:24 -> 00:08:28] of the first point then s1 and s2 or the second point then s1 and s2 the third point
+[00:08:28 -> 00:08:36] and so on but there is a the reuse distance between the access to the same element is
+[00:08:36 -> 00:08:43] actually larger here because i have to know i do lexicographically i do the s1 first then s2
+[00:08:43 -> 00:08:50] then i do s1 and then finally i do the reused iteration with re-indexing i have basically
+[00:08:50 -> 00:08:57] changed this iteration space so that i first execute the zeroth iteration of s2 then i
+[00:08:57 -> 00:09:03] execute the zeroth iteration of s1 then i execute the first iteration of s2 then i execute
+[00:09:03 -> 00:09:08] the first iteration of s1 and so on and now the dependency edges are basically just straight
+[00:09:08 -> 00:09:14] lines straight vertical lines and that basically decreases my reuse distance between data
+[00:09:14 -> 00:09:20] dependencies and this transformation is exactly represented by this particular program and its
+[00:09:20 -> 00:09:24] iteration space is represented pictorially here and we also call this the affine primitive
+[00:09:24 -> 00:09:29] affine transform number three called re-indexing

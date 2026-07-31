@@ -1,0 +1,504 @@
+Title: Compiler Design Module 124 16: Example of Context Sensitive Pointer Analysis
+Video ID: _QKn-rrUAhc
+Detected language: en
+------------------------------------------------------------
+
+[00:00:00 -> 00:00:04] So now I'll look at an example that demonstrates
+[00:00:04 -> 00:00:07] a context-sensitive pointer analysis and how it operates
+[00:00:07 -> 00:00:10] and what are its strengths and limitations, okay.
+[00:00:10 -> 00:00:13] So, and the example I'm gonna take is this example
+[00:00:13 -> 00:00:17] where a compiler tries to optimize a program
+[00:00:17 -> 00:00:20] by resolving the virtual function calls at compile time.
+[00:00:20 -> 00:00:22] So I'm considering an object-oriented language
+[00:00:22 -> 00:00:25] and consider this base class
+[00:00:25 -> 00:00:28] in this object-oriented language, like C++ or Java,
+[00:00:28 -> 00:00:32] where the base class contains a virtual function,
+[00:00:32 -> 00:00:33] and in this case, it's an abstract function,
+[00:00:33 -> 00:00:35] which means that the derived classes
+[00:00:35 -> 00:00:38] will have separate implementations.
+[00:00:38 -> 00:00:40] Let's say there are two derived classes, D1 and D2,
+[00:00:40 -> 00:00:42] and they both have separate implementations
+[00:00:42 -> 00:00:45] of this function F, this member function,
+[00:00:45 -> 00:00:47] this virtual member function F.
+[00:00:47 -> 00:00:49] And now I'm going to show some code
+[00:00:49 -> 00:00:54] which is going to have some aliasing behaviors,
+[00:00:54 -> 00:00:57] and then the compiler will be interested
+[00:01:00 -> 00:01:02] in identifying whether a certain object
+[00:01:02 -> 00:01:04] is definitely D1 or definitely D2.
+[00:01:04 -> 00:01:08] If the compiler can, at compile time,
+[00:01:08 -> 00:01:10] definitely say that some object is D1,
+[00:01:10 -> 00:01:14] and let's say the function F is called on that object,
+[00:01:14 -> 00:01:17] so let's say there's some object X on which F is called,
+[00:01:17 -> 00:01:19] and the compiler can reason at compile time
+[00:01:19 -> 00:01:22] that X definitely is D1 and not D2,
+[00:01:22 -> 00:01:26] then X can just resolve the virtual function call
+[00:01:26 -> 00:01:28] directly to D1's F.
+[00:01:28 -> 00:01:30] So recall that virtual function calls
+[00:01:30 -> 00:01:32] are actually resolved at runtime,
+[00:01:32 -> 00:01:36] because depending on what object it is being called on,
+[00:01:36 -> 00:01:37] the corresponding function is called.
+[00:01:37 -> 00:01:41] So if it was at runtime, the system checks
+[00:01:41 -> 00:01:43] or the program checks whether the current object,
+[00:01:43 -> 00:01:47] the receiving object, is a D1 type or D2 type,
+[00:01:47 -> 00:01:48] and depending on that,
+[00:01:48 -> 00:01:50] it will call D1's F or D2's F.
+[00:01:50 -> 00:01:52] But if the compiler can, at compile time,
+[00:01:52 -> 00:01:55] resolve this and say that no, this is definitely D1's F,
+[00:01:55 -> 00:01:59] then it can avoid the overhead of the runtime lookup
+[00:01:59 -> 00:02:02] in the Vtable to do this resolution at runtime.
+[00:02:02 -> 00:02:03] And so this is an optimization
+[00:02:03 -> 00:02:05] where the compiler tries to resolve
+[00:02:05 -> 00:02:08] virtual function calls at compile time.
+[00:02:08 -> 00:02:09] Okay, let's look at an example.
+[00:02:09 -> 00:02:12] So let's say there's another class, copy,
+[00:02:12 -> 00:02:15] that just has a single function,
+[00:02:15 -> 00:02:16] copy, small case,
+[00:02:16 -> 00:02:20] which just takes an input argument of type base,
+[00:02:20 -> 00:02:23] which could be either of type D1 or D2,
+[00:02:23 -> 00:02:26] and then returns a copy of the incoming object.
+[00:02:26 -> 00:02:30] So it just takes B and returns B, okay?
+[00:02:30 -> 00:02:32] And let's say this is my main function.
+[00:02:32 -> 00:02:34] It creates a new copy object,
+[00:02:34 -> 00:02:36] so C is equal to new copy.
+[00:02:36 -> 00:02:39] Then it creates a new base object, X,
+[00:02:39 -> 00:02:43] but, so it creates a new D1 object, sorry,
+[00:02:43 -> 00:02:44] it creates a new D1 object,
+[00:02:44 -> 00:02:46] and then calls C pointer.copy on it.
+[00:02:46 -> 00:02:49] So this is going to just take new D1,
+[00:02:49 -> 00:02:53] put it into, as an argument to copy,
+[00:02:53 -> 00:02:55] and then it's going, that's what it's going to return.
+[00:02:55 -> 00:02:59] So X is going to have a pointer,
+[00:02:59 -> 00:03:02] X is going to have a copy of D1.
+[00:03:03 -> 00:03:04] I'm using, you know,
+[00:03:04 -> 00:03:07] I'm using a mixture of C++ and Java syntax,
+[00:03:07 -> 00:03:09] because when I say new D1 and base B,
+[00:03:09 -> 00:03:11] just consider that base B is a reference,
+[00:03:11 -> 00:03:12] and when you return B,
+[00:03:12 -> 00:03:13] then that's what,
+[00:03:13 -> 00:03:15] that's the reference that's returning back.
+[00:03:15 -> 00:03:17] So think of this as a reference,
+[00:03:17 -> 00:03:19] and new is creating a reference.
+[00:03:19 -> 00:03:22] And when I say this arrow is similar to dot in Java,
+[00:03:22 -> 00:03:25] and in C++, it's an arrow,
+[00:03:26 -> 00:03:28] which basically calls the copy function
+[00:03:28 -> 00:03:31] on the reference C.
+[00:03:31 -> 00:03:35] Okay, so base X equals C.copy new D1
+[00:03:35 -> 00:03:38] is just going to, as we can see,
+[00:03:38 -> 00:03:39] copy is just going to return the reference,
+[00:03:39 -> 00:03:41] so that's just going to give,
+[00:03:41 -> 00:03:44] put X equals whatever was allocated at D1.
+[00:03:44 -> 00:03:47] And similarly, Y equals C.copy new D2,
+[00:03:47 -> 00:03:49] that's going to put D2 in Y.
+[00:03:49 -> 00:03:53] So, you know, when we reason about this program manually,
+[00:03:53 -> 00:03:55] then we can clearly see that X will be pointing
+[00:03:55 -> 00:03:56] to a D1 object,
+[00:03:56 -> 00:03:59] and Y will be pointing to a D2 object.
+[00:03:59 -> 00:04:00] And then if you call X.f,
+[00:04:00 -> 00:04:02] then D1's f should be called,
+[00:04:02 -> 00:04:04] and when you call Y.f,
+[00:04:04 -> 00:04:06] then D2's f should be called.
+[00:04:06 -> 00:04:08] But we can do this kind of reasoning manually,
+[00:04:08 -> 00:04:10] but the question is can the compiler
+[00:04:10 -> 00:04:13] do this kind of reasoning in a general setting?
+[00:04:13 -> 00:04:15] And we're going to use our pointer analysis,
+[00:04:15 -> 00:04:18] our context-sensitive pointer analysis
+[00:04:18 -> 00:04:21] on this program to see whether it can do this or not.
+[00:04:21 -> 00:04:23] Okay, so the first step
+[00:04:23 -> 00:04:26] in doing the context-sensitive pointer analysis
+[00:04:26 -> 00:04:30] is to label the allocation sites and the call sites.
+[00:04:30 -> 00:04:32] So one allocation site is this new copy,
+[00:04:32 -> 00:04:35] so let me call that LC.
+[00:04:35 -> 00:04:37] Another allocation site is this new D1,
+[00:04:37 -> 00:04:38] let me call this LD1.
+[00:04:38 -> 00:04:41] Similarly, another allocation site is new D2,
+[00:04:41 -> 00:04:42] let me call it LD2.
+[00:04:42 -> 00:04:43] Moreover, these sites,
+[00:04:43 -> 00:04:46] I'm kind of skipping a few steps,
+[00:04:46 -> 00:04:47] I should have actually expanded this
+[00:04:47 -> 00:04:48] into three address code,
+[00:04:48 -> 00:04:49] and then done all this,
+[00:04:49 -> 00:04:51] but just so that I can fit everything
+[00:04:51 -> 00:04:52] on a single slide,
+[00:04:52 -> 00:04:54] I'm avoiding that step,
+[00:04:54 -> 00:04:57] and it still works.
+[00:04:57 -> 00:04:59] So the same label, LD1,
+[00:04:59 -> 00:05:01] is both an allocation site
+[00:05:01 -> 00:05:04] and a call site to this function copy.
+[00:05:04 -> 00:05:05] And the call site recall is important
+[00:05:05 -> 00:05:07] for the call context
+[00:05:07 -> 00:05:10] for our context-sensitive pointer analysis.
+[00:05:10 -> 00:05:14] Okay, and so this is LD1, this is LD2,
+[00:05:14 -> 00:05:16] and the question is which F should be called,
+[00:05:16 -> 00:05:17] which F is called,
+[00:05:17 -> 00:05:19] can we resolve this at compile time?
+[00:05:19 -> 00:05:21] Can the compiler resolve this automatically
+[00:05:21 -> 00:05:22] at compile time?
+[00:05:22 -> 00:05:24] Now, this is the top-level function main,
+[00:05:24 -> 00:05:28] so I'm going to assume that the initial context is zero.
+[00:05:28 -> 00:05:32] So now I'm going to just use my transfer functions
+[00:05:32 -> 00:05:36] for a call context point analysis.
+[00:05:36 -> 00:05:38] I'm going to use Anderson's analysis,
+[00:05:38 -> 00:05:39] it doesn't matter,
+[00:05:39 -> 00:05:40] the same call context sensitivity
+[00:05:40 -> 00:05:43] can be applied to Steensguard algorithm as well,
+[00:05:43 -> 00:05:47] or any other representation of the points to graph.
+[00:05:47 -> 00:05:50] But I'm going to use the Anderson's algorithm
+[00:05:50 -> 00:05:52] because it's the simplest thing.
+[00:05:52 -> 00:05:55] So here I'm analyzing,
+[00:05:55 -> 00:05:56] so this whole body of main
+[00:05:56 -> 00:05:59] is being analyzed in context zero.
+[00:05:59 -> 00:06:01] So when I transfer across this instruction,
+[00:06:01 -> 00:06:03] C equals new copy,
+[00:06:03 -> 00:06:06] the allocation rule gets triggered,
+[00:06:06 -> 00:06:11] and so the corresponding abstract object
+[00:06:11 -> 00:06:14] is denoted by LC in context zero,
+[00:06:14 -> 00:06:15] so that becomes LC zero,
+[00:06:15 -> 00:06:18] and that gets assigned to C in context zero,
+[00:06:18 -> 00:06:19] so that's C zero.
+[00:06:19 -> 00:06:24] So I say C zero may point to LC zero,
+[00:06:25 -> 00:06:27] so this becomes my edge in the points to graph
+[00:06:27 -> 00:06:30] as I'm executing my points to algorithm.
+[00:06:30 -> 00:06:31] I also want to emphasize
+[00:06:31 -> 00:06:32] that I'm going to execute this algorithm
+[00:06:32 -> 00:06:34] at call context depth of one,
+[00:06:35 -> 00:06:37] and later I'm going to discuss
+[00:06:37 -> 00:06:38] what is the effect of increasing
+[00:06:38 -> 00:06:40] the call context depth, et cetera,
+[00:06:40 -> 00:06:42] and what are the implications of using a single depth.
+[00:06:42 -> 00:06:44] Of course, we have seen previously
+[00:06:44 -> 00:06:46] that if we increase the call context depth,
+[00:06:46 -> 00:06:49] then the number of call contexts can increase.
+[00:06:49 -> 00:06:52] In general, it can be exponential in the depth,
+[00:06:52 -> 00:06:57] because if you look at the call tree,
+[00:06:57 -> 00:07:01] or the call tree, or the call graph,
+[00:07:01 -> 00:07:03] the more depth you have,
+[00:07:03 -> 00:07:07] the more kind of paths you will potentially have.
+[00:07:07 -> 00:07:10] Okay, so this is the first edge
+[00:07:10 -> 00:07:12] that I have in my points to graph
+[00:07:12 -> 00:07:15] by virtue of this allocation statement.
+[00:07:15 -> 00:07:16] Now I'm going to continue this.
+[00:07:16 -> 00:07:19] So there's an allocation statement new D1,
+[00:07:19 -> 00:07:21] and that gets the object,
+[00:07:21 -> 00:07:22] the reference that gets created here
+[00:07:22 -> 00:07:26] is copied to the argument of the copy function,
+[00:07:26 -> 00:07:27] which is B,
+[00:07:27 -> 00:07:32] and B will be analyzed in the call context L D1,
+[00:07:33 -> 00:07:35] because we are using a call context depth of one,
+[00:07:35 -> 00:07:39] and we kind of go through this,
+[00:07:39 -> 00:07:42] we reach copy through this call site,
+[00:07:42 -> 00:07:47] so the call context becomes L D1,
+[00:07:47 -> 00:07:48] and zero gets removed,
+[00:07:48 -> 00:07:50] because the actual call context,
+[00:07:50 -> 00:07:53] the full depth call context would be zero and L D1,
+[00:07:53 -> 00:07:55] but because we are using a depth of one,
+[00:07:55 -> 00:07:57] so the call context becomes L D1.
+[00:07:58 -> 00:07:58] So let's look at this.
+[00:07:58 -> 00:08:01] So because of the virtue of this statement here,
+[00:08:02 -> 00:08:03] this statement here,
+[00:08:04 -> 00:08:09] we basically, the dispatch of the copy function,
+[00:08:09 -> 00:08:11] the new D1 is basically represented
+[00:08:11 -> 00:08:15] by the abstract object L D1 O or L D1 zero,
+[00:08:15 -> 00:08:18] because it's a new allocation,
+[00:08:18 -> 00:08:21] at allocation site L D1 in context zero,
+[00:08:21 -> 00:08:22] so that becomes L D1 zero,
+[00:08:22 -> 00:08:25] and that gets copied to the argument B,
+[00:08:25 -> 00:08:29] and the argument B is being analyzed in call context L D1,
+[00:08:29 -> 00:08:31] because of the virtue of this dispatch,
+[00:08:31 -> 00:08:36] and so B in context L D1 may point to L D1,
+[00:08:38 -> 00:08:41] the allocation site L D1 in context zero.
+[00:08:42 -> 00:08:44] So this is my new edge by virtue of this call.
+[00:08:44 -> 00:08:48] Once again, B is in context L D1,
+[00:08:48 -> 00:08:52] and the allocation site is in context zero,
+[00:08:52 -> 00:08:55] and so the allocation site itself is called L D1,
+[00:08:55 -> 00:08:57] because I'm using the same L D1
+[00:08:57 -> 00:09:00] for both the call context or the call site
+[00:09:00 -> 00:09:01] and the allocation site,
+[00:09:01 -> 00:09:04] the L D1 is appearing both as a call context
+[00:09:04 -> 00:09:05] and as an allocation site,
+[00:09:05 -> 00:09:07] so I hope that's not confusing you.
+[00:09:07 -> 00:09:12] All right, now when the function copy gets called,
+[00:09:12 -> 00:09:14] it just simply returns B.
+[00:09:14 -> 00:09:18] B was already pointing to L D1 zero,
+[00:09:18 -> 00:09:22] so this return value gets copied to X,
+[00:09:22 -> 00:09:25] and X is being analyzed in call context of main,
+[00:09:25 -> 00:09:29] which was zero, so we draw another edge that says X zero,
+[00:09:29 -> 00:09:32] because that's what at the return time,
+[00:09:32 -> 00:09:33] we apply the copy rule,
+[00:09:33 -> 00:09:36] because the return value gets copied back
+[00:09:36 -> 00:09:39] to the call site in the return register,
+[00:09:39 -> 00:09:41] so the return register is X zero,
+[00:09:41 -> 00:09:45] so X zero now points to whatever B was pointing to,
+[00:09:45 -> 00:09:47] and B was pointing to L D1 zero,
+[00:09:47 -> 00:09:51] so X zero is also now, may also point to L D1 zero.
+[00:09:52 -> 00:09:54] So this is the points to graph that gets created
+[00:09:54 -> 00:09:59] by virtue of the first two statements in the program.
+[00:09:59 -> 00:10:03] Now I similarly analyze the third statement in the program,
+[00:10:03 -> 00:10:04] and I'm going to do something similar.
+[00:10:04 -> 00:10:06] The third statement is almost identical
+[00:10:06 -> 00:10:07] to the second statement,
+[00:10:07 -> 00:10:10] so this is what the call context graph would look like.
+[00:10:10 -> 00:10:14] Just like I had L zero D1 for new D1,
+[00:10:14 -> 00:10:16] I'll have L zero D2 for this new D2,
+[00:10:16 -> 00:10:19] and because the allocation site is L D2,
+[00:10:19 -> 00:10:24] the B this time will be analyzed in call context L D2,
+[00:10:24 -> 00:10:25] so it becomes B L D2,
+[00:10:25 -> 00:10:27] which is different from B L D1,
+[00:10:27 -> 00:10:29] this is the versioning of the B variable
+[00:10:29 -> 00:10:31] depending on the call context
+[00:10:31 -> 00:10:32] in which it's being analyzed,
+[00:10:32 -> 00:10:34] and B L D2 may point to L zero D2,
+[00:10:34 -> 00:10:37] and this is the precision improvement,
+[00:10:37 -> 00:10:38] I'm going to discuss this more later,
+[00:10:38 -> 00:10:40] and then when it gets returned back to Y,
+[00:10:40 -> 00:10:41] then Y zero,
+[00:10:41 -> 00:10:43] because Y was being analyzed in context zero,
+[00:10:43 -> 00:10:46] may point to whatever B L D2 may point to,
+[00:10:46 -> 00:10:48] because by virtue of the return,
+[00:10:48 -> 00:10:51] then that means Y zero may point to L zero D2,
+[00:10:53 -> 00:10:54] and this is my,
+[00:10:54 -> 00:10:57] you can check that this is the final points to graph,
+[00:10:57 -> 00:10:57] this is a fixed point,
+[00:10:57 -> 00:10:59] you can rerun the algorithm,
+[00:10:59 -> 00:11:01] you can check all the instructions again
+[00:11:01 -> 00:11:02] and transfer again,
+[00:11:02 -> 00:11:04] and you would find that this is a fixed point solution,
+[00:11:04 -> 00:11:06] and because it's a fixed point solution,
+[00:11:06 -> 00:11:11] I know that X dot F can only point to L zero D1,
+[00:11:11 -> 00:11:13] so X can only point to L zero D1,
+[00:11:13 -> 00:11:15] which is of type capital D1,
+[00:11:15 -> 00:11:18] similarly Y zero,
+[00:11:18 -> 00:11:20] or Y in context main,
+[00:11:20 -> 00:11:21] can only point to L zero D2,
+[00:11:21 -> 00:11:22] which is of type D2,
+[00:11:22 -> 00:11:25] so I can resolve these Fs,
+[00:11:25 -> 00:11:27] precisely by saying that this is,
+[00:11:27 -> 00:11:30] this should simply call D1's F,
+[00:11:30 -> 00:11:31] and this should simply call D2's F,
+[00:11:31 -> 00:11:32] in other words,
+[00:11:32 -> 00:11:33] I don't,
+[00:11:33 -> 00:11:35] the compiler is able to resolve
+[00:11:35 -> 00:11:37] the virtual function calls at compile time,
+[00:11:37 -> 00:11:39] and thus save runtime overhead,
+[00:11:39 -> 00:11:41] runtime V table loop overhead,
+[00:11:41 -> 00:11:42] due to these,
+[00:11:42 -> 00:11:44] this,
+[00:11:44 -> 00:11:46] due to the general resolution at runtime,
+[00:11:46 -> 00:11:47] how it is done, okay?
+[00:11:47 -> 00:11:48] So this is an example of
+[00:11:50 -> 00:11:52] called text sensitive pointer analysis
+[00:11:52 -> 00:11:54] being used to resolve virtual functions
+[00:11:54 -> 00:11:55] at compile time.
+[00:11:56 -> 00:11:59] Okay, now I just want to say that
+[00:11:59 -> 00:12:02] if I was instead using a context insensitive analysis,
+[00:12:02 -> 00:12:05] then the results would have been imprecise,
+[00:12:05 -> 00:12:06] and we can just see why,
+[00:12:06 -> 00:12:10] well, if the context was imprecise,
+[00:12:10 -> 00:12:12] if the context was insensitive,
+[00:12:12 -> 00:12:14] then I wouldn't have versioned B
+[00:12:14 -> 00:12:15] based on the call site,
+[00:12:15 -> 00:12:17] so recall that I was basically versioning B
+[00:12:17 -> 00:12:20] in two ways, B L D1 and B L D2,
+[00:12:20 -> 00:12:23] depending on which call site I was called from,
+[00:12:23 -> 00:12:25] but now there'll be a single B variable,
+[00:12:25 -> 00:12:26] which will be the argument here,
+[00:12:26 -> 00:12:27] and that B may,
+[00:12:27 -> 00:12:28] by virtue of the first call,
+[00:12:28 -> 00:12:30] it may point to,
+[00:12:33 -> 00:12:34] by virtue of the first call,
+[00:12:34 -> 00:12:37] it may point to L zero D1,
+[00:12:37 -> 00:12:39] and by virtue of the second call,
+[00:12:39 -> 00:12:42] it may point to L zero D2.
+[00:12:42 -> 00:12:43] And then when you return B,
+[00:12:43 -> 00:12:47] then it seems like X may point to either L zero D1
+[00:12:47 -> 00:12:47] or L zero D2,
+[00:12:47 -> 00:12:49] because X is just going to get a copy of B,
+[00:12:49 -> 00:12:52] and because D may point to either of these,
+[00:12:52 -> 00:12:53] X may point to either of these.
+[00:12:53 -> 00:12:55] Similarly, Y may point to either of these.
+[00:12:55 -> 00:12:58] And so this is the final points to graph.
+[00:12:58 -> 00:13:02] X seems like it may point to either L zero D1
+[00:13:02 -> 00:13:02] or L zero D2,
+[00:13:02 -> 00:13:05] and Y seems like it may point to either L zero D1
+[00:13:05 -> 00:13:06] or L zero D2.
+[00:13:06 -> 00:13:07] And this is imprecise
+[00:13:07 -> 00:13:11] because now the compiler cannot reason
+[00:13:11 -> 00:13:13] that this F is definitely D1's F
+[00:13:13 -> 00:13:18] because it may point to either a D1 object or a D2 object.
+[00:13:18 -> 00:13:22] And so in this case, in this example,
+[00:13:22 -> 00:13:24] a context-insensitive analysis will not be able
+[00:13:24 -> 00:13:27] to resolve these virtual function calls at compile time,
+[00:13:27 -> 00:13:30] whereas a context-sensitive analysis
+[00:13:30 -> 00:13:31] with a call context depth of one
+[00:13:31 -> 00:13:35] was able to resolve these virtual function calls
+[00:13:35 -> 00:13:36] at compile time.
+[00:13:36 -> 00:13:38] Now, let's take another example
+[00:13:38 -> 00:13:42] where even if I use a context-sensitive analysis
+[00:13:42 -> 00:13:44] of depth one, I would not be able to resolve
+[00:13:44 -> 00:13:46] the virtual function calls at compile time.
+[00:13:46 -> 00:13:48] And I don't have to do much.
+[00:13:49 -> 00:13:52] I still use the same base D1, D2,
+[00:13:52 -> 00:13:54] which have a virtual function F.
+[00:13:54 -> 00:13:57] D1 and D2 have separate implementations of F base.
+[00:13:57 -> 00:14:01] In the base class, the F function is not defined.
+[00:14:01 -> 00:14:04] And then I have a copy class just like before,
+[00:14:04 -> 00:14:09] but this time the copy function calls another function,
+[00:14:09 -> 00:14:11] which I call the helper function.
+[00:14:11 -> 00:14:16] And when somebody calls copy on some object D,
+[00:14:16 -> 00:14:19] then it just calls helper on that D
+[00:14:19 -> 00:14:21] and returns that value back.
+[00:14:21 -> 00:14:24] And helper does what copy was originally doing,
+[00:14:24 -> 00:14:26] which was just copies D
+[00:14:26 -> 00:14:28] and just returns the reference to the input one.
+[00:14:28 -> 00:14:33] It just returns the input argument D.
+[00:14:33 -> 00:14:34] Now, notice that all I have done
+[00:14:34 -> 00:14:37] is I've increased the depth of my call stack
+[00:14:37 -> 00:14:41] by introducing another helper function that helps copy.
+[00:14:41 -> 00:14:44] And because of that, my call context depth of size one
+[00:14:44 -> 00:14:47] will be insufficient, as I'm going to show you.
+[00:14:47 -> 00:14:50] So once again, I label all these allocation sites
+[00:14:50 -> 00:14:53] and call sites as LC, LD1, LD2,
+[00:14:53 -> 00:14:55] and I start drawing my points to graph
+[00:14:55 -> 00:14:57] by transferring over each of these tables.
+[00:14:57 -> 00:15:00] So once again, because by virtue of the first statement,
+[00:15:00 -> 00:15:03] I say C0 can point to LC
+[00:15:03 -> 00:15:05] because I'm analyzing main in context zero.
+[00:15:05 -> 00:15:07] So C0 is can point to LC.
+[00:15:11 -> 00:15:14] Actually, I should have said LC zero, okay?
+[00:15:14 -> 00:15:19] Then I transfer over this function call,
+[00:15:21 -> 00:15:25] and then I say B because of this allocation new D1,
+[00:15:29 -> 00:15:33] the B pointer in context LD1
+[00:15:33 -> 00:15:35] is pointing to L0 D1.
+[00:15:35 -> 00:15:39] So L0 D1 is basically the abstract object
+[00:15:39 -> 00:15:41] corresponding to new D1, LD1.
+[00:15:41 -> 00:15:43] LD1 is allocation site,
+[00:15:43 -> 00:15:46] and L0 D1 is the allocation site LD1 in the context zero.
+[00:15:46 -> 00:15:49] So that represents this abstract object D1.
+[00:15:49 -> 00:15:51] And then when I dispatch,
+[00:15:51 -> 00:15:54] then B can point to this object.
+[00:15:54 -> 00:15:57] So that's what B pointing to this means.
+[00:15:57 -> 00:15:58] But when I analyze B,
+[00:15:58 -> 00:16:01] I'm analyzing it in the call context of LD1.
+[00:16:01 -> 00:16:03] I'm doing a call context point analysis.
+[00:16:03 -> 00:16:05] That's why a subscript B with its context,
+[00:16:05 -> 00:16:06] which is LD1.
+[00:16:06 -> 00:16:11] So B in context LD1 can point to LD1 in context zero.
+[00:16:13 -> 00:16:16] And then this function copy
+[00:16:16 -> 00:16:21] is just helping along this argument B to the helper.
+[00:16:24 -> 00:16:27] And let's say this call site is L helper.
+[00:16:27 -> 00:16:31] Then D is being analyzed in the context L helper
+[00:16:31 -> 00:16:34] because we are using a call context depth of one.
+[00:16:34 -> 00:16:36] And so I'm just looking at the call site.
+[00:16:36 -> 00:16:40] So D is being analyzed in the context L helper,
+[00:16:40 -> 00:16:43] and D just gets a copy of B.
+[00:16:43 -> 00:16:46] So whatever B LD1 was pointing to,
+[00:16:46 -> 00:16:48] D L helper will also start pointing to.
+[00:16:48 -> 00:16:51] And so I draw an arrow from D L helper
+[00:16:51 -> 00:16:52] to whatever D LD1 was pointing to,
+[00:16:52 -> 00:16:54] which in this case is L0 D1.
+[00:16:54 -> 00:16:57] So this is the points to graph till this point.
+[00:16:57 -> 00:17:00] So far I've analyzed these two statements,
+[00:17:00 -> 00:17:05] and I have done the dispatch from helper B to base D.
+[00:17:06 -> 00:17:10] Okay, and this is the call context
+[00:17:10 -> 00:17:13] since pointer analysis till depth one result so far.
+[00:17:13 -> 00:17:14] Okay, let's continue.
+[00:17:14 -> 00:17:17] So what helper is going to do is going to return D.
+[00:17:17 -> 00:17:20] D is being analyzed in D L helper,
+[00:17:20 -> 00:17:24] and that return value is going to get returned
+[00:17:24 -> 00:17:26] all the way back to X.
+[00:17:26 -> 00:17:29] So X will start pointing to L0,
+[00:17:29 -> 00:17:31] whatever D L helper was pointing to.
+[00:17:31 -> 00:17:33] So X will start pointing to L0 D1.
+[00:17:33 -> 00:17:36] So X was being analyzed in the context zero.
+[00:17:36 -> 00:17:37] So we draw an edge from X zero
+[00:17:37 -> 00:17:39] to whatever D L helper was pointing to,
+[00:17:39 -> 00:17:41] which is L0 D1.
+[00:17:42 -> 00:17:45] Okay, now this was because of the transfer
+[00:17:45 -> 00:17:47] of this statement, I do a similar transfer
+[00:17:47 -> 00:17:50] across the second function call here,
+[00:17:50 -> 00:17:53] which is base Y equals C dot copy.
+[00:17:53 -> 00:17:58] And once again, I create a new abstract object
+[00:17:58 -> 00:18:01] for new D2, which is L0 D2.
+[00:18:01 -> 00:18:05] The allocation site is L D2 being executed in context zero.
+[00:18:05 -> 00:18:06] So that becomes L0 D2.
+[00:18:06 -> 00:18:10] This gets copied to B being analyzed in L D2.
+[00:18:10 -> 00:18:13] So B L D2 may point to L0 D2.
+[00:18:13 -> 00:18:15] This will again call helper,
+[00:18:15 -> 00:18:18] and helper will be analyzed in context L helper.
+[00:18:18 -> 00:18:21] So that means D L helper will get a copy
+[00:18:21 -> 00:18:24] of whatever B is holding.
+[00:18:24 -> 00:18:25] B is holding in the current context,
+[00:18:25 -> 00:18:28] and D in the current context is L D2.
+[00:18:28 -> 00:18:32] So whatever D L D2 may point to, which is L0 D2,
+[00:18:32 -> 00:18:33] now D L helper may point to.
+[00:18:33 -> 00:18:35] So D L helper may now seems,
+[00:18:35 -> 00:18:37] may point to L0 D2 objects as well.
+[00:18:37 -> 00:18:39] Recall that previously we had said
+[00:18:39 -> 00:18:42] that D L helper may point to L0 D1 as well.
+[00:18:42 -> 00:18:43] So notice that this is an approximation,
+[00:18:43 -> 00:18:46] and D L helper is,
+[00:18:46 -> 00:18:48] it seems like there's only one D,
+[00:18:48 -> 00:18:49] which is D L helper,
+[00:18:49 -> 00:18:53] which can point to both D1 object or a D2 object,
+[00:18:53 -> 00:18:54] depending on which call it is.
+[00:18:54 -> 00:18:55] And this approximation is coming
+[00:18:55 -> 00:19:00] because of the bounded depth of one, if, okay?
+[00:19:00 -> 00:19:01] Let's continue.
+[00:19:01 -> 00:19:05] Similarly, this is a helper is going to return D
+[00:19:05 -> 00:19:06] all the way to Y,
+[00:19:06 -> 00:19:08] and just like X, whatever, you know,
+[00:19:08 -> 00:19:09] just like we did with X,
+[00:19:09 -> 00:19:12] whatever D L helper may point to,
+[00:19:12 -> 00:19:14] Y0 may start pointing to.
+[00:19:14 -> 00:19:18] D L helper may point to both L0 D1 and L0 or L0 D2.
+[00:19:18 -> 00:19:23] So Y0 may conservatively also point to either of these.
+[00:19:23 -> 00:19:24] Once again, this is an approximation.
+[00:19:24 -> 00:19:27] We know by manually inspecting the program
+[00:19:27 -> 00:19:28] that Y0 can only point to L0 D2,
+[00:19:28 -> 00:19:32] but because we are doing this depth one,
+[00:19:32 -> 00:19:34] context-sensitive point analysis,
+[00:19:34 -> 00:19:39] we have to make this approximation for D L helper,
+[00:19:39 -> 00:19:41] and because that gets transferred to Y,
+[00:19:41 -> 00:19:45] so Y0 seems to point to both L0 D1 and L0 D2.
+[00:19:45 -> 00:19:47] Now, once again, this is not a fixed point.
+[00:19:47 -> 00:19:51] If I transfer again over any of these statements,
+[00:19:51 -> 00:19:52] then I will eventually get a fixed point
+[00:19:53 -> 00:19:55] which will require X0 to point to
+[00:19:55 -> 00:19:57] whatever D L helper is pointing to,
+[00:19:57 -> 00:20:01] and that would mean that X0 can now also point to L0 D2.
+[00:20:01 -> 00:20:04] And once again, notice that this is imprecise.
+[00:20:04 -> 00:20:08] Even though I'm using a context-sensitive pointer analysis,
+[00:20:08 -> 00:20:10] I get an imprecise answer
+[00:20:10 -> 00:20:12] because it seems like both X can point to
+[00:20:12 -> 00:20:13] either D1 or D2,
+[00:20:13 -> 00:20:15] so I cannot resolve the function
+[00:20:15 -> 00:20:19] with a virtual function called F at compile time.
+[00:20:19 -> 00:20:20] I'll have to resolve it at run time.
+[00:20:20 -> 00:20:23] Similarly for Y.
+[00:20:23 -> 00:20:25] And so this is imprecise,
+[00:20:30 -> 00:20:32] even though I'm using a context-sensitive analysis.
+[00:20:32 -> 00:20:34] And the problem, the reason it became imprecise
+[00:20:34 -> 00:20:35] is because I just introduced
+[00:20:35 -> 00:20:39] another extra function call in my call stack,
+[00:20:39 -> 00:20:41] and that exposed the limits
+[00:20:41 -> 00:20:42] of my context-sensitive analysis
+[00:20:42 -> 00:20:45] which was bounded at depth one.
+[00:20:45 -> 00:20:45] On the other hand,
+[00:20:45 -> 00:20:49] if I had used a larger depth of my analysis,
+[00:20:49 -> 00:20:51] if I had used a call context depth of two,
+[00:20:51 -> 00:20:53] then it would have worked for this example.
+[00:20:53 -> 00:20:55] But then it won't have worked for some other examples.
+[00:20:55 -> 00:20:57] For example, if I just created two helpers,
+[00:20:57 -> 00:21:00] then even a depth two won't have worked.
+[00:21:00 -> 00:21:02] However, if I had used a full region-based analysis,
+[00:21:02 -> 00:21:04] which would have just summarized all the poly functions
+[00:21:04 -> 00:21:07] and kind of inlined them at all call sites,
+[00:21:07 -> 00:21:08] that would have all worked
+[00:21:08 -> 00:21:12] for arbitrary call context depths
+[00:21:13 -> 00:21:16] or call stack depths.
+[00:21:16 -> 00:21:19] But as we know, it can be very expensive,
+[00:21:19 -> 00:21:21] especially for large programs.
+[00:21:21 -> 00:21:24] So these examples basically demonstrate
+[00:21:24 -> 00:21:26] the capabilities and limitations
+[00:21:26 -> 00:21:28] of a context-sensitive analysis
+[00:21:28 -> 00:21:30] and how the depth parameter plays a role
+[00:21:30 -> 00:21:33] in determining the precision of the analysis.

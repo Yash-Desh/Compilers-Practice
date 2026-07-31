@@ -1,0 +1,164 @@
+Title: Compiler Design Module 124 11: Field sensitive pointer analysis
+Video ID: DkJt_Osfzbk
+Detected language: en
+------------------------------------------------------------
+
+[00:00:00 -> 00:00:05] So we've been discussing pointer analysis and we looked at Anderson's algorithm.
+[00:00:05 -> 00:00:09] I'm going to generalize Anderson's algorithm by looking at more programming language constructs
+[00:00:09 -> 00:00:14] than the four constructs that we considered when we discussed Anderson's algorithm.
+[00:00:14 -> 00:00:20] So for example, languages like C allow you to do pointer arithmetic.
+[00:00:20 -> 00:00:26] So you can do P equals Q plus I, where both P and Q may be pointers.
+[00:00:26 -> 00:00:30] What happens to the points to information and the points to graph in the presence of
+[00:00:30 -> 00:00:38] such pointer arithmetic or the program can contain an instructional form P equals ampersand
+[00:00:38 -> 00:00:42] Q pointer dot F. This is C syntax.
+[00:00:42 -> 00:00:50] So for example, if I was to draw this, then if Q is pointing here, then P could
+[00:00:50 -> 00:00:55] point anywhere within the object that Q points to, right?
+[00:00:55 -> 00:00:57] So that's what P equals Q plus I means.
+[00:00:57 -> 00:01:03] So for example, this distance here between Q and P could be I or even P equals ampersand
+[00:01:03 -> 00:01:11] Q dot F. So if F was a field here, then ampersand Q dot F is basically a pointer
+[00:01:11 -> 00:01:16] to that field within this larger object that Q points to.
+[00:01:16 -> 00:01:19] And similarly, P equals ampersand AI.
+[00:01:19 -> 00:01:25] So if A is an array, then once again, this could be, you know, this whole distance could
+[00:01:25 -> 00:01:30] be I into whatever is the element size, for example, I into four or whatever.
+[00:01:30 -> 00:01:35] And so P is pointing to within Q. And in all these cases, notice that P is pointing
+[00:01:35 -> 00:01:39] to the same object as what Q is pointing to.
+[00:01:39 -> 00:01:43] So P is only pointing to within that, just the only difference is that P could
+[00:01:43 -> 00:01:46] potentially point to the middle of that object.
+[00:01:46 -> 00:01:50] And that also we are just going to consider that as saying that P is pointing to the
+[00:01:50 -> 00:01:55] same abstract object as Q. So when we say that P points to an abstract object, then
+[00:01:55 -> 00:02:02] we basically really mean that P points to either the beginning or the middle of that
+[00:02:02 -> 00:02:03] abstract object.
+[00:02:03 -> 00:02:07] And so all these instructions basically make sure that P is also pointing to the same
+[00:02:07 -> 00:02:13] abstract object that Q may have been pointing to before this instruction.
+[00:02:13 -> 00:02:18] Now, you may ask the question, what if there was an overflow, in which case P could point
+[00:02:18 -> 00:02:21] to outside of this object?
+[00:02:21 -> 00:02:32] Well, this kind of pointing beyond the size of the object is usually illegal or undefined
+[00:02:32 -> 00:02:35] in languages like C and higher level languages than C.
+[00:02:35 -> 00:02:41] And so if P points to outside the object pointed to by Q, then that is undefined
+[00:02:41 -> 00:02:45] behavior. And that is the case in which case the program is actually illegal.
+[00:02:45 -> 00:02:49] When I say illegal, it does not necessarily mean that the compiler throws an error.
+[00:02:49 -> 00:02:53] But overall, it's the programmer's responsibility to ensure that this kind of situation
+[00:02:53 -> 00:02:57] never happens, which means through pointer arithmetic or through an address taken field
+[00:02:57 -> 00:03:01] or through an address taken element of an array, you cannot point beyond the
+[00:03:01 -> 00:03:08] boundary of an object to which the original pointer Q or A were pointing to.
+[00:03:08 -> 00:03:13] And so assuming that this or anything that kind of any kind of any such operation that
+[00:03:13 -> 00:03:18] allows the pointer P to point beyond the boundary of the object, then we can be we
+[00:03:18 -> 00:03:24] can kind of safely say that P points within the object that Q or A pointed to at the
+[00:03:24 -> 00:03:28] beginning of the instruction before the execution of that instruction.
+[00:03:28 -> 00:03:34] So using that fact, we can just treat all these three different programming constructs
+[00:03:34 -> 00:03:39] as simple copies, which means P equals Q plus I is just treated as P equals Q, because
+[00:03:39 -> 00:03:43] after all, P is just going to point to within the object that Q points to.
+[00:03:43 -> 00:03:47] Similarly, P equals ampersand Q dot F treated as P equals Q once again, because P is
+[00:03:47 -> 00:03:50] just going to point to within whatever Q is pointing to.
+[00:03:50 -> 00:03:54] And similarly, ampersand AI treated as a copy.
+[00:03:54 -> 00:03:59] And doing this, these transfer functions for these kind of operations assume that
+[00:03:59 -> 00:04:07] pointers cannot go out of bounds, otherwise it's UB or undefined behavior.
+[00:04:07 -> 00:04:12] Now, I'm going to also discuss a little bit about a field sensitive analysis for higher
+[00:04:12 -> 00:04:19] level languages like Java or C sharp or other languages which do not allow pointer arithmetic.
+[00:04:19 -> 00:04:21] You could have code something which looks like this.
+[00:04:21 -> 00:04:24] You could allocate a new variable.
+[00:04:24 -> 00:04:28] I'm going to assume that the new keyword allows me to allocate a new new location
+[00:04:28 -> 00:04:29] to memory object.
+[00:04:29 -> 00:04:33] So I use X equals new and assuming the allocation site abstraction, let's say the allocation
+[00:04:33 -> 00:04:39] site was one, then X will, because by virtue of this instruction, X can point to an abstract
+[00:04:39 -> 00:04:44] object one, which represents all the objects that are allocated at allocation site one.
+[00:04:44 -> 00:04:50] Now, when I say X dot F equals new, now that's basically saying that let's say
+[00:04:50 -> 00:04:58] X was pointing to some object, then inside that, if there was a field F, then that
+[00:04:58 -> 00:05:00] is now being updated.
+[00:05:00 -> 00:05:06] So that's being updated to point to whatever is being allocated at this instruction two.
+[00:05:06 -> 00:05:10] And anything that means allocated instruction two in an allocation site abstraction can
+[00:05:10 -> 00:05:11] point to two.
+[00:05:11 -> 00:05:14] So in other words, this field can point to two.
+[00:05:14 -> 00:05:21] And in our analysis, we're just going, so this is just like saying that the contents
+[00:05:21 -> 00:05:26] of the object pointed to by X can point to whatever we are doing.
+[00:05:26 -> 00:05:28] And that's as good as saying that star X equals new.
+[00:05:28 -> 00:05:35] So the only difference between star X equals new and X pointer dot F equals new is that
+[00:05:35 -> 00:05:38] in this case, in star X equals new, we were actually overwriting the entire object.
+[00:05:38 -> 00:05:42] Here, we are only updating a field of that object.
+[00:05:42 -> 00:05:46] But in either case, there exists a pointer in that object that can potentially point
+[00:05:46 -> 00:05:49] to an object that is represented by abstract object two.
+[00:05:50 -> 00:05:57] And so just treat such statements as star X. X pointer dot F is nothing but just treated
+[00:05:57 -> 00:06:01] as star X when you were doing the points to transfer function.
+[00:06:01 -> 00:06:03] And so this becomes star X equals new.
+[00:06:03 -> 00:06:08] Similarly, if you do X dot G equals new, then X pointer dot G equals new, then becomes
+[00:06:08 -> 00:06:10] star X equals new also.
+[00:06:10 -> 00:06:13] And the resulting points to graph for this using Anderson's algorithm would look something
+[00:06:13 -> 00:06:14] like this.
+[00:06:14 -> 00:06:22] And one, which is the object allocated at one, may point to objects allocated at site two
+[00:06:22 -> 00:06:27] or objects allocated at site three.
+[00:06:27 -> 00:06:33] OK, so this is the points to graph if we use a field in sensitive analysis.
+[00:06:33 -> 00:06:40] So notice that in this analysis, we are not considering the fact that, well, this
+[00:06:40 -> 00:06:42] address can only live in the field F.
+[00:06:42 -> 00:06:45] And that address can only live in field G.
+[00:06:45 -> 00:06:51] For example, if there was another field G here, then this can point to three.
+[00:06:51 -> 00:06:56] But in this field in sensitive analysis, we are assuming we're just kind of approximating
+[00:06:56 -> 00:07:01] this whole thing as a single abstract object and saying that, hey, the contents of this
+[00:07:01 -> 00:07:04] whole thing can point to either two or three.
+[00:07:04 -> 00:07:08] And that's what this resulting points to graph is giving us.
+[00:07:08 -> 00:07:11] And that's why it's called a field in sensitive analysis, because we're not
+[00:07:11 -> 00:07:15] being sensitive to the fact that different pointers may be stored at different fields.
+[00:07:15 -> 00:07:18] OK, so let's see what are the implications of that.
+[00:07:18 -> 00:07:24] So, for example, if I do y equals x pointer dot G, once again, what I'm doing is I'm
+[00:07:24 -> 00:07:29] reading the contents of the object pointed to by x and storing them in y.
+[00:07:29 -> 00:07:33] And that's as good as saying y equals star x in our field in sensitive analysis.
+[00:07:33 -> 00:07:37] So x was pointing to one and one could contain pointers to either two or three
+[00:07:37 -> 00:07:40] based on the field in sensitive analysis we did in the previous slide.
+[00:07:40 -> 00:07:46] Then y can now point to whatever one may point to, so y may point to either two or three.
+[00:07:46 -> 00:07:50] Now, once again, because it's a field in sensitive analysis, we are ignoring the fact
+[00:07:50 -> 00:07:58] that y is only leading the field G and G could only contain an object of type three.
+[00:07:58 -> 00:08:02] And so a more precise analysis should have told me that y can only point to three
+[00:08:02 -> 00:08:03] and not to two.
+[00:08:03 -> 00:08:09] But because I'm doing a field in sensitive analysis, I'm getting an imprecision because
+[00:08:09 -> 00:08:13] of that. And so it basically says y can point to either two or three.
+[00:08:13 -> 00:08:18] So it turns out that you can do better.
+[00:08:18 -> 00:08:23] And but for that, you basically, you know, the language type system should be
+[00:08:23 -> 00:08:26] should not allow things like pointer arithmetic or address taken fields,
+[00:08:26 -> 00:08:29] because in the presence of pointer arithmetic and address taken fields,
+[00:08:29 -> 00:08:35] it becomes very hard to say that whether this pointer may point anywhere in the middle
+[00:08:35 -> 00:08:39] of the object or whether it may point to field F or whether it may point to field G,
+[00:08:39 -> 00:08:45] because if I just say Q equals P plus I, then, you know, if I if I is not a
+[00:08:45 -> 00:08:50] compile time constant, then whether P could point to field F or G becomes
+[00:08:50 -> 00:08:52] very hard to say.
+[00:08:52 -> 00:08:56] But many languages like Java and C sharp do not allow such pointer arithmetic
+[00:08:56 -> 00:09:00] or do not allow address taken fields, in which case you can track the contents
+[00:09:00 -> 00:09:03] of each field of each abstract object separately.
+[00:09:03 -> 00:09:08] So you can say that the F field of abstract object one can point to two
+[00:09:08 -> 00:09:13] and the G field of abstract object one point can point to three.
+[00:09:13 -> 00:09:16] And that gives you more precise information.
+[00:09:16 -> 00:09:20] So, for example, you can say that, you know, in the same example that we had
+[00:09:20 -> 00:09:22] is that X dot F equals new.
+[00:09:22 -> 00:09:28] So that means one, the F field in object allocated at site one can point to two
+[00:09:28 -> 00:09:32] and the G field of an object allocated at site one can point to an object
+[00:09:32 -> 00:09:34] allocated at site three.
+[00:09:34 -> 00:09:39] So the way to represent this in a points to graph is to label these edges
+[00:09:39 -> 00:09:39] based on the fields.
+[00:09:39 -> 00:09:44] So the edge label identifies the field through which it may point.
+[00:09:44 -> 00:09:48] So, for example, one may point to two through F and it may point to three
+[00:09:48 -> 00:09:48] through G.
+[00:09:48 -> 00:09:51] But notice that through G, one may not point to two.
+[00:09:51 -> 00:09:56] One may only point to if G is dereferenced, then only three will be
+[00:09:56 -> 00:09:57] obtained, but not two.
+[00:09:57 -> 00:10:01] And so this this points to graph is more precise than the field
+[00:10:01 -> 00:10:07] in sensitive analysis graph that we saw earlier.
+[00:10:07 -> 00:10:09] Now, let's see the implications.
+[00:10:09 -> 00:10:16] So, for example, if I do Y equals X dot G, then Y is dereferencing looking
+[00:10:16 -> 00:10:20] at the field G, the content of the field G in the object pointed to by X.
+[00:10:20 -> 00:10:23] The object pointed to by X is one.
+[00:10:23 -> 00:10:25] And the field that's been dereferenced is G.
+[00:10:25 -> 00:10:26] So that's three.
+[00:10:26 -> 00:10:29] And so Y based on this field sensitive analysis can only point to
+[00:10:29 -> 00:10:31] three, but not to two.
+[00:10:31 -> 00:10:34] And so the field sensitive constraints differentiate based on the field names
+[00:10:34 -> 00:10:37] because we know that the field G is being dereferenced.
+[00:10:37 -> 00:10:40] And so based on that, we can say that Y is only pointing to three and not
+[00:10:40 -> 00:10:41] to two.
+[00:10:41 -> 00:10:45] And this is a more precise analysis than the one that we saw earlier,
+[00:10:45 -> 00:10:46] which was a field in sensitive analysis.
+[00:10:46 -> 00:10:50] But recall that a field sensitive analysis is only possible if in the
+[00:10:50 -> 00:10:55] absence of pointer arithmetic and address taken fields.
+[00:10:55 -> 00:10:56] Well, it is in general possible.
+[00:10:56 -> 00:11:00] It may be possible even in the presence of pointer arithmetic and
+[00:11:00 -> 00:11:02] address taken fields, but it will become more complex.
+[00:11:02 -> 00:11:06] So typically these kind of analysis would be easier and more
+[00:11:06 -> 00:11:09] practical to implement for languages which do not allow pointer
+[00:11:09 -> 00:11:11] arithmetic and address taken fields.

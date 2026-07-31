@@ -1,0 +1,243 @@
+Title: Compiler Design Module 98 : Semilattice Height
+Video ID: m37kpTo21MU
+Detected language: en
+------------------------------------------------------------
+
+[00:00:00 -> 00:00:05] Okay, so now we're going to learn about a new concept and that's the height of a semi-lattice.
+[00:00:05 -> 00:00:10] So recall that we talked about how semi-lattice can be represented, for example a set of values
+[00:00:10 -> 00:00:16] and a meet operator and things like that, but we're going to talk about one very important
+[00:00:16 -> 00:00:19] property of a semi-lattice and that's called its height.
+[00:00:19 -> 00:00:24] So the height of a semi-lattice is the largest number of less than or greater than
+[00:00:24 -> 00:00:27] relations whatever you want to call it, so I've written greater than.
+[00:00:27 -> 00:00:31] So the height of a semi-lattice is the largest number of greater than relations that would
+[00:00:31 -> 00:00:33] fit in a descending order.
+[00:00:33 -> 00:00:36] So x0 is greater than x1 is greater than x2 dot dot dot.
+[00:00:36 -> 00:00:43] So if I was to basically find the longest such chain of greater than relations between
+[00:00:43 -> 00:00:48] the elements in V, then that the length of that longest chain is going to be called
+[00:00:48 -> 00:00:52] the height of the semi-lattice.
+[00:00:52 -> 00:00:57] So recall that this is a partial order and so the height of the semi-lattice can
+[00:00:57 -> 00:01:02] be less than the number of elements in the set V. If it was a total order, that would
+[00:01:02 -> 00:01:08] mean that every pair of elements is related by the less than or equal to operator, in
+[00:01:08 -> 00:01:13] which case the height is the number of elements in V. But for a partial order,
+[00:01:13 -> 00:01:17] this height could be lower than the number of elements in V.
+[00:01:17 -> 00:01:22] In other words, in one of the representations of the semi-lattice, which is the graphical
+[00:01:22 -> 00:01:26] representation, this basically boils down to the longest path length in the semi-lattice
+[00:01:26 -> 00:01:27] diagram.
+[00:01:27 -> 00:01:30] So what is the longest path length in the semi-lattice diagram?
+[00:01:30 -> 00:01:33] And that is what we're going to call the height of the semi-lattice.
+[00:01:33 -> 00:01:39] And so it is very easy to understand height by using the semi-lattice diagram representation
+[00:01:39 -> 00:01:41] of a semi-lattice.
+[00:01:41 -> 00:01:45] So, for example, let's say my semi-lattice has two values, true and false.
+[00:01:45 -> 00:01:50] And let's say my less than equal to operator relation is basically represented
+[00:01:50 -> 00:01:51] by this graphical notation.
+[00:01:51 -> 00:01:53] So false is less than equal to true.
+[00:01:53 -> 00:01:55] And what is the height of the semi-lattice?
+[00:01:55 -> 00:01:58] It's just two, or maybe even you can say one, right?
+[00:01:58 -> 00:02:03] So because the length of the longest chain is one edge or two nodes.
+[00:02:03 -> 00:02:07] It's a matter of convention, whether you want to count the number of nodes or
+[00:02:07 -> 00:02:10] whether you want to count the number of edges.
+[00:02:10 -> 00:02:12] So I'm going to count the number of nodes.
+[00:02:12 -> 00:02:16] And so I'm going to say that the height of this semi-lattice is two.
+[00:02:16 -> 00:02:19] Similarly, I could have another semi-lattice where true is less than equal to false.
+[00:02:19 -> 00:02:23] So I mean, the number of elements and the set of elements V is the same,
+[00:02:23 -> 00:02:29] just that the meet operator is different and consequently the partial order is different.
+[00:02:29 -> 00:02:32] And once again, the height of the semi-lattice is two.
+[00:02:32 -> 00:02:38] Here's another example of a semi-lattice, empty set, singleton set with D1.
+[00:02:38 -> 00:02:42] And once again, the height of the semi-lattice is two.
+[00:02:42 -> 00:02:45] Now here are some more examples.
+[00:02:45 -> 00:02:47] So let's say I have false, false.
+[00:02:47 -> 00:02:52] So I just took a product of the semi-lattice with itself, for example.
+[00:02:52 -> 00:02:59] And so I would get a semi-lattice which looks like following, false, false, false, true, true, false and true, true.
+[00:02:59 -> 00:03:05] So I just took a product of each of the nodes that's going to be the Cartesian product of all the nodes.
+[00:03:05 -> 00:03:08] And so that gives me four different nodes.
+[00:03:08 -> 00:03:22] And then I use my ordering relations that for false x1, y1 is less than equal to x2, y2 if and only if x1 is less than equal to x2 and y1 is less than equal to y2.
+[00:03:22 -> 00:03:33] And if I use that definition of product, then I get this semi-lattice for the product, semi-lattice for the semi-lattice that we discussed in the previous slide.
+[00:03:33 -> 00:03:35] And what is the height of this semi-lattice?
+[00:03:35 -> 00:03:41] The height of the semi-lattice is actually three, one, two and three.
+[00:03:41 -> 00:03:46] Similarly, I could have taken a product of one semi-lattice with another.
+[00:03:46 -> 00:03:57] In this case, I'm assuming that the single, you know, there are two elements in my, in my set of, from which the set of values v is drawn.
+[00:03:57 -> 00:04:01] So one of the values is the full set d1, d2.
+[00:04:01 -> 00:04:09] There are two other values d1 with singleton set d1, another value called big singleton set d2 and yet another value is the empty set.
+[00:04:09 -> 00:04:10] And let's say this is my semi-lattice.
+[00:04:10 -> 00:04:15] Once again, the height of the semi-lattice is two.
+[00:04:15 -> 00:04:17] Alright, here is another example.
+[00:04:17 -> 00:04:22] So let's say I have, I just generalized the example that I had in my previous slide, which had just two definitions.
+[00:04:22 -> 00:04:25] Let's say I have n definitions, n is some finite number.
+[00:04:25 -> 00:04:32] So in this case, I have d1 element is the full set, which is all the elements, d1 dot dot dot dn.
+[00:04:32 -> 00:04:37] Another value is just the empty set, which doesn't have any of the elements.
+[00:04:37 -> 00:04:39] And then there are all other kinds of elements.
+[00:04:39 -> 00:04:42] So how many elements are there in this particular set?
+[00:04:42 -> 00:04:46] Basically, all possible subsets of d1 dot dot dn.
+[00:04:46 -> 00:04:48] And how many subsets of d1 dot dot dn are possible?
+[00:04:48 -> 00:04:54] It's 2 to the power n, that's a power set of n, of d1 dot dot dn, right?
+[00:04:54 -> 00:04:59] And so one of the values is, for example, all the elements except d1, right?
+[00:04:59 -> 00:05:01] So that's d2 dot dot dot dn.
+[00:05:01 -> 00:05:04] Here, this is all the values except d2.
+[00:05:04 -> 00:05:07] So d1 dot d3 dot dot dot dn.
+[00:05:07 -> 00:05:09] So all the definitions, I should say, except d2.
+[00:05:09 -> 00:05:12] So d1, d3 dot dot dot dn.
+[00:05:12 -> 00:05:15] And here it is d1 dot dot dot dn minus 1.
+[00:05:15 -> 00:05:17] So all the definitions except dn.
+[00:05:17 -> 00:05:20] Now, similarly, I could now omit two of them.
+[00:05:20 -> 00:05:24] So for example, this is all the definitions except d1 and d2.
+[00:05:24 -> 00:05:29] These are all the definitions except, let's say, d3.
+[00:05:29 -> 00:05:33] OK, so this is actually, I think this is.
+[00:05:33 -> 00:05:38] Maybe I want to say all the definitions except d2 and d3.
+[00:05:38 -> 00:05:42] And this is all the definitions except dn minus 1 and dn.
+[00:05:42 -> 00:05:44] And so how many of such things are there?
+[00:05:44 -> 00:05:46] Well, you can say n choose 2.
+[00:05:46 -> 00:05:49] How many of such things are there where one of the elements is omitted?
+[00:05:49 -> 00:05:51] n choose 1, and so on, right?
+[00:05:51 -> 00:05:52] And what's the total number of elements?
+[00:05:52 -> 00:05:57] It's just n choose 0 plus n choose 1 plus n choose 2, so on,
+[00:05:57 -> 00:06:01] till n choose n, and that's just nothing but 2 to the power n.
+[00:06:01 -> 00:06:01] All right.
+[00:06:01 -> 00:06:04] So the total number of elements here is 2 to the power n.
+[00:06:04 -> 00:06:06] Now, we are interested in the height of the semi lattice.
+[00:06:06 -> 00:06:08] So what is the height of the semi lattice?
+[00:06:08 -> 00:06:11] Well, what is the longest chain?
+[00:06:11 -> 00:06:14] Or what is the longest path in the semi lattice diagram?
+[00:06:14 -> 00:06:20] And you would see that, you know, there is an edge from one element to the other element only if.
+[00:06:20 -> 00:06:23] So let me use notation.
+[00:06:23 -> 00:06:30] So let's say there's an edge from x1 to x2 only if x2 has one.
+[00:06:30 -> 00:06:34] The cardinality of x2 is one less than the cardinality of x1.
+[00:06:34 -> 00:06:36] By cardinality, I mean number of elements in the set.
+[00:06:36 -> 00:06:42] So if x2 size is one less than x1 size, then there's an edge from x1 to x2.
+[00:06:42 -> 00:06:45] Not necessarily, but if there is an edge, then it's not a...
+[00:06:45 -> 00:06:52] So if there is an edge from x1 to x2, then x2 size must be one less than x1 size.
+[00:06:52 -> 00:06:54] The converse is not true, right?
+[00:06:54 -> 00:06:54] Okay.
+[00:06:54 -> 00:07:00] So in this situation, which basically if there's an edge, then I must have one less element.
+[00:07:00 -> 00:07:02] What do you think should be the maximum path length?
+[00:07:02 -> 00:07:04] Well, it's going to be the maximum number of elements,
+[00:07:04 -> 00:07:11] because with every edge at min, I have to reduce one element.
+[00:07:11 -> 00:07:13] So the maximum path length is nothing but n.
+[00:07:13 -> 00:07:18] And so the height of this particular semi-lattice is actually n.
+[00:07:18 -> 00:07:21] Notice that the number of elements in the semi-lattice is 2 to the power n,
+[00:07:21 -> 00:07:22] but the height is n.
+[00:07:22 -> 00:07:28] So the height is actually much smaller than the number of elements.
+[00:07:28 -> 00:07:33] So if we just take some examples of data flow analysis that we already know,
+[00:07:33 -> 00:07:34] for example, reaching definitions,
+[00:07:34 -> 00:07:37] the height of the semi-lattice is equal to the number of definitions.
+[00:07:37 -> 00:07:39] We just saw this in our previous example.
+[00:07:39 -> 00:07:41] If we just invert that semi-lattice,
+[00:07:41 -> 00:07:44] we get the semi-lattice for reaching definitions.
+[00:07:44 -> 00:07:47] And even then the height of the semi-lattice remains the same,
+[00:07:47 -> 00:07:49] which is the number of definitions.
+[00:07:49 -> 00:07:50] Similarly for live variables,
+[00:07:50 -> 00:07:54] the height of the semi-lattice is the number of variables, all right?
+[00:07:54 -> 00:07:56] Once again, when we talk about live variables,
+[00:07:56 -> 00:07:59] we are talking about subsets of variables
+[00:07:59 -> 00:08:02] and there are 2 to the power n different subsets,
+[00:08:02 -> 00:08:04] but the height still remains n,
+[00:08:04 -> 00:08:08] which n is the number of variables, all right?
+[00:08:08 -> 00:08:11] So why are we studying the height of a semi-lattice?
+[00:08:11 -> 00:08:13] And here is the important property
+[00:08:13 -> 00:08:16] which makes the height of the semi-lattice very important.
+[00:08:16 -> 00:08:20] And that is that if one of the properties that we require
+[00:08:20 -> 00:08:23] for the fixed point iteration to converge
+[00:08:23 -> 00:08:26] is that the semi-lattice height is finite.
+[00:08:26 -> 00:08:29] So if the semi-lattice height is finite,
+[00:08:29 -> 00:08:33] then we are guaranteed that the algorithm will converge.
+[00:08:33 -> 00:08:36] The fixed point algorithm of DFA,
+[00:08:36 -> 00:08:38] the iteration algorithm is guaranteed to converge.
+[00:08:38 -> 00:08:40] In fact, the time it will take to converge
+[00:08:40 -> 00:08:44] is proportional to the height of the semi-lattice.
+[00:08:44 -> 00:08:46] So the longer the height,
+[00:08:46 -> 00:08:50] the slower the algorithm will converge
+[00:08:50 -> 00:08:53] or terminate in the worst case, all right?
+[00:08:53 -> 00:08:56] And so it's a good news that for problems
+[00:08:56 -> 00:08:59] like reaching definitions and life-less analysis,
+[00:08:59 -> 00:09:02] the height is only linear in the number of variables, right?
+[00:09:02 -> 00:09:04] So maybe the number of variables is 1,000,
+[00:09:04 -> 00:09:06] so it's only 1,000.
+[00:09:06 -> 00:09:07] It would have been a disaster
+[00:09:07 -> 00:09:09] if the height of the semi-lattice
+[00:09:09 -> 00:09:11] was actually exponential in the number of variables
+[00:09:11 -> 00:09:14] because then the algorithm would have become impractical
+[00:09:14 -> 00:09:16] because something like 2 to the power 1,000
+[00:09:16 -> 00:09:20] is just so slow that's almost not infeasible
+[00:09:20 -> 00:09:22] to kind of do that, all right?
+[00:09:22 -> 00:09:25] So once again, one of the properties we require
+[00:09:25 -> 00:09:27] for the fixed point iteration to converge
+[00:09:27 -> 00:09:30] is that the semi-lattice height is finite.
+[00:09:30 -> 00:09:33] And if it is finite, then the algorithm is guaranteed
+[00:09:33 -> 00:09:37] to terminate or converge, one and the same thing.
+[00:09:38 -> 00:09:41] All right, so here's an example of a semi-lattice
+[00:09:41 -> 00:09:42] where the height is not finite.
+[00:09:42 -> 00:09:45] So let's say V equals all integers
+[00:09:45 -> 00:09:49] and let's say the meet operator is the minimum operator.
+[00:09:49 -> 00:09:51] It's going to take the minimum of two values.
+[00:09:51 -> 00:09:52] So if I was to draw the semi-lattice diagram
+[00:09:52 -> 00:09:54] and we have seen this before,
+[00:09:54 -> 00:09:56] it's going to be infinity, dot, dot, dot,
+[00:09:56 -> 00:09:58] two, one, zero, minus one, minus two,
+[00:09:58 -> 00:10:00] dot, dot, dot, minus infinity.
+[00:10:00 -> 00:10:02] What is the height of the semi-lattice?
+[00:10:02 -> 00:10:07] The height of the semi-lattice is infinity, right?
+[00:10:08 -> 00:10:11] It's actually an infinite height lattice.
+[00:10:11 -> 00:10:13] And so if this is the semi-lattice
+[00:10:13 -> 00:10:15] on which our DFA is going to operate,
+[00:10:15 -> 00:10:17] so recall that the DFA framework is formed
+[00:10:17 -> 00:10:21] of three values, F, V, and the meet operator,
+[00:10:21 -> 00:10:23] and V and the meet operator
+[00:10:23 -> 00:10:25] basically define the semi-lattice.
+[00:10:25 -> 00:10:28] And if this is the semi-lattice that is the part of the DFA,
+[00:10:28 -> 00:10:30] then the DFL iteration algorithm
+[00:10:30 -> 00:10:34] is actually not guaranteed to converge, okay?
+[00:10:34 -> 00:10:37] But if it is finite, then it is guaranteed to converge.
+[00:10:37 -> 00:10:41] And in this case, if this is my semi-lattice,
+[00:10:41 -> 00:10:43] then it is not guaranteed to converge.
+[00:10:43 -> 00:10:46] So this is not a good semi-lattice to have for DFA.
+[00:10:47 -> 00:10:49] But notice that it's not necessary.
+[00:10:49 -> 00:10:52] So in our previous DFA, in our previous semi-lattice,
+[00:10:52 -> 00:10:54] we had an infinite number of values in V
+[00:10:54 -> 00:10:56] and even the height was infinite.
+[00:10:56 -> 00:10:57] But is it always true that if you have
+[00:10:57 -> 00:10:59] an infinite number of values,
+[00:10:59 -> 00:11:01] then the height must always be infinite?
+[00:11:01 -> 00:11:03] Well, the answer is no, okay?
+[00:11:03 -> 00:11:05] So a semi-lattice with infinite number of values
+[00:11:05 -> 00:11:07] can have a finite height.
+[00:11:07 -> 00:11:08] And we have already seen an example,
+[00:11:08 -> 00:11:10] and that's the constant propagation example.
+[00:11:10 -> 00:11:12] So in the constant propagation example,
+[00:11:12 -> 00:11:15] we could have, we had three different values.
+[00:11:15 -> 00:11:16] One was the top value,
+[00:11:16 -> 00:11:20] one was that it's a constant for some constant C,
+[00:11:20 -> 00:11:21] and then there was the bottom value.
+[00:11:21 -> 00:11:23] But when we say it's a constant for some constant C,
+[00:11:23 -> 00:11:26] C could have been any constant in the range
+[00:11:26 -> 00:11:27] that that particular variable takes.
+[00:11:27 -> 00:11:29] So if that variable is an integer variable,
+[00:11:29 -> 00:11:32] a mathematical integer, not a C language integer,
+[00:11:32 -> 00:11:34] because C language integer is also finite,
+[00:11:34 -> 00:11:36] but let's say it's a mathematical integer,
+[00:11:36 -> 00:11:37] which means it can take any value
+[00:11:37 -> 00:11:39] from minus infinity to infinity,
+[00:11:39 -> 00:11:43] then the number of values that I can have is from,
+[00:11:43 -> 00:11:44] once again, minus infinity dot dot dot,
+[00:11:44 -> 00:11:46] minus two, minus one, zero, one, two,
+[00:11:46 -> 00:11:48] and so on, till infinity, right?
+[00:11:48 -> 00:11:51] But none of these values are actually,
+[00:11:51 -> 00:11:53] are not related by the partial order operator.
+[00:11:53 -> 00:11:56] They are related to the top and the bottom values,
+[00:11:56 -> 00:11:59] just like they have been shown in the semi-lattice diagram,
+[00:11:59 -> 00:12:02] which means any such value, for example,
+[00:12:02 -> 00:12:03] zero is less than or equal to top,
+[00:12:03 -> 00:12:06] and similarly bottom is less than or equal to zero.
+[00:12:06 -> 00:12:08] And that's true for any other value as well,
+[00:12:08 -> 00:12:09] nothing special about zero.
+[00:12:09 -> 00:12:13] And so the height of the semi-lattice
+[00:12:13 -> 00:12:17] in this example is only three, three nodes, right?
+[00:12:17 -> 00:12:20] And whereas the number of elements
+[00:12:20 -> 00:12:23] in the semi-lattice are infinite.
+[00:12:23 -> 00:12:26] So it's not necessary that if the height,
+[00:12:26 -> 00:12:28] if the number of elements is infinite,
+[00:12:28 -> 00:12:31] then the height must be infinite as well.
+[00:12:31 -> 00:12:32] We have seen examples of both cases
+[00:12:32 -> 00:12:35] where it is infinite and where it is not infinite.
+[00:12:35 -> 00:12:37] In fact, and in our previous examples,
+[00:12:37 -> 00:12:40] we saw an example where the size of the set
+[00:12:40 -> 00:12:43] was two to the power n, but the height was n, all right?
+[00:12:43 -> 00:12:45] So all kinds of different semi-lattices are possible.

@@ -1,0 +1,210 @@
+Title: Compiler Design Module 89 : Gen and Kill Sets
+Video ID: NRoF_6NN70M
+Detected language: en
+------------------------------------------------------------
+
+[00:00:00 -> 00:00:07] So, last time we talked about how a DFA can be expressed as a transfer function and a
+[00:00:07 -> 00:00:11] meet function and so let's review that a little bit.
+[00:00:11 -> 00:00:16] The transfer function is a function that relates the in of a statement to the out
+[00:00:16 -> 00:00:17] of the statement.
+[00:00:17 -> 00:00:25] So, if the in value is v, the out value is fv where f is called our transfer function.
+[00:00:25 -> 00:00:32] And then we have a meet operator or a meet function, where basically the out value of
+[00:00:32 -> 00:00:38] a predecessor is related to the in value of a successor, right?
+[00:00:38 -> 00:00:41] And this holds even if there are multiple predecessors of the same statement.
+[00:00:41 -> 00:00:49] So, for example, it will relate out p1, out p2, out pn to in s and once again,
+[00:00:49 -> 00:00:56] the relation is actually a function where in s is represented as a function of outs,
+[00:00:56 -> 00:01:01] out p1, out p2, dot, dot, dot, out pn and we call this a meet operator, right?
+[00:01:01 -> 00:01:08] And so, dataflow analysis has two important components, almost, not almost, but all
+[00:01:08 -> 00:01:11] dataflow analysis have two important components.
+[00:01:11 -> 00:01:14] One is the transfer function and the other is the meet operator.
+[00:01:14 -> 00:01:19] Now, I should point out that I am assuming here that it's a forward dataflow analysis.
+[00:01:19 -> 00:01:23] If it was a backward dataflow analysis, then I would just flip the ins and outs.
+[00:01:23 -> 00:01:28] So, for example, if it was a backward dataflow analysis, in s would be a function, would
+[00:01:28 -> 00:01:33] be specified as a transfer function of out s, so just flip in and out.
+[00:01:33 -> 00:01:41] And similarly, out of a predecessor will be specified as a function of the in of
+[00:01:41 -> 00:01:42] a successor.
+[00:01:42 -> 00:01:47] And if there are multiple successors, then the function is going to operate on all the
+[00:01:47 -> 00:01:52] values of all the successors in case of a backward dataflow analysis.
+[00:01:52 -> 00:01:57] So the structure of computation is very much isomorphic irrespective of whether
+[00:01:57 -> 00:02:03] it's a forward dataflow analysis or it's a backward dataflow analysis.
+[00:02:03 -> 00:02:08] Now the other thing we discussed was to the use of gen, which is generator and
+[00:02:08 -> 00:02:11] kill, right, sets for to represent the transfer function.
+[00:02:11 -> 00:02:17] So to summarize often, but not always, it is possible to represent the transfer
+[00:02:17 -> 00:02:23] function through a gen s and kill s function, right, where gen is a property
+[00:02:23 -> 00:02:27] of the statement, that instruction, and kill is also a property of the
+[00:02:27 -> 00:02:31] instruction, right, and it has nothing to do with the in value or the out
+[00:02:31 -> 00:02:32] value or anything like that.
+[00:02:32 -> 00:02:36] It's just gen is a property of the statement and you can compute it
+[00:02:36 -> 00:02:40] statically before you even start your dataflow analysis.
+[00:02:40 -> 00:02:45] And the way you would typically have the structure that you would typically have is
+[00:02:45 -> 00:02:54] the transfer function f, f v is computed as v minus kill s union gen s.
+[00:02:54 -> 00:02:58] So you remove some things from v and you add some things to v.
+[00:02:58 -> 00:03:03] And basically, I mean, I'm assuming here that v is represented as a set, right.
+[00:03:03 -> 00:03:07] For example, we looked at causal propagation and said it's a set of
+[00:03:07 -> 00:03:13] variables to constant mappings and kill is going to remove some of those mappings,
+[00:03:13 -> 00:03:16] which basically means that it's going to map it to bottom and gen is going to
+[00:03:16 -> 00:03:19] potentially add some mappings, right.
+[00:03:19 -> 00:03:24] And notice that I'm saying that this is often, but not always, all right.
+[00:03:24 -> 00:03:28] So, for example, we looked at constant propagation and we had two options for
+[00:03:28 -> 00:03:32] our transfer function, one which was more precise, where we won't use just
+[00:03:32 -> 00:03:37] gen and kill sets to represent the transfer function, but it would be a more
+[00:03:37 -> 00:03:42] expensive computation and more complex computation to basically be able to
+[00:03:42 -> 00:03:44] figure out whether something is a constant or not.
+[00:03:44 -> 00:03:48] For example, it could exchange information across variables.
+[00:03:48 -> 00:03:51] On the other hand, there was a second option, which is a simpler option, but
+[00:03:51 -> 00:03:54] less precise, which would just use a gen and kill set, right.
+[00:03:54 -> 00:03:58] And so it's up to the designer of the DFA to decide what he or she wants
+[00:03:58 -> 00:04:04] to use, but the point is that even there, there is this pattern that, you
+[00:04:04 -> 00:04:08] know, you can kind of express the transfer function using kill and gen.
+[00:04:08 -> 00:04:12] In fact, we're going to see that this pattern is actually common to many
+[00:04:12 -> 00:04:16] transformations, many analyses, many data flow analyses that we're going
+[00:04:16 -> 00:04:19] to study in future.
+[00:04:19 -> 00:04:19] Okay.
+[00:04:19 -> 00:04:22] And once again, I want to point out that kill and gen are just the
+[00:04:22 -> 00:04:27] properties of S and they have nothing to do with N, right.
+[00:04:27 -> 00:04:31] And that's the whole point of, or V, and that's the whole point of, you
+[00:04:31 -> 00:04:32] know, that's the whole advantage that we're getting.
+[00:04:32 -> 00:04:37] We can pre-compute these sets and then using these sets kind of do our
+[00:04:37 -> 00:04:41] data flow analysis, perhaps in a faster manner.
+[00:04:41 -> 00:04:41] Okay.
+[00:04:41 -> 00:04:45] And so this part of the expression here, V minus kill S, can be
+[00:04:45 -> 00:04:47] thought of as the propagate part of the expression.
+[00:04:47 -> 00:04:53] So it's just propagating V across S, maybe after killing some things.
+[00:04:53 -> 00:04:56] And this is the generate part of S, you know, it's generating some
+[00:04:56 -> 00:05:00] more expressions, so often called propagate and generate.
+[00:05:00 -> 00:05:02] All right.
+[00:05:02 -> 00:05:07] So just to recap, for constant propagation, if my statement is of the
+[00:05:07 -> 00:05:12] form X is colon equal to C, so it's assigning a constant C to X, then
+[00:05:12 -> 00:05:18] gen S is just X comma C, and kill S is anything that contains X as the
+[00:05:18 -> 00:05:19] first element, right.
+[00:05:19 -> 00:05:25] So X comma star, a wild card blank here, right.
+[00:05:25 -> 00:05:29] On the other hand, if S was a statement which looks like X colon
+[00:05:29 -> 00:05:33] equals F something, some other function, which is not a constant,
+[00:05:33 -> 00:05:36] then gen S is just the empty set, so it's not really generating any new
+[00:05:36 -> 00:05:42] constant mapping, but kill S is anything that contains X as the first
+[00:05:42 -> 00:05:46] element, so X comma wild card star.
+[00:05:46 -> 00:05:46] Okay.
+[00:05:46 -> 00:05:47] So we have already seen this.
+[00:05:47 -> 00:05:50] Now let's look at one more example, which is the available
+[00:05:50 -> 00:05:54] expression example that we had actually looked at when we were
+[00:05:54 -> 00:05:56] discussing data flow analysis in the beginning.
+[00:05:56 -> 00:05:59] We looked at common sub-expression elimination.
+[00:05:59 -> 00:06:02] For that, we need available expressions analysis.
+[00:06:02 -> 00:06:04] And recall, what is the available expression analysis?
+[00:06:04 -> 00:06:09] It says, what are the expressions that are already available in some
+[00:06:09 -> 00:06:09] variable?
+[00:06:09 -> 00:06:14] So for example, when I have X colon equals Y plus Z, then Y plus
+[00:06:14 -> 00:06:17] Z is, after this statement is executed, Y plus Z is now available
+[00:06:17 -> 00:06:21] in X, so later on, if somebody says W equals Y plus Z, then I
+[00:06:21 -> 00:06:25] can just replace it with W equals X, because Y plus Z is already
+[00:06:25 -> 00:06:26] available in X.
+[00:06:26 -> 00:06:29] And so the gen for this particular statement, when I'm doing the
+[00:06:29 -> 00:06:34] available expressions pass is X comma Y plus Z, and the kill is
+[00:06:34 -> 00:06:38] anything that contains X either on the left as the first element
+[00:06:38 -> 00:06:40] or as a part of the second element, right?
+[00:06:40 -> 00:06:45] So in this case, my element is basically a tuple which has the
+[00:06:45 -> 00:06:48] variable as the first element and the expression that is
+[00:06:48 -> 00:06:50] contained in it as the second element.
+[00:06:50 -> 00:06:55] And so kill is going to be anything that involves X either
+[00:06:55 -> 00:06:58] as the first element or as X in the expression part.
+[00:06:58 -> 00:07:00] And we have discussed this before.
+[00:07:00 -> 00:07:05] In this case, we kill everything that has all mappings
+[00:07:05 -> 00:07:08] of X, because now X has a new mapping.
+[00:07:08 -> 00:07:11] And we also kill everything that is using X in the
+[00:07:11 -> 00:07:13] RHS, in the expression, because X has now been
+[00:07:13 -> 00:07:16] updated, and so that particular expression is no
+[00:07:16 -> 00:07:18] longer available at that program point.
+[00:07:20 -> 00:07:22] OK.
+[00:07:22 -> 00:07:25] One of the advantages of doing a basic block is that you can
+[00:07:25 -> 00:07:26] compute summaries.
+[00:07:26 -> 00:07:30] So especially, for example, if you want to compute summaries
+[00:07:30 -> 00:07:32] of a sequence of instructions, for example, if you have a
+[00:07:32 -> 00:07:35] basic block that has multiple instructions, you can compute
+[00:07:35 -> 00:07:37] a summary of the entire basic block.
+[00:07:37 -> 00:07:40] So for example, here is a basic block, S1, S2, S3.
+[00:07:40 -> 00:07:44] And let's say, if there's an input value V, we are
+[00:07:44 -> 00:07:46] interested in knowing what would be the output value,
+[00:07:46 -> 00:07:48] FV, and that would represent the transfer function of the
+[00:07:48 -> 00:07:50] entire basic block.
+[00:07:50 -> 00:07:53] Now, one of the advantages of using Gen and Kill is that
+[00:07:53 -> 00:08:01] now I can summarize the transfer function as Gen and
+[00:08:01 -> 00:08:03] Kill of the full basic block.
+[00:08:03 -> 00:08:05] And let's try to understand how that's going to happen.
+[00:08:05 -> 00:08:08] So the transfer function of the basic block, I'm going
+[00:08:08 -> 00:08:11] to call it FV of V, is going to be just the
+[00:08:11 -> 00:08:14] composition of the transfer function of the individual
+[00:08:14 -> 00:08:16] statements in the program.
+[00:08:16 -> 00:08:18] So because it's a forward dataflow analysis, I'll
+[00:08:18 -> 00:08:22] first apply the S1 transfer function.
+[00:08:22 -> 00:08:23] So let's call it FS1.
+[00:08:23 -> 00:08:26] Then I'm going to apply S2 transfer function, so let's
+[00:08:26 -> 00:08:29] call it FS2, and similarly FS3.
+[00:08:29 -> 00:08:35] So FVV equals FS3 of FS2 of FS1 V.
+[00:08:35 -> 00:08:38] And now recall that we already have these transfer
+[00:08:38 -> 00:08:40] functions as Gen and Kill sets.
+[00:08:40 -> 00:08:44] So I'm going to say, oh, that's just FS3 of FS2 of V
+[00:08:44 -> 00:08:48] minus Kill S1 union Gen S1.
+[00:08:48 -> 00:08:51] And now if I expand it further and apply FS2 to this
+[00:08:51 -> 00:08:57] whole value, then I get V minus Kill S1 union Kill S2.
+[00:08:57 -> 00:08:59] So there should be a bracket here.
+[00:08:59 -> 00:09:06] So V minus Kill S1 union Kill S2, and union Gen S1
+[00:09:06 -> 00:09:07] minus Kill S2 union Gen S2.
+[00:09:07 -> 00:09:12] So I've just kind of expanded this particular call
+[00:09:12 -> 00:09:18] here, VFS2, and by using its Gen and Kill, and then just
+[00:09:18 -> 00:09:21] reorganized Kill S2 and Kill S1 so that they start
+[00:09:21 -> 00:09:23] appearing together.
+[00:09:23 -> 00:09:27] Now there's an interesting fact about this expression.
+[00:09:27 -> 00:09:29] And the fact is that if I look at this Kill S1 union
+[00:09:29 -> 00:09:35] Kill S2, that's the stuff that gets killed from V.
+[00:09:35 -> 00:09:39] And so you can call that as kill of the block that's
+[00:09:40 -> 00:09:42] formed by the two instructions, S1 semicolon S2.
+[00:09:42 -> 00:09:46] So kill of S1 semicolon S2, which represents the sequence
+[00:09:46 -> 00:09:49] of instructions, S1 and S2, is just formed by uniting the
+[00:09:49 -> 00:09:53] two individual Kill sets, Kill S1 union Kill S2.
+[00:09:53 -> 00:09:58] And similarly, the Gen of S1 semicolon S2 is Gen of S1
+[00:09:58 -> 00:10:01] minus Kill of S2 union Gen of S2.
+[00:10:01 -> 00:10:04] So you union Gen S1 and Gen S2.
+[00:10:04 -> 00:10:07] But before you do that, you also kill S2.
+[00:10:08 -> 00:10:10] You also subtract Kill S2 from Gen S1.
+[00:10:10 -> 00:10:15] So idea is that whatever was generated by S1, if it is
+[00:10:15 -> 00:10:17] killed by S2, then you remove that.
+[00:10:17 -> 00:10:20] And then you union Gen S2.
+[00:10:20 -> 00:10:25] So basically, the point is that I can compose these, I
+[00:10:25 -> 00:10:30] can have summarized values of Kill and Gen for
+[00:10:30 -> 00:10:32] sequences of instructions, or in fact, entire basic
+[00:10:32 -> 00:10:35] blocks, and then that would make my data flow
+[00:10:35 -> 00:10:38] analysis even faster.
+[00:10:38 -> 00:10:44] So for a basic block B, Gen B, as computed using that
+[00:10:44 -> 00:10:48] kind of expression that we saw earlier, is just Gen of
+[00:10:48 -> 00:10:52] S1 minus Kill of S2 union Gen of S2.
+[00:10:52 -> 00:10:55] And then I can keep doing this for longer and
+[00:10:55 -> 00:10:56] longer sequences.
+[00:10:56 -> 00:11:00] That's just the locally exposed constant definitions.
+[00:11:00 -> 00:11:04] So if I look at constant propagation, so the keyword
+[00:11:04 -> 00:11:05] here is locally exposed.
+[00:11:05 -> 00:11:07] What does locally exposed mean?
+[00:11:07 -> 00:11:09] These are the definitions that are available at the
+[00:11:09 -> 00:11:11] end of the basic block for a forward data flow
+[00:11:11 -> 00:11:14] analysis, because some definitions may have been
+[00:11:14 -> 00:11:16] created, some mappings may have been created to
+[00:11:16 -> 00:11:18] constants in the middle, but maybe they have been
+[00:11:18 -> 00:11:22] killed by the time we reach the end.
+[00:11:22 -> 00:11:24] So things that were actually available at the end
+[00:11:24 -> 00:11:26] of the basic block, I'm calling them locally
+[00:11:26 -> 00:11:28] exposed for that basic block.
+[00:11:28 -> 00:11:30] And that's exactly what Gen B is going to look like.
+[00:11:30 -> 00:11:33] And notice again that Gen B is just a function of the
+[00:11:33 -> 00:11:34] basic block, and I can pre-compute.
+[00:11:34 -> 00:11:36] So even before I start my data flow analysis,
+[00:11:36 -> 00:11:39] I can compute Gen B for every basic block.
+[00:11:39 -> 00:11:41] And similarly, I can compute Kill B.
+[00:11:41 -> 00:11:42] And what is Kill B?
+[00:11:42 -> 00:11:43] Kill B is a set of constant definitions that
+[00:11:43 -> 00:11:45] are killed by B.
+[00:11:45 -> 00:11:47] And that's at the union of things that are
+[00:11:47 -> 00:11:49] killed by each instruction.
+[00:11:49 -> 00:11:52] And so that also I can pre-compute, and now my
+[00:11:52 -> 00:11:54] data flow analysis can work at basic block
+[00:11:54 -> 00:11:57] generality with the simple operators like my
+[00:11:57 -> 00:11:59] minus and union, and that can make
+[00:11:59 -> 00:12:01] my implementation faster.

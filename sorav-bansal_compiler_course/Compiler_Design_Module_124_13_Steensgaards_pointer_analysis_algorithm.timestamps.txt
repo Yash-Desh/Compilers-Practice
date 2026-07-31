@@ -1,0 +1,309 @@
+Title: Compiler Design Module 124 13: Steensgaard's pointer analysis algorithm
+Video ID: UVVHWQSb6-k
+Detected language: en
+------------------------------------------------------------
+
+[00:00:00 -> 00:00:04] So we saw in our last module how Anderson's algorithm can
+[00:00:04 -> 00:00:09] be quadratic to cubic time in the size of the program.
+[00:00:09 -> 00:00:12] So I'm going to discuss another algorithm,
+[00:00:12 -> 00:00:13] which is a very popular algorithm called
+[00:00:13 -> 00:00:18] Steen's Guards algorithm named after the person who proposed it.
+[00:00:18 -> 00:00:20] It's a near linear time algorithm,
+[00:00:20 -> 00:00:22] linear in the size of the program,
+[00:00:22 -> 00:00:26] and also linear space in the size of the program.
+[00:00:26 -> 00:00:29] It's a main point to analysis just like Anderson's algorithm,
+[00:00:29 -> 00:00:33] and I said that it has some extra heuristics or tricks
+[00:00:33 -> 00:00:37] to basically make it faster and smaller.
+[00:00:37 -> 00:00:42] Steen's Guards algorithm is actually used in compilers
+[00:00:42 -> 00:00:47] like LLVM because it is linear time.
+[00:00:47 -> 00:00:49] Compilers can afford linear time algorithms,
+[00:00:49 -> 00:00:53] but they cannot afford quadratic to cubic time algorithms.
+[00:00:53 -> 00:00:56] So recall that order n square space
+[00:00:56 -> 00:00:58] was required in Anderson's algorithm
+[00:00:58 -> 00:01:01] just for representing the main point to relationships.
+[00:01:01 -> 00:01:05] Because if there are n nodes in the points to graph,
+[00:01:05 -> 00:01:09] then the number of edges could be at up to order n square.
+[00:01:09 -> 00:01:12] And so that would be the amount of space that is
+[00:01:12 -> 00:01:15] required to just store the information.
+[00:01:15 -> 00:01:18] In fact, we had also discussed how computing
+[00:01:18 -> 00:01:20] that graph can be, in the worst case,
+[00:01:20 -> 00:01:23] cubic in the size of the program.
+[00:01:23 -> 00:01:26] This algorithm is going to require
+[00:01:26 -> 00:01:31] constant space for each object or register or address.
+[00:01:31 -> 00:01:34] So Anderson's algorithm required up to order n space
+[00:01:34 -> 00:01:36] for each register because each register
+[00:01:36 -> 00:01:40] could have up to order n outgoing edges,
+[00:01:40 -> 00:01:41] all the things that it could point to.
+[00:01:41 -> 00:01:44] And similarly, every object could have
+[00:01:44 -> 00:01:46] up to order n outgoing edges and so on.
+[00:01:46 -> 00:01:50] So Anderson's algorithm required linear space
+[00:01:50 -> 00:01:54] for every object or register or address,
+[00:01:54 -> 00:01:56] but this algorithm will require constant space
+[00:01:56 -> 00:02:00] for every object or register or address.
+[00:02:00 -> 00:02:02] So let's see how that happens.
+[00:02:02 -> 00:02:07] The key idea is that whenever there are more than one
+[00:02:10 -> 00:02:14] outgoing edges, let's say p is pointing to q and r,
+[00:02:14 -> 00:02:18] then we merge or unify the abstract objects q and r
+[00:02:18 -> 00:02:21] into a single abstract object, which we call q comma r.
+[00:02:21 -> 00:02:24] So we unify the abstract objects.
+[00:02:24 -> 00:02:29] So the basic insight here is that if there's an object p
+[00:02:29 -> 00:02:32] that is pointing to two different abstract objects,
+[00:02:32 -> 00:02:34] q and r, then q and r are probably going
+[00:02:34 -> 00:02:36] to behave similarly, and so we don't need
+[00:02:36 -> 00:02:39] to track their points to set separately.
+[00:02:39 -> 00:02:42] We can actually merge them into a single compound object
+[00:02:42 -> 00:02:43] and then behave as though,
+[00:02:43 -> 00:02:46] pretend as though they're a single abstract object.
+[00:02:46 -> 00:02:49] This is obviously at the cost of precision,
+[00:02:49 -> 00:02:51] but then anything that r points to just believe
+[00:02:51 -> 00:02:53] that q may also point to that,
+[00:02:53 -> 00:02:56] and anything that q may point to, r may also point to that.
+[00:02:56 -> 00:02:58] So by when you merge or unify two objects,
+[00:02:58 -> 00:03:00] you are losing precision because you're basically saying
+[00:03:00 -> 00:03:01] that anything that r could point to,
+[00:03:01 -> 00:03:03] q can point to, and vice versa.
+[00:03:05 -> 00:03:06] And this unification is transitive.
+[00:03:06 -> 00:03:08] So for example, if the original points to graph
+[00:03:08 -> 00:03:10] was p points to either q or r,
+[00:03:10 -> 00:03:12] and then q could point to either s or t,
+[00:03:12 -> 00:03:14] and similarly, r could point to u,
+[00:03:14 -> 00:03:16] then because q and r have been unified,
+[00:03:16 -> 00:03:20] then the new points to graph looks like q,
+[00:03:20 -> 00:03:24] this unified node could point to either s or t or u,
+[00:03:24 -> 00:03:26] you know, coming from here,
+[00:03:26 -> 00:03:28] and then all these outgoing edges could be merged
+[00:03:28 -> 00:03:32] into a single abstract object with an s comma t comma u,
+[00:03:32 -> 00:03:34] and because this is transitive,
+[00:03:34 -> 00:03:36] unification is transitive,
+[00:03:36 -> 00:03:37] and so this becomes s comma t comma u,
+[00:03:37 -> 00:03:39] and then whatever they could point to,
+[00:03:39 -> 00:03:40] that becomes v comma w.
+[00:03:40 -> 00:03:43] And you can see how this big graph here
+[00:03:43 -> 00:03:45] with many edges is actually reduced
+[00:03:45 -> 00:03:48] to a much smaller graph with only three edges.
+[00:03:49 -> 00:03:50] And so this is what unification
+[00:03:50 -> 00:03:51] in Steensgaard's algorithm does,
+[00:03:51 -> 00:03:53] and this is really the key idea,
+[00:03:53 -> 00:03:57] is the key change from Anderson's algorithm,
+[00:03:57 -> 00:03:59] which makes the points to information smaller,
+[00:03:59 -> 00:04:02] but potentially at a loss of precision.
+[00:04:02 -> 00:04:04] But the hope is that this loss of precision
+[00:04:04 -> 00:04:07] would be small for typical programming patterns,
+[00:04:07 -> 00:04:10] and that's what was shown empirically,
+[00:04:10 -> 00:04:13] and that's why this is a popular algorithm.
+[00:04:13 -> 00:04:15] So Steensgaard's algorithm relies on the heuristic
+[00:04:15 -> 00:04:18] that all point t's would likely
+[00:04:18 -> 00:04:19] have similar points to sets.
+[00:04:19 -> 00:04:23] So if all point t's of a single object,
+[00:04:23 -> 00:04:25] so let's say of a single object p,
+[00:04:25 -> 00:04:26] would have similar behavior,
+[00:04:26 -> 00:04:30] so avoid separate tracking for them.
+[00:04:30 -> 00:04:32] Just unify them into a single node
+[00:04:32 -> 00:04:35] and just track them as a single abstract object,
+[00:04:35 -> 00:04:36] and anything that,
+[00:04:36 -> 00:04:38] and you can just kind of unify
+[00:04:38 -> 00:04:40] all the outgoing edges as well,
+[00:04:40 -> 00:04:44] and do that transitively.
+[00:04:44 -> 00:04:46] There's a variant of Steensgaard's algorithm,
+[00:04:46 -> 00:04:47] which is the precision,
+[00:04:47 -> 00:04:49] which improves precision slightly,
+[00:04:49 -> 00:04:50] and which is typically used,
+[00:04:50 -> 00:04:53] which is that if u is not a pointer,
+[00:04:53 -> 00:04:56] so for example, in this example,
+[00:04:56 -> 00:04:58] let's say r is pointing to u,
+[00:04:58 -> 00:05:00] and q is pointing to t,
+[00:05:00 -> 00:05:02] and if q and r are unified,
+[00:05:02 -> 00:05:05] then the outgoing edges are u, t, and s.
+[00:05:05 -> 00:05:06] And in the original algorithm,
+[00:05:06 -> 00:05:09] we would unify all three of them.
+[00:05:09 -> 00:05:10] But there's a slight twist,
+[00:05:10 -> 00:05:12] or the slight precision improvement for this,
+[00:05:12 -> 00:05:17] which is that if among all the pointees,
+[00:05:17 -> 00:05:19] or all the outgoing edges,
+[00:05:19 -> 00:05:21] if the ones only consider,
+[00:05:21 -> 00:05:24] only unify those outgoing edges,
+[00:05:24 -> 00:05:25] or those pointees,
+[00:05:25 -> 00:05:28] which are not pointers,
+[00:05:28 -> 00:05:30] or which are pointers,
+[00:05:30 -> 00:05:31] only unify those outgoing edges,
+[00:05:31 -> 00:05:33] which are pointers,
+[00:05:33 -> 00:05:37] do not unify those pointees that are not pointers.
+[00:05:37 -> 00:05:39] For example, in this case,
+[00:05:39 -> 00:05:40] u may be a scalar,
+[00:05:40 -> 00:05:41] for example, it may be an integer,
+[00:05:41 -> 00:05:42] in which case I don't,
+[00:05:43 -> 00:05:44] it can't have any outgoing edges,
+[00:05:44 -> 00:05:46] and in fact, when I unify,
+[00:05:46 -> 00:05:49] I don't unify u with s and t.
+[00:05:49 -> 00:05:51] So s and t get unified because they are pointers,
+[00:05:51 -> 00:05:53] because they could further point to other things,
+[00:05:53 -> 00:05:54] but u is not a pointer,
+[00:05:54 -> 00:05:56] so I leave u alone,
+[00:05:56 -> 00:05:58] and that's basically the precision improvement.
+[00:05:58 -> 00:05:59] And so the general rule is that
+[00:05:59 -> 00:06:03] if any outgoing edge,
+[00:06:03 -> 00:06:07] or any pointee is not a pointer,
+[00:06:07 -> 00:06:09] which means it has no outgoing edges of its own,
+[00:06:09 -> 00:06:10] then do not unify it.
+[00:06:10 -> 00:06:12] And here's an example,
+[00:06:12 -> 00:06:13] here u is not a pointer,
+[00:06:13 -> 00:06:17] and so u is not unified with the other outgoing edges,
+[00:06:17 -> 00:06:19] or other pointees of q,r,
+[00:06:19 -> 00:06:20] which were s and t.
+[00:06:20 -> 00:06:21] So s and t are unified,
+[00:06:21 -> 00:06:23] but u is not unified.
+[00:06:24 -> 00:06:25] And this helps because it avoids
+[00:06:25 -> 00:06:28] unnecessary outgoing edges from non-pointers.
+[00:06:28 -> 00:06:28] For example,
+[00:06:28 -> 00:06:30] in the previous graph,
+[00:06:30 -> 00:06:31] you may have seen that u,
+[00:06:31 -> 00:06:33] the points to graph said that u can also point to v,
+[00:06:33 -> 00:06:35] and u can also point to w,
+[00:06:35 -> 00:06:37] but u was not even a pointer,
+[00:06:37 -> 00:06:41] so we avoid that precision loss
+[00:06:41 -> 00:06:44] by using this simple precision improvement.
+[00:06:44 -> 00:06:46] And it seems to work in empiricals,
+[00:06:47 -> 00:06:49] when evaluated empirically on real-world programs.
+[00:06:50 -> 00:06:52] Okay, so now let's analyze the space
+[00:06:52 -> 00:06:55] and time complexity of Anderson's algorithm.
+[00:06:55 -> 00:06:58] And I'm going to use the simple Anderson's algorithm,
+[00:06:58 -> 00:07:00] sorry, Steensgaard's algorithm.
+[00:07:00 -> 00:07:01] I'm gonna use a simple Steensgaard's algorithm
+[00:07:01 -> 00:07:03] without the precision improvement
+[00:07:03 -> 00:07:05] that I just discussed in the previous slide.
+[00:07:05 -> 00:07:08] So in the simple Steensgaard's algorithm,
+[00:07:08 -> 00:07:12] there can be at most order n edges in the worst case,
+[00:07:12 -> 00:07:13] because after all,
+[00:07:13 -> 00:07:15] a node can have at most one outgoing edge,
+[00:07:15 -> 00:07:17] because if it had multiple outgoing edges,
+[00:07:17 -> 00:07:19] we would have unified all of them into a single edge.
+[00:07:19 -> 00:07:22] And we do that across all the edges,
+[00:07:22 -> 00:07:23] and we do that transitively.
+[00:07:23 -> 00:07:25] And so because a node can have at most one
+[00:07:25 -> 00:07:26] outgoing edge,
+[00:07:26 -> 00:07:28] there is only a constant amount of space
+[00:07:28 -> 00:07:31] that is required for every node in the graph.
+[00:07:31 -> 00:07:33] And so the number of edges in the points to graph
+[00:07:33 -> 00:07:35] is order n in the worst case.
+[00:07:35 -> 00:07:38] And that's a significant improvement in time complexity,
+[00:07:38 -> 00:07:41] in space complexity over Anderson's algorithm,
+[00:07:41 -> 00:07:45] which had order n squared worst case, space complexity.
+[00:07:45 -> 00:07:48] In Steensgaard, the space complexity order n worst case.
+[00:07:48 -> 00:07:49] It's a huge improvement.
+[00:07:49 -> 00:07:51] Imagine there's a piece of code
+[00:07:51 -> 00:07:53] which has millions of lines of code,
+[00:07:53 -> 00:07:55] then order n is just order million,
+[00:07:55 -> 00:07:57] but order n squared is million square,
+[00:07:57 -> 00:07:59] which can be a very large number
+[00:07:59 -> 00:08:02] and may overflow our hardware resources.
+[00:08:03 -> 00:08:06] Also, let's look at time complexity.
+[00:08:06 -> 00:08:09] So when I process a statement,
+[00:08:09 -> 00:08:10] so the time complexity is determined
+[00:08:10 -> 00:08:13] by how the transfer happens
+[00:08:13 -> 00:08:15] when you implement the transfer function
+[00:08:15 -> 00:08:16] of a points to algorithm.
+[00:08:16 -> 00:08:19] So for example, I could have something like x,
+[00:08:20 -> 00:08:25] let's say x colon equals star y.
+[00:08:25 -> 00:08:27] Then I look at what is y pointing to.
+[00:08:27 -> 00:08:30] So let's say y is pointing to something.
+[00:08:30 -> 00:08:32] Let's say y is pointing to a.
+[00:08:32 -> 00:08:34] Then I look at what is a pointing to.
+[00:08:34 -> 00:08:36] So let's say a is pointing to b.
+[00:08:37 -> 00:08:39] Then I say, okay, now x can also point to b.
+[00:08:39 -> 00:08:42] So let's say x was already pointing to c.
+[00:08:42 -> 00:08:45] Then I say x can now also point to b.
+[00:08:45 -> 00:08:46] But the moment I do that,
+[00:08:46 -> 00:08:48] x can have two outgoing edges.
+[00:08:48 -> 00:08:51] And so I unify b and c into a single node.
+[00:08:51 -> 00:08:54] So the new points to graph becomes x can point to b,c
+[00:08:55 -> 00:08:58] and y can point to a
+[00:08:58 -> 00:09:00] and a can point to b,c.
+[00:09:00 -> 00:09:02] And so this is the new points to graph.
+[00:09:02 -> 00:09:05] So what was required in doing this transfer function?
+[00:09:05 -> 00:09:08] We first identify the node corresponding to y.
+[00:09:08 -> 00:09:10] So, or in this case, star y,
+[00:09:10 -> 00:09:12] which means y would have,
+[00:09:12 -> 00:09:14] because in Steen's garden algorithm,
+[00:09:14 -> 00:09:17] the variant is every node can have
+[00:09:17 -> 00:09:18] at most one outgoing edge.
+[00:09:18 -> 00:09:21] y will have only at most one outgoing edge.
+[00:09:21 -> 00:09:24] So let's say that one was going to some node.
+[00:09:24 -> 00:09:25] Let's say a.
+[00:09:25 -> 00:09:28] Then a also could have at most one outgoing edge.
+[00:09:28 -> 00:09:30] So that is, let's say going to b.
+[00:09:30 -> 00:09:32] So, and that's the node.
+[00:09:32 -> 00:09:33] That's what I mean by identifying the node
+[00:09:33 -> 00:09:37] associated with the RHS or the variables on the RHS.
+[00:09:37 -> 00:09:38] So in this case, that's b.
+[00:09:38 -> 00:09:41] And there will be only one such node in Steen's garden,
+[00:09:41 -> 00:09:42] unlike Anderson's whether it would be
+[00:09:42 -> 00:09:44] up to n such nodes.
+[00:09:44 -> 00:09:48] And then you create an edge from x to that node
+[00:09:48 -> 00:09:51] and unify if required, right?
+[00:09:51 -> 00:09:53] So x would also have maybe at most
+[00:09:53 -> 00:09:55] one outgoing edge already.
+[00:09:55 -> 00:09:56] Now you create one extra edge
+[00:09:56 -> 00:09:58] and then you unify these two.
+[00:09:58 -> 00:10:00] All these operations are actually constant time.
+[00:10:00 -> 00:10:02] So an operation of creating an edge,
+[00:10:02 -> 00:10:04] because there's at most one edge to be created
+[00:10:04 -> 00:10:08] and unifying if required, there is also constant time
+[00:10:08 -> 00:10:10] because there's at most one unification to be done.
+[00:10:10 -> 00:10:13] And so both of these are constant time operations.
+[00:10:15 -> 00:10:19] And so the total time taken,
+[00:10:19 -> 00:10:21] but the only thing here is when you identify
+[00:10:21 -> 00:10:23] the node associated with the variable,
+[00:10:23 -> 00:10:27] then, so it depends on how you implement
+[00:10:27 -> 00:10:31] the unification and the identification.
+[00:10:31 -> 00:10:33] So one, depending on the data structure,
+[00:10:33 -> 00:10:36] the time complexity of identification and unification
+[00:10:36 -> 00:10:38] can be slightly different.
+[00:10:38 -> 00:10:41] And so let's say we use,
+[00:10:41 -> 00:10:45] one of the kind of easy data structures to use here
+[00:10:45 -> 00:10:48] is the union find data structure,
+[00:10:48 -> 00:10:50] which basically gives you order alpha n,
+[00:10:50 -> 00:10:53] where alpha n is the Ackerman's function,
+[00:10:53 -> 00:10:55] which grows very slowly, slower than log n,
+[00:10:55 -> 00:10:57] in identification of a node.
+[00:10:57 -> 00:10:59] And unification is just order one.
+[00:10:59 -> 00:11:01] So if you recall, unification just involves
+[00:11:02 -> 00:11:05] the unification of an edge and you find,
+[00:11:05 -> 00:11:09] or identification basically requires traversing edges
+[00:11:09 -> 00:11:11] by short-circuiting as we are going
+[00:11:11 -> 00:11:13] and traversing and finding the root
+[00:11:13 -> 00:11:16] and checking what the root of that cluster is.
+[00:11:16 -> 00:11:18] So that's the union find data structure
+[00:11:18 -> 00:11:21] that you may recall from your data structures class.
+[00:11:21 -> 00:11:23] Using that, you can do these operations
+[00:11:23 -> 00:11:25] in order one and order alpha n time.
+[00:11:26 -> 00:11:28] So if there are n statements
+[00:11:28 -> 00:11:29] and you can have at most n transfers,
+[00:11:29 -> 00:11:31] then the amount of time that it requires
+[00:11:31 -> 00:11:33] is order n alpha n.
+[00:11:33 -> 00:11:35] And so that's the time complexity
+[00:11:35 -> 00:11:36] of Steen's Guard algorithm,
+[00:11:36 -> 00:11:38] which is significantly better than,
+[00:11:38 -> 00:11:39] I mean, it's almost linear time,
+[00:11:39 -> 00:11:42] slightly higher than linear time.
+[00:11:42 -> 00:11:44] Alpha n grows slower than log n.
+[00:11:44 -> 00:11:47] So this is less than n log n.
+[00:11:47 -> 00:11:49] So this is a significant improvement
+[00:11:49 -> 00:11:52] over quadratic to cubic of Anderson's algorithm.
+[00:11:52 -> 00:11:54] And that's why it's typically used in compilers.
+[00:11:55 -> 00:11:57] So based on, I mean,
+[00:11:57 -> 00:11:58] Steen's Guard algorithm was proposed
+[00:11:58 -> 00:12:01] somewhere in late 90s in 1996.
+[00:12:01 -> 00:12:03] And when it was published,
+[00:12:03 -> 00:12:05] the result that was empirically shown
+[00:12:05 -> 00:12:07] was that Steen's Guard algorithm
+[00:12:07 -> 00:12:09] was run on a 1 million line program,
+[00:12:09 -> 00:12:10] which was a Microsoft Word program.
+[00:12:10 -> 00:12:12] And this was an order of magnitude improvement
+[00:12:12 -> 00:12:16] and scalability over state of the art at that time.
+[00:12:16 -> 00:12:18] Steen's Guard algorithm,
+[00:12:18 -> 00:12:19] which was used at that time,
+[00:12:19 -> 00:12:20] was field insensitive,
+[00:12:20 -> 00:12:22] but you can also make it field sensitive,
+[00:12:22 -> 00:12:24] in which case some of these
+[00:12:25 -> 00:12:27] tight space and time complexity bounds
+[00:12:27 -> 00:12:29] may need to be loosened up a little bit.

@@ -1,0 +1,479 @@
+Title: Compiler Design Module 113 : Natural Loop Definition
+Video ID: ccU9c7kUwmQ
+Detected language: en
+------------------------------------------------------------
+
+[00:00:00 -> 00:00:06] Now that we understand dominator and dominance relations and we also image a dominance relations,
+[00:00:06 -> 00:00:09] we are actually ready to define what is a natural loop formally.
+[00:00:09 -> 00:00:14] Recall that in the previous module, one of the previous modules, we discussed what is
+[00:00:14 -> 00:00:20] a natural loop informally, just to remind you, it needs to have a cycle and there
+[00:00:20 -> 00:00:24] needs to be a single entry point, but how do I kind of define this more formally
+[00:00:24 -> 00:00:29] so that I can write an algorithm to detect such natural loops?
+[00:00:29 -> 00:00:37] So a natural loop is made of a header and I am going to call the header D and this header
+[00:00:37 -> 00:00:42] should dominate all nodes in the loop and this captures the property that this is the only
+[00:00:42 -> 00:00:47] entry point to any of the nodes in the loop.
+[00:00:47 -> 00:00:53] So this D or the header is supposed to be the entry point of the loop.
+[00:00:53 -> 00:00:58] Then there should be a back edge, there needs to be some cycle and so a back edge
+[00:00:58 -> 00:01:03] is an edge that creates a cycle and what is the definition of a back edge?
+[00:01:03 -> 00:01:08] A back edge is an edge whose destination dominates its source.
+[00:01:08 -> 00:01:13] Not every cycle needs to have a back edge.
+[00:01:13 -> 00:01:18] Natural loops are a special case of cycles.
+[00:01:18 -> 00:01:22] Every natural loop is a cycle, but every cycle is not a natural loop and so when
+[00:01:22 -> 00:01:25] I talk about natural loops, I need to have a back edge and what is a back edge
+[00:01:26 -> 00:01:29] An edge whose destination dominates its source.
+[00:01:29 -> 00:01:39] So if the edge is from N to D, then D should dominate N.
+[00:01:39 -> 00:01:43] Although N can reach D, it is D that is dominating N.
+[00:01:43 -> 00:01:48] So if D dominates N, it basically means that D can also reach N, so that obviously
+[00:01:48 -> 00:01:51] means there is a cycle, but it also means more things.
+[00:01:51 -> 00:01:56] It also means that this is a back edge and the entry, N was dominated by D, which means
+[00:01:56 -> 00:02:02] that even the source of the back edge was dominated by the destination of the back
+[00:02:02 -> 00:02:03] edge.
+[00:02:03 -> 00:02:09] So an edge whose destination dominates its source and actually the destination
+[00:02:09 -> 00:02:13] of the back edge should be the same as the header of the loop.
+[00:02:13 -> 00:02:16] In fact, that's how we're going to identify the header of a loop, we're going to
+[00:02:16 -> 00:02:20] identify the back edge and then we look at its destination and that destination
+[00:02:20 -> 00:02:25] we're going to call the header of the loop, we're going to see examples.
+[00:02:25 -> 00:02:30] And finally, this just identifies a back edge and a header.
+[00:02:30 -> 00:02:33] What are all the nodes in the loops and all the edges in the loops?
+[00:02:33 -> 00:02:39] Well, we define this quantity called the natural loop of a back edge.
+[00:02:39 -> 00:02:44] So we associate a natural loop with a back edge and so let's say the back edge
+[00:02:44 -> 00:02:49] is from N to D, where D dominates N, then what is the set of nodes that belongs
+[00:02:49 -> 00:02:53] to this loop of natural loop of a back edge?
+[00:02:53 -> 00:02:59] It includes D and all the nodes that can reach N without going through D.
+[00:02:59 -> 00:03:04] All right, so all the nodes that can reach N without going through D.
+[00:03:04 -> 00:03:09] So all the nodes that can reach N without going through D.
+[00:03:09 -> 00:03:15] And you will notice that this definition also implies that all these nodes are going
+[00:03:15 -> 00:03:21] to be dominated by D because D dominates N.
+[00:03:21 -> 00:03:25] These nodes can reach N without going through D.
+[00:03:25 -> 00:03:28] And so from that, one can infer that all these nodes are also going to be
+[00:03:28 -> 00:03:33] dominated by D. I'm not going to give the full argument, but just the
+[00:03:33 -> 00:03:37] statement and I'll let you think about that on your own.
+[00:03:37 -> 00:03:39] So here's an example.
+[00:03:39 -> 00:03:44] Let's say this is my control flow graph, B1, B2, B3, B4, B5.
+[00:03:44 -> 00:03:47] And let's say there is an edge from B5 to B2.
+[00:03:47 -> 00:03:51] Now, just the way I've drawn the graph, it is very clear that the control is
+[00:03:51 -> 00:03:55] flowing from the top to bottom, and there's only one edge which is flowing
+[00:03:55 -> 00:03:58] the air control from bottom to top.
+[00:03:58 -> 00:04:08] And so the only cycle in this program is this cycle made up of B2, B3, B4, B5.
+[00:04:08 -> 00:04:09] But cycle is not enough.
+[00:04:09 -> 00:04:11] I mean, not every cycle is a natural loop.
+[00:04:11 -> 00:04:13] So we want to find out whether there is a natural loop in this
+[00:04:13 -> 00:04:14] program or not.
+[00:04:14 -> 00:04:18] And so the first question we're going to ask is, what are the back edges?
+[00:04:18 -> 00:04:21] And so before we answer, to be able to answer what are the back edges, we need
+[00:04:21 -> 00:04:24] to say, basically to find back edges, we need to find edges where the
+[00:04:24 -> 00:04:26] destination dominates the source.
+[00:04:26 -> 00:04:29] So for that, we need to figure out what is the dominance relation in this
+[00:04:29 -> 00:04:31] particular graph.
+[00:04:31 -> 00:04:33] So you can see that B1 dominates everything else.
+[00:04:33 -> 00:04:40] We can see that B2 dominates B3, B4, and B5, OK?
+[00:04:40 -> 00:04:46] And B3 dominates B5, B4 dominates B5, and of course, every node dominates
+[00:04:46 -> 00:04:48] itself as well.
+[00:04:48 -> 00:04:51] All right, so that's our dominator relation.
+[00:04:51 -> 00:04:53] So what are the back edges?
+[00:04:53 -> 00:04:56] You will find that there's only one edge such that the destination
+[00:04:56 -> 00:05:01] dominates the source, and that is this particular edge from B5 to B2.
+[00:05:01 -> 00:05:06] The destination is B2, and that dominates the source, which is B5.
+[00:05:06 -> 00:05:09] And so indeed, this happens to be a back edge.
+[00:05:09 -> 00:05:16] The edge from B5 to B2 is a back edge because B2 dominates B5.
+[00:05:16 -> 00:05:21] Any path from the start of the program to B5 has to go through B2, right?
+[00:05:21 -> 00:05:24] Because it has to go through B2, whatever path you take.
+[00:05:24 -> 00:05:28] All right, OK, so there's only one.
+[00:05:28 -> 00:05:30] And if you look at any other edge, right?
+[00:05:30 -> 00:05:32] For example, B2 to B3.
+[00:05:32 -> 00:05:36] B2 dominates B3, but B3 does not dominate B2, and we want the
+[00:05:36 -> 00:05:39] destination to dominate the source, not the other way around.
+[00:05:39 -> 00:05:41] And so this is not a back edge, all right?
+[00:05:41 -> 00:05:43] So similarly, all the other edges.
+[00:05:43 -> 00:05:48] All right, so we could figure out that B5 to B2, OK, this is an error.
+[00:05:48 -> 00:05:51] So B5 to B2 is a back edge.
+[00:05:51 -> 00:05:52] Now, what is the header of a loop?
+[00:05:52 -> 00:05:57] Recall that the header of a loop is just basically a node that dominates
+[00:05:57 -> 00:06:00] every other node in the loop.
+[00:06:00 -> 00:06:04] Just the way we have defined the natural loop of a back edge, we're
+[00:06:04 -> 00:06:07] going to find out that the destination of the back edge is going
+[00:06:07 -> 00:06:11] to dominate all the nodes in the natural loop of that back edge, just
+[00:06:11 -> 00:06:12] the way we have defined it.
+[00:06:12 -> 00:06:14] And so it's very easy to figure out what the header is.
+[00:06:14 -> 00:06:17] Once we have identified the back edge, the header is just the
+[00:06:17 -> 00:06:17] destination node.
+[00:06:17 -> 00:06:21] So the header is nothing but B2, the destination node of the
+[00:06:21 -> 00:06:23] back edge that we just identified.
+[00:06:23 -> 00:06:25] And so the header is B2.
+[00:06:25 -> 00:06:29] Now, the question is, what is the natural loop of B2?
+[00:06:29 -> 00:06:35] And so that's going to include B2 and all the nodes that can
+[00:06:35 -> 00:06:39] reach B5 without going through B2.
+[00:06:39 -> 00:06:42] So what are all the nodes that can reach B5 without going through B2?
+[00:06:42 -> 00:06:45] Can B1 reach B5 without going through B2?
+[00:06:45 -> 00:06:46] Not really.
+[00:06:46 -> 00:06:53] I mean, any path that I take from B1 to B5 has to go through B2.
+[00:06:53 -> 00:06:57] I'm not going to consider B2 because B2 is already in the natural loop.
+[00:06:57 -> 00:06:59] It's the header of the natural loop.
+[00:06:59 -> 00:07:01] Can B3 reach B5 without going through B2?
+[00:07:01 -> 00:07:03] The answer is yes.
+[00:07:03 -> 00:07:06] Can B4 reach B5 without going through B2?
+[00:07:06 -> 00:07:08] The answer is yes.
+[00:07:08 -> 00:07:11] Can B5 reach itself without going through B2?
+[00:07:11 -> 00:07:12] The answer is yes.
+[00:07:12 -> 00:07:16] And so the natural loop of B2 is B2 plus all the nodes that
+[00:07:16 -> 00:07:18] can reach B5 without going through B2.
+[00:07:18 -> 00:07:22] And that's going to be B2, B3, B4, and B5.
+[00:07:22 -> 00:07:24] And so that's the natural loop associated with the
+[00:07:24 -> 00:07:26] back edge B5 to B2.
+[00:07:26 -> 00:07:29] So when we say it's a natural loop, we say it's a
+[00:07:29 -> 00:07:31] natural loop of B5 to B2.
+[00:07:31 -> 00:07:36] Actually, I should say natural loop of B5 to B2.
+[00:07:36 -> 00:07:38] All right.
+[00:07:38 -> 00:07:44] So yes, this is our solution for this particular example.
+[00:07:44 -> 00:07:44] The header is B2.
+[00:07:44 -> 00:07:46] The back edge is B5 to B2.
+[00:07:46 -> 00:07:51] The natural loop of B5 to B2 is B2, B3, B4, B5.
+[00:07:51 -> 00:07:53] And that's the loop.
+[00:07:53 -> 00:07:55] Notice that even informally speaking, this loop
+[00:07:55 -> 00:07:57] satisfies our informal requirements.
+[00:07:57 -> 00:07:59] There is a cycle.
+[00:07:59 -> 00:08:00] And there is only one entry point.
+[00:08:00 -> 00:08:02] Nobody is jumping into the middle of the loop.
+[00:08:02 -> 00:08:07] And that entry point is the header of the loop, which is B2.
+[00:08:07 -> 00:08:09] All right, let's look at another slightly more
+[00:08:09 -> 00:08:11] complicated example that potentially has multiple
+[00:08:11 -> 00:08:13] back edges and multiple loops.
+[00:08:13 -> 00:08:16] So what are the back edges?
+[00:08:16 -> 00:08:20] So once again, the control flow of the program is
+[00:08:20 -> 00:08:22] in this diagram as I've drawn it, is flowing from
+[00:08:22 -> 00:08:23] top to bottom.
+[00:08:23 -> 00:08:25] But there are some cycles.
+[00:08:25 -> 00:08:28] And so for example, B2 is jumping to itself.
+[00:08:28 -> 00:08:30] B4 is jumping to B3.
+[00:08:30 -> 00:08:33] B5 is jumping to B2.
+[00:08:33 -> 00:08:35] Now, which of these are back edges, all right?
+[00:08:35 -> 00:08:39] And we want to say, if I talk about the domination
+[00:08:39 -> 00:08:42] relation, and say that B1 dominates everything else,
+[00:08:42 -> 00:08:44] B2 dominates everything below it, B3 dominates
+[00:08:44 -> 00:08:46] everything below it, and B4 dominates everything below
+[00:08:46 -> 00:08:48] it, and B5 dominates itself.
+[00:08:48 -> 00:08:51] And every node also dominates itself.
+[00:08:51 -> 00:08:53] All right, so what are the back edges?
+[00:08:53 -> 00:08:56] Well, it's very clear that any edge that's going
+[00:08:56 -> 00:09:00] from a higher numbered node to a lower numbered node
+[00:09:00 -> 00:09:01] is actually a back edge.
+[00:09:01 -> 00:09:03] Because a lower numbered node is dominating,
+[00:09:03 -> 00:09:05] in this particular example, is dominating
+[00:09:05 -> 00:09:06] all the higher numbered nodes.
+[00:09:06 -> 00:09:09] So B5 to B2 is a back edge.
+[00:09:09 -> 00:09:11] B4 to B3 is a back edge.
+[00:09:11 -> 00:09:14] And in fact, B2 to B2 is also a back edge,
+[00:09:14 -> 00:09:15] because B2 dominates itself.
+[00:09:16 -> 00:09:21] All right, so B5 to B2, B4 to B3, and B2 to B2.
+[00:09:21 -> 00:09:24] We have identified that all these three are back edges.
+[00:09:24 -> 00:09:26] Now, what are the headers of the associated loops?
+[00:09:26 -> 00:09:28] It's easy.
+[00:09:28 -> 00:09:30] The header of the first back edge is just B2.
+[00:09:30 -> 00:09:32] The header of the loop associated with the first back edge
+[00:09:32 -> 00:09:35] is just B2, B3, and B2.
+[00:09:35 -> 00:09:38] We can see that there are two loops here
+[00:09:38 -> 00:09:39] that have the same header.
+[00:09:39 -> 00:09:41] The first and the third loop back edges
+[00:09:41 -> 00:09:42] actually have the same header,
+[00:09:42 -> 00:09:44] because they're going back to B2.
+[00:09:44 -> 00:09:45] And how to handle this situation,
+[00:09:45 -> 00:09:48] we're going to talk about very soon.
+[00:09:48 -> 00:09:49] All right, so what is the header?
+[00:09:49 -> 00:09:50] Of B5 to B2, B2.
+[00:09:50 -> 00:09:52] Header of B4 to B3, B3.
+[00:09:52 -> 00:09:55] Header of B2 to B2, B2.
+[00:09:55 -> 00:09:57] What are the corresponding natural loops?
+[00:09:58 -> 00:09:59] That's also easy.
+[00:09:59 -> 00:10:03] The natural loop of B5 to B2 are B2,
+[00:10:03 -> 00:10:04] plus all the nodes that can reach B5
+[00:10:04 -> 00:10:06] without going through B2.
+[00:10:06 -> 00:10:08] So if I look at this, B2.
+[00:10:08 -> 00:10:10] So B2, all the nodes that can reach B5.
+[00:10:10 -> 00:10:12] So B3 can reach B5 without going through B2.
+[00:10:12 -> 00:10:14] B4 can reach B5 without going through B2.
+[00:10:14 -> 00:10:17] But B1 cannot reach B5 without going through B2.
+[00:10:17 -> 00:10:19] So it's B2, B3, B4, B5.
+[00:10:19 -> 00:10:22] Now let's look at B4 to B3.
+[00:10:22 -> 00:10:23] So this particular thing.
+[00:10:23 -> 00:10:26] What are all the nodes that can reach B4
+[00:10:26 -> 00:10:27] without going through B3?
+[00:10:28 -> 00:10:31] Actually, B3 is the immediate dominator of B4.
+[00:10:31 -> 00:10:33] And because B3 is the immediate dominator,
+[00:10:33 -> 00:10:35] the only node that can reach B4
+[00:10:35 -> 00:10:37] without going through B3 is B4.
+[00:10:37 -> 00:10:39] And so the answer is B4.
+[00:10:39 -> 00:10:41] And then we also include the B3 in the natural loop.
+[00:10:41 -> 00:10:43] So it's B3 comma B4.
+[00:10:43 -> 00:10:46] Similarly, what's the natural loop of B2?
+[00:10:46 -> 00:10:48] Well, it's just B2, right?
+[00:10:48 -> 00:10:50] Because there is no node that can reach B2
+[00:10:50 -> 00:10:51] without going through B2.
+[00:10:51 -> 00:10:54] And so the natural loop is just the header
+[00:10:54 -> 00:10:56] of that package.
+[00:10:56 -> 00:10:59] All right, so in this particular example,
+[00:10:59 -> 00:11:01] we could figure out what are the natural loops.
+[00:11:01 -> 00:11:05] And so these are three different natural loops, all right?
+[00:11:05 -> 00:11:08] And two of them have the same header.
+[00:11:09 -> 00:11:11] The first and the third one have the same header.
+[00:11:11 -> 00:11:15] The second one has a different header, which is B3.
+[00:11:15 -> 00:11:16] All right.
+[00:11:16 -> 00:11:21] So notice that some of the loops,
+[00:11:21 -> 00:11:22] some of the loops are completely contained
+[00:11:22 -> 00:11:23] in the other loop.
+[00:11:23 -> 00:11:26] B3 comma B4 is completely contained
+[00:11:26 -> 00:11:30] inside B2, B3, B4, B5, all right?
+[00:11:30 -> 00:11:32] So there are three loops,
+[00:11:32 -> 00:11:36] and some are completely contained in the other loop.
+[00:11:36 -> 00:11:39] Similarly, you can say that B2 is completely contained
+[00:11:39 -> 00:11:41] in B2, B3, B4, B5.
+[00:11:41 -> 00:11:42] And so we use the term nested.
+[00:11:42 -> 00:11:46] So some loops are nested within other loops.
+[00:11:46 -> 00:11:47] And this nesting can, I mean,
+[00:11:47 -> 00:11:48] although this example is just showing
+[00:11:48 -> 00:11:50] one level of nesting, this could be recursive.
+[00:11:50 -> 00:11:53] For example, there could be three levels of nesting.
+[00:11:53 -> 00:11:55] So the top-level loop,
+[00:11:55 -> 00:11:57] there's a loop that's nested within it,
+[00:11:57 -> 00:11:58] and then there could be a loop
+[00:11:58 -> 00:12:00] that's nested further within it, right?
+[00:12:00 -> 00:12:04] And how am I deciding if something is nested or not?
+[00:12:04 -> 00:12:08] Well, if the natural loop of one,
+[00:12:08 -> 00:12:11] if the natural loop associated with a back edge is,
+[00:12:11 -> 00:12:13] the nodes in that are a subset
+[00:12:13 -> 00:12:16] of the nodes of another natural loop,
+[00:12:16 -> 00:12:17] then we say that the first natural loop
+[00:12:17 -> 00:12:21] is nested within the second natural loop.
+[00:12:22 -> 00:12:24] So here's an interesting fact.
+[00:12:24 -> 00:12:28] If two loops do not have the same header,
+[00:12:28 -> 00:12:30] then there are only two possibilities, all right?
+[00:12:30 -> 00:12:34] And that's coming from the properties of the natural loop,
+[00:12:34 -> 00:12:35] as we have defined the natural loop.
+[00:12:35 -> 00:12:39] Either these two natural loops are disjoint,
+[00:12:39 -> 00:12:42] which means that the nodes of one natural loop
+[00:12:42 -> 00:12:44] and the nodes of the other natural loop
+[00:12:44 -> 00:12:45] have nothing in common.
+[00:12:45 -> 00:12:47] In other words, if I take an intersection
+[00:12:47 -> 00:12:50] of these two sets, I'm going to get the empty set.
+[00:12:51 -> 00:12:53] Or one is entirely contained,
+[00:12:53 -> 00:12:58] or in other words, nested within the other, all right?
+[00:12:58 -> 00:13:00] So if I just go back to my example,
+[00:13:02 -> 00:13:04] if I look at these two loops,
+[00:13:04 -> 00:13:06] the second and the third loop,
+[00:13:06 -> 00:13:07] they have different headers, right?
+[00:13:07 -> 00:13:10] The second loop has the header B3,
+[00:13:10 -> 00:13:12] the third loop has the header B2.
+[00:13:12 -> 00:13:15] And indeed, the two loops are disjoint.
+[00:13:15 -> 00:13:17] They don't have anything in common.
+[00:13:17 -> 00:13:20] Whereas if I look at the first and the second,
+[00:13:21 -> 00:13:22] they have different headers.
+[00:13:22 -> 00:13:26] The first one has B2 again, and the second one has B3.
+[00:13:26 -> 00:13:29] And one is completely nested within the other, right?
+[00:13:29 -> 00:13:34] So B3, B4 is a subset of B2, B3, B4, B5, right?
+[00:13:34 -> 00:13:35] So it's an interesting fact.
+[00:13:35 -> 00:13:38] Once again, I'm not providing a proof,
+[00:13:38 -> 00:13:40] but I'll let you do that on your own
+[00:13:40 -> 00:13:41] if you are interested.
+[00:13:41 -> 00:13:43] But it's an interesting fact that
+[00:13:43 -> 00:13:46] if the headers are different,
+[00:13:46 -> 00:13:50] then one loop is either disjoint from the other loop,
+[00:13:50 -> 00:13:54] or one loop is completely nested within the other loop.
+[00:13:54 -> 00:13:55] And this is a very, very interesting
+[00:13:55 -> 00:13:57] and important property.
+[00:13:57 -> 00:13:59] And so based on this property,
+[00:13:59 -> 00:14:01] we can start defining inner loops.
+[00:14:01 -> 00:14:03] So we can say that this is the innermost loop.
+[00:14:03 -> 00:14:04] What is the innermost loop?
+[00:14:04 -> 00:14:06] These are the loops that contain no other loop, right?
+[00:14:06 -> 00:14:08] So now that we have the notion
+[00:14:08 -> 00:14:09] of something is nested in something,
+[00:14:09 -> 00:14:10] so we can draw these,
+[00:14:10 -> 00:14:13] we can kind of have relationships
+[00:14:13 -> 00:14:14] between different loops,
+[00:14:14 -> 00:14:16] between different natural loops
+[00:14:16 -> 00:14:18] if they all have those different headers.
+[00:14:18 -> 00:14:19] And then we can say,
+[00:14:19 -> 00:14:21] oh, this loop is nested within this loop.
+[00:14:21 -> 00:14:24] And if we can draw these edges
+[00:14:24 -> 00:14:25] between these two loops,
+[00:14:25 -> 00:14:27] and if there is no,
+[00:14:29 -> 00:14:32] if one of the loops does not have any loop
+[00:14:32 -> 00:14:34] that is nested within it,
+[00:14:34 -> 00:14:37] then we say that that is the innermost loop.
+[00:14:37 -> 00:14:38] Okay, so inner loops are the ones
+[00:14:38 -> 00:14:40] that contain no other loop.
+[00:14:40 -> 00:14:42] So for example, in our previous example,
+[00:14:42 -> 00:14:44] B4 to B3 is an inner loop.
+[00:14:44 -> 00:14:47] Similarly, B2 to B2 is an inner loop.
+[00:14:47 -> 00:14:50] But B5 to B2 is not an inner loop
+[00:14:50 -> 00:14:52] because it contains other loops.
+[00:14:53 -> 00:14:54] All right.
+[00:14:54 -> 00:14:59] Now, but this particular fact had this precondition
+[00:14:59 -> 00:15:01] which said that the two loops
+[00:15:01 -> 00:15:02] should not have the same header.
+[00:15:02 -> 00:15:05] What if the two loops have the same header?
+[00:15:05 -> 00:15:06] And in fact, our example has two loops
+[00:15:06 -> 00:15:08] which have the same header.
+[00:15:08 -> 00:15:09] And in this case,
+[00:15:11 -> 00:15:12] so basically we basically,
+[00:15:12 -> 00:15:13] let's look at,
+[00:15:13 -> 00:15:15] this is the slide that's showing
+[00:15:15 -> 00:15:17] what is nested within what.
+[00:15:17 -> 00:15:19] So these two loops, second and third,
+[00:15:19 -> 00:15:22] are disjoint because they have the same different headers.
+[00:15:22 -> 00:15:25] This loop, B4 to B3,
+[00:15:25 -> 00:15:28] B3 comma B4 is nested within B5, B2.
+[00:15:28 -> 00:15:30] And I'm also showing that B2 to B2
+[00:15:30 -> 00:15:32] is nested within the first one,
+[00:15:32 -> 00:15:33] but I'm going to clarify this.
+[00:15:33 -> 00:15:35] Let me just actually remove this particular line
+[00:15:35 -> 00:15:39] and let's just retain this particular relationship.
+[00:15:39 -> 00:15:41] And so if I say B3 comma B4
+[00:15:41 -> 00:15:44] is nested within B2, B3, B4, B5.
+[00:15:45 -> 00:15:47] But I won't really talk about B2 to B2
+[00:15:47 -> 00:15:50] because here, they don't have the same,
+[00:15:51 -> 00:15:52] they don't have different headers.
+[00:15:52 -> 00:15:55] B2 to B2 does not have a different header
+[00:15:55 -> 00:15:56] from B5 to B2.
+[00:15:56 -> 00:15:57] In fact, they share the same header.
+[00:15:57 -> 00:16:01] So we're going to talk about that in the next slide.
+[00:16:01 -> 00:16:03] So far, I've only talked about loops,
+[00:16:03 -> 00:16:05] relationships, nesting relationships,
+[00:16:05 -> 00:16:07] and disjointness relationship between loops
+[00:16:07 -> 00:16:08] when the loops have different headers.
+[00:16:08 -> 00:16:10] So for example, the second and the third loop,
+[00:16:10 -> 00:16:11] I can create a relationship
+[00:16:11 -> 00:16:13] because they actually have different headers
+[00:16:13 -> 00:16:16] and the relationship is that they are disjoint.
+[00:16:16 -> 00:16:17] What are the inner loops?
+[00:16:17 -> 00:16:20] Very clear that B4 to B3 is an inner loop
+[00:16:20 -> 00:16:23] because it doesn't contain any other loop.
+[00:16:23 -> 00:16:25] We're going to look at B2 to B2 also very soon.
+[00:16:26 -> 00:16:31] All right, so what about loops with the same header?
+[00:16:31 -> 00:16:34] So here are example structures
+[00:16:34 -> 00:16:36] where there could be loops with the same header.
+[00:16:36 -> 00:16:38] This is a structure we saw in our example.
+[00:16:38 -> 00:16:41] Let's say there are two basic blocks.
+[00:16:41 -> 00:16:42] There's a loop from the second basic,
+[00:16:42 -> 00:16:44] there's a package from the second basic block
+[00:16:44 -> 00:16:45] to the first basic block,
+[00:16:45 -> 00:16:46] but there's also a package
+[00:16:46 -> 00:16:50] from the first basic block to itself.
+[00:16:50 -> 00:16:52] Now here's another example where there are two loops
+[00:16:52 -> 00:16:54] which share the same header.
+[00:16:54 -> 00:16:55] There are let's say three basic blocks
+[00:16:55 -> 00:16:59] and the first basic block goes to the second one
+[00:16:59 -> 00:17:00] and there are two outgoing edges
+[00:17:00 -> 00:17:01] from the first basic block
+[00:17:01 -> 00:17:04] and both of them are looping back
+[00:17:04 -> 00:17:06] to the first basic block.
+[00:17:06 -> 00:17:10] So there are actually two back edges in both situations.
+[00:17:11 -> 00:17:14] Both the back edges are associated with natural loops.
+[00:17:15 -> 00:17:17] Okay, first of all, why am I calling them back edges?
+[00:17:17 -> 00:17:20] Because I know that destination dominates the source.
+[00:17:20 -> 00:17:21] All right, it's not just about a cycle.
+[00:17:21 -> 00:17:23] I'm actually being able to reason
+[00:17:23 -> 00:17:27] about the domination of the source of that edge
+[00:17:27 -> 00:17:29] by the destination of the edge.
+[00:17:29 -> 00:17:31] So both these examples,
+[00:17:31 -> 00:17:33] the destination dominates the source
+[00:17:33 -> 00:17:34] and so this is good.
+[00:17:35 -> 00:17:37] Also in both these examples,
+[00:17:37 -> 00:17:40] the two loops share the same header, all right?
+[00:17:40 -> 00:17:41] So first of all,
+[00:17:41 -> 00:17:45] what is the natural loop of this particular edge here?
+[00:17:45 -> 00:17:49] So let me just say this is B1, B2 and B3.
+[00:17:49 -> 00:17:52] So there are two back edges, B1 to B2
+[00:17:54 -> 00:17:57] and then there is another back edge, B1 to, sorry.
+[00:17:57 -> 00:18:01] The two back edges, B2 to B1 and B3 to B1
+[00:18:02 -> 00:18:06] and each of them is associated with the loop.
+[00:18:06 -> 00:18:08] So the loop is B1, B2
+[00:18:10 -> 00:18:13] and the loop here is B1, B3.
+[00:18:14 -> 00:18:17] Natural loop for this particular back edge.
+[00:18:17 -> 00:18:19] And now I want to say, oh, which one is the inner loop?
+[00:18:19 -> 00:18:21] Now it's not clear at all which one is the inner loop
+[00:18:21 -> 00:18:24] because now we have a situation where
+[00:18:24 -> 00:18:28] one of the loops is neither disjoined nor contained.
+[00:18:28 -> 00:18:31] B1, B2 is not disjoined from B1, B3.
+[00:18:31 -> 00:18:35] B1, B2 is not contained within B1, B3
+[00:18:35 -> 00:18:36] and this situation is happening
+[00:18:36 -> 00:18:40] because they share the same loop header.
+[00:18:41 -> 00:18:43] And so in this case, it is hard to say
+[00:18:43 -> 00:18:44] which is the inner loop
+[00:18:44 -> 00:18:47] because there is no kind of containment
+[00:18:47 -> 00:18:50] or disjoined edge relationship between the two loops.
+[00:18:50 -> 00:18:52] In the first case, one could argue that,
+[00:18:52 -> 00:18:55] oh, it's the smaller loop that's the inner loop
+[00:18:55 -> 00:18:57] but even there, the reasoning is slightly flawed
+[00:18:57 -> 00:19:00] because I could always split,
+[00:19:00 -> 00:19:03] let's say I decided to do some kind of loop,
+[00:19:03 -> 00:19:05] some kind of partial redundancy elimination
+[00:19:06 -> 00:19:07] and so I basically decided to add
+[00:19:07 -> 00:19:10] some kind of basic block on this back edge.
+[00:19:10 -> 00:19:12] Now, as soon as I do that,
+[00:19:12 -> 00:19:17] then this structure starts resembling the second structure.
+[00:19:22 -> 00:19:25] And so it's not precise here to say
+[00:19:25 -> 00:19:29] that the loop formed by B1's back edge
+[00:19:29 -> 00:19:34] is a subset of the loop formed by B2, B1's back edge.
+[00:19:35 -> 00:19:37] B2 to B1, right?
+[00:19:37 -> 00:19:39] So the loop formed by B1 to B1
+[00:19:39 -> 00:19:42] is not a subset of the loop formed by B2 to B1
+[00:19:42 -> 00:19:44] because some kind of transformation
+[00:19:44 -> 00:19:46] could have added a basic block here
+[00:19:46 -> 00:19:48] in which case that kind of reasoning
+[00:19:48 -> 00:19:50] would have also failed.
+[00:19:51 -> 00:19:54] So that idea that something is nested within something
+[00:19:54 -> 00:19:58] can only work if the loops had disjoint headers.
+[00:19:58 -> 00:19:59] If they have the same header,
+[00:19:59 -> 00:20:01] then we are having some issues.
+[00:20:01 -> 00:20:03] We are seeing examples where one loop
+[00:20:03 -> 00:20:07] is neither contained in the other loop, right?
+[00:20:07 -> 00:20:10] So let me just write this nicely so there's no confusion.
+[00:20:10 -> 00:20:12] This is B1, B2, right?
+[00:20:12 -> 00:20:13] And this is B1, B3.
+[00:20:13 -> 00:20:17] So B1, B2 is neither disjoint from B1, B3
+[00:20:17 -> 00:20:20] and B1, B2 is neither contained within B1, B3.
+[00:20:20 -> 00:20:22] And so we have the situation,
+[00:20:22 -> 00:20:27] we can't reason about the nesting behavior
+[00:20:28 -> 00:20:29] in these kind of loops.
+[00:20:29 -> 00:20:31] So how do we deal with this?
+[00:20:31 -> 00:20:33] Firstly, it is very important
+[00:20:33 -> 00:20:35] to understand the nesting behavior of the program
+[00:20:35 -> 00:20:38] because that way we can do more optimizations,
+[00:20:38 -> 00:20:40] it lends greater structure to the program.
+[00:20:40 -> 00:20:43] And so when the two loops,
+[00:20:43 -> 00:20:45] two natural loops formed by two different back edges
+[00:20:45 -> 00:20:47] share the same header,
+[00:20:47 -> 00:20:48] it's not possible,
+[00:20:48 -> 00:20:51] it's hard to tell which is the inner loop.
+[00:20:51 -> 00:20:53] And so one solution,
+[00:20:53 -> 00:20:56] and this is the typical solution that is employed,
+[00:20:56 -> 00:20:58] is that you just combine them as a single loop.
+[00:20:58 -> 00:21:01] Or just consider these two different back,
+[00:21:01 -> 00:21:03] the loops formed by these two different back edges
+[00:21:04 -> 00:21:05] combine them into a single loop.
+[00:21:06 -> 00:21:10] So to see that with our original example,
+[00:21:10 -> 00:21:12] we had three back edges
+[00:21:13 -> 00:21:15] and the first and the third back edge
+[00:21:15 -> 00:21:18] actually shared the same header.
+[00:21:18 -> 00:21:20] And so I'm suggesting that we're going to combine
+[00:21:20 -> 00:21:21] these two loops into a single loop.
+[00:21:21 -> 00:21:25] So we're gonna combine the loops formed by B2 to B2
+[00:21:25 -> 00:21:27] and B5 to B2 into a single loop
+[00:21:27 -> 00:21:28] and that loop is going to contain
+[00:21:28 -> 00:21:30] the union of the two natural loops,
+[00:21:30 -> 00:21:34] which is again going to be B2, B3, B4, B5.
+[00:21:34 -> 00:21:35] And now we can say,
+[00:21:35 -> 00:21:38] now we basically say behave as though
+[00:21:38 -> 00:21:40] there are only two loops, all right?
+[00:21:40 -> 00:21:41] Even though there are three back edges,
+[00:21:41 -> 00:21:43] there are only two loops
+[00:21:43 -> 00:21:45] and now we can talk about nesting behavior,
+[00:21:45 -> 00:21:48] we can say that the loop formed by B3 to B4
+[00:21:48 -> 00:21:51] is nested within this combined loop,
+[00:21:51 -> 00:21:52] this combination loop, all right?
+[00:21:52 -> 00:21:55] And the reason we are basically combining once again
+[00:21:55 -> 00:21:59] is because it's very hard to have a nesting relationship
+[00:21:59 -> 00:22:02] between the loop formed by B2 to B2 and B5 to B2
+[00:22:02 -> 00:22:07] because in general, if they share the same header
+[00:22:07 -> 00:22:09] and the canonical example for that
+[00:22:09 -> 00:22:11] is this example that we saw.

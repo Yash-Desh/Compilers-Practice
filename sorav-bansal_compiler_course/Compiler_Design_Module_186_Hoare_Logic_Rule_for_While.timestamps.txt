@@ -1,0 +1,263 @@
+Title: Compiler Design Module 186 : Hoare Logic Rule for While
+Video ID: i_D5SDIvp60
+Detected language: en
+------------------------------------------------------------
+
+[00:00:00 -> 00:00:07] So now we are ready to discuss the fifth and final rule of whole logic which is the while
+[00:00:07 -> 00:00:14] construct. Recall that we've been discussing all the different rules, verification rule conditions
+[00:00:14 -> 00:00:18] that should be generated for different imperative language constructs like if then else,
+[00:00:18 -> 00:00:24] assignment, sequence. We also discussed one consequence rule that basically helps us
+[00:00:24 -> 00:00:31] generalize to a larger set of pre-condition, post-condition pairs or more specifically
+[00:00:31 -> 00:00:36] whole triples which basically represent partial correctness conditions.
+[00:00:38 -> 00:00:45] So here's the fifth rule which is again says when can I have a partial correctness condition
+[00:00:46 -> 00:00:51] across a loop and so the partial correctness condition is again represented as a whole
+[00:00:51 -> 00:01:00] triple. So it says that across a loop which is of the form while bc where b is the Boolean condition
+[00:01:00 -> 00:01:07] and c is some body of the while loop then this whole triple holds which is p
+[00:01:08 -> 00:01:16] this whole program and p and not b holds. If this holds which is written above
+[00:01:16 -> 00:01:23] the top of the line in this inference rule. Now recall that we have been discussing how we can
+[00:01:23 -> 00:01:30] construct whole triples constructively and so this is the only rule that we have
+[00:01:30 -> 00:01:35] and this is the first rule and the only rule that we'll have for constructing a whole
+[00:01:35 -> 00:01:40] triple across a loop, a while loop in this case. I'm specifically considering a while loop
+[00:01:40 -> 00:01:44] because it generally covers all different kinds of loops. Of course there are other kinds of
+[00:01:44 -> 00:01:48] loops that can be formed through go to statements and other things. We are not really discussing
+[00:01:48 -> 00:01:53] those kind of syntaxes. We have used a very simple imperative language which supports if
+[00:01:53 -> 00:01:59] then else and while and we one could generalize it to a larger language as well. The basic
+[00:01:59 -> 00:02:07] concepts remain the same. So this is the first rule that actually allows us to construct
+[00:02:07 -> 00:02:13] a whole triple across a while construct and the condition for that is that this whole triple
+[00:02:13 -> 00:02:19] can be constructed if this whole triple is available through the other four rules that we
+[00:02:19 -> 00:02:24] have or maybe including this rule. If I'm able to construct this whole triple then this whole
+[00:02:24 -> 00:02:30] triple will also hold and that's the constructive way of defining what whole triples hold.
+[00:02:30 -> 00:02:37] So let's look at this antecedent which is the stuff above the line. So it says if p and b
+[00:02:38 -> 00:02:47] cp holds which means if p and b is true before c and then you execute c then p holds then
+[00:02:48 -> 00:02:52] this whole thing holds which is if p is true then you execute the loop the loop continues
+[00:02:52 -> 00:02:57] it if it does not terminate then you know I can put anything here but recall this is a
+[00:02:57 -> 00:03:02] partial correctness condition. So if whenever the loop terminates then this will also hold.
+[00:03:02 -> 00:03:07] So if this whole triple holds then this whole triple also holds.
+[00:03:08 -> 00:03:13] All right so what is the you know what is the intuition behind it? Why do we have this
+[00:03:13 -> 00:03:18] inference rule? Well you can see that you know p is something that holds at the beginning of
+[00:03:18 -> 00:03:24] the loop p is also something that holds at the end of the loop and there's additionally
+[00:03:24 -> 00:03:28] one more thing that holds at the end of the loop which is not b because you know we
+[00:03:28 -> 00:03:32] know that we have exited the loop and the only reason you will exit this loop is when
+[00:03:32 -> 00:03:39] the Boolean condition evaluates to false. So p holds through at the beginning of the loop
+[00:03:39 -> 00:03:45] and the end of the loop. What does this say? But this is also saying so what does this say?
+[00:03:45 -> 00:03:52] It says if p holds if p and b hold at the beginning of one iteration of the loop
+[00:03:53 -> 00:03:58] then p also holds at the end of that iteration. So if p and b hold at the beginning
+[00:03:58 -> 00:04:02] of an iteration then p holds at the end of the iteration. In other words,
+[00:04:03 -> 00:04:06] notice that when I'm at the beginning of the iteration which is at this point
+[00:04:06 -> 00:04:10] then b anyway holds because you know I just checked b and so if I reached here I've
+[00:04:10 -> 00:04:17] decided to continue in the loop. So b anyway holds and p here basically holds and you know
+[00:04:17 -> 00:04:21] assuming p and b hold then after one iteration p holds again. So in other words
+[00:04:21 -> 00:04:27] p can be thought of as a loop invariant. p is a loop invariant at the beginning of the
+[00:04:27 -> 00:04:33] loop body all right and if so basically it's saying that if p is a loop invariant
+[00:04:34 -> 00:04:39] and you can for the body of the loop then if p holds at the beginning of the loop then p
+[00:04:39 -> 00:04:43] also holds at the end of the loop and that's not very hard to see because p holds at after
+[00:04:43 -> 00:04:48] every iteration of the loop and so whenever the loop exists then also p holds. Additionally
+[00:04:48 -> 00:04:53] we have these an extra kind of post condition which says not b that's because you know the
+[00:04:53 -> 00:05:00] only reason we exit the loop is when b is false. Moreover when we actually try to prove that p is
+[00:05:00 -> 00:05:06] a loop invariant we have an extra condition that is available to us which is that b holds
+[00:05:06 -> 00:05:11] at the beginning of the loop iteration because the loop we have reached the beginning of the
+[00:05:11 -> 00:05:18] loop iteration only because the check evaluated the check b evaluated to true. All right so
+[00:05:18 -> 00:05:23] let's look at an example of the application of this rule and so here is an example of a
+[00:05:23 -> 00:05:29] while loop program that we have seen earlier it says while x is not equal to zero x is x minus one
+[00:05:29 -> 00:05:35] x gets x minus one and the whole triple that we are interested in proving is that if initially
+[00:05:35 -> 00:05:39] x is a non-negative number which is x is greater than equal to zero then at the end of
+[00:05:39 -> 00:05:44] the program x equals zero so pretty simple program pretty simple property just basically
+[00:05:44 -> 00:05:49] saying that just it just counts down x all the way to zero and we need to prove this whole
+[00:05:49 -> 00:05:54] triple and recall once again that the only rule that we the only inference rule that we can apply
+[00:05:54 -> 00:05:59] across a rule across a while loop is basically this fifth inference rule for the while loop
+[00:05:59 -> 00:06:04] and so I'm going to apply this try and apply this rule so when I pattern match this program
+[00:06:04 -> 00:06:13] with this then you know maybe I can say p is x is greater than equal to zero and you know
+[00:06:13 -> 00:06:19] b is x is not equal to zero and p and not b would become x is greater than equal to zero
+[00:06:19 -> 00:06:24] and not of x is not equal to zero becomes x equals zero so x is greater than equal to
+[00:06:24 -> 00:06:29] zero and x equals zero just becomes x equals zero so actually it pattern matches nicely
+[00:06:29 -> 00:06:34] so yeah here is the slide which shows this which is that if I consider x is greater
+[00:06:34 -> 00:06:41] than equal to zero as p then q is nothing but q can be actually q is just equivalent to p and
+[00:06:41 -> 00:06:45] not b because x equals zero is the same as saying p which is x is greater than equal to zero and
+[00:06:46 -> 00:06:53] not b which is x equals zero so so this pattern matches nicely and so I will be able to prove
+[00:06:53 -> 00:06:58] this if I am able to prove this right if I am able to construct this for the body of the loop
+[00:06:58 -> 00:07:02] so what does what does this evaluate to based on this pattern matching for p
+[00:07:02 -> 00:07:08] and b well I'm going to say if x is greater than equal to zero then if I execute x is
+[00:07:08 -> 00:07:15] colon equal to x minus one then x is still greater than equal to zero but that's not really
+[00:07:15 -> 00:07:18] true because if x is greater than equal to zero x could have been zero and then I decrement it
+[00:07:18 -> 00:07:27] then x can actually become negative so here is what it will turn out to be it's p and b so here
+[00:07:27 -> 00:07:32] the and b actually helps us notice that b is basically x is not equal to zero so this
+[00:07:32 -> 00:07:36] becomes x is not equal to zero I've written greater than but more precise thing would have
+[00:07:36 -> 00:07:43] been x is not equal to zero and say if p and b hold then you execute one iteration one loop
+[00:07:43 -> 00:07:49] iteration which just executes x equals x minus one then p holds so is it possible is it is
+[00:07:49 -> 00:07:53] this whole triple true well let's see if x is greater than equal to zero and x is not equal
+[00:07:53 -> 00:07:59] to zero then x is strictly greater than zero and then I decrement it by one so at most
+[00:07:59 -> 00:08:03] it will be either still strictly greater than zero or it will be equal to zero and so indeed
+[00:08:03 -> 00:08:08] this whole triple holds and because this whole triple holds we can apply the Weyl rule to show
+[00:08:08 -> 00:08:14] that this whole triple also holds now that was an example where it was really easy I mean
+[00:08:14 -> 00:08:18] whatever was the actual original problem that was given to us which was I had to show that
+[00:08:18 -> 00:08:23] you know this was p and this was this became p and not b and you know it matched really
+[00:08:23 -> 00:08:28] nicely and I was able to find the loop invariant just by this pattern matching
+[00:08:28 -> 00:08:32] in this particular example but now I'm going to show you an example where just this pattern
+[00:08:32 -> 00:08:37] matching does not work and that's why you know loop finding loop invariant is a hard problem and
+[00:08:37 -> 00:08:42] that's one of the most you know that's one of the most that's one of the undecidable problems
+[00:08:42 -> 00:08:48] in program verification so let's see here is a program which says while n is not equal to zero
+[00:08:48 -> 00:08:55] sum equals sum plus n n equals n minus one so not only does it decrement n on every
+[00:08:55 -> 00:09:01] iteration but it also accumulates into sum and the whole triple that I'm interested in
+[00:09:01 -> 00:09:10] proving is that if initially sum equals zero and n naught and n equals some initial value n naught
+[00:09:10 -> 00:09:14] and n naught is greater than equal to zero so n naught is non-negative then at the end of
+[00:09:14 -> 00:09:20] this program the sum is going to be n naught into n naught plus one by two this is the
+[00:09:20 -> 00:09:26] this is the arithmetic progression I mean you can get this kind of mathematical formula from
+[00:09:27 -> 00:09:31] the arithmetic progression if n naught is greater than equal to zero then I'm just
+[00:09:31 -> 00:09:35] basically doing this doing n plus n minus one plus n minus two plus n minus three
+[00:09:36 -> 00:09:41] all the way up till I reach zero and that's going to be n naught into n naught plus one
+[00:09:41 -> 00:09:47] by two now I want to prove this this whole triple and I'm going to once again try and
+[00:09:47 -> 00:09:53] pattern match with the while rule and say okay maybe this whole thing is p and maybe this
+[00:09:53 -> 00:10:00] whole thing is p and not b where b is basically n not equal to zero so let's see if it pattern
+[00:10:00 -> 00:10:07] matches so our first thing is what is p and not b so p and not b is basically this whole thing
+[00:10:07 -> 00:10:12] which is sum equals zero and n equals n naught and n naught is greater than equal to zero
+[00:10:12 -> 00:10:18] and what is not b and not b is basically n equals zero so p and not b just becomes this
+[00:10:18 -> 00:10:24] whole thing and if you just kind of see look at this and simplify this n equals zero basically
+[00:10:24 -> 00:10:29] means n naught is also equal to zero and sum is also equal to zero so p and not b is just sum
+[00:10:29 -> 00:10:37] equal everything is zero sum is zero n naught is zero and n is zero and and from there I
+[00:10:37 -> 00:10:47] can actually show that q actually holds which is p and not b actually implies q because
+[00:10:47 -> 00:10:52] recall that q is sum equals n naught into n naught plus one by two that's what I need to prove
+[00:10:52 -> 00:10:59] and so p and not b implies q which basically means you know I can actually use my consequence
+[00:10:59 -> 00:11:04] rule and use p and not b as q prime and then say okay because q prime implies q
+[00:11:04 -> 00:11:10] maybe I cannot prove you know I can actually prove a stronger condition and maybe then pattern
+[00:11:10 -> 00:11:16] match so instead of proving this instead of proving this I actually try to prove this whole
+[00:11:16 -> 00:11:24] thing here which is sum equals zero n equals zero n naught equals zero now of course this is
+[00:11:24 -> 00:11:29] not going to be true and but you know this is what the pattern matching at least gives us
+[00:11:29 -> 00:11:34] and if I pattern match like this then this is what I get at the end because that's what I want
+[00:11:34 -> 00:11:38] p and not b assuming I consider this whole thing as p and then when I say this is p and
+[00:11:38 -> 00:11:45] not b then yes indeed you know this p and not b pattern matches with q in the sense that
+[00:11:45 -> 00:11:50] I need to apply an extra consequence rule because this whole thing implies q and that you know that
+[00:11:50 -> 00:11:56] help that is okay that is acceptable from our consequence rule but now the other thing I need
+[00:11:56 -> 00:12:03] to prove is this antecedent so if I use this as p and this is b then is my antecedent true
+[00:12:03 -> 00:12:09] which is is this p actually a loop invariant well intuitively this p is not a loop invariant
+[00:12:09 -> 00:12:13] because notice that p is basically sum also saying sum equals zero so how can that be
+[00:12:13 -> 00:12:18] a loop invariant when actually I am doing sum equals sum plus n but let's just see that more
+[00:12:19 -> 00:12:26] formally if I say p and b initially and then I execute one body of the one iteration of the
+[00:12:26 -> 00:12:34] loop body which is sum equals sum plus n n equals n minus one then this is b so p and b
+[00:12:34 -> 00:12:39] which is n is not equal to zero then can I prove that p still holds which is sum is still
+[00:12:39 -> 00:12:43] equal to zero the answer is no because notice that if sum is equal to zero and n is not equal
+[00:12:43 -> 00:12:50] to zero then sum equals sum plus n will likely be not equal to zero and so I cannot show that
+[00:12:50 -> 00:12:54] sum will be still equal to zero after one iteration of the loop so in this example I
+[00:12:54 -> 00:12:59] mean in my previous example I could simply pattern match whatever was the p with with
+[00:12:59 -> 00:13:05] this in this rule and I could actually apply this rule because this the antecedent was also
+[00:13:05 -> 00:13:10] coming out to be provable but in this case the antecedent which is this thing is not coming out
+[00:13:10 -> 00:13:15] to be provable and so it's not okay to be I cannot apply this rule so what can I apply
+[00:13:15 -> 00:13:21] how can I basically you know you still use this rule and still be able to prove this whole
+[00:13:21 -> 00:13:27] triple which is which is you know p is this and q is this and this is my y loop so the
+[00:13:27 -> 00:13:33] answer to that is I need to find some loop invariant p prime such that it is actually a
+[00:13:33 -> 00:13:41] loop invariant which means p prime and b if c which is the loop body p prime hold which means
+[00:13:41 -> 00:13:46] if p prime and b is true at the beginning of the loop body and you execute one iteration of
+[00:13:46 -> 00:13:52] the loop body then p prime holds at the end of the loop body if I can show that then
+[00:13:53 -> 00:13:59] and further I can show that p implies p prime so I'm using my consequence rule so not only
+[00:13:59 -> 00:14:04] do I find a p prime that satisfies this condition which is this coming from this antecedent
+[00:14:04 -> 00:14:08] but I also use my consequence rule to say okay the p prime should also satisfy the fact
+[00:14:08 -> 00:14:14] that p implies p prime moreover it should satisfy the fact that p prime and not b
+[00:14:14 -> 00:14:20] is kind of either implies q or should imply q and once again I'm using the consequence
+[00:14:20 -> 00:14:26] rule and I'm calling that q prime right so basically I'm saying that I need to find some
+[00:14:26 -> 00:14:31] p prime such that this becomes p prime this becomes p prime this becomes p prime this becomes
+[00:14:31 -> 00:14:39] p prime and then whatever I intended to prove it is such that if p primes this p prime and not
+[00:14:39 -> 00:14:45] b hold then p cq will also hold and that that I'm going to apply the consequence rule
+[00:14:45 -> 00:14:51] because I'll have to prove that p implies p prime and p prime and not d implies q where
+[00:14:51 -> 00:14:58] q is this and p is this all right so can I find such a p prime and that's the real question
+[00:14:58 -> 00:15:04] and one you know I'm going to give you the answer we cannot this problem of finding this
+[00:15:04 -> 00:15:09] p prime in general for any general program of course for this particular small program we may
+[00:15:09 -> 00:15:14] be able to implement some tricks or search procedures to identify what should be the p
+[00:15:14 -> 00:15:19] prime but in general for any program identifying this p prime is an undecidable problem so why
+[00:15:19 -> 00:15:24] is this problem so hard well let's try to look at what would p prime be for this particular
+[00:15:24 -> 00:15:29] correctness condition that we are interested in proving and the p prime that we require here
+[00:15:29 -> 00:15:35] is basically this formula in green that I have written which is sum equals n naught minus n
+[00:15:36 -> 00:15:42] into n naught minus n plus one by two and n is greater than equal to zero so this is the
+[00:15:42 -> 00:15:49] whole loop invariant that I can use which is p prime and if I use this as my p prime you will
+[00:15:49 -> 00:15:55] be able to show that it is indeed a loop invariant which means if p prime and b hold at the
+[00:15:55 -> 00:16:00] beginning of a loop body then you execute a loop body then p prime would still hold it's not
+[00:16:00 -> 00:16:07] hard to see this because sum is increasing by n and n is decreasing by one and notice that
+[00:16:07 -> 00:16:12] you know because sum increases by n and n decreases by one you know they're going to
+[00:16:12 -> 00:16:18] actually cancel out each other and you're going to still get the same p prime at the end so once
+[00:16:18 -> 00:16:23] you have p prime the other and you have been able to show that p prime is actually a loop
+[00:16:23 -> 00:16:29] invariant which means you have shown that p prime and b c p prime hold then you have to
+[00:16:29 -> 00:16:36] also show that t implies p prime and p prime and not b implies q right I'm also writing p
+[00:16:36 -> 00:16:43] prime and not b as q prime and in other words q prime implies q all right so and that will also
+[00:16:43 -> 00:16:49] fall out because notice that p imply p is basically saying sum equals zero and n equals
+[00:16:49 -> 00:16:54] n naught is greater than equal to zero now because n equals n naught n naught minus n
+[00:16:54 -> 00:16:58] will just become zero and so this whole thing will become zero sum equals zero so zero equals
+[00:16:58 -> 00:17:04] zero would be true and n is greater than equal to zero is also true because n naught
+[00:17:04 -> 00:17:08] is greater than equal to zero and n equals so p would imply p prime that's my first point
+[00:17:08 -> 00:17:15] and the second point is that p prime and not b would imply q so if I look at p prime and not b
+[00:17:15 -> 00:17:22] is basically saying that n equals zero so when n equals zero sum becomes n naught minus zero
+[00:17:23 -> 00:17:27] that's just n naught and this becomes n naught minus zero plus one that's just n naught plus
+[00:17:27 -> 00:17:35] one divide by two and n is greater than equal to zero n is equal to actually n will be equal to
+[00:17:35 -> 00:17:39] zero so n is greater than equal to zero is also true and so that this that that just becomes n
+[00:17:39 -> 00:17:47] you know p prime and not b becomes will imply that sum equals n naught into n naught plus one
+[00:17:47 -> 00:17:54] by two so yeah once again when I when I say p so the first part was that p implies p prime
+[00:17:54 -> 00:17:59] we've already done that this part is basically saying that this p prime and not b which is n
+[00:17:59 -> 00:18:05] equals zero implies q which is sum equals n naught into n naught plus one by two you can
+[00:18:05 -> 00:18:11] check it for yourself all right so you can see why the example that I've shown previously that
+[00:18:11 -> 00:18:16] the p prime that was required was pretty complicated and it wasn't really possible to
+[00:18:16 -> 00:18:22] derive it either from the original p or from the program structure or anything like that or
+[00:18:22 -> 00:18:28] from q or anything like that and so finding the required p prime or q prime is undecidable
+[00:18:28 -> 00:18:33] but let's understand what is what are some characteristics of the whole logic that I have
+[00:18:33 -> 00:18:37] described so far and there are two ways to describe to kind of characterize any logic
+[00:18:37 -> 00:18:44] one is soundness soundness says that whether this logic only derives true facts so that
+[00:18:44 -> 00:18:49] basically means it no erroneous fact can be derived by whole logic so whatever facts are
+[00:18:49 -> 00:18:54] being constructed out of the five inference rules they actually all hold at runtime which
+[00:18:54 -> 00:18:59] means whatever predicates you actually are generating using the constructive proof rules
+[00:18:59 -> 00:19:04] that I have influenced rules that I've shown earlier the five rules those will actually hold
+[00:19:04 -> 00:19:09] at runtime for all possible executions of the program that's soundness and the other
+[00:19:09 -> 00:19:13] way to say that is that there cannot be any erroneous fact that is derived from these five
+[00:19:13 -> 00:19:19] rules completeness says that all true facts can be derived by whole logic so for example
+[00:19:19 -> 00:19:25] the example I showed which is you know at the end of the loop sum equals n naught into n naught
+[00:19:25 -> 00:19:31] plus one by two now can that be always derived by whole logic well that's questionable because
+[00:19:31 -> 00:19:35] I mean the whole logic is not telling us how to find the loop invariant how to find the
+[00:19:35 -> 00:19:43] p prime and so just the whole logic is not enough to derive all possible true facts I mean
+[00:19:43 -> 00:19:48] it will only derive correct facts that's soundness completeness says that all true
+[00:19:48 -> 00:19:51] facts can be derived through as a whole logic that would have been great it would have been
+[00:19:51 -> 00:19:56] ideal if you know all true facts could be derived by whole logic but and you know we
+[00:19:56 -> 00:20:01] would have all our verification problems solved really easily but that's actually not true
+[00:20:01 -> 00:20:06] whole logic alone is not enough to derive all possible true facts it's not possible I mean
+[00:20:07 -> 00:20:12] although some statements must be true just using whole logic you cannot construct that
+[00:20:12 -> 00:20:17] statement straight away you need more machinery to be able to construct that statement what is
+[00:20:17 -> 00:20:25] that more machinery it is basically that p prime q prime identification which is the loop
+[00:20:25 -> 00:20:32] invariant identification more informally speaking so why why do I say that finding
+[00:20:32 -> 00:20:37] the loop invariant is undecidable well that I've fallen back on the famous result which
+[00:20:37 -> 00:20:42] is called the Godel theorem if the first order logic includes arithmetic which
+[00:20:42 -> 00:20:48] mostly all programs do involve and here I'm talking about integer arithmetic which you
+[00:20:48 -> 00:20:53] know integer can be infinite size and things then there exists no complete axiomatization
+[00:20:53 -> 00:21:00] axiomatization of the implication in the consequence rule so this is a slightly
+[00:21:00 -> 00:21:06] technical way of saying that it's not always possible to find the required p prime and also
+[00:21:06 -> 00:21:11] by consequence the q prime in the consequence rule because notice that when we try in you know
+[00:21:11 -> 00:21:16] when I try to solve the while program I basically try to find some p prime which was a loop
+[00:21:16 -> 00:21:22] invariant and then I applied the consequence rule so what is that p prime such that you
+[00:21:22 -> 00:21:31] know I can basically prove that this whole triple whole is there an algorithm can I can
+[00:21:31 -> 00:21:37] there be an algorithm that always is able to find such a p prime Godel theorem shows that
+[00:21:37 -> 00:21:42] there cannot be any such algorithm that can always find p prime for any arbitrary program
+[00:21:42 -> 00:21:48] and so this is not always possible to find the required p prime and so whole logic will
+[00:21:48 -> 00:21:55] always be incomplete so we have a proof that it will always be incomplete well although that
+[00:21:55 -> 00:21:59] is you know that is a little bit discouraging news here is you know here is another way to
+[00:21:59 -> 00:22:03] kind of characterize the problem which is called relative completeness it says
+[00:22:04 -> 00:22:08] all true facts can be derived by the whole logic so now we are trying to show that
+[00:22:08 -> 00:22:14] whole logic can be complete provided so there are some riders the first order assertion
+[00:22:14 -> 00:22:18] language is rich enough to express the loop invariant so whatever is the first order language
+[00:22:18 -> 00:22:23] by first order I mean the quantifiers are only on the values so using that you know for
+[00:22:23 -> 00:22:28] example in our invariant we are saying for all sum for all n naught sum equals n naught into n
+[00:22:28 -> 00:22:33] naught plus one by two so that is an loop invariant that is expressible in the first
+[00:22:33 -> 00:22:38] order assertion language because the first order assertion language includes quantifiers and it
+[00:22:38 -> 00:22:43] includes arithmetic operations and things like that so indeed the first order assertion language
+[00:22:43 -> 00:22:48] is rich enough to express the loop invariance and the first order theorems needed in the
+[00:22:48 -> 00:22:54] consequence rule are given example by an oracle so if somebody is able to give us
+[00:22:54 -> 00:22:59] what are the required loop invariants like p prime or q prime and things like that which
+[00:22:59 -> 00:23:04] basically are the theorems needed in the consequence rule then if some oracle is
+[00:23:04 -> 00:23:10] giving us those those loop invariants then the whole logic is actually complete so the
+[00:23:10 -> 00:23:15] what this relative completeness theorem is saying is that the only source of incompleteness
+[00:23:15 -> 00:23:23] in whole logic is that identification of p prime and q prime in the consequence rule if some oracle
+[00:23:23 -> 00:23:27] if you know for any such case where you are interested in finding such a p prime and q prime
+[00:23:27 -> 00:23:31] an oracle was available and you just ask the oracle oh can you please tell me the p prime
+[00:23:31 -> 00:23:35] and it tells you the right p prime and then you are able to proceed with the proof then
+[00:23:35 -> 00:23:41] any true fact that you were interested in would be derivable from whole logic so that's
+[00:23:41 -> 00:23:47] a good thing that whole logic is almost complete except that there are these holes to be filled
+[00:23:47 -> 00:23:52] which are basically loop invariants and this is an important result which is relative completeness
+[00:23:52 -> 00:23:59] because that means that although whole logic is incomplete we know what is the exact
+[00:23:59 -> 00:24:06] nature of incompleteness and then we can just work on addressing that incompleteness so if
+[00:24:06 -> 00:24:10] the more we address that incompleteness for example the more sophisticated algorithms we
+[00:24:10 -> 00:24:16] develop to identify the loop invariance the you know we will be able to do more and more proofs
+[00:24:16 -> 00:24:23] and as you know if we are able to find the most that the best possible invariant inference
+[00:24:23 -> 00:24:28] algorithm then we have also found basically found the best possible
+[00:24:30 -> 00:24:33] system to basically prove partial correctness

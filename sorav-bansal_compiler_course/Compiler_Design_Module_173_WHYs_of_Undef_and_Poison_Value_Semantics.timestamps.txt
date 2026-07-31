@@ -1,0 +1,674 @@
+Title: Compiler Design Module 173 : WHYs of Undef and Poison Value Semantics
+Video ID: zP7ck5QF-Bk
+Detected language: en
+------------------------------------------------------------
+
+[00:00:00 -> 00:00:05] So far we have been talking about the operational semantics, first of the Poisson value and
+[00:00:05 -> 00:00:07] then of the UNDEF value.
+[00:00:07 -> 00:00:12] But much of the discussion may have felt a little mechanical because we're basically
+[00:00:12 -> 00:00:18] saying, oh, this is what the designer chose for Poisson or this is what the designer
+[00:00:18 -> 00:00:20] chose for UNDEF.
+[00:00:20 -> 00:00:25] We have, you know, through our discussion been trying to motivate why those choices
+[00:00:25 -> 00:00:27] were made.
+[00:00:27 -> 00:00:33] But this particular module is dedicated exclusively for the why's of these semantics.
+[00:00:33 -> 00:00:36] In particular, I'm going to start with the why's of UNDEF semantics.
+[00:00:36 -> 00:00:41] I'm going to compare them with what are the Poisson semantics and why such semantics
+[00:00:41 -> 00:00:43] have been chosen.
+[00:00:43 -> 00:00:48] Because it's, I mean, I guess, you know, that the why is generally more important
+[00:00:48 -> 00:00:49] than the what.
+[00:00:49 -> 00:00:55] And so let's try to get, you know, have a full module on just discussing the why's
+[00:00:55 -> 00:00:56] once again.
+[00:00:56 -> 00:00:59] Sometimes you're going to be repeating stuff that you've discussed, but some of these
+[00:00:59 -> 00:01:02] things are going to be fresh.
+[00:01:02 -> 00:01:07] So you know, let's say that I have an expression in my language and once again
+[00:01:07 -> 00:01:13] I'm using the LLVM IR syntax, which is x equals UNDEF plus UNDEF.
+[00:01:13 -> 00:01:19] And you know, one thing that we have said so far is that each time UNDEF is
+[00:01:19 -> 00:01:22] used a different value can be observed.
+[00:01:22 -> 00:01:26] So each allows different values on each observation.
+[00:01:26 -> 00:01:32] So why is this kind of feature of UNDEF used?
+[00:01:32 -> 00:01:35] Why not just say that whatever is the UNDEF value, you know, just have one
+[00:01:35 -> 00:01:37] constant UNDEF value or something like that?
+[00:01:37 -> 00:01:41] Well, the answer is, you know, for example, basically the compiler is going
+[00:01:41 -> 00:01:45] to do these transformations and some of these UNDEF values are going to get
+[00:01:45 -> 00:01:49] stored somewhere or they're going to be moved around and then some value is
+[00:01:49 -> 00:01:51] going to be used somewhere, etc.
+[00:01:51 -> 00:01:57] Now, if the compiler is forced to basically use the same UNDEF value
+[00:01:57 -> 00:02:02] everywhere, so I mean, one semantics of the UNDEF value could be that it is
+[00:02:02 -> 00:02:04] some random value, but it is fixed everywhere.
+[00:02:04 -> 00:02:08] So once you say x equals UNDEF, then x would be the same everywhere.
+[00:02:08 -> 00:02:13] Then that basically requires the compiler to save and restore that
+[00:02:13 -> 00:02:17] garbage value, that random value in a register or something like that,
+[00:02:17 -> 00:02:21] or basically maintain extra memory state for that random value, which
+[00:02:21 -> 00:02:25] was actually an UNDEF value, which could have been anything.
+[00:02:25 -> 00:02:30] And so allowing that different observations of the UNDEF value can
+[00:02:30 -> 00:02:34] potentially turn different results, basically relieves the compiler of
+[00:02:34 -> 00:02:37] having to do the same restore, right?
+[00:02:37 -> 00:02:41] And basically every time an UNDEF value is read or something like
+[00:02:41 -> 00:02:44] that, the compiler can just choose any random value at that point.
+[00:02:44 -> 00:02:47] And if the UNDEF value is being used at two points or three points,
+[00:02:47 -> 00:02:50] then each of those two points or three points can have different values
+[00:02:50 -> 00:02:51] and so on.
+[00:02:51 -> 00:02:56] So that's the basic spirit of this particular property of the UNDEF
+[00:02:56 -> 00:03:00] value, which allows different values on each observation.
+[00:03:00 -> 00:03:04] The other thing I want to point out is that UNDEF plus UNDEF is no
+[00:03:04 -> 00:03:08] different from saying y equals UNDEF and x equals y plus y.
+[00:03:08 -> 00:03:11] Some people like to make this distinction, oh, I mean, okay,
+[00:03:11 -> 00:03:15] UNDEF plus UNDEF can give you different values on the first UNDEF
+[00:03:15 -> 00:03:19] and the second UNDEF, but why not just say y equals UNDEF and
+[00:03:19 -> 00:03:20] then x equals y plus y?
+[00:03:20 -> 00:03:24] So when you say y equals UNDEF, then that's the only observation
+[00:03:24 -> 00:03:27] of UNDEF and maybe you choose some random value here.
+[00:03:27 -> 00:03:29] And then when you say x equals y plus y,
+[00:03:29 -> 00:03:32] then that random value is used twice, right?
+[00:03:32 -> 00:03:34] So for example, if the random value that you chose for
+[00:03:34 -> 00:03:37] y was three, then x equals three plus three would be six.
+[00:03:39 -> 00:03:41] And that would give you nice properties like, oh,
+[00:03:41 -> 00:03:44] x will always be even and things like that.
+[00:03:44 -> 00:03:48] But this kind of distinction between UNDEF plus UNDEF versus
+[00:03:48 -> 00:03:52] y equals UNDEF and x equals y plus y doesn't make sense
+[00:03:52 -> 00:03:56] because after all, when we are doing compiler
+[00:03:56 -> 00:03:58] transformations, one of the kind of transformations
+[00:03:58 -> 00:04:01] that we do is, for example, constant propagation.
+[00:04:01 -> 00:04:05] And so if y equals UNDEF and x equals y plus y,
+[00:04:05 -> 00:04:07] I can simply constant propagate UNDEF everywhere.
+[00:04:07 -> 00:04:09] And now these two are actually equivalent.
+[00:04:09 -> 00:04:11] In fact, I mean, more generally,
+[00:04:11 -> 00:04:13] I'm using the example of constant propagation,
+[00:04:13 -> 00:04:18] but more generally, the IR needs to have the semantics
+[00:04:19 -> 00:04:22] which are called replace all users with semantics.
+[00:04:22 -> 00:04:24] So in many places in our compiler algorithms,
+[00:04:24 -> 00:04:28] we basically change some expression and say,
+[00:04:28 -> 00:04:30] okay, now replace all users of this expression
+[00:04:32 -> 00:04:34] with this value or something like that.
+[00:04:34 -> 00:04:37] And those kinds of semantics are kind of ingrained
+[00:04:37 -> 00:04:39] into most compiler algorithms.
+[00:04:39 -> 00:04:42] And the only way you can have those semantics
+[00:04:42 -> 00:04:46] is by treating these two cases identically.
+[00:04:46 -> 00:04:48] You can't make a distinction between the second case
+[00:04:48 -> 00:04:49] and the first case.
+[00:04:49 -> 00:04:52] In both cases, if y was UNDEF,
+[00:04:52 -> 00:04:54] then if you say y plus y,
+[00:04:54 -> 00:04:56] then it's basically like two observations
+[00:04:56 -> 00:04:59] have been made for y in this case.
+[00:04:59 -> 00:05:01] And so x can potentially be an odd number
+[00:05:01 -> 00:05:04] because in the first observation, y can return two.
+[00:05:04 -> 00:05:06] And then the second observation,
+[00:05:06 -> 00:05:07] maybe y can return three.
+[00:05:07 -> 00:05:10] And you can take any other constant as well.
+[00:05:10 -> 00:05:14] So I mean, yeah, so that hopefully answers the question
+[00:05:15 -> 00:05:18] UNDEF plus UNDEF and y plus y
+[00:05:18 -> 00:05:20] have to be treated in the same way.
+[00:05:20 -> 00:05:24] They can't be treated in a different way.
+[00:05:24 -> 00:05:25] The other thing is,
+[00:05:25 -> 00:05:27] why do we care about UNDEF
+[00:05:27 -> 00:05:29] having different valuations at different points?
+[00:05:29 -> 00:05:30] This is something we have used,
+[00:05:30 -> 00:05:32] we have discussed in one of the previous modules as well,
+[00:05:32 -> 00:05:34] but I'm going to repeat it here
+[00:05:34 -> 00:05:35] for the completeness of discussion.
+[00:05:35 -> 00:05:37] So let's say I say A equals UNDEF.
+[00:05:37 -> 00:05:40] So basically means A can take any random value
+[00:05:40 -> 00:05:41] within the type of A.
+[00:05:41 -> 00:05:43] So let's say it was I32,
+[00:05:43 -> 00:05:46] then it can take any of the two to the power 32 values.
+[00:05:46 -> 00:05:51] And then say B equals multiplication of I32A with two.
+[00:05:52 -> 00:05:53] So that's just A into two.
+[00:05:54 -> 00:05:58] And then C equals AND of I32A into three.
+[00:05:58 -> 00:06:01] And now a compiler may want to say, figure out
+[00:06:01 -> 00:06:03] and kind of do this transformation
+[00:06:03 -> 00:06:05] that just changed the multiplication
+[00:06:05 -> 00:06:07] to just saying a constant assignment two,
+[00:06:07 -> 00:06:09] because after all A is just an UNDEF value,
+[00:06:09 -> 00:06:11] it can take any value.
+[00:06:11 -> 00:06:12] And maybe the value that I want to give it
+[00:06:12 -> 00:06:14] is one in this example.
+[00:06:14 -> 00:06:15] And so one into two is two.
+[00:06:15 -> 00:06:17] I can make this, I mean,
+[00:06:17 -> 00:06:19] I can basically always do refinement,
+[00:06:19 -> 00:06:21] which means I can go from more non-determinism
+[00:06:21 -> 00:06:23] to less non-determinism.
+[00:06:23 -> 00:06:24] And so that can allow the compiler
+[00:06:24 -> 00:06:25] to just change the statement
+[00:06:25 -> 00:06:28] to multiplication of one into two, which is just two.
+[00:06:29 -> 00:06:30] On the other hand,
+[00:06:30 -> 00:06:33] here's a third instruction says AND of A comma three.
+[00:06:33 -> 00:06:35] So A and three.
+[00:06:35 -> 00:06:38] And once again, I can assume A to be let's say three,
+[00:06:38 -> 00:06:41] maybe, and this time three and three would be three.
+[00:06:41 -> 00:06:45] And so I can just kind of transform this to C equals three.
+[00:06:45 -> 00:06:48] So notice that this transformation is legal
+[00:06:48 -> 00:06:52] only if I can basically have different valuations of A
+[00:06:52 -> 00:06:54] at different points in the program.
+[00:06:54 -> 00:06:56] So in the second instruction,
+[00:06:56 -> 00:06:58] I'm using the valuation one.
+[00:06:58 -> 00:06:58] In the third instruction,
+[00:06:58 -> 00:07:00] I'm using the valuation three.
+[00:07:00 -> 00:07:04] And so it is in many cases,
+[00:07:04 -> 00:07:06] I mean, this is just a small example,
+[00:07:06 -> 00:07:07] but there will be many cases
+[00:07:07 -> 00:07:09] where you don't want to keep track of,
+[00:07:09 -> 00:07:10] oh, this was the last value
+[00:07:10 -> 00:07:12] that I had used for this particular undef.
+[00:07:12 -> 00:07:14] I mean, that would be very difficult
+[00:07:14 -> 00:07:15] for a compiler to do.
+[00:07:15 -> 00:07:17] And so a much easier option is
+[00:07:17 -> 00:07:19] that whenever an undef value is observed,
+[00:07:19 -> 00:07:21] it can just return any value.
+[00:07:21 -> 00:07:23] So if it is observed 10 times, it can return.
+[00:07:23 -> 00:07:26] It can basically generate 10 different random values
+[00:07:26 -> 00:07:27] for that particular time.
+[00:07:29 -> 00:07:30] Okay.
+[00:07:30 -> 00:07:32] The other thing is that undef
+[00:07:32 -> 00:07:35] is more deterministic than poison.
+[00:07:35 -> 00:07:37] What do I mean by more deterministic?
+[00:07:37 -> 00:07:40] It has, whatever are the sets of behaviors
+[00:07:40 -> 00:07:42] that the poison value can potentially have,
+[00:07:42 -> 00:07:45] the non deterministic choices of behaviors,
+[00:07:45 -> 00:07:48] the undef value only allows a subset of those behaviors.
+[00:07:48 -> 00:07:51] So let's look at an example to see that.
+[00:07:51 -> 00:07:53] I mean, intuitively, this is very clear
+[00:07:53 -> 00:07:55] because the poison value basically says,
+[00:07:55 -> 00:07:58] oh, if you do anything with it, then it's poison.
+[00:07:58 -> 00:08:00] If you observe it, then it's poison.
+[00:08:00 -> 00:08:02] If you branch on it, then it becomes UB.
+[00:08:02 -> 00:08:04] If you divide by it, then it becomes UB.
+[00:08:04 -> 00:08:08] Undef also says that if you divide by it, it becomes UB.
+[00:08:08 -> 00:08:09] If you branch on it, it becomes UB.
+[00:08:09 -> 00:08:12] But it kind of makes things more deterministic.
+[00:08:12 -> 00:08:14] For example, if you multiply it by two,
+[00:08:14 -> 00:08:16] then you only get even numbers.
+[00:08:16 -> 00:08:17] Whereas poison just say you get poison.
+[00:08:17 -> 00:08:20] And poison, the poison value basically
+[00:08:20 -> 00:08:23] has more possible behaviors than the set of even numbers
+[00:08:23 -> 00:08:25] because the poison value can be substituted
+[00:08:25 -> 00:08:27] with any value, but the set of even numbers
+[00:08:27 -> 00:08:29] can only be substituted with an even number.
+[00:08:29 -> 00:08:31] And so that's what I mean when I say undef
+[00:08:31 -> 00:08:32] is more deterministic than poison.
+[00:08:32 -> 00:08:34] And this can also be seen
+[00:08:34 -> 00:08:36] in the types of transformations that are legal for undef
+[00:08:36 -> 00:08:38] versus what are legal for poison.
+[00:08:38 -> 00:08:42] So if I have a code which says X equals undef star two,
+[00:08:42 -> 00:08:45] then it's not okay to convert that to X equals one
+[00:08:45 -> 00:08:47] because undef star two will always give me
+[00:08:47 -> 00:08:50] an even number, whereas X equals one
+[00:08:50 -> 00:08:52] is kind of an odd number.
+[00:08:52 -> 00:08:54] So I cannot choose, there's no valuation
+[00:08:54 -> 00:08:56] of the undef value, which multiplied by two
+[00:08:56 -> 00:08:58] gives me one.
+[00:08:58 -> 00:09:01] And so among let's say this I32 type
+[00:09:01 -> 00:09:02] or something like that.
+[00:09:02 -> 00:09:04] And so this is not a legal transformation.
+[00:09:04 -> 00:09:07] On the other hand, if I say X equals poison into two,
+[00:09:07 -> 00:09:09] I can always convert that to X equals one
+[00:09:09 -> 00:09:11] because poison into two is just poison.
+[00:09:11 -> 00:09:13] And so X equals poison,
+[00:09:13 -> 00:09:17] which means it's a non-deterministic error value.
+[00:09:17 -> 00:09:18] And so I can always change it
+[00:09:18 -> 00:09:19] to some deterministic value
+[00:09:19 -> 00:09:23] without adding any extra behaviors.
+[00:09:23 -> 00:09:25] And so this would be a valid refinement
+[00:09:25 -> 00:09:27] because I will go from more non-deterministic behavior
+[00:09:27 -> 00:09:30] to less non-deterministic behavior in this case.
+[00:09:30 -> 00:09:32] Whereas in this case, I will go from,
+[00:09:33 -> 00:09:35] I'm basically generating a behavior
+[00:09:35 -> 00:09:37] that was not present in the original program.
+[00:09:37 -> 00:09:39] Here I'm generating a behavior that was present,
+[00:09:39 -> 00:09:41] that was one of the possible behaviors
+[00:09:41 -> 00:09:42] in the original program.
+[00:09:44 -> 00:09:47] Now because undef is more deterministic than poison,
+[00:09:47 -> 00:09:50] and because we can always go from more non-determinism
+[00:09:50 -> 00:09:51] to less non-determinism,
+[00:09:51 -> 00:09:54] it is okay to convert poison to undef.
+[00:09:54 -> 00:09:58] So if there is a statement which says X equals poison,
+[00:09:58 -> 00:10:01] it's always okay to change that to X equals undef.
+[00:10:01 -> 00:10:02] Because as I just said,
+[00:10:02 -> 00:10:04] undef is less non-deterministic than poison.
+[00:10:04 -> 00:10:06] So whatever are the behaviors
+[00:10:06 -> 00:10:08] that are possible for the poison value
+[00:10:08 -> 00:10:10] are a superset of the behaviors
+[00:10:10 -> 00:10:12] that are possible for the undef value.
+[00:10:12 -> 00:10:16] And so it's always okay to go from more non-determinism
+[00:10:16 -> 00:10:17] to less non-determinism.
+[00:10:17 -> 00:10:19] On the other hand, it is not okay
+[00:10:19 -> 00:10:20] to go in the other direction
+[00:10:20 -> 00:10:23] because we can't go from less non-determinism
+[00:10:23 -> 00:10:24] to more non-determinism.
+[00:10:24 -> 00:10:26] I can't change undef to poison,
+[00:10:26 -> 00:10:29] but I can change poison to undef.
+[00:10:30 -> 00:10:35] Now, of course, when there's more non-determinism,
+[00:10:35 -> 00:10:37] there's more optimization opportunity.
+[00:10:37 -> 00:10:41] So if I'm dealing with the poison value,
+[00:10:41 -> 00:10:43] then typically I'll have more optimization opportunity
+[00:10:43 -> 00:10:45] than if I'm dealing with the undef value.
+[00:10:45 -> 00:10:47] And you're going to see some examples.
+[00:10:47 -> 00:10:49] So the first example that I have here
+[00:10:49 -> 00:10:51] is let's say X equals poison into Y.
+[00:10:51 -> 00:10:53] So that just means X equals poison
+[00:10:53 -> 00:10:57] because poison operated upon with anything else
+[00:10:57 -> 00:10:59] is basically just poison.
+[00:10:59 -> 00:11:03] And then I say, if X, if some expensive operation on X,
+[00:11:03 -> 00:11:04] then do something.
+[00:11:04 -> 00:11:09] Now, because branch on poison is UB,
+[00:11:12 -> 00:11:13] I'm sure that X is poison.
+[00:11:13 -> 00:11:14] So branch on poison is UB.
+[00:11:14 -> 00:11:16] So basically I can just say
+[00:11:16 -> 00:11:18] that this whole code is unreachable, right?
+[00:11:18 -> 00:11:21] So this whole code is unreachable or this triggers UB.
+[00:11:21 -> 00:11:22] I'm sure that this triggers UB.
+[00:11:22 -> 00:11:24] And so if something triggers UB,
+[00:11:24 -> 00:11:26] I can basically replace it with unreachable.
+[00:11:26 -> 00:11:27] Or the compiler can say that,
+[00:11:27 -> 00:11:29] oh, this code can never be executed
+[00:11:29 -> 00:11:30] because if it gets executed,
+[00:11:30 -> 00:11:32] then it's undefined behavior
+[00:11:32 -> 00:11:34] and anything can happen in undefined behavior.
+[00:11:34 -> 00:11:36] So the easy thing to say is that this,
+[00:11:36 -> 00:11:37] you know, just, I mean,
+[00:11:37 -> 00:11:40] just pretend as though it doesn't even exist.
+[00:11:40 -> 00:11:43] And so that's what transformation
+[00:11:43 -> 00:11:45] to the unreachable instruction means
+[00:11:45 -> 00:11:47] because I'm sure that this triggers UB.
+[00:11:47 -> 00:11:50] But if I look at the same operation
+[00:11:50 -> 00:11:52] with the undef value instead of the poison value,
+[00:11:52 -> 00:11:54] I say X equals undef star Y
+[00:11:54 -> 00:11:57] and then I do if expensive X.
+[00:11:57 -> 00:12:00] Now it is not okay to transform this to unreachable.
+[00:12:00 -> 00:12:01] You may wonder why,
+[00:12:01 -> 00:12:04] because after all branching on undef is also undefined,
+[00:12:04 -> 00:12:06] UB is also undefined behavior.
+[00:12:06 -> 00:12:09] But notice that when I multiply undef with Y,
+[00:12:09 -> 00:12:12] then maybe I end up with a deterministic value
+[00:12:12 -> 00:12:15] because undef into zero just gives me zero.
+[00:12:15 -> 00:12:17] So if Y was zero,
+[00:12:17 -> 00:12:21] then X is no longer a non-singleton set of values.
+[00:12:21 -> 00:12:23] It's a singleton set of values.
+[00:12:23 -> 00:12:26] And the branching on a singleton set of values
+[00:12:26 -> 00:12:27] is well-defined.
+[00:12:27 -> 00:12:29] And so it is not okay to say
+[00:12:29 -> 00:12:32] that this whole thing can be changed to unreachable.
+[00:12:32 -> 00:12:33] All right?
+[00:12:33 -> 00:12:35] Because if Y was zero,
+[00:12:35 -> 00:12:38] then this whole thing has well-defined behavior.
+[00:12:38 -> 00:12:41] So this does not necessarily trigger UB.
+[00:12:41 -> 00:12:43] The code on the right does not necessarily trigger UB.
+[00:12:43 -> 00:12:46] It triggers UB for some values of Y,
+[00:12:46 -> 00:12:47] for most values of Y,
+[00:12:47 -> 00:12:50] but there exists a value of Y, which is zero,
+[00:12:50 -> 00:12:52] for which this code does not trigger UB.
+[00:12:52 -> 00:12:54] And so I cannot replace this whole code
+[00:12:54 -> 00:12:55] by just the unreachable statement
+[00:12:55 -> 00:12:58] because possibly there are executions there
+[00:12:58 -> 00:13:00] which are well-defined,
+[00:13:00 -> 00:13:04] which are not going to trigger UB.
+[00:13:04 -> 00:13:05] Here's another example.
+[00:13:05 -> 00:13:08] So let's say I have two integers.
+[00:13:08 -> 00:13:10] I'm using C syntax now,
+[00:13:10 -> 00:13:12] and I have two variables, I and N.
+[00:13:12 -> 00:13:13] These are integer type.
+[00:13:13 -> 00:13:16] And say I have this loop where I'm computing N plus one.
+[00:13:16 -> 00:13:18] And one of the common transformations
+[00:13:18 -> 00:13:20] that compilers like GCC do
+[00:13:20 -> 00:13:22] is they convert I is less than N plus one
+[00:13:22 -> 00:13:24] to I is less than equal to N.
+[00:13:24 -> 00:13:26] The question is, is this legal?
+[00:13:26 -> 00:13:28] And I'm going to answer this question
+[00:13:28 -> 00:13:30] by using different semantics,
+[00:13:30 -> 00:13:33] possible semantics for signed integer overflow, right?
+[00:13:33 -> 00:13:35] So of course, I mean,
+[00:13:35 -> 00:13:38] if N was any kind of normal number,
+[00:13:38 -> 00:13:39] which is not like, you know,
+[00:13:39 -> 00:13:41] where N plus one was not going to trigger
+[00:13:41 -> 00:13:43] some error condition or something like that,
+[00:13:43 -> 00:13:45] it's not going to trigger an overflow,
+[00:13:45 -> 00:13:48] then it makes sense that if I is less than N plus one,
+[00:13:48 -> 00:13:51] then it must be less than equal to N.
+[00:13:52 -> 00:13:56] But what happens if N plus one overflows?
+[00:13:56 -> 00:13:58] So for example, if N was int max,
+[00:13:58 -> 00:14:03] then int max plus one is what?
+[00:14:03 -> 00:14:04] I mean, if I use the semantics
+[00:14:04 -> 00:14:07] that int max plus one actually wraps around,
+[00:14:07 -> 00:14:10] then int max plus one would become int min,
+[00:14:10 -> 00:14:11] which is a negative number,
+[00:14:11 -> 00:14:13] large negative number,
+[00:14:13 -> 00:14:16] which is, you know,
+[00:14:16 -> 00:14:18] in the two's complement in representation.
+[00:14:18 -> 00:14:20] And so this would become,
+[00:14:21 -> 00:14:22] you know, if N was int max,
+[00:14:22 -> 00:14:24] then this would become I is less than int min,
+[00:14:24 -> 00:14:25] and that is always false,
+[00:14:25 -> 00:14:26] because, you know,
+[00:14:26 -> 00:14:27] I being an integer can never be less
+[00:14:27 -> 00:14:30] than the minimum possible representable value.
+[00:14:30 -> 00:14:33] And so I is less than int min would also be false.
+[00:14:33 -> 00:14:34] And so this loop will never be executed
+[00:14:34 -> 00:14:35] in the source program.
+[00:14:35 -> 00:14:37] But if I look at the target program,
+[00:14:37 -> 00:14:39] then I is less than equal to N
+[00:14:39 -> 00:14:41] would translate to I is less than equal to int max,
+[00:14:41 -> 00:14:43] because that's the case we're using
+[00:14:43 -> 00:14:44] when N was equal to int max.
+[00:14:44 -> 00:14:47] And I is less than equal to N to max
+[00:14:47 -> 00:14:49] would be always true.
+[00:14:49 -> 00:14:51] And so while in the original program,
+[00:14:51 -> 00:14:53] the loop would never be executed.
+[00:14:53 -> 00:14:54] In the new program,
+[00:14:54 -> 00:14:56] the loop would actually be an infinite execution,
+[00:14:56 -> 00:14:59] because I'll just keep executing until forever,
+[00:14:59 -> 00:15:01] because I would always be less than equal to int max,
+[00:15:01 -> 00:15:02] unless, you know, in the body,
+[00:15:02 -> 00:15:04] we have some way of getting out
+[00:15:04 -> 00:15:05] or something like that.
+[00:15:05 -> 00:15:07] But this condition is always going to evaluate it true,
+[00:15:07 -> 00:15:09] and this condition will evaluate to false
+[00:15:09 -> 00:15:11] for N equals int min.
+[00:15:11 -> 00:15:13] So with wraparound semantics
+[00:15:13 -> 00:15:15] in two's complement representation,
+[00:15:15 -> 00:15:17] this transformation is not legal, right?
+[00:15:17 -> 00:15:21] Because N plus one would basically, you know,
+[00:15:21 -> 00:15:22] because of this corner case
+[00:15:22 -> 00:15:24] when N would be equal to int max.
+[00:15:24 -> 00:15:27] And that's why we use undefined behavior semantics in C.
+[00:15:27 -> 00:15:28] But what about in LLVM?
+[00:15:28 -> 00:15:29] And we have said that, you know,
+[00:15:29 -> 00:15:31] we can use undefined behavior semantics
+[00:15:31 -> 00:15:32] in the source language,
+[00:15:32 -> 00:15:34] but if you use the undefined behavior semantics
+[00:15:34 -> 00:15:35] in the intermediate representation,
+[00:15:35 -> 00:15:38] then that thwarts optimization opportunities
+[00:15:38 -> 00:15:40] like hoisting and other things.
+[00:15:40 -> 00:15:42] And so in the intermediate language, we have a choice.
+[00:15:42 -> 00:15:43] We can either, you know,
+[00:15:43 -> 00:15:46] assign the value of poison to N plus one.
+[00:15:46 -> 00:15:49] And so if I say int max plus one, that's an overflow,
+[00:15:49 -> 00:15:51] then I basically say it yields poison.
+[00:15:51 -> 00:15:53] So that's option number one.
+[00:15:53 -> 00:15:54] And under that option,
+[00:15:54 -> 00:15:56] this transformation is actually okay.
+[00:15:56 -> 00:15:59] Because if N was int max,
+[00:15:59 -> 00:16:02] then int max one plus one would yield poison.
+[00:16:02 -> 00:16:05] And then I's less than poison would also yield poison.
+[00:16:05 -> 00:16:08] And then a branch based on poison
+[00:16:08 -> 00:16:09] would be undefined behavior.
+[00:16:09 -> 00:16:11] And so I don't need to consider
+[00:16:12 -> 00:16:14] this particular case was when N equals int max.
+[00:16:14 -> 00:16:16] Because when N equals int max,
+[00:16:16 -> 00:16:19] the value of the original program triggers UB.
+[00:16:19 -> 00:16:20] And so in other words,
+[00:16:20 -> 00:16:22] I don't need to consider that particular case
+[00:16:22 -> 00:16:26] because you know, if some case triggers UB,
+[00:16:26 -> 00:16:28] as a compiler, I don't need to worry about that case.
+[00:16:28 -> 00:16:30] In other words, I don't need to worry about the case
+[00:16:30 -> 00:16:32] when N equals int max.
+[00:16:32 -> 00:16:34] And so I can transform it as such,
+[00:16:34 -> 00:16:36] because for all other values of N,
+[00:16:36 -> 00:16:38] which are not int max,
+[00:16:38 -> 00:16:41] this transformation actually is a legal transformation.
+[00:16:41 -> 00:16:43] It was only this value int max,
+[00:16:43 -> 00:16:45] which was causing a problem.
+[00:16:45 -> 00:16:48] And now that we have used the semantics
+[00:16:48 -> 00:16:50] that int max plus one will yield poison,
+[00:16:50 -> 00:16:53] or any signed integer overflow would yield poison.
+[00:16:53 -> 00:16:55] We know that when N equals int max,
+[00:16:55 -> 00:16:56] the original program will cause UB.
+[00:16:56 -> 00:16:59] And so we don't need to account for that case.
+[00:16:59 -> 00:17:01] We don't need to consider that case.
+[00:17:01 -> 00:17:02] And for all other cases,
+[00:17:02 -> 00:17:03] this transformation is legal.
+[00:17:03 -> 00:17:06] And so that's why compilers like GCC
+[00:17:06 -> 00:17:08] routinely make such transformations.
+[00:17:08 -> 00:17:10] In fact, these are the kind of transformations
+[00:17:10 -> 00:17:11] that will be required
+[00:17:11 -> 00:17:14] that are even kind of taken for granted
+[00:17:14 -> 00:17:15] when we are talking about
+[00:17:15 -> 00:17:16] lots of different transformations
+[00:17:16 -> 00:17:18] like algebraic simplification,
+[00:17:18 -> 00:17:20] even discussed in this particular course.
+[00:17:21 -> 00:17:23] What if int max plus one was not poison?
+[00:17:23 -> 00:17:26] What if LLVM decided that int max plus one
+[00:17:26 -> 00:17:27] is actually undef?
+[00:17:27 -> 00:17:29] It turns out even then,
+[00:17:29 -> 00:17:30] this transformation is okay,
+[00:17:30 -> 00:17:32] because if N plus one was undef,
+[00:17:32 -> 00:17:35] then I would say I is less than undef.
+[00:17:35 -> 00:17:37] And from I equals zero to I is less than undef,
+[00:17:37 -> 00:17:39] the compiler can reason about the fact
+[00:17:39 -> 00:17:41] that whatever undef gives me,
+[00:17:41 -> 00:17:43] it's okay, I can always change that
+[00:17:43 -> 00:17:44] to I is less than equal to N,
+[00:17:44 -> 00:17:45] because I is less than undef
+[00:17:45 -> 00:17:47] is basically going to give me
+[00:17:47 -> 00:17:49] some non-deterministic value.
+[00:17:49 -> 00:17:50] It can be either true or false,
+[00:17:50 -> 00:17:52] and it's okay to change that
+[00:17:52 -> 00:17:53] to I is less than equal to N.
+[00:17:53 -> 00:17:55] So here we have seen an example
+[00:17:55 -> 00:17:57] where the signed integer overflow,
+[00:17:57 -> 00:17:59] irrespective of whether it's treated as poison
+[00:17:59 -> 00:18:01] or undef, allows a transformation.
+[00:18:01 -> 00:18:03] Next I'm going to discuss an example
+[00:18:03 -> 00:18:05] where we're going to distinguish,
+[00:18:05 -> 00:18:06] I'm going to say, oh, poison is better,
+[00:18:06 -> 00:18:07] but undef is not going to work.
+[00:18:07 -> 00:18:08] So once again,
+[00:18:08 -> 00:18:11] let's look at the signed integer overflow property.
+[00:18:11 -> 00:18:12] And let's say there's a check
+[00:18:12 -> 00:18:15] in my code which says if A plus X
+[00:18:15 -> 00:18:17] is greater than, signed greater than,
+[00:18:17 -> 00:18:19] that's what the subscript S means, A.
+[00:18:19 -> 00:18:20] Is it okay to change this code
+[00:18:20 -> 00:18:21] to X greater than zero?
+[00:18:23 -> 00:18:25] And of course, I mean,
+[00:18:25 -> 00:18:26] if I look at the integer arithmetic,
+[00:18:26 -> 00:18:27] this should be okay,
+[00:18:27 -> 00:18:30] but I have to worry about all these corner cases.
+[00:18:30 -> 00:18:34] And it turns out that if X, A plus X,
+[00:18:34 -> 00:18:37] yields poison on overflow,
+[00:18:37 -> 00:18:39] so if A plus X overflows,
+[00:18:39 -> 00:18:40] and if that yields poison,
+[00:18:40 -> 00:18:41] then this is okay,
+[00:18:41 -> 00:18:43] because if A plus X overflows,
+[00:18:43 -> 00:18:44] then that would yield poison,
+[00:18:44 -> 00:18:47] and then poison greater than A would yield poison.
+[00:18:47 -> 00:18:50] And so poison value can always be determinized
+[00:18:50 -> 00:18:51] into a more deterministic value,
+[00:18:51 -> 00:18:52] which is X greater than zero,
+[00:18:52 -> 00:18:55] because poison can be substituted for anything.
+[00:18:55 -> 00:18:59] And so if A plus X yields poison on overflow,
+[00:18:59 -> 00:19:03] then A plus X greater than A would also yield poison.
+[00:19:03 -> 00:19:04] And so this whole value would be poison,
+[00:19:04 -> 00:19:06] and so that it's okay to kind of yield,
+[00:19:06 -> 00:19:09] this would be a less non-deterministic value than poison,
+[00:19:09 -> 00:19:12] because anything can be substituted for poison.
+[00:19:12 -> 00:19:14] And so you can choose substitute X is greater than zero,
+[00:19:14 -> 00:19:16] even in that case.
+[00:19:16 -> 00:19:19] Of course, when it's not going to overflow,
+[00:19:19 -> 00:19:21] then this is a valid transformation.
+[00:19:21 -> 00:19:22] But let's consider the case
+[00:19:22 -> 00:19:26] when A plus X signed integer overflow yields undef
+[00:19:26 -> 00:19:28] instead of poison.
+[00:19:28 -> 00:19:32] I argue that this transformation is no longer legal.
+[00:19:32 -> 00:19:33] And here's the case.
+[00:19:33 -> 00:19:36] Let's say A was int max and X was one.
+[00:19:36 -> 00:19:37] When A is int max,
+[00:19:37 -> 00:19:40] then int max plus X,
+[00:19:40 -> 00:19:41] and X was one,
+[00:19:41 -> 00:19:45] then int max plus one basically would be undef, right?
+[00:19:45 -> 00:19:47] So in this particular case,
+[00:19:47 -> 00:19:49] this value would become undef.
+[00:19:51 -> 00:19:54] When A is int max and X is one,
+[00:19:54 -> 00:19:56] then A plus X will become undef,
+[00:19:56 -> 00:19:58] and A would become int max.
+[00:19:58 -> 00:20:01] Now what does undef greater than int max evaluate to?
+[00:20:01 -> 00:20:04] Recall that undef basically represents any value
+[00:20:04 -> 00:20:06] in that type, in the integer type.
+[00:20:07 -> 00:20:10] But whatever the value I choose for undef,
+[00:20:10 -> 00:20:12] it can never be greater than int max
+[00:20:12 -> 00:20:15] because int max is the largest possible integer
+[00:20:15 -> 00:20:16] in the integer type.
+[00:20:16 -> 00:20:18] And so undef greater than int max
+[00:20:18 -> 00:20:20] would always evaluate to false.
+[00:20:21 -> 00:20:24] Whereas X greater than zero may evaluate to true.
+[00:20:24 -> 00:20:26] And in this particular case,
+[00:20:26 -> 00:20:27] because X is one,
+[00:20:27 -> 00:20:30] one greater than zero would evaluate to true.
+[00:20:30 -> 00:20:32] And so these two are not going to evaluate
+[00:20:32 -> 00:20:34] to the same thing for this corner case
+[00:20:34 -> 00:20:38] when A was equal to int max and then X was equal to one.
+[00:20:38 -> 00:20:41] And so A plus X sine integer arithmetic overflow,
+[00:20:41 -> 00:20:42] if that yields undef,
+[00:20:42 -> 00:20:44] then some kind of common transformations
+[00:20:44 -> 00:20:47] that we take for granted do not remain legal.
+[00:20:47 -> 00:20:50] And that's why, that's one of the reasons,
+[00:20:50 -> 00:20:52] perhaps one of the reasons why the LLVM designers
+[00:20:52 -> 00:20:54] decided that sine integer overflow
+[00:20:54 -> 00:20:59] should be poisoned and not undef.
+[00:20:59 -> 00:21:01] There's also another question that comes up,
+[00:21:01 -> 00:21:04] which is why care about the undef value at all?
+[00:21:04 -> 00:21:05] And the answer is basically simple.
+[00:21:05 -> 00:21:08] And this is again something that we have discussed previously.
+[00:21:08 -> 00:21:10] The answer is that undef basically
+[00:21:10 -> 00:21:12] gives you more predictable behavior.
+[00:21:12 -> 00:21:15] Some languages which will basically assume,
+[00:21:15 -> 00:21:17] have semantics that say that uninitialized value
+[00:21:17 -> 00:21:19] should give you any random value,
+[00:21:19 -> 00:21:20] but not, you know,
+[00:21:20 -> 00:21:22] it's not an error to read an undefined value.
+[00:21:22 -> 00:21:24] It's basically, or uninitialized value.
+[00:21:24 -> 00:21:27] It's basically saying that you get any random value.
+[00:21:27 -> 00:21:28] C does not have that.
+[00:21:28 -> 00:21:31] C says that if you read an uninitialized value,
+[00:21:31 -> 00:21:32] that's undefined behavior.
+[00:21:32 -> 00:21:35] But some other language could potentially say
+[00:21:35 -> 00:21:37] that if you read an uninitialized value,
+[00:21:37 -> 00:21:38] you can get a random value.
+[00:21:38 -> 00:21:40] And so in that case,
+[00:21:40 -> 00:21:43] if I have int x and then I have to print x star zero,
+[00:21:43 -> 00:21:46] then the programmer would be well within his or her rights
+[00:21:46 -> 00:21:47] to assume,
+[00:21:47 -> 00:21:51] expect that this particular program is going to print zero.
+[00:21:51 -> 00:21:52] And I mean, on the right,
+[00:21:52 -> 00:21:54] I show the corresponding LLVM transformation
+[00:21:54 -> 00:21:55] of this program, which is just like, you know,
+[00:21:55 -> 00:21:57] allocate a 32-bit integer.
+[00:21:57 -> 00:21:58] That's i32.
+[00:21:58 -> 00:22:00] x equals allocate i32.
+[00:22:00 -> 00:22:03] So x gets some address in the memory.
+[00:22:03 -> 00:22:05] Then t1 equals load x,
+[00:22:05 -> 00:22:07] which is just going to return the value of x.
+[00:22:07 -> 00:22:08] It's going to, in this case,
+[00:22:08 -> 00:22:10] return some uninitialized value.
+[00:22:12 -> 00:22:13] In our case, we're going to assume,
+[00:22:13 -> 00:22:14] in the case of LLVM,
+[00:22:14 -> 00:22:16] we're going to assume that this is going to be
+[00:22:16 -> 00:22:17] the undef value.
+[00:22:17 -> 00:22:21] Then I'm going to multiply that value with zero.
+[00:22:21 -> 00:22:24] And in LLVM case, if t1 was undef,
+[00:22:24 -> 00:22:25] then that's just going to give me zero.
+[00:22:25 -> 00:22:27] And then I'm going to print zero.
+[00:22:27 -> 00:22:29] But if, for example,
+[00:22:29 -> 00:22:32] I had chosen the Poisson value for x in this case,
+[00:22:32 -> 00:22:35] then t2 would also have been Poisson.
+[00:22:35 -> 00:22:37] And then when I try to print a Poisson value,
+[00:22:37 -> 00:22:40] then either, you know,
+[00:22:40 -> 00:22:41] maybe no print would have happened
+[00:22:41 -> 00:22:43] because maybe I was going to branch on Poisson
+[00:22:43 -> 00:22:44] or something like that.
+[00:22:44 -> 00:22:46] And that would have caused undefined behavior,
+[00:22:46 -> 00:22:49] or I could have potentially printed any random value.
+[00:22:49 -> 00:22:52] And both those cases would be unexpected
+[00:22:52 -> 00:22:54] or unintuitive results for the programmer in many cases.
+[00:22:54 -> 00:22:56] And so the undef value basically caters
+[00:22:56 -> 00:22:58] to expected semantics,
+[00:22:58 -> 00:22:59] which is not so much about optimization,
+[00:22:59 -> 00:23:01] but more about understandability
+[00:23:01 -> 00:23:04] or kind of programmability of the particular language.
+[00:23:05 -> 00:23:06] So these are the two choices.
+[00:23:06 -> 00:23:08] If t1 equals undef, then you print zero.
+[00:23:08 -> 00:23:10] If t1 equals Poisson,
+[00:23:10 -> 00:23:11] you could potentially get UB
+[00:23:11 -> 00:23:13] or you print just some random value.
+[00:23:13 -> 00:23:16] And so both those cases may be not acceptable
+[00:23:16 -> 00:23:18] for certain programming languages.
+[00:23:18 -> 00:23:21] And as an IR designer,
+[00:23:21 -> 00:23:22] you need to cater for multiple languages.
+[00:23:22 -> 00:23:25] And that's why you need both kinds of things.
+[00:23:26 -> 00:23:28] The other kind of question here
+[00:23:28 -> 00:23:31] is why do we consider branch on undef
+[00:23:31 -> 00:23:32] to be UB?
+[00:23:32 -> 00:23:36] And once again, I'm going to cite
+[00:23:38 -> 00:23:41] some common transformations that compilers do
+[00:23:41 -> 00:23:44] and say that unless we do this,
+[00:23:44 -> 00:23:45] why does branch on undef has to be UB?
+[00:23:45 -> 00:23:47] Well, the other option could have been that
+[00:23:47 -> 00:23:48] when you branch on undef,
+[00:23:48 -> 00:23:50] then any of the branches can be taken
+[00:23:50 -> 00:23:51] non-deterministically.
+[00:23:51 -> 00:23:52] That was the other option
+[00:23:52 -> 00:23:55] that the language designer could have taken.
+[00:23:55 -> 00:23:56] But let's look at this example,
+[00:23:56 -> 00:23:57] this transformation example.
+[00:23:57 -> 00:23:59] So if X equals U,
+[00:23:59 -> 00:24:01] where U represents an undef value,
+[00:24:01 -> 00:24:04] then FX, right?
+[00:24:04 -> 00:24:05] It's a common transformation.
+[00:24:05 -> 00:24:08] This is the global value numbering transformation.
+[00:24:08 -> 00:24:10] It says if X equals U, FU.
+[00:24:10 -> 00:24:11] I mean, you can think of this
+[00:24:11 -> 00:24:15] as a kind of extension of copy propagation.
+[00:24:15 -> 00:24:18] I mean, this is called global value numbering.
+[00:24:18 -> 00:24:20] Also, I mean, kind of some form
+[00:24:20 -> 00:24:22] of common sub-expression elimination
+[00:24:22 -> 00:24:23] and copy propagation.
+[00:24:23 -> 00:24:25] But basically if X equals U
+[00:24:25 -> 00:24:27] and you know that in the if block,
+[00:24:27 -> 00:24:28] you can replace X with U.
+[00:24:28 -> 00:24:32] And so you can just basically replace X with U
+[00:24:32 -> 00:24:34] and this should be a legal transformation.
+[00:24:34 -> 00:24:38] But it turns out that if branch on undef was not UB,
+[00:24:38 -> 00:24:40] then this is not a legal transformation.
+[00:24:40 -> 00:24:42] Because if branch on undef was,
+[00:24:42 -> 00:24:45] let's say could potentially take some random branch,
+[00:24:48 -> 00:24:50] then even if let's say U was undef,
+[00:24:50 -> 00:24:52] then X equals U is also going to be undef
+[00:24:52 -> 00:24:55] because it can either be true or false.
+[00:24:55 -> 00:24:57] X equals U is also going to be undef.
+[00:24:57 -> 00:24:59] And then if undef,
+[00:24:59 -> 00:25:01] I could potentially randomly choose
+[00:25:01 -> 00:25:03] to take this branch or that branch.
+[00:25:03 -> 00:25:05] Now let's take the case when X was equal to,
+[00:25:05 -> 00:25:08] let's say one and U was equal to two
+[00:25:08 -> 00:25:11] or U was equal to undef, right?
+[00:25:11 -> 00:25:16] Now X equals U is going to give me undef
+[00:25:16 -> 00:25:19] and then I'm going to execute F1 non-deterministically.
+[00:25:19 -> 00:25:23] I mean, I'm going to choose one of these branches,
+[00:25:23 -> 00:25:24] whether the if or the else branch.
+[00:25:24 -> 00:25:26] And let's say I chose the if branch,
+[00:25:26 -> 00:25:29] then I'm going to execute F1.
+[00:25:29 -> 00:25:31] But in the target program,
+[00:25:31 -> 00:25:33] I'm going to execute F undef.
+[00:25:33 -> 00:25:35] And these two things are totally different.
+[00:25:35 -> 00:25:37] I mean, in one case you are basically,
+[00:25:37 -> 00:25:39] let's say F for the print function.
+[00:25:39 -> 00:25:40] In one case, you're going to be printing one.
+[00:25:40 -> 00:25:41] In the other case,
+[00:25:41 -> 00:25:43] you're going to be printing some random value.
+[00:25:43 -> 00:25:46] And so this transformation is not legal
+[00:25:46 -> 00:25:49] if branch on undef was not UB.
+[00:25:49 -> 00:25:51] On the other hand, if branch on undef is UB,
+[00:25:51 -> 00:25:53] then this whole program would basically
+[00:25:53 -> 00:25:56] just give you me undefined behavior.
+[00:25:56 -> 00:26:00] And now, in that case, it's okay to translate it into this.
+[00:26:00 -> 00:26:00] I want to point out
+[00:26:00 -> 00:26:02] that U represents a potentially undef value.
+[00:26:02 -> 00:26:03] So if it is undef,
+[00:26:03 -> 00:26:05] then this whole thing is totally UB.
+[00:26:05 -> 00:26:08] And so it's okay to kind of transform it into this.
+[00:26:08 -> 00:26:10] If U was not undef,
+[00:26:10 -> 00:26:13] then also it is okay to translate into this.
+[00:26:13 -> 00:26:16] And so that's the common reasoning
+[00:26:16 -> 00:26:18] that the compilers use.
+[00:26:18 -> 00:26:21] And these semantics aid that kind of reasoning
+[00:26:21 -> 00:26:23] to be able to do such transformations.
+[00:26:24 -> 00:26:25] And that is one of the reasons
+[00:26:25 -> 00:26:27] why branch on undef needs to be UB.

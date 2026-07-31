@@ -1,0 +1,75 @@
+Title: Compiler Design Module 170 : Immediate vs  Deferred UB
+Video ID: 0YSXgoWKYxs
+Detected language: en
+------------------------------------------------------------
+
+[00:00:00 -> 00:00:05] So, now we have discussed the poison value and its associated operational semantics and
+[00:00:05 -> 00:00:08] also the motivation for the use of poison value.
+[00:00:08 -> 00:00:15] Today I am going to introduce another terminology that is used for this kind of undefined
+[00:00:15 -> 00:00:20] behavior, weak form of undefined behavior such as poison values and that is called
+[00:00:20 -> 00:00:24] deferred undefined behavior versus immediate undefined behavior.
+[00:00:24 -> 00:00:29] So, the undefined behavior that we had studied originally which is the undefined
+[00:00:29 -> 00:00:33] behavior, the kind of undefined behavior that is present in the C programming language for
+[00:00:33 -> 00:00:38] example, we are going to call that the immediate undefined behavior or immediate
+[00:00:38 -> 00:00:39] undefined behavior.
+[00:00:39 -> 00:00:43] And we are going to introduce a new term called deferred UB and I am going to in
+[00:00:43 -> 00:00:48] this module say what does deferred UB mean and why it is called so.
+[00:00:48 -> 00:00:53] So, let us take this example int x equals int max plus 1.
+[00:00:53 -> 00:01:00] Now, this is an example where int max plus 1 will cause signed integer overflow and because
+[00:01:00 -> 00:01:05] it will cause signed integer overflow in the C programming language it will trigger
+[00:01:05 -> 00:01:07] undefined behavior and I am going to call that immediate UB.
+[00:01:07 -> 00:01:11] So, it is immediately going to trigger the undefined behavior which means from
+[00:01:11 -> 00:01:17] here on the program gets allowed to do anything because it has done something
+[00:01:17 -> 00:01:20] illegal, the machine does not know what to do here and the machine can behave
+[00:01:20 -> 00:01:22] any which way it likes.
+[00:01:22 -> 00:01:27] And that is basically a feature that for error conditions used for optimization, we have
+[00:01:27 -> 00:01:30] discussed this in a lot of detail earlier.
+[00:01:30 -> 00:01:36] And then we looked at an IR like LLVM which uses a Poisson value to represent the result
+[00:01:36 -> 00:01:42] of such computation and this transfers the Poisson value to the destination
+[00:01:42 -> 00:01:43] variable x.
+[00:01:43 -> 00:01:48] I should also point out that if I take another example let us say I do 2 divide
+[00:01:48 -> 00:01:54] by 0 x you know let us say y equals 2 divide by 0, then in this case it will be immediate
+[00:01:54 -> 00:02:00] UB in both cases, so right even for LLVM this would result in immediate UB.
+[00:02:00 -> 00:02:05] So, we have selectively you know chosen some operations where we are going to trigger
+[00:02:05 -> 00:02:11] immediate UB and some operations where we are going to generate a Poisson value.
+[00:02:11 -> 00:02:14] Further we define the operational semantics of the Poisson value, for example one
+[00:02:14 -> 00:02:18] of the important characteristics is the Poisson value propagates.
+[00:02:18 -> 00:02:22] So for example if x is a Poisson value then I can add it to anything or do any other
+[00:02:22 -> 00:02:26] operation on it and I can end up with a Poisson value again.
+[00:02:26 -> 00:02:30] So you know once again I get a Poisson value in the case of C this statement may
+[00:02:30 -> 00:02:34] or may not execute at all because I mean C has already triggered UB but in the
+[00:02:34 -> 00:02:39] case of LLVM we have just created a Poisson value we are still obliged the abstract
+[00:02:39 -> 00:02:42] machine still obliged to execute the next instruction.
+[00:02:42 -> 00:02:46] So in the case of C I just use a dash operator it's not really applicable you can do the
+[00:02:46 -> 00:02:51] C abstract machine can do anything it likes but the LLVM abstract machine will generate
+[00:02:51 -> 00:02:56] a Poisson value for this particular program into y and then let's say I do some kind
+[00:02:56 -> 00:03:01] of dangerous operation on y for example I could divide by y or I could branch on
+[00:03:01 -> 00:03:06] y and in which case even LLVM now triggers immediate UB.
+[00:03:06 -> 00:03:10] So the idea is that you know you generate a Poisson value but as long as the Poisson
+[00:03:10 -> 00:03:14] value is not being used in some critical operations or what I'm going to call
+[00:03:14 -> 00:03:19] dangerous operations like branch or the denominator of a division then it just
+[00:03:19 -> 00:03:23] kind of keeps propagating the Poisson value and the program keeps executing
+[00:03:23 -> 00:03:27] but as long as soon as it's used in some kind of dangerous operation like
+[00:03:27 -> 00:03:35] a memory used as a memory address or as a branch condition then I'm going to
+[00:03:35 -> 00:03:41] trigger immediate UB and so what has really happened is that the Poisson
+[00:03:41 -> 00:03:46] value has allowed the deferring of the UB. The UB that was supposed to be
+[00:03:46 -> 00:03:50] triggered originally in the C program at the first statement itself has been
+[00:03:50 -> 00:03:54] deferred all the way to the use of the Poisson value in some dangerous
+[00:03:54 -> 00:03:58] operation and so Poisson value allows deferring of UB and if the
+[00:03:58 -> 00:04:01] Poisson value is never used in a dangerous operation we have been
+[00:04:01 -> 00:04:05] able to avoid the UB altogether right and that is where the power of the
+[00:04:05 -> 00:04:08] Poisson value comes from or the advantage of the Poisson value comes
+[00:04:08 -> 00:04:12] from. If the Poisson value is not used in a dangerous operation then you
+[00:04:12 -> 00:04:16] know we'd never trigger UB and this allows you know many common
+[00:04:16 -> 00:04:19] transformations especially the ones that involve hoisting and loop
+[00:04:19 -> 00:04:22] invariant core motion is a very prototypical example of a
+[00:04:22 -> 00:04:28] transformation that uses hoisting and because of this behavior of Poisson
+[00:04:28 -> 00:04:33] values which basically defers immediate UB as shown in this example Poisson
+[00:04:33 -> 00:04:37] values are I'm also going to say that Poisson values are a form of deferred
+[00:04:37 -> 00:04:42] UB so I'm introducing a new terminology immediate UB versus deferred UB
+[00:04:42 -> 00:04:46] Poisson values basically implement a form of deferred UB which is also
+[00:04:46 -> 00:04:51] weaker form of UB than immediate UB and and so this terminology helps us
+[00:04:52 -> 00:04:58] you know understand the the motivation and the operations of you know these
+[00:04:58 -> 00:05:03] weaker forms of UB like Poisson values because they by using the
+[00:05:03 -> 00:05:06] word deferred you're basically explicitly saying what's really
+[00:05:06 -> 00:05:10] happening in this particular case.

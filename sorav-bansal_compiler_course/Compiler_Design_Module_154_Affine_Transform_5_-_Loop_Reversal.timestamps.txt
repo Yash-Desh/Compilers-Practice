@@ -1,0 +1,79 @@
+Title: Compiler Design Module 154 : Affine Transform #5 - Loop Reversal
+Video ID: cgGVpFQ3qKQ
+Detected language: en
+------------------------------------------------------------
+
+[00:00:00 -> 00:00:06] So we're going to discuss our fifth primitive of I'm transformed today, which is loop reversal
+[00:00:06 -> 00:00:12] So let's look at this example for i equals 0 to n y n minus i equals z i
+[00:00:13 -> 00:00:16] So notice that it's you know
+[00:00:16 -> 00:00:21] y is being traversed in the reverse order because the coefficient of i is minus 1
+[00:00:21 -> 00:00:28] whereas z is being traversed in the forward order just like all the other examples and now we have for j equals 0 to n
+[00:00:29 -> 00:00:34] x j equals y j so both x and y in this case are being traversed in the forward order
+[00:00:34 -> 00:00:37] Now once again as we have been using in our examples
+[00:00:37 -> 00:00:43] There is a read up to write dependency between elements by accesses of y with accesses to
+[00:00:44 -> 00:00:46] y n minus i and accesses to y j
+[00:00:47 -> 00:00:49] and if I was to draw a
+[00:00:49 -> 00:00:55] pictorial representation the crosses represent the instances of x 1 and the circle represent the
+[00:00:56 -> 00:01:02] Instances of s 2 then the first instance of s 1 is going to access y n and
+[00:01:03 -> 00:01:09] that is what is going to be accessed by the last instance of s 2 because the last instance of s 2 is going to
+[00:01:09 -> 00:01:16] Access y n and so there's a read up to write dependency from the first instance of s 1 to the last instance of s 2
+[00:01:16 -> 00:01:19] similarly, there's a read up to write dependency from
+[00:01:19 -> 00:01:27] Second instance of s 1 to the n minus 1th instance of s 2 and so on and so this is what our dependency graph looks like
+[00:01:27 -> 00:01:33] And the question is what would be the resulting space partitioning constraints? What would be the resulting?
+[00:01:34 -> 00:01:36] transformation of the program for
+[00:01:36 -> 00:01:44] synchronization free parallelism and also locality as a result and so and and whatever is the result is actually going to form
+[00:01:44 -> 00:01:47] our fifth primitive affine transform which is loop reversal
+[00:01:48 -> 00:01:54] Okay, so my first step is going to be to represent this program in the polyatrial representation
+[00:01:54 -> 00:02:00] There are two statements s 1 and s 2 the iteration space of s 1 is from 0 to n and that's for i and
+[00:02:01 -> 00:02:06] Then the transition space for s 2 is also 0 to n both are single dimensional iteration spaces
+[00:02:07 -> 00:02:13] Now I'm going to create my space partitioning constraints. What are my space partitioning constraints?
+[00:02:13 -> 00:02:18] Whenever there is a dependence a data dependence from s 1 to s 2
+[00:02:18 -> 00:02:25] Then there should be they should have those instances which have data dependence must be mapped to the same processor ID
+[00:02:25 -> 00:02:33] and so this basically translates to saying that whenever n minus i equals j because that's when there will be a data dependence between an
+[00:02:34 -> 00:02:39] Instance of s 1 and an instance of s 2. So whenever n minus 1 equals j
+[00:02:39 -> 00:02:44] This is just the you know lowering of f i plus small f equals
+[00:02:45 -> 00:02:49] capital F prime small i prime plus small f prime then
+[00:02:49 -> 00:02:51] This should be then
+[00:02:52 -> 00:02:58] Pi equals pj in other words the iteration i and iteration j should map to the same processor
+[00:02:58 -> 00:03:03] And so based on these space partitioning constraints the the solution that I will get
+[00:03:03 -> 00:03:09] The maximum rank solution that I'll get is p equals n minus i and p equals j
+[00:03:09 -> 00:03:15] So for the i-th iteration of s 1 it is mapped to the n minus i-th
+[00:03:16 -> 00:03:22] Processor in the processor space for example the 0th iteration of s 1 is going to get mapped to the nth processor
+[00:03:22 -> 00:03:28] And on the other hand for s 2 it is p equals j which means the nth iteration of s 2 is going to get
+[00:03:28 -> 00:03:35] The nth processor so 0th iteration of s 1 and the nth iteration of s 2 are going to get mapped to the same processor
+[00:03:35 -> 00:03:42] Which is processor ID n and that's exactly what our space partitioning constraints require and and so on for other
+[00:03:43 -> 00:03:49] Processor IDs as well and now the next job is to generate the code for this particular maximum rank solution
+[00:03:50 -> 00:03:57] The naive code generation strategy is to have an outer loop on the processor space so for p equals 0 to n
+[00:03:57 -> 00:04:02] Notice that the lower bound is 0 because both s 1 and s 2
+[00:04:02 -> 00:04:06] mappings based given that i-th maximum value is capital N
+[00:04:06 -> 00:04:14] So the p's minimum value will be a capital N minus capital N that's 0 and p equals j is just because j's minimum value is 0
+[00:04:14 -> 00:04:21] So p's minimum value will be 0 so the lower bound is 0 similarly you can check for yourself that the upper bound for p
+[00:04:21 -> 00:04:26] Is going to be capital N so the outer loop is just for p equals 0 to n p plus plus
+[00:04:26 -> 00:04:34] And then I just paste the original program as it is except that I predicate the statements s 1 and s 2 with their respective
+[00:04:35 -> 00:04:42] Mapping functions the solutions because we only want those iterations to execute on the current processor ID
+[00:04:42 -> 00:04:46] Which are mapped to that particular processor ID so I'm going to say if p equals n minus i
+[00:04:47 -> 00:04:53] y i n minus i equals z i if p equals j x j equals y j
+[00:04:53 -> 00:04:58] And now I'm going to tighten my loop bounds or eliminate empty iterations
+[00:04:58 -> 00:05:02] It is very clear that this inner loop on i is only going to
+[00:05:03 -> 00:05:10] Have one iteration which is meaningful that all the other iterations are going to be empty for this inner loop on i
+[00:05:10 -> 00:05:17] Similarly for the inner loop on j only one iteration is going to be non empty all other iterations are going to be empty
+[00:05:17 -> 00:05:21] Which is the iteration of the i-th loop on i which is non empty
+[00:05:22 -> 00:05:26] It is the iteration where i equals n minus p
+[00:05:26 -> 00:05:31] Right because that's the only iteration for which this predicate is going to evaluate to true
+[00:05:32 -> 00:05:38] similarly the iteration for which this is going to be non empty for j is when j equals p and
+[00:05:39 -> 00:05:45] So I can basically simplify the loop and in fact remove the inner loops and just replace i with
+[00:05:46 -> 00:05:48] N minus p and so that gives me
+[00:05:48 -> 00:05:54] N minus i becomes n minus n minus p which becomes just p right n minus
+[00:05:55 -> 00:06:02] Parenthesis n minus p that just becomes p and i there is replaced by n minus p so this becomes n minus p and that's s1
+[00:06:02 -> 00:06:09] And similarly for s2 it becomes x p equals y p because j is equal to p and so I get x p equals y p
+[00:06:09 -> 00:06:11] And this is my new transform program
+[00:06:12 -> 00:06:18] Because we basically respected space partitioning constraints while finding our mapping function
+[00:06:18 -> 00:06:24] You can be assured that this new program transform program is equivalent to the original program
+[00:06:25 -> 00:06:33] And if I was to draw the same thing pictorially our original loop data dependencies look something like the following
+[00:06:33 -> 00:06:38] You know there were edges from the first iteration of s1 to the last iteration of s2
+[00:06:38 -> 00:06:41] And the last iteration of s1 to the first iteration of s2
+[00:06:42 -> 00:06:48] But now I have been able to transform the loop while respecting their dependencies such that
+[00:06:48 -> 00:06:56] The data dependencies that actually have a very small resistance the data dependent iterations actually occurred in the same iteration of the outer loop P
+[00:06:57 -> 00:07:02] Essentially what I have been able to do is just rearrange s1 iterations so that
+[00:07:02 -> 00:07:07] You know so that these edges become the shortest possible and this has been the common theme in all our
+[00:07:08 -> 00:07:16] Primitive of fine transform examples that we have been looking so far which have involved the use of space partitioning constraints

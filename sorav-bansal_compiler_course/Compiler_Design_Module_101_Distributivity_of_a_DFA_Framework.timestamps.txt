@@ -1,0 +1,222 @@
+Title: Compiler Design Module 101 : Distributivity of a DFA Framework
+Video ID: rkAA1ksJYPc
+Detected language: en
+------------------------------------------------------------
+
+[00:00:00 -> 00:00:06] So, last time we talked about the monotonicity of a DFA framework and recall that monotonicity
+[00:00:06 -> 00:00:12] of a framework means that for all functions belonging to the family of transfer functions,
+[00:00:12 -> 00:00:18] if x is less than equal to y, then fx is less than equal to fy, for all functions
+[00:00:18 -> 00:00:19] f.
+[00:00:19 -> 00:00:25] Now, I want to clarify that this does not mean that fx is less than equal to x,
+[00:00:25 -> 00:00:31] it just means that it maps smaller, every function maps smaller values to smaller results.
+[00:00:31 -> 00:00:36] But that does not mean that the result needs to be necessarily less than the value itself.
+[00:00:36 -> 00:00:41] For example, here is the reaching definitions transfer function, fx equals x minus scale
+[00:00:41 -> 00:00:48] union gen, and let's say gen is D1 and kill is D2, so they are both singleton sets,
+[00:00:48 -> 00:00:53] and let's say x was D2, then f of D2 would be D1 and D1 is not less than equal
+[00:00:53 -> 00:00:54] to D2.
+[00:00:55 -> 00:00:57] D1 is incomparable to D2.
+[00:00:57 -> 00:01:02] In fact, I can also create examples where fx can be greater than equal to x.
+[00:01:02 -> 00:01:06] So, it's not the case that fx needs to be less than equal to x, it just means
+[00:01:06 -> 00:01:12] that if x1 is less than equal to x2, then fx1 is less than equal to fx2.
+[00:01:12 -> 00:01:19] So it's possible that f maps values to larger values, but it needs to be monotonic.
+[00:01:20 -> 00:01:26] So, I think that it's clear, I've been saying this many times.
+[00:01:26 -> 00:01:34] Alright, so monotonicity means that, the other way to represent monotonicity is that
+[00:01:34 -> 00:01:40] f of x meet y is less than equal to fx meet fy for all x and y.
+[00:01:40 -> 00:01:45] Alright, so in other words, first meet and then apply the transfer function is
+[00:01:45 -> 00:01:49] less than equal to, first apply the transfer function and then meet.
+[00:01:50 -> 00:01:55] Okay, and we also saw some examples of this in one of the previous lecture modules.
+[00:01:55 -> 00:02:03] Now, here is a special case and this special case is when for all transfer functions
+[00:02:03 -> 00:02:11] in belonging to the family, fx meet y equals fx meet fy for all possible x and y.
+[00:02:11 -> 00:02:15] Okay, so notice that this is just a special case of monotonicity.
+[00:02:15 -> 00:02:20] Here, I'm saying that it doesn't really matter whether you meet first and then apply
+[00:02:20 -> 00:02:23] the transfer function or you first apply the transfer function and then meet.
+[00:02:23 -> 00:02:26] You're going to get the same result in both cases.
+[00:02:26 -> 00:02:33] And this property, if it is true about your framework, is also called distributivity.
+[00:02:33 -> 00:02:37] In other words, if this property is true, then the framework is called distributor.
+[00:02:37 -> 00:02:41] Right, so distributivity is a special case of monotonicity.
+[00:02:41 -> 00:02:46] Now, let's use an example to understand distributivity in more detail.
+[00:02:46 -> 00:02:50] So, let's look at the reaching definitions example and recall that in reaching definitions,
+[00:02:50 -> 00:02:53] fx equals x minus kill union gen.
+[00:02:53 -> 00:02:59] And here we know that this framework is monotone.
+[00:02:59 -> 00:03:01] This is something that we have discussed last time.
+[00:03:01 -> 00:03:08] To summarize, x1 is less than equal to x2 is equivalent to saying x1 is a superset of x2.
+[00:03:08 -> 00:03:15] And so, if I look at fx1 and fx2, they basically evaluate to these expressions on your right.
+[00:03:15 -> 00:03:22] And we can see that if x1 is a superset of x2, then fx1 must also be a superset of x2.
+[00:03:22 -> 00:03:26] And so, it's very clear that this framework is monotone.
+[00:03:26 -> 00:03:29] And this is something that we have also discussed previously.
+[00:03:29 -> 00:03:32] But is this framework distributor?
+[00:03:32 -> 00:03:37] And to answer that question, we have to use the other definition of monotonicity
+[00:03:37 -> 00:03:46] which says that if x1 meet x2, is it less than equal to fx1 meet fx2?
+[00:03:46 -> 00:03:51] And recall that for reaching definitions, x1 meet x2 is nothing but x1 union x2.
+[00:03:51 -> 00:03:54] So, the meet operator is the set union operator.
+[00:03:54 -> 00:04:05] So, is it true, in other words, that f of x1 union x2 would always be less than equal to f of x1 union f of x2?
+[00:04:06 -> 00:04:08] So, we can kind of try to solve for this.
+[00:04:08 -> 00:04:17] And all we need to do is basically substitute for fx1 and for fx2 and similarly for fx1 union fx2.
+[00:04:17 -> 00:04:25] So, if I substitute, I get f of x1 union fx2 is nothing but x1 union x2 minus scale union gen.
+[00:04:25 -> 00:04:32] f of x1 is x1 minus scale union gen and f of x2 is x2 minus scale union gen.
+[00:04:32 -> 00:04:37] And so, I put a union in the middle because basically I am doing fx1 union fx2.
+[00:04:37 -> 00:04:42] And so, this is the new equation that I am interested in solving.
+[00:04:42 -> 00:04:44] And is this actually true?
+[00:04:44 -> 00:04:50] Well, if I just rearrange the terms, you would find that these are actually equivalent.
+[00:04:50 -> 00:04:58] So, any element that belongs to the left hand side which is a set also belongs to the right hand side and vice versa.
+[00:04:58 -> 00:05:04] Okay, I am not going into the details of proving it but you can perhaps see it that for example
+[00:05:04 -> 00:05:11] any element that belongs to x1 and belongs to kill will not be present in the left hand side.
+[00:05:11 -> 00:05:14] Neither will it be present in the right hand side.
+[00:05:14 -> 00:05:16] On the other hand, so you can do this case analysis.
+[00:05:16 -> 00:05:23] So, if an element is present in x1 and not present in kill and not present in gen
+[00:05:23 -> 00:05:26] or if it is present in x1 and present in kill.
+[00:05:26 -> 00:05:33] And you would find that for all these cases, the element belongs to the left hand side if and only if it belongs to the right hand side.
+[00:05:33 -> 00:05:35] And so, these two sets are actually equivalent.
+[00:05:35 -> 00:05:37] So, what does that tell us?
+[00:05:37 -> 00:05:44] It tells us that f of x1 union x2 equals f of x1 union f of x2.
+[00:05:44 -> 00:05:49] In other words, f of x1 meet x2 equals f of x1 meet of x of x2.
+[00:05:49 -> 00:05:54] Which means that our reaching definitions framework is not only monotone but it is also distributed.
+[00:05:54 -> 00:05:57] So, it is both monotone and distributed.
+[00:05:59 -> 00:06:07] So, once again a framework, DFA framework f v meet is distributed if and only if
+[00:06:07 -> 00:06:14] f of x meet y equals f of x meet f of y for all f belonging to the family of transfer functions capital F
+[00:06:14 -> 00:06:17] and of course for all values x and y.
+[00:06:18 -> 00:06:28] Now, this is equivalent to saying that if a framework is distributive, if you first meet input and then apply f,
+[00:06:28 -> 00:06:34] it is going to give the same answer as you first apply f individually and then meet.
+[00:06:34 -> 00:06:40] Distributivity implies monotonicity but not vice versa.
+[00:06:40 -> 00:06:44] So, distributivity recall is a special case of monotonicity.
+[00:06:44 -> 00:06:47] If distributivity is true, then monotonicity is also true.
+[00:06:47 -> 00:06:50] If f is distributive, then f is also monotone.
+[00:06:50 -> 00:06:53] But the other way is of course not true.
+[00:06:53 -> 00:07:02] So, here is an example where I am going to try to show that this particular example of constant propagation
+[00:07:02 -> 00:07:08] with a special choice of transfer functions is monotone but it is not distributive.
+[00:07:08 -> 00:07:13] So, recall the constant propagation example.
+[00:07:14 -> 00:07:22] This is a semi-lattice of the constant propagation algorithm which is the top value, the bottom value,
+[00:07:22 -> 00:07:27] which says not a constant and then there is a constant value for some constant c.
+[00:07:27 -> 00:07:30] So, this is a simplified way of representing the lattice.
+[00:07:30 -> 00:07:36] Actually, there could be large number of values for c but this is just a simplified way of representing the same lattice.
+[00:07:36 -> 00:07:42] Now, there were two ways to represent the transfer functions depending on what is the level of precision
+[00:07:42 -> 00:07:44] that you want in your DFA analysis.
+[00:07:44 -> 00:07:49] You could either say that I just specify the transfer function using kill and gensets.
+[00:07:49 -> 00:07:56] So, if the statement is of the form x equals c, then it generates x, c.
+[00:07:56 -> 00:08:03] And similarly, if it overrides some y, then it kills anything that involves y in it.
+[00:08:03 -> 00:08:06] So, that is one way of specifying constant propagation.
+[00:08:06 -> 00:08:11] And in fact, we have kind of discussed this in the past as well.
+[00:08:11 -> 00:08:14] The other option is to specify the transfer function in a more nuanced way.
+[00:08:14 -> 00:08:21] For example, in this nuanced way, if the input x is, let's say, a equals 2 and b equals 3,
+[00:08:21 -> 00:08:27] and let's say the statement s for which the transfer function fs is being computed is z equals a plus b,
+[00:08:27 -> 00:08:31] then our first option is just going to say z equals a plus b.
+[00:08:31 -> 00:08:33] It doesn't really generate any new constant definition.
+[00:08:33 -> 00:08:37] But the more nuanced implementation of the transfer function could say that
+[00:08:37 -> 00:08:45] oh, I know that a is a constant because a is 2, b is a constant because b is 3 in x, which is the input value.
+[00:08:45 -> 00:08:51] So, I can say that z is also a constant which is formed by adding the two constants, 2 and 3, and so z equals 5.
+[00:08:51 -> 00:08:54] And so, in this nuanced implementation of the transfer function,
+[00:08:54 -> 00:09:00] fs of x equals a, 2, b, 3 and z, 5.
+[00:09:01 -> 00:09:03] So, this is the second option.
+[00:09:03 -> 00:09:07] And you can imagine that the second option is going to give you more precise results.
+[00:09:07 -> 00:09:11] It's going to identify more constant relationships than the first option,
+[00:09:11 -> 00:09:15] because the first option in this case would have just said that z is not a constant.
+[00:09:16 -> 00:09:22] So, my first observation here is, if I use option number 1, then it is distributive.
+[00:09:22 -> 00:09:25] Why is it distributive? It's the same argument that I use for reaching definitions.
+[00:09:25 -> 00:09:27] So, anything that can be represented,
+[00:09:28 -> 00:09:34] anything where, any DFA framework where the transfer function can be represented as a kill and a gen set
+[00:09:34 -> 00:09:42] is just distributive because I can show that f of x1 meet x2 equals f of x1 meet f of x2.
+[00:09:43 -> 00:09:51] If the meet operator is either a set union or set intersection or things like that.
+[00:09:51 -> 00:09:55] In that case, I can show that this kind of thing is distributive.
+[00:09:55 -> 00:10:01] Exactly the same argument as we had for reaching definitions a couple of slides ago.
+[00:10:01 -> 00:10:04] So, I'm not going to discuss option 1 anymore.
+[00:10:04 -> 00:10:06] We already know it's distributive.
+[00:10:06 -> 00:10:10] The interesting thing here is whether option 2 is distributive.
+[00:10:10 -> 00:10:12] First of all, is it even monotone?
+[00:10:12 -> 00:10:14] So, let's check whether it is monotone or not.
+[00:10:18 -> 00:10:20] First of all, I want to say that it is monotone
+[00:10:21 -> 00:10:31] because smaller values in this particular lattice basically mean fewer constant relationships.
+[00:10:31 -> 00:10:33] So, if I start with fewer constant relationships,
+[00:10:33 -> 00:10:39] my transfer function can only produce fewer constant relationships in the output.
+[00:10:39 -> 00:10:41] So, if I start with fewer constant relationships in the input,
+[00:10:41 -> 00:10:46] then my transfer function can only produce fewer constant relationships in the output.
+[00:10:46 -> 00:10:50] In other words, the framework is monotone even in this option 2
+[00:10:50 -> 00:10:56] because my transfer function cannot just magically create new constant relationships.
+[00:10:57 -> 00:11:00] Now, let's try to understand whether it is distributive.
+[00:11:00 -> 00:11:04] So, to understand that, I'm going to use a count example.
+[00:11:04 -> 00:11:06] Here's the count example.
+[00:11:06 -> 00:11:09] x1 maps a to 2 and b to 3.
+[00:11:09 -> 00:11:16] So, let's say x1 is a set of tuples of variables, constant values
+[00:11:16 -> 00:11:20] and in this case, it maps a to 2 and b to 3.
+[00:11:20 -> 00:11:26] Similarly, there's another value x2 which maps a to 3 and b to 2.
+[00:11:26 -> 00:11:30] And let's say the statement s is z equals a plus b.
+[00:11:30 -> 00:11:34] Now, we know that fs x1 is going to be
+[00:11:34 -> 00:11:38] I'm going to see that a is 2 and b is 3 and z is just a plus b.
+[00:11:38 -> 00:11:43] So, I can say z is 5 because I know the input values are constant for a and b.
+[00:11:43 -> 00:11:46] So, I know that the output value is constant for z.
+[00:11:46 -> 00:11:51] And so, fs of x1 equals a equals 2, b equals 3 and z equals 5.
+[00:11:51 -> 00:11:53] So, I've inferred a new constant relationship
+[00:11:53 -> 00:11:56] based on this option 2 transfer function.
+[00:11:56 -> 00:12:01] Similarly, fs of x2 is also a equals 3, b equals 2, that is unchanged
+[00:12:01 -> 00:12:02] and then z equals 5.
+[00:12:02 -> 00:12:04] So, in both cases, I've been able to infer
+[00:12:04 -> 00:12:08] that another constant relationship which is z equals 5.
+[00:12:08 -> 00:12:12] Now, let's see what is fs x1 meet of fs x2.
+[00:12:12 -> 00:12:15] So, recall that in the constant propagation example,
+[00:12:15 -> 00:12:17] the meet operator is set intersection.
+[00:12:17 -> 00:12:20] And so, when I do set intersection of these two sets,
+[00:12:20 -> 00:12:24] then I basically get the only common element here is z equals 5.
+[00:12:24 -> 00:12:29] Because a equals 2 and a equals 3, intersection is null.
+[00:12:29 -> 00:12:32] b equals 3 and b equals 2 intersection is null.
+[00:12:32 -> 00:12:38] But z equals 5 and z equals 5, the intersection preserves this relationship.
+[00:12:39 -> 00:12:46] And so, fs x1 meet of fs x2 is z equals 5.
+[00:12:46 -> 00:12:52] Now, to check distributivity, I need to check what is fs of x1 meet x2.
+[00:12:52 -> 00:12:55] So, first of all, what is x1 meet x2?
+[00:12:55 -> 00:12:58] x1 meet x2 here is the empty set.
+[00:12:58 -> 00:13:00] So, x1 meet x2 is the empty set
+[00:13:00 -> 00:13:03] because there is no commonality between the two sets.
+[00:13:03 -> 00:13:08] And then, fs of the empty set is just going to be the empty set.
+[00:13:08 -> 00:13:11] Because if I don't know that a is a constant,
+[00:13:11 -> 00:13:13] if I don't know that b is a constant,
+[00:13:13 -> 00:13:16] then I can't really say that z is a constant.
+[00:13:16 -> 00:13:20] And so, f of x1 meet x2 is also the empty set
+[00:13:20 -> 00:13:26] and that is not equal to f of x1 meet of f of x2.
+[00:13:26 -> 00:13:29] And it is less than that,
+[00:13:29 -> 00:13:33] but it is not equal to and so this framework is not distributed.
+[00:13:34 -> 00:13:38] So, this particular way of specifying a transfer function
+[00:13:38 -> 00:13:41] is monotone but not distributed.
+[00:13:41 -> 00:13:46] It is more precise than the option 1 transfer function
+[00:13:46 -> 00:13:48] which was actually distributed.
+[00:13:48 -> 00:13:52] But even though this is more precise, it is not distributed.
+[00:13:52 -> 00:13:58] So, precision and distributivity are two orthogonal things.
+[00:13:58 -> 00:14:02] To understand the implications of distributivity,
+[00:14:02 -> 00:14:03] what does it really mean?
+[00:14:03 -> 00:14:06] What does it mean for a function to be distributive
+[00:14:06 -> 00:14:08] or for it to be not to be distributive?
+[00:14:08 -> 00:14:11] So, for example, we have looked at constant propagation
+[00:14:11 -> 00:14:13] and we said that it is not distributive.
+[00:14:13 -> 00:14:16] We looked at it from a mathematical point of view,
+[00:14:16 -> 00:14:19] but if we look at it from a control flow graph,
+[00:14:19 -> 00:14:22] operational point of view of the DFA algorithm,
+[00:14:22 -> 00:14:24] then let's say I have these two basic blocks.
+[00:14:24 -> 00:14:27] One of them is setting a to 2 and b to 3.
+[00:14:27 -> 00:14:30] The other one is setting a to 3 and b to 2.
+[00:14:30 -> 00:14:32] So, this is going to produce this value x1
+[00:14:32 -> 00:14:35] which is going to map a to 2 and b to 3.
+[00:14:35 -> 00:14:37] On the right hand side, I am going to produce a value x2
+[00:14:37 -> 00:14:40] that maps a to 3 and b to 2.
+[00:14:40 -> 00:14:44] And then I am going to do z equals a plus b.
+[00:14:44 -> 00:14:49] Now, our DFA algorithm is first going to do
+[00:14:49 -> 00:14:55] compute x1 meet x2 and then apply f on that x1 meet x2.
+[00:14:55 -> 00:14:56] And so, what it is going to give me is
+[00:14:56 -> 00:14:58] x1 meet x2 is going to give me the empty set
+[00:14:58 -> 00:15:03] and then fs of x1 meet x2 is also going to give me the empty set.
+[00:15:03 -> 00:15:06] On the other hand, if I had done the other thing
+[00:15:06 -> 00:15:08] which is first apply the transfer function
+[00:15:08 -> 00:15:11] and then meet on both the branches,
+[00:15:11 -> 00:15:16] this is the diagram I am using to kind of represent that,
+[00:15:16 -> 00:15:21] then I would have got fs of x1 meet of fs of x2
+[00:15:21 -> 00:15:24] and as we have seen in our previous discussion,
+[00:15:24 -> 00:15:28] that would have given me the singleton set z equals 5.
+[00:15:29 -> 00:15:33] And so, the answer is different
+[00:15:33 -> 00:15:36] depending on whether you met first
+[00:15:36 -> 00:15:38] or whether you apply the transfer function first.
+[00:15:38 -> 00:15:42] And so, this framework is not distributed.
+[00:15:42 -> 00:15:44] On the other hand, if it was distributed,
+[00:15:44 -> 00:15:46] it really shouldn't have mattered
+[00:15:46 -> 00:15:49] whether you executed the meet operator first
+[00:15:49 -> 00:15:52] or whether you executed the transfer function first.
+[00:15:52 -> 00:15:54] Notice that in our particular algorithm,
+[00:15:54 -> 00:15:55] in our fixed point iteration,
+[00:15:55 -> 00:15:58] we always meet first and then apply the transfer function.
+[00:15:58 -> 00:16:02] And so, the result we would have gotten for this particular example
+[00:16:02 -> 00:16:04] would have been the empty set.

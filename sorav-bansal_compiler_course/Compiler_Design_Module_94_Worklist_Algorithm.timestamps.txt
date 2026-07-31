@@ -1,0 +1,430 @@
+Title: Compiler Design Module 94 : Worklist Algorithm
+Video ID: 5slyZmmtqkk
+Detected language: en
+------------------------------------------------------------
+
+[00:00:00 -> 00:00:05] So, let's look at the DFA fixed point iteration once again.
+[00:00:05 -> 00:00:11] So the input to the fixed point iteration algorithm is a control flow graph, CFG equals
+[00:00:11 -> 00:00:17] n, e, entry, exit, n is the set of nodes, e is the set of edges, entry is a special
+[00:00:17 -> 00:00:21] node and exit is also a special node in the control flow graph.
+[00:00:21 -> 00:00:24] And then if I look at the forward DFA and you know I could also have looked at the
+[00:00:24 -> 00:00:28] backward DFA but just for simplicity let's just look at one of them and I arbitrarily
+[00:00:28 -> 00:00:29] pick forward.
+[00:00:29 -> 00:00:34] If I look at the forward DFA, I initialize out of entry to the boundary condition value.
+[00:00:34 -> 00:00:39] So whatever is the boundary condition value for a particular DFA that you are interested in.
+[00:00:39 -> 00:00:44] And then also for each other basic block other than entry, I just say out B equals
+[00:00:44 -> 00:00:50] top value where top value is again specific to the particular DFA that we are looking at.
+[00:00:50 -> 00:00:52] The top value is based on the meet operator.
+[00:00:52 -> 00:00:56] So when we define the meet operator, it automatically also defines our top value.
+[00:00:56 -> 00:01:01] Top value is something which is greater than equal to everything else and that is also
+[00:01:01 -> 00:01:02] greater than equal to operator.
+[00:01:02 -> 00:01:05] The ordering operator is also implied by the meet operator.
+[00:01:05 -> 00:01:10] And we're going as I've been saying, we'll also be looking at it in more detail later.
+[00:01:10 -> 00:01:15] And then this part here is actually the fixed point iteration.
+[00:01:15 -> 00:01:24] So this part is the initialization and the part below it is the iteration, the fixed
+[00:01:24 -> 00:01:26] point iteration.
+[00:01:26 -> 00:01:31] And so inside the iteration, we say while changes to any out occur for each basic block
+[00:01:31 -> 00:01:35] B, do this computation.
+[00:01:35 -> 00:01:41] So now here's the interesting observation because initially everything else is top.
+[00:01:41 -> 00:01:47] It's only the first node, the entry node that has a value that is other than top,
+[00:01:47 -> 00:01:48] that is the boundary condition value.
+[00:01:48 -> 00:01:53] So let's say if I pick some basic block which is other than entry, then you know
+[00:01:53 -> 00:01:57] the in of that basic block will be top, the out of the basic block will be top because
+[00:01:57 -> 00:02:01] in will be top because all its predecessors out would be top and so on.
+[00:02:01 -> 00:02:05] So only place where it would make sense to pick a basic block at the first step
+[00:02:05 -> 00:02:09] is the basic block that just follows the entry node.
+[00:02:09 -> 00:02:12] So all the nodes that are successors of the entry node are the ones that we
+[00:02:12 -> 00:02:13] really need to pick.
+[00:02:13 -> 00:02:17] Everything else we don't need to pick because if we pick them, then they are
+[00:02:17 -> 00:02:22] not going to change their values because their predecessors are top and so
+[00:02:22 -> 00:02:28] their current value is top and so even the next value is going to be top because
+[00:02:28 -> 00:02:32] meet over top is just top and then transfer function over top is also top.
+[00:02:32 -> 00:02:34] Typically, all right.
+[00:02:34 -> 00:02:40] And so transfer function over top is not necessarily top but typically it is top.
+[00:02:40 -> 00:02:45] But the point is that typically top represents that something has not been
+[00:02:45 -> 00:02:49] reached or it's the most aggressive value.
+[00:02:49 -> 00:02:55] So I want that things should basically reach that point and only then I should be computing it.
+[00:02:55 -> 00:02:55] All right.
+[00:02:55 -> 00:02:56] Okay.
+[00:02:56 -> 00:03:02] So the question here is do I really need to consider all basic blocks at every
+[00:03:02 -> 00:03:06] iteration or can I omit some basic block at some iteration?
+[00:03:06 -> 00:03:07] So that's question number one.
+[00:03:07 -> 00:03:12] Do I really need to consider all basic blocks or can I only consider some basic blocks?
+[00:03:12 -> 00:03:15] For example, I gave the example of a forward DFA.
+[00:03:15 -> 00:03:19] Then the first iteration, I only need to pick up the successors of the entry node.
+[00:03:19 -> 00:03:24] And then from there on, the data will start flowing, right?
+[00:03:24 -> 00:03:27] If I pick something later, something in the middle or something at the end and the
+[00:03:27 -> 00:03:32] first iteration that is usually not going to be very useful.
+[00:03:32 -> 00:03:36] And the other thing is if I have multiple basic blocks from which I could pick,
+[00:03:36 -> 00:03:39] should there be an order in which I should pick them?
+[00:03:39 -> 00:03:40] Is it going to matter?
+[00:03:40 -> 00:03:47] And, you know, I'm going to prove, we're going to see later on that the order doesn't
+[00:03:47 -> 00:03:52] really matter from a correctness or from a point of view of what result we get.
+[00:03:52 -> 00:03:58] But the order may matter from an efficiency perspective, how fast my DFA algorithm is.
+[00:03:58 -> 00:03:58] Okay.
+[00:03:58 -> 00:04:02] So there's this famous algorithm called the work list algorithm.
+[00:04:02 -> 00:04:07] It's also commonly called the Kildal's work list algorithm named after the person
+[00:04:07 -> 00:04:10] who first devised this algorithm.
+[00:04:11 -> 00:04:20] Kildal and for a forward, so the idea here is the following for a forward DFA,
+[00:04:20 -> 00:04:26] the inB value does not change if none of the outP values change where P is a
+[00:04:26 -> 00:04:27] predecessor of B.
+[00:04:27 -> 00:04:34] So if the in value will change only if one of the out values of the
+[00:04:34 -> 00:04:37] predecessor has changed because if none of the out values of the predecessor
+[00:04:37 -> 00:04:41] has changed, then, you know, I am already in a fixed point because the
+[00:04:41 -> 00:04:42] out values have changed.
+[00:04:42 -> 00:04:46] So the meet operator applied on the out values of the thing is not going to
+[00:04:46 -> 00:04:48] give me a new in value.
+[00:04:48 -> 00:04:51] So when I say already in the fixed point, we're already in the fixed
+[00:04:51 -> 00:04:53] point at that, in that segment of the program.
+[00:04:53 -> 00:04:57] Although, you know, maybe other places we are not at the fixed point.
+[00:04:57 -> 00:05:02] And so for a forward DFA, the inB value does not change if none of the
+[00:05:02 -> 00:05:06] outP values change where P is a predecessor of B, right?
+[00:05:06 -> 00:05:08] So inB and outP.
+[00:05:08 -> 00:05:13] And so similarly for backward DFA and this statement is for a forward
+[00:05:13 -> 00:05:18] DFA, but I could have stated the statement for a backward DFA.
+[00:05:18 -> 00:05:22] Similarly, I would have just said for a backward DFA, the outB value
+[00:05:22 -> 00:05:28] does not change if none of the inS values change where S is a
+[00:05:28 -> 00:05:29] successor of P, right?
+[00:05:29 -> 00:05:32] So forward and backward are kind of isomorphic.
+[00:05:32 -> 00:05:36] I'm just using forward as an example, but you can always kind of,
+[00:05:36 -> 00:05:40] you know, flip it and kind of start talking about backward as well.
+[00:05:41 -> 00:05:42] All right.
+[00:05:43 -> 00:05:46] So here is the based on this observation.
+[00:05:46 -> 00:05:50] Here is the idea that we will maintain a work list, which is a
+[00:05:50 -> 00:05:54] list of basic logs that still need to be processed, right?
+[00:05:54 -> 00:05:57] So list of basic logs that we know that they need to be
+[00:05:57 -> 00:06:00] processed because maybe in the forward DFA, their predecessor
+[00:06:00 -> 00:06:04] was just changed and so, you know, it's possible that their
+[00:06:04 -> 00:06:08] successors are going to be needing some change as well.
+[00:06:09 -> 00:06:14] So let's not read the, so I'm going to read this sentence in blue,
+[00:06:14 -> 00:06:18] but I'm going to omit these kind of annotations in red, which are
+[00:06:18 -> 00:06:19] meant for backward DFA.
+[00:06:19 -> 00:06:20] I'm going to read the backward later.
+[00:06:21 -> 00:06:25] So in a forward DFA, whenever we remove a basic block from the
+[00:06:26 -> 00:06:29] work list, we compute its outState, right?
+[00:06:29 -> 00:06:32] So whenever we remove a basic block from the work list, we
+[00:06:32 -> 00:06:34] compute its outState because that's what the body of that
+[00:06:34 -> 00:06:35] loop says.
+[00:06:36 -> 00:06:40] And if this state has changed, so this is important, right?
+[00:06:40 -> 00:06:44] Only if it has changed, the block's successors are added
+[00:06:44 -> 00:06:46] to the work list, right?
+[00:06:46 -> 00:06:51] And this basically captures our observation that a block
+[00:06:51 -> 00:06:55] B needs to be added to the work list only if one of its
+[00:06:55 -> 00:06:57] predecessors out values has changed.
+[00:06:58 -> 00:07:02] And so that's basically how we're going to implement our DFA
+[00:07:02 -> 00:07:06] and this is going to be hopefully more efficient than
+[00:07:06 -> 00:07:08] looking at all basic blocks in each iteration.
+[00:07:08 -> 00:07:09] And that's the whole idea.
+[00:07:09 -> 00:07:14] The work list algorithm is supposed to make the DFA fixed
+[00:07:14 -> 00:07:15] point iteration more efficient.
+[00:07:15 -> 00:07:18] Now I can read the same sentence for a backward DFA as
+[00:07:18 -> 00:07:23] well, which is just replace the forward with backward and
+[00:07:23 -> 00:07:26] out with in and successors with predecessors.
+[00:07:26 -> 00:07:29] So in a backward DFA, whenever we remove a basic block from
+[00:07:29 -> 00:07:32] the work list, we compute it in state.
+[00:07:32 -> 00:07:35] If the state has changed, the block's predecessors are
+[00:07:35 -> 00:07:37] added to the work list.
+[00:07:37 -> 00:07:39] So this would be for a backward DFA.
+[00:07:40 -> 00:07:40] All right.
+[00:07:41 -> 00:07:46] So how does the work list algorithm proceed?
+[00:07:46 -> 00:07:49] So at initialization time, we add the basic blocks
+[00:07:49 -> 00:07:50] whose information is known.
+[00:07:51 -> 00:08:00] So whatever basic blocks information is known at initialization
+[00:08:00 -> 00:08:03] time at the start of the DFA algorithm, they are
+[00:08:03 -> 00:08:04] added to the work list.
+[00:08:04 -> 00:08:07] So what are the basic blocks whose initial information is
+[00:08:07 -> 00:08:07] known?
+[00:08:07 -> 00:08:10] It's exactly the set of basic blocks for which we
+[00:08:10 -> 00:08:12] have boundary condition values, right?
+[00:08:12 -> 00:08:14] So basically that's coming from the boundary condition.
+[00:08:14 -> 00:08:17] For example, typically for a forward DFA, the boundary
+[00:08:17 -> 00:08:19] condition is known for the entry node.
+[00:08:19 -> 00:08:21] For a backward DFA, typically the boundary condition is
+[00:08:21 -> 00:08:23] known for the exit node.
+[00:08:23 -> 00:08:26] And so initialization would just involve adding either
+[00:08:26 -> 00:08:31] the entry node to the work list for a forward DFA or
+[00:08:31 -> 00:08:34] the exit node into the work list for a backward DFA
+[00:08:34 -> 00:08:38] for the typical DFA where this property holds.
+[00:08:39 -> 00:08:41] And then the termination condition is that the work
+[00:08:41 -> 00:08:42] list becomes empty.
+[00:08:42 -> 00:08:45] So notice that things are added to the work list
+[00:08:45 -> 00:08:46] only if something changed.
+[00:08:46 -> 00:08:50] So for example, if a block's out value changed, only
+[00:08:50 -> 00:08:54] then the successor basic blocks are added to the
+[00:08:54 -> 00:08:54] work list.
+[00:08:54 -> 00:08:59] So at a point where the work list becomes empty,
+[00:08:59 -> 00:09:01] it basically indicates that we have reached the
+[00:09:01 -> 00:09:01] fixed point.
+[00:09:01 -> 00:09:04] So there's a nice way of detecting the fixed
+[00:09:04 -> 00:09:05] point also.
+[00:09:05 -> 00:09:08] So the outer condition check that while any out has
+[00:09:08 -> 00:09:11] changed, it just now reduces to the work list
+[00:09:11 -> 00:09:12] has become empty.
+[00:09:13 -> 00:09:16] Alright, also I want to point out that the work
+[00:09:16 -> 00:09:17] list is a set, right?
+[00:09:17 -> 00:09:20] So the work list is a set because each block may
+[00:09:20 -> 00:09:22] appear at most once in the work list at any given
+[00:09:22 -> 00:09:23] time.
+[00:09:23 -> 00:09:26] So we add to the work list, but then it's
+[00:09:26 -> 00:09:29] possible that a block could have two predecessors
+[00:09:29 -> 00:09:31] and both those predecessors changed.
+[00:09:31 -> 00:09:34] And so because of that, we try to add the
+[00:09:34 -> 00:09:35] same block twice into the work list.
+[00:09:36 -> 00:09:39] But if we add the same block twice, it's not
+[00:09:39 -> 00:09:40] like we're going to process it twice, right?
+[00:09:40 -> 00:09:44] So we just kind of maintain it as a set.
+[00:09:44 -> 00:09:46] So at each basic block is going to appear at
+[00:09:46 -> 00:09:49] most once in the set.
+[00:09:52 -> 00:09:56] So that algorithm basically gives you a
+[00:09:56 -> 00:09:59] sense of how we are going to proceed in
+[00:10:00 -> 00:10:02] in kind of choosing the basic blocks that
+[00:10:02 -> 00:10:03] we should process.
+[00:10:03 -> 00:10:07] So for example, when I'm looking at my
+[00:10:07 -> 00:10:09] original algorithm, what I'm going to do is
+[00:10:09 -> 00:10:12] that iteration loop that I have and there
+[00:10:12 -> 00:10:14] I'm going to initialize by just adding the
+[00:10:14 -> 00:10:17] entry node to the work list and then I'm
+[00:10:17 -> 00:10:19] going to say, okay, now let's add all the
+[00:10:19 -> 00:10:21] success because the entry node has changed
+[00:10:21 -> 00:10:22] because of the boundary value.
+[00:10:23 -> 00:10:24] I'm going to say, okay, now let's add all
+[00:10:24 -> 00:10:27] the successor nodes of the entry node.
+[00:10:27 -> 00:10:29] And if any of the successor nodes have
+[00:10:29 -> 00:10:31] changed, then we add the successor of the
+[00:10:31 -> 00:10:35] successor and so on until you know, until
+[00:10:35 -> 00:10:37] things keep changing and hopefully some at
+[00:10:37 -> 00:10:40] some point things will stop changing and
+[00:10:40 -> 00:10:41] that's coming from the fact that there is a
+[00:10:42 -> 00:10:43] you know, there's some properties about the
+[00:10:43 -> 00:10:45] ordering operator, which is basically giving
+[00:10:45 -> 00:10:47] us this this property that at some point
+[00:10:47 -> 00:10:49] things will keep stop changing and we're
+[00:10:49 -> 00:10:51] going to look at that in more detail later
+[00:10:51 -> 00:10:51] on as well.
+[00:10:52 -> 00:10:56] So that's, you know, that's a good way
+[00:10:56 -> 00:10:58] of pruning out basic blocks that we
+[00:10:58 -> 00:11:00] don't need to look at, right?
+[00:11:00 -> 00:11:01] So we only look at those basic blocks
+[00:11:01 -> 00:11:03] whose predecessors have changed for a
+[00:11:03 -> 00:11:06] forward DFA and and so, you know,
+[00:11:06 -> 00:11:08] that's basically answers our first question,
+[00:11:08 -> 00:11:10] which is can we omit some basic blocks
+[00:11:10 -> 00:11:12] and if so, how do we identify which
+[00:11:12 -> 00:11:12] ones to omit?
+[00:11:13 -> 00:11:16] The answer is well, if you know, if the
+[00:11:16 -> 00:11:18] neighboring basic block has changed only
+[00:11:18 -> 00:11:21] then the the current basic block is
+[00:11:21 -> 00:11:23] added to the work list and by neighboring,
+[00:11:24 -> 00:11:25] I mean predecessor in case of forward
+[00:11:25 -> 00:11:28] and successor in case of backward.
+[00:11:28 -> 00:11:30] Now, the other question is if there
+[00:11:30 -> 00:11:31] are multiple basic blocks present
+[00:11:31 -> 00:11:33] in the work list at any point given
+[00:11:33 -> 00:11:36] time and there will be then what
+[00:11:36 -> 00:11:38] should I pick?
+[00:11:39 -> 00:11:40] Which one should I pick?
+[00:11:40 -> 00:11:41] Is it okay if I pick anyone?
+[00:11:41 -> 00:11:43] So the answer to this question is yes,
+[00:11:43 -> 00:11:45] indeed it is okay to pick anyone.
+[00:11:45 -> 00:11:47] That's just the property of this work
+[00:11:47 -> 00:11:49] of this dataflow analysis
+[00:11:49 -> 00:11:51] iteration fixed point iteration algorithm
+[00:11:51 -> 00:11:53] and that's completely independent
+[00:11:53 -> 00:11:54] of the work list algorithm, all right?
+[00:11:54 -> 00:11:56] So you can pick any basic block
+[00:11:56 -> 00:11:58] at any time and yet you are going
+[00:11:58 -> 00:12:00] to arrive at the same solution and
+[00:12:00 -> 00:12:01] that's going to be the most precise
+[00:12:01 -> 00:12:03] solution for some definition of precision
+[00:12:03 -> 00:12:05] and I've been saying this we're going
+[00:12:05 -> 00:12:08] to discuss why and how later about
+[00:12:08 -> 00:12:13] precision and the fact that you know,
+[00:12:13 -> 00:12:15] it doesn't matter what order we pick
+[00:12:16 -> 00:12:18] but from an efficiency point of view,
+[00:12:18 -> 00:12:20] does it matter which one I pick?
+[00:12:20 -> 00:12:22] Well, it turns out that yes,
+[00:12:22 -> 00:12:25] indeed it matters which one to pick
+[00:12:25 -> 00:12:26] and here is an example.
+[00:12:26 -> 00:12:29] So let's say I have a basic block B1,
+[00:12:30 -> 00:12:34] basic block B2, basic block B3
+[00:12:35 -> 00:12:37] and then I have basic block,
+[00:12:37 -> 00:12:39] there's an edge from B2 to B3.
+[00:12:39 -> 00:12:41] So let's say initially in my work list,
+[00:12:41 -> 00:12:44] B1 is present and B1 changes.
+[00:12:44 -> 00:12:46] So then I'm going to add both B2
+[00:12:47 -> 00:12:49] and B3 to my work list, right?
+[00:12:49 -> 00:12:52] So this is, this was one and now B2
+[00:12:52 -> 00:12:54] and B3 can be, have been added
+[00:12:54 -> 00:12:54] to the big work list.
+[00:12:55 -> 00:12:56] Now I have two options either I could
+[00:12:56 -> 00:12:59] have picked B3 first and then B2
+[00:12:59 -> 00:13:01] or I could have picked B2 first
+[00:13:01 -> 00:13:02] and then B3.
+[00:13:02 -> 00:13:03] Now, which one do you think is better?
+[00:13:04 -> 00:13:06] Well, it's, you know, intuitively
+[00:13:06 -> 00:13:08] it feels like, you know, it's better to do B2 first
+[00:13:08 -> 00:13:10] because once you have done B2,
+[00:13:10 -> 00:13:11] then the information across this edge
+[00:13:11 -> 00:13:13] will become up-to-date, right?
+[00:13:13 -> 00:13:15] From B2 to B3, right?
+[00:13:15 -> 00:13:17] So let me just use a different color.
+[00:13:18 -> 00:13:20] The information on this edge from B2 to B3
+[00:13:20 -> 00:13:24] will become up-to-date if we do B2 first.
+[00:13:24 -> 00:13:26] On the other hand, if we do B3 first,
+[00:13:26 -> 00:13:28] then what will happen is that the information
+[00:13:28 -> 00:13:31] on this edge would be old, would be stale
+[00:13:31 -> 00:13:33] and so we would, maybe B3 would change
+[00:13:33 -> 00:13:35] or maybe B3 will not change, whatever happens.
+[00:13:35 -> 00:13:37] But then we will now do B2
+[00:13:37 -> 00:13:40] and now because of B2, now maybe B3
+[00:13:40 -> 00:13:42] has to be added again to the work list
+[00:13:42 -> 00:13:45] because B2 is pointing to B3, right?
+[00:13:45 -> 00:13:47] So in this case, it would have been better
+[00:13:48 -> 00:13:55] to pick B2 before B3, all right?
+[00:13:55 -> 00:13:57] In general, if B2 has an edge,
+[00:13:57 -> 00:14:00] if some block B1, B i has an edge
+[00:14:00 -> 00:14:01] to some other block B j,
+[00:14:02 -> 00:14:05] then it seems better to basically pick B i before B j.
+[00:14:05 -> 00:14:08] Now, if the code has no cycle,
+[00:14:08 -> 00:14:11] then we can actually order these basic blocks
+[00:14:11 -> 00:14:14] so that nodes that are reachable
+[00:14:14 -> 00:14:16] are kind of considered later.
+[00:14:16 -> 00:14:17] So if B i can reach B j,
+[00:14:17 -> 00:14:20] then B j will be considered later
+[00:14:20 -> 00:14:23] and B i would be considered before B j.
+[00:14:24 -> 00:14:26] But if there is a cycle in the control flow graph,
+[00:14:26 -> 00:14:28] then both B i and B j can reach each other,
+[00:14:28 -> 00:14:30] in which case we can pick either of them
+[00:14:30 -> 00:14:32] and it should not really.
+[00:14:32 -> 00:14:36] We really don't have any good way
+[00:14:36 -> 00:14:37] or heuristic to basically say that,
+[00:14:37 -> 00:14:39] okay, we should pick this or that.
+[00:14:39 -> 00:14:41] So that's basically the idea that we're going to use
+[00:14:41 -> 00:14:45] to order the selection of basic blocks
+[00:14:45 -> 00:14:47] when there are multiple choices in the work list.
+[00:14:48 -> 00:14:51] Okay, so the first point is that the choice
+[00:14:51 -> 00:14:53] doesn't matter from a correctness point of view,
+[00:14:54 -> 00:14:58] but so it is okay to pick any basic block
+[00:14:58 -> 00:15:00] from a correctness point of view,
+[00:15:00 -> 00:15:04] but the choice may influence the efficiency of the algorithm.
+[00:15:05 -> 00:15:08] So processing order for basic blocks.
+[00:15:08 -> 00:15:10] So basic idea is it would be fastest
+[00:15:10 -> 00:15:13] if all predecessors for a forward DFA
+[00:15:13 -> 00:15:15] and you know, if I was backward DFA,
+[00:15:15 -> 00:15:18] then I would just say all successors
+[00:15:18 -> 00:15:20] instead of all predecessors.
+[00:15:20 -> 00:15:23] So would be fastest if all predecessors of B
+[00:15:23 -> 00:15:25] are processed before B is processed.
+[00:15:26 -> 00:15:28] So in an example, before B3 is processed,
+[00:15:28 -> 00:15:31] it's better that you have both B1 and B2
+[00:15:31 -> 00:15:32] have been processed before B3 is processed.
+[00:15:32 -> 00:15:35] So would be fastest of all predecessors of B
+[00:15:35 -> 00:15:36] are processed before B is processed
+[00:15:36 -> 00:15:40] so that basically when B is being processed,
+[00:15:40 -> 00:15:42] we should be able to use the latest information
+[00:15:42 -> 00:15:44] on all the incoming edges
+[00:15:44 -> 00:15:45] and this is for a forward DFA.
+[00:15:46 -> 00:15:50] All right, so that's great.
+[00:15:50 -> 00:15:52] And in fact, in the absence of loops,
+[00:15:52 -> 00:15:55] it is possible to order the blocks
+[00:15:55 -> 00:15:57] so that the algorithm converges processed
+[00:15:57 -> 00:16:00] by processing each basic block at most once.
+[00:16:01 -> 00:16:02] All right, so for example,
+[00:16:02 -> 00:16:05] we are looking at this example of B1, B2, B3.
+[00:16:05 -> 00:16:06] So if you pick it in this order,
+[00:16:06 -> 00:16:09] first B1, then B2 and last B3,
+[00:16:09 -> 00:16:11] then we just need to process each basic block
+[00:16:11 -> 00:16:13] at most once because B3 is the last basic block.
+[00:16:13 -> 00:16:16] Let's say it's just the exit node or something.
+[00:16:16 -> 00:16:17] Then, you know, we are just done
+[00:16:17 -> 00:16:19] with processing each basic block at most once.
+[00:16:19 -> 00:16:21] Whereas if you had picked the other order
+[00:16:21 -> 00:16:23] which is B1, B3 and then B2,
+[00:16:23 -> 00:16:26] then we would have had to process B3 twice
+[00:16:26 -> 00:16:29] because first we would process B3 because of B1
+[00:16:29 -> 00:16:32] and then we would process B3 again because of B2.
+[00:16:33 -> 00:16:35] And so but you know,
+[00:16:35 -> 00:16:36] so but when in that basic,
+[00:16:36 -> 00:16:38] in that graph there was no cycle
+[00:16:38 -> 00:16:40] and so this statement saying
+[00:16:40 -> 00:16:42] that in the absence of loops,
+[00:16:42 -> 00:16:45] so if it's an IA cyclic graph,
+[00:16:45 -> 00:16:47] it is possible to order the block
+[00:16:47 -> 00:16:49] so that the algorithm converges
+[00:16:49 -> 00:16:51] by processing each basic block at most once.
+[00:16:51 -> 00:16:54] And example, you can just use any topological sort
+[00:16:54 -> 00:16:56] for the, of the graph.
+[00:16:56 -> 00:16:58] So a topological sort of a graph is basically
+[00:16:58 -> 00:17:01] a sort of the graph where a sorting of the nodes
+[00:17:01 -> 00:17:05] in the graph such that if a node x can reach a node y,
+[00:17:05 -> 00:17:07] then x appears before y.
+[00:17:07 -> 00:17:09] Now because there are no cycles in the graph,
+[00:17:09 -> 00:17:11] it is possible to have a topological sort
+[00:17:12 -> 00:17:13] and if you process the nodes
+[00:17:13 -> 00:17:15] in the topological sorted order,
+[00:17:15 -> 00:17:17] topologically sorted order of the graph,
+[00:17:17 -> 00:17:19] then you are going to get a good answer,
+[00:17:21 -> 00:17:22] good efficiency of the algorithm.
+[00:17:22 -> 00:17:24] You can just kind of in one iteration,
+[00:17:24 -> 00:17:25] you are not in one iteration,
+[00:17:25 -> 00:17:28] but every basic block would need to be processed
+[00:17:28 -> 00:17:32] at most once in the entire execution
+[00:17:32 -> 00:17:33] of the DFA fixed-point iteration.
+[00:17:34 -> 00:17:36] However, that is not true if there are cycles
+[00:17:36 -> 00:17:38] because in cycles you could,
+[00:17:38 -> 00:17:39] let's say in the previous example,
+[00:17:39 -> 00:17:42] if there was B2 and B3
+[00:17:42 -> 00:17:45] and then B3 was actually again pointing to B2
+[00:17:45 -> 00:17:46] and let's say there was B1
+[00:17:46 -> 00:17:48] which was pointing to both B2 and B3.
+[00:17:48 -> 00:17:50] Now it's not clear which one to pick
+[00:17:50 -> 00:17:52] and if I pick B2 first,
+[00:17:52 -> 00:17:54] even then it's possible that I have to do
+[00:17:54 -> 00:17:57] B2 again because let's say I pick B1, B2,
+[00:17:57 -> 00:17:59] then I pick B3 and B3 changes
+[00:17:59 -> 00:18:00] and because of B3's change,
+[00:18:00 -> 00:18:02] B2 needs to be processed again
+[00:18:02 -> 00:18:04] and maybe because of B2's change,
+[00:18:04 -> 00:18:05] B3 needs to be processed again
+[00:18:05 -> 00:18:06] and so this can keep going on
+[00:18:06 -> 00:18:09] for some time until maybe we hit bottom
+[00:18:09 -> 00:18:11] or we hit some fixed-point or something like that
+[00:18:11 -> 00:18:13] in which case we have to process
+[00:18:13 -> 00:18:16] each basic block potentially more than once
+[00:18:16 -> 00:18:19] and so this statement is only true
+[00:18:19 -> 00:18:20] in the absence of loops,
+[00:18:20 -> 00:18:22] not in the presence of loops.
+[00:18:23 -> 00:18:26] Okay, but what about in presence of loops?
+[00:18:26 -> 00:18:29] In general, the reverse post-order
+[00:18:29 -> 00:18:31] is a good idea for forward DFA
+[00:18:31 -> 00:18:34] and post-order is a good idea for backward DFA.
+[00:18:34 -> 00:18:36] So there are no theoretical guarantees
+[00:18:36 -> 00:18:38] that it's going to give you the best answer
+[00:18:38 -> 00:18:40] but in general it helps because
+[00:18:40 -> 00:18:43] so in the presence of cycles
+[00:18:43 -> 00:18:44] if you can just figure out
+[00:18:44 -> 00:18:45] what is the reverse post-order,
+[00:18:45 -> 00:18:48] reverse post-order basically captures the fact that
+[00:18:49 -> 00:18:56] if a node X can reach node Y,
+[00:18:56 -> 00:18:57] then in the reverse post-order
+[00:18:57 -> 00:18:59] X would appear before Y
+[00:19:00 -> 00:19:02] in the absence of cycles and stuff like that
+[00:19:02 -> 00:19:04] and so even if there are cycles,
+[00:19:04 -> 00:19:05] some reverse post-order
+[00:19:05 -> 00:19:07] will give you some arbitrary ordering
+[00:19:07 -> 00:19:09] because there could be multiple reverse post-orders
+[00:19:09 -> 00:19:13] and so it will give you some arbitrary ordering
+[00:19:13 -> 00:19:15] and that would typically work well
+[00:19:15 -> 00:19:16] for a forward DFA because
+[00:19:17 -> 00:19:19] for things that are not involved in the cycle,
+[00:19:19 -> 00:19:21] it would give you a topological sort
+[00:19:21 -> 00:19:25] and isomorphically for the backward DFA.
+[00:19:25 -> 00:19:27] So just like reverse post-order
+[00:19:27 -> 00:19:33] is ordering things that are reachable later,
+[00:19:33 -> 00:19:36] post-order is ordering things that are reachable earlier
+[00:19:36 -> 00:19:38] because that's what we want in a backward DFA.
+[00:19:38 -> 00:19:39] So reverse post-order and post-order
+[00:19:39 -> 00:19:42] are just flips of each other,
+[00:19:42 -> 00:19:43] inverses of each other
+[00:19:43 -> 00:19:46] and so while one works better for forward,
+[00:19:46 -> 00:19:48] the other works better for backward DFA.

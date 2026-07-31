@@ -1,0 +1,552 @@
+Title: Compiler Design Module 158 : Program Dependence Graphs
+Video ID: jz2_mHMLn20
+Detected language: en
+------------------------------------------------------------
+
+[00:00:00 -> 00:00:05] So in our previous module, we discussed how some programs can be parallelized better if
+[00:00:05 -> 00:00:08] we just add a small amount of synchronization.
+[00:00:08 -> 00:00:13] In particular, we were looking at barrier synchronization that basically orders all
+[00:00:13 -> 00:00:18] iterations of some group of statements, some subset of statements within other group
+[00:00:18 -> 00:00:19] of statements.
+[00:00:19 -> 00:00:24] But within different groups, we can now exercise parallelism.
+[00:00:24 -> 00:00:28] And so this barrier synchronization actually enables more parallelism in each of the
+[00:00:28 -> 00:00:29] subparts.
+[00:00:29 -> 00:00:36] Now, question is, how can we design a compiler algorithm that identifies automatically where
+[00:00:36 -> 00:00:38] it can put the barriers, number one.
+[00:00:38 -> 00:00:43] And number two, in one of our examples, we also saw that the compiler should be able
+[00:00:43 -> 00:00:48] to automatically perform loop fission to separate two statements into two different
+[00:00:48 -> 00:00:50] loopness and put a barrier in between.
+[00:00:50 -> 00:00:55] And what is the algorithm that the compiler, what is the kind of reasoning that the
+[00:00:55 -> 00:01:00] compiler could use to basically do these transformations automatically?
+[00:01:00 -> 00:01:06] So the answer is going to be program dependence graphs.
+[00:01:06 -> 00:01:08] So what are program dependence graphs?
+[00:01:08 -> 00:01:12] Well, I'm going to discuss them in this lecture module.
+[00:01:12 -> 00:01:15] But basically, the problem that we're going to solve with program dependence graphs
+[00:01:15 -> 00:01:19] is that addition of barrier synchronization may require loop fission.
+[00:01:19 -> 00:01:24] And so we want to break the loop into as many separate loops as possible.
+[00:01:24 -> 00:01:31] If there are data dependencies, and then basically be able to say that, OK, if I put
+[00:01:31 -> 00:01:36] a barrier here, then this part of the program or this particular loopness, which has been
+[00:01:36 -> 00:01:40] broken up potentially through loop vision, can be parallelized.
+[00:01:40 -> 00:01:44] And then identify the barrier synchronization points and finally parallelize.
+[00:01:44 -> 00:01:47] So this is going to be our code generation strategy.
+[00:01:47 -> 00:01:54] But the first question is how to identify what are the statements which should be
+[00:01:54 -> 00:01:59] detected using loop vision and between which we should put a barrier synchronization.
+[00:01:59 -> 00:02:02] And the answer is going to come from program dependence graphs.
+[00:02:02 -> 00:02:06] So what is the program dependence graph or PDG, as I'm also going to call it?
+[00:02:06 -> 00:02:08] It has nodes which are static assignment statements.
+[00:02:08 -> 00:02:13] So static assignment statements, just like we talk about static three address code
+[00:02:13 -> 00:02:16] statements, we are talking about static assignment statements at the higher level
+[00:02:16 -> 00:02:19] because the whole assignment is going to move up or down in this case.
+[00:02:19 -> 00:02:24] It's not going to be single accesses that are going to move up and up or down.
+[00:02:24 -> 00:02:28] And barriers are going to be inserted across entire C statements, entire assignment
+[00:02:28 -> 00:02:32] statements, and not just individual static accesses.
+[00:02:32 -> 00:02:35] And then, so these are the assignments.
+[00:02:35 -> 00:02:41] So if I have, let's say, two statements, S1 and S2, and each of them has some amount
+[00:02:41 -> 00:02:46] of iteration space, my program dependence graph only has two nodes, one for S1 and one for S2.
+[00:02:46 -> 00:02:52] And I have an edge from statement S1 to a statement S2, if and only if, some dynamic
+[00:02:52 -> 00:03:00] instance of S1 shares a data dependence with a later dynamic instance of S2.
+[00:03:00 -> 00:03:02] Notice that the later word is key here, all right?
+[00:03:02 -> 00:03:08] So we already know how to identify whether some dynamic instance of S1 has a data
+[00:03:08 -> 00:03:10] dependence with some dynamic instance of S2.
+[00:03:10 -> 00:03:11] We use our data dependence constraints.
+[00:03:11 -> 00:03:15] We have also been using them, the data dependence constraints, in our space
+[00:03:15 -> 00:03:16] partitioning constraints.
+[00:03:16 -> 00:03:21] But this time, it's not just about, you know, there being a data dependency.
+[00:03:21 -> 00:03:26] But we want to identify if the data dependency is happening later in time,
+[00:03:26 -> 00:03:31] later in the ascending lexicographic order of the loop iteration space.
+[00:03:31 -> 00:03:38] So some statement, some dynamic instance of S1 has a data dependence to a later
+[00:03:38 -> 00:03:40] dynamic instance of S2.
+[00:03:40 -> 00:03:46] If the data dependence is to an earlier iteration instance of S2, then that is
+[00:03:46 -> 00:03:50] not counted, that is not, you know, in that case, we don't draw an edge in the
+[00:03:50 -> 00:03:53] program dependence graph PDG.
+[00:03:53 -> 00:03:58] But if the data dependence is to a later instance of S2, then we do draw an
+[00:03:58 -> 00:04:00] edge in the PDG.
+[00:04:00 -> 00:04:04] So we're going to see some examples of what is later and what is not later,
+[00:04:04 -> 00:04:08] and what kind of PDGs emerge for different types of programs.
+[00:04:08 -> 00:04:10] So how do we construct the PDG?
+[00:04:10 -> 00:04:14] Well, we basically first identify all the static statements, assignment
+[00:04:14 -> 00:04:15] statement in the program.
+[00:04:15 -> 00:04:16] That is the easy part.
+[00:04:16 -> 00:04:19] It's just evident from the program itself.
+[00:04:19 -> 00:04:23] And then we construct the data dependence constraints, which are just like our
+[00:04:23 -> 00:04:29] original data dependence constraints, which say capital F1, capital F1 i1 plus
+[00:04:29 -> 00:04:34] small f1 equals capital F2 i2 plus small f2, where one of them, where one of
+[00:04:34 -> 00:04:36] the accesses is a right, right?
+[00:04:36 -> 00:04:37] So that's a data dependence.
+[00:04:37 -> 00:04:41] But we also add another constraint, which is the ordering constraint, which
+[00:04:41 -> 00:04:43] basically captures the later requirement.
+[00:04:43 -> 00:04:48] It says that the i1 of iteration of S1, which has a data dependence with
+[00:04:48 -> 00:04:54] the i2 iteration of S2 should be, should proceed in the program execution
+[00:04:54 -> 00:04:56] order using the precedence order.
+[00:04:56 -> 00:05:00] So i1 should precede i2.
+[00:05:00 -> 00:05:03] So i1 of S1 should precede i2 of S2.
+[00:05:03 -> 00:05:07] And so this is basically written as this operator, this precedence operator
+[00:05:07 -> 00:05:12] with a subscript of S1, S2 saying that, you know, i1 of S1 should
+[00:05:12 -> 00:05:14] precede i2 of S2.
+[00:05:14 -> 00:05:18] Notice that it matters which, which, which statements we are looking at and
+[00:05:18 -> 00:05:22] also what iteration indices we are looking at for each statement.
+[00:05:22 -> 00:05:28] So i1 is the iteration vector for S1 and i2 is the iteration vector for S2.
+[00:05:28 -> 00:05:32] So, so this is for, you know, let's say from S1 to S2.
+[00:05:32 -> 00:05:35] Now, similarly, we could create edges from S2 to S1.
+[00:05:35 -> 00:05:40] So we do the same check of whether there is a data dependence from one
+[00:05:40 -> 00:05:46] statement of some dynamic instance of the one statement to some later dynamic
+[00:05:46 -> 00:05:51] instance of the other statement such that one of them was right.
+[00:05:51 -> 00:05:53] And so we first test this for S1, S2.
+[00:05:53 -> 00:05:54] Maybe there is, maybe there's not.
+[00:05:54 -> 00:05:56] If there is, we draw an edge in the PDG.
+[00:05:56 -> 00:05:58] If there's not, we don't draw an edge.
+[00:05:58 -> 00:06:03] And separately, we consider S2 to S1 and notice that it's not necessary
+[00:06:03 -> 00:06:06] that if there is an edge from S1 to S2, then there cannot be an edge
+[00:06:06 -> 00:06:10] from S2 to S1 and we're going to see examples of that.
+[00:06:10 -> 00:06:13] Moreover, S1 and S2 could potentially be the same statement.
+[00:06:13 -> 00:06:17] I could, you know, if there are some, there are data dependencies from some
+[00:06:17 -> 00:06:23] dynamic instance of S1 to some other dynamic instance, some later dynamic
+[00:06:23 -> 00:06:27] instance of S2, then, you know, then also, then basically I needed to draw
+[00:06:27 -> 00:06:32] an edge from S1 to itself and notice that in this case, when S1 and S2 are
+[00:06:32 -> 00:06:37] the same statement, then later, just later requirement actually goes away
+[00:06:37 -> 00:06:40] because it's almost like, you know, if you have two different dynamic
+[00:06:40 -> 00:06:43] instances, then one of them is going to be later anyway of the same statement.
+[00:06:43 -> 00:06:48] So if S1 and S2 are the same statement and they have a data
+[00:06:48 -> 00:06:52] dependence among some dynamic instances, one of them is going to be later.
+[00:06:52 -> 00:06:55] And so we'll draw an edge from S1 to itself.
+[00:06:55 -> 00:07:01] And in this case, I1 precedes I2, I1 of S1 precedes I2 of S2 is
+[00:07:01 -> 00:07:06] basically boils down to I1 precedes I2 in the iteration order, in the
+[00:07:06 -> 00:07:11] iteration space order, ascending lexicographic order of the S1 iteration space, right?
+[00:07:11 -> 00:07:15] So this becomes a simplified instance where S1 equals S2 because the
+[00:07:15 -> 00:07:17] precedence relation becomes much easier to compute.
+[00:07:17 -> 00:07:21] We just need to figure out whether I1 precedes I2 in the
+[00:07:21 -> 00:07:23] ascending lexicographic order.
+[00:07:23 -> 00:07:26] But when we are looking at two different statements, the problem becomes
+[00:07:26 -> 00:07:28] harder, as we're going to see with examples.
+[00:07:30 -> 00:07:33] Also, I want to point out, as I already said, that cycles are possible.
+[00:07:33 -> 00:07:40] So it's possible that I have an edge from S1 to S2 and an edge from S2 to S1 simultaneously.
+[00:07:40 -> 00:07:44] And even though the later requirements makes it seem like maybe it's only, you
+[00:07:44 -> 00:07:46] know, it's going to be one way edges, but actually we're going to see
+[00:07:46 -> 00:07:49] examples where we're going to get cycles like these.
+[00:07:50 -> 00:07:51] So let's look at our first example.
+[00:07:52 -> 00:07:55] And this example is basically something that we looked at before.
+[00:07:55 -> 00:07:59] So there's a two depth loop nest for I equals zero to N for J equals zero to M.
+[00:07:59 -> 00:08:04] Xij plus equals f of x i minus one j and this is S1.
+[00:08:05 -> 00:08:09] And then I have another loop nest, which is for I equals zero to N minus 10 for J
+[00:08:09 -> 00:08:13] equals 10 to M plus 20, some different loop nest bounds.
+[00:08:13 -> 00:08:15] I'm just using some loop, different loop nest bounds.
+[00:08:19 -> 00:08:23] Now the first thing is that the loop iteration bounds, the loop iteration
+[00:08:23 -> 00:08:25] spaces basically intersect, right?
+[00:08:25 -> 00:08:30] If M and N were large numbers, then the two loop iteration spaces intersect.
+[00:08:30 -> 00:08:31] And so there are data dependencies.
+[00:08:31 -> 00:08:34] If they didn't intersect, then there would be no data dependencies.
+[00:08:34 -> 00:08:38] Now I want to figure out what is the program dependence graph for this program.
+[00:08:39 -> 00:08:42] And the nodes are going to be, there only going to be two nodes, S1 and S2.
+[00:08:43 -> 00:08:46] And I claim that this is my program dependence graph.
+[00:08:46 -> 00:08:53] So if I look at S1, there are dependencies from iterations of S1 to other
+[00:08:53 -> 00:08:57] iterations of S1, because some iterations are accessing Xij and the
+[00:08:57 -> 00:09:00] other iterations are accessing X i minus one j.
+[00:09:00 -> 00:09:05] And whenever X i minus one j equals Xij for different, X i prime minus
+[00:09:05 -> 00:09:09] one comma j prime equals Xij for different ij and i prime j prime.
+[00:09:09 -> 00:09:13] Then we have a data dependence across multiple iterations of the same S1.
+[00:09:13 -> 00:09:18] We have seen this repeatedly in our previous example as well.
+[00:09:18 -> 00:09:23] And so in this case, we basically have a self edge from S1 to itself.
+[00:09:24 -> 00:09:30] Now, similarly, the same logic I have in self edge from S2 to itself.
+[00:09:32 -> 00:09:38] Now, finally, I need to basically consider S1, S2, and then I
+[00:09:38 -> 00:09:40] need to consider S2, S1.
+[00:09:41 -> 00:09:47] So if I look at S1, S2, notice that S1 is basically accessing
+[00:09:47 -> 00:09:51] elements Xij and X i minus one j.
+[00:09:51 -> 00:09:56] And S2 is accessing elements Xij and Xij minus one.
+[00:09:57 -> 00:10:01] But the good thing is that all the iterations of S1 finish before
+[00:10:01 -> 00:10:03] any iteration of S2 begins.
+[00:10:03 -> 00:10:09] So already we know that the edges can only be from S1 to S2 because
+[00:10:09 -> 00:10:13] there's no iteration of S1 that occurs after any iteration of S2.
+[00:10:13 -> 00:10:15] So there cannot be an edge from S2 to S1.
+[00:10:16 -> 00:10:19] So we don't need to really consider S2 to S1 in this case, because we
+[00:10:19 -> 00:10:24] know that all iterations of S1, all dynamic instances of S1 must
+[00:10:24 -> 00:10:26] finish before any dynamic instance of S2.
+[00:10:26 -> 00:10:30] So in other words, there is no dynamic instance of S1 that happens
+[00:10:31 -> 00:10:33] after some dynamic instance of S2.
+[00:10:34 -> 00:10:37] And so the only question is, should there be an edge from S1 to S2?
+[00:10:37 -> 00:10:39] And the answer is actually very easy.
+[00:10:39 -> 00:10:40] The answer is yes.
+[00:10:40 -> 00:10:44] There are both read after write, write after read, and
+[00:10:44 -> 00:10:46] write after write dependencies.
+[00:10:46 -> 00:10:52] Because for example, the 0,0th iteration or let's say 0,10th
+[00:10:52 -> 00:10:58] iteration of S1 accesses X010 and the 0,10th iteration of S2 also
+[00:10:58 -> 00:11:02] accesses X010 and both of them are right.
+[00:11:02 -> 00:11:07] And so there's a data dependence from some dynamic instance of S1 to
+[00:11:07 -> 00:11:12] some dynamic instance of S2, where the dynamic instance of S2
+[00:11:13 -> 00:11:15] occurs later in the program.
+[00:11:16 -> 00:11:20] And so I draw in it from S1 to S2 and this becomes my program
+[00:11:20 -> 00:11:20] dependence graph.
+[00:11:21 -> 00:11:23] This program dependence graph is important because it's basically
+[00:11:23 -> 00:11:27] saying that which of these statements depends, some dynamic
+[00:11:27 -> 00:11:30] instance of these statements depend on some dynamic instance of
+[00:11:31 -> 00:11:31] the other statements.
+[00:11:31 -> 00:11:35] So here, dynamic instances of S2 depend on dynamic instances of
+[00:11:35 -> 00:11:37] S1, but not the other way around.
+[00:11:37 -> 00:11:41] And so what it means, and we're going to do this later, is that
+[00:11:41 -> 00:11:44] we can potentially put a barrier between this, all right?
+[00:11:44 -> 00:11:47] Because there are no edges, there are no edges going in the
+[00:11:47 -> 00:11:47] other direction.
+[00:11:47 -> 00:11:49] There are only edges going in the forward direction.
+[00:11:50 -> 00:11:53] And if the edges are unidirectional, then we can put
+[00:11:53 -> 00:11:55] a barrier and it basically means that there are only
+[00:11:55 -> 00:11:56] dependencies in one direction.
+[00:11:56 -> 00:11:59] So we can finish everything on the left-hand side before
+[00:11:59 -> 00:12:01] starting anything on the right-hand side.
+[00:12:02 -> 00:12:03] Okay.
+[00:12:03 -> 00:12:04] Let's take another example.
+[00:12:04 -> 00:12:08] Let's say this loop for i equals 1 to n, i++, x i
+[00:12:09 -> 00:12:12] equals y i plus z i, w a i equals x i.
+[00:12:12 -> 00:12:15] This is the example that we had looked at in the previous
+[00:12:15 -> 00:12:16] module as well.
+[00:12:16 -> 00:12:19] And let's call the first statement S1 and let's call the
+[00:12:19 -> 00:12:20] second statement S2.
+[00:12:20 -> 00:12:23] Now, if I draw the program dependence graph for this, my
+[00:12:23 -> 00:12:26] first question is, does S1 have a data dependency with
+[00:12:26 -> 00:12:26] itself?
+[00:12:27 -> 00:12:30] And the answer is no, because if you look at S1, it's
+[00:12:30 -> 00:12:32] basically completely data parallel, different iterations
+[00:12:32 -> 00:12:36] of S1, different instance of S1 are not accessing, are
+[00:12:36 -> 00:12:38] accessing distinct elements of memory.
+[00:12:39 -> 00:12:44] Similarly, S2, if I look at S2 with itself, because of
+[00:12:44 -> 00:12:46] the w a i, we don't know what a i could be.
+[00:12:46 -> 00:12:47] It could be arbitrary.
+[00:12:47 -> 00:12:49] It could, you know, all of the, for all the different
+[00:12:49 -> 00:12:52] i's, a i could value to the same value, let's say
+[00:12:52 -> 00:12:56] zero, in which case different instances of S2 have
+[00:12:56 -> 00:12:59] data dependencies to later instances of S2 itself.
+[00:12:59 -> 00:13:03] And so I have a self edge from S2 to itself.
+[00:13:04 -> 00:13:07] And finally, I consider S1 to S2 and also I consider
+[00:13:07 -> 00:13:08] S2 to S1.
+[00:13:09 -> 00:13:12] So when I consider S1 to S2, I notice that, you know, in
+[00:13:12 -> 00:13:16] the first iteration, S1 is going to write to X0 and
+[00:13:16 -> 00:13:18] S2 is going to read from X0.
+[00:13:18 -> 00:13:22] So right there, there is a read after write dependency
+[00:13:22 -> 00:13:29] from the one instance or the first instance of S1 to
+[00:13:29 -> 00:13:30] the first instance of S2.
+[00:13:31 -> 00:13:34] And the first instance of S2 in this case executes
+[00:13:34 -> 00:13:37] later in the original program order than the first
+[00:13:37 -> 00:13:39] instance of S1.
+[00:13:40 -> 00:13:43] And so from the first instance itself, I can simply
+[00:13:43 -> 00:13:45] say that, oh, okay, I need to draw an edge from S1 to S2.
+[00:13:46 -> 00:13:48] We can look at more instances as well, but this
+[00:13:48 -> 00:13:50] is actually good enough for us to do so.
+[00:13:50 -> 00:13:52] I'm going to look at the mathematical algorithm
+[00:13:52 -> 00:13:54] to do these things automatically.
+[00:13:54 -> 00:13:56] But for now, I'm just going, I'm just basically
+[00:13:56 -> 00:14:00] giving you a qualitative understanding of how we can
+[00:14:00 -> 00:14:03] reason about drawing these edges in the PDG.
+[00:14:03 -> 00:14:06] Now, the other thing we need to do is how to
+[00:14:06 -> 00:14:08] draw and whether there needs to be an edge
+[00:14:08 -> 00:14:09] from S2 to S1.
+[00:14:09 -> 00:14:14] So let's see, the first iteration, S2 is going
+[00:14:14 -> 00:14:18] to access X1 and S1 is going to access X1 as
+[00:14:18 -> 00:14:24] well, but the execution of the first iteration
+[00:14:24 -> 00:14:27] of S1 happens before the execution of first
+[00:14:27 -> 00:14:28] iteration of S2.
+[00:14:28 -> 00:14:31] And so in this case, we don't meet the
+[00:14:31 -> 00:14:33] constraint that there is a later instance of
+[00:14:33 -> 00:14:36] S1, which basically kind of has data dependency
+[00:14:36 -> 00:14:38] to some instances of S2.
+[00:14:38 -> 00:14:41] Now let's look at, and moreover, all the
+[00:14:41 -> 00:14:43] other instances of S2, the ones that are
+[00:14:43 -> 00:14:46] coming after are going to access X1, X2,
+[00:14:46 -> 00:14:48] X3, X4, and so on.
+[00:14:49 -> 00:14:52] And S1 is also going to basically access
+[00:14:52 -> 00:14:54] X1, X2, X3, X4, and so on.
+[00:14:54 -> 00:14:56] But whenever these two access the same
+[00:14:56 -> 00:14:59] location, for example, both of them access
+[00:14:59 -> 00:15:02] let's say X4, it is always true that S1's
+[00:15:02 -> 00:15:06] access to X4 is before S2's access of X4.
+[00:15:07 -> 00:15:07] Okay.
+[00:15:07 -> 00:15:10] It's never the case that S2's access of X4
+[00:15:10 -> 00:15:14] is after S1's access of X4.
+[00:15:14 -> 00:15:16] It's never the case that S2's access of
+[00:15:16 -> 00:15:20] X4 is before S1's access of X4.
+[00:15:20 -> 00:15:22] And I'm just using X4 as one example,
+[00:15:22 -> 00:15:25] but if I look at any XI, then it never
+[00:15:25 -> 00:15:28] the case that S2's access of XI is
+[00:15:28 -> 00:15:32] before the S1's access of the same XI.
+[00:15:33 -> 00:15:33] Okay.
+[00:15:33 -> 00:15:35] And so I don't need to draw an edge
+[00:15:35 -> 00:15:37] from S2 to S1.
+[00:15:39 -> 00:15:42] This is, this is a little bit subtle
+[00:15:42 -> 00:15:44] and I want, you know, I hope, you
+[00:15:44 -> 00:15:44] know, this was clear.
+[00:15:45 -> 00:15:46] I also want to point out that I don't
+[00:15:46 -> 00:15:49] really need to look at W, Y, and Z
+[00:15:49 -> 00:15:51] because, you know, S1 is not touching
+[00:15:51 -> 00:15:53] W and S2 is not touching Y and Z.
+[00:15:53 -> 00:15:54] So it's only X that I'm looking at in
+[00:15:54 -> 00:15:55] this particular example.
+[00:15:56 -> 00:15:57] And so this program dependence graph
+[00:15:57 -> 00:15:59] is also interesting because now I
+[00:15:59 -> 00:16:02] know that at this point here, the
+[00:16:02 -> 00:16:04] dependencies are all unidirectional
+[00:16:04 -> 00:16:06] and so it is possible to put a
+[00:16:06 -> 00:16:07] barrier if it helps in improving
+[00:16:07 -> 00:16:08] my parallelization.
+[00:16:09 -> 00:16:11] Let's look at another example.
+[00:16:11 -> 00:16:12] Let's say I changed the program
+[00:16:12 -> 00:16:14] slightly and instead of XI, I
+[00:16:14 -> 00:16:17] basically had XI plus one plus XI
+[00:16:17 -> 00:16:17] minus one.
+[00:16:18 -> 00:16:21] And now it basically becomes clear
+[00:16:21 -> 00:16:24] that there is some dynamic instance
+[00:16:24 -> 00:16:27] of S2, which is data dependent on
+[00:16:27 -> 00:16:29] some dynamic instance of S1
+[00:16:30 -> 00:16:33] because some later dynamic
+[00:16:33 -> 00:16:33] instance of S1.
+[00:16:33 -> 00:16:36] So in the first iteration, S2 is
+[00:16:36 -> 00:16:40] reading X2 and it's a second
+[00:16:40 -> 00:16:41] iteration.
+[00:16:42 -> 00:16:43] So if I look at, you know, the
+[00:16:43 -> 00:16:48] access to X2, then S1 is, S1's
+[00:16:48 -> 00:16:50] second iteration is basically doing
+[00:16:50 -> 00:16:53] this and S2's first iteration is
+[00:16:53 -> 00:16:53] reading it.
+[00:16:53 -> 00:16:55] So first iteration is read and
+[00:16:55 -> 00:16:57] second iteration of S1 is writing
+[00:16:57 -> 00:17:00] X2 and so, and moreover, the
+[00:17:00 -> 00:17:03] second iteration of S1 is, you
+[00:17:03 -> 00:17:08] know, is after, so second
+[00:17:08 -> 00:17:15] iteration of S1 is after first
+[00:17:15 -> 00:17:21] iteration of S2 and so basically I
+[00:17:21 -> 00:17:23] have my required constraint and so
+[00:17:23 -> 00:17:25] this time I need to also draw an
+[00:17:25 -> 00:17:28] edge from S2 to S1.
+[00:17:29 -> 00:17:30] I will, you know, the original
+[00:17:30 -> 00:17:33] edge from S1 to S2 remains
+[00:17:33 -> 00:17:36] because, you know, if I look at
+[00:17:36 -> 00:17:38] XI and XI minus one, I would
+[00:17:38 -> 00:17:40] find that later instances,
+[00:17:40 -> 00:17:42] earlier instances of S1 are
+[00:17:42 -> 00:17:44] dependent on later instances
+[00:17:44 -> 00:17:44] of S2.
+[00:17:44 -> 00:17:46] For example, the first iteration
+[00:17:46 -> 00:17:49] of S1 depends on the second
+[00:17:49 -> 00:17:52] iteration of S2, all right, or
+[00:17:52 -> 00:17:53] the second iteration of S2
+[00:17:53 -> 00:17:54] depends on the first
+[00:17:54 -> 00:17:55] iteration of S1.
+[00:17:55 -> 00:17:56] So there is an edge from S1 to
+[00:17:56 -> 00:17:59] S2 because of XI minus one and
+[00:17:59 -> 00:18:00] there is an edge from S2 to
+[00:18:00 -> 00:18:03] S1 because of XI plus one and
+[00:18:03 -> 00:18:04] so now I have a program
+[00:18:04 -> 00:18:06] dependence graph where it's not
+[00:18:06 -> 00:18:09] possible to find a split
+[00:18:09 -> 00:18:11] where the flow of dependency
+[00:18:11 -> 00:18:12] is unidirectional.
+[00:18:15 -> 00:18:16] Let's look at this other
+[00:18:16 -> 00:18:19] example, XI equals WI plus ZI
+[00:18:19 -> 00:18:22] and WAI equals XI.
+[00:18:22 -> 00:18:26] Now, once again, WI, the S1
+[00:18:26 -> 00:18:27] iterations are data parallel.
+[00:18:27 -> 00:18:29] So there are no dependencies
+[00:18:29 -> 00:18:30] between different iterations
+[00:18:30 -> 00:18:32] of S1, but there are
+[00:18:32 -> 00:18:33] dependencies between some
+[00:18:33 -> 00:18:34] iterations of S2 and some
+[00:18:34 -> 00:18:36] iterations of S1 because WAI
+[00:18:36 -> 00:18:37] is unknown.
+[00:18:37 -> 00:18:38] So for example, the first
+[00:18:38 -> 00:18:40] iteration of S1 could have
+[00:18:40 -> 00:18:42] accessed W1 and the second
+[00:18:42 -> 00:18:45] iteration of S2 could also
+[00:18:45 -> 00:18:47] access W1 because AI could
+[00:18:47 -> 00:18:49] have been one and I can do
+[00:18:49 -> 00:18:50] it the other way around.
+[00:18:50 -> 00:18:51] Also, for example, the
+[00:18:51 -> 00:18:52] second iteration of S1 could
+[00:18:52 -> 00:18:54] access W2 and the first
+[00:18:54 -> 00:18:57] iteration of S2 could
+[00:18:57 -> 00:18:59] access W2 as well because
+[00:18:59 -> 00:19:01] A1 could have been two.
+[00:19:01 -> 00:19:02] And so there are edges in
+[00:19:02 -> 00:19:03] both directions.
+[00:19:03 -> 00:19:05] And once again, I don't
+[00:19:05 -> 00:19:06] have a split point where
+[00:19:06 -> 00:19:08] the flow of dependencies
+[00:19:08 -> 00:19:09] is unidirectional.
+[00:19:10 -> 00:19:11] Here is another
+[00:19:11 -> 00:19:12] interesting example.
+[00:19:13 -> 00:19:14] For I equals one to N,
+[00:19:15 -> 00:19:16] I plus plus, ZI equals
+[00:19:16 -> 00:19:19] ZI divided by WI and then
+[00:19:19 -> 00:19:21] I have an inner loop for
+[00:19:21 -> 00:19:22] J equals I, J is less
+[00:19:22 -> 00:19:23] than equal to N, J plus
+[00:19:23 -> 00:19:26] plus, XIJ equals YIJ
+[00:19:26 -> 00:19:28] square and ZJ plus
+[00:19:28 -> 00:19:29] equals XIJ.
+[00:19:30 -> 00:19:31] Now, the first thing to
+[00:19:31 -> 00:19:36] notice here is that S1
+[00:19:36 -> 00:19:37] is data parallel because
+[00:19:37 -> 00:19:38] they are all accessing
+[00:19:38 -> 00:19:39] different elements.
+[00:19:39 -> 00:19:40] They are all indexed by
+[00:19:40 -> 00:19:42] I and so they are all
+[00:19:42 -> 00:19:43] accessing data elements.
+[00:19:43 -> 00:19:43] So there's no self loop
+[00:19:43 -> 00:19:45] from S1 to S1.
+[00:19:45 -> 00:19:46] Similarly, there is no
+[00:19:46 -> 00:19:48] self loop from S2 to S2.
+[00:19:48 -> 00:19:49] They're all accessing
+[00:19:49 -> 00:19:50] different elements across
+[00:19:50 -> 00:19:51] different iteration spaces.
+[00:19:52 -> 00:19:53] And similarly, there is
+[00:19:53 -> 00:19:54] no self loop from S3
+[00:19:54 -> 00:19:55] to S3 either.
+[00:19:55 -> 00:19:57] OK, so now first we have
+[00:19:57 -> 00:19:59] we just check the self loops.
+[00:19:59 -> 00:20:00] Now we check every
+[00:20:00 -> 00:20:01] pair of statements.
+[00:20:01 -> 00:20:03] So let's look at S1
+[00:20:03 -> 00:20:05] and from S1 to S3.
+[00:20:05 -> 00:20:07] And it is very clear that
+[00:20:07 -> 00:20:08] S1 is going to execute,
+[00:20:08 -> 00:20:10] you know, touch Z and S3
+[00:20:10 -> 00:20:11] is also going to touch Z
+[00:20:11 -> 00:20:12] and let's look at the ordering.
+[00:20:13 -> 00:20:15] So S1 is going to touch
+[00:20:15 -> 00:20:19] Z1, Z2, Z3, Z4 and so on.
+[00:20:19 -> 00:20:22] And S3 is also going to touch
+[00:20:22 -> 00:20:25] Z1 because J starts from I,
+[00:20:25 -> 00:20:30] notice, and so Z1, Z2, Z3, Z4.
+[00:20:30 -> 00:20:33] And so, for example,
+[00:20:33 -> 00:20:35] if I just look at Z1,
+[00:20:35 -> 00:20:37] S1 accesses, writes to Z1
+[00:20:37 -> 00:20:40] and S3 also writes to Z1.
+[00:20:40 -> 00:20:43] And the S3 is write to Z1
+[00:20:43 -> 00:20:46] is after S1 write to Z1.
+[00:20:46 -> 00:20:47] And so there is an edge
+[00:20:47 -> 00:20:49] from S1 to S3.
+[00:20:49 -> 00:20:51] So the edge from S1 to S3
+[00:20:51 -> 00:20:52] is actually pretty easy to see
+[00:20:52 -> 00:20:53] because the same element
+[00:20:53 -> 00:20:55] Z1 is being written
+[00:20:56 -> 00:20:58] where S3 is write is after S1 write.
+[00:20:58 -> 00:21:00] Now, if I look at the other way round,
+[00:21:00 -> 00:21:01] S3 to S1.
+[00:21:02 -> 00:21:06] Notice that S3 is basically writing
+[00:21:08 -> 00:21:13] Z1, Z2, Z3 and so on
+[00:21:13 -> 00:21:15] in the first write for I equals 1
+[00:21:15 -> 00:21:17] because it is the inner loop, right?
+[00:21:17 -> 00:21:19] So even for I equals 1,
+[00:21:19 -> 00:21:20] I'm going to start writing Z1,
+[00:21:20 -> 00:21:22] Z2, Z3 because it's iterating on J.
+[00:21:22 -> 00:21:24] And then for I equals 2,
+[00:21:24 -> 00:21:25] which happens later.
+[00:21:26 -> 00:21:28] So this was S1, S3.
+[00:21:29 -> 00:21:30] And now for I equals 2,
+[00:21:30 -> 00:21:32] S1 is going to write Z2.
+[00:21:33 -> 00:21:34] And so we can see that
+[00:21:34 -> 00:21:35] there is a data dependency
+[00:21:35 -> 00:21:39] from an earlier instance of Z3
+[00:21:39 -> 00:21:41] to a later instance of S1, right?
+[00:21:41 -> 00:21:43] Because if I look at Z2,
+[00:21:43 -> 00:21:47] Z2 is being written for I equals 1,
+[00:21:48 -> 00:21:49] J equals 2,
+[00:21:50 -> 00:21:51] which happens before
+[00:21:52 -> 00:21:53] the write to Z2,
+[00:21:53 -> 00:21:55] which happens when I equals 2.
+[00:21:55 -> 00:21:56] So in other words,
+[00:21:56 -> 00:21:58] 1, 2,
+[00:21:58 -> 00:22:01] this is I, J is happens before.
+[00:22:01 -> 00:22:03] And this is S1, S3
+[00:22:04 -> 00:22:06] happens before 2, right?
+[00:22:06 -> 00:22:07] So the 1, 2,
+[00:22:08 -> 00:22:09] so this is S3, S1, sorry.
+[00:22:09 -> 00:22:10] This is S3, S1.
+[00:22:10 -> 00:22:12] So the 1, 2th iteration of S3
+[00:22:12 -> 00:22:17] happens before the 2th iteration of S1, OK?
+[00:22:17 -> 00:22:18] And so we have an edge
+[00:22:18 -> 00:22:19] in the other direction as well
+[00:22:19 -> 00:22:20] from S3 to S1.
+[00:22:21 -> 00:22:23] Finally, if I look at S2,
+[00:22:23 -> 00:22:24] I find that there is no data
+[00:22:24 -> 00:22:26] dependency between S1 and S2
+[00:22:26 -> 00:22:27] because they're basically
+[00:22:27 -> 00:22:29] accessing different arrays.
+[00:22:29 -> 00:22:31] But if I look at S2 and S3,
+[00:22:31 -> 00:22:32] we have a common element
+[00:22:32 -> 00:22:33] which is X, I, J.
+[00:22:34 -> 00:22:35] And so there is a data dependency
+[00:22:35 -> 00:22:36] from S2 to S3
+[00:22:36 -> 00:22:38] because it's the same element,
+[00:22:38 -> 00:22:40] let's say X00 or X11
+[00:22:40 -> 00:22:42] that is being written by S2
+[00:22:42 -> 00:22:43] and then being read by S3.
+[00:22:43 -> 00:22:44] But you would find that
+[00:22:44 -> 00:22:46] because the, you know,
+[00:22:46 -> 00:22:48] they are all writing different elements
+[00:22:48 -> 00:22:50] at different instances,
+[00:22:50 -> 00:22:52] there is no edge in the other direction.
+[00:22:52 -> 00:22:54] In other words, it can never happen
+[00:22:54 -> 00:22:56] that some X, I, J was written by S3,
+[00:22:56 -> 00:22:58] read by S3 first
+[00:22:58 -> 00:22:59] and then it was written by S2,
+[00:22:59 -> 00:23:01] the same X, I, J value,
+[00:23:01 -> 00:23:03] because that's how, you know,
+[00:23:03 -> 00:23:04] that's how this program looks like.
+[00:23:04 -> 00:23:05] Once again, I'm just giving you
+[00:23:05 -> 00:23:06] a qualitative explanation.
+[00:23:07 -> 00:23:08] We're going to have mathematical method
+[00:23:08 -> 00:23:09] to find these things
+[00:23:09 -> 00:23:11] automatically later on.
+[00:23:11 -> 00:23:12] So important thing is that
+[00:23:12 -> 00:23:14] there is an edge from S2 to S3,
+[00:23:14 -> 00:23:16] but not an edge from S3 to S2.
+[00:23:17 -> 00:23:18] So in this case,
+[00:23:18 -> 00:23:19] I cannot draw a barrier here.
+[00:23:19 -> 00:23:20] So this, that's not possible,
+[00:23:20 -> 00:23:22] but I can draw a barrier here
+[00:23:22 -> 00:23:24] because there's a unidirectional flow
+[00:23:24 -> 00:23:26] of dependencies from S2 to S3.
+[00:23:30 -> 00:23:31] And in this case,
+[00:23:31 -> 00:23:33] if I was to do a program transformation,
+[00:23:33 -> 00:23:35] I would just move S2,
+[00:23:35 -> 00:23:36] you know, I would move S2
+[00:23:36 -> 00:23:37] into a separate loop of itself.
+[00:23:38 -> 00:23:39] This is loop fission
+[00:23:39 -> 00:23:41] and then put a barrier in the middle
+[00:23:41 -> 00:23:43] that improved my parallelism.
+[00:23:43 -> 00:23:44] And so these are the kind of,
+[00:23:44 -> 00:23:45] the program dependence graph
+[00:23:45 -> 00:23:48] is giving us hints on what can be moved up,
+[00:23:48 -> 00:23:49] what can be,
+[00:23:50 -> 00:23:51] what are candidates for loop fission
+[00:23:51 -> 00:23:53] without changing the meaning of the program.
+[00:23:53 -> 00:23:55] And once we have done the loop fission,
+[00:23:55 -> 00:23:56] we have different loopness
+[00:23:56 -> 00:23:58] and we can also potentially put barriers
+[00:23:58 -> 00:24:00] if that helps our parallelism cause.
+[00:24:01 -> 00:24:02] Here is another example.
+[00:24:02 -> 00:24:04] So here is the generated code
+[00:24:04 -> 00:24:05] after we have moved the S2,
+[00:24:08 -> 00:24:11] hoisted up S2 value statement upwards.
+[00:24:11 -> 00:24:14] So this is basically the whole loop nest
+[00:24:14 -> 00:24:16] for S2 and then we have S1 and S3.
+[00:24:16 -> 00:24:18] So this is just the code generated
+[00:24:18 -> 00:24:19] based on the program
+[00:24:19 -> 00:24:20] dependence graph that we drew.
+[00:24:22 -> 00:24:24] All right, I just want to point out
+[00:24:24 -> 00:24:25] that if I change the example slightly,
+[00:24:25 -> 00:24:27] so instead of Xij,
+[00:24:27 -> 00:24:29] if I had and in my previous example,
+[00:24:29 -> 00:24:32] I had Xij here and Xij here for S3.
+[00:24:33 -> 00:24:35] But now if I change the S3 access
+[00:24:35 -> 00:24:37] to X i plus 1j,
+[00:24:37 -> 00:24:40] I claim that I need to also draw an edge
+[00:24:40 -> 00:24:41] from S3 to S2,
+[00:24:41 -> 00:24:43] because if I look at
+[00:24:44 -> 00:24:47] the 1 comma 1th iteration of S3,
+[00:24:49 -> 00:24:51] then that basically would proceed.
+[00:24:52 -> 00:24:54] So if I look at S3 comma S2,
+[00:24:54 -> 00:24:57] then 1 comma 1th iteration of S3
+[00:24:57 -> 00:25:00] would precede the 1 comma,
+[00:25:00 -> 00:25:05] 2 comma 1th iteration of S2.
+[00:25:05 -> 00:25:08] And so and they are data dependent.
+[00:25:08 -> 00:25:11] And so I will need an edge from S3 to S2.
+[00:25:11 -> 00:25:12] And in this program
+[00:25:12 -> 00:25:14] dependence graph, there is no opportunity
+[00:25:14 -> 00:25:18] for inserting a barrier and or loop fishing.

@@ -1,0 +1,354 @@
+Title: Compiler Design Module 81 : Liveness Property
+Video ID: T8MZJ5J-tLA
+Detected language: en
+------------------------------------------------------------
+
+[00:00:00 -> 00:00:05] So, now that we have learned about constant propagation and how to represent it as a data
+[00:00:05 -> 00:00:12] flow analysis, we also learned about why a data flow analysis is like constant propagation
+[00:00:12 -> 00:00:18] is guaranteed to converge because we reasoned about the orderings and the fact that the
+[00:00:18 -> 00:00:22] values can only move in one direction of that ordering.
+[00:00:22 -> 00:00:28] Let's discuss another data flow analysis which is the liveness analysis.
+[00:00:28 -> 00:00:33] And to motivate liveness, let's consider a familiar example of four basic blocks.
+[00:00:33 -> 00:00:38] In the first basic block, we are assigning x to 3, the other basic blocks are just assigning
+[00:00:38 -> 00:00:43] to y, and then in the fourth basic block, which is also a meet point for the two different
+[00:00:43 -> 00:00:50] paths, true and false, and here basically we had, we originally had A colon equals
+[00:00:50 -> 00:00:56] 2 into x, but now because of constant propagation, we have replaced x with 3.
+[00:00:56 -> 00:01:03] So now, this has been basically transformed to A is colon equal to 6, and so now x is
+[00:01:03 -> 00:01:08] no longer being used here, and the question now is, can we just remove, can we get rid
+[00:01:08 -> 00:01:12] of this statement, can we eliminate this statement, this instruction which assigns
+[00:01:12 -> 00:01:14] 3 to x?
+[00:01:14 -> 00:01:19] And the answer is actually depends, it depends on whether x is being used anywhere
+[00:01:19 -> 00:01:20] else in the program or not.
+[00:01:20 -> 00:01:24] So for example, if there was another path that was branching from, let's say this
+[00:01:24 -> 00:01:30] particular basic block, and there there was some assignment that was using x, then it
+[00:01:30 -> 00:01:35] is not okay to remove this x, we cannot get rid of the statement.
+[00:01:35 -> 00:01:40] On the other hand, if there was nothing of the sort, then it's okay, right, then
+[00:01:40 -> 00:01:43] it's okay to remove the statement.
+[00:01:43 -> 00:01:46] And so once again, this is an example of a property that requires the knowledge of
+[00:01:46 -> 00:01:50] the entire program to be able to perform a transformation, right?
+[00:01:50 -> 00:01:54] In this case, I want to know whether x is colon equal to 3 is dead code or not,
+[00:01:54 -> 00:01:59] and in order to be able to reason about whether x is colon equal to 3 is dead code,
+[00:01:59 -> 00:02:05] I want to know whether in the downstream logic of the program, this value of x,
+[00:02:05 -> 00:02:07] can it ever be used or not?
+[00:02:07 -> 00:02:11] And if it can never be used in the downstream logic, then I can remove it.
+[00:02:11 -> 00:02:16] If it may be used in the downstream logic on some path, then I cannot remove it.
+[00:02:16 -> 00:02:22] And so this is one of those global analyses that again, we would need to do
+[00:02:22 -> 00:02:27] some kind of global reasoning to make local transformations.
+[00:02:27 -> 00:02:31] And so data flow analysis is exactly the kind of framework that we have
+[00:02:31 -> 00:02:33] developed to do these kinds of things.
+[00:02:33 -> 00:02:37] We need to understand how we are going to adapt the data flow analysis to do
+[00:02:37 -> 00:02:38] this type of analysis.
+[00:02:38 -> 00:02:40] So this is another example of data flow analysis.
+[00:02:40 -> 00:02:44] And the idea is to introduce you to another type of data flow analysis
+[00:02:44 -> 00:02:48] before we actually start about the theoretical underpinnings of DFA.
+[00:02:49 -> 00:02:50] All right.
+[00:02:50 -> 00:02:54] So the question to ask here is, is x live?
+[00:02:54 -> 00:02:58] So I'm introducing the term live or dead at this statement.
+[00:02:58 -> 00:03:02] And when I say at this statement, I'm actually asking, is the program,
+[00:03:02 -> 00:03:05] is x live or dead at just after this statement?
+[00:03:05 -> 00:03:06] All right.
+[00:03:06 -> 00:03:10] So in constant propagation, you recall that you may recall that we were asking
+[00:03:10 -> 00:03:14] the question, is x a constant just before the statement?
+[00:03:15 -> 00:03:20] Here we are asking the question, is x live just after the statement?
+[00:03:20 -> 00:03:21] What does live mean?
+[00:03:21 -> 00:03:25] Live basically means, is this value of x, the current value of x at this
+[00:03:25 -> 00:03:30] program point, is it possible for the program to use this value anywhere
+[00:03:30 -> 00:03:32] in the downstream logic of the program?
+[00:03:32 -> 00:03:37] And if the value is dead, it basically means that it's definitely not going
+[00:03:37 -> 00:03:40] to be used in any of the program parts in the downstream logic
+[00:03:40 -> 00:03:42] from this program point.
+[00:03:42 -> 00:03:46] So once again, we are interested in asking the question, is x live at this
+[00:03:46 -> 00:03:48] program point or not?
+[00:03:48 -> 00:03:53] And here for a given statement, I'm interested in the point that is just
+[00:03:53 -> 00:03:54] after the statement.
+[00:03:54 -> 00:03:57] This is in contrast to constant propagation, where we were interested
+[00:03:57 -> 00:03:59] in the point just before the statement.
+[00:03:59 -> 00:04:00] All right.
+[00:04:00 -> 00:04:01] OK.
+[00:04:01 -> 00:04:06] So let's take an example to understand what is live and what is dead.
+[00:04:06 -> 00:04:08] So let's take this straight line piece of code.
+[00:04:08 -> 00:04:14] Let's say x is assigned 3, then x is assigned 4, then y is assigned z, then
+[00:04:14 -> 00:04:18] w is assigned x, and then you exit.
+[00:04:18 -> 00:04:19] All right.
+[00:04:19 -> 00:04:23] And I want to know what are the points at which x is live and what
+[00:04:23 -> 00:04:25] are the points at which x is dead.
+[00:04:25 -> 00:04:29] And this will also help us understand what is the meaning of live and dead.
+[00:04:29 -> 00:04:33] So first of all, I will say that at this particular point just before the
+[00:04:33 -> 00:04:34] exit, x is dead.
+[00:04:34 -> 00:04:39] Because I'm assuming that once the program exits, the value of x is
+[00:04:39 -> 00:04:39] meaningless.
+[00:04:39 -> 00:04:41] I mean, it's not going to get used anywhere.
+[00:04:41 -> 00:04:44] It's basically being, you know, it's not going to get used.
+[00:04:44 -> 00:04:48] So I can just assume that just before exit, it is dead.
+[00:04:48 -> 00:04:49] That's what dead means.
+[00:04:49 -> 00:04:51] That from here on, x is not going to get used.
+[00:04:51 -> 00:04:53] So I can say it's dead.
+[00:04:53 -> 00:04:56] What about just before w is colon equal to x?
+[00:04:56 -> 00:04:58] Is it dead or is it live?
+[00:04:58 -> 00:05:03] The answer is it is live because it's being used in this assignment to w.
+[00:05:03 -> 00:05:10] So unless I don't maintain this value of x, I won't be able to execute this
+[00:05:10 -> 00:05:11] statement which assigns x to w.
+[00:05:11 -> 00:05:16] So one way to think about liveness is do I need to maintain this value for
+[00:05:16 -> 00:05:18] the program logic to be executed correctly?
+[00:05:18 -> 00:05:19] Right.
+[00:05:19 -> 00:05:22] And indeed, at this particular point, I need to maintain the value of x for
+[00:05:22 -> 00:05:25] w is colon equal to x to execute correctly.
+[00:05:25 -> 00:05:29] What about this point just before y is colon equal to z?
+[00:05:29 -> 00:05:33] Now, once again, even though y is colon equal to z is not using x, but
+[00:05:33 -> 00:05:35] the statement just after that is using x.
+[00:05:35 -> 00:05:40] And so x is live because downstream, maybe not immediately, but
+[00:05:40 -> 00:05:43] maybe two steps down or three steps down, x is being used.
+[00:05:43 -> 00:05:46] So x is live at this program point as well.
+[00:05:47 -> 00:05:48] What about this program point?
+[00:05:48 -> 00:05:51] Is x live at this program point?
+[00:05:51 -> 00:05:52] The answer is actually no.
+[00:05:52 -> 00:05:56] It is actually dead because the successive statement is just going to
+[00:05:56 -> 00:05:58] assign a new value to x.
+[00:05:58 -> 00:06:00] So if you are assigning a new value to x,
+[00:06:00 -> 00:06:03] the current value of x is not going to get used.
+[00:06:03 -> 00:06:05] So I don't need to maintain it.
+[00:06:05 -> 00:06:06] I could have thrown it away.
+[00:06:06 -> 00:06:09] And because it's going to get overwritten anyway, so
+[00:06:09 -> 00:06:11] I don't really need to maintain what the current value of x.
+[00:06:11 -> 00:06:16] So this is actually x is dead just before x is colon equal to 4.
+[00:06:16 -> 00:06:19] So I hope you're paying attention.
+[00:06:19 -> 00:06:22] Just before x is colon equal to 4, x is dead.
+[00:06:23 -> 00:06:26] What about just before x is colon equal to 3?
+[00:06:26 -> 00:06:31] Once again, it is dead because the statement just following this
+[00:06:31 -> 00:06:36] particular program point is going to assign to x.
+[00:06:36 -> 00:06:40] And so the current value of x, whatever it was before the statement,
+[00:06:40 -> 00:06:43] is not meaningful anymore to the rest of the program logic.
+[00:06:43 -> 00:06:45] And I don't need to maintain it, so I can call it dead.
+[00:06:45 -> 00:06:47] Maybe I can also take an example.
+[00:06:47 -> 00:06:51] Let's say before this, there was some other thing like a is colon equal to b.
+[00:06:52 -> 00:06:54] What about at this point?
+[00:06:54 -> 00:06:55] Is it dead or live?
+[00:06:55 -> 00:06:58] So once again, it would be dead, okay?
+[00:06:58 -> 00:07:01] Because a is colon equal to b is not going to use x, and
+[00:07:01 -> 00:07:04] x is colon equal to 3 is going to override the value of x.
+[00:07:04 -> 00:07:09] So basically, I'm sure that the current
+[00:07:09 -> 00:07:12] value of x is not going to get used in the program.
+[00:07:12 -> 00:07:16] And so I can call it dead, all right?
+[00:07:16 -> 00:07:19] So this is the lightness analysis for a single variable, x.
+[00:07:19 -> 00:07:25] So let's define it more clearly, more precisely.
+[00:07:25 -> 00:07:29] A variable x is live at statement s.
+[00:07:29 -> 00:07:33] If there exists a statement s prime that uses x.
+[00:07:33 -> 00:07:38] Example, s prime could be y equals some function that is using x.
+[00:07:38 -> 00:07:43] For example, y equals x plus z, or y equals a plus b plus x, or whatever, right?
+[00:07:43 -> 00:07:48] So there is some statement in my program which is going to actually use x.
+[00:07:48 -> 00:07:52] And let's call that statement s prime.
+[00:07:52 -> 00:07:56] So for x to be live, there must exist at least one such statement, s prime.
+[00:07:56 -> 00:07:59] Such that it's not just enough for there to exist such a statement.
+[00:07:59 -> 00:08:01] It should also have a particular position.
+[00:08:01 -> 00:08:04] So there should be a path from s to s prime.
+[00:08:04 -> 00:08:07] So there should be some program path that starts at s and
+[00:08:07 -> 00:08:10] then reaches s prime, all right?
+[00:08:10 -> 00:08:13] Even if there is one such program path, that's great, all right?
+[00:08:13 -> 00:08:13] That's good enough.
+[00:08:14 -> 00:08:21] And another thing is that path should have no intervening assignment to x, all right?
+[00:08:21 -> 00:08:24] Because if that path has an intervening assignment to x,
+[00:08:24 -> 00:08:28] it basically means that this use of x is actually for that assignment and
+[00:08:28 -> 00:08:30] not for my current value of x.
+[00:08:30 -> 00:08:35] So this is another important point that there should be no intervening
+[00:08:35 -> 00:08:36] assignment to x.
+[00:08:36 -> 00:08:38] And we also saw this in a previous example.
+[00:08:39 -> 00:08:42] If there was an intervening assignment, even though there was a use later on,
+[00:08:42 -> 00:08:45] because of the assignment, the value is getting overwritten.
+[00:08:45 -> 00:08:47] So the current value is not live.
+[00:08:47 -> 00:08:49] So when we are talking about liveness for a variable,
+[00:08:49 -> 00:08:51] we are actually talking about the liveness for
+[00:08:51 -> 00:08:54] the current value of the variable, right?
+[00:08:54 -> 00:08:56] So that's what we mean, okay?
+[00:08:57 -> 00:09:02] So once we define the notion of liveness for
+[00:09:02 -> 00:09:07] a variable by either the value live or dead,
+[00:09:07 -> 00:09:09] we can also talk about dead code from here on.
+[00:09:09 -> 00:09:11] So we recall that we started with the question,
+[00:09:11 -> 00:09:14] can I remove or eliminate this particular statement?
+[00:09:14 -> 00:09:17] In other words, the question was, is the statement dead code?
+[00:09:17 -> 00:09:21] And so this slide formalizes the answer.
+[00:09:21 -> 00:09:26] It is a statement of the form x colon equals something, something.
+[00:09:26 -> 00:09:31] It's dead code if x is dead immediately after the assignment.
+[00:09:31 -> 00:09:34] For example, if there was, just after the assignment,
+[00:09:34 -> 00:09:38] the value is dead, then basically means that whatever
+[00:09:38 -> 00:09:41] the value that's been stored into x is completely meaningless
+[00:09:41 -> 00:09:43] for the rest of the program logic.
+[00:09:43 -> 00:09:45] And that basically means that this particular statement
+[00:09:45 -> 00:09:47] is now dead code and I can eliminate it.
+[00:09:48 -> 00:09:50] So for example, in the example that we saw
+[00:09:50 -> 00:09:54] on the last slide, we had x is colon equal to three,
+[00:09:54 -> 00:09:56] and then x equals colon equal to four.
+[00:09:56 -> 00:09:58] And then just after x colon equal to four,
+[00:09:58 -> 00:10:01] we had live value for x.
+[00:10:01 -> 00:10:03] But just after x is colon equal to three,
+[00:10:03 -> 00:10:05] we had dead value for x, right?
+[00:10:05 -> 00:10:08] And so because the value here is dead,
+[00:10:08 -> 00:10:11] this particular assignment x equal to three is dead.
+[00:10:11 -> 00:10:13] But notice, it's dead code, right?
+[00:10:13 -> 00:10:16] So x being assigned to three is dead code,
+[00:10:16 -> 00:10:19] but x being assigned to value four is not dead code,
+[00:10:19 -> 00:10:23] right, because the value of x is actually live
+[00:10:23 -> 00:10:25] just after the statement.
+[00:10:25 -> 00:10:28] So notice that the emphasis on after and not before.
+[00:10:29 -> 00:10:30] All right, okay.
+[00:10:31 -> 00:10:34] So how do we do compute analysis,
+[00:10:34 -> 00:10:37] how do we compute liveness as a DFA?
+[00:10:37 -> 00:10:41] So how do we express a liveness analysis as a DFA?
+[00:10:41 -> 00:10:43] And so the idea is that we are going to express
+[00:10:43 -> 00:10:46] liveness at a program point based on liveness
+[00:10:46 -> 00:10:49] at the successor program point, right?
+[00:10:49 -> 00:10:50] So recall that a data flow analysis
+[00:10:50 -> 00:10:53] is basically about having local rules
+[00:10:53 -> 00:10:57] on how my value should be related to my neighbor's value.
+[00:10:57 -> 00:10:59] So when we were talking about constant propagation,
+[00:10:59 -> 00:11:01] the neighbor was my predecessor neighbor.
+[00:11:01 -> 00:11:04] So I would say, oh, the value at my point,
+[00:11:04 -> 00:11:06] just before this statement,
+[00:11:06 -> 00:11:10] depends on the value at the out of the predecessor.
+[00:11:10 -> 00:11:12] The value at the in of the current statement
+[00:11:12 -> 00:11:15] depends on the values of the out points
+[00:11:15 -> 00:11:17] of the predecessors.
+[00:11:17 -> 00:11:20] But now in this case of liveness,
+[00:11:20 -> 00:11:22] it's going to be a backward data flow analysis.
+[00:11:22 -> 00:11:25] So in a backward data flow analysis,
+[00:11:25 -> 00:11:28] the value at the out of a statement
+[00:11:28 -> 00:11:33] will depend on the values at the in of the successors,
+[00:11:33 -> 00:11:33] all right?
+[00:11:33 -> 00:11:36] So the values at the in of the successors
+[00:11:36 -> 00:11:39] will basically determine the value
+[00:11:39 -> 00:11:41] at the out of the predecessor.
+[00:11:41 -> 00:11:43] So the data is actually flowing
+[00:11:43 -> 00:11:46] in the reverse direction of program execution
+[00:11:46 -> 00:11:49] and that's why it's called backward data flow analysis.
+[00:11:49 -> 00:11:51] So unlike the constant propagation analysis,
+[00:11:51 -> 00:11:54] which was a forward data flow analysis
+[00:11:54 -> 00:11:56] because there the data was flowing
+[00:11:56 -> 00:12:01] in the same direction as the program execution, all right?
+[00:12:01 -> 00:12:05] Okay, so important point that liveness
+[00:12:05 -> 00:12:07] is actually a backward data flow analysis.
+[00:12:07 -> 00:12:09] Recall that in constant propagation,
+[00:12:09 -> 00:12:12] the out of a statement was related to the in
+[00:12:12 -> 00:12:15] of that statement based on what the statement is.
+[00:12:15 -> 00:12:17] In the backward data flow analysis,
+[00:12:17 -> 00:12:18] we will just switch this
+[00:12:18 -> 00:12:20] and here the in of the statement
+[00:12:20 -> 00:12:22] would be related to the out of the statement.
+[00:12:22 -> 00:12:23] It basically means the same thing.
+[00:12:23 -> 00:12:24] I mean, basically these are equations.
+[00:12:24 -> 00:12:27] Recall that these are systems of equations
+[00:12:27 -> 00:12:28] but just as the data,
+[00:12:28 -> 00:12:30] the values are going to flow in the reverse direction
+[00:12:30 -> 00:12:33] because it's the successor's value that I care about
+[00:12:33 -> 00:12:35] when I'm going to determine my own value,
+[00:12:35 -> 00:12:38] not my predecessor's value, all right?
+[00:12:38 -> 00:12:41] We're going to see this with an example later on.
+[00:12:41 -> 00:12:42] So we're going to maintain a Boolean property
+[00:12:42 -> 00:12:46] for a variable and the way property is going to be true
+[00:12:46 -> 00:12:48] if the variable may be live, all right?
+[00:12:48 -> 00:12:51] So and it's going to be false
+[00:12:51 -> 00:12:54] if it is definitely dead, all right?
+[00:12:54 -> 00:12:56] So we have to maintain two properties,
+[00:12:56 -> 00:12:58] whether it's live or whether it's dead
+[00:12:58 -> 00:13:00] but actually I'm making a more subtle point here.
+[00:13:00 -> 00:13:02] I'm not going to store whether it's live or dead.
+[00:13:02 -> 00:13:04] Recall that in a data flow analysis,
+[00:13:04 -> 00:13:06] we basically store the property of interest
+[00:13:06 -> 00:13:08] and then there is a conservative value.
+[00:13:08 -> 00:13:10] We say, okay, I don't really know
+[00:13:10 -> 00:13:12] whether it is that property or not,
+[00:13:12 -> 00:13:14] whether it is X or not.
+[00:13:14 -> 00:13:15] So in this case, I'm proposing
+[00:13:15 -> 00:13:17] that we'll have two properties.
+[00:13:17 -> 00:13:21] One is true, which will stand for it may be live
+[00:13:21 -> 00:13:24] and then false which says, oh, it's definitely not live
+[00:13:24 -> 00:13:25] or definitely dead, all right?
+[00:13:25 -> 00:13:29] So definitely dead means not live, not live for sure.
+[00:13:30 -> 00:13:33] So what is the conservative value here, all right?
+[00:13:33 -> 00:13:36] The conservative value here is actually true, all right?
+[00:13:36 -> 00:13:37] So this is the conservative value.
+[00:13:39 -> 00:13:40] Why?
+[00:13:40 -> 00:13:41] Because it's basically saying,
+[00:13:41 -> 00:13:43] oh, I can't really say that it's definitely dead.
+[00:13:43 -> 00:13:44] It may be live.
+[00:13:44 -> 00:13:46] I can't even say whether it's definitely live or not.
+[00:13:46 -> 00:13:47] I just say it's maybe live, all right?
+[00:13:47 -> 00:13:49] So that's the conservative value
+[00:13:49 -> 00:13:52] and recall that in the case of constant propagation,
+[00:13:52 -> 00:13:53] the conservative value is bottom,
+[00:13:53 -> 00:13:54] which said that, okay,
+[00:13:54 -> 00:13:56] I really can't say whether it's a constant.
+[00:13:56 -> 00:13:59] Similarly here, the conservative value is true,
+[00:13:59 -> 00:14:01] which is saying it may be live.
+[00:14:01 -> 00:14:03] I really can't say that it's definitely dead, all right?
+[00:14:03 -> 00:14:04] So that's what the conservative value is
+[00:14:04 -> 00:14:07] because that's the safe option here, all right?
+[00:14:07 -> 00:14:09] And for example, one way to check
+[00:14:09 -> 00:14:10] whether it's a safe option or not,
+[00:14:10 -> 00:14:13] if I basically, my data flow analysis just returns
+[00:14:13 -> 00:14:15] that everywhere it is the conservative value,
+[00:14:15 -> 00:14:17] which is it may be live,
+[00:14:17 -> 00:14:19] then basically nothing is dead code, right?
+[00:14:20 -> 00:14:21] Because there's no way that I can do
+[00:14:21 -> 00:14:24] dead code elimination from because of that.
+[00:14:24 -> 00:14:25] But only if there are some places
+[00:14:25 -> 00:14:28] where actually I get the false value after my DFA,
+[00:14:28 -> 00:14:30] then I could have some chance
+[00:14:30 -> 00:14:33] of actually identifying dead code and eliminating it.
+[00:14:34 -> 00:14:36] So what is the ordering of likeness values?
+[00:14:36 -> 00:14:40] Well, it is, from now on,
+[00:14:40 -> 00:14:42] whenever we talk about a DFA, a data flow analysis,
+[00:14:42 -> 00:14:44] we'll talk about its values,
+[00:14:44 -> 00:14:46] and then we'll talk about the ordering relation
+[00:14:46 -> 00:14:47] between those values,
+[00:14:47 -> 00:14:48] because the ordering relation
+[00:14:48 -> 00:14:50] will help us easily express
+[00:14:50 -> 00:14:53] what should be the transfer function rules, all right?
+[00:14:53 -> 00:14:55] Recall that in constant propagation,
+[00:14:55 -> 00:14:57] four rules could be expressed by just one rule
+[00:14:57 -> 00:14:58] once we had the ordering relation.
+[00:14:58 -> 00:15:02] So we're going to now use the same trick everywhere,
+[00:15:02 -> 00:15:03] and that also helps us ensure
+[00:15:03 -> 00:15:07] that our data flow analysis is well-formed
+[00:15:07 -> 00:15:10] in the sense that it will converge when it executes,
+[00:15:10 -> 00:15:11] right?
+[00:15:11 -> 00:15:12] So these ordering relations are actually very important
+[00:15:12 -> 00:15:16] from not just the ease of specifying the DFA,
+[00:15:16 -> 00:15:20] but also to prove properties of the DFA,
+[00:15:20 -> 00:15:22] things like convergence.
+[00:15:22 -> 00:15:24] So here is the ordering.
+[00:15:24 -> 00:15:29] I'm just going to say that true is less than false,
+[00:15:29 -> 00:15:30] all right?
+[00:15:30 -> 00:15:34] So in this method of representing the two values,
+[00:15:34 -> 00:15:35] true and false,
+[00:15:35 -> 00:15:37] I'm going to say true is less than false,
+[00:15:37 -> 00:15:38] and another way to represent it
+[00:15:38 -> 00:15:40] is to have a directed edge from false to true.
+[00:15:40 -> 00:15:42] So notice that,
+[00:15:42 -> 00:15:43] one way to remember this is
+[00:15:43 -> 00:15:45] that whatever is the direction of the arrow,
+[00:15:45 -> 00:15:46] you can just look at the arrow
+[00:15:46 -> 00:15:49] and kind of treat that as a less than operator.
+[00:15:49 -> 00:15:54] So this diagram is basically saying true is less than false,
+[00:15:54 -> 00:15:58] less than equal to false, to be more precise, all right?
+[00:15:58 -> 00:16:00] And then once we have this ordering,
+[00:16:00 -> 00:16:04] we can also define the greatest lower bound,
+[00:16:04 -> 00:16:06] and that is for X and Y,
+[00:16:06 -> 00:16:07] what is the greatest lower bound?
+[00:16:07 -> 00:16:09] Well, there's just two values, false and true.
+[00:16:09 -> 00:16:11] So greatest lower bound is very easy.
+[00:16:11 -> 00:16:13] It's just the Boolean or, all right?
+[00:16:13 -> 00:16:14] I mean, what is the greatest lower?
+[00:16:15 -> 00:16:16] So you can draw a truth table
+[00:16:16 -> 00:16:18] and say what is the greatest lower bound of,
+[00:16:18 -> 00:16:21] if X is false and Y is false, then it will be false.
+[00:16:21 -> 00:16:23] If X is true and Y is false, or vice versa,
+[00:16:23 -> 00:16:25] then it will be true.
+[00:16:25 -> 00:16:26] And if both are true, then it will be true.
+[00:16:26 -> 00:16:27] And from that truth table,
+[00:16:27 -> 00:16:31] you can just easily infer that this GLB function
+[00:16:31 -> 00:16:33] is just exactly identical to the Boolean or function,
+[00:16:33 -> 00:16:34] right?
+[00:16:34 -> 00:16:35] And so the GLB of,
+[00:16:35 -> 00:16:39] in fact, you can also prove that GLB of any n inputs,
+[00:16:39 -> 00:16:42] and it's easy to see that for X1 dot dot Xn
+[00:16:42 -> 00:16:45] is also equivalent to the logical or function
+[00:16:45 -> 00:16:47] for all these n inputs.

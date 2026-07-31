@@ -1,0 +1,389 @@
+Title: Compiler Design Module 80 : DFA Value Orderings
+Video ID: UGqEqZsgxY8
+Detected language: en
+------------------------------------------------------------
+
+[00:00:00 -> 00:00:06] So now we're going to discuss our arguments for the convergence properties of our fixed
+[00:00:06 -> 00:00:13] point iteration algorithm and one of the arguments here is the argument of ordering.
+[00:00:13 -> 00:00:19] So the idea is that we should first simplify the presentation of the analysis by ordering
+[00:00:19 -> 00:00:20] the abstract values.
+[00:00:20 -> 00:00:26] So for our constant propagation data flow analysis example, the abstract values are
+[00:00:26 -> 00:00:31] bottom, constant c, and the value top.
+[00:00:31 -> 00:00:38] And let's just put a less than operator which is going to order it and say let's just assume
+[00:00:38 -> 00:00:44] that bottom is less than c for any c and then that c is less than top and this is just
+[00:00:44 -> 00:00:48] an arbitrary operator that I've created now.
+[00:00:48 -> 00:00:53] And I'm going to use this operator, the less than operator, to basically be able to
+[00:00:53 -> 00:00:58] about the convergence properties of my algorithm.
+[00:00:58 -> 00:01:03] So I'm assuming once again that the bottom is less than c and we're also assuming that
+[00:01:03 -> 00:01:10] c is less than top and the less than operator is supposed to be transitive.
+[00:01:10 -> 00:01:12] That's why we're using this symbol.
+[00:01:12 -> 00:01:16] And so if bottom is less than c and c is less than top, then bottom is also less
+[00:01:16 -> 00:01:18] than top.
+[00:01:18 -> 00:01:24] So less than is a transitive operator.
+[00:01:24 -> 00:01:28] And actually this is not a total ordering but it's something which is called a partial
+[00:01:28 -> 00:01:33] ordering which means among all the possible values, it's not necessary that all values
+[00:01:33 -> 00:01:38] are comparable but there are some values that are comparable and some that are not.
+[00:01:38 -> 00:01:41] So another way to write a partial order is in this way.
+[00:01:41 -> 00:01:47] So instead of a horizontal representation, I've turned it into a vertical representation
+[00:01:47 -> 00:01:51] and used a directed arrow to represent the less than operator.
+[00:01:51 -> 00:01:57] So for example, an arrow from top to c indicates that c is less than top and an arrow from
+[00:01:57 -> 00:02:01] c to bottom represents that bottom is less than c.
+[00:02:01 -> 00:02:05] And c is not actually a value, c is actually a placeholder for any constant value.
+[00:02:05 -> 00:02:09] So for example, the right way to say this is for example, zero is less than top
+[00:02:09 -> 00:02:14] and bottom is less than zero and in fact zero is just one of the values.
+[00:02:14 -> 00:02:18] So there are other abstract values that are possible for example, one, two, three or minus
+[00:02:18 -> 00:02:22] one, minus two, minus three or whatever other values that your variable of interest
+[00:02:22 -> 00:02:25] may be able to take.
+[00:02:25 -> 00:02:29] And in this case, we're basically saying that any of these constant values, example
+[00:02:29 -> 00:02:35] two is less than top and bottom is less than two.
+[00:02:35 -> 00:02:40] But notice that this picture is not saying anything about what is the relationship
+[00:02:40 -> 00:02:42] between one and two.
+[00:02:42 -> 00:02:47] So one is neither less than two nor is it greater than two in this ordering,
+[00:02:47 -> 00:02:50] in this notion of less than operator.
+[00:02:50 -> 00:02:54] And so that's why it's called a partial ordering because only some values
+[00:02:54 -> 00:02:59] basically are related by the less than operation, by the ordering operation
+[00:02:59 -> 00:03:01] and others are just not comparable.
+[00:03:01 -> 00:03:06] So for example, all the constants are just incomparable.
+[00:03:06 -> 00:03:12] So we soon understand why this kind of an ordering relation is meaningful.
+[00:03:12 -> 00:03:17] And so in this kind of ordering, we basically even though it is a partial
+[00:03:17 -> 00:03:19] order, we can talk about the greatest value.
+[00:03:19 -> 00:03:23] The greatest value is a value which is not less than any other value in my set
+[00:03:23 -> 00:03:25] of values.
+[00:03:25 -> 00:03:28] And in this case, that is top and there could be multiple greatest values.
+[00:03:28 -> 00:03:33] But in this particular example, there's only one greatest value which is top.
+[00:03:33 -> 00:03:38] Similarly, the least value is the value which is less than everything else
+[00:03:38 -> 00:03:39] in the set.
+[00:03:39 -> 00:03:41] And in this case, that's the bottom value.
+[00:03:41 -> 00:03:45] And once again, there could be multiple bottom values, multiple least values.
+[00:03:45 -> 00:03:49] But in this particular example, there's only one least value which is the bottom
+[00:03:49 -> 00:03:50] value.
+[00:03:51 -> 00:03:55] All right, so with that, we can also define the notion of a greatest lower
+[00:03:55 -> 00:03:56] bound.
+[00:03:56 -> 00:04:02] So greatest lower bound or GLB of two or more elements is the greatest value
+[00:04:02 -> 00:04:08] that is lower by the less than equal to operator than both X and Y.
+[00:04:08 -> 00:04:13] Now notice that I have, there's a subtlety here, I just changed the less than
+[00:04:13 -> 00:04:15] operator to the less than equal to operator.
+[00:04:15 -> 00:04:18] The main difference between less than and less than equal to operator is that
+[00:04:18 -> 00:04:20] the less than equal to operator is also reflexive.
+[00:04:20 -> 00:04:25] So X is less than equal to X is true, all right?
+[00:04:25 -> 00:04:26] So that's the only difference.
+[00:04:26 -> 00:04:30] So it also says that equal things are also kind of ordered using less
+[00:04:30 -> 00:04:34] than equal to, whereas in the case of less than, it was only the unequal
+[00:04:34 -> 00:04:37] things that were related by the less than operator.
+[00:04:37 -> 00:04:41] And we would be, from here on, interested in the less than equal to operator.
+[00:04:41 -> 00:04:44] So we are interested in an operator that's both reflexive,
+[00:04:44 -> 00:04:49] which means the same element is related to itself using this operator,
+[00:04:49 -> 00:04:52] which is true for the less than equal to operator, and it's transitive,
+[00:04:52 -> 00:04:55] which is true for both less than and less than equal to operator.
+[00:04:56 -> 00:05:01] So GLB XY is the greatest value that is lower by the less than equal to
+[00:05:01 -> 00:05:06] operator, not the less than operator, than both X and Y, all right?
+[00:05:06 -> 00:05:10] So it's the greatest value that's lower than both X and Y, okay?
+[00:05:10 -> 00:05:14] And although I'm showing GLB with two arguments,
+[00:05:14 -> 00:05:17] you could extend this to more than two arguments as well.
+[00:05:17 -> 00:05:22] For example, GLB XYZ is the greatest value that's lower than all three of X,
+[00:05:22 -> 00:05:25] Y, and Z, all right?
+[00:05:25 -> 00:05:28] So let's take some examples to understand GLB in more detail.
+[00:05:28 -> 00:05:32] So for example, in this particular partial ordering that I have drawn here,
+[00:05:32 -> 00:05:34] GLB of top, 1 is 1.
+[00:05:34 -> 00:05:38] So what is the greatest value that's less than equal to both 1 and top?
+[00:05:38 -> 00:05:39] It is 1.
+[00:05:39 -> 00:05:43] Recall that we're using the less than equal to operator, which is reflexive.
+[00:05:43 -> 00:05:46] And so we're going to, so 1 is less than equal to 1, and
+[00:05:46 -> 00:05:49] 1 is also less than equal to top, and so the answer will be 1.
+[00:05:49 -> 00:05:52] So GLB of top, 1 is 1.
+[00:05:52 -> 00:05:57] Similarly, GLB of bottom, top is bottom, all right?
+[00:05:57 -> 00:06:00] What's the element that's lower than both bottom and top?
+[00:06:01 -> 00:06:04] There's only one such element, and that's bottom.
+[00:06:04 -> 00:06:06] And so the answer is bottom.
+[00:06:06 -> 00:06:09] Notice that the order of the arguments doesn't matter.
+[00:06:09 -> 00:06:12] I could have switched and said, what is the GLB of top, bottom?
+[00:06:12 -> 00:06:14] And the answer is going to be still the same.
+[00:06:14 -> 00:06:16] So the order of arguments doesn't matter.
+[00:06:16 -> 00:06:19] Similarly, what is GLB of 2, bottom?
+[00:06:19 -> 00:06:24] Bottom again, just like, you know, just say 2 and bottom.
+[00:06:24 -> 00:06:27] So what is the greatest element that's lower than both bottom and 2?
+[00:06:27 -> 00:06:28] That's just bottom.
+[00:06:29 -> 00:06:32] What is the GLB of 1, 2?
+[00:06:32 -> 00:06:33] So 1 and 2.
+[00:06:33 -> 00:06:37] So what is the greatest element that's lower than both 1 and 2?
+[00:06:37 -> 00:06:38] Can it be 1?
+[00:06:38 -> 00:06:43] No, because 1 is less than equal to 1, but 1 is not less than equal to 2.
+[00:06:43 -> 00:06:45] Recall that 1 and 2 are incomparable.
+[00:06:45 -> 00:06:48] So similarly, 2 cannot be the answer, and so
+[00:06:48 -> 00:06:51] the only answer here can be bottom, all right?
+[00:06:51 -> 00:06:55] So one way to think about the GLB is it's the, when you start descending,
+[00:06:55 -> 00:07:01] it's the first node that's common as you start descending from the two elements,
+[00:07:01 -> 00:07:03] x and y, or any number of multiple elements.
+[00:07:04 -> 00:07:08] And what's the GLB, for example, of 1, 2, and top?
+[00:07:08 -> 00:07:10] Once again, that's bottom, all right?
+[00:07:10 -> 00:07:15] So what's the greatest element that's lower than both 1, 2, and top?
+[00:07:15 -> 00:07:20] The only element that satisfies this is the bottom element, okay?
+[00:07:21 -> 00:07:25] All right, so with the definition of GLB, the rules 1 to 4 in our
+[00:07:25 -> 00:07:30] constant propagation algorithm that were basically relating predecessor values
+[00:07:30 -> 00:07:35] to successor values, recall that this was the diagram for rules 1 to 4,
+[00:07:35 -> 00:07:40] where there was some values at the predecessors, let me draw them with green.
+[00:07:40 -> 00:07:43] And then there was a value at the successor that was supposed to be
+[00:07:43 -> 00:07:47] represented as a function of the values at the predecessors, and
+[00:07:47 -> 00:07:49] that was a transfer function.
+[00:07:49 -> 00:07:53] And so now we can represent this function as, I know there were four
+[00:07:53 -> 00:07:56] different rules that said, if it's top, then this is what should happen,
+[00:07:56 -> 00:07:58] if it's bottom, then this is what should happen.
+[00:07:58 -> 00:08:00] Now with the GLB definition,
+[00:08:00 -> 00:08:03] it becomes really easy to write those four rules as a single rule.
+[00:08:03 -> 00:08:12] And the rule is that the value at s, x, in, so
+[00:08:12 -> 00:08:16] statement s, input of statement s for variable x,
+[00:08:18 -> 00:08:25] is the GLB of c, p, x out for all predecessors of s, all right?
+[00:08:25 -> 00:08:27] So just look at all these values.
+[00:08:27 -> 00:08:32] For example, let's say this was value v1, and let's say this was value v2.
+[00:08:32 -> 00:08:37] Then basically just take the GLB, the greatest lower bound of v1 and v2, and
+[00:08:37 -> 00:08:41] that would be the value v3 at the successor, all right?
+[00:08:41 -> 00:08:48] So the value at the successor's input is the GLB of the values at
+[00:08:48 -> 00:08:52] the predecessor's outputs, right, because there could be multiple predecessors.
+[00:08:52 -> 00:08:53] If there's only one predecessor,
+[00:08:53 -> 00:08:57] then the GLB of a single element is just the element itself.
+[00:08:57 -> 00:08:59] But if there are multiple predecessors, then the value would be
+[00:08:59 -> 00:09:04] the GLB of all those multiple values, the greatest lower bound, okay?
+[00:09:04 -> 00:09:09] And you can confirm this by just looking at those rules again.
+[00:09:09 -> 00:09:13] And it is actually, by design, we define GLB in such a way
+[00:09:13 -> 00:09:17] that this property is actually true, okay?
+[00:09:17 -> 00:09:19] Now here's the convergence argument.
+[00:09:19 -> 00:09:22] With this definition of GLB and this partial ordering,
+[00:09:22 -> 00:09:25] we can now have our convergence argument.
+[00:09:25 -> 00:09:29] And the argument is, recall that in our fixed-point iteration algorithm,
+[00:09:29 -> 00:09:34] we had this statement that says repeat until nothing changes, all right?
+[00:09:34 -> 00:09:35] And the question was,
+[00:09:35 -> 00:09:38] why won't the iteration algorithm go on forever, right?
+[00:09:38 -> 00:09:40] Maybe things just keep changing.
+[00:09:40 -> 00:09:43] And you may say, but why will they keep changing?
+[00:09:43 -> 00:09:45] Well, maybe they keep oscillating, or maybe they just,
+[00:09:45 -> 00:09:47] the first time it's zero, the second time it's one, two, three,
+[00:09:47 -> 00:09:50] because there's an infinite number of values that are possible.
+[00:09:50 -> 00:09:53] Or it could just go from one to bottom to one to bottom to one to
+[00:09:53 -> 00:09:54] bottom, or something like that, right?
+[00:09:55 -> 00:09:56] Anything can happen.
+[00:09:56 -> 00:09:58] What's the argument that it's going to definitely converge?
+[00:09:58 -> 00:10:01] This iteration algorithm will converge.
+[00:10:01 -> 00:10:05] Recall that the iteration algorithm converges when nothing changes.
+[00:10:05 -> 00:10:08] And the only reason that it will not converge is that it keeps changing
+[00:10:08 -> 00:10:09] forever, right?
+[00:10:09 -> 00:10:13] And one reason for it to keep changing forever is because there
+[00:10:13 -> 00:10:15] is an infinite number of elements in my set.
+[00:10:15 -> 00:10:18] It can just keep taking a different value each time.
+[00:10:18 -> 00:10:21] And the other reason for it to keep going on forever is it can
+[00:10:21 -> 00:10:22] oscillate between the same number of values.
+[00:10:22 -> 00:10:25] It can oscillate between a finite number of values.
+[00:10:25 -> 00:10:28] For example, it can oscillate between one and bottom, or one and two,
+[00:10:28 -> 00:10:28] or whatever.
+[00:10:30 -> 00:10:31] So GLB will explain why, all right?
+[00:10:31 -> 00:10:33] And that's the next slide.
+[00:10:33 -> 00:10:36] So by using GLB, we're going to be able to prove that the fixed
+[00:10:36 -> 00:10:39] point iteration will for sure converge.
+[00:10:41 -> 00:10:43] And so here's the argument.
+[00:10:43 -> 00:10:46] Recall that in our initial state, the values start at top.
+[00:10:47 -> 00:10:49] And from there, because top is the greatest value,
+[00:10:49 -> 00:10:52] the values can only decrease, all right?
+[00:10:52 -> 00:10:59] Now, for example, top can change to C, and C can change to bottom, okay?
+[00:10:59 -> 00:11:01] And these are the only two possibilities that can happen,
+[00:11:01 -> 00:11:06] because top can change to C because maybe I stepped across a
+[00:11:06 -> 00:11:10] statement that was assigning a constant C to the variable x,
+[00:11:10 -> 00:11:12] and so it changed to C.
+[00:11:12 -> 00:11:15] And eventually, C may change to bottom because maybe the
+[00:11:15 -> 00:11:18] predecessor value was bottom, and because of that, I became
+[00:11:18 -> 00:11:21] bottom, or because I was meeting across two different constant
+[00:11:21 -> 00:11:24] values, and I became bottom, and things like that.
+[00:11:24 -> 00:11:28] But it cannot happen that top changed to some constant C,
+[00:11:28 -> 00:11:31] maybe the C is zero, and then another iteration now it
+[00:11:31 -> 00:11:32] changed to one.
+[00:11:32 -> 00:11:36] That just cannot happen because after all, why can zero
+[00:11:36 -> 00:11:39] become one?
+[00:11:39 -> 00:11:40] Firstly, why could it become zero?
+[00:11:40 -> 00:11:43] Because either there was a statement that assigned zero,
+[00:11:43 -> 00:11:46] in which case now it can never become one, or it could be
+[00:11:46 -> 00:11:49] because of multiple predecessors meeting at the
+[00:11:49 -> 00:11:50] same point.
+[00:11:50 -> 00:11:53] But in that case, we're going to take a GLB of the existing
+[00:11:53 -> 00:11:57] values, and then because the predecessor values are
+[00:11:57 -> 00:12:01] decreasing, the successor value can also decrease.
+[00:12:01 -> 00:12:04] So this can be kind of, this is the intuitive argument,
+[00:12:04 -> 00:12:07] this can be proved more formally using induction on
+[00:12:07 -> 00:12:12] the structure of the control flow graph of the program.
+[00:12:12 -> 00:12:14] But here is the intuitive argument, that you can only
+[00:12:14 -> 00:12:18] kind of, the values will only start at top, and then
+[00:12:18 -> 00:12:20] they can only decrease in this chain.
+[00:12:20 -> 00:12:23] So from top, they can go to, let's say, some C,
+[00:12:23 -> 00:12:26] and from C, maybe they stabilize at C, or maybe they go
+[00:12:26 -> 00:12:28] from that C to bottom.
+[00:12:28 -> 00:12:31] They cannot go from one C1 to another C2 or anything
+[00:12:31 -> 00:12:32] like that.
+[00:12:32 -> 00:12:34] And also, they can never go up.
+[00:12:34 -> 00:12:37] So once they are C, they cannot become top again.
+[00:12:37 -> 00:12:39] And similarly, if they are bottom ones, they cannot
+[00:12:39 -> 00:12:40] become C anymore, right?
+[00:12:40 -> 00:12:42] So that's the argument.
+[00:12:42 -> 00:12:46] And so thus, C, S, X, in or out, can change
+[00:12:46 -> 00:12:48] at most twice, right?
+[00:12:48 -> 00:12:51] So any value, for a given statement S, and for a given
+[00:12:51 -> 00:12:54] variable X, we assume it's a single variable for now.
+[00:12:54 -> 00:12:58] And so for given a statement S, the value can only
+[00:12:58 -> 00:12:59] change twice in X by most, right?
+[00:12:59 -> 00:13:02] From top, it can go to some constant C, and then
+[00:13:02 -> 00:13:05] from that constant C, it can either remain there,
+[00:13:05 -> 00:13:07] in which case it will only change once, or it can
+[00:13:07 -> 00:13:09] go to bottom, in which case it would have
+[00:13:09 -> 00:13:10] changed twice.
+[00:13:10 -> 00:13:13] So any value throughout the duration of the algorithm
+[00:13:13 -> 00:13:15] can only change twice.
+[00:13:15 -> 00:13:18] And that's basically the root of our convergence argument.
+[00:13:18 -> 00:13:21] What is the maximum number of steps that the fixed
+[00:13:21 -> 00:13:22] point iteration would take?
+[00:13:22 -> 00:13:27] Well, the iteration goes on if there was some change.
+[00:13:27 -> 00:13:29] But the changes are unidirectional.
+[00:13:29 -> 00:13:32] They can only go from top, from upper layer to lower
+[00:13:32 -> 00:13:34] layer, or they can stay where they are, right?
+[00:13:34 -> 00:13:37] So if the changes are unidirectional, then the
+[00:13:37 -> 00:13:39] question is how many different changes are possible,
+[00:13:39 -> 00:13:40] in the worst case.
+[00:13:40 -> 00:13:45] And in the worst case, because each iteration must
+[00:13:46 -> 00:13:50] have a change, and a change is only in a single
+[00:13:50 -> 00:13:52] direction, so the maximum number of steps that
+[00:13:52 -> 00:13:55] would happen is the number of values that we need
+[00:13:55 -> 00:13:58] to compute, let's say the values, let's call that
+[00:13:58 -> 00:14:02] number of C, S, X, in, comma, out, in slash out
+[00:14:02 -> 00:14:04] values that need to be computed, into two.
+[00:14:04 -> 00:14:06] Why is this two coming?
+[00:14:06 -> 00:14:12] Because at most two changes to each value, right?
+[00:14:14 -> 00:14:17] And the iteration goes on until there is some value
+[00:14:17 -> 00:14:18] that has changed.
+[00:14:18 -> 00:14:22] So at most all values, in the worst case, all values
+[00:14:22 -> 00:14:24] will change twice.
+[00:14:24 -> 00:14:26] That's the worst case, actually.
+[00:14:26 -> 00:14:28] And so the maximum number of steps I'll have is
+[00:14:28 -> 00:14:31] basically number of these values into two, all right?
+[00:14:31 -> 00:14:34] And after that, I'm sure everything would be bottom,
+[00:14:34 -> 00:14:38] because if it's still going on, by the time
+[00:14:38 -> 00:14:40] everything would be bottom, and then I will
+[00:14:40 -> 00:14:42] definitely convert, for sure.
+[00:14:42 -> 00:14:44] Hopefully I'll converge earlier than that,
+[00:14:44 -> 00:14:46] because if everything is bottom, that's not
+[00:14:46 -> 00:14:48] very useful information, so maybe some of them
+[00:14:48 -> 00:14:50] will become constant, some of them will remain
+[00:14:50 -> 00:14:51] top and things like that, and that would
+[00:14:51 -> 00:14:53] be more useful.
+[00:14:53 -> 00:14:55] But even in the worst case, even if everything
+[00:14:55 -> 00:14:57] becomes bottom, I would definitely be done
+[00:14:57 -> 00:15:00] within two into the number of values.
+[00:15:00 -> 00:15:02] And then how many number of values are there, right?
+[00:15:02 -> 00:15:04] So what are the number of values?
+[00:15:04 -> 00:15:06] What is the number of CSX in-out values?
+[00:15:06 -> 00:15:10] Well, at most there could be two such values
+[00:15:10 -> 00:15:11] for every statement.
+[00:15:11 -> 00:15:12] Actually, there'll be fewer ones, because
+[00:15:12 -> 00:15:15] within a basic block, it's the same value.
+[00:15:15 -> 00:15:18] Between two statements, we just use one value.
+[00:15:18 -> 00:15:20] But at most, even if there were n statements
+[00:15:20 -> 00:15:22] in the program, then the number of such values
+[00:15:22 -> 00:15:26] is only two, and so the total number of steps
+[00:15:26 -> 00:15:28] that the algorithm will take is number
+[00:15:28 -> 00:15:31] of program statements into four, all right?
+[00:15:31 -> 00:15:33] That's just coming from the fact
+[00:15:33 -> 00:15:36] that at most two C values per statement,
+[00:15:36 -> 00:15:40] one before and one after, okay?
+[00:15:40 -> 00:15:43] Actually, these are, again, these are worst case bounds.
+[00:15:43 -> 00:15:45] Typically, these bounds are going to be tighter,
+[00:15:45 -> 00:15:49] A, because there are less than two C values
+[00:15:49 -> 00:15:52] per statement on average, and also,
+[00:15:52 -> 00:15:54] this is just worst case that every value
+[00:15:54 -> 00:15:56] will change twice, maybe some values
+[00:15:56 -> 00:15:58] will not change twice, in which case
+[00:15:58 -> 00:16:01] we will have less number of iterations.
+[00:16:01 -> 00:16:04] Also, some values, during some iterations,
+[00:16:04 -> 00:16:06] multiple values may change in one go,
+[00:16:06 -> 00:16:08] and things like that, maybe you can pick
+[00:16:08 -> 00:16:10] two things that can be changed simultaneously,
+[00:16:10 -> 00:16:12] things like that.
+[00:16:12 -> 00:16:14] Okay, but that analysis was just
+[00:16:14 -> 00:16:17] for one variable X, right?
+[00:16:17 -> 00:16:19] Recall that C, S, X, in, out
+[00:16:19 -> 00:16:23] is basically being calculated for one variable X.
+[00:16:23 -> 00:16:25] We are iterating over all possible,
+[00:16:25 -> 00:16:28] we did consider in our analysis all possible statements,
+[00:16:28 -> 00:16:30] and that's what we said, number of statements
+[00:16:30 -> 00:16:32] in two, four.
+[00:16:32 -> 00:16:35] We also looked at all possibilities of in and out,
+[00:16:35 -> 00:16:37] so that's how the two factor came in,
+[00:16:37 -> 00:16:40] but what about different variables, right?
+[00:16:40 -> 00:16:43] There could be multiple variables in my program,
+[00:16:43 -> 00:16:45] and so one option here is to run separately
+[00:16:45 -> 00:16:47] for each variable, all right?
+[00:16:47 -> 00:16:49] So just identify what are all the variables
+[00:16:49 -> 00:16:50] that you want to run in.
+[00:16:50 -> 00:16:52] For, of course, the number of variables
+[00:16:52 -> 00:16:54] will be less than the number of statements
+[00:16:54 -> 00:16:56] in your program, assuming three address code,
+[00:16:56 -> 00:16:58] and in that case, you can just run this
+[00:16:58 -> 00:17:00] for every variable separately,
+[00:17:00 -> 00:17:01] and in which case, you can multiply
+[00:17:01 -> 00:17:04] the execution time estimate by the number of variables,
+[00:17:04 -> 00:17:05] right, and this is not much,
+[00:17:05 -> 00:17:07] because typically, I mean, this just means
+[00:17:07 -> 00:17:09] that it's quadratic in the number,
+[00:17:09 -> 00:17:11] in size of the program.
+[00:17:11 -> 00:17:12] For a single variable, we just showed
+[00:17:12 -> 00:17:14] that it is linear in the size of the program,
+[00:17:14 -> 00:17:16] it's just four into the size of the program,
+[00:17:16 -> 00:17:18] where the number of statements
+[00:17:18 -> 00:17:21] is being used as a proxy for the size of the program,
+[00:17:21 -> 00:17:23] and if I run it separately for each variable,
+[00:17:23 -> 00:17:26] then it will be quadratic in the size of the program.
+[00:17:26 -> 00:17:28] Option two is to keep track
+[00:17:28 -> 00:17:30] of all variables simultaneously.
+[00:17:30 -> 00:17:33] So rather than doing this for one variable at a time,
+[00:17:33 -> 00:17:34] why don't I keep track
+[00:17:34 -> 00:17:36] of all the variables simultaneously,
+[00:17:36 -> 00:17:38] and this way, I just need to modify
+[00:17:38 -> 00:17:40] the transfer function such that it kind of
+[00:17:40 -> 00:17:42] just looks at every variable separately and does it,
+[00:17:42 -> 00:17:45] and you may say, oh, but how did it improve
+[00:17:45 -> 00:17:45] my performance?
+[00:17:45 -> 00:17:48] Well, looking at a set of variables in one go
+[00:17:48 -> 00:17:51] is often cheaper than looking at
+[00:17:51 -> 00:17:52] each variable separately, right,
+[00:17:52 -> 00:17:55] and so you can modify the transfer functions
+[00:17:55 -> 00:17:59] so that you can update multiple values in one step.
+[00:17:59 -> 00:18:02] For example, you can represent a set of variables
+[00:18:02 -> 00:18:04] using a fast data structure
+[00:18:05 -> 00:18:07] that allows, let's say, order one
+[00:18:07 -> 00:18:11] or order log n update access and things like that,
+[00:18:11 -> 00:18:11] and using these tricks,
+[00:18:11 -> 00:18:13] you can improve the performance,
+[00:18:13 -> 00:18:15] and that's what's typically done.
+[00:18:15 -> 00:18:16] I would also like to point out
+[00:18:16 -> 00:18:18] that if you track all variables simultaneously,
+[00:18:18 -> 00:18:19] it also sometimes gives you
+[00:18:19 -> 00:18:22] more information simultaneously.
+[00:18:22 -> 00:18:23] For example, if you have a statement
+[00:18:23 -> 00:18:25] like X equals Y plus Z,
+[00:18:25 -> 00:18:26] and if you are treating,
+[00:18:26 -> 00:18:28] if you are kind of keeping track
+[00:18:28 -> 00:18:31] of both Y and Z simultaneously
+[00:18:31 -> 00:18:34] and you know that Y and Z are constant at this point
+[00:18:34 -> 00:18:35] at the input of the statement,
+[00:18:35 -> 00:18:38] then you can also infer that X is a constant,
+[00:18:38 -> 00:18:40] and this is only possible because you were doing,
+[00:18:40 -> 00:18:43] dealing with X, Y, and Z simultaneously.
+[00:18:43 -> 00:18:45] On the other hand, if I had dealt with Y separately
+[00:18:45 -> 00:18:48] and Z separately and X separately,
+[00:18:48 -> 00:18:50] then my analysis would have been weaker
+[00:18:50 -> 00:18:51] in the sense that it would have given me
+[00:18:51 -> 00:18:53] a less precise solution.
+[00:18:54 -> 00:18:55] So recall that one of the questions
+[00:18:55 -> 00:18:56] that you want to ask is,
+[00:18:56 -> 00:18:58] how precise is my solution?
+[00:18:58 -> 00:19:00] And we're going to discuss those things later on.
+[00:19:00 -> 00:19:03] But I just want to point out that,
+[00:19:04 -> 00:19:05] if you do things separately,
+[00:19:05 -> 00:19:07] then you may end up with a less precise solution
+[00:19:07 -> 00:19:09] than if you do things together
+[00:19:09 -> 00:19:12] in some situations for some types of analysis,
+[00:19:12 -> 00:19:14] and I gave you an example.
+[00:19:14 -> 00:19:19] And we'll talk about this in our later lecture modules.

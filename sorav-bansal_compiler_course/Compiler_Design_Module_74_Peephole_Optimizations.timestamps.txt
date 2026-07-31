@@ -1,0 +1,158 @@
+Title: Compiler Design Module 74 : Peephole Optimizations
+Video ID: lQ1tG9b8Kdk
+Detected language: en
+------------------------------------------------------------
+
+[00:00:00 -> 00:00:06] So, now I'll discuss another type of local optimization which is called peephole optimization.
+[00:00:06 -> 00:00:07] What is a peephole optimization?
+[00:00:07 -> 00:00:14] A peephole optimization is a pattern matching rule that has a pattern and a replacement.
+[00:00:14 -> 00:00:20] So for example, a pattern could be a set of instruction templates i1, i2, i3, i n.
+[00:00:20 -> 00:00:25] It's a sequence of instruction templates and then a replacement is also another sequence
+[00:00:25 -> 00:00:29] of instruction templates j1, j2, ...jn.
+[00:00:29 -> 00:00:35] The idea is that using this pattern comma replacement tuple, we can scan the code and
+[00:00:35 -> 00:00:41] see if this pattern matches with any existing code in the program being optimized and if
+[00:00:41 -> 00:00:44] it does then we can replace it with the replacement code.
+[00:00:44 -> 00:00:50] And this makes sense if the replacement pattern code is faster or in some sense
+[00:00:50 -> 00:00:56] better in terms of resource usage than the original pattern code.
+[00:00:56 -> 00:01:01] Traditionally, this kind of peephole optimization has been very successfully used on assembly
+[00:01:01 -> 00:01:11] code because at the assembly level there are all kinds of opcodes that are very esoteric
+[00:01:11 -> 00:01:16] in nature, so very corner case kind of opcodes and when you generate code from
+[00:01:16 -> 00:01:22] your IR then maybe you have missed out on those opcodes and so these peephole
+[00:01:22 -> 00:01:28] optimizations can scan windows of your instruction program screen inside the program and see
+[00:01:28 -> 00:01:33] if any of these windows matches the pattern and if so then it replaces it with the
+[00:01:33 -> 00:01:38] appropriate replacement.
+[00:01:38 -> 00:01:43] So for example, here is an example of a peephole optimization says if you see
+[00:01:43 -> 00:01:50] a move of r2 to r1 followed by another move of r1 to r2 then you can just replace
+[00:01:50 -> 00:01:55] it with a single move from r2 to r1 because the second move in this case becomes a no op
+[00:01:55 -> 00:02:00] because at this point both r1 and r2 have the same value.
+[00:02:00 -> 00:02:05] Now this kind of instruction sequence can actually occur very frequently when you
+[00:02:05 -> 00:02:12] are generating code from IR to assembly because when you are doing register allocation
+[00:02:12 -> 00:02:19] and then you are assigning IR registers to assembly registers then you have to emit
+[00:02:19 -> 00:02:26] code that is going to do this register naming and transfer of values from one
+[00:02:26 -> 00:02:30] register to another or transfer of values from register to stack slot and things
+[00:02:30 -> 00:02:35] like that and so often you will find that very closely located instructions which
+[00:02:35 -> 00:02:39] look like they are just moving registers back and forth and in this case you can
+[00:02:39 -> 00:02:44] just run peephole optimizer that's going to just, it's called a peephole optimizer
+[00:02:44 -> 00:02:48] because it just looks at a peephole of instructions, a small window of
+[00:02:48 -> 00:02:53] instructions and keeps sliding down the instruction stream and checks for any
+[00:02:53 -> 00:02:58] instruction sequence that matches the pattern and if it does then it just
+[00:02:58 -> 00:03:01] replaces it with the replacement pattern.
+[00:03:01 -> 00:03:04] Now notice that this is a pattern because r1 and r2 are not actual
+[00:03:04 -> 00:03:08] registers they are actually placeholders for any register names.
+[00:03:08 -> 00:03:13] So for example this particular pattern move r1 r2 and followed by move r2 r1 will
+[00:03:13 -> 00:03:21] also match something like move r3 r4 and move r4 r3.
+[00:03:24 -> 00:03:28] So even this would match this particular pattern because it's not the
+[00:03:28 -> 00:03:31] particular register names r1 and r2 that is important it's just that there's
+[00:03:31 -> 00:03:36] some register r1 and there's some distinct register r2 and this is the
+[00:03:36 -> 00:03:41] form of computation that's happening. So it's a pattern of instructions that it
+[00:03:41 -> 00:03:44] represents and the same pattern can match many different types of
+[00:03:44 -> 00:03:48] instruction sequences. Here's another example of a peephole optimization rule
+[00:03:48 -> 00:03:53] it says add, immediate and update dollar r1 dollar r1 i so recall that
+[00:03:53 -> 00:03:59] this means that r1 is updated with r1 plus i so i is added to r1 and i
+[00:03:59 -> 00:04:03] here is supposed to be an immediate value or constant value and similarly
+[00:04:03 -> 00:04:10] second instruction is add iu r1 r1 j that adds another constant j. Now both r1
+[00:04:10 -> 00:04:16] i and j these are just placeholders in this pattern and these can match any
+[00:04:16 -> 00:04:20] register or any constant with them i can match in some constant and j can
+[00:04:20 -> 00:04:24] match some other constant I'm not really specifying what constant it is
+[00:04:24 -> 00:04:28] and I can replace it with the replacement which says add iu dollar r1
+[00:04:28 -> 00:04:34] dollar r1 i plus j all right where i plus j is also an immediate value a
+[00:04:34 -> 00:04:38] constant value that you know that can be just formed by summing up the
+[00:04:38 -> 00:04:43] constants i and j with which they were pattern match. So for example if I have
+[00:04:43 -> 00:04:57] a code which looks like add iu r3 r3 r3 once again add iu r3 r3 and 3
+[00:04:57 -> 00:05:04] and then I have add iu r3 it has to be the same register because you know
+[00:05:04 -> 00:05:09] it's the same r1 that's happening on both sides and let's say I have 4 then
+[00:05:09 -> 00:05:21] this can be replaced with add iu r3 r3 7 okay so so notice that this
+[00:05:21 -> 00:05:27] particular transformation can be implemented by this particular people
+[00:05:27 -> 00:05:33] optimization rule so a people optimizer is basically implemented as a
+[00:05:33 -> 00:05:37] database of people optimization rules like the ones that we have just shown
+[00:05:37 -> 00:05:43] you here and then an optimizer that basically is going to scan the
+[00:05:43 -> 00:05:47] instruction stream to find some sequence of instructions that matches
+[00:05:47 -> 00:05:52] this pattern and if so it executes the corresponding replacement as shown
+[00:05:52 -> 00:05:57] in these examples. It turns out that many local optimizations can be cast as
+[00:05:57 -> 00:06:01] people optimizations for example you can cast algebraic simplification as a
+[00:06:01 -> 00:06:05] people optimization you say if you see a multiplication by a constant and the
+[00:06:05 -> 00:06:09] constant is a power of 2 then you can change it with a shift or you can
+[00:06:09 -> 00:06:14] cast constant folding as a people optimization you can say if these
+[00:06:14 -> 00:06:19] are the constants that are occurring so for example even this here is an
+[00:06:19 -> 00:06:23] example of a constant folding optimization you can think of this
+[00:06:23 -> 00:06:26] particular optimization as an optimization of dead code elimination
+[00:06:26 -> 00:06:29] where the second instruction is actually dead code because it doesn't
+[00:06:29 -> 00:06:34] really do much although when we define dead code it was different a little
+[00:06:34 -> 00:06:37] differently you can think of this as a second instruction is a no op that
+[00:06:37 -> 00:06:42] gets eliminated through this people optimization rule but not all local
+[00:06:42 -> 00:06:45] optimizations can be cast as people optimization rules so for example
+[00:06:45 -> 00:06:50] let's look at copy propagation so when we say copy propagation then you know
+[00:06:50 -> 00:06:56] the copy the the statement which says w equals x which is a copy can be a lot
+[00:06:56 -> 00:07:01] of distance away from the actual use of w and so trying to cast it as a
+[00:07:01 -> 00:07:04] people optimization rule would require us to have a really large
+[00:07:04 -> 00:07:08] window of pattern matching rules that should match with that particular
+[00:07:08 -> 00:07:12] instruction stream and that would be a little baseball right because let's
+[00:07:12 -> 00:07:18] say I have w equals x then I have lots of instructions in the middle and then I
+[00:07:18 -> 00:07:23] have something which is a use of x so the x plus 1 right some v equals x
+[00:07:23 -> 00:07:29] plus v equals w plus 1 then here I would want that the w here in v equals
+[00:07:29 -> 00:07:33] w plus 1 is replaced with x but then to do this as a people
+[00:07:33 -> 00:07:36] optimization is really difficult because now I need to also have a
+[00:07:36 -> 00:07:41] pattern that not just matches w equals x and v equals w plus 1 but
+[00:07:41 -> 00:07:45] also matches all these instructions in the middle and there can be a lot of
+[00:07:45 -> 00:07:48] different possibilities permutations and combinations of what what can appear
+[00:07:48 -> 00:07:52] in the middle and so doing this as a people optimization may not make sense
+[00:07:52 -> 00:07:57] so some optimizations lend themselves very well to be represented as people
+[00:07:57 -> 00:08:00] optimizations and some other optimizations are better done
+[00:08:00 -> 00:08:04] algorithmically like copy propagation is an example or maybe even
+[00:08:04 -> 00:08:09] common sub-expression elimination notice that people optimizations like
+[00:08:09 -> 00:08:12] all other optimizations that we have discussed so far is also another type of
+[00:08:12 -> 00:08:17] local optimization so we are really talking about optimizations within a
+[00:08:17 -> 00:08:21] basic block although there has been this was the original notion of people
+[00:08:21 -> 00:08:24] optimizations although there have been subsequent approaches that have done
+[00:08:24 -> 00:08:30] people optimization across basic blocks as well although in in limited
+[00:08:30 -> 00:08:37] scenarios all right so how do you apply people optimizations well like
+[00:08:38 -> 00:08:41] local optimizations people optimizations are typically applied
+[00:08:41 -> 00:08:45] iteratively or repeatedly so you would just go through the instruction stream
+[00:08:45 -> 00:08:50] once and try to find a you know instruction stream window of
+[00:08:50 -> 00:08:53] instructions that matches one of the patterns in your database and if
+[00:08:53 -> 00:08:56] something matches you do the replacement and you keep doing this
+[00:08:56 -> 00:08:59] iteratively because what can happen is that let's say there was an
+[00:08:59 -> 00:09:05] instruction stream and there was some window which matched right now
+[00:09:05 -> 00:09:10] because of this match there was a replacement and because of the
+[00:09:10 -> 00:09:15] replacement there there was another new window that got created that can now
+[00:09:15 -> 00:09:18] get matched again or maybe that window can be somewhere here right so they
+[00:09:18 -> 00:09:21] could be overlapping windows that start getting matched because of the
+[00:09:21 -> 00:09:24] previous replacement and this can work both ways sometimes people
+[00:09:24 -> 00:09:30] optimizations can trigger more people optimizations in the next pass in the
+[00:09:30 -> 00:09:34] next iteration or sometimes they can preclude other people optimizations
+[00:09:34 -> 00:09:37] because of one people optimization the other people optimization got disabled
+[00:09:37 -> 00:09:41] and this is very similar to the kind of thing that we have seen also while
+[00:09:41 -> 00:09:46] we were discussing local optimization so but you know people have worked on
+[00:09:46 -> 00:09:50] optimal application of people optimizations and things like that
+[00:09:50 -> 00:09:55] also but the state of the practice is basically that you just apply people
+[00:09:55 -> 00:09:59] optimizations opportunistically wherever you find them and and you
+[00:09:59 -> 00:10:03] keep doing this either till you reach a fixed point just like our local
+[00:10:03 -> 00:10:08] optimization algorithm or maybe for a fixed number of iterations or something
+[00:10:08 -> 00:10:12] or any other metric that you want to use for your convergence criterion
+[00:10:12 -> 00:10:20] okay so here are some more examples of people optimizations so add iu r1 r2 0
+[00:10:20 -> 00:10:23] can be just replaced with move of r2 to r1 so instead of doing an
+[00:10:23 -> 00:10:26] arithmetic which is just going to do arithmetic with zero and so
+[00:10:26 -> 00:10:29] unnecessarily turning on your arithmetic circuit you just want to
+[00:10:29 -> 00:10:34] implement a move instruction or similarly if you have a move r1 r1 you
+[00:10:34 -> 00:10:39] can just replace it with the empty sequence which means just remove this
+[00:10:39 -> 00:10:45] instruction because it's a no-op there have been a lot of prior work on
+[00:10:45 -> 00:10:48] automatic generation of people optimizations and that makes the
+[00:10:48 -> 00:10:51] whole idea of people optimizations even more attractive because sometimes
+[00:10:51 -> 00:10:55] they can be automatically generated and so they don't have to be human
+[00:10:55 -> 00:11:01] manually codified and the idea is to use enumerative or stochastic
+[00:11:01 -> 00:11:06] search techniques to automatically learn people optimization okay sometimes
+[00:11:06 -> 00:11:10] these techniques are also called AI techniques or things like that in fact
+[00:11:10 -> 00:11:15] some of my own research has been in this space okay so to summarize
+[00:11:15 -> 00:11:21] program optimization is actually a term that is used to improve the
+[00:11:21 -> 00:11:26] program using some algorithms maybe local optimizations or people
+[00:11:26 -> 00:11:32] optimizations but the word optimization actually I argue is a misnomer it's not
+[00:11:32 -> 00:11:36] there's no attempt to actually try to find the optimal solution so the word
+[00:11:36 -> 00:11:40] optimization is actually a misnomer here but the word has caught on and so
+[00:11:40 -> 00:11:44] we use it because of historical reasons a better term would probably
+[00:11:44 -> 00:11:48] be co-program improver because these algorithms all they are doing is
+[00:11:48 -> 00:11:52] trying to improve the code based on certain patterns or algorithms and and
+[00:11:52 -> 00:11:57] they just stop when you know certain criterion holds or try for some amount
+[00:11:57 -> 00:12:00] of time and then you give up or things like that so there's no notion
+[00:12:00 -> 00:12:05] of optimization here although it's called optimization it's this what we're
+[00:12:05 -> 00:12:09] really doing is just trying to improve the code using some well-known
+[00:12:09 -> 00:12:11] patterns

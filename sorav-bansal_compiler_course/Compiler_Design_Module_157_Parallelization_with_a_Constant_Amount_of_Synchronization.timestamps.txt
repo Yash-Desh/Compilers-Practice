@@ -1,0 +1,465 @@
+Title: Compiler Design Module 157 : Parallelization with a Constant Amount of Synchronization
+Video ID: BHvsBQJmn5c
+Detected language: en
+------------------------------------------------------------
+
+[00:00:00 -> 00:00:05] So far, we have looked at synchronization-free parallelism.
+[00:00:05 -> 00:00:10] But now today, I'm going to show some examples where
+[00:00:10 -> 00:00:13] synchronization-free is not going to give you parallelism.
+[00:00:13 -> 00:00:17] But if you put a little bit of synchronization, and this I
+[00:00:17 -> 00:00:20] call a constant amount of synchronization, constant in
+[00:00:20 -> 00:00:24] the size of the iteration space, so it's independent of
+[00:00:24 -> 00:00:27] the size of the iteration space, then we will be able to
+[00:00:27 -> 00:00:29] get better parallelism than if we just don't put any
+[00:00:29 -> 00:00:31] synchronization at all.
+[00:00:31 -> 00:00:34] So I'm going to motivate that synchronization is sometimes
+[00:00:34 -> 00:00:36] required in today's module.
+[00:00:36 -> 00:00:38] And let's look at this example.
+[00:00:38 -> 00:00:44] For i equals 0 to n, i++, for j equals 0 to m, j++, xij plus
+[00:00:44 -> 00:00:48] equals some function of x i minus 1j.
+[00:00:48 -> 00:00:52] Now, what this basically means is that the i comma jth
+[00:00:52 -> 00:00:57] iteration is dependent on i minus 1 comma jth iteration.
+[00:00:57 -> 00:00:59] There's a read-after-write dependency.
+[00:00:59 -> 00:01:04] Because in the i minus 1jth iteration, the i minus 1jth
+[00:01:04 -> 00:01:05] element is written.
+[00:01:05 -> 00:01:08] And in the i comma jth iteration, the i minus 1
+[00:01:08 -> 00:01:11] comma jth element is read.
+[00:01:11 -> 00:01:15] So there is a dependency from i minus 1 comma j to i
+[00:01:15 -> 00:01:19] comma j, where these are basically representing
+[00:01:19 -> 00:01:21] iteration points.
+[00:01:21 -> 00:01:23] And so if I was to parallelize, I would basically
+[00:01:23 -> 00:01:29] say that, OK, it's like saying that if the value of j is
+[00:01:29 -> 00:01:34] same, then all the elements for the same value of j have
+[00:01:34 -> 00:01:35] data dependencies.
+[00:01:35 -> 00:01:37] But across different values of j, they are data
+[00:01:37 -> 00:01:38] independent.
+[00:01:38 -> 00:01:41] And so if I use my space partitioning constraints, I'm
+[00:01:41 -> 00:01:44] going to get a solution that maps every distinct
+[00:01:44 -> 00:01:48] value of j to a distinct processor, a rank 1 solution.
+[00:01:48 -> 00:01:51] So in other words, if i was the x-axis and j was the
+[00:01:51 -> 00:01:55] y-axis, then all the horizontal strands would, each
+[00:01:55 -> 00:01:58] horizontal strand would be mapped to the same processor.
+[00:01:58 -> 00:02:00] But different horizontal strands would be mapped to
+[00:02:00 -> 00:02:02] different processors.
+[00:02:02 -> 00:02:05] OK, but now let me change this program slightly.
+[00:02:05 -> 00:02:07] And let me add another loop nest.
+[00:02:07 -> 00:02:11] And in this loop nest, I say for i equals 0 to n, j
+[00:02:11 -> 00:02:13] equals 1 to some other bounds.
+[00:02:13 -> 00:02:14] It doesn't really matter.
+[00:02:14 -> 00:02:16] I could have used m, but I'm just using m minus 10
+[00:02:16 -> 00:02:21] just to kind of say that the bounds can be different.
+[00:02:22 -> 00:02:27] So let's say i equals j plus plus, xij plus equals some
+[00:02:27 -> 00:02:29] function g of xij minus 1.
+[00:02:29 -> 00:02:33] Now this time, just like in my previous loop nest, there
+[00:02:33 -> 00:02:37] was a dependency across different values of i.
+[00:02:37 -> 00:02:39] In this loop nest, the dependencies across different
+[00:02:39 -> 00:02:42] values of j.
+[00:02:42 -> 00:02:46] And so it's like, once again, for the same value of
+[00:02:46 -> 00:02:50] i and different values of j, I have data dependencies.
+[00:02:50 -> 00:02:52] And for the same values of i, I have data
+[00:02:52 -> 00:02:53] independent iterations.
+[00:02:53 -> 00:02:56] And so if I again use my space partitioning constraints,
+[00:02:56 -> 00:02:58] I would obtain a rank one solution.
+[00:02:58 -> 00:03:01] And this time, for every different value of i, I would
+[00:03:01 -> 00:03:02] use a different processor.
+[00:03:02 -> 00:03:05] And this would be my maximum rank solution for my space
+[00:03:05 -> 00:03:07] partitioning constraints.
+[00:03:07 -> 00:03:10] Now both these are giving me different
+[00:03:10 -> 00:03:11] parallelization solutions.
+[00:03:11 -> 00:03:15] The first loop nest is giving me p equals j.
+[00:03:15 -> 00:03:18] And the second loop nest is giving me p equals i.
+[00:03:18 -> 00:03:20] But let's see what happens when I basically try to
+[00:03:20 -> 00:03:23] parallelize, using synchronization-free parallelism,
+[00:03:23 -> 00:03:26] a program that has both the loops together.
+[00:03:26 -> 00:03:31] In this case, I basically want, I'm going to say that
+[00:03:31 -> 00:03:33] actually this loop, if I look at both the loops
+[00:03:33 -> 00:03:36] together and use my space partitioning constraints for
+[00:03:36 -> 00:03:38] synchronization-free parallelization, then I'm going
+[00:03:38 -> 00:03:40] to find that it is not parallelizable.
+[00:03:40 -> 00:03:42] And why is it not parallelizable?
+[00:03:42 -> 00:03:47] Well, the first loop nest is going to say that if
+[00:03:47 -> 00:03:52] the values of j are same, then they must belong to the
+[00:03:52 -> 00:03:54] same processor.
+[00:03:54 -> 00:03:58] That's why we got p equals j.
+[00:03:58 -> 00:04:01] So if the values of j are same, then the iterations
+[00:04:01 -> 00:04:03] should map to the same processor.
+[00:04:03 -> 00:04:04] What's that second loop nest?
+[00:04:04 -> 00:04:07] It says if the values of i are same, then they must
+[00:04:07 -> 00:04:08] map to the same processor.
+[00:04:08 -> 00:04:11] And if you combine the two, it basically means that all
+[00:04:11 -> 00:04:13] the points should map to the same processor.
+[00:04:13 -> 00:04:18] Because if I go horizontally, that's the same value of i.
+[00:04:18 -> 00:04:21] And if I go vertically, that's the same value of j.
+[00:04:21 -> 00:04:24] So if I take any two points in the iteration space, I can
+[00:04:24 -> 00:04:28] find a transitive data dependency from any i1, j1 to
+[00:04:28 -> 00:04:32] any i2, j2, by first going on i and then going on j.
+[00:04:32 -> 00:04:35] This can be seen diagrammatically.
+[00:04:35 -> 00:04:40] The first loop nest says that if I plot j on the x
+[00:04:40 -> 00:04:42] axis, because it's in the inner loop, and i on the y
+[00:04:42 -> 00:04:44] axis, because it's the outer loop, then the data
+[00:04:44 -> 00:04:47] dependencies are these vertical strands, right?
+[00:04:47 -> 00:04:51] And so because of these data dependencies, I want to say
+[00:04:51 -> 00:04:54] that all these points on this vertical strand should map
+[00:04:54 -> 00:04:56] to the same processor.
+[00:04:56 -> 00:04:58] Similarly, all the points on this vertical strand should
+[00:04:58 -> 00:05:00] map on the same processor, and so on.
+[00:05:00 -> 00:05:04] But now if I look at the second new loop nest, it's
+[00:05:04 -> 00:05:07] the same axis, j and i, but this time I get
+[00:05:07 -> 00:05:10] horizontal data dependencies for the same value of i.
+[00:05:10 -> 00:05:12] Which means that this horizontal strand should map on
+[00:05:12 -> 00:05:15] the same processor, and this horizontal strand should map
+[00:05:15 -> 00:05:16] on the same processor.
+[00:05:16 -> 00:05:22] And I claim that the only affine function that can
+[00:05:22 -> 00:05:25] satisfy both these constraints is the affine function of
+[00:05:25 -> 00:05:28] rank 0, which just maps all these iterations to the
+[00:05:28 -> 00:05:31] same processor ID, let's say 0.
+[00:05:31 -> 00:05:33] So it's also easy to see.
+[00:05:33 -> 00:05:35] This one and this one should have the same processor,
+[00:05:35 -> 00:05:37] and this one and this one should have the same
+[00:05:37 -> 00:05:38] processor.
+[00:05:38 -> 00:05:41] So this one and this one should also have the same
+[00:05:41 -> 00:05:41] processor.
+[00:05:41 -> 00:05:44] And so basically if I just combine these two, I
+[00:05:44 -> 00:05:48] basically get a diagram like this.
+[00:05:48 -> 00:05:51] And this basically means that everything has a data
+[00:05:51 -> 00:05:54] dependency on everything else, and that just means
+[00:05:54 -> 00:05:57] that you cannot have any parallelization, and the
+[00:05:57 -> 00:06:00] entire program, all the iteration points in the
+[00:06:00 -> 00:06:04] iteration space should map to the same processor.
+[00:06:04 -> 00:06:07] But that was synchronization-free parallelism,
+[00:06:07 -> 00:06:10] because I just didn't want any sort of synchronization
+[00:06:10 -> 00:06:11] in my program.
+[00:06:11 -> 00:06:15] But it is easy to see that if I was able to split
+[00:06:15 -> 00:06:18] this program into two different programs, then I
+[00:06:18 -> 00:06:19] can exploit parallelism.
+[00:06:19 -> 00:06:21] In other words, I can basically parallelize this
+[00:06:21 -> 00:06:24] loopness separately and that loopness separately.
+[00:06:24 -> 00:06:27] But it's not so simple, because there are data
+[00:06:27 -> 00:06:30] dependencies from this statement, let's say S1, to
+[00:06:30 -> 00:06:31] this statement, let's say S2.
+[00:06:31 -> 00:06:35] Because things are being written to X in this
+[00:06:35 -> 00:06:38] statement, elements of X, and things are being read
+[00:06:38 -> 00:06:39] from the elements of S.
+[00:06:39 -> 00:06:42] So it's not like this loopness can be executed
+[00:06:42 -> 00:06:44] complete isolation from this loopness.
+[00:06:44 -> 00:06:47] But what we can probably say is that all iterations
+[00:06:47 -> 00:06:50] of this loopness must finish before any iteration
+[00:06:50 -> 00:06:52] of this loopness begins.
+[00:06:52 -> 00:06:54] And once we are able to say that, then I can
+[00:06:54 -> 00:06:58] basically parallelize each loopness independently.
+[00:06:58 -> 00:07:01] And so the first thing to notice here is that
+[00:07:01 -> 00:07:04] when considering constraints between S1 and S2,
+[00:07:04 -> 00:07:07] we get a rank zero solution based on the data
+[00:07:07 -> 00:07:09] dependencies and our space partitioning constraints
+[00:07:09 -> 00:07:11] for this particular program.
+[00:07:11 -> 00:07:13] And so we want a solution for this.
+[00:07:13 -> 00:07:15] And the solution is that we are going to add
+[00:07:15 -> 00:07:17] some kind of small amount of synchronization.
+[00:07:17 -> 00:07:20] So it's no longer going to be synchronization-free.
+[00:07:20 -> 00:07:22] All our space partitioning constraints were meant
+[00:07:22 -> 00:07:24] for synchronization-free parallelism.
+[00:07:24 -> 00:07:28] But now we are basically interested in identifying
+[00:07:28 -> 00:07:30] better solutions, even at the cost of putting
+[00:07:30 -> 00:07:32] a little bit of synchronization.
+[00:07:32 -> 00:07:34] And so the little bit of synchronization in this example
+[00:07:34 -> 00:07:36] that I will need is a barrier,
+[00:07:37 -> 00:07:40] which is a barrier between the two loopness.
+[00:07:40 -> 00:07:41] What is a barrier?
+[00:07:41 -> 00:07:44] A barrier basically says that this entire loopness
+[00:07:44 -> 00:07:46] should finish before any iteration
+[00:07:46 -> 00:07:48] of the second loopness starts.
+[00:07:48 -> 00:07:50] So it's like if I basically parallelize
+[00:07:50 -> 00:07:52] the first loopness, then all threads
+[00:07:52 -> 00:07:55] of the first loopness should kind of finish
+[00:07:55 -> 00:07:57] before I start executing any thread
+[00:07:57 -> 00:07:59] of the second loopness.
+[00:07:59 -> 00:08:03] And so if I do that, if I use a barrier synchronization
+[00:08:03 -> 00:08:05] between the two loopness, then I don't need
+[00:08:05 -> 00:08:07] to consider statements across barriers,
+[00:08:07 -> 00:08:10] because in a way I have kind of split the two programs,
+[00:08:10 -> 00:08:12] split the program into two parts,
+[00:08:12 -> 00:08:13] and basically said that the second part
+[00:08:13 -> 00:08:16] will execute only after the first part has finished.
+[00:08:16 -> 00:08:18] And so when I look for space partitioning constraints,
+[00:08:18 -> 00:08:21] then I only need to consider each part in isolation.
+[00:08:22 -> 00:08:25] Okay, and so what I can do is I can consider
+[00:08:25 -> 00:08:27] the first part in isolation, and I will be able
+[00:08:27 -> 00:08:30] to parallelize with P equals J, just like we saw before.
+[00:08:30 -> 00:08:32] And then I can look at the second part in isolation,
+[00:08:32 -> 00:08:35] and then I can parallelize it with P equals I.
+[00:08:35 -> 00:08:36] Important thing is that there will be
+[00:08:36 -> 00:08:40] one synchronization happening between the two loopness,
+[00:08:40 -> 00:08:41] which is a barrier synchronization
+[00:08:41 -> 00:08:42] which will cause some overhead,
+[00:08:42 -> 00:08:44] but it will be a small amount of overhead
+[00:08:44 -> 00:08:46] because I will just have to, you know,
+[00:08:46 -> 00:08:49] it's just one wait for the entire loop to finish.
+[00:08:49 -> 00:08:52] So if I had, let's say, 100 processors,
+[00:08:52 -> 00:08:54] then the first loop can be made 100x faster,
+[00:08:54 -> 00:08:57] but then I have to wait for all the threads to finish.
+[00:08:57 -> 00:09:00] So assuming that all threads are going to finish together,
+[00:09:00 -> 00:09:03] then I still have 100x faster execution.
+[00:09:03 -> 00:09:05] I wait for all the threads to finish,
+[00:09:05 -> 00:09:07] and then I start the second thread.
+[00:09:07 -> 00:09:09] In this case, again, I can now execute
+[00:09:09 -> 00:09:11] 100 threads in parallel, and so overall,
+[00:09:11 -> 00:09:16] I still get nearly 100x speedup on my 100 processors.
+[00:09:16 -> 00:09:20] So this is, you know, this is parallelization
+[00:09:20 -> 00:09:23] with some small amount of synchronization.
+[00:09:23 -> 00:09:24] And the important thing to note
+[00:09:24 -> 00:09:26] about the barrier synchronization
+[00:09:26 -> 00:09:29] is that all S1 iterations execute
+[00:09:29 -> 00:09:31] before any S2 iterations execute, all right?
+[00:09:31 -> 00:09:34] So this is what barrier synchronization means,
+[00:09:34 -> 00:09:37] and this is an important property that we require
+[00:09:37 -> 00:09:38] for doing this kind of transformation.
+[00:09:38 -> 00:09:41] Because, as I said, there are data dependencies
+[00:09:41 -> 00:09:43] from S1 to S2.
+[00:09:43 -> 00:09:44] There are, you know, whatever is being,
+[00:09:44 -> 00:09:47] you know, some elements that are being written
+[00:09:47 -> 00:09:50] or updated in S1 are being read in S2.
+[00:09:50 -> 00:09:52] So there are read after write dependencies.
+[00:09:52 -> 00:09:53] So I need to basically be sure
+[00:09:53 -> 00:09:56] that the S1 updates have finished
+[00:09:56 -> 00:09:58] before I start actually reading data
+[00:09:58 -> 00:10:02] from the matrix X, and so that's,
+[00:10:02 -> 00:10:05] the barrier synchronization allows me to do that.
+[00:10:07 -> 00:10:09] Okay, that was an example,
+[00:10:09 -> 00:10:11] that was my first example of why synchronization
+[00:10:11 -> 00:10:13] may sometimes be required.
+[00:10:13 -> 00:10:14] Here is my second example,
+[00:10:14 -> 00:10:16] which is slightly more interesting
+[00:10:16 -> 00:10:19] than the first example, because here,
+[00:10:19 -> 00:10:21] you know, the synchronization should be,
+[00:10:21 -> 00:10:24] is not kind of already, the barrier,
+[00:10:24 -> 00:10:27] where to place the barrier is not as clear
+[00:10:27 -> 00:10:28] as it was in the previous example.
+[00:10:28 -> 00:10:30] In the previous example, it was very clear
+[00:10:30 -> 00:10:31] the loopness were already separate,
+[00:10:31 -> 00:10:33] and I just put a barrier in between.
+[00:10:33 -> 00:10:35] By the way, we are interested in identifying
+[00:10:35 -> 00:10:37] compiler algorithms that are going
+[00:10:37 -> 00:10:40] to automatically identify where to put the barriers,
+[00:10:40 -> 00:10:42] and then give me a good amount
+[00:10:42 -> 00:10:44] of parallelism in my program.
+[00:10:44 -> 00:10:45] And so I'm just discussing
+[00:10:45 -> 00:10:47] what are the possible solutions,
+[00:10:47 -> 00:10:49] and then later on we're going to discuss algorithms
+[00:10:49 -> 00:10:52] to basically reach these solutions automatically
+[00:10:52 -> 00:10:54] through a compiler.
+[00:10:54 -> 00:10:56] So let's see, I have another program,
+[00:10:56 -> 00:10:58] and this is another example, my second example.
+[00:10:58 -> 00:11:01] For i equals zero to n, i plus plus,
+[00:11:01 -> 00:11:03] and this loop body has two statements,
+[00:11:03 -> 00:11:04] s1 and s2.
+[00:11:04 -> 00:11:08] The first statement says xi equals yi plus zi,
+[00:11:08 -> 00:11:12] and the second statement says w of a of i
+[00:11:12 -> 00:11:14] equals xi, all right?
+[00:11:14 -> 00:11:16] So the first statement is, you know,
+[00:11:16 -> 00:11:18] you can basically be very sure,
+[00:11:18 -> 00:11:23] you can identify for s1 the axis pattern,
+[00:11:23 -> 00:11:27] the capital F and small f using affine transforms,
+[00:11:27 -> 00:11:29] because they're just affine accesses.
+[00:11:29 -> 00:11:30] But for the second statement,
+[00:11:30 -> 00:11:33] the axis is not affine because I have a memory axis
+[00:11:33 -> 00:11:36] that depends on the value of ai,
+[00:11:36 -> 00:11:38] and the ai value could be arbitrary.
+[00:11:38 -> 00:11:41] And so when I'm doing compiler analysis,
+[00:11:41 -> 00:11:44] I cannot make assumptions on what is the value of ai,
+[00:11:44 -> 00:11:45] and so I have to make conservative assumptions
+[00:11:45 -> 00:11:48] that ai can point anywhere in w,
+[00:11:48 -> 00:11:50] and so there could be data dependencies
+[00:11:50 -> 00:11:53] across the iterations of i.
+[00:11:53 -> 00:11:58] So while the first statement is fully data parallel,
+[00:11:58 -> 00:11:59] it is embarrassingly parallel,
+[00:11:59 -> 00:12:00] because different iterations of i
+[00:12:00 -> 00:12:04] will access different elements of x, y, and z,
+[00:12:04 -> 00:12:06] but different iterations of i are not guaranteed
+[00:12:06 -> 00:12:09] to access different elements of w,
+[00:12:09 -> 00:12:11] because it's possible that a0 and a1
+[00:12:11 -> 00:12:13] point to the same element,
+[00:12:13 -> 00:12:15] in which case it is necessary for me
+[00:12:15 -> 00:12:19] to not parallelize this sex statement s2,
+[00:12:19 -> 00:12:22] or it's necessary for me to preserve the order of s2.
+[00:12:24 -> 00:12:26] The other thing I want to point out is the,
+[00:12:26 -> 00:12:28] so what we have established so far
+[00:12:28 -> 00:12:30] is that there are no data dependencies
+[00:12:30 -> 00:12:33] between different iterations of s1.
+[00:12:33 -> 00:12:36] We have established that there may be data dependencies,
+[00:12:36 -> 00:12:38] and so conservatively we'll assume
+[00:12:38 -> 00:12:39] that there are data dependencies
+[00:12:39 -> 00:12:42] between different iterations of s2.
+[00:12:42 -> 00:12:44] And if I look at between s1 and s2,
+[00:12:44 -> 00:12:46] I would find that there are data dependencies
+[00:12:46 -> 00:12:49] between an iteration of s2
+[00:12:49 -> 00:12:53] and iterations of s1 and iterations of s2,
+[00:12:53 -> 00:12:57] because I'm writing xi and I'm reading xi in s2.
+[00:12:58 -> 00:13:00] Can I parallelize this loop?
+[00:13:00 -> 00:13:03] So if I just use my synchronization-free parallelism
+[00:13:03 -> 00:13:06] algorithm using space partitioning constraints,
+[00:13:06 -> 00:13:08] I'm going to basically find that,
+[00:13:08 -> 00:13:10] oh, because of s2,
+[00:13:10 -> 00:13:13] all the iterations of s2 must map to the same processor.
+[00:13:13 -> 00:13:18] Moreover, because the order of s1 and s2 must be preserved,
+[00:13:19 -> 00:13:21] so s1 should basically,
+[00:13:21 -> 00:13:23] that would also basically require s1
+[00:13:23 -> 00:13:27] to be executed before s2 for that particular iteration.
+[00:13:27 -> 00:13:29] And so basically the space partitioning constraints
+[00:13:29 -> 00:13:31] is going to tell me that both s1 and s2
+[00:13:31 -> 00:13:33] should basically have a rank zero solution.
+[00:13:33 -> 00:13:35] So all of them should basically execute
+[00:13:35 -> 00:13:36] on the same processor.
+[00:13:36 -> 00:13:38] For s2, it is very obvious.
+[00:13:38 -> 00:13:41] For s1, this happens because of the data dependency on s2.
+[00:13:41 -> 00:13:43] So I cannot execute s1 in parallel
+[00:13:43 -> 00:13:48] because values returned by s1 are used by s2.
+[00:13:49 -> 00:13:53] And s2 is executing sequentially on a single processor
+[00:13:53 -> 00:13:56] and because it has data dependencies due to W.
+[00:13:57 -> 00:14:01] Now, I can potentially use some synchronization
+[00:14:01 -> 00:14:02] to basically make,
+[00:14:02 -> 00:14:04] if I use the synchronization-free parallelism,
+[00:14:04 -> 00:14:06] then I'm basically going to end up
+[00:14:06 -> 00:14:08] with a rank zero solution,
+[00:14:08 -> 00:14:09] but if I use a small amount of synchronization,
+[00:14:09 -> 00:14:13] then I will show that I can actually have better parallelism.
+[00:14:13 -> 00:14:17] And here is, so just to explain
+[00:14:17 -> 00:14:19] what I have already said in pictures,
+[00:14:19 -> 00:14:21] AI can access any element.
+[00:14:21 -> 00:14:25] So if I was to draw the dependency graph between s2,
+[00:14:25 -> 00:14:26] now there are,
+[00:14:26 -> 00:14:28] s2s are basically these circles
+[00:14:28 -> 00:14:30] and instances of s2 are these circles
+[00:14:30 -> 00:14:32] and instances of s1 are these crosses.
+[00:14:32 -> 00:14:36] So there are no dependencies across different crosses,
+[00:14:36 -> 00:14:38] but there are dependencies across different circles.
+[00:14:38 -> 00:14:40] And in fact, if there are n iterations,
+[00:14:40 -> 00:14:42] then there are n squared dependencies
+[00:14:42 -> 00:14:43] because I have to conservatively assume
+[00:14:43 -> 00:14:48] that AI could potentially alias for different values of I.
+[00:14:48 -> 00:14:50] And so there are dependencies across s2.
+[00:14:50 -> 00:14:51] Moreover, there are dependencies
+[00:14:51 -> 00:14:56] from iterations of x, s1, to iterations of s2.
+[00:14:58 -> 00:15:05] Now, okay, and if I basically use this,
+[00:15:05 -> 00:15:08] so actually maybe I have drawn this a little bit wrong.
+[00:15:09 -> 00:15:12] It's only s1s to s2.
+[00:15:12 -> 00:15:14] So maybe the picture is something like this.
+[00:15:14 -> 00:15:17] So s2 has all the data dependencies among themselves
+[00:15:17 -> 00:15:20] and iterations of s1 have data dependencies
+[00:15:20 -> 00:15:23] with their corresponding iterations in s2.
+[00:15:23 -> 00:15:25] But if I look at this graph,
+[00:15:25 -> 00:15:26] it basically looks,
+[00:15:26 -> 00:15:30] basically means that all these points are interconnected.
+[00:15:30 -> 00:15:31] And so the only solution is
+[00:15:31 -> 00:15:34] that all of them are mapped to the same processor
+[00:15:34 -> 00:15:36] because there's a data dependency from x to zero,
+[00:15:36 -> 00:15:40] zero to zero, x to not, not to not, and so on.
+[00:15:40 -> 00:15:42] And so everything is basically interconnected.
+[00:15:42 -> 00:15:43] And so there is really no parallelism.
+[00:15:43 -> 00:15:45] And when I say interconnected,
+[00:15:45 -> 00:15:47] basically means there are data dependencies.
+[00:15:47 -> 00:15:49] And so I cannot just parallelize them.
+[00:15:49 -> 00:15:53] I need to respect the ordering between their execution.
+[00:15:54 -> 00:15:56] Okay, so this is what my data dependency graph looks
+[00:15:56 -> 00:16:01] like, and let me just fix this one as well.
+[00:16:01 -> 00:16:03] So this was my data dependency graph.
+[00:16:03 -> 00:16:04] And what I'm going to do
+[00:16:04 -> 00:16:08] is I am going to transform this code in this way.
+[00:16:08 -> 00:16:09] So I'm going to do loop fission,
+[00:16:09 -> 00:16:13] which means I'm going to split the two statements
+[00:16:13 -> 00:16:16] in a single loop body into two different loops, right?
+[00:16:16 -> 00:16:19] So for i equals zero to n, i plus plus,
+[00:16:19 -> 00:16:21] for x i equals y i plus z i,
+[00:16:21 -> 00:16:23] and then another loop which says
+[00:16:23 -> 00:16:26] for i equals zero to n, wa i equals x i.
+[00:16:26 -> 00:16:27] Now it is okay to do this
+[00:16:27 -> 00:16:30] because the only dependencies were from x i
+[00:16:30 -> 00:16:32] to its corresponding iteration
+[00:16:32 -> 00:16:37] of the i-th iteration of S1 to the i-th iteration of S2,
+[00:16:37 -> 00:16:39] and their relative order is preserved
+[00:16:39 -> 00:16:40] in this loop fission transformation.
+[00:16:40 -> 00:16:42] For example, it wouldn't have been preserved
+[00:16:42 -> 00:16:44] if there was a dependency from the i-th iteration
+[00:16:44 -> 00:16:48] of S1 between the i-th iteration of S1
+[00:16:48 -> 00:16:51] and the i minus 1-th iteration of S2.
+[00:16:51 -> 00:16:52] So in the original program,
+[00:16:52 -> 00:16:54] the i minus 1-th iteration of S2 would have executed
+[00:16:54 -> 00:16:56] before the i-th iteration of S1.
+[00:16:56 -> 00:16:59] In the new program, the i minus 1-th iteration of S2
+[00:16:59 -> 00:17:02] would execute after the i-th iteration of the S1.
+[00:17:02 -> 00:17:06] But fortunately, the i minus 1-th iteration of S2
+[00:17:06 -> 00:17:10] is not dependent on the i-th iteration of S1,
+[00:17:10 -> 00:17:14] and so that's why I can do this split fission of the loop
+[00:17:14 -> 00:17:19] and still have a correct implementation
+[00:17:20 -> 00:17:22] and implementation that's equivalent
+[00:17:22 -> 00:17:23] to my original program.
+[00:17:23 -> 00:17:25] And now what I can do is I can basically
+[00:17:25 -> 00:17:27] parallelize the first loop
+[00:17:27 -> 00:17:28] and have a barrier synchronization
+[00:17:29 -> 00:17:30] between the first loop and the second loop,
+[00:17:30 -> 00:17:32] just like we had in our first example,
+[00:17:32 -> 00:17:34] and that would give me better parallelism.
+[00:17:34 -> 00:17:36] The second loop will not get parallelized,
+[00:17:36 -> 00:17:38] but the first loop has order n parallelism.
+[00:17:38 -> 00:17:41] And so the new transform program looks like this.
+[00:17:41 -> 00:17:44] I first execute all the iterations of S1.
+[00:17:44 -> 00:17:46] These are all data-independent iterations,
+[00:17:46 -> 00:17:48] so I can execute them in parallel.
+[00:17:48 -> 00:17:49] Then I have a barrier,
+[00:17:49 -> 00:17:51] and then I execute all the iterations of S2,
+[00:17:51 -> 00:17:55] but this time I execute the iterations of S2 sequentially.
+[00:17:56 -> 00:17:59] So that's my transformation
+[00:17:59 -> 00:18:02] that is going to give me better parallelism,
+[00:18:02 -> 00:18:04] but it has a small amount of synchronization
+[00:18:04 -> 00:18:05] that is required,
+[00:18:05 -> 00:18:07] and in this case it is the barrier synchronization.
+[00:18:07 -> 00:18:09] And later on we are going to look at,
+[00:18:09 -> 00:18:10] in our next few modules,
+[00:18:10 -> 00:18:13] look at how to identify these transformations
+[00:18:13 -> 00:18:15] automatically through a compiler.
+[00:18:16 -> 00:18:18] So the first loop here becomes parallelizable,
+[00:18:18 -> 00:18:20] so S1 becomes parallelizable,
+[00:18:20 -> 00:18:22] whereas S2 remains sequential.
+[00:18:22 -> 00:18:24] And if I was to look at the generated code
+[00:18:24 -> 00:18:26] for this particular transformation,
+[00:18:26 -> 00:18:28] it would look something like the following.
+[00:18:28 -> 00:18:29] I'll have a for loop,
+[00:18:29 -> 00:18:33] which is a parallel for loop on the processors.
+[00:18:33 -> 00:18:34] For the first for loop,
+[00:18:34 -> 00:18:36] I just use synchronization-free parallelism
+[00:18:36 -> 00:18:38] to figure out that I get a rank one solution
+[00:18:38 -> 00:18:40] for this one depth loop,
+[00:18:40 -> 00:18:41] which is p equals i.
+[00:18:41 -> 00:18:43] So I just use p equals i,
+[00:18:43 -> 00:18:45] and i goes from zero to n,
+[00:18:45 -> 00:18:46] so p also goes from zero to n.
+[00:18:46 -> 00:18:49] So for p equals zero to n, p plus plus,
+[00:18:49 -> 00:18:50] and this is a parallel for loop,
+[00:18:50 -> 00:18:53] xp equals yp plus zp.
+[00:18:54 -> 00:18:56] And then I basically have a barrier,
+[00:18:56 -> 00:18:58] which basically says that, okay,
+[00:18:58 -> 00:19:01] maybe these statements are executing in parallel,
+[00:19:01 -> 00:19:03] but then I basically want a barrier.
+[00:19:03 -> 00:19:05] I could have written it in a different way as well.
+[00:19:06 -> 00:19:07] I could have, for example,
+[00:19:07 -> 00:19:09] just close this loop,
+[00:19:09 -> 00:19:10] then have the barrier,
+[00:19:10 -> 00:19:14] and then basically I don't need this if p equals zero
+[00:19:14 -> 00:19:15] and just execute it,
+[00:19:15 -> 00:19:17] the second loop sequentially.
+[00:19:17 -> 00:19:19] So notice that the first loop here is parallel,
+[00:19:19 -> 00:19:22] and the second loop here is sequential.
+[00:19:23 -> 00:19:26] Okay, so this is my transform program,
+[00:19:26 -> 00:19:29] which requires a barrier synchronization.
+[00:19:29 -> 00:19:31] It allows the first loop to get parallelized,
+[00:19:31 -> 00:19:35] and requires the second loop to be sequential.
+[00:19:35 -> 00:19:38] Notice that when I'm talking about synchronization,
+[00:19:38 -> 00:19:40] parallelization with synchronization,
+[00:19:40 -> 00:19:43] I'm really not so much concerned about locality.
+[00:19:43 -> 00:19:46] When we were talking about synchronization-free parallelism,
+[00:19:46 -> 00:19:47] even if there was only one processor,
+[00:19:47 -> 00:19:49] we were actually gaining locality
+[00:19:49 -> 00:19:51] because we were reducing the reuse distance.
+[00:19:51 -> 00:19:53] Here, we are actually only talking about parallelism
+[00:19:53 -> 00:19:55] and not talking about locality
+[00:19:55 -> 00:19:58] when we talk about parallelization
+[00:19:58 -> 00:20:00] with a small amount of synchronization.

@@ -1,0 +1,446 @@
+Title: Compiler Design Module 185 : Hoare Logic Rules
+Video ID: RXmaFcKBYrc
+Detected language: en
+------------------------------------------------------------
+
+[00:00:00 -> 00:00:08] So we're going to go through the whole triple constructive proof or constructive rules one
+[00:00:08 -> 00:00:13] by one once again and this time instead of actually providing an encoding for a whole
+[00:00:13 -> 00:00:21] triple, I'm going to constructively specify what whole triples are valid and what whole
+[00:00:21 -> 00:00:26] triples can be constructed based on certain properties and this is going to be based
+[00:00:26 -> 00:00:27] on inference rules.
+[00:00:27 -> 00:00:33] So to understand what I mean, let's look at this first whole triple whole logic rule and
+[00:00:33 -> 00:00:37] these are the rules of the so-called whole logic.
+[00:00:37 -> 00:00:43] This is the assignment statement x colon equals e and if this is my program then this
+[00:00:43 -> 00:00:44] whole triple holds.
+[00:00:44 -> 00:00:45] What is this whole triple?
+[00:00:45 -> 00:00:50] Well, this time instead of saying arbitrary p and arbitrary q and then trying to
+[00:00:50 -> 00:00:54] provide a corresponding logical encoding, I'm actually doing a constructive proof.
+[00:00:54 -> 00:01:01] So I'm saying that for any p and any assignment, this whole triple holds and what is this
+[00:01:01 -> 00:01:02] whole triple?
+[00:01:02 -> 00:01:08] You know, the precondition is p where x has been replaced with substituted with
+[00:01:08 -> 00:01:12] e, x colon equals e, p.
+[00:01:12 -> 00:01:17] So notice that this is a constructive way of specifying what whole triple holds.
+[00:01:17 -> 00:01:23] So I'm saying that this whole triple holds for any assignment and any p.
+[00:01:23 -> 00:01:30] Notice that, you know, earlier our kind of way of specifying this property was something
+[00:01:30 -> 00:01:31] like this.
+[00:01:31 -> 00:01:42] We would say p x colon equals e q and this is equivalent to saying that p implies q
+[00:01:42 -> 00:01:46] such that x has been replaced with e.
+[00:01:46 -> 00:01:49] But this time I'm not, you know, I'm not using this.
+[00:01:49 -> 00:01:55] I'm actually using this way of specifying what whole triples hold and I'm saying that,
+[00:01:55 -> 00:01:58] you know, for any p, this holds.
+[00:01:58 -> 00:02:04] So for example, if, so I'm going to show you an example in the next slide.
+[00:02:04 -> 00:02:09] But the difference between this way of specifying what a whole triple means and this way of
+[00:02:09 -> 00:02:13] specifying what a whole triple means is that this is a constructive way or the,
+[00:02:13 -> 00:02:18] I'm saying that this is, you know, here is a way for any p and for any assignment,
+[00:02:18 -> 00:02:20] this whole triple holds.
+[00:02:20 -> 00:02:23] Here I was saying that given a whole triple, what does it mean?
+[00:02:23 -> 00:02:27] But you know, that's more like trying to understand what a whole triple means.
+[00:02:27 -> 00:02:31] This is, this kind of specification is basically, you know, a semantic meaning,
+[00:02:31 -> 00:02:33] giving a semantic meaning to a whole triple.
+[00:02:33 -> 00:02:37] Here I'm saying, oh, you know, this is a whole triple that definitely holds.
+[00:02:37 -> 00:02:39] And that's why I call it constructive.
+[00:02:39 -> 00:02:45] So let's, you know, before I look at an example, let me give you another composition,
+[00:02:45 -> 00:02:48] another rule for whole logic, which is again a constructive rule.
+[00:02:48 -> 00:02:53] I'm saying that if for some statement or some program C1,
+[00:02:53 -> 00:03:01] PC1R holds and for some other statement C2, RCQ holds for some PR and Q,
+[00:03:01 -> 00:03:08] then I can say that PC1 composed with C2Q holds.
+[00:03:08 -> 00:03:10] And this is our composition rule.
+[00:03:10 -> 00:03:14] And we have been seeing this rule, you know, we've been applying this rule
+[00:03:14 -> 00:03:16] implicitly all along.
+[00:03:16 -> 00:03:20] This time, I'm basically showing you a constructive rule,
+[00:03:20 -> 00:03:22] which shows, which basically says the same thing.
+[00:03:22 -> 00:03:31] So once again, if PC1R holds and RCQ holds, then PC1 semicolon C2Q holds,
+[00:03:31 -> 00:03:36] where C1 semicolon C2 represents the composition or the sequencing of the two programs.
+[00:03:36 -> 00:03:38] And this is also called the composition rule.
+[00:03:38 -> 00:03:40] So let's look at an example.
+[00:03:40 -> 00:03:42] Let's say this is my program.
+[00:03:42 -> 00:03:43] It is made up of two assignments.
+[00:03:43 -> 00:03:46] The first assignment is X colon equals 0.
+[00:03:46 -> 00:03:50] And the second assignment is X colon equals X plus 1.
+[00:03:50 -> 00:03:56] And I want to prove this whole triple, which is true as a precondition.
+[00:03:56 -> 00:03:59] A true precondition means that, you know, there's really no constraint,
+[00:03:59 -> 00:04:00] basically.
+[00:04:00 -> 00:04:02] It's the weakest possible precondition that you can have or
+[00:04:02 -> 00:04:05] weakest possible assertion that you can have.
+[00:04:05 -> 00:04:08] And the post condition is X equals 1.
+[00:04:08 -> 00:04:12] Now, it's easy to see that this whole triple are actually true.
+[00:04:12 -> 00:04:16] But how does, you know, how do we kind of show that this can be
+[00:04:16 -> 00:04:19] constructed from the two rules that I showed you in the previous slide?
+[00:04:19 -> 00:04:23] So this time I'm not going to basically show an encoding of this whole triple.
+[00:04:23 -> 00:04:27] I'm going to try to construct this whole triple from the two rules that I've
+[00:04:27 -> 00:04:30] shown you in my previous slide, which is the assignment axiom and the
+[00:04:30 -> 00:04:32] composition rule.
+[00:04:32 -> 00:04:36] So the first thing I'm going to do is I'm going to show, I'm going to use
+[00:04:36 -> 00:04:41] the first rule, the assignment axiom rule, across the second statement,
+[00:04:41 -> 00:04:42] let's say.
+[00:04:42 -> 00:04:46] I could have chosen the first statement also, but I guess it's, you know,
+[00:04:46 -> 00:04:51] because the assignment axiom says for any P and for any assignment,
+[00:04:51 -> 00:04:55] I know what holds for, what whole triple holds for that assignment.
+[00:04:55 -> 00:04:56] I know the P here.
+[00:04:56 -> 00:05:01] I just need to basically figure out what needs to come here.
+[00:05:01 -> 00:05:04] And so when I use the assignment axiom for the second statement,
+[00:05:04 -> 00:05:08] the second statement is X colon equals X plus 1.
+[00:05:09 -> 00:05:12] The post condition that I require is X equals 1.
+[00:05:12 -> 00:05:15] So both these things are coming straight away from here.
+[00:05:15 -> 00:05:22] And now the assignment axiom says that the whole triple holds where I,
+[00:05:22 -> 00:05:26] so this is basically, this forms my P in the assignment axiom.
+[00:05:26 -> 00:05:32] And this forms my C. And what goes before it is basically P where X has
+[00:05:32 -> 00:05:35] been replaced with E, right?
+[00:05:35 -> 00:05:38] And this C is basically nothing but X colon equals E.
+[00:05:38 -> 00:05:41] So E is nothing but X plus 1.
+[00:05:41 -> 00:05:46] And so here, P is X equals 1.
+[00:05:46 -> 00:05:50] And X colon equals E is X colon equals X plus 1.
+[00:05:50 -> 00:05:56] And so this whole triple can be constructed just using the assignment
+[00:05:56 -> 00:05:58] axiom that I showed you on the previous slide.
+[00:05:58 -> 00:06:02] Now if I look, if I kind of just simplify this, X equals 1 where X has
+[00:06:02 -> 00:06:08] been replaced with X plus 1 just becomes X plus 1 equals 1.
+[00:06:08 -> 00:06:16] Because after I substitute X by X plus 1, then I get X plus 1 equals 1.
+[00:06:16 -> 00:06:21] And that basically means X equals 0, all right?
+[00:06:21 -> 00:06:23] So that's basically X equals 0.
+[00:06:23 -> 00:06:26] And so from the assignment axiom, I know that I've been able to
+[00:06:26 -> 00:06:31] construct a whole triple which says X equals 0, X colon equals X plus 1, X
+[00:06:31 -> 00:06:32] equals 1.
+[00:06:32 -> 00:06:36] Precondition, program, postcondition.
+[00:06:36 -> 00:06:43] Now once I have the precondition of X colon equals X plus 1, I can kind of
+[00:06:43 -> 00:06:47] say, OK, now let's say that this was the postcondition of the first
+[00:06:47 -> 00:06:50] statement, then what is the whole triple that holds for the first
+[00:06:50 -> 00:06:51] statement?
+[00:06:51 -> 00:06:55] And once again, I'm going to apply the assignment axiom and say, OK, X
+[00:06:55 -> 00:06:56] equals 0 comes here.
+[00:06:56 -> 00:06:59] So that's coming from here, right?
+[00:06:59 -> 00:07:01] So this is coming from here.
+[00:07:01 -> 00:07:03] And then I say, OK, X colon equals 0.
+[00:07:03 -> 00:07:08] And from the assignment axiom, I say, so in this case, now this is my P,
+[00:07:08 -> 00:07:12] this is my X colon equals E, and so this is P, and this is the
+[00:07:12 -> 00:07:17] substitution X colon equals E.
+[00:07:17 -> 00:07:17] And so what is P?
+[00:07:17 -> 00:07:19] P is X equals 0.
+[00:07:19 -> 00:07:20] What is the substitution I want?
+[00:07:20 -> 00:07:23] That is X colon equals 0.
+[00:07:23 -> 00:07:31] So X has been substituted with 0, just comes 0 equals 0.
+[00:07:31 -> 00:07:33] And 0 equals 0 is a tautology.
+[00:07:33 -> 00:07:37] So that just becomes true, all right?
+[00:07:37 -> 00:07:40] And so this basically, this whole triple becomes, so from the
+[00:07:40 -> 00:07:43] assignment axiom, we've been able to construct the whole triple
+[00:07:43 -> 00:07:47] true, X colon equals 0, X equals 0.
+[00:07:47 -> 00:07:49] Similarly, from the assignment axiom, we've been able to
+[00:07:49 -> 00:07:52] construct the whole triple, X equals 0, X colon equals X plus
+[00:07:52 -> 00:07:54] 1, X equals 1.
+[00:07:54 -> 00:07:57] Now I can apply my composition rule.
+[00:07:57 -> 00:08:00] This becomes my P, which is true.
+[00:08:00 -> 00:08:05] X equals 0 becomes my R. The first statement becomes C1.
+[00:08:05 -> 00:08:10] X equals 0 is again R. X equals 1 becomes Q.
+[00:08:10 -> 00:08:13] And this second statement becomes C2.
+[00:08:13 -> 00:08:18] And so this becomes PC1R holds, and RC2Q holds.
+[00:08:18 -> 00:08:23] Then I know that PC1 semicolon C2Q holds.
+[00:08:23 -> 00:08:25] And so this coming from the composition rule.
+[00:08:25 -> 00:08:28] So this time, I am basically defining the whole logic
+[00:08:28 -> 00:08:31] constructively and saying what are the whole triples that
+[00:08:31 -> 00:08:33] can be constructed using a set of rules.
+[00:08:33 -> 00:08:35] So far, I've introduced two rules.
+[00:08:35 -> 00:08:38] And based on those two rules, I've shown that this
+[00:08:38 -> 00:08:40] whole triple can be constructed.
+[00:08:40 -> 00:08:43] And I've also shown a construction procedure for
+[00:08:43 -> 00:08:45] this particular whole triple, which involves the
+[00:08:45 -> 00:08:50] instantiation of the assignment axiom and that
+[00:08:50 -> 00:08:54] rule twice, and then involves an application of the
+[00:08:54 -> 00:08:55] composition rule.
+[00:08:55 -> 00:08:59] And that's done once.
+[00:08:59 -> 00:09:01] All right, so we understand what I mean by
+[00:09:01 -> 00:09:03] constructive specification of whole logic.
+[00:09:03 -> 00:09:05] Now let's look at another rule, which is the
+[00:09:05 -> 00:09:08] if-then-else rule, which is the third rule in our
+[00:09:08 -> 00:09:10] set of rules.
+[00:09:10 -> 00:09:15] The rule says if P and BC1Q holds, for some
+[00:09:15 -> 00:09:18] predicate P and some Boolean condition B, some
+[00:09:18 -> 00:09:23] program C1, and some predicate Q, and P and not B,
+[00:09:23 -> 00:09:25] C2Q holds.
+[00:09:25 -> 00:09:29] So P's are common, the B's are common, and the Q's
+[00:09:29 -> 00:09:30] are also common.
+[00:09:30 -> 00:09:31] The only difference is this time I have
+[00:09:31 -> 00:09:33] C2 instead of C1.
+[00:09:33 -> 00:09:38] Then if B, then C1 else C2Q holds.
+[00:09:38 -> 00:09:42] So these two B's are, so this B becomes the
+[00:09:42 -> 00:09:45] condition of the if-then-else, this C1 becomes
+[00:09:45 -> 00:09:49] the then body, and this C2 becomes the else body.
+[00:09:49 -> 00:09:52] So I'm basically saying that if P and B, C1Q
+[00:09:52 -> 00:09:58] holds, P and not B, C2Q holds, then P, if B, then
+[00:09:58 -> 00:10:01] C1, else C2Q holds.
+[00:10:01 -> 00:10:03] Once again, let's look at an example to
+[00:10:03 -> 00:10:05] understand this in more detail.
+[00:10:05 -> 00:10:06] So let's look at this program.
+[00:10:06 -> 00:10:10] If x is greater than 0, skip, else x colon
+[00:10:10 -> 00:10:11] equals minus x.
+[00:10:11 -> 00:10:13] This is a program that we have seen before, and
+[00:10:13 -> 00:10:16] the whole triple here that we are interested in,
+[00:10:16 -> 00:10:19] let's say, is the precondition is x equals x
+[00:10:19 -> 00:10:23] not for some, let's say, value x not, and the
+[00:10:23 -> 00:10:26] post-condition is x equals modulus of x not.
+[00:10:26 -> 00:10:29] It's easy to see that this whole triple actually
+[00:10:29 -> 00:10:33] holds, informally speaking, because if x is
+[00:10:33 -> 00:10:36] greater than 0, then nothing happens, and that's
+[00:10:36 -> 00:10:39] basically because x is already positive, so it's
+[00:10:39 -> 00:10:41] going to give you the same answer.
+[00:10:41 -> 00:10:43] But if x is negative, then you negate it to
+[00:10:43 -> 00:10:45] get a positive value, and so at the very end,
+[00:10:45 -> 00:10:49] you're going to get x equals modulus of x not.
+[00:10:49 -> 00:10:51] All right, so now I'm going to apply my if then
+[00:10:51 -> 00:10:54] else rule to show that this whole triple can
+[00:10:54 -> 00:10:55] also be constructed.
+[00:10:55 -> 00:10:57] So to be able to construct this whole triple,
+[00:10:57 -> 00:11:02] I need to first construct the corresponding whole
+[00:11:02 -> 00:11:06] triples for the then body and the else body.
+[00:11:06 -> 00:11:09] So here I show the whole triple that is required
+[00:11:09 -> 00:11:10] for the then body.
+[00:11:10 -> 00:11:15] The then body says x equals x not, skip, x
+[00:11:15 -> 00:11:18] equals mod x not, but not just x equals x not,
+[00:11:18 -> 00:11:22] but also I need to do and b, where b here is
+[00:11:22 -> 00:11:23] x greater than 0.
+[00:11:23 -> 00:11:28] So this whole triple that I require to be able
+[00:11:28 -> 00:11:31] to construct this larger whole triple is that
+[00:11:31 -> 00:11:34] p and b, so p is x equals x not, that's
+[00:11:34 -> 00:11:37] coming from here, b is x greater than 0,
+[00:11:37 -> 00:11:39] which is coming from here.
+[00:11:39 -> 00:11:42] C1 is skip, which is coming from here,
+[00:11:42 -> 00:11:45] and q is x equals modulus of x not,
+[00:11:45 -> 00:11:47] which is coming from here.
+[00:11:48 -> 00:11:52] And I want to show that if x equals x not
+[00:11:52 -> 00:11:55] and x is greater than 0, and I do nothing,
+[00:11:55 -> 00:11:56] so skip is nothing but a know-how,
+[00:11:56 -> 00:11:58] so I can even kind of, although I haven't
+[00:11:58 -> 00:12:00] specified a rule for skip, it's almost
+[00:12:00 -> 00:12:02] like saying that nothing happened,
+[00:12:02 -> 00:12:04] then x equals mod x not.
+[00:12:04 -> 00:12:06] And it's easy to see that this is true,
+[00:12:07 -> 00:12:09] and we'll use some kind of logic,
+[00:12:09 -> 00:12:11] and I'm using first order logic here,
+[00:12:11 -> 00:12:13] where first order logic, I mean that there
+[00:12:13 -> 00:12:16] can be quantifiers on values, but not
+[00:12:16 -> 00:12:19] quantifiers on higher order functions
+[00:12:19 -> 00:12:20] and things like that.
+[00:12:20 -> 00:12:23] So here we have x equals x not
+[00:12:23 -> 00:12:28] and x greater than 0, don't do anything,
+[00:12:28 -> 00:12:31] and that means x equals modulus x not.
+[00:12:31 -> 00:12:32] Can I prove this?
+[00:12:32 -> 00:12:34] I can prove this using first order logic,
+[00:12:34 -> 00:12:37] because x equals x not and x is greater than 0,
+[00:12:37 -> 00:12:40] so this just basically, because this is a skip operator,
+[00:12:40 -> 00:12:42] I really don't need my constructive rules,
+[00:12:42 -> 00:12:45] I just need to show that this implies this,
+[00:12:45 -> 00:12:49] and that's actually true, because x equals x not
+[00:12:49 -> 00:12:51] and x is greater than 0, that basically means
+[00:12:51 -> 00:12:54] both x and x not are positive values,
+[00:12:54 -> 00:12:56] that also basically means that x also
+[00:12:56 -> 00:12:58] equals modulus of x not.
+[00:12:58 -> 00:13:01] So it's easy to see that if p and b hold,
+[00:13:01 -> 00:13:06] then q holds, because the program is just a know-how,
+[00:13:06 -> 00:13:08] so I don't really need to really construct a whole triple,
+[00:13:08 -> 00:13:12] I can just use first order logic to prove this whole triple
+[00:13:12 -> 00:13:14] or this obligation.
+[00:13:15 -> 00:13:17] Now the second thing, the second proof obligation
+[00:13:17 -> 00:13:19] that I want to prove for constructing
+[00:13:19 -> 00:13:22] this larger whole triple is for the else body,
+[00:13:22 -> 00:13:24] and for the else body I say,
+[00:13:24 -> 00:13:27] so first of all, just in more detail,
+[00:13:27 -> 00:13:30] if I'm looking at the then, yeah, okay,
+[00:13:30 -> 00:13:32] so when I looked at the then body,
+[00:13:32 -> 00:13:36] then I would just add the skip instruction,
+[00:13:36 -> 00:13:38] and we just use first order logic,
+[00:13:38 -> 00:13:40] but when I look at the then body, else body,
+[00:13:40 -> 00:13:44] then I have this instruction called x colon equals minus x,
+[00:13:44 -> 00:13:48] so that forms my C2, and this time the whole triple
+[00:13:48 -> 00:13:52] that I want to construct is p and not b,
+[00:13:52 -> 00:13:56] so not b becomes x is less than equal to 0,
+[00:13:56 -> 00:14:00] I should say, so x is less than equal to 0,
+[00:14:00 -> 00:14:03] and x equals x not, that's p,
+[00:14:03 -> 00:14:05] not b is x is less than equal to 0,
+[00:14:05 -> 00:14:07] that's just not of x is greater than 0,
+[00:14:07 -> 00:14:11] C2 is x colon equals minus x, that's the program,
+[00:14:11 -> 00:14:14] and then q is x equals modulus of x not.
+[00:14:15 -> 00:14:20] Now I can, x equals x not and x is less than equal to 0
+[00:14:21 -> 00:14:26] is the C2, x equals modulus of x not,
+[00:14:26 -> 00:14:28] can I construct this?
+[00:14:28 -> 00:14:30] It doesn't seem like we can construct this
+[00:14:30 -> 00:14:31] using the rules that we have so far,
+[00:14:31 -> 00:14:33] let's see what we can construct,
+[00:14:33 -> 00:14:35] what we can construct using the assignment axiom,
+[00:14:35 -> 00:14:37] because there's an assignment statement here,
+[00:14:37 -> 00:14:41] is that if x equals modulus of x not, that's my p,
+[00:14:41 -> 00:14:45] then if I just substitute minus x for x,
+[00:14:45 -> 00:14:47] then that this whole triple whole,
+[00:14:47 -> 00:14:49] so minus x equals modulus of x not,
+[00:14:49 -> 00:14:51] just to make this clearer,
+[00:14:51 -> 00:14:56] here I'm just doing p, x colon equals e,
+[00:14:56 -> 00:15:01] this thing here, minus x is e and this is p,
+[00:15:02 -> 00:15:04] and so what I've basically, I just copied p here,
+[00:15:04 -> 00:15:06] which is x equals modulus of x not,
+[00:15:06 -> 00:15:09] except that I replaced x with e and e is minus x,
+[00:15:09 -> 00:15:12] so that becomes minus x equals modulus of x not.
+[00:15:12 -> 00:15:14] So using the assignment axiom,
+[00:15:14 -> 00:15:17] I can construct this whole triple, but not this one,
+[00:15:18 -> 00:15:20] but it turns out that these two whole triples
+[00:15:20 -> 00:15:22] are actually identical,
+[00:15:22 -> 00:15:24] because if I just apply first order logic,
+[00:15:24 -> 00:15:28] I can show that minus x equals modulus of x not equals,
+[00:15:28 -> 00:15:31] x equals, is the same thing as x equals x not,
+[00:15:31 -> 00:15:33] and x is less than or equal to zero,
+[00:15:33 -> 00:15:35] because minus x equals modulus of x not
+[00:15:35 -> 00:15:39] basically means that x was negative,
+[00:15:39 -> 00:15:41] because modulus of x not is definitely positive,
+[00:15:41 -> 00:15:43] and if minus x is a positive number,
+[00:15:43 -> 00:15:45] then x must be a negative number,
+[00:15:46 -> 00:15:48] and also we know that,
+[00:15:48 -> 00:15:53] so minus x equals modulus of x not,
+[00:15:54 -> 00:15:56] actually these are not equivalent,
+[00:15:56 -> 00:15:58] but this is more like, this should be an implication,
+[00:15:58 -> 00:16:02] because it's possible that x not was a positive number,
+[00:16:04 -> 00:16:07] so I should have really said these imply here, all right?
+[00:16:07 -> 00:16:10] So I'm saying that if x equals x not,
+[00:16:10 -> 00:16:12] and x is less than or equal to zero,
+[00:16:12 -> 00:16:14] then minus x equals modulus of x not,
+[00:16:14 -> 00:16:16] but not the other way around,
+[00:16:16 -> 00:16:17] and so this is a problem,
+[00:16:17 -> 00:16:19] I mean from the assignment axiom,
+[00:16:19 -> 00:16:22] I was only able to construct this whole triple,
+[00:16:22 -> 00:16:25] but what I really require is this whole triple,
+[00:16:25 -> 00:16:27] and so far I don't know of a way
+[00:16:27 -> 00:16:29] of constructing this whole triple,
+[00:16:29 -> 00:16:31] because I wasn't able to construct
+[00:16:31 -> 00:16:32] one of the smaller whole triples,
+[00:16:32 -> 00:16:35] in particular I wasn't able to construct the whole triple
+[00:16:35 -> 00:16:37] that was required for the else clause,
+[00:16:37 -> 00:16:38] which is this whole triple,
+[00:16:38 -> 00:16:41] what I was able to construct was this whole triple,
+[00:16:41 -> 00:16:43] and these two whole triples are actually not equivalent,
+[00:16:43 -> 00:16:46] so I think I said they are equivalent just now,
+[00:16:46 -> 00:16:48] but they're actually not equivalent,
+[00:16:48 -> 00:16:52] because the precondition of this whole triple
+[00:16:52 -> 00:16:54] is different from the precondition of this whole triple.
+[00:16:54 -> 00:16:56] The precondition of this whole triple
+[00:16:56 -> 00:16:57] is actually stronger
+[00:16:57 -> 00:16:59] than the precondition of this whole triple,
+[00:16:59 -> 00:17:04] and it is easy to see that if this whole triple holds,
+[00:17:07 -> 00:17:08] then this will also hold,
+[00:17:08 -> 00:17:10] but so far we haven't discussed the rule
+[00:17:10 -> 00:17:11] which says that,
+[00:17:11 -> 00:17:14] and so far we won't be able to construct
+[00:17:14 -> 00:17:15] this whole triple as such,
+[00:17:15 -> 00:17:18] and so this whole triple cannot be constructed
+[00:17:18 -> 00:17:20] by the three rules that we have discussed so far.
+[00:17:20 -> 00:17:22] I'm going to discuss a fourth rule very soon
+[00:17:22 -> 00:17:24] that's going to allow us to reason about
+[00:17:24 -> 00:17:27] to be able to construct this whole triple as well.
+[00:17:27 -> 00:17:30] Similarly, here again,
+[00:17:30 -> 00:17:32] if I just kind of made the condition stronger
+[00:17:32 -> 00:17:35] and said x equals x naught and y equals one
+[00:17:35 -> 00:17:36] for some variable y,
+[00:17:36 -> 00:17:39] and this is the whole triple that I want to prove.
+[00:17:39 -> 00:17:41] Now it's easy to see that this whole triple
+[00:17:41 -> 00:17:41] is also true,
+[00:17:41 -> 00:17:44] because I only made the precondition stronger,
+[00:17:44 -> 00:17:46] I've added more constraints on y,
+[00:17:46 -> 00:17:49] but it's not possible to prove it
+[00:17:49 -> 00:17:52] because I'm not able to construct this whole triple.
+[00:17:52 -> 00:17:54] What I'm able to construct is this.
+[00:17:54 -> 00:17:57] So I'm able to construct this whole triple,
+[00:17:57 -> 00:18:02] I construct this,
+[00:18:02 -> 00:18:06] but I require this,
+[00:18:06 -> 00:18:08] and so I am stuck,
+[00:18:08 -> 00:18:10] and so basically that means that so far
+[00:18:10 -> 00:18:12] the three rules that we have discussed
+[00:18:12 -> 00:18:15] are insufficient to be able to construct this whole triple.
+[00:18:16 -> 00:18:18] So to be able to solve this problem,
+[00:18:18 -> 00:18:21] there is a fourth rule in the whole logic
+[00:18:21 -> 00:18:22] that I'm introducing,
+[00:18:22 -> 00:18:25] which is that if p implies p prime,
+[00:18:25 -> 00:18:28] for some predicates p and p prime,
+[00:18:28 -> 00:18:32] and p prime c q prime holds,
+[00:18:33 -> 00:18:38] and q prime implies q for some q prime and q.
+[00:18:38 -> 00:18:40] So notice that the whole triple that holds
+[00:18:40 -> 00:18:42] is p prime q c prime,
+[00:18:42 -> 00:18:44] but then there are extra predicates p
+[00:18:44 -> 00:18:46] where p is stronger than p prime,
+[00:18:46 -> 00:18:48] because p implies p prime,
+[00:18:48 -> 00:18:50] and q is weaker than q prime,
+[00:18:50 -> 00:18:51] because q prime implies q,
+[00:18:51 -> 00:18:55] then it also implies that p c q holds.
+[00:18:55 -> 00:18:56] And this is called the consequence rule,
+[00:18:56 -> 00:18:58] and this is going to be a very important rule
+[00:18:58 -> 00:18:59] as we go along.
+[00:18:59 -> 00:19:01] And basically it kind of says
+[00:19:01 -> 00:19:04] that if a stronger post precondition
+[00:19:04 -> 00:19:07] implies a post-condition,
+[00:19:07 -> 00:19:09] if a precondition implies a post-condition,
+[00:19:09 -> 00:19:11] then a stronger precondition
+[00:19:13 -> 00:19:15] will also imply a weaker post-condition.
+[00:19:15 -> 00:19:18] So if p prime c q prime holds,
+[00:19:18 -> 00:19:22] then a stronger post precondition p,
+[00:19:22 -> 00:19:26] c weaker post-condition q also holds.
+[00:19:26 -> 00:19:29] And to see this with an example,
+[00:19:30 -> 00:19:33] in this particular example,
+[00:19:33 -> 00:19:34] we were able to construct
+[00:19:34 -> 00:19:36] minus x equals modulus of x naught,
+[00:19:36 -> 00:19:38] x colon equals minus x,
+[00:19:38 -> 00:19:40] x equals modulus of x naught.
+[00:19:40 -> 00:19:43] Now let's assume that this is p prime,
+[00:19:43 -> 00:19:45] minus x equals modulus of x naught.
+[00:19:45 -> 00:19:48] This is q prime, x equals modulus of x naught.
+[00:19:48 -> 00:19:53] And now let's look at this particular statement here.
+[00:19:53 -> 00:19:55] Let's say this is p,
+[00:19:56 -> 00:19:58] and now this is q.
+[00:19:58 -> 00:20:00] Now it's clear that q prime implies q,
+[00:20:00 -> 00:20:02] because q prime is x equals modulus of x naught,
+[00:20:02 -> 00:20:04] so q prime implies q.
+[00:20:05 -> 00:20:06] p implies p prime,
+[00:20:06 -> 00:20:08] so you can see that's going to come
+[00:20:08 -> 00:20:09] from first-order logic.
+[00:20:09 -> 00:20:10] If x equals x naught,
+[00:20:10 -> 00:20:12] and x is less than zero,
+[00:20:12 -> 00:20:14] and y is equal to one,
+[00:20:14 -> 00:20:16] then that means that minus x equals modulus of x naught.
+[00:20:16 -> 00:20:20] It's easy to see that p implies p prime.
+[00:20:20 -> 00:20:25] Then we can show that p, c2, q also holds.
+[00:20:26 -> 00:20:27] And because we have been able to show
+[00:20:27 -> 00:20:29] that p, c2, q holds,
+[00:20:29 -> 00:20:34] earlier we had shown that p, c1, q holds.
+[00:20:35 -> 00:20:38] From that we are able to show that p, if b,
+[00:20:38 -> 00:20:40] we have been able to show p and not b,
+[00:20:40 -> 00:20:43] c2, q holds, to be more precise.
+[00:20:43 -> 00:20:47] Earlier we had shown that p and b, c1, q holds.
+[00:20:47 -> 00:20:49] From that we are able to show that p,
+[00:20:49 -> 00:20:53] if b, c1, else c2, q holds.
+[00:20:53 -> 00:20:55] So this way we have been using the four rules,
+[00:20:55 -> 00:20:57] the consequence rules was important here.
+[00:20:57 -> 00:20:59] Using the four rules,
+[00:20:59 -> 00:21:02] assignment axiom, composition rule.
+[00:21:02 -> 00:21:03] Actually in this example,
+[00:21:03 -> 00:21:05] we didn't really use the composition rule.
+[00:21:05 -> 00:21:07] In this example, we used the assignment axiom,
+[00:21:07 -> 00:21:10] the if then else rule and the consequence rule
+[00:21:10 -> 00:21:13] to be able to construct this particular whole triple.
+[00:21:15 -> 00:21:19] So in general, identifying the required p prime
+[00:21:19 -> 00:21:21] and q prime is the key.
+[00:21:21 -> 00:21:25] And we have seen earlier that for acyclic code,
+[00:21:25 -> 00:21:26] we can find pre-images.
+[00:21:26 -> 00:21:28] For example, we can just say, okay,
+[00:21:28 -> 00:21:30] if this is q, then I just find
+[00:21:30 -> 00:21:33] what is the corresponding pre-image here,
+[00:21:33 -> 00:21:38] which is just substitute e for x in q
+[00:21:39 -> 00:21:42] and that's the pre-image of q here and so on.
+[00:21:42 -> 00:21:43] And using that, we are able to find
+[00:21:43 -> 00:21:45] what p prime and q prime should be.
+[00:21:45 -> 00:21:48] In fact, here also p prime just came from that
+[00:21:48 -> 00:21:51] because we just took the pre-image of q,
+[00:21:51 -> 00:21:53] which was x equals modulus of x naught
+[00:21:53 -> 00:21:55] and took its kind of pre-image
+[00:21:55 -> 00:21:56] across this assignment statement
+[00:21:56 -> 00:21:57] and that became a p prime.
+[00:21:57 -> 00:22:00] And then we just had to show that p implies p prime
+[00:22:00 -> 00:22:02] and q prime implies q.
+[00:22:02 -> 00:22:04] And so in this particular example of if-then-else,
+[00:22:04 -> 00:22:07] which actually represents an acyclic program,
+[00:22:07 -> 00:22:10] it's possible to always find these p prime
+[00:22:10 -> 00:22:13] and q prime through this pre-image mechanism.
+[00:22:13 -> 00:22:15] But in general, this is going to become harder
+[00:22:15 -> 00:22:16] in the presence of loops,
+[00:22:16 -> 00:22:18] as we're going to discuss later.

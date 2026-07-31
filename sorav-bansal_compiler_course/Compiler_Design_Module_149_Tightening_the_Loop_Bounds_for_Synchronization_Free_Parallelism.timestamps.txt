@@ -1,0 +1,215 @@
+Title: Compiler Design Module 149 : Tightening the Loop Bounds for Synchronization Free Parallelism
+Video ID: guAjKaypwto
+Detected language: en
+------------------------------------------------------------
+
+[00:00:00 -> 00:00:06] In our quest for identifying the best possible rearrangement of the loop such that there is no
+[00:00:06 -> 00:00:12] synchronization, we first identify the space partitioning constraints. Then we solve the
+[00:00:12 -> 00:00:20] space partitioning constraints to obtain maximum rank functions, find functions from iteration
+[00:00:20 -> 00:00:25] space to processor space. And then in our last module, we discussed a code generation strategy.
+[00:00:25 -> 00:00:33] Given a set of fine functions, one for each statement, we found some code generation strategy
+[00:00:33 -> 00:00:39] that basically makes the outer loops the processor loops. In other words, the outer
+[00:00:39 -> 00:00:44] loops can be fully parallelized. The outer loops are embarrassingly parallel and the inner loops
+[00:00:44 -> 00:00:51] are basically loops that are executing one on each processor and they need to be sequential.
+[00:00:51 -> 00:00:54] And we also said that if it's a parallel machine that gives you more parallelism,
+[00:00:54 -> 00:00:59] if it's a uniprocessor machine, then it gives you better locality because
+[00:01:01 -> 00:01:05] things that had data dependencies are now going to be accessed close in time.
+[00:01:05 -> 00:01:10] In other words, you have reduced the reuse distance. But one of the problems with the
+[00:01:10 -> 00:01:15] code generation strategy that we discussed in our previous module is that the code was not
+[00:01:15 -> 00:01:21] efficient. In fact, the code that is executed for every processor was almost as expensive as
+[00:01:21 -> 00:01:26] the total amount of work that was being done. In fact, we have increased the total amount of
+[00:01:26 -> 00:01:31] work that is being done. And if it was a sequential machine, the generated code would
+[00:01:31 -> 00:01:36] actually be slower than the original program. And so that doesn't look like a very good idea.
+[00:01:36 -> 00:01:41] What was basically the problem is something that we're going to discuss in our module today.
+[00:01:42 -> 00:01:45] And also the solution, which I call tightening the loop bounds.
+[00:01:46 -> 00:01:50] The solution for the running example that we had discussed in our previous module
+[00:01:50 -> 00:01:55] was that the outer loop basically iterates over the processor IDs. So for example,
+[00:01:55 -> 00:02:03] for p equals minus 101, plus 100, p plus plus, for i equals 0 to 100, for j equals 0 to 100.
+[00:02:03 -> 00:02:08] If p equals i minus j minus 1, then do something. If p equals i minus j,
+[00:02:08 -> 00:02:14] then do something else. This is S1 and S2. And the problem is that I am iterating,
+[00:02:14 -> 00:02:20] for example, in the inner loop over j from 0 to 100. But these statements will only
+[00:02:20 -> 00:02:28] execute for one value of j. For example, S1 will execute for the value of j which matches
+[00:02:29 -> 00:02:36] p equals i minus j minus 1. In other words, it will execute for j equals i minus p minus 1.
+[00:02:36 -> 00:02:40] Similarly, this particular statement, the second statement, S2 would execute for
+[00:02:40 -> 00:02:48] j equals i minus p. And so each of these statements is only going to execute for one
+[00:02:48 -> 00:02:56] value of j for a given p and i. Then why would you iterate over 100 values of j
+[00:02:57 -> 00:03:04] unnecessarily? If I look at any one statement, then out of the 100 iterations of the inner loop,
+[00:03:04 -> 00:03:10] only one iteration is actually doing anything for any one statement. If I look at both the
+[00:03:10 -> 00:03:14] statements, then out of the whole 100 iterations of the inner loop, only two iterations, at
+[00:03:14 -> 00:03:18] most two iterations, are actually having any effect on the program state at all.
+[00:03:19 -> 00:03:24] Others are just iterating unnecessarily. Other 98 iterations are just empty iterations.
+[00:03:25 -> 00:03:30] So that's what I'm calling empty iterations here. And tightening the loop bounds can also be
+[00:03:30 -> 00:03:35] thought of as elimination of empty iterations. And once we tighten the loop bounds, we basically
+[00:03:35 -> 00:03:40] reduce the amount of work that the computer has to do without actually changing the result
+[00:03:40 -> 00:03:46] of the program. In this case also, I can move from j equals 0 to 100 to something which is more
+[00:03:47 -> 00:03:52] tighter. And notice that because it's the innermost loop, I can have lower bounds and
+[00:03:52 -> 00:03:57] upper bounds, which are in terms of int, because at this point, the values of int are
+[00:03:57 -> 00:04:05] already fixed. So to understand this better, I'm going to use a simpler example than the
+[00:04:05 -> 00:04:09] running example that I have shown you in the previous slide. So let's say my program was
+[00:04:09 -> 00:04:15] simply for i equals 0 to 100, x i equals 0. Now this loop is an embarrassingly parallel loop,
+[00:04:15 -> 00:04:19] but that's not how our algorithm works. I mean, we could have just said, okay,
+[00:04:20 -> 00:04:25] just put a parallel keyword at the top and we are done. But that's not how our
+[00:04:25 -> 00:04:30] space partitioning algorithm works. What will the space partitioning algorithm do for this
+[00:04:30 -> 00:04:34] example? It'll say, okay, what is the iteration space? It's i from 0 to 100.
+[00:04:34 -> 00:04:41] So what is the mapping function that basically obeys the data dependencies? Notice that there
+[00:04:41 -> 00:04:44] are no data dependencies across different iterations. It's an embarrassingly parallel
+[00:04:44 -> 00:04:49] loop. So I'm going to get a full rank solution for my space partitioning constraints.
+[00:04:50 -> 00:04:56] The rank here is only one, the loop nest depth is only one. So the solution is just capital C,
+[00:04:56 -> 00:05:01] the coefficient matrix is one and small c, the additive vector is zero. In other words,
+[00:05:01 -> 00:05:07] the processor ID equals the iteration ID. All right. So p equals i and it's a one-dimensional
+[00:05:07 -> 00:05:12] processor space as well. So it's an identity mapping from each iteration to each processor
+[00:05:12 -> 00:05:16] ID. And now if I look at my code generation strategy, what is it going to do to this
+[00:05:16 -> 00:05:20] program? It's going to transform it to something like this. It's going to say
+[00:05:20 -> 00:05:26] outer loop is on p, inner loop is on i. So I'm just pasting the original program in the
+[00:05:26 -> 00:05:33] body of the outer loop. And so for p equals 0 to 100, p++. And now I go to for i equals 0 to 100,
+[00:05:33 -> 00:05:42] i++. If p equals i, x i equals 0. Now this may look weird because bizarre because I've just
+[00:05:42 -> 00:05:51] changed a linear loop into a quadratic loop. Why is this useful? Well, yeah, I mean,
+[00:05:51 -> 00:05:55] in this particular example, it seems like this is wasteful. And in fact, this is the solution
+[00:05:55 -> 00:06:00] that we want to fix right now. And after we fix it, the solution will work not only on this
+[00:06:00 -> 00:06:06] example, but also on other examples, which may not have been data parallel, embarrassingly parallel.
+[00:06:06 -> 00:06:13] So in this case, for example, the inner loop has i equals 0 to 100. But 99 of these iterations
+[00:06:13 -> 00:06:19] from 0 to 100 are going to be empty iterations. Only one iteration where i equals p is going to
+[00:06:19 -> 00:06:24] have some effect. And so how can I tighten the loop bounds of the inner loop? I can say
+[00:06:24 -> 00:06:28] something like, so it has a lot of empty iterations. And so what I can do is I can just
+[00:06:28 -> 00:06:35] tighten the loop bounds to lower bound is p and upper bound is p. So from 0 to 100,
+[00:06:35 -> 00:06:40] I've gone to p to p, which means I have reduced from 100 iterations of which 99 were
+[00:06:40 -> 00:06:47] empty to one iteration, which is the non-empty iteration. And so this is what my new code
+[00:06:47 -> 00:06:51] looks like. Now, even this is not very satisfactory, although the number of iterations
+[00:06:51 -> 00:06:56] I am doing is now correct. We are still doing 100 iterations and the inner loop is only
+[00:06:56 -> 00:07:01] doing one iteration for every outer loop. So the inner loop can actually be eliminated
+[00:07:01 -> 00:07:06] here. And we're going to discuss such transformations later on. But at least we
+[00:07:06 -> 00:07:11] should in this module be able to figure out how to tighten these bounds, how to determine
+[00:07:11 -> 00:07:15] these lower bounds and upper bounds, these tighten the lower bounds and upper bounds.
+[00:07:15 -> 00:07:19] And here is a hint. It's not going to be anything that we don't already know.
+[00:07:19 -> 00:07:23] We're basically going to be using the Fourier mode skin method to identify the lower and
+[00:07:23 -> 00:07:29] upper bounds, but doing appropriate projection of the polyhedron for every state. So in this
+[00:07:29 -> 00:07:34] case also, I just basically figure out what are all the, for a given value of p,
+[00:07:35 -> 00:07:41] what are all the possible values that I can take for the iteration space of this
+[00:07:41 -> 00:07:45] particular statement x i equals 0. And I basically figure out that the lower bound
+[00:07:45 -> 00:07:50] must be p and the upper bound must be p as well. And so that's how I obtain this solution.
+[00:07:50 -> 00:07:54] So I'm going to discuss this elimination of empty iterations
+[00:07:54 -> 00:07:56] or tightening of loop bounds algorithm in this module.
+[00:07:58 -> 00:08:03] So just to understand what solution we expect for our running example, the example that I
+[00:08:03 -> 00:08:10] showed on the first slide. So we have for p equals minus 101 to 100, for i equals 0 to 100,
+[00:08:10 -> 00:08:17] for j equals 0 to 100, and then something. Now I said that of these 100 inner loop iterations,
+[00:08:17 -> 00:08:23] maybe 98 are empty iterations. So how do I fix that? Well, here I'm just going to show you
+[00:08:23 -> 00:08:27] the solution first, and then we're going to see the algorithm to arrive at the solution.
+[00:08:27 -> 00:08:33] So the solution is going to be j equals maximum of 0, i minus p minus 1.
+[00:08:34 -> 00:08:41] And that's j is greater than equal to this, and j is less than equal to minimum of 100, i minus p.
+[00:08:43 -> 00:08:49] And where is this i minus p minus 1 and i minus p coming? Well, notice that it has very
+[00:08:49 -> 00:08:55] striking similarity to these processor mapping functions that I have. I just basically said,
+[00:08:55 -> 00:09:01] because j is now the inner loop, I just rewrite j in terms of p for both the statements and
+[00:09:01 -> 00:09:08] then basically expand my polyhedron such that it accommodates the polyhedrons of both
+[00:09:09 -> 00:09:15] S1 and S2. So this is the solution we're going to look at the algorithm very soon.
+[00:09:15 -> 00:09:22] Actually, it is not just enough to tighten the inner loop bounds. We can also tighten the
+[00:09:22 -> 00:09:28] loop bounds of i because some of the iterations of the ith loop are also empty because for a
+[00:09:28 -> 00:09:36] given value of p, I cannot usually iterate for all the 100 elements values of i because these
+[00:09:36 -> 00:09:43] statements are only going to be executed for some combinations of p comma i for all possible
+[00:09:43 -> 00:09:48] values of j. And so even here we have some empty iterations and we can use again the same
+[00:09:48 -> 00:09:52] Fourier mode scheme method to identify what is the lower bound of i and what is the upper
+[00:09:52 -> 00:09:58] bound of i when I project on i at this point for a given value of p.
+[00:10:00 -> 00:10:08] All right, so this is what the solution is going to look like at the second loop here,
+[00:10:08 -> 00:10:14] which is i is greater than equal to max of 0 comma p and i is less than equal to min
+[00:10:14 -> 00:10:20] of 100 comma 101 plus p. So these are the tightened loop bounds. Notice that these loop
+[00:10:20 -> 00:10:26] bounds are strictly tighter or at least as tight as the original loop bound because we are using
+[00:10:26 -> 00:10:32] max and min and that automatically tells you that we're not increasing the space
+[00:10:32 -> 00:10:38] of iterations. We are only decreasing the space if anything. Okay, so how do I apply
+[00:10:38 -> 00:10:42] at these solutions? As I said, we're going to use the Fourier mode scheme method and let's
+[00:10:42 -> 00:10:48] just do it. Let's just use the Fourier mode scheme method on this particular example
+[00:10:48 -> 00:10:53] to see how it will work and also to review and refresh how would the Fourier mode scheme method
+[00:10:53 -> 00:11:01] works. So we're first going to identify the constraints for S1, then we are going to identify
+[00:11:01 -> 00:11:05] the constraints for S2 and then we are going to take a union over them and that's basically
+[00:11:06 -> 00:11:12] this strategy we're going to employ. And so when I look for S1, this is the iteration
+[00:11:12 -> 00:11:19] space. I say p is between 101 and 100, that's coming from the outer loop, i is between 0 and 100,
+[00:11:19 -> 00:11:26] j is between 0 and 100, p equals i minus j minus 1. And so the way to write p equals i
+[00:11:26 -> 00:11:33] minus j minus 1, notice that for S1 only those iterations will be executed when p equals i
+[00:11:33 -> 00:11:37] minus j minus 1. That was our mapping function, that's the predicate in our generated code.
+[00:11:37 -> 00:11:42] And so I need to basically say I want to tighten the bounds using this predicate
+[00:11:42 -> 00:11:48] and so I represent this predicate p equals i minus j minus 1 as a pair of two inequalities.
+[00:11:48 -> 00:11:52] One is p is greater than equal to i minus j minus 1 and the other is p is less than equal
+[00:11:52 -> 00:11:58] to i minus j minus 1. So I just use two inequalities to represent one equality.
+[00:11:58 -> 00:12:04] Together this inequality and this inequality imply that p equals i minus j minus 1.
+[00:12:04 -> 00:12:09] And now I have all the constraints on my iteration indices in the form of inequalities
+[00:12:09 -> 00:12:14] and now I can use the Fourier Modeskin method to project on any dimension. For example,
+[00:12:14 -> 00:12:19] I can first project on p to identify what are the lower and upper bounds on of p
+[00:12:19 -> 00:12:25] and if I just do that I claim that what I'm going to get is that p lies between minus 101
+[00:12:25 -> 00:12:29] and 100. This is actually something that we had also done in our previous module when we were
+[00:12:29 -> 00:12:33] trying to understand what is the minimum processor id and the maximum processor id
+[00:12:34 -> 00:12:38] that we need to iterate against. But then after we have fixed a value of p
+[00:12:38 -> 00:12:44] now we can project the remaining dimensions of the polyhedron which is i comma j on a
+[00:12:44 -> 00:12:50] single dimension i and from that we will get the lower bound and upper bound of i.
+[00:12:50 -> 00:12:56] And finally we can you know for a given value of p and i I can project the remaining
+[00:12:56 -> 00:13:02] dimension j to identify its project on the remaining dimension j to identify its lower bound
+[00:13:02 -> 00:13:06] and upper bound. So that's the simple algorithm and we know how to solve it using the Fourier
+[00:13:06 -> 00:13:11] Modeskin method and this is the solution that I'm going to get using that algorithm. This is
+[00:13:11 -> 00:13:16] the Fourier Modeskin method again and so p between minus 101 to 100 i is greater than
+[00:13:16 -> 00:13:21] equal to max of 0 comma p plus 1 i is less than equal to min of 100 comma 101 plus p.
+[00:13:21 -> 00:13:27] So this is just projecting on i projecting the polyhedron formed by i comma j for a
+[00:13:27 -> 00:13:34] specific value of p on i and so that just gives me this and finally j equals i minus p minus 1.
+[00:13:34 -> 00:13:40] So this is the polyhedron that I get for S1 and let's say let's assume for argument's sake that
+[00:13:40 -> 00:13:46] the only statement in my body was S1 then I could have just gotten rid of S2 completely
+[00:13:46 -> 00:13:50] in which case I would have you know I would have I would have already had my solution
+[00:13:50 -> 00:13:54] my outer loop would have been for p and these are the lower bounds and upper bounds
+[00:13:54 -> 00:13:58] the inner loop would have been for i which these are the lower bounds and upper bounds
+[00:13:58 -> 00:14:01] and for j there's only a single value so I don't even need a loop
+[00:14:01 -> 00:14:07] on j and I could have just said x i I could have just said j equals i minus p minus 1
+[00:14:07 -> 00:14:11] and remove this inner loop completely and then I could have just executed
+[00:14:11 -> 00:14:17] S1 without needing to have any predicate as well but the problem here is slightly
+[00:14:17 -> 00:14:20] more interesting because it's slightly more complex because it has two different
+[00:14:21 -> 00:14:27] statements S1 and S2 and the polyhedron space for S1 may be different from the
+[00:14:27 -> 00:14:33] polyhedron space of S2 and so let's see what is the polyhedron space for S2
+[00:14:33 -> 00:14:38] and once again I just rewrite the I just write the all the bounds on all the iteration
+[00:14:38 -> 00:14:44] indices so once again p is between minus 101 and 100 i is between 0 and 100 j is between 0
+[00:14:44 -> 00:14:51] and 100 and p equals i minus j so this time the difference is in S1 it was p equals i minus j
+[00:14:51 -> 00:14:57] minus 1 for S2 it is p equals i minus j and once again when I use the Fourier mode scan method
+[00:14:57 -> 00:15:05] to solve for to project first on p then on i and finally on j I basically get these
+[00:15:06 -> 00:15:11] lower bounds and upper bounds once again p is from minus 101 to 100 this is the same
+[00:15:11 -> 00:15:17] solution that we had in our last module as well then i is greater than equal to max of 0 comma p
+[00:15:17 -> 00:15:23] notice that this lower bound of i is different from the lower bound of i that I had from S1
+[00:15:23 -> 00:15:29] where it was max of 0 comma p plus 1 here it is max of 0 comma p the upper bound of i is min
+[00:15:29 -> 00:15:37] of 100 comma 100 plus p once again the upper bound of i in for S2 is different from the
+[00:15:37 -> 00:15:43] upper bound of i for S1 for S1 the upper bound was min of 100 comma 101 plus p and here it is
+[00:15:43 -> 00:15:48] min of 100 comma 100 plus p so 101 and 100 so those are that's the difference between the
+[00:15:48 -> 00:15:55] upper bound of i and finally the lower bound and upper bound of j are both i minus p and
+[00:15:55 -> 00:16:00] that is also different in case of S2 it is i minus p in the case of S1 it was i minus p
+[00:16:00 -> 00:16:06] minus 1 now these are the two polyhedron spaces that we have got for each of S1 and S2
+[00:16:06 -> 00:16:12] and what do and these and if I take the union the strict union of these S1 and S2 what I end
+[00:16:12 -> 00:16:16] up with is not non-polyhedron space because you know it's a non-convex space because
+[00:16:19 -> 00:16:24] the union of two polyhedrons need not be a polyhedron but because we are interested in
+[00:16:24 -> 00:16:31] these kind of affine loop nests we basically find the tightest polyhedron that encloses this
+[00:16:31 -> 00:16:36] union of two polyhedrons so the tightest convex polyhedron that encloses this
+[00:16:36 -> 00:16:45] non-convex union of two constituent polyhedra okay and so how do I find that well on the
+[00:16:45 -> 00:16:51] first dimension p they are identical so I don't have to do anything on the second dimension
+[00:16:51 -> 00:16:58] I just basically take the most liberal answer so which is more liberal max zero comma p or
+[00:16:58 -> 00:17:04] max zero comma p plus one max zero comma p is the one that accommodates more values right because
+[00:17:04 -> 00:17:09] p is smaller than p plus one and so max zero comma p now becomes a lower bound for i and
+[00:17:09 -> 00:17:15] similarly which is more liberal on the upper bound min 100 comma 100 plus p or min 100 comma
+[00:17:15 -> 00:17:22] 101 plus p it's min of 100 comma 101 plus p which is more liberal it accommodates more values
+[00:17:22 -> 00:17:28] and so basically we get this is the lower bound for i and this is the upper bound
+[00:17:28 -> 00:17:36] for i similarly when I look at j I say i minus p and i minus p minus one which is smaller
+[00:17:37 -> 00:17:42] clearly i minus p minus one is smaller than i minus p so this becomes my lower bound
+[00:17:43 -> 00:17:52] and for j and this becomes my upper bound for j notice that you know I can just choose my lower
+[00:17:52 -> 00:17:56] bounds and upper bounds and not worry about correctness because anyway all my executions
+[00:17:56 -> 00:18:01] are going to be predicated so even if I for example take a lose upper bound or
+[00:18:01 -> 00:18:06] like a loose lower bound it doesn't change the correctness of my program it only changes
+[00:18:07 -> 00:18:14] the performance of my program so finally the union looks something like this p is between
+[00:18:14 -> 00:18:20] minus 101 to 100 i is between max of zero comma p and min of 100 comma 101 plus p
+[00:18:21 -> 00:18:26] so you know the lower bound is coming from s2 and the upper bound is coming from s1
+[00:18:26 -> 00:18:31] and similarly j is between i minus p minus one and i minus p once again the lower bound
+[00:18:31 -> 00:18:38] is coming from s1 and the upper bound is coming from s2 and now I can rewrite my code to obtain
+[00:18:38 -> 00:18:42] the final generated code the final generated code basically just changes the lower bound and
+[00:18:42 -> 00:18:49] the upper bound for the the two loops in this loop nest i is bit from max of zero comma p
+[00:18:49 -> 00:18:57] to min of 100 comma 101 plus p and j goes from zero comma i minus p minus one to j
+[00:18:58 -> 00:19:04] min of 100 comma i minus p so this is our new generated code I claim that this code is faster
+[00:19:04 -> 00:19:09] than the code that we had generated in our previous lecture module where we were iterating
+[00:19:09 -> 00:19:15] the inner loop for all the 100 iterations of j and many of those were empty iterations this
+[00:19:15 -> 00:19:20] time I am I'm sure that none of the iterations are going to be empty either they will be
+[00:19:20 -> 00:19:27] executed each iteration for p comma i comma j will either execute s1 or s2 or both
+[00:19:28 -> 00:19:32] okay said differently the number of actual iterations that we are going to execute is
+[00:19:32 -> 00:19:38] going to be the number of values that p can take multiplied by the number of values that
+[00:19:38 -> 00:19:44] i takes for those each value of p average over p multiplied by all the values that j takes
+[00:19:44 -> 00:19:48] over each value of p comma i and notice that the number of values that j takes is
+[00:19:48 -> 00:19:54] very small it's at most two for a given value of p comma i and so you know the overall number
+[00:19:54 -> 00:19:59] of iterations hasn't it hasn't become cubic or anything like this anything like that although
+[00:19:59 -> 00:20:04] the code still looks like a triple loop nest the number of iterations actually remains quadratic
+[00:20:04 -> 00:20:16] and so that's our desired solution

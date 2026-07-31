@@ -1,0 +1,150 @@
+Title: Compiler Design Module 87 : Limitations of Graph Colouring
+Video ID: WcYgn1H47Hc
+Detected language: en
+------------------------------------------------------------
+
+[00:00:00 -> 00:00:05] So, we've been discussing register allocation and one of the assumptions that we've been
+[00:00:05 -> 00:00:14] making is that it's a many-to-one mapping from temporaries in your IR to machine registers
+[00:00:14 -> 00:00:21] or you know think of it as a limited number of temporaries which so, but this many-to-one
+[00:00:21 -> 00:00:28] mapping we've been assuming it's a static mapping, it's a mapping that does not
+[00:00:28 -> 00:00:32] consider program locations, it's the same mapping that's used throughout the program
+[00:00:32 -> 00:00:37] and that really simplifies the problem both for identifying this mapping and for actually
+[00:00:37 -> 00:00:43] doing the code generation. But there are limitations and a primary limitation of course
+[00:00:43 -> 00:00:50] is that because registers are allocated statically, it has an all or nothing problem. So, what's
+[00:00:50 -> 00:00:55] the all or nothing problem? Either a temporary is allocated to a register at all the
+[00:00:55 -> 00:01:00] program points or it is not allocated to a register at all the program points or it's
+[00:01:00 -> 00:01:05] not at none of the program points it is allocated to a register, it's actually spilt
+[00:01:05 -> 00:01:10] to memory at all program points and you know here is a pattern that where it would
+[00:01:10 -> 00:01:16] be a bad idea to have this all or nothing problem because let's say there's this T1
+[00:01:16 -> 00:01:20] temporary and here's a loop and so T1 is being used heavily inside the loop
+[00:01:20 -> 00:01:26] body but then T1 is being used very sparingly here on the exit path maybe this exit path is
+[00:01:26 -> 00:01:32] taken only you know once very rarely maybe you know once in a million executions this
+[00:01:32 -> 00:01:38] exit path will be taken but if it's taken then T1 will be used there. Now, it doesn't make
+[00:01:38 -> 00:01:45] sense to allocate T1 to a register here but it makes a lot of sense to allocate T1 to a
+[00:01:45 -> 00:01:53] in the middle of the loop body. Now, if I draw the register interference graph for T1 I will
+[00:01:53 -> 00:01:57] include all the temporaries that are occurring in the loop body and I will include all the
+[00:01:57 -> 00:02:03] temporaries that are occurring on the exit path and now for some reason if you know the graph
+[00:02:03 -> 00:02:08] is not colorable the dense graphs is formed by adding all these edges both on the rear path
+[00:02:08 -> 00:02:15] and on the hot path then we are going to probably decide that let's fill T1 and if we decide that
+[00:02:15 -> 00:02:21] that would be that would be a tragedy right because you know you could have just retained
+[00:02:21 -> 00:02:29] T1 here and not retained T1 in the register at the exit path so the point is that you
+[00:02:29 -> 00:02:35] want to divide this reasoning between at different regions of the program all right you
+[00:02:35 -> 00:02:40] want to say that okay let's draw a different rig different register interference graph for
+[00:02:40 -> 00:02:44] this region and this region could be a loop body and then let's have a different register
+[00:02:44 -> 00:02:50] interference graph for this region which is this exit path and then at the intersection
+[00:02:50 -> 00:02:55] or at the join points of the two regions the point where the two regions meet that those
+[00:02:55 -> 00:02:58] program points which are kind of in the interface between the two regions we can have
+[00:02:59 -> 00:03:06] appropriate translation code that is going to you know translate between the two solutions
+[00:03:06 -> 00:03:10] the between the two many-to-one mappings right so each region can have its own many-to-one
+[00:03:10 -> 00:03:16] mapping but at the boundary of the two regions if you ever go from one region to another
+[00:03:16 -> 00:03:20] region you're going to have to translate based on the two mappings that are that
+[00:03:20 -> 00:03:24] could be potentially different in the two regions all right so that's the idea
+[00:03:25 -> 00:03:29] and so this is called a region-based register allocator and the idea is we partition the
+[00:03:29 -> 00:03:35] program into regions and solve for each region separately for example using our
+[00:03:35 -> 00:03:39] previous strategy which is the rig-based strategy which uses graph coloring and
+[00:03:39 -> 00:03:44] reconcile at region boundaries all right so that's basically the idea the question is how
+[00:03:44 -> 00:03:49] do you decide what should be the regions of your program and here are some you know example
+[00:03:49 -> 00:03:55] schemes to decide the regions and once again these are heuristic schemes and we basically
+[00:03:55 -> 00:04:01] could say that okay we have a region for each loop body so loops are you know i did possible
+[00:04:01 -> 00:04:05] it's possible to identify loops inside a control flow graph and we are going to look
+[00:04:05 -> 00:04:10] at more you know more formal definitions of what are what is a loop how to identify it later
+[00:04:10 -> 00:04:16] on but you know think of any cycle and any node all the kind of basic logs that participate
+[00:04:16 -> 00:04:23] in that cycle as the basic blocks that are part of that loop and we can say that okay this is the
+[00:04:23 -> 00:04:27] body of the loop which is consisting of all these basic blocks that's part of the cycle
+[00:04:27 -> 00:04:33] and we can say that this this set of basic blocks is one region and then everything else
+[00:04:33 -> 00:04:36] is another region and so on so we can have you know we can have different cycles in my
+[00:04:36 -> 00:04:41] control flow graph in which case i could have different regions for each different loop
+[00:04:41 -> 00:04:45] we could have nested loops in which case the inner loop could be a different region
+[00:04:45 -> 00:04:49] from the outer loop and the outer loop could be a different region from the main program the
+[00:04:49 -> 00:04:53] you know the outer region of the program which doesn't have any loop whatsoever
+[00:04:53 -> 00:04:57] right and so you can have a region for each loop body and you'd say okay i'm going to do
+[00:04:57 -> 00:05:02] my register allocation for each loop body separately and then i'm going to do the
+[00:05:02 -> 00:05:07] reconciliation at region boundaries or you could also do regions based on register pressure
+[00:05:07 -> 00:05:12] for example how many are live registers are simultaneously present in this region
+[00:05:12 -> 00:05:16] so here the register pressure is very high so even if it's within the loop body or within
+[00:05:16 -> 00:05:21] a straight line piece of sequence of code where there are no loops there could be some regions
+[00:05:21 -> 00:05:25] where there's a lot of register pressure lots of registers are being used and then there are
+[00:05:25 -> 00:05:30] some regions where you know you can see that only a few registers are live and so you can
+[00:05:30 -> 00:05:35] kind of divide the program in the straight line program for example into two regions here
+[00:05:35 -> 00:05:38] there's a lot of register pressure so i'm going to have to spill some things and here
+[00:05:38 -> 00:05:43] there's none so i can kind of bring everything back into machine registers and that way you can
+[00:05:43 -> 00:05:49] you know at least the place where there is less register pressure we can kind of have full
+[00:05:49 -> 00:05:53] utilization of our machine registers as opposed to if we had taken the whole program as a
+[00:05:53 -> 00:05:58] single region in which case some registers would have to be spilled and those would have
+[00:05:58 -> 00:06:04] been spilled even when there was low register pressure in parts of the program so some key
+[00:06:04 -> 00:06:09] things here how to decide a region the region shouldn't be so small that you know
+[00:06:09 -> 00:06:13] because there's some overhead at the region boundary so the region boundary you need to
+[00:06:14 -> 00:06:18] kind of translate from one map to another and there will be some overhead of that
+[00:06:18 -> 00:06:23] so loops are great because you know you go from an inner loop to an outer loop hopefully
+[00:06:23 -> 00:06:27] that's going to be a rare event compared to executing within the loop because loop should
+[00:06:27 -> 00:06:31] at least create a few iterations before it goes out and so at those boundaries it is
+[00:06:31 -> 00:06:37] acceptable to pay the overhead of reconciliation but maybe you know when i am doing based on
+[00:06:37 -> 00:06:42] register pressure then i don't want to kind of make my region so fine grained that the
+[00:06:42 -> 00:06:47] overhead of doing the reconciliation outweighs the advantages of doing region-based register
+[00:06:47 -> 00:06:56] allocation okay there are some more limitations to this way of doing register allocation
+[00:06:56 -> 00:07:01] the way we are discussing register allocation is that you know we have done the optimizations
+[00:07:01 -> 00:07:06] in the instruction in the intermediate representation IR and then we are basically
+[00:07:06 -> 00:07:10] doing register allocation in the IR itself so we haven't really translated to assembly
+[00:07:10 -> 00:07:14] and after we have done the register allocation in the IR we are sure that the number of
+[00:07:14 -> 00:07:18] registers in the IR that are being used is less than equal to the number of machine
+[00:07:18 -> 00:07:22] registers and that's when we actually translate it all the way to the assembly code right so
+[00:07:22 -> 00:07:29] we basically look at every single IR instruction and then find the corresponding assembly
+[00:07:29 -> 00:07:33] instruction for that IR instruction or maybe a sequence of IR instructions is translated to a
+[00:07:33 -> 00:07:39] single assembly instruction or maybe one IR instruction is translated to a sequence of
+[00:07:39 -> 00:07:44] assembly instructions so all these three possibilities are possible but the way we are
+[00:07:44 -> 00:07:48] discussing it is that we first do register allocation and then do instruction selection
+[00:07:48 -> 00:07:54] but there is a problem because on some architectures for example x86 some instructions
+[00:07:54 -> 00:07:58] operate only on specific registers so for example you know there will be an instruction
+[00:07:59 -> 00:08:04] which is going to operate on the flags for example or the instruction that's going to
+[00:08:04 -> 00:08:09] do multiplication or division on x86 so maybe it requires that the operand needs to be in a
+[00:08:09 -> 00:08:14] specific register or at least it will require that the operand needs to be in a register
+[00:08:14 -> 00:08:18] all right and in which case if you have register if you have not allocated it to
+[00:08:18 -> 00:08:24] that register or if you have allocated it to memory because of spilling then you may have an
+[00:08:24 -> 00:08:29] issue all right and so this is you know of course you know there are ways different ways
+[00:08:29 -> 00:08:35] to solve this problem for example you could as I discussed last time we could have some
+[00:08:35 -> 00:08:39] reserved registers that are just used for this temporary business but then you know you pay
+[00:08:39 -> 00:08:43] the cost by just keeping some reserved registers so if you have 16 registers and you reserve
+[00:08:43 -> 00:08:48] let's say two registers then you just you know have to work with 14 registers and that's
+[00:08:48 -> 00:08:54] going to slow down your program your implementation and so in general so we would really like to have
+[00:08:54 -> 00:09:00] a solution that is both good hopefully optimal but at least as close to optimal as possible
+[00:09:01 -> 00:09:05] and still kind of you know it's you know we can kind of design an algorithm that will work
+[00:09:05 -> 00:09:11] for all scenarios all right and notice that our algorithm has this pass by pass architecture
+[00:09:11 -> 00:09:16] and that's the problem that and this this problem is basically just a symptom of the
+[00:09:16 -> 00:09:20] bigger problem that we have organized our compiler into a pass by pass architecture so what's the
+[00:09:20 -> 00:09:26] pass by pass architecture well we have passes right so we first created IR then we had
+[00:09:26 -> 00:09:31] optimization passes over the IR then we got an optimized IR then we had a register allocation
+[00:09:31 -> 00:09:36] pass over the IR and now we have an IR that is using no more than machine register number
+[00:09:36 -> 00:09:42] of registers and and then we have an instruction selection pass that's actually converting it to
+[00:09:42 -> 00:09:46] assembly the problem is this pass by pass that the register allocator doesn't know what the
+[00:09:46 -> 00:09:50] instruction selector needs the instruction selector doesn't know what the register allocator needs
+[00:09:50 -> 00:09:55] and so they are just working in their individual silos and that's why it's called a pass by pass
+[00:09:55 -> 00:10:00] architecture ideally it should have been true that you know the both of these things have
+[00:10:00 -> 00:10:06] been done together or even for for that matter all the compiler is basically all the logic
+[00:10:06 -> 00:10:10] in the compiler is kind of working cooperatively with each other that would have been the ideal
+[00:10:10 -> 00:10:16] scenario but that has software engineering issues right i mean the complexity of logic that
+[00:10:16 -> 00:10:21] software developers will have to tackle to be able to do something like that is just so big
+[00:10:21 -> 00:10:26] that it's it's not practical at least today to do something like that so there have been
+[00:10:26 -> 00:10:32] some fixes which are more like hacky fixes to this problem for example the reloading pass
+[00:10:32 -> 00:10:36] and gcc's register allocator so after the register allocation has happened and while the
+[00:10:36 -> 00:10:42] gcc is doing instruction selection it would see whether you know the opcodes the register
+[00:10:42 -> 00:10:47] allocator has chosen the correct registers or not or whether it has you know chosen even a
+[00:10:47 -> 00:10:52] register or has spilled into memory and if the wrong choice has been made then it has some rules
+[00:10:52 -> 00:10:57] that would basically for you know architecture specific rules for example it's x86 x86 specific
+[00:10:57 -> 00:11:03] rules on how to transform that code so that you know it can be you can generate instructions
+[00:11:03 -> 00:11:08] for that sequence of instructions so in other words reload the instructions just change the
+[00:11:08 -> 00:11:12] instructions so that they are different so these kind of hacks have been present in
+[00:11:12 -> 00:11:17] compilers for years now or decades in fact and all this is not a satisfactory solution
+[00:11:17 -> 00:11:22] but it is an engineering solution to problems like this there have been alternative approaches
+[00:11:22 -> 00:11:27] that have been more principled for example you can do register allocation and instruction
+[00:11:27 -> 00:11:31] selection simultaneously all right and there have been some dynamic programming approaches
+[00:11:31 -> 00:11:35] that would try to figure out what are all the possible instructions that can be used for this
+[00:11:35 -> 00:11:41] point part of the ir code and then they will also try to figure out what are all the
+[00:11:41 -> 00:11:45] possibilities for the register allocation for example if i spill this then what happens if i
+[00:11:45 -> 00:11:48] spill that then what happens you collect all those possibilities and then you have an
+[00:11:48 -> 00:11:53] algorithm that's based on you know maybe dynamic programming to figure out what's the
+[00:11:53 -> 00:11:57] best combination of choices that's going to give you the optimal solution for a given
+[00:11:57 -> 00:12:02] program so this is generally more expensive during compilation so compiler takes more time
+[00:12:02 -> 00:12:07] to do these kind of things but it can produce significantly better results and some of my own
+[00:12:07 -> 00:12:12] research has been in this space and i will point you to a paper in the comment section
+[00:12:13 -> 00:12:19] that where we kind of show the improvements that can happen because of doing register
+[00:12:19 -> 00:12:21] allocation and instruction selection simultaneously

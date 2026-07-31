@@ -1,0 +1,166 @@
+Title: Compiler Design Module 122 : Introduction to Induction Variables
+Video ID: KbJd0M_6nog
+Detected language: en
+------------------------------------------------------------
+
+[00:00:00 -> 00:00:06] So, now we are going to discuss the techniques to actually do the symbolic analysis inside
+[00:00:06 -> 00:00:07] the loop.
+[00:00:07 -> 00:00:12] We have seen some examples where symbolic analysis can produce more precise answers.
+[00:00:12 -> 00:00:18] But what are the under-the-cover techniques that basically produce such more precise answers
+[00:00:18 -> 00:00:20] using symbolic analysis?
+[00:00:20 -> 00:00:26] And one of the very popular techniques is called induction variables.
+[00:00:26 -> 00:00:30] I am going to motivate the need for induction variables in this particular module and we
+[00:00:30 -> 00:00:35] are going to discuss what are induction variables more formally in the next module.
+[00:00:35 -> 00:00:39] So here is an example to motivate the need for induction variables.
+[00:00:39 -> 00:00:46] I have a program which says for j equals dot dot dot, so for j equals 1 to n, where
+[00:00:46 -> 00:00:50] j is being incremented by 1 in every iteration, aj equals 0.
+[00:00:50 -> 00:00:55] A is an array and you want to set the jth element of the array to 0.
+[00:00:55 -> 00:01:00] Now if I lower this down to the intermediate representation in 3 address code, then let's
+[00:01:00 -> 00:01:06] say a was an array of integers, then I would first do 4 into j to get the byte index
+[00:01:06 -> 00:01:07] inside a.
+[00:01:07 -> 00:01:11] Then I am going to get the address of a, so that's t2 equals ampersand a and
+[00:01:11 -> 00:01:16] then I am going to add the 2 and say t3 equals t1 plus t2 and finally I am going
+[00:01:16 -> 00:01:22] to say star t3 equals 0 and the 4 instructions in 3 address code together are going to form
+[00:01:22 -> 00:01:27] my statement in the high level language aj equals 0.
+[00:01:27 -> 00:01:37] Now the nice thing here is that we can see that t1 is 4 into j and t3 is the address
+[00:01:37 -> 00:01:43] of a plus 4 into j and so if I look at t1, t2 and t3 they have a certain property,
+[00:01:43 -> 00:01:49] t2 for example is loop invariant, it doesn't really matter what iteration you are in,
+[00:01:49 -> 00:01:54] irrespective of the iteration the value stored in t2 would always be the same which is the
+[00:01:54 -> 00:01:56] address of a.
+[00:01:56 -> 00:02:01] The value in t1 would get incremented by 4 on every iteration because it's 4 into
+[00:02:01 -> 00:02:06] j and j is getting incremented by 1 in every iteration and similarly the value in t3
+[00:02:06 -> 00:02:11] will get incremented by 4 in every iteration because t3 is nothing but the sum of a
+[00:02:11 -> 00:02:17] loop invariant variable which is t2 and a variable that is getting incremented by
+[00:02:17 -> 00:02:19] 4 on every iteration.
+[00:02:19 -> 00:02:26] So such variables that get incremented by a constant stride on every iteration I am going
+[00:02:26 -> 00:02:30] to call them induction variables and we are going to define that more formally later on.
+[00:02:30 -> 00:02:34] But once I am able to identify these induction variables, I can perform a transformation
+[00:02:34 -> 00:02:39] and in this case I can basically do the following, I can say t3 equals ampersand
+[00:02:39 -> 00:02:45] a because it's loop invariant, I can just hoist it at the top of the loop and then
+[00:02:45 -> 00:02:52] I can say star t3 equals 0, t3 equals t3 plus 4. So instead of actually doing the multiplication
+[00:02:52 -> 00:02:56] which may be expensive on your architecture, we can replace it with an addition because
+[00:02:56 -> 00:03:00] we know that t3 is going to increment by 4 every time because j is getting incremented
+[00:03:00 -> 00:03:07] by 1 by every time and t3 has a multiplicative factor of 4 on the increment side.
+[00:03:07 -> 00:03:13] And so I have star t3 equals 0 and t3 equals t3 plus 4. Now this type of transformation
+[00:03:13 -> 00:03:20] from the left to the right is called strength reduction and because it is strength reduction
+[00:03:20 -> 00:03:25] because you are reducing the strength of the operators from multiplication to addition
+[00:03:25 -> 00:03:28] hoping that addition is going to be faster on your architecture.
+[00:03:28 -> 00:03:32] But how do you do this kind of analysis and you know what is the nature of the
+[00:03:32 -> 00:03:37] symbolic analysis that will allow us to do this kind of reasoning.
+[00:03:37 -> 00:03:41] So to understand that in more detail, let's look at this longer example.
+[00:03:41 -> 00:03:48] Let's say I have this body of a loop and then the first instruction has a label loop
+[00:03:48 -> 00:03:53] and the last instruction has some condition based on which it either jumps to loop, jumps
+[00:03:53 -> 00:03:58] back to the loop or it exits the loop. Now if I look at the body it's saying b
+[00:03:58 -> 00:04:04] equals a, a equals a plus 1, c equals a plus b and so on. And what I can do
+[00:04:04 -> 00:04:11] now is I can try to express the values at the end of an iteration based on the values
+[00:04:11 -> 00:04:14] at the beginning of the iteration. So this is similar to the available expressions
+[00:04:14 -> 00:04:19] analysis that we are talking about and this time I am interested in the transfer function
+[00:04:19 -> 00:04:24] for the entire loop body and I am going to do that using a map m.
+[00:04:24 -> 00:04:29] So let m be a map of variable to value at the start of the loop body and we want
+[00:04:29 -> 00:04:34] to express the effect of one iteration in terms of m and that's my transfer function
+[00:04:34 -> 00:04:40] for the loop body of this particular loop. So effect of one iteration in terms of m
+[00:04:40 -> 00:04:47] as a function of m. So let's try to do that. So at the very beginning we have
+[00:04:47 -> 00:04:54] m a, m b, m c, m d, m e and so on because those are the values that a, b, c, d, e
+[00:04:54 -> 00:04:59] etc hold respectively. And so after the first statement, so at the end of each
+[00:04:59 -> 00:05:03] statement I want to know what is the new value or what is the current value.
+[00:05:03 -> 00:05:07] So at the end of the first statement which is b equals a, I know that the new
+[00:05:07 -> 00:05:12] current value of b is now instead of m b it has now become m a because I have
+[00:05:12 -> 00:05:17] just assigned a to b. Now at the end of the second statement I have a
+[00:05:17 -> 00:05:23] equals m a plus 1 because I am saying a equals a plus 1, the current value of a
+[00:05:23 -> 00:05:27] is m a which is this value that was at the start of the loop iteration
+[00:05:27 -> 00:05:33] and so a equals m a plus 1. Then I have c equals a plus b. Now this time a
+[00:05:33 -> 00:05:41] already is updated to m a plus 1 and b has been updated to m a and so what is
+[00:05:41 -> 00:05:46] a plus b? That's just m a plus 1 plus m a or in other words 2 into m a
+[00:05:46 -> 00:05:50] plus 1 and so that's the new value of c. Alright and so this is how I'm
+[00:05:50 -> 00:05:56] summarizing the effect of you know the first prefix of the first three
+[00:05:56 -> 00:06:00] statements of the loop iteration based on the transfer function that I have
+[00:06:00 -> 00:06:04] described so far and I can keep doing this. So for example I have d equals r
+[00:06:04 -> 00:06:11] plus b then I just say d equals m r plus m b, d equals m r plus m a because
+[00:06:11 -> 00:06:16] the current value of b is m a because of this first assignment d equals a.
+[00:06:16 -> 00:06:22] E equals f that just translates to e equals m f. f equals read. Now read is
+[00:06:22 -> 00:06:26] some unknown operation I don't really know what it is it's coming from outside
+[00:06:26 -> 00:06:30] the map the value of on the right-hand side of this operation is coming from
+[00:06:30 -> 00:06:35] outside the map m and so I have a special value called unknown and say
+[00:06:35 -> 00:06:40] f equals unknown. Alright and unknown is nothing similar to our the bottom
+[00:06:40 -> 00:06:46] value in our semi lattice. And then I have g equals 2 into f but f we know
+[00:06:46 -> 00:06:51] at this point is unknown so 2 into unknown is nothing but unknown. a equals
+[00:06:51 -> 00:06:56] a plus 1 so a was already m a plus 1 and this time I'm again adding one to it
+[00:06:56 -> 00:07:02] so it becomes m a plus 2. And finally p equals p plus 1 gives me p equals m p
+[00:07:02 -> 00:07:08] plus 1 and q equals m p plus a becomes me q equals m p plus m a plus 3
+[00:07:08 -> 00:07:15] because p is m p plus 1 and a is m a plus 2. Alright so this is the summary of the
+[00:07:15 -> 00:07:18] transfer function at the end of each statement at the end of the entire
+[00:07:18 -> 00:07:24] iteration whatever are the values that we get here so I can now generate a new
+[00:07:24 -> 00:07:29] map m prime for all the variables and I can express m prime in terms of m
+[00:07:29 -> 00:07:33] based on the analysis that I have done and that is basically my transfer
+[00:07:33 -> 00:07:36] function for the entire loop which is specifying the map at the end of the
+[00:07:36 -> 00:07:42] iteration in terms of the map at the beginning of the iteration. So let m
+[00:07:42 -> 00:07:46] prime be a var2val map at the end of an iteration I would be able to
+[00:07:46 -> 00:07:51] say that m prime r equals m r notice that r is not changed m prime a equals
+[00:07:51 -> 00:07:56] m a plus 2 we already figured that out m prime p equals m p plus 1 and m
+[00:07:56 -> 00:08:02] prime f is unknown. Alright so that's the that's what we get at the end of
+[00:08:02 -> 00:08:09] each statement. At the end of i minus 1 iteration so also notice that I'm
+[00:08:09 -> 00:08:14] only referring I'm only using four variables I didn't for basically you
+[00:08:14 -> 00:08:18] know create a mapping in m prime for all the variables I just created a mapping
+[00:08:18 -> 00:08:22] for four variables and that's because only four variables are appearing on
+[00:08:22 -> 00:08:29] the right hand side of my transfer function you know m a m r m f and m p
+[00:08:29 -> 00:08:34] and so across multiple iterations these are the variables for which I
+[00:08:34 -> 00:08:38] would be really interested in. Now once I am able to identify the transfer
+[00:08:38 -> 00:08:42] function for a single iteration I would be able to summarize this into
+[00:08:42 -> 00:08:46] the transfer function of multiple iterations assuming that these
+[00:08:46 -> 00:08:50] transfer functions are either loop invariant for example r is loop
+[00:08:50 -> 00:08:55] invariant so m prime r is nothing but m r but a is an induction variable in
+[00:08:55 -> 00:08:58] the sense that it's getting incremented by a constant offset on
+[00:08:58 -> 00:09:02] every iteration. How do I know that a is an induction variable because if I
+[00:09:02 -> 00:09:07] look at the function for a m prime a equals m a plus 2 and so it's a
+[00:09:07 -> 00:09:10] constant offset by which a is incrementing on a single iteration
+[00:09:10 -> 00:09:16] similarly m prime p equals m p plus 1 so p is also an induction variable and
+[00:09:16 -> 00:09:21] then m prime f equals unknown and so f is not an induction variable. Now once
+[00:09:21 -> 00:09:25] I've been able to identify these relationships then I can generalize
+[00:09:25 -> 00:09:28] this for i iterations so you know right now I just have this for one
+[00:09:28 -> 00:09:33] iteration and m prime is expressed in terms of m for one iteration I can do
+[00:09:33 -> 00:09:36] the same thing for i iterations so instead of doing it for i iterations
+[00:09:36 -> 00:09:41] let's do it for i minus 1 iterations because we're going to you know deal
+[00:09:41 -> 00:09:44] with the i-th iteration in a more fine-grained manner. So what will happen
+[00:09:44 -> 00:09:49] after i iterations what do you think? r would remain the same it doesn't
+[00:09:49 -> 00:09:52] matter because r is not being modified inside the loop. a would be
+[00:09:52 -> 00:09:58] incremented by 2 i minus 1 times so what would a become and the new a
+[00:09:58 -> 00:10:04] and that's m i minus 1 a would be m a plus 2 into i minus 1 alright
+[00:10:04 -> 00:10:10] similarly m prime p would be m p plus 1 into i minus 1 and so on because if
+[00:10:10 -> 00:10:14] every iteration is incrementing by constant offset after i minus
+[00:10:14 -> 00:10:17] iterations I would have incremented by that constant offset
+[00:10:17 -> 00:10:22] multiplied by the number of iterations. So at the end of i minus 1 iterations
+[00:10:22 -> 00:10:28] I get m prime a equals m a plus 2 into i minus 1 and m prime p equals m p
+[00:10:28 -> 00:10:36] plus 1 into i minus 1. Alright so based on that I can take the next step so once
+[00:10:36 -> 00:10:41] I know what are the values at the beginning of the iteration so these are
+[00:10:41 -> 00:10:46] the values that are at the end of the i minus 1 iteration and these
+[00:10:46 -> 00:10:49] are also the values that are at the beginning of the i-th iteration so
+[00:10:49 -> 00:10:53] just before the first statement of the i-th iteration I'm going to
+[00:10:53 -> 00:10:59] have these values for r, a, p and if and based on that I can compute some of the
+[00:10:59 -> 00:11:03] values at the end of each statement of the i-th iteration and that's my next
+[00:11:03 -> 00:11:06] slide at the end of each statement in the i-th iteration if I want to know
+[00:11:06 -> 00:11:11] what is b so I look at what is m a, m a is m a plus 2 into i minus 1 and so
+[00:11:11 -> 00:11:16] b equals a so that just becomes b equals m a plus 2 into i minus 1. Now
+[00:11:16 -> 00:11:20] the second statement is a equals a plus 1 so a equals m a plus 2 into i
+[00:11:20 -> 00:11:28] minus 1 plus 1. c equals a plus b and that becomes 2 into m a plus 4 i minus
+[00:11:28 -> 00:11:34] 3 so basically I'm just substituting for the LHS using the
+[00:11:34 -> 00:11:40] LHS of these equations that I have for i minus 1 iterations and I'm
+[00:11:40 -> 00:11:43] kind of doing the same thing across the i-th iteration preserving the
+[00:11:43 -> 00:11:46] values and then substituting just like we have done for a single
+[00:11:46 -> 00:11:52] iteration. So what are we trying to do? We are trying to wherever possible
+[00:11:52 -> 00:11:56] represent values as a fine expressions on the loop iteration index so in my
+[00:11:56 -> 00:12:01] previous slide but the loop iteration index was i and wherever possible notice
+[00:12:01 -> 00:12:03] that in some cases it was not possible in which case we were using
+[00:12:03 -> 00:12:07] unknown but wherever possible we want to represent the values as a fine
+[00:12:07 -> 00:12:13] expressions on the loop iteration index and based on that once I'm
+[00:12:13 -> 00:12:16] able to do that then I would be able to perform such transformations
+[00:12:16 -> 00:12:22] because once I know that in the j-th iteration j is going to be c0 plus c1
+[00:12:22 -> 00:12:27] into i because based on this analysis I was able to identify that at the j-th
+[00:12:27 -> 00:12:32] iteration if I want to write j as a as in a fine expression on the loop
+[00:12:32 -> 00:12:36] iteration variable i I would probably get an expression like c0 plus c1
+[00:12:36 -> 00:12:39] into i and then I can write a simple transformation path which says
+[00:12:39 -> 00:12:46] if you see this pattern c0 plus c1 into i just initialize c0 j to c0
+[00:12:46 -> 00:12:50] plus c1 and then on every iteration at the end of the iteration do j is equal
+[00:12:50 -> 00:12:54] to j plus c1 and that's going to give you the same effect and you're going
+[00:12:54 -> 00:12:59] to have implemented this trend reduction optimization or
+[00:12:59 -> 00:13:04] transformation based on this information that the j is a fine
+[00:13:04 -> 00:13:07] expression on the loop iteration variable.

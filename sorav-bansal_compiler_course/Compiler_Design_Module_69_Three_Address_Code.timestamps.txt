@@ -1,0 +1,408 @@
+Title: Compiler Design Module 69 : Three Address Code
+Video ID: 34_yFle5QI8
+Detected language: en
+------------------------------------------------------------
+
+[00:00:00 -> 00:00:02] So now that we are familiar with the notion of
+[00:00:02 -> 00:00:05] an interpreted representation or IR,
+[00:00:05 -> 00:00:07] let's look at a particular IR,
+[00:00:07 -> 00:00:10] that is the IR for assembly code generation.
+[00:00:10 -> 00:00:12] Recall that we said that there could be
+[00:00:12 -> 00:00:14] multiple layers of abstraction for IR.
+[00:00:14 -> 00:00:16] For example, we're taking the example of
+[00:00:16 -> 00:00:18] TensorFlow and said one IR could
+[00:00:18 -> 00:00:21] have higher level abstractions like matrices,
+[00:00:21 -> 00:00:23] another IR would be for code generation.
+[00:00:23 -> 00:00:26] So IR for assembly code generation is
+[00:00:26 -> 00:00:29] the lower level IR which is meant for code generation.
+[00:00:29 -> 00:00:30] Typically, this IR is present
+[00:00:30 -> 00:00:35] in the compiler tool chains of almost all languages,
+[00:00:35 -> 00:00:36] because at the end of everything,
+[00:00:36 -> 00:00:39] you need to do code generation for
+[00:00:39 -> 00:00:41] the actual machine and that's the assembly code.
+[00:00:41 -> 00:00:43] So what is this IR?
+[00:00:43 -> 00:00:46] This IR resembles high-level assembly,
+[00:00:46 -> 00:00:47] which means that it has
+[00:00:47 -> 00:00:49] register names just like assembly has
+[00:00:49 -> 00:00:53] registers names, R1, R2, R3.
+[00:00:53 -> 00:00:55] IR has register names.
+[00:00:55 -> 00:00:57] Let's maybe call them temporaries
+[00:00:58 -> 00:01:01] or registers, it's the same thing in IR.
+[00:01:01 -> 00:01:03] And so the important thing is that
+[00:01:03 -> 00:01:08] unlike an assembly architecture,
+[00:01:09 -> 00:01:11] unlike an instruction set architecture,
+[00:01:11 -> 00:01:13] a physical realization of an architecture
+[00:01:13 -> 00:01:16] which has a finite small number of registers,
+[00:01:16 -> 00:01:19] say eight or 16 or 32 or 64,
+[00:01:19 -> 00:01:22] the IR has an unlimited number of registers.
+[00:01:23 -> 00:01:26] Then such IRs typically have control structures
+[00:01:26 -> 00:01:28] like conditional and unconditional branches,
+[00:01:28 -> 00:01:30] and this is also very similar
+[00:01:30 -> 00:01:33] to how it works in assembly,
+[00:01:33 -> 00:01:35] in low-level assembly, typically.
+[00:01:36 -> 00:01:39] Notice that this kind of control structure
+[00:01:39 -> 00:01:42] is kind of more lower-level
+[00:01:42 -> 00:01:45] than higher-level constructs like if-then-else
+[00:01:45 -> 00:01:48] or for or while, right?
+[00:01:48 -> 00:01:50] So all those higher-level constructs will get lowered
+[00:01:50 -> 00:01:55] or generated into these low-level instructions
+[00:01:55 -> 00:01:57] like conditional branch or branch.
+[00:01:57 -> 00:02:00] And it turns out that these low-level instructions
+[00:02:00 -> 00:02:03] like conditional branch or branch, unconditional branch,
+[00:02:03 -> 00:02:05] are enough to be able to do our analysis
+[00:02:05 -> 00:02:09] for optimization purposes, as you're going to see later.
+[00:02:09 -> 00:02:12] And then the instruction, the IR has opcodes,
+[00:02:12 -> 00:02:13] just like assembly,
+[00:02:13 -> 00:02:17] but often they are slightly higher-level opcodes, okay?
+[00:02:17 -> 00:02:22] So for example, at the lower-level opcode
+[00:02:22 -> 00:02:23] could be, in the assembly,
+[00:02:23 -> 00:02:27] could be that there is an addition
+[00:02:27 -> 00:02:29] and it also updates the flags.
+[00:02:29 -> 00:02:31] Whereas at the IR level,
+[00:02:31 -> 00:02:33] maybe you could have a higher-level opcode
+[00:02:33 -> 00:02:36] which does a vector addition or something like that.
+[00:02:36 -> 00:02:39] So I mean, the opcodes look very similar,
+[00:02:39 -> 00:02:41] and the reason they look similar
+[00:02:41 -> 00:02:43] is because at the end of everything,
+[00:02:43 -> 00:02:44] you want to lower these opcodes
+[00:02:44 -> 00:02:46] to actual assembly opcodes.
+[00:02:46 -> 00:02:47] And so because they look similar,
+[00:02:47 -> 00:02:49] it becomes easy to be able,
+[00:02:49 -> 00:02:53] I mean, the loss of performance or efficiency
+[00:02:53 -> 00:02:57] and that translation layer from optimized IR to assembly
+[00:02:57 -> 00:02:58] should not be much.
+[00:02:58 -> 00:03:00] And it would typically not be much
+[00:03:00 -> 00:03:05] as long as the opcodes are similar
+[00:03:05 -> 00:03:07] to the ones in assembly.
+[00:03:07 -> 00:03:09] Now, I say often higher-level,
+[00:03:09 -> 00:03:11] but sometimes they're often lower-level as well.
+[00:03:11 -> 00:03:13] So for example, some opcodes in assembly
+[00:03:13 -> 00:03:15] may be actually doing multiple operations in one go.
+[00:03:15 -> 00:03:17] For example, let's say multiply and add.
+[00:03:17 -> 00:03:19] So many architectures have instructions
+[00:03:19 -> 00:03:23] that would do multiply and add in one instruction.
+[00:03:24 -> 00:03:26] And maybe the IR does not have that kind of thing.
+[00:03:26 -> 00:03:30] Maybe the IR only has separate instructions for multiply
+[00:03:30 -> 00:03:32] and a separate instruction for add.
+[00:03:32 -> 00:03:33] And in which case,
+[00:03:33 -> 00:03:38] when we are translating from the IR to assembly,
+[00:03:38 -> 00:03:40] then we have to be a little bit careful
+[00:03:40 -> 00:03:41] so that we are able to use
+[00:03:41 -> 00:03:43] that single instruction and so on.
+[00:03:43 -> 00:03:45] So opcodes in the IR could be
+[00:03:45 -> 00:03:47] both higher-level or lower-level.
+[00:03:47 -> 00:03:49] What do I mean by higher-level or lower-level?
+[00:03:50 -> 00:03:53] That may be a good idea to discuss a little bit.
+[00:03:53 -> 00:03:55] I would call an opcode higher-level
+[00:03:55 -> 00:04:00] if its translation to the assembly opcode
+[00:04:00 -> 00:04:02] produces more than one instructions,
+[00:04:02 -> 00:04:03] then it's a higher-level opcode.
+[00:04:03 -> 00:04:05] On the other hand, it's a lower-level opcode
+[00:04:05 -> 00:04:08] if more than one instructions
+[00:04:08 -> 00:04:10] result in a single instruction in the assembly, right?
+[00:04:10 -> 00:04:12] So basically, the question is,
+[00:04:12 -> 00:04:14] what is the, during translation,
+[00:04:14 -> 00:04:16] am I increasing the number of instructions
+[00:04:16 -> 00:04:18] or am I decreasing the number of instructions?
+[00:04:18 -> 00:04:19] If I'm increasing,
+[00:04:19 -> 00:04:22] then I'm calling it higher-level opcode.
+[00:04:22 -> 00:04:23] If I'm decreasing,
+[00:04:23 -> 00:04:26] then I'm calling it a lower-level opcode.
+[00:04:26 -> 00:04:27] Okay.
+[00:04:27 -> 00:04:30] So here are some IR characteristics.
+[00:04:30 -> 00:04:31] Each instruction,
+[00:04:31 -> 00:04:36] so, you know, there's been a lot of kind of evolution
+[00:04:37 -> 00:04:41] of IR at this level of assembly code generation.
+[00:04:41 -> 00:04:43] And what has been successful
+[00:04:43 -> 00:04:47] is basically something of the following form.
+[00:04:47 -> 00:04:48] Each instruction in such an IR
+[00:04:48 -> 00:04:53] is of the form X equals Y operator Z,
+[00:04:53 -> 00:04:56] where operator op is basically a binary operator.
+[00:04:57 -> 00:04:59] Or X operator Y.
+[00:04:59 -> 00:05:01] So basically two types of instructions.
+[00:05:01 -> 00:05:04] One is basically a binary op
+[00:05:04 -> 00:05:05] and another is a unary op.
+[00:05:07 -> 00:05:08] Okay.
+[00:05:08 -> 00:05:10] And in this form of IR,
+[00:05:10 -> 00:05:13] Y and Z are registers or constants.
+[00:05:13 -> 00:05:15] And they can be either scalars or vectors.
+[00:05:15 -> 00:05:16] And what are vectors?
+[00:05:16 -> 00:05:18] Vectors are just small groups of scalars.
+[00:05:18 -> 00:05:22] Say maybe, you know, a group of four scalars
+[00:05:22 -> 00:05:25] or a group of eight scalars can be called a vector.
+[00:05:25 -> 00:05:26] So what are vector instructions?
+[00:05:26 -> 00:05:31] For example, I could say add a vector of four
+[00:05:31 -> 00:05:32] with another vector of four,
+[00:05:32 -> 00:05:36] which means each element would get added respectively.
+[00:05:36 -> 00:05:38] So it's an element-wise addition operator.
+[00:05:38 -> 00:05:39] Right?
+[00:05:39 -> 00:05:40] So the same operator plus can be applied
+[00:05:40 -> 00:05:42] both to a vector data type
+[00:05:42 -> 00:05:43] or to a scalar data type.
+[00:05:44 -> 00:05:47] And this type of IR is also popularly called
+[00:05:47 -> 00:05:49] the three address code.
+[00:05:49 -> 00:05:51] The reason it's being called the three address code
+[00:05:51 -> 00:05:52] is because in each instruction,
+[00:05:52 -> 00:05:54] there are at most three addresses.
+[00:05:54 -> 00:05:55] X, Y, and Z.
+[00:05:55 -> 00:05:58] Y and Z are the addresses that are read.
+[00:05:58 -> 00:06:01] By addresses, I mean, you know, names for quantities.
+[00:06:01 -> 00:06:03] And so maybe in this case,
+[00:06:03 -> 00:06:08] the only names that matter are register names,
+[00:06:08 -> 00:06:10] the IR register names, which are unlimited in number.
+[00:06:10 -> 00:06:12] The other types of names that may matter
+[00:06:12 -> 00:06:14] are basically memory addresses.
+[00:06:14 -> 00:06:17] And so we're going to see some memory instructions as well.
+[00:06:18 -> 00:06:19] Okay.
+[00:06:19 -> 00:06:24] So for example, if you want to have an expression
+[00:06:24 -> 00:06:28] which says X plus Y into Z in your higher level language,
+[00:06:28 -> 00:06:30] let's say in C, then at the IR level,
+[00:06:30 -> 00:06:32] because we have a three address code,
+[00:06:32 -> 00:06:34] such an expression cannot be represented
+[00:06:34 -> 00:06:38] in a single instruction of the three address code.
+[00:06:38 -> 00:06:41] And so we have to break it down into two instructions.
+[00:06:41 -> 00:06:42] T1 equals Y into Z
+[00:06:42 -> 00:06:45] and T2 equals X plus T1.
+[00:06:46 -> 00:06:50] And so basically what has happened here is that I've,
+[00:06:50 -> 00:06:51] you know, this is a three address code.
+[00:06:51 -> 00:06:53] And what are T1 and T2?
+[00:06:53 -> 00:06:55] T1 and T2 are just temporary registers,
+[00:06:55 -> 00:06:58] fresh temporary registers that I can generate
+[00:06:58 -> 00:06:59] because recall that I have an unlimited number
+[00:06:59 -> 00:07:03] of registers, so I can just keep generating registers
+[00:07:03 -> 00:07:05] as and when I need it.
+[00:07:05 -> 00:07:07] There's one very important property of a three address code
+[00:07:07 -> 00:07:11] and which is that each sub expression now has a name.
+[00:07:11 -> 00:07:15] So for example, if I look at any sub expression,
+[00:07:15 -> 00:07:18] Y into Z or X plus Y into Z,
+[00:07:18 -> 00:07:19] so each of them has a name.
+[00:07:19 -> 00:07:22] For example, Y into Z has a name T1 now
+[00:07:22 -> 00:07:25] and X plus T1, X plus Y into Z now has a name T2
+[00:07:25 -> 00:07:26] and so on.
+[00:07:26 -> 00:07:30] And so every kind of sub computation also has a name
+[00:07:30 -> 00:07:31] in the three address code.
+[00:07:31 -> 00:07:35] And so that is very useful because let's say later on
+[00:07:35 -> 00:07:38] in my program, I'm only interested in Y into Z,
+[00:07:38 -> 00:07:40] then I already have a name for it, which is T1.
+[00:07:40 -> 00:07:44] And so that makes my compiler analysis easier
+[00:07:44 -> 00:07:46] from the perspective of optimization.
+[00:07:47 -> 00:07:51] Okay, before we talk about the strategy
+[00:07:51 -> 00:07:52] for IR code generation,
+[00:07:52 -> 00:07:54] let's also look at some more instructions.
+[00:07:54 -> 00:07:57] So for example, there's also load
+[00:07:57 -> 00:07:59] and store instructions in the IR
+[00:07:59 -> 00:08:01] and this work very similar to how we've seen
+[00:08:01 -> 00:08:05] our load and store instructions work in MIPS assembly,
+[00:08:05 -> 00:08:06] which is that you give an address
+[00:08:06 -> 00:08:09] and then you give a destination target.
+[00:08:09 -> 00:08:10] So for example, if I want to load,
+[00:08:10 -> 00:08:12] then I would give the address and the register
+[00:08:12 -> 00:08:15] and the load instruction would read memory at the address
+[00:08:15 -> 00:08:17] and put the contents in the register.
+[00:08:17 -> 00:08:19] And store is just the opposite.
+[00:08:19 -> 00:08:21] It's going to read the register
+[00:08:21 -> 00:08:23] and write to the location in memory,
+[00:08:23 -> 00:08:26] which is specified by the address.
+[00:08:27 -> 00:08:32] Okay, so we recall that we discussed this function
+[00:08:32 -> 00:08:35] called cgen that can take a program
+[00:08:35 -> 00:08:37] and generate code for it.
+[00:08:37 -> 00:08:41] And the program was our own toy language program
+[00:08:41 -> 00:08:43] that had declarations and function calls
+[00:08:43 -> 00:08:45] and things like that.
+[00:08:45 -> 00:08:46] And if I was to ask you the question
+[00:08:46 -> 00:08:49] how to generate code from that language
+[00:08:49 -> 00:08:51] to an intermediate representation,
+[00:08:51 -> 00:08:53] not all the way to assembly,
+[00:08:53 -> 00:08:55] but just the intermediate representation.
+[00:08:55 -> 00:08:58] Recall that cgen was generating code for assembly.
+[00:08:58 -> 00:09:01] So we're not interested in generating code for assembly
+[00:09:01 -> 00:09:03] but just the intermediate representation.
+[00:09:03 -> 00:09:05] And once again, I'm going to define a function
+[00:09:05 -> 00:09:08] and this time let's call it igen instead of cgen.
+[00:09:09 -> 00:09:13] And it takes an expression e in our language
+[00:09:13 -> 00:09:17] and a value t,
+[00:09:17 -> 00:09:20] which basically represents the register name
+[00:09:20 -> 00:09:23] in which the value of e should be computed.
+[00:09:23 -> 00:09:25] So recall that when we were talking about cgen,
+[00:09:25 -> 00:09:28] then there we basically said that we assume
+[00:09:28 -> 00:09:29] that we had this invariant
+[00:09:29 -> 00:09:32] that the value of the expression would get computed
+[00:09:32 -> 00:09:37] and stored in a zero at the end of the execution
+[00:09:37 -> 00:09:38] of the generated code.
+[00:09:38 -> 00:09:41] But in igen, we can be a little bit more flexible
+[00:09:41 -> 00:09:44] and we don't have to stick to one particular register,
+[00:09:44 -> 00:09:48] a zero, we have an unlimited number of registers.
+[00:09:48 -> 00:09:51] And so let's just say that igen e,t
+[00:09:51 -> 00:09:53] is going to generate the code
+[00:09:53 -> 00:09:55] such that the value gets computed
+[00:09:55 -> 00:09:57] and stored at the end of the execution
+[00:09:57 -> 00:10:01] in register number t or temporary number t.
+[00:10:02 -> 00:10:04] So it generates code to compute the value
+[00:10:04 -> 00:10:06] of expression e in register t.
+[00:10:07 -> 00:10:10] And this flexibility, this second argument in igen
+[00:10:10 -> 00:10:12] is a big thing because now I don't have to commit
+[00:10:12 -> 00:10:14] to which register I'm going to generate my code in.
+[00:10:14 -> 00:10:16] I'm just basically assuming
+[00:10:16 -> 00:10:19] there are unlimited number of registers
+[00:10:19 -> 00:10:21] and later on maybe I will decide which registers
+[00:10:21 -> 00:10:23] to actually put in machine registers
+[00:10:23 -> 00:10:26] and which ones to keep in memory and things like that.
+[00:10:26 -> 00:10:27] And that's register allocation.
+[00:10:28 -> 00:10:30] This becomes a really nice optimization.
+[00:10:31 -> 00:10:36] Okay, so this is what my igen rules would look like.
+[00:10:36 -> 00:10:38] I'm just showing one example rule
+[00:10:38 -> 00:10:42] to show how igen would look different from cgen.
+[00:10:42 -> 00:10:45] So for example, if I have igen e1 plus e2,
+[00:10:45 -> 00:10:47] so this is for the addition operator, comma t.
+[00:10:47 -> 00:10:51] So t is also coming as an input to this function.
+[00:10:51 -> 00:10:54] Then I would first do igen e1 t1,
+[00:10:54 -> 00:10:56] where t1 is different from t.
+[00:10:56 -> 00:10:58] So some new temporary variable that I've created,
+[00:10:58 -> 00:11:00] temporary register that I've created.
+[00:11:00 -> 00:11:02] Then igen e2 t2,
+[00:11:03 -> 00:11:06] and then I just said t equals t1 plus t2, all right?
+[00:11:06 -> 00:11:11] Because igen e1 t1 is going to compute e1 in t1,
+[00:11:11 -> 00:11:14] e2 in t2, and then I can just compute t
+[00:11:14 -> 00:11:16] by just adding t1 plus t2.
+[00:11:16 -> 00:11:19] And notice t1 and t2 are fresh registers
+[00:11:19 -> 00:11:22] that are not being already used in the program.
+[00:11:22 -> 00:11:24] And it's easy to keep track
+[00:11:24 -> 00:11:27] of how many registers have already been used.
+[00:11:27 -> 00:11:30] And so you can just keep minting new registers.
+[00:11:32 -> 00:11:35] All right, here is an example of a three address code IR
+[00:11:35 -> 00:11:38] that you may also have seen for your programming assignments.
+[00:11:38 -> 00:11:41] This is the low-level virtual machine, LLVM.
+[00:11:42 -> 00:11:45] The types in LLVM look like the following,
+[00:11:45 -> 00:11:49] i1, i8, i32, i64.
+[00:11:49 -> 00:11:53] So i1 stands for an integer of size one bit.
+[00:11:53 -> 00:11:56] i8 stands for an integer of size eight bits.
+[00:11:56 -> 00:11:58] So in other words, one byte.
+[00:11:58 -> 00:12:03] i32, four bytes, or 32 bits, and so on.
+[00:12:03 -> 00:12:05] So notice that the types are also kind of
+[00:12:05 -> 00:12:06] a little bit lower level,
+[00:12:06 -> 00:12:09] unlike C, which would have, let's say,
+[00:12:09 -> 00:12:13] int, long, and things like that,
+[00:12:13 -> 00:12:17] or even bool, or character type, short.
+[00:12:17 -> 00:12:21] These are kind of slightly higher-level types.
+[00:12:21 -> 00:12:25] And at the LLVM level, we don't want to keep track
+[00:12:25 -> 00:12:28] of how big is a short or how big is an int.
+[00:12:28 -> 00:12:30] Actually, the C language doesn't really specify
+[00:12:30 -> 00:12:32] how big int is.
+[00:12:32 -> 00:12:33] It just says it should be at least this much big.
+[00:12:33 -> 00:12:36] So for example, some implementations of C
+[00:12:36 -> 00:12:38] would have an eight-byte integer,
+[00:12:38 -> 00:12:41] and some implementations would have a four-byte integer.
+[00:12:41 -> 00:12:43] But at the level of LLVM,
+[00:12:43 -> 00:12:46] that decision should have already been made.
+[00:12:46 -> 00:12:47] So what is an intermediate representation?
+[00:12:47 -> 00:12:50] Recall that some decisions have already been made,
+[00:12:50 -> 00:12:53] and some decisions remain to be made.
+[00:12:53 -> 00:12:56] And we want to design an IR such that
+[00:12:56 -> 00:12:58] only those decisions have been made
+[00:12:58 -> 00:13:00] which are not as consequential
+[00:13:00 -> 00:13:02] to optimization as possible,
+[00:13:02 -> 00:13:04] and those decisions which are very consequential
+[00:13:04 -> 00:13:07] to optimizations, those should have been made.
+[00:13:07 -> 00:13:09] So for example, what should be the size of an integer?
+[00:13:09 -> 00:13:11] Maybe that's not so consequential to optimization,
+[00:13:11 -> 00:13:15] or maybe that's something that we want to be fixed about,
+[00:13:15 -> 00:13:16] or maybe that's just coming from the configuration
+[00:13:16 -> 00:13:18] of the environment.
+[00:13:18 -> 00:13:20] And so those decisions have been made
+[00:13:20 -> 00:13:22] by the time you reach LLVM.
+[00:13:22 -> 00:13:24] But what are the decisions that have not been made?
+[00:13:24 -> 00:13:26] Well, the decisions that have not been made
+[00:13:26 -> 00:13:28] are what are the registers
+[00:13:28 -> 00:13:30] in which the values will be computed, right?
+[00:13:30 -> 00:13:31] The machine registers.
+[00:13:31 -> 00:13:33] Or what are the instruction opcodes
+[00:13:33 -> 00:13:36] that are going to be used to compute these things?
+[00:13:36 -> 00:13:37] So unlike the Cgen function
+[00:13:37 -> 00:13:40] which was doing this immediately,
+[00:13:40 -> 00:13:41] these decisions immediately,
+[00:13:41 -> 00:13:42] and going all the way to assembly,
+[00:13:42 -> 00:13:44] here we're keeping some things
+[00:13:44 -> 00:13:45] as abstract as possible,
+[00:13:45 -> 00:13:47] and later on we decide what we want to do.
+[00:13:48 -> 00:13:50] Okay.
+[00:13:50 -> 00:13:52] Also, there are some more types, like float.
+[00:13:53 -> 00:13:56] You know, maybe float also can have a size.
+[00:13:56 -> 00:13:57] So instead of having float double,
+[00:13:57 -> 00:13:59] maybe you can say the float of this type,
+[00:13:59 -> 00:14:01] float 32, float 64, and so on.
+[00:14:02 -> 00:14:04] Also, it has pointer types.
+[00:14:04 -> 00:14:07] So you can point to a type of...
+[00:14:07 -> 00:14:10] You can have a pointer to a type I32,
+[00:14:10 -> 00:14:13] or you can have a pointer to a pointer to type I32,
+[00:14:13 -> 00:14:15] or you can have a pointer to a float,
+[00:14:15 -> 00:14:16] or things like that.
+[00:14:16 -> 00:14:17] So it also has pointer types.
+[00:14:17 -> 00:14:20] This is very similar to how it works in C as well.
+[00:14:20 -> 00:14:23] So C and LLVM are quite similar, actually.
+[00:14:23 -> 00:14:25] But then they have other types.
+[00:14:25 -> 00:14:26] For example, this is the vector type,
+[00:14:26 -> 00:14:28] four cross I32.
+[00:14:28 -> 00:14:31] Now, this vector type is actually not present in C.
+[00:14:31 -> 00:14:33] And so this is basically something
+[00:14:33 -> 00:14:35] which is kind of, you know,
+[00:14:35 -> 00:14:37] you can think of LLVM being slightly higher level
+[00:14:37 -> 00:14:39] than C in that matter,
+[00:14:39 -> 00:14:41] because this basically says it's a vector
+[00:14:41 -> 00:14:44] of four 32-bit values,
+[00:14:44 -> 00:14:46] or integer values, right?
+[00:14:46 -> 00:14:49] And this is useful, for example, to do vectorization.
+[00:14:49 -> 00:14:52] So I can have an opcode which adds to vector quantities.
+[00:14:52 -> 00:14:54] And now, later, when I do code generation,
+[00:14:54 -> 00:14:56] if my architecture actually has a vector instruction,
+[00:14:56 -> 00:14:57] then I can get to use it.
+[00:14:57 -> 00:14:59] So these kind of instructions
+[00:14:59 -> 00:15:00] may not be present in the high-level language.
+[00:15:00 -> 00:15:02] In fact, they are not present
+[00:15:02 -> 00:15:03] in most high-level languages,
+[00:15:03 -> 00:15:06] like C and C++, or even Java.
+[00:15:06 -> 00:15:08] But they are present in this low-level IR,
+[00:15:08 -> 00:15:10] because the idea is that the optimizer
+[00:15:10 -> 00:15:12] is going to convert the high-level program
+[00:15:12 -> 00:15:14] such that it's going to find
+[00:15:14 -> 00:15:15] these vectorization opportunities,
+[00:15:15 -> 00:15:19] and it's going to introduce these such vector types.
+[00:15:19 -> 00:15:20] Just like these vector types,
+[00:15:20 -> 00:15:23] there are some struct types, all right?
+[00:15:23 -> 00:15:25] So struct types do not,
+[00:15:25 -> 00:15:28] unlike vector types, which basically are a number,
+[00:15:28 -> 00:15:29] which is the number of repetitions,
+[00:15:29 -> 00:15:30] and a single type,
+[00:15:30 -> 00:15:34] so vectors are basically repetitions of the same type,
+[00:15:34 -> 00:15:36] a struct could be a collection of different types.
+[00:15:36 -> 00:15:38] So just like in a C struct.
+[00:15:38 -> 00:15:39] So example, I could have a struct
+[00:15:39 -> 00:15:42] which has one I32 value and another I16 value,
+[00:15:42 -> 00:15:45] and maybe a third float value, and things like that.
+[00:15:45 -> 00:15:48] And such types are also supported in the LLVM IR.
+[00:15:49 -> 00:15:51] The reason I'm discussing LLVM IR
+[00:15:51 -> 00:15:53] is because it's one of the most popular
+[00:15:53 -> 00:15:55] three-address code style IRs,
+[00:15:55 -> 00:16:00] and it's almost the de facto popular IR
+[00:16:01 -> 00:16:03] that is used for code generation,
+[00:16:03 -> 00:16:05] optimized code generation for most architectures,
+[00:16:05 -> 00:16:09] including x86 and ARM.
+[00:16:09 -> 00:16:11] Also, it has RISC-like opcodes.
+[00:16:11 -> 00:16:12] For example, it has,
+[00:16:12 -> 00:16:16] so it wants to keep its opcodes as simple as possible.
+[00:16:16 -> 00:16:20] So it has add, load, store, call, function call, read,
+[00:16:20 -> 00:16:24] and these opcodes could sometimes have
+[00:16:24 -> 00:16:25] an unbounded number of arguments.
+[00:16:25 -> 00:16:27] For example, call could basically say,
+[00:16:27 -> 00:16:28] what are the arguments,
+[00:16:28 -> 00:16:30] and the argument list could be unbounded,
+[00:16:30 -> 00:16:32] and this is different from how call works
+[00:16:32 -> 00:16:34] in a real machine.
+[00:16:34 -> 00:16:35] When in a real machine,
+[00:16:35 -> 00:16:37] the call may basically assume that
+[00:16:37 -> 00:16:38] the arguments are laid out on stack
+[00:16:38 -> 00:16:39] or something like that.
+[00:16:39 -> 00:16:41] Here, the arguments can be on the registers,
+[00:16:41 -> 00:16:44] and they can be an unbounded number of registers.
+[00:16:44 -> 00:16:47] Similarly, return can actually return a set of registers
+[00:16:47 -> 00:16:49] or a vector value or things like that,
+[00:16:49 -> 00:16:51] conditional branch, and so on.

@@ -1,0 +1,455 @@
+Title: Compiler Design Module 72 : Optimization Overview
+Video ID: dK8SjttPNG4
+Detected language: en
+------------------------------------------------------------
+
+[00:00:00 -> 00:00:03] So now we're going to start discussing optimization
+[00:00:03 -> 00:00:05] on the intermediate representation.
+[00:00:05 -> 00:00:09] So most IRs are organized as a control flow graph
+[00:00:09 -> 00:00:11] over basic blocks, all right?
+[00:00:11 -> 00:00:12] So what is a control flow graph?
+[00:00:12 -> 00:00:15] We're also going to call it a CFG for short.
+[00:00:16 -> 00:00:19] Firstly, let's review what is a basic block.
+[00:00:19 -> 00:00:21] Recall that a basic block is a single entry,
+[00:00:21 -> 00:00:24] single exit, straight line, code segment.
+[00:00:24 -> 00:00:27] So for example, this rectangle here
+[00:00:27 -> 00:00:32] has multiple incoming edges and multiple outgoing edges.
+[00:00:33 -> 00:00:34] By incoming edges, I mean,
+[00:00:34 -> 00:00:38] there are incoming control flow.
+[00:00:38 -> 00:00:41] Each edge represents a potential incoming control flow
+[00:00:41 -> 00:00:44] from a different basic block.
+[00:00:44 -> 00:00:45] And similarly, outgoing edges
+[00:00:45 -> 00:00:48] basically represent outgoing control flow.
+[00:00:48 -> 00:00:49] And so in this particular case,
+[00:00:49 -> 00:00:53] this rectangle is supposed to represent
+[00:00:53 -> 00:00:54] straight line code segment,
+[00:00:54 -> 00:00:56] which has only a single entry
+[00:00:56 -> 00:00:59] because the only entries are at the first instruction,
+[00:00:59 -> 00:01:01] beginning of the first instruction,
+[00:01:01 -> 00:01:04] and single exit because the only exits are
+[00:01:04 -> 00:01:06] at the end of the last instruction.
+[00:01:06 -> 00:01:08] And so this particular thing is a basic,
+[00:01:08 -> 00:01:11] code segment is a basic block.
+[00:01:11 -> 00:01:13] Here are some examples of code segments
+[00:01:13 -> 00:01:15] that are not basic blocks.
+[00:01:15 -> 00:01:18] So here, this rectangle has only one incoming edge
+[00:01:18 -> 00:01:19] and one outgoing edge,
+[00:01:19 -> 00:01:21] but it has outgoing edges
+[00:01:21 -> 00:01:23] from the middle of the code segment.
+[00:01:23 -> 00:01:27] And that means that it's not a basic block
+[00:01:27 -> 00:01:31] because it's no longer a single exit basic block.
+[00:01:31 -> 00:01:33] Similarly, here, there's a basic block,
+[00:01:33 -> 00:01:35] but it has an entry to the middle of the basic block
+[00:01:35 -> 00:01:38] and we are not going to call it a basic block therefore.
+[00:01:38 -> 00:01:40] And so this is also not a basic block.
+[00:01:40 -> 00:01:42] And let's look at this fourth example.
+[00:01:42 -> 00:01:46] Here, there is only a single entry and a single exit,
+[00:01:47 -> 00:01:52] and there is no incoming edge to any of the other code,
+[00:01:52 -> 00:01:55] but it's not a straight line sequence of instructions,
+[00:01:55 -> 00:01:57] because in this, there's a branching,
+[00:01:57 -> 00:01:59] and then there's a meeting,
+[00:01:59 -> 00:02:01] join point, and there's a branch point.
+[00:02:01 -> 00:02:05] And although in this whole larger red rectangle
+[00:02:05 -> 00:02:07] does not have any incoming edge,
+[00:02:07 -> 00:02:09] neither does it have any outgoing edge
+[00:02:09 -> 00:02:10] except at the end,
+[00:02:10 -> 00:02:13] and it has only the incoming edges at the beginning.
+[00:02:13 -> 00:02:14] It is not a basic block
+[00:02:14 -> 00:02:16] because it's not a straight line code segment.
+[00:02:16 -> 00:02:19] So all three conditions, single entry, single exit,
+[00:02:19 -> 00:02:21] and straight line should be met
+[00:02:21 -> 00:02:23] for it to be called a basic block.
+[00:02:24 -> 00:02:26] So here's an example for optimization
+[00:02:26 -> 00:02:27] inside a basic block.
+[00:02:27 -> 00:02:29] So let's say this is my basic block.
+[00:02:29 -> 00:02:32] It is labeled with a label L
+[00:02:32 -> 00:02:34] so that the other parts of the code
+[00:02:34 -> 00:02:36] can jump to this basic blocks
+[00:02:36 -> 00:02:40] by saying jump L or go to L or branch L.
+[00:02:40 -> 00:02:44] And then it has, let's say, three statements.
+[00:02:44 -> 00:02:47] The first one says T equals two into X,
+[00:02:47 -> 00:02:49] assigns two into X to T.
+[00:02:49 -> 00:02:53] Then the third one says W equals T plus X.
+[00:02:53 -> 00:02:56] And the last one says if W is greater than three,
+[00:02:56 -> 00:02:58] go to L prime.
+[00:02:58 -> 00:03:01] Now there are some optimizations that you can imagine.
+[00:03:01 -> 00:03:03] Firstly, it is okay to change three
+[00:03:03 -> 00:03:05] to W equals three into X.
+[00:03:05 -> 00:03:10] For some reason, if addition of two variables is cheaper,
+[00:03:10 -> 00:03:13] is more costly than multiplication by a constant,
+[00:03:13 -> 00:03:16] then it may be cheaper to actually do W equals three
+[00:03:16 -> 00:03:19] into X rather than doing W equals T plus X
+[00:03:19 -> 00:03:20] because T we know is just two into X
+[00:03:20 -> 00:03:22] and this would be an optimization.
+[00:03:22 -> 00:03:24] I'm not discussing how we're going to perform
+[00:03:24 -> 00:03:25] this optimization, but I'm just saying
+[00:03:25 -> 00:03:29] that this could be a potential optimization.
+[00:03:29 -> 00:03:32] Now similarly, it is okay,
+[00:03:32 -> 00:03:35] is it okay to change four to,
+[00:03:35 -> 00:03:39] if X is greater than one, go to L prime.
+[00:03:39 -> 00:03:41] So four is basically if W is greater than three,
+[00:03:41 -> 00:03:42] go to L prime.
+[00:03:42 -> 00:03:46] And because we know W equals three into X,
+[00:03:46 -> 00:03:48] can we say W greater than three is the same
+[00:03:48 -> 00:03:50] as saying X greater than one
+[00:03:50 -> 00:03:52] by just dividing both sides by three?
+[00:03:52 -> 00:03:56] Well, it turns out the answer here is no, okay?
+[00:03:56 -> 00:04:01] Because three into X being greater than three
+[00:04:01 -> 00:04:03] is a different condition from X being greater than one
+[00:04:03 -> 00:04:05] because three into X,
+[00:04:05 -> 00:04:07] here X is not an infinite integer.
+[00:04:07 -> 00:04:10] It is a finite bounded integer
+[00:04:10 -> 00:04:12] and three into X could mean overflow
+[00:04:12 -> 00:04:14] and wraparound and things like that.
+[00:04:14 -> 00:04:18] And so there exist values of X
+[00:04:18 -> 00:04:21] for which three into X is greater than three,
+[00:04:21 -> 00:04:23] but X is not greater than one, all right?
+[00:04:23 -> 00:04:26] And so one has to be careful.
+[00:04:26 -> 00:04:29] For the first one, the answer is yes, all right?
+[00:04:29 -> 00:04:33] And is it okay to remove two, right?
+[00:04:33 -> 00:04:35] So because we have already said
+[00:04:35 -> 00:04:39] we have replaced this with two into three into X,
+[00:04:39 -> 00:04:42] is it now okay to get rid of two?
+[00:04:42 -> 00:04:43] Is it okay to do that?
+[00:04:43 -> 00:04:45] Well, the answer, it depends, right?
+[00:04:45 -> 00:04:46] So it depends.
+[00:04:46 -> 00:04:49] It depends on whether T is being used later on
+[00:04:49 -> 00:04:50] in the code or not.
+[00:04:50 -> 00:04:52] And so we need to be worried about that.
+[00:04:52 -> 00:04:55] So this example is just giving you three types
+[00:04:55 -> 00:04:57] of optimizations or transformations.
+[00:04:57 -> 00:04:59] One of them is clearly okay.
+[00:04:59 -> 00:05:01] One of them is clearly not okay.
+[00:05:01 -> 00:05:03] And the third one depends.
+[00:05:03 -> 00:05:05] You can't really decide whether you can do it or not
+[00:05:05 -> 00:05:07] just by looking at this particular code segment.
+[00:05:07 -> 00:05:09] You also need to look at the rest of the program
+[00:05:09 -> 00:05:10] to be able to say that.
+[00:05:10 -> 00:05:13] And so that's the third one.
+[00:05:13 -> 00:05:16] Okay, so now let's define a control flow graph or CFG.
+[00:05:16 -> 00:05:18] A CFG is a directed graph
+[00:05:18 -> 00:05:22] where basic blocks are the nodes.
+[00:05:22 -> 00:05:25] And there's an edge from block A to block B
+[00:05:25 -> 00:05:30] if the execution can pass from the last instruction in A
+[00:05:30 -> 00:05:32] to the first instruction in B, all right?
+[00:05:32 -> 00:05:34] And this is something that we've been assuming
+[00:05:34 -> 00:05:36] and drawing in our figures already.
+[00:05:36 -> 00:05:38] But now we define it more formally.
+[00:05:38 -> 00:05:40] And so what is the control flow graph?
+[00:05:40 -> 00:05:41] It is a directed graph.
+[00:05:41 -> 00:05:43] Where basic blocks are nodes
+[00:05:43 -> 00:05:45] and there's an edge from block A to block B
+[00:05:45 -> 00:05:47] if the execution can potentially pass
+[00:05:47 -> 00:05:49] from the last instruction in A
+[00:05:50 -> 00:05:52] to the first instruction in B.
+[00:05:53 -> 00:05:56] So here are some examples of where the edge is going.
+[00:05:56 -> 00:05:59] So for example, if I have an unconditional branch
+[00:05:59 -> 00:06:03] at the end of a basic block to a label L,
+[00:06:03 -> 00:06:06] then I will draw an edge from this basic block
+[00:06:06 -> 00:06:10] to the basic block that represents L.
+[00:06:10 -> 00:06:13] Similarly, if I have a conditional branch
+[00:06:13 -> 00:06:14] at the end of a basic block,
+[00:06:14 -> 00:06:17] so it's a B, E, Q, R1, R2, L,
+[00:06:17 -> 00:06:19] it basically means that if R1 equals R2,
+[00:06:19 -> 00:06:20] then go to L.
+[00:06:20 -> 00:06:22] So then I will have an edge from this basic block
+[00:06:22 -> 00:06:25] to the basic block representing L.
+[00:06:25 -> 00:06:26] But then I will also have an edge
+[00:06:26 -> 00:06:30] from this basic block to the successor basic block,
+[00:06:30 -> 00:06:32] the basic block that just follows
+[00:06:33 -> 00:06:34] this particular basic block
+[00:06:34 -> 00:06:36] in the code instruction order, all right?
+[00:06:36 -> 00:06:38] So there are two edges that are coming out.
+[00:06:38 -> 00:06:39] One that's going to L
+[00:06:39 -> 00:06:42] and the other that's going to the next basic block.
+[00:06:42 -> 00:06:43] And this kind of an edge
+[00:06:43 -> 00:06:48] is also called a fall through edge, okay?
+[00:06:48 -> 00:06:51] Because it just falls through to the next basic block.
+[00:06:51 -> 00:06:54] And similarly, here's the third thing.
+[00:06:54 -> 00:06:56] Here, there is no branch,
+[00:06:56 -> 00:06:58] but there is a basic block.
+[00:06:58 -> 00:06:59] It has some instructions.
+[00:06:59 -> 00:07:02] And then after the execution, the last instruction,
+[00:07:02 -> 00:07:04] the natural thing for the computer to do
+[00:07:04 -> 00:07:05] would be to execute the first instruction
+[00:07:05 -> 00:07:07] in the following basic block
+[00:07:07 -> 00:07:09] because these are successive basic blocks.
+[00:07:09 -> 00:07:10] But they happen to be in different basic blocks
+[00:07:10 -> 00:07:13] because this second basic block,
+[00:07:13 -> 00:07:15] so let me call this B and let me call this A.
+[00:07:15 -> 00:07:18] So basic block B has two incoming edges.
+[00:07:18 -> 00:07:21] And so it has to be a separate basic block from A.
+[00:07:21 -> 00:07:22] It can't be merged with A
+[00:07:22 -> 00:07:24] because that's by the definition of basic block.
+[00:07:24 -> 00:07:27] And although there is no branch instruction,
+[00:07:27 -> 00:07:29] neither unconditional nor conditional,
+[00:07:29 -> 00:07:31] just the fall through semantics
+[00:07:31 -> 00:07:34] are going to give you an edge from A to B.
+[00:07:34 -> 00:07:37] And so this also is basically a fall through edge.
+[00:07:39 -> 00:07:39] All right.
+[00:07:39 -> 00:07:42] So here's an example of a CFG.
+[00:07:42 -> 00:07:46] So maybe, you initialize X to one and then I to one,
+[00:07:46 -> 00:07:49] and then you have maybe have a label L
+[00:07:50 -> 00:07:54] and you say X equals X into X, I equals I plus one.
+[00:07:54 -> 00:07:56] And if I is less than 10, go to L.
+[00:07:56 -> 00:08:00] So this is probably just computing something
+[00:08:00 -> 00:08:03] with some power of X and it's doing this 10 times.
+[00:08:03 -> 00:08:06] It's saying X into X and doing that 10 times.
+[00:08:06 -> 00:08:10] And then this is a loop, right?
+[00:08:10 -> 00:08:14] So I gets incremented by one until it becomes 10,
+[00:08:16 -> 00:08:19] in which case you just return from the function body.
+[00:08:19 -> 00:08:19] All right.
+[00:08:19 -> 00:08:22] So notice that this is a control flow graph
+[00:08:22 -> 00:08:25] where there is a cycle in the graph
+[00:08:25 -> 00:08:27] and that represents a loop.
+[00:08:28 -> 00:08:32] And you can imagine that such a control flow graph
+[00:08:32 -> 00:08:34] can be created using a program
+[00:08:34 -> 00:08:36] which contains a while construct
+[00:08:36 -> 00:08:38] or a fall construct in your program.
+[00:08:38 -> 00:08:42] So the body of a method can be represented as a CFG,
+[00:08:42 -> 00:08:43] a control flow graph,
+[00:08:43 -> 00:08:45] and such a CFG will have one entry node.
+[00:08:45 -> 00:08:46] This is the initial node
+[00:08:46 -> 00:08:48] at which the execution will start.
+[00:08:48 -> 00:08:51] And it could have multiple terminal nodes
+[00:08:51 -> 00:08:53] which will represent all the return statements
+[00:08:53 -> 00:08:54] in the procedure.
+[00:08:54 -> 00:08:56] So maybe your language allows
+[00:08:56 -> 00:08:58] multiple return statements in your procedure,
+[00:08:58 -> 00:09:00] just like C or C plus plus or Java,
+[00:09:00 -> 00:09:02] in which case all those return statements
+[00:09:02 -> 00:09:04] would be the terminal basic blocks
+[00:09:04 -> 00:09:10] or terminal nodes in your CFG.
+[00:09:10 -> 00:09:13] So what do we want to do in terms of optimization?
+[00:09:13 -> 00:09:15] We are going to typically operate
+[00:09:15 -> 00:09:17] on this control flow graph
+[00:09:17 -> 00:09:19] of the intermediate representation,
+[00:09:19 -> 00:09:22] treat it as a graph and then try to improve things
+[00:09:22 -> 00:09:26] just like the example that we saw a couple of slides back.
+[00:09:26 -> 00:09:27] And then we are going to try to improve,
+[00:09:27 -> 00:09:29] we are going to typically try to improve
+[00:09:29 -> 00:09:33] the program's resource utilization for some resource.
+[00:09:33 -> 00:09:34] Sometimes it is the execution time
+[00:09:34 -> 00:09:35] that we are interested in,
+[00:09:35 -> 00:09:38] and most often this is the most important resource
+[00:09:38 -> 00:09:41] that we are usually optimizing for.
+[00:09:41 -> 00:09:43] But for other applications,
+[00:09:43 -> 00:09:46] it may be more important to optimize for code size.
+[00:09:46 -> 00:09:48] Now I should point out that these are not exclusive.
+[00:09:48 -> 00:09:51] Maybe optimizing for code size
+[00:09:51 -> 00:09:53] also optimizes for execution time,
+[00:09:53 -> 00:09:55] and that's actually often true.
+[00:09:55 -> 00:09:59] And so it's not true that just optimizing for code size
+[00:09:59 -> 00:10:01] means that you must necessarily pay a price.
+[00:10:01 -> 00:10:03] It's not necessarily a trade-off.
+[00:10:03 -> 00:10:07] It may actually be well-aligned goals.
+[00:10:07 -> 00:10:10] Or you could be optimizing for memory usage.
+[00:10:10 -> 00:10:13] So maybe you want to optimize the amount of extra memory
+[00:10:13 -> 00:10:15] that is created on the heap,
+[00:10:15 -> 00:10:17] or in the data section, or on the stack,
+[00:10:19 -> 00:10:21] or the number of disk IO operations
+[00:10:21 -> 00:10:23] that the program makes,
+[00:10:23 -> 00:10:25] or the number of network IO operations
+[00:10:25 -> 00:10:26] that the program makes.
+[00:10:26 -> 00:10:31] And here also there can be more fine-grained metrics.
+[00:10:31 -> 00:10:34] For example, you may want to optimize
+[00:10:34 -> 00:10:37] for the number of round trips that you make to the disk,
+[00:10:37 -> 00:10:40] or the number of round trips that you make to the network.
+[00:10:40 -> 00:10:43] Alternatively, you may not care about the round trips.
+[00:10:43 -> 00:10:46] You may want to optimize for the amount of bandwidth
+[00:10:46 -> 00:10:49] that your program is going to take on the disk channel
+[00:10:49 -> 00:10:53] or on the network link and things like that.
+[00:10:53 -> 00:10:55] And finally, you may be interested in optimizing
+[00:10:55 -> 00:10:56] for power consumption,
+[00:10:56 -> 00:10:58] especially for battery-operated devices
+[00:10:58 -> 00:11:03] like smartphones or internet of thing devices, IoT devices.
+[00:11:03 -> 00:11:04] Power consumption is a big thing.
+[00:11:04 -> 00:11:06] Often it's, sometimes it's power consumption
+[00:11:06 -> 00:11:08] that you're optimizing for.
+[00:11:08 -> 00:11:10] Sometimes it's energy consumption
+[00:11:10 -> 00:11:11] that you're optimizing for.
+[00:11:11 -> 00:11:13] Energy and power are two different things.
+[00:11:13 -> 00:11:16] Typically optimizing for energy
+[00:11:16 -> 00:11:19] also comes from just optimizing the execution time
+[00:11:19 -> 00:11:20] because it's shorter.
+[00:11:20 -> 00:11:22] If the program can finish quicker,
+[00:11:22 -> 00:11:25] then it is going to use less energy, right?
+[00:11:25 -> 00:11:27] Energy is just power into time.
+[00:11:27 -> 00:11:30] And so typically, often you're not optimizing for power,
+[00:11:30 -> 00:11:32] but you're optimizing for energy.
+[00:11:32 -> 00:11:35] And usually if you're optimizing for execution time,
+[00:11:35 -> 00:11:39] or automatically are also optimizing for energy.
+[00:11:39 -> 00:11:41] Now, one important point,
+[00:11:41 -> 00:11:44] optimization should not alter what the program computes.
+[00:11:44 -> 00:11:48] Typically, that's what we think about optimization.
+[00:11:48 -> 00:11:51] The program, the implementation should still conform
+[00:11:51 -> 00:11:52] to the meaning of the program.
+[00:11:52 -> 00:11:55] And recall that we specified the meaning of a program
+[00:11:55 -> 00:11:57] using semantic rules.
+[00:11:57 -> 00:11:59] For example, we discussed operational semantics
+[00:11:59 -> 00:12:00] for a toy language.
+[00:12:00 -> 00:12:04] And so that meaning should be always obeyed.
+[00:12:04 -> 00:12:08] So optimization should never try to transgress
+[00:12:08 -> 00:12:10] those boundaries of meaning.
+[00:12:10 -> 00:12:11] Although, in the modern world,
+[00:12:11 -> 00:12:14] there are also ideas of approximate computing
+[00:12:14 -> 00:12:15] and things like that,
+[00:12:15 -> 00:12:19] especially for things like neural networks
+[00:12:19 -> 00:12:22] where the whole notion of correctness
+[00:12:22 -> 00:12:23] is not very well-defined.
+[00:12:23 -> 00:12:26] And so it's okay if you are making some errors
+[00:12:26 -> 00:12:27] here or there.
+[00:12:28 -> 00:12:30] But even in those cases,
+[00:12:30 -> 00:12:33] there are some boundaries to what you can tolerate
+[00:12:33 -> 00:12:38] in terms of error in the result of the program.
+[00:12:38 -> 00:12:39] For our purposes,
+[00:12:39 -> 00:12:41] we're gonna assume that the value computation results
+[00:12:41 -> 00:12:42] are exact.
+[00:12:42 -> 00:12:46] And so whatever is the value that's been computed
+[00:12:46 -> 00:12:48] and that's observable by an external user
+[00:12:48 -> 00:12:51] should remain intact in the face of optimizations.
+[00:12:51 -> 00:12:53] For example, I just gave you an example
+[00:12:53 -> 00:12:55] that let's say W equals C into X.
+[00:12:55 -> 00:12:56] And the original program is
+[00:12:56 -> 00:12:58] if W greater than three go to L,
+[00:12:58 -> 00:13:00] it is not okay to convert this to
+[00:13:00 -> 00:13:02] if X greater than one go to L
+[00:13:02 -> 00:13:04] because these two conditions,
+[00:13:04 -> 00:13:06] W greater than three and X greater than one
+[00:13:06 -> 00:13:08] are completely different conditions
+[00:13:08 -> 00:13:11] because they become true for,
+[00:13:11 -> 00:13:14] there exist points, there exist values for X
+[00:13:14 -> 00:13:16] where one is true and the other is not.
+[00:13:16 -> 00:13:20] And so one has to be careful about that.
+[00:13:20 -> 00:13:23] Here are the typical granularities of optimization.
+[00:13:23 -> 00:13:25] One is called local optimizations.
+[00:13:25 -> 00:13:27] And these are optimizations that apply
+[00:13:27 -> 00:13:28] to a basic block in isolation.
+[00:13:28 -> 00:13:30] So you can just look at a basic block
+[00:13:30 -> 00:13:32] and say, oh, I can do this optimization.
+[00:13:32 -> 00:13:35] For example, we have seen a local optimization
+[00:13:35 -> 00:13:38] where we would say W equals two into X
+[00:13:38 -> 00:13:40] and then T equals W plus X
+[00:13:40 -> 00:13:42] and then we said T equals three to X.
+[00:13:42 -> 00:13:44] So that would be a local optimization.
+[00:13:44 -> 00:13:47] We can just look at a basic block in isolation
+[00:13:47 -> 00:13:49] without having to worry about the rest of the program
+[00:13:49 -> 00:13:51] and say, oh, I can optimize it.
+[00:13:51 -> 00:13:52] And that would be a local optimization.
+[00:13:52 -> 00:13:55] These are typically the easiest to implement.
+[00:13:55 -> 00:13:57] Then there are a category of optimizations
+[00:13:57 -> 00:13:59] that are called global optimizations
+[00:13:59 -> 00:14:02] and these apply to a CFG,
+[00:14:02 -> 00:14:04] which represents a method body in isolation.
+[00:14:04 -> 00:14:06] So I can just look at the body of a method
+[00:14:06 -> 00:14:08] as a CFG, as a control flow graph
+[00:14:08 -> 00:14:09] and then say, oh, by the way,
+[00:14:09 -> 00:14:11] I can optimize this, I can optimize this.
+[00:14:11 -> 00:14:13] But I'm looking at the whole body in isolation.
+[00:14:13 -> 00:14:16] I'm not looking at other method bodies
+[00:14:16 -> 00:14:18] when I'm doing these optimizations.
+[00:14:18 -> 00:14:20] And the third category of optimizations
+[00:14:20 -> 00:14:22] are interprocedural optimization.
+[00:14:22 -> 00:14:26] Here we apply optimizations across method boundaries.
+[00:14:26 -> 00:14:28] So I can say that, oh, I know that this method
+[00:14:28 -> 00:14:30] is being called by that method
+[00:14:30 -> 00:14:32] and the values that that method uses
+[00:14:32 -> 00:14:34] are constrained in this way
+[00:14:34 -> 00:14:36] and so I can optimize this method accordingly
+[00:14:36 -> 00:14:37] and so on.
+[00:14:37 -> 00:14:38] And so such optimizations
+[00:14:38 -> 00:14:40] are called interprocedural optimizations.
+[00:14:40 -> 00:14:41] Interprocedural optimizations
+[00:14:41 -> 00:14:42] are usually the hardest to implement
+[00:14:42 -> 00:14:47] because they require the maximum amount of reasoning
+[00:14:47 -> 00:14:51] or larger code region,
+[00:14:51 -> 00:14:53] but they're also often the most effective
+[00:14:53 -> 00:14:56] in terms of their savings that they produce
+[00:14:56 -> 00:15:02] in terms of resource usage.
+[00:15:02 -> 00:15:07] Optimization, unfortunately, is not a science.
+[00:15:07 -> 00:15:08] It's more of an art.
+[00:15:08 -> 00:15:10] And the current state of the art here
+[00:15:10 -> 00:15:13] is that we typically want to get the maximum benefit
+[00:15:13 -> 00:15:14] for the minimum cost
+[00:15:14 -> 00:15:15] because there is no, you know,
+[00:15:15 -> 00:15:18] we don't have the optimal program
+[00:15:18 -> 00:15:22] for a given specification is an undecidable problem.
+[00:15:22 -> 00:15:26] So you cannot hope to have the optimal program
+[00:15:27 -> 00:15:28] for most programs.
+[00:15:28 -> 00:15:31] And so what you do is you're basically
+[00:15:31 -> 00:15:33] just making some improvements here or there
+[00:15:33 -> 00:15:35] and how much improvement you want to make,
+[00:15:35 -> 00:15:37] you know, there's a cost.
+[00:15:37 -> 00:15:39] There's a cost of development
+[00:15:39 -> 00:15:40] which people need to,
+[00:15:40 -> 00:15:41] humans need to expand
+[00:15:41 -> 00:15:44] to be able to do those optimizations.
+[00:15:44 -> 00:15:46] And then let's say it took me, you know,
+[00:15:46 -> 00:15:48] one month to develop that optimization.
+[00:15:48 -> 00:15:50] If that optimization only makes, you know,
+[00:15:50 -> 00:15:55] 0.01% change in the speed of, you know,
+[00:15:56 -> 00:15:58] 1% of the programs that run in the world,
+[00:15:58 -> 00:16:00] that's not, you know,
+[00:16:00 -> 00:16:02] maybe the best use of my time.
+[00:16:02 -> 00:16:04] On the other hand, if maybe one,
+[00:16:04 -> 00:16:06] after one month of effort,
+[00:16:06 -> 00:16:08] if I can make, you know,
+[00:16:08 -> 00:16:11] 10% of the program running in the world,
+[00:16:11 -> 00:16:13] 0.1% faster,
+[00:16:13 -> 00:16:15] that would be a worthwhile use of my time.
+[00:16:15 -> 00:16:18] Okay, because 10% of all the programs
+[00:16:18 -> 00:16:19] running in the world,
+[00:16:19 -> 00:16:20] making them 0.1% faster
+[00:16:20 -> 00:16:22] is actually a significant improvement
+[00:16:22 -> 00:16:23] because, you know,
+[00:16:23 -> 00:16:24] that much energy saved
+[00:16:24 -> 00:16:26] because there's a lot of programs
+[00:16:26 -> 00:16:27] running in the world
+[00:16:27 -> 00:16:28] and, you know,
+[00:16:28 -> 00:16:31] saving 0.1% for 10% of the programs
+[00:16:31 -> 00:16:33] is going to be a significant amount
+[00:16:33 -> 00:16:34] of energy saved, for example,
+[00:16:34 -> 00:16:36] or runtime saved, for example.
+[00:16:36 -> 00:16:40] All right, so some optimizations
+[00:16:40 -> 00:16:41] are hard to implement.
+[00:16:42 -> 00:16:44] So you would probably just not implement them
+[00:16:44 -> 00:16:45] even though they were effective.
+[00:16:45 -> 00:16:47] They say, oh, they are too hard to implement
+[00:16:47 -> 00:16:48] and we're not going to implement them.
+[00:16:48 -> 00:16:50] And there's a large category of optimizations
+[00:16:50 -> 00:16:52] that fall in this category.
+[00:16:52 -> 00:16:53] And so what has happened is that
+[00:16:53 -> 00:16:55] initially they were not implemented
+[00:16:55 -> 00:16:56] but then over the years,
+[00:16:56 -> 00:16:58] as compilers became more and more mature,
+[00:16:58 -> 00:17:00] more and more complicated optimizations
+[00:17:00 -> 00:17:03] started getting added to the compiler.
+[00:17:03 -> 00:17:05] And this is a continuously growing curve.
+[00:17:05 -> 00:17:07] If you recall one of our initial lectures,
+[00:17:07 -> 00:17:09] we just showed that how compiler complexity
+[00:17:09 -> 00:17:10] has been growing over the years.
+[00:17:10 -> 00:17:12] And one of the reason is because
+[00:17:12 -> 00:17:13] more and more complex optimizations
+[00:17:13 -> 00:17:16] are getting implemented inside the compiler.
+[00:17:17 -> 00:17:20] Some optimizations require large compilation time.
+[00:17:20 -> 00:17:23] So some optimizations require complex reasoning
+[00:17:24 -> 00:17:25] in the computer.
+[00:17:25 -> 00:17:28] And so they require large compilation time.
+[00:17:28 -> 00:17:30] And that's often not a good idea,
+[00:17:30 -> 00:17:33] especially for developers who are doing
+[00:17:33 -> 00:17:37] this test debug loop,
+[00:17:37 -> 00:17:38] in which case, you know,
+[00:17:38 -> 00:17:40] having to recompile over and over again
+[00:17:40 -> 00:17:41] where the compilation time is large
+[00:17:41 -> 00:17:42] is not a good idea.
+[00:17:42 -> 00:17:44] And so maybe some optimization
+[00:17:44 -> 00:17:46] gets rejected because of that.
+[00:17:46 -> 00:17:49] And then some optimizations have a low payoff.
+[00:17:49 -> 00:17:50] So doing an optimization
+[00:17:50 -> 00:17:52] may not actually yield much benefit
+[00:17:52 -> 00:17:54] and in which case it's not worth
+[00:17:54 -> 00:17:55] spending your time on it.
+[00:17:55 -> 00:17:58] But often it's very hard to quantify the payoff
+[00:17:58 -> 00:17:59] because doing one optimization
+[00:17:59 -> 00:18:01] actually enables other optimizations
+[00:18:01 -> 00:18:02] and things like that.

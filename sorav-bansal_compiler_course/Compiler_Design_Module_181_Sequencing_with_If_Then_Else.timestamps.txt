@@ -1,0 +1,168 @@
+Title: Compiler Design Module 181 : Sequencing with If Then Else
+Video ID: lomyduiygyI
+Detected language: en
+------------------------------------------------------------
+
+[00:00:00 -> 00:00:04] Just like we looked at sequencing for the assignment operator,
+[00:00:04 -> 00:00:08] let's look at the conditional operator once again.
+[00:00:08 -> 00:00:12] Recall that a conditional operator in our toy imperative language
+[00:00:12 -> 00:00:14] is basically an if-then-else operator.
+[00:00:14 -> 00:00:19] If some Boolean expression B on the program state,
+[00:00:19 -> 00:00:21] which is represented with x and dot, dot, dot,
+[00:00:21 -> 00:00:24] then do something, let's say change the state with
+[00:00:24 -> 00:00:28] some assignment statements, say x colon equals f,
+[00:00:28 -> 00:00:30] or else x colon equals g.
+[00:00:31 -> 00:00:35] And I want to emphasize that this body
+[00:00:35 -> 00:00:37] need not be a single statement,
+[00:00:37 -> 00:00:39] it could be a sequence of multiple statements,
+[00:00:39 -> 00:00:42] multiple assignment statements or nested ifs, et cetera,
+[00:00:42 -> 00:00:47] but we can just extract it as a single assignment for now,
+[00:00:48 -> 00:00:53] and we can have a general set of rules
+[00:00:53 -> 00:00:55] to basically inductively apply
+[00:00:55 -> 00:00:59] to get the final kind of verification conditions.
+[00:00:59 -> 00:01:02] The whole trouble that we are interested in proving
+[00:01:02 -> 00:01:05] is basically that if precondition p holds
+[00:01:05 -> 00:01:06] at the beginning of the program
+[00:01:06 -> 00:01:08] and the program is executed,
+[00:01:08 -> 00:01:11] then at the end of the program, q holds.
+[00:01:11 -> 00:01:14] And both p and q are predicates,
+[00:01:14 -> 00:01:17] which are basically Boolean functions
+[00:01:17 -> 00:01:19] on the machine state,
+[00:01:19 -> 00:01:22] which is represented with x and dot, dot, dot.
+[00:01:22 -> 00:01:24] All right, so we've already seen
+[00:01:24 -> 00:01:27] how to approach this proof.
+[00:01:27 -> 00:01:30] We're basically interested in finding
+[00:01:30 -> 00:01:35] intermediate predicates, p1 at the start of the den body,
+[00:01:37 -> 00:01:39] p2 at the end of the den body,
+[00:01:39 -> 00:01:40] p3 at the start of the else body,
+[00:01:40 -> 00:01:42] p4 at the end of the else body,
+[00:01:42 -> 00:01:45] such that, and any such predicates are okay,
+[00:01:45 -> 00:01:48] as long as they satisfy these conditions in green.
+[00:01:48 -> 00:01:52] The conditions are that p and b should imply p1.
+[00:01:53 -> 00:01:57] Similarly, p and not b should imply p3.
+[00:01:57 -> 00:01:59] Similarly, this whole triple should be true,
+[00:01:59 -> 00:02:04] which means p1, if p1 holds the beginning of this body,
+[00:02:04 -> 00:02:06] then p2 should hold at the end of it.
+[00:02:06 -> 00:02:09] So, because in this case, it's a single assignment,
+[00:02:09 -> 00:02:11] I can use the encoding for my assignment operator
+[00:02:11 -> 00:02:15] and say p1 should imply p2,
+[00:02:15 -> 00:02:20] such that all the x's have been replaced with f in p2.
+[00:02:21 -> 00:02:24] Similarly, p3 should imply p4,
+[00:02:24 -> 00:02:28] such that all the x's in p4 have been replaced with g.
+[00:02:28 -> 00:02:32] And finally, both p2 and p4 should imply q.
+[00:02:34 -> 00:02:36] The succinct way to write that
+[00:02:36 -> 00:02:38] is that p2 or p4 should imply q.
+[00:02:38 -> 00:02:41] This basically means that individually p2
+[00:02:41 -> 00:02:45] should imply q and p4 should also imply q.
+[00:02:46 -> 00:02:50] Now, this is one way to kind of discharge
+[00:02:51 -> 00:02:52] this whole triple proof obligation.
+[00:02:52 -> 00:02:55] And these five different conditions
+[00:02:55 -> 00:02:57] form our verification conditions.
+[00:02:57 -> 00:02:59] But of course, the problem is how do I find out
+[00:02:59 -> 00:03:02] what is p1, p2, p3, p4?
+[00:03:02 -> 00:03:04] Once again, I want to emphasize that
+[00:03:04 -> 00:03:07] any such values of p1, p2, p3, p4
+[00:03:07 -> 00:03:09] that satisfy these constraints are good enough.
+[00:03:09 -> 00:03:12] If you are able to find any such p1, p2, p3, p4,
+[00:03:12 -> 00:03:15] we have completed the end-to-end proof.
+[00:03:15 -> 00:03:17] So now, today in this module,
+[00:03:17 -> 00:03:18] I'm going to show you a strategy
+[00:03:18 -> 00:03:21] on identifying what should be the appropriate
+[00:03:21 -> 00:03:22] p1, p2, p3, p4.
+[00:03:22 -> 00:03:24] This is just one such strategy,
+[00:03:24 -> 00:03:26] which is a general strategy which would work
+[00:03:26 -> 00:03:29] for any such kind of proof obligations
+[00:03:29 -> 00:03:31] with a conditional operator.
+[00:03:31 -> 00:03:33] So the first thing that I'm going to use
+[00:03:33 -> 00:03:36] is I'm going to say p2 and p4 are the same as q.
+[00:03:36 -> 00:03:39] So given q, we already given p and q.
+[00:03:39 -> 00:03:42] So for p2 and p4, I just use q.
+[00:03:42 -> 00:03:43] And that immediately gets rid
+[00:03:43 -> 00:03:46] of the last proof obligation which said p2 or p4
+[00:03:46 -> 00:03:49] should imply q because now this just translates to q
+[00:03:49 -> 00:03:52] or q should imply q, which is a tautology.
+[00:03:52 -> 00:03:54] And so we can get rid of it.
+[00:03:54 -> 00:03:57] So we just choose p2 to be q and p4 to be q.
+[00:03:57 -> 00:04:01] And so in this code,
+[00:04:01 -> 00:04:04] I've also replaced p4 with q and p2 with q.
+[00:04:05 -> 00:04:07] The second thing is I just choose,
+[00:04:07 -> 00:04:10] I mean, this is something that we have already seen
+[00:04:10 -> 00:04:11] when we are talking about sequencing
+[00:04:11 -> 00:04:12] or assignment operators.
+[00:04:12 -> 00:04:16] I choose p3 to be the weakest precondition of q
+[00:04:16 -> 00:04:18] across this statement.
+[00:04:18 -> 00:04:21] So p3 is basically q
+[00:04:21 -> 00:04:24] where all the x's have been replaced with g, right?
+[00:04:24 -> 00:04:27] And so that basically,
+[00:04:27 -> 00:04:29] if I look at my proof obligation,
+[00:04:29 -> 00:04:30] the verification condition,
+[00:04:30 -> 00:04:32] it was that p3 should imply q
+[00:04:32 -> 00:04:34] where all x's have been replaced with g.
+[00:04:34 -> 00:04:36] Now, if I just use p3 to be the same thing
+[00:04:36 -> 00:04:39] as the RHS of this proof obligation,
+[00:04:39 -> 00:04:41] then basically this again becomes a tautology
+[00:04:41 -> 00:04:42] and I can cross this out.
+[00:04:42 -> 00:04:44] And so basically what I'm doing is
+[00:04:44 -> 00:04:46] whatever was the proof obligation that was required,
+[00:04:46 -> 00:04:49] I'm just kind of taking its pre-image
+[00:04:49 -> 00:04:50] and saying,
+[00:04:50 -> 00:04:53] oh, what is the weakest condition that should be true here
+[00:04:53 -> 00:04:55] which kind of satisfies
+[00:04:55 -> 00:04:58] my required verification condition.
+[00:04:58 -> 00:05:00] And that in this case is basically q
+[00:05:00 -> 00:05:03] such that all the x's have been replaced with g.
+[00:05:04 -> 00:05:09] Similarly, I can replace p1 with q,
+[00:05:09 -> 00:05:12] which is the post condition for the then body
+[00:05:12 -> 00:05:14] with all the x's replaced with f.
+[00:05:14 -> 00:05:17] This is just identical to the case for else.
+[00:05:17 -> 00:05:18] Earlier we talked about,
+[00:05:18 -> 00:05:20] in the previous slide I talked about else.
+[00:05:20 -> 00:05:25] The else code where I was replacing p3 with q
+[00:05:26 -> 00:05:28] where x's have been replaced with g.
+[00:05:28 -> 00:05:30] Here I'm replacing p1 with q
+[00:05:30 -> 00:05:34] where x's have been replaced with f.
+[00:05:34 -> 00:05:36] And so with that,
+[00:05:36 -> 00:05:39] my new kind of program,
+[00:05:39 -> 00:05:41] the code looks like the following.
+[00:05:41 -> 00:05:46] Now given concrete expressions to p1, p2, p3, p4,
+[00:05:46 -> 00:05:48] it's in there no longer non-deterministic.
+[00:05:48 -> 00:05:51] I don't have to find some p1, p2, p3, p4.
+[00:05:51 -> 00:05:53] In fact, I have a strategy to identify
+[00:05:53 -> 00:05:55] what the p1, p2, p3, p4 should be.
+[00:05:55 -> 00:05:57] For example, p1 is this expression,
+[00:05:57 -> 00:05:59] p2 is this expression,
+[00:05:59 -> 00:06:01] p3 is this expression,
+[00:06:01 -> 00:06:03] and p4 is this expression.
+[00:06:03 -> 00:06:06] And we've already shown that with these choices,
+[00:06:06 -> 00:06:10] the last three verification conditions
+[00:06:10 -> 00:06:11] just become tautologies,
+[00:06:11 -> 00:06:13] and we don't need to do anything for them.
+[00:06:13 -> 00:06:15] It's only the first two verification conditions
+[00:06:15 -> 00:06:17] that remain to be proven,
+[00:06:17 -> 00:06:21] which is p and b imply q,
+[00:06:21 -> 00:06:23] imply this p1, which is q,
+[00:06:23 -> 00:06:25] where all x's have been replaced with f,
+[00:06:25 -> 00:06:28] and p and not b, which is this else branch,
+[00:06:28 -> 00:06:32] imply q where all x's have been replaced with g.
+[00:06:32 -> 00:06:36] And so I've reduced the proof of code from finding,
+[00:06:36 -> 00:06:39] from having to find some p1, p2, p3, p4
+[00:06:39 -> 00:06:41] that satisfy the five verification conditions
+[00:06:41 -> 00:06:44] to just discharging these two verification conditions
+[00:06:44 -> 00:06:47] because I've chosen my p1, p2, p3, p4,
+[00:06:47 -> 00:06:51] and now I have a strategy to choose my p1, p2, p3,
+[00:06:51 -> 00:06:52] and p4.
+[00:06:52 -> 00:06:54] Finally, I'd like to point out
+[00:06:54 -> 00:06:56] that the combination of these two proof obligations
+[00:06:56 -> 00:06:59] can be actually expressed as a single proof obligation
+[00:06:59 -> 00:07:04] which says that p implies this whole expression,
+[00:07:04 -> 00:07:05] this whole expression here,
+[00:07:05 -> 00:07:08] which basically says if b is true,
+[00:07:08 -> 00:07:10] then q, then this expression is true,
+[00:07:10 -> 00:07:12] which is actually p1,
+[00:07:12 -> 00:07:13] else this expression is true,
+[00:07:13 -> 00:07:15] which is actually p3, right?
+[00:07:15 -> 00:07:18] And so these two are actually equivalent.
+[00:07:18 -> 00:07:20] If this, which means the right-hand side is true,
+[00:07:20 -> 00:07:21] then the left-hand side,
+[00:07:21 -> 00:07:24] both of these are going to evaluate it true
+[00:07:24 -> 00:07:25] and vice versa.

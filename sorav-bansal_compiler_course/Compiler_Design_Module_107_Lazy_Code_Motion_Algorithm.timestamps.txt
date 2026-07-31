@@ -1,0 +1,628 @@
+Title: Compiler Design Module 107 : Lazy Code Motion Algorithm
+Video ID: zPLbAOdIqRw
+Detected language: en
+------------------------------------------------------------
+
+[00:00:00 -> 00:00:02] So, now we are ready to actually discuss
+[00:00:02 -> 00:00:04] the lazy code motion algorithm.
+[00:00:04 -> 00:00:06] We have already looked at a lot of examples,
+[00:00:06 -> 00:00:08] input-output examples on what is expected
+[00:00:08 -> 00:00:10] from the algorithm, but now let's look
+[00:00:10 -> 00:00:14] at the actual algorithm as it has been devised
+[00:00:14 -> 00:00:16] by researchers.
+[00:00:16 -> 00:00:19] So, before we discuss the algorithm,
+[00:00:20 -> 00:00:23] we have a pre-processing step in this algorithm.
+[00:00:23 -> 00:00:25] And in the pre-processing step,
+[00:00:25 -> 00:00:27] we are going to assume that every statement
+[00:00:27 -> 00:00:29] is in a basic block of its own
+[00:00:29 -> 00:00:31] because we want to be able to add
+[00:00:31 -> 00:00:35] our extra copies of the expression
+[00:00:35 -> 00:00:36] anywhere we like.
+[00:00:36 -> 00:00:38] So, we will make every instruction,
+[00:00:38 -> 00:00:43] even though it's a straight line sequence of code,
+[00:00:43 -> 00:00:46] even though it may be a straight line sequence of code,
+[00:00:46 -> 00:00:48] we're going to make them into 10,
+[00:00:48 -> 00:00:49] even if there were 10 instructions,
+[00:00:49 -> 00:00:51] we're going to make them into 10 different basic blocks.
+[00:00:51 -> 00:00:53] So, every instruction will be
+[00:00:53 -> 00:00:55] in a basic block of its own.
+[00:00:55 -> 00:00:57] And then we will insert a basic block
+[00:00:57 -> 00:00:59] between the source and destination of an edge
+[00:00:59 -> 00:01:01] if the destination has multiple predecessors.
+[00:01:01 -> 00:01:06] So, for example, if this is a basic block
+[00:01:06 -> 00:01:07] that has multiple predecessors,
+[00:01:07 -> 00:01:12] then I'm going to insert an extra empty basic block
+[00:01:13 -> 00:01:15] on all the incoming edges.
+[00:01:15 -> 00:01:18] So, any basic block that has more than one predecessors,
+[00:01:18 -> 00:01:18] I'm going to do this.
+[00:01:18 -> 00:01:20] And notice that this is automatically going
+[00:01:20 -> 00:01:22] to take care of all the critical edges
+[00:01:22 -> 00:01:25] because critical edges has extra requirements here.
+[00:01:25 -> 00:01:28] We are basically saying that any block
+[00:01:28 -> 00:01:32] that has multiple incoming edges should be,
+[00:01:32 -> 00:01:33] we should add empty basic blocks.
+[00:01:33 -> 00:01:36] So, that automatically takes care of all the critical edges.
+[00:01:37 -> 00:01:39] And so, these are the empty basic blocks
+[00:01:39 -> 00:01:41] that we may retain at the end of the algorithm
+[00:01:41 -> 00:01:44] if something was added to these basic blocks.
+[00:01:44 -> 00:01:46] Now, with this pre-processing,
+[00:01:46 -> 00:01:48] we're going to basically assume
+[00:01:48 -> 00:01:51] that any extra copies of the expression
+[00:01:51 -> 00:01:54] for which the partial redundancy is being eliminated
+[00:01:54 -> 00:01:57] are going to be added to the beginning
+[00:01:57 -> 00:01:59] of any basic block, right?
+[00:01:59 -> 00:02:02] So, for example, every instruction is a basic block.
+[00:02:02 -> 00:02:06] So, if I add a copy,
+[00:02:06 -> 00:02:08] then it's going to be at the beginning of the basic block.
+[00:02:08 -> 00:02:11] If I add it to an empty basic block,
+[00:02:11 -> 00:02:12] there is nothing there.
+[00:02:12 -> 00:02:13] So, beginning of that basic block,
+[00:02:13 -> 00:02:15] I can add something as well, right?
+[00:02:15 -> 00:02:18] So, I can add something to the beginning
+[00:02:18 -> 00:02:20] of a basic block where every instruction
+[00:02:20 -> 00:02:22] is in a basic block of its own
+[00:02:22 -> 00:02:24] and then every basic block
+[00:02:24 -> 00:02:26] that has more than one predecessor,
+[00:02:26 -> 00:02:29] we add empty basic blocks on the incoming edges.
+[00:02:30 -> 00:02:32] All right, there are going to be four steps
+[00:02:32 -> 00:02:33] to our algorithm.
+[00:02:33 -> 00:02:37] Our first step is going to be find expressions needed
+[00:02:37 -> 00:02:39] at each program point, all right?
+[00:02:39 -> 00:02:42] And so, what do I mean by needed?
+[00:02:42 -> 00:02:45] An expression E is needed at a program point
+[00:02:45 -> 00:02:50] if on all outgoing paths, E needs to be computed,
+[00:02:50 -> 00:02:50] all right?
+[00:02:51 -> 00:02:54] So, E needs to be computed on all outgoing program paths
+[00:02:54 -> 00:02:56] if E was being used,
+[00:02:56 -> 00:03:00] if E was being computed in the original program
+[00:03:00 -> 00:03:01] on all outgoing program paths.
+[00:03:01 -> 00:03:04] So, E is needed at a program point
+[00:03:04 -> 00:03:07] if on all outgoing paths, E needs to be computed.
+[00:03:07 -> 00:03:09] When I say E needs to be computed,
+[00:03:09 -> 00:03:11] it basically means E was computed
+[00:03:11 -> 00:03:14] in the original program on all outgoing program paths.
+[00:03:14 -> 00:03:15] That's what it means, all right?
+[00:03:15 -> 00:03:18] So, if on all outgoing program paths,
+[00:03:18 -> 00:03:25] was computed in the original program, then E is needed at that program point.
+[00:03:25 -> 00:03:28] So we're going to find expressions needed at each program point.
+[00:03:28 -> 00:03:29] So what do I need?
+[00:03:29 -> 00:03:34] I need a DFA, which is going to be a backward DFA because I want to know what's happening
+[00:03:34 -> 00:03:36] after this program point, right?
+[00:03:36 -> 00:03:43] So is this expression being computed on all outgoing program paths?
+[00:03:43 -> 00:03:46] So to be able to do that, I need a backward DFA.
+[00:03:46 -> 00:03:53] Notice that this definition of needed expressions, an expression being needed at a program point
+[00:03:53 -> 00:03:56] requires that it's computed on all outgoing program paths.
+[00:03:56 -> 00:04:04] And this is actually agreeing with our requirement 2 of our lazy code motion requirements, which
+[00:04:04 -> 00:04:09] is that if it is not required on any of the outgoing program paths, then it should
+[00:04:09 -> 00:04:12] not be computed at that point, right?
+[00:04:13 -> 00:04:19] A copy of E should be placed at a place, at a basic block, only if it was going to be
+[00:04:19 -> 00:04:23] computed on all the outgoing program paths in the original program, right?
+[00:04:23 -> 00:04:26] Because if it's not being computed on all the outgoing program paths, then on some
+[00:04:26 -> 00:04:31] program paths, we would have computed it unnecessarily.
+[00:04:31 -> 00:04:35] It wouldn't have been needed on that program path and I would have computed it unnecessarily
+[00:04:35 -> 00:04:40] and I would have thus been violating the requirement 2 of my partial redundancy elimination
+[00:04:40 -> 00:04:44] set of requirements that we discussed in the previous module.
+[00:04:44 -> 00:04:50] Second, find expressions available at each program point, alright?
+[00:04:50 -> 00:04:57] And this is similar to the available expressions analysis, which basically means that is
+[00:04:57 -> 00:05:01] an expression already available here, if it is available on all the incoming paths.
+[00:05:01 -> 00:05:02] But there is a slight twist.
+[00:05:02 -> 00:05:07] We are going to assume that needed expressions are already also available, alright?
+[00:05:07 -> 00:05:12] So if an expression is needed at a particular program point, we kind of hypothetically assume
+[00:05:12 -> 00:05:16] that it is computed, right?
+[00:05:16 -> 00:05:17] So what am I doing here?
+[00:05:17 -> 00:05:22] The second dataflow analysis, which is available expressions, is going to use the results
+[00:05:22 -> 00:05:26] of the first dataflow analysis, which is needed expressions.
+[00:05:26 -> 00:05:30] And so I'm going to say that an expression is available at a particular program point
+[00:05:30 -> 00:05:35] if it is needed on all the incoming paths, alright?
+[00:05:35 -> 00:05:38] So that's what it means.
+[00:05:38 -> 00:05:42] So this is almost like available expressions, but with a slight twist because we don't just
+[00:05:42 -> 00:05:46] say that an expression is available on a path if it is actually computed, but we
+[00:05:46 -> 00:05:52] also say it is available on a path if it has been, if we see that it is needed
+[00:05:52 -> 00:05:57] at some program point in that path, alright?
+[00:05:57 -> 00:06:02] So we could compute an expression E at those program points where it has just become
+[00:06:02 -> 00:06:05] needed and is unavailable, alright?
+[00:06:06 -> 00:06:13] So once we have needed and available, what do we, one idea to basically place the copies
+[00:06:13 -> 00:06:18] of E, which is, let's say partially run, where can I place the copies of E?
+[00:06:18 -> 00:06:24] Well, we could place the copies of E at those program points where it has just become
+[00:06:24 -> 00:06:28] needed, which means earlier it was not needed, but now it has just become needed,
+[00:06:28 -> 00:06:31] which means that now, because it is needed, it's safe to put it there because I know
+[00:06:31 -> 00:06:34] that for all outgoing paths it would be needed.
+[00:06:34 -> 00:06:38] And it is also unavailable because if it's already available, then I shouldn't be putting
+[00:06:38 -> 00:06:39] it there, right?
+[00:06:39 -> 00:06:43] When it's available, I don't really need to recompute it.
+[00:06:43 -> 00:06:48] So once again, we could compute an expression E at those program points where it has just
+[00:06:48 -> 00:06:49] become needed.
+[00:06:49 -> 00:06:53] So just become needed is important because just before it, it may not be needed.
+[00:06:53 -> 00:06:57] It should not be needed, in which case I can't put it there because if it's
+[00:06:57 -> 00:07:00] not needed somewhere, I shouldn't be putting it in computation there.
+[00:07:00 -> 00:07:02] And it should have just become needed, all right?
+[00:07:02 -> 00:07:06] And it should not be available, all right?
+[00:07:06 -> 00:07:10] It should not be available, and that's coming from our second requirement.
+[00:07:10 -> 00:07:14] In fact, even if I just remove the word just here, we'll just say we could compute
+[00:07:14 -> 00:07:20] an expression E at those program points where it is needed and unavailable, that
+[00:07:20 -> 00:07:24] automatically means that it would be computed at those program points where it has just
+[00:07:24 -> 00:07:25] become needed.
+[00:07:25 -> 00:07:33] If something is not just needed, that means it was needed earlier, then it was also available
+[00:07:33 -> 00:07:34] at later points, all right?
+[00:07:34 -> 00:07:37] So this will become clearer with an example.
+[00:07:37 -> 00:07:43] And so in this, I'm going to call this the earliest an expression can be computed.
+[00:07:43 -> 00:07:48] And so earliest B is a set of expressions that can be computed at a basic block
+[00:07:48 -> 00:07:55] B is if it is needed at the entry of B and it's not available at the entry of B.
+[00:07:55 -> 00:08:00] And so that's written as needed B dot n minus available B dot n.
+[00:08:00 -> 00:08:05] I think I have slightly miswritten the brackets here.
+[00:08:05 -> 00:08:08] It should be needed B dot n minus available B dot n.
+[00:08:08 -> 00:08:13] So this captures the fact that it is needed at a program point, but it is not
+[00:08:13 -> 00:08:17] available at that program point.
+[00:08:17 -> 00:08:22] And finally, once I do this, then I find expressions whose computation can be
+[00:08:22 -> 00:08:26] postponed. So this is just saying that, okay, it's needed, it's not available,
+[00:08:26 -> 00:08:27] let's compute it.
+[00:08:27 -> 00:08:30] But recall that lazy code motion has a third requirement, which is that let's
+[00:08:30 -> 00:08:35] compute the expressions as late as possible, as lazily as possible.
+[00:08:35 -> 00:08:39] And to do that, we're going to find expressions whose computation can be
+[00:08:39 -> 00:08:43] postponed, that is they are needed, unavailable and previously unused.
+[00:08:43 -> 00:08:47] So if it is needed and unavailable, needed and unavailable and so on, we're
+[00:08:47 -> 00:08:52] going to keep trying to postpone it until we see its first use, right?
+[00:08:52 -> 00:08:57] So after which it cannot be postponed because computation for often
+[00:08:57 -> 00:08:59] expression cannot be postponed after its use.
+[00:08:59 -> 00:09:02] So it can be only postponed till it has been used.
+[00:09:02 -> 00:09:06] And so this kind of analysis is going to make us satisfy the third
+[00:09:06 -> 00:09:09] requirement, which is expressions are computed as lazily as possible.
+[00:09:09 -> 00:09:15] And this is going to be done using a forward DFA because we're going to see
+[00:09:15 -> 00:09:19] using a forward DFA, where all can I postpone an expression that could have
+[00:09:19 -> 00:09:25] been computed somewhere using the needed and the available expressions analysis?
+[00:09:25 -> 00:09:28] All right, so this may not be a very clear exposition so far.
+[00:09:28 -> 00:09:31] So maybe when we look at an example, which we're going to do next,
+[00:09:31 -> 00:09:33] it's going to become clearer.
+[00:09:33 -> 00:09:34] So let's look at this example.
+[00:09:34 -> 00:09:38] We have this control flow graph and this is A plus B being computed thrice.
+[00:09:38 -> 00:09:44] There are some parts where it is redundant, some other parts where it is not redundant.
+[00:09:44 -> 00:09:45] Now let's compute needed.
+[00:09:45 -> 00:09:51] So needed, an expression A plus B is needed at a program point if it is needed
+[00:09:51 -> 00:09:53] on all the outgoing parts.
+[00:09:53 -> 00:09:57] So notice that where all is it needed?
+[00:09:57 -> 00:10:02] So I'm just going to focus on one particular expression here, A plus B.
+[00:10:02 -> 00:10:07] DFA is actually designed for a set of expressions to be done in one go.
+[00:10:07 -> 00:10:11] But just for explanation, I'm just going to look at one expression.
+[00:10:11 -> 00:10:15] So the set is going to be either a singleton set or a null set.
+[00:10:15 -> 00:10:17] And if it is a singleton set, it means that it is needed there.
+[00:10:17 -> 00:10:21] And so I'm going to mark it with the needed annotation.
+[00:10:21 -> 00:10:24] And so the first thing before I even start my algorithm,
+[00:10:24 -> 00:10:26] I need to do my pre-processing.
+[00:10:26 -> 00:10:28] And so every instruction needs to be in its basic block of its own.
+[00:10:28 -> 00:10:31] So I'm assuming each of these is just single instructions.
+[00:10:31 -> 00:10:34] And then any basic block that has multiple incoming edges,
+[00:10:34 -> 00:10:38] I need to add empty basic blocks on all the incoming edges.
+[00:10:38 -> 00:10:41] So I've done that in this particular figure.
+[00:10:41 -> 00:10:43] Now, the second step is to do needed.
+[00:10:43 -> 00:10:47] And based on our definition of needed,
+[00:10:47 -> 00:10:52] I claim that for all the program points in the program,
+[00:10:52 -> 00:10:53] A plus B is needed.
+[00:10:53 -> 00:10:54] Why do I say that?
+[00:10:54 -> 00:10:57] Because after all the program paths,
+[00:10:57 -> 00:10:59] actually there are three such program paths,
+[00:10:59 -> 00:11:03] go through the last basic block where Z is equal to A plus B.
+[00:11:03 -> 00:11:07] And so A plus B is being computed on all the three program paths.
+[00:11:07 -> 00:11:10] So it is needed on all program paths,
+[00:11:10 -> 00:11:12] even at the beginning of the program.
+[00:11:12 -> 00:11:15] So even if I look here, it is needed on all outgoing paths,
+[00:11:15 -> 00:11:17] because it's needed on this path, it's needed on this path,
+[00:11:17 -> 00:11:20] and it's also needed on this path.
+[00:11:20 -> 00:11:23] Similarly, I can take any other program point.
+[00:11:23 -> 00:11:24] It's needed everywhere.
+[00:11:24 -> 00:11:27] So actually it's needed everywhere in the program.
+[00:11:27 -> 00:11:30] Also notice that I have two annotations of N,
+[00:11:30 -> 00:11:33] which means it's needed for every basic block.
+[00:11:34 -> 00:11:35] So one at the beginning of a basic block
+[00:11:35 -> 00:11:37] and one at the end of a basic block.
+[00:11:37 -> 00:11:41] And because every basic block has only one instruction,
+[00:11:41 -> 00:11:44] the only two annotations per basic block are enough.
+[00:11:44 -> 00:11:47] So this is what the needed analysis is expected
+[00:11:47 -> 00:11:51] to give as a result for this particular example.
+[00:11:51 -> 00:11:54] Now let's see what is the available expressions
+[00:11:54 -> 00:11:56] analysis is going to give us.
+[00:11:56 -> 00:11:58] So available expressions is basically,
+[00:11:58 -> 00:11:59] if it is an expression available,
+[00:11:59 -> 00:12:02] with the twist that if an expression is needed somewhere,
+[00:12:02 -> 00:12:03] it is then computed.
+[00:12:03 -> 00:12:05] So if I do the available expressions,
+[00:12:05 -> 00:12:08] I'm going to find that the expression is also available
+[00:12:08 -> 00:12:12] at all program points, except the first one, all right?
+[00:12:12 -> 00:12:13] Because it is needed here.
+[00:12:13 -> 00:12:16] So at this particular program point here,
+[00:12:16 -> 00:12:18] it is not available.
+[00:12:18 -> 00:12:19] But now because it was needed here,
+[00:12:19 -> 00:12:22] I'm assuming that it would have been computed here.
+[00:12:22 -> 00:12:25] And so just after that here, it is available.
+[00:12:25 -> 00:12:27] This is where the twist is,
+[00:12:27 -> 00:12:29] this is different from the original available expressions
+[00:12:29 -> 00:12:30] because here we are also assuming
+[00:12:30 -> 00:12:32] that if an expression is needed,
+[00:12:32 -> 00:12:33] then it is also available.
+[00:12:34 -> 00:12:36] It has also been computed.
+[00:12:36 -> 00:12:38] And so an expression is needed,
+[00:12:38 -> 00:12:39] is available at a program point
+[00:12:39 -> 00:12:42] if it's available on all the incoming paths.
+[00:12:42 -> 00:12:44] And so if I look at that,
+[00:12:44 -> 00:12:47] that basically means all the program points
+[00:12:47 -> 00:12:48] in this particular example.
+[00:12:48 -> 00:12:50] So for all the program points,
+[00:12:50 -> 00:12:53] the expression A plus B is both needed and available.
+[00:12:54 -> 00:12:56] Now I'm going to apply,
+[00:12:56 -> 00:13:00] use the following definition of earliest
+[00:13:00 -> 00:13:03] to say that this is the earliest position
+[00:13:04 -> 00:13:08] where the expression can be placed
+[00:13:09 -> 00:13:11] without causing any extra redundant,
+[00:13:11 -> 00:13:13] extra computation on any path.
+[00:13:13 -> 00:13:14] And that is basically given
+[00:13:14 -> 00:13:17] by needed B dot in minus available B dot in.
+[00:13:17 -> 00:13:21] So an expression can be computed earliest
+[00:13:21 -> 00:13:23] at a basic block B.
+[00:13:23 -> 00:13:25] If it is needed at the entry of that basic block,
+[00:13:25 -> 00:13:28] so B dot in and it is unavailable
+[00:13:28 -> 00:13:29] at the entry of this basic block.
+[00:13:29 -> 00:13:33] So what is a basic block where it is needed
+[00:13:33 -> 00:13:35] and not available?
+[00:13:35 -> 00:13:36] There is only one such at the entry
+[00:13:36 -> 00:13:39] and there's only one such basic block in this example
+[00:13:39 -> 00:13:41] and that's the first basic block.
+[00:13:41 -> 00:13:44] So this is indeed the first point in the program
+[00:13:44 -> 00:13:46] where I can compute A plus B.
+[00:13:46 -> 00:13:48] And you can see that's actually true
+[00:13:48 -> 00:13:50] because if I just compute A plus B here,
+[00:13:50 -> 00:13:52] I can say T equals A plus B
+[00:13:52 -> 00:13:55] and then I can just replace X equals A plus B with T
+[00:13:55 -> 00:13:56] Y equals A plus B with T
+[00:13:56 -> 00:13:58] and Z equals A plus B with T.
+[00:13:58 -> 00:14:00] And this would be a valid solution.
+[00:14:00 -> 00:14:01] However, this would be a valid solution
+[00:14:01 -> 00:14:04] to partial redundancy elimination
+[00:14:04 -> 00:14:06] but this doesn't actually take care of our third requirement
+[00:14:06 -> 00:14:10] which is the expression is computed as late as possible.
+[00:14:10 -> 00:14:11] So for that, we're going to do
+[00:14:11 -> 00:14:14] a postponable expressions analysis.
+[00:14:14 -> 00:14:17] What's a postponable expressions analysis?
+[00:14:17 -> 00:14:20] Basically, I'm going to see where all it is earliest.
+[00:14:23 -> 00:14:24] So wherever it is earliest,
+[00:14:24 -> 00:14:26] that's where I can,
+[00:14:26 -> 00:14:28] that's the first place I can compute it
+[00:14:28 -> 00:14:29] but then I can also postpone it
+[00:14:29 -> 00:14:31] and I can keep postponing it
+[00:14:31 -> 00:14:33] until I see a use on every part.
+[00:14:33 -> 00:14:37] So it's postponable at this point.
+[00:14:37 -> 00:14:40] It's postponable before X equals A plus B
+[00:14:40 -> 00:14:41] at the entry of this basic block
+[00:14:41 -> 00:14:43] but then it has been used in the basic block
+[00:14:43 -> 00:14:48] so it's not postponable at the end of this basic block.
+[00:14:48 -> 00:14:51] Similarly, on this part, it's postponable, postponable,
+[00:14:51 -> 00:14:53] postponable, postponable
+[00:14:53 -> 00:14:58] and also postponable here, all right?
+[00:14:58 -> 00:15:01] But not postponable here because it's seen a use, right?
+[00:15:01 -> 00:15:04] So, sorry, it's not postponable here either.
+[00:15:04 -> 00:15:05] Okay, sorry, this is not one.
+[00:15:05 -> 00:15:08] So although on this particular part,
+[00:15:08 -> 00:15:10] although on this particular part,
+[00:15:10 -> 00:15:12] A plus B is postponable to this point.
+[00:15:12 -> 00:15:14] On this part, it's not postponable.
+[00:15:14 -> 00:15:15] So one of the requirements for postponable
+[00:15:15 -> 00:15:17] is that it can be postponed
+[00:15:17 -> 00:15:19] at a particular program point
+[00:15:19 -> 00:15:22] if it can be postponed on all the incoming parts
+[00:15:22 -> 00:15:23] of that program point.
+[00:15:23 -> 00:15:27] And so in this example, on this particular program part,
+[00:15:27 -> 00:15:29] it can be postponed here.
+[00:15:29 -> 00:15:34] It seems like it's postponable here on this part
+[00:15:34 -> 00:15:37] but on this particular part, it is not postponable,
+[00:15:37 -> 00:15:38] all right?
+[00:15:38 -> 00:15:40] And I want it to be postponable
+[00:15:40 -> 00:15:41] on all the incoming program parts
+[00:15:41 -> 00:15:44] and only then I'm going to say that it's postponable.
+[00:15:44 -> 00:15:45] Now this also makes intuitive sense
+[00:15:45 -> 00:15:49] because postponable means that I can compute A plus B here
+[00:15:49 -> 00:15:52] but I should do that only if, you know,
+[00:15:53 -> 00:15:55] it is possible to postpone the computation here
+[00:15:55 -> 00:15:57] on all the incoming program parts.
+[00:15:57 -> 00:16:00] Even if it's not postponable at certain location
+[00:16:00 -> 00:16:03] from some of the incoming parts,
+[00:16:03 -> 00:16:06] then I don't want to keep the computation there.
+[00:16:06 -> 00:16:07] All right, so that's the idea.
+[00:16:07 -> 00:16:11] Similarly, if I look at this particular program part here,
+[00:16:11 -> 00:16:14] A plus B is postponable, postponable,
+[00:16:14 -> 00:16:17] postponable, postponable
+[00:16:17 -> 00:16:18] but here it's not postponable
+[00:16:18 -> 00:16:21] because on this program part, it's not postponable
+[00:16:21 -> 00:16:23] even though on this program part, it is postponable
+[00:16:23 -> 00:16:25] but we are going to take an intersection here
+[00:16:25 -> 00:16:27] because I want it to be postponable
+[00:16:27 -> 00:16:30] on all the incoming program parts.
+[00:16:30 -> 00:16:34] Now this solution here is going to give us a sense of,
+[00:16:34 -> 00:16:37] now this is the earliest I could have computed A plus B
+[00:16:37 -> 00:16:40] but where is the latest I could have computed A plus B
+[00:16:40 -> 00:16:43] and that, so the postponable expressions analysis
+[00:16:43 -> 00:16:46] is going to give you that answer
+[00:16:46 -> 00:16:47] and from this solution,
+[00:16:47 -> 00:16:50] I can see that this is the last point
+[00:16:50 -> 00:16:53] where it can be postponed here.
+[00:16:53 -> 00:16:57] This is the last point where it can be postponed
+[00:16:57 -> 00:16:59] and this is the last point where it can be postponed.
+[00:16:59 -> 00:17:02] All right, so I can draw a frontier
+[00:17:02 -> 00:17:06] where such that, what are all the basic blocks
+[00:17:06 -> 00:17:08] where it is postponable at the entry
+[00:17:08 -> 00:17:13] but one of its successors, it cannot be postponed.
+[00:17:13 -> 00:17:15] At one of the successors, it cannot be postponed.
+[00:17:15 -> 00:17:17] So that's the last point where it can be postponed.
+[00:17:17 -> 00:17:22] So A plus B could be postponed here, here, here
+[00:17:23 -> 00:17:28] but not here, not here and not here.
+[00:17:28 -> 00:17:30] All right, and so this basically forms
+[00:17:30 -> 00:17:33] a frontier of postponable.
+[00:17:33 -> 00:17:35] What do I mean by frontier of postponable?
+[00:17:35 -> 00:17:38] It is postponable at that basic block
+[00:17:38 -> 00:17:41] but not postponable at some of the successor
+[00:17:41 -> 00:17:43] basic blocks of that basic block.
+[00:17:43 -> 00:17:44] Right, so that's what a frontier means
+[00:17:44 -> 00:17:46] and so I'm going to add A plus B
+[00:17:46 -> 00:17:49] at the frontier of the basic blocks
+[00:17:49 -> 00:17:52] and I'm claiming that this is the best solution
+[00:17:52 -> 00:17:53] for my lazy code motion
+[00:17:53 -> 00:17:56] because A, it eliminates partial redundancy
+[00:17:56 -> 00:17:58] for this particular example
+[00:17:58 -> 00:18:01] and it computes the expression as late as possible.
+[00:18:02 -> 00:18:05] All right, okay, so this is,
+[00:18:05 -> 00:18:07] I'm going to call this the latest position,
+[00:18:07 -> 00:18:10] the latest place, the latest basic block
+[00:18:10 -> 00:18:13] where the expression A plus B can be computed
+[00:18:13 -> 00:18:18] and so the latest for this example will be three blocks,
+[00:18:18 -> 00:18:21] this one, this one and this one.
+[00:18:21 -> 00:18:23] All right, earliest was just one block
+[00:18:23 -> 00:18:25] so I could have computed it there as well
+[00:18:25 -> 00:18:27] and I would have eliminated partial redundancy
+[00:18:27 -> 00:18:28] but for lazy code motion,
+[00:18:28 -> 00:18:29] my solution is actually different
+[00:18:29 -> 00:18:32] and it's consisting of three different basic blocks.
+[00:18:33 -> 00:18:35] All right, so now we are ready
+[00:18:35 -> 00:18:38] to actually discuss the dataflow analysis more formally.
+[00:18:38 -> 00:18:40] We have already seen this with an example.
+[00:18:40 -> 00:18:42] So needed expressions,
+[00:18:42 -> 00:18:45] it's a backward dataflow analysis on sets of expressions.
+[00:18:45 -> 00:18:47] So what are the expressions which are needed?
+[00:18:47 -> 00:18:49] All right, we're looking at a single expression
+[00:18:49 -> 00:18:52] but now we can generalize it to sets of expressions.
+[00:18:52 -> 00:18:57] Transfer function, if it is used and it is not killed,
+[00:18:58 -> 00:19:01] all right, so if it's used in a basic block
+[00:19:01 -> 00:19:03] and it is not killed, so by used,
+[00:19:03 -> 00:19:05] I mean if I have a situation, it is computed
+[00:19:05 -> 00:19:07] so if I say X equals A plus B,
+[00:19:07 -> 00:19:10] then A plus B is used in that basic block.
+[00:19:10 -> 00:19:12] What do I mean by killed?
+[00:19:12 -> 00:19:14] If one of the operands has been defined.
+[00:19:14 -> 00:19:15] So for example, if I say,
+[00:19:15 -> 00:19:17] if I'm looking at expression A plus B
+[00:19:17 -> 00:19:19] but then I have redefined A to some,
+[00:19:19 -> 00:19:23] let's say value X, then A plus B has been killed.
+[00:19:23 -> 00:19:25] All right, so that's what E kill means
+[00:19:25 -> 00:19:27] and E use basically I've already described.
+[00:19:27 -> 00:19:28] So that's a transfer function.
+[00:19:28 -> 00:19:30] It's a backward dataflow analysis
+[00:19:30 -> 00:19:31] which says whether it has been used
+[00:19:31 -> 00:19:33] and it has not yet been killed.
+[00:19:33 -> 00:19:35] If it has been used and not been killed
+[00:19:35 -> 00:19:37] on all the outgoing paths,
+[00:19:37 -> 00:19:40] then at that program point, it is needed.
+[00:19:40 -> 00:19:42] And so the meet operator is set intersection
+[00:19:42 -> 00:19:44] because I want it to be needed
+[00:19:44 -> 00:19:46] on all the outgoing program paths.
+[00:19:46 -> 00:19:47] And what's the boundary condition?
+[00:19:47 -> 00:19:52] Because it's a backward dataflow analysis,
+[00:19:52 -> 00:19:54] I'm going to specify the boundary condition
+[00:19:54 -> 00:19:56] at the exit of the program
+[00:19:56 -> 00:19:58] and the boundary condition is that nothing is needed
+[00:19:58 -> 00:20:00] at the exit of the program, all right?
+[00:20:00 -> 00:20:03] So no expression is needed at the exit of the program
+[00:20:03 -> 00:20:04] and that's trivial because we don't need
+[00:20:04 -> 00:20:07] to do any computation at the exit of the program.
+[00:20:08 -> 00:20:10] All right, available expressions.
+[00:20:10 -> 00:20:11] So available expressions is something
+[00:20:11 -> 00:20:13] that we're already familiar with.
+[00:20:13 -> 00:20:15] It's a forward dataflow analysis.
+[00:20:15 -> 00:20:17] The meet operator is set intersection.
+[00:20:17 -> 00:20:20] The boundary condition is out of entry equals the empty set.
+[00:20:20 -> 00:20:22] Nothing is available in the beginning.
+[00:20:22 -> 00:20:24] The transfer function is also similar.
+[00:20:24 -> 00:20:29] The only twist here is that I say something is available
+[00:20:29 -> 00:20:32] if it is needed at the entry of that basic block.
+[00:20:32 -> 00:20:36] So transfer function is X union needed of B dot in
+[00:20:36 -> 00:20:39] minus E kill of B, all right?
+[00:20:39 -> 00:20:41] So E kill is the same definition that I had
+[00:20:41 -> 00:20:43] that it was not being killed.
+[00:20:43 -> 00:20:43] So if it is available,
+[00:20:43 -> 00:20:47] it shouldn't have been killed on that particular path.
+[00:20:47 -> 00:20:48] And if it is needed,
+[00:20:48 -> 00:20:50] then I assume that it has been computed there.
+[00:20:50 -> 00:20:54] So I'm assuming that needed is as good as saying
+[00:20:54 -> 00:20:56] that it is computed.
+[00:20:56 -> 00:20:58] So if it is computed, then I add it to X.
+[00:20:58 -> 00:21:00] Also, if there's some expression that has been killed,
+[00:21:01 -> 00:21:05] then I subtract it from this value, X union needed.
+[00:21:05 -> 00:21:07] This is very similar to the available expressions,
+[00:21:07 -> 00:21:10] just that computation is replaced by needed.
+[00:21:10 -> 00:21:12] Notice that this is an interesting algorithm
+[00:21:12 -> 00:21:15] which uses the result of the first dataflow analysis
+[00:21:15 -> 00:21:19] into the result to compute the second dataflow analysis.
+[00:21:19 -> 00:21:21] So only after the first dataflow analysis
+[00:21:21 -> 00:21:22] has fully completed,
+[00:21:22 -> 00:21:24] can we start the second dataflow analysis
+[00:21:24 -> 00:21:28] because we require the final values,
+[00:21:28 -> 00:21:30] results of the first dataflow analysis
+[00:21:30 -> 00:21:32] in our second dataflow analysis.
+[00:21:33 -> 00:21:35] All right, so in this particular example,
+[00:21:35 -> 00:21:39] we've already seen how this analysis is going to show
+[00:21:39 -> 00:21:43] that A plus B is needed at all program points,
+[00:21:43 -> 00:21:45] and it is available at all program points
+[00:21:45 -> 00:21:50] except at the entry of the first basic block.
+[00:21:51 -> 00:21:54] And from here, we know that earliest we can place
+[00:21:54 -> 00:21:57] A plus B is at the first basic block.
+[00:21:57 -> 00:21:59] Earliest of B equals needed B dot n
+[00:21:59 -> 00:22:01] minus available B dot n.
+[00:22:01 -> 00:22:03] And so the only basic block
+[00:22:03 -> 00:22:07] which basically for which A plus B will appear
+[00:22:07 -> 00:22:10] inside the earliest of that basic block
+[00:22:10 -> 00:22:11] is going to be the first basic block.
+[00:22:11 -> 00:22:12] And for the first basic block,
+[00:22:12 -> 00:22:14] I'm going to have A plus B.
+[00:22:14 -> 00:22:16] And so that's the earliest I can put A plus B.
+[00:22:16 -> 00:22:17] And that also makes sense
+[00:22:17 -> 00:22:18] because if I compute A plus B
+[00:22:18 -> 00:22:19] right in the beginning in this program,
+[00:22:19 -> 00:22:22] then I don't need to compute it again,
+[00:22:22 -> 00:22:24] and I would have eliminated all partial redundancy.
+[00:22:24 -> 00:22:28] But we also want to postpone it as late as possible.
+[00:22:28 -> 00:22:31] So this is our third analysis.
+[00:22:31 -> 00:22:37] It's a forward data flow analysis on sets of expressions.
+[00:22:37 -> 00:22:39] An expression is postponable
+[00:22:39 -> 00:22:41] if it's postponable on all the incoming program paths.
+[00:22:41 -> 00:22:44] So the meet operator is set intersection.
+[00:22:44 -> 00:22:45] The boundary condition is that
+[00:22:45 -> 00:22:47] nothing is postponable at the beginning.
+[00:22:48 -> 00:22:50] And the transfer function is that
+[00:22:50 -> 00:22:53] something is postponable if it is earliest,
+[00:22:53 -> 00:22:57] which means I know that it can be computed here.
+[00:22:57 -> 00:22:59] So it's the earliest place I can compute it.
+[00:22:59 -> 00:23:01] And it has not been used, all right?
+[00:23:01 -> 00:23:02] So if it has been used,
+[00:23:02 -> 00:23:05] then I can't postpone it any further.
+[00:23:05 -> 00:23:07] So I subtract use, right?
+[00:23:07 -> 00:23:08] Once again, what is used?
+[00:23:08 -> 00:23:10] If it's computed like X equals A plus B,
+[00:23:10 -> 00:23:11] then A plus B is being used
+[00:23:11 -> 00:23:13] by that particular statement.
+[00:23:13 -> 00:23:17] So if it is earliest, it needs to be computed.
+[00:23:17 -> 00:23:20] It can be computed there, but it has not been used.
+[00:23:20 -> 00:23:22] And so that's given by the transfer function
+[00:23:22 -> 00:23:25] X union earliest B minus E use B.
+[00:23:25 -> 00:23:27] Once again, the third data flow analysis
+[00:23:27 -> 00:23:29] is using the results of the second data flow analysis.
+[00:23:29 -> 00:23:31] So we can start the third data flow analysis
+[00:23:31 -> 00:23:33] only after the second data flow analysis
+[00:23:33 -> 00:23:35] has completely finished.
+[00:23:37 -> 00:23:39] All right, so this is the result
+[00:23:39 -> 00:23:40] that we had in our previous slide
+[00:23:40 -> 00:23:42] for this particular example.
+[00:23:42 -> 00:23:44] And now I'm going to do postponable.
+[00:23:44 -> 00:23:45] And so with postponable,
+[00:23:45 -> 00:23:48] I'm going to say that it's postponable here
+[00:23:48 -> 00:23:50] because it's earliest,
+[00:23:50 -> 00:23:51] but it's not postponable in the beginning
+[00:23:51 -> 00:23:53] because I haven't even seen earlier.
+[00:23:53 -> 00:23:56] So it's not postponable at the beginning of the basic block,
+[00:23:56 -> 00:23:58] but it's postponable to the end of the basic block.
+[00:23:58 -> 00:24:00] It's postponable at the beginning of this basic block,
+[00:24:00 -> 00:24:03] but it's not postponable at the end of the basic block
+[00:24:03 -> 00:24:05] because it's been used in this basic block.
+[00:24:05 -> 00:24:08] And recall that my transfer function was minus E use.
+[00:24:08 -> 00:24:10] So that's why it's not postponable here.
+[00:24:10 -> 00:24:14] Similarly on this part, it's postponable, postponable,
+[00:24:14 -> 00:24:16] postponable, postponable,
+[00:24:16 -> 00:24:18] but here it's not postponable,
+[00:24:18 -> 00:24:20] not even at the beginning of the basic block.
+[00:24:20 -> 00:24:23] So here it is not postponable, all right?
+[00:24:23 -> 00:24:24] Why?
+[00:24:24 -> 00:24:27] Because it's not postponable on one of the incoming paths.
+[00:24:27 -> 00:24:30] It's postponable on the second incoming path,
+[00:24:30 -> 00:24:32] but not on the first incoming path at this point.
+[00:24:32 -> 00:24:36] And so it's not postponable, all right?
+[00:24:36 -> 00:24:37] So what does it tell us?
+[00:24:37 -> 00:24:39] That this is the last latest position
+[00:24:39 -> 00:24:44] I can compute A plus B and not any later.
+[00:24:44 -> 00:24:46] Similarly on this part, it's postponable, postponable,
+[00:24:46 -> 00:24:49] postponable, postponable, not postponable
+[00:24:49 -> 00:24:51] because it's not postponable on one of the incoming paths.
+[00:24:51 -> 00:24:55] So this is my answer for the postponable analysis.
+[00:24:55 -> 00:24:58] And based on that, I compute latest,
+[00:24:58 -> 00:25:01] which is basically nothing but the frontier
+[00:25:01 -> 00:25:03] of postponable union earliest, right?
+[00:25:03 -> 00:25:06] So I take all basic blocks,
+[00:25:06 -> 00:25:09] which are either marked as earliest,
+[00:25:09 -> 00:25:12] using our description of earliest,
+[00:25:12 -> 00:25:14] which I did in the previous slide,
+[00:25:14 -> 00:25:18] or the expressions that can be postponable
+[00:25:18 -> 00:25:21] at the entry of that particular basic block.
+[00:25:21 -> 00:25:22] And so all such basic blocks,
+[00:25:22 -> 00:25:24] I want to consider as latest,
+[00:25:25 -> 00:25:27] but I only want to consider those basic blocks
+[00:25:27 -> 00:25:32] for which some successor is not postponable or earliest.
+[00:25:33 -> 00:25:36] All right, so that's what this thing says,
+[00:25:36 -> 00:25:39] that for some successor,
+[00:25:39 -> 00:25:43] it should be true that either it's not earliest
+[00:25:43 -> 00:25:46] in that successor or it is not postponable
+[00:25:46 -> 00:25:48] in that successor.
+[00:25:48 -> 00:25:51] It is neither earliest nor postponable in that successor.
+[00:25:51 -> 00:25:54] All right, so that's what this expression means.
+[00:25:54 -> 00:25:57] And also, if it has been used in B also,
+[00:25:57 -> 00:25:59] then I'm going to say that it's latest
+[00:25:59 -> 00:25:59] in that particular piece.
+[00:25:59 -> 00:26:02] For example, it is late this,
+[00:26:04 -> 00:26:05] so let's look at this example
+[00:26:05 -> 00:26:08] to see what this expression is going to value,
+[00:26:08 -> 00:26:11] which basic blocks are going to have A plus B
+[00:26:11 -> 00:26:14] in its latest set.
+[00:26:14 -> 00:26:17] And it's going to be three answers, actually.
+[00:26:17 -> 00:26:18] One is this particular basic block
+[00:26:18 -> 00:26:20] where I'm computing X equals A plus B
+[00:26:20 -> 00:26:23] because it's postponable at the entry
+[00:26:23 -> 00:26:27] and it is using A plus B, all right?
+[00:26:27 -> 00:26:30] So that's why it's postponable here.
+[00:26:30 -> 00:26:33] It's latest here because it's postponable at the entry
+[00:26:33 -> 00:26:36] and for some successor,
+[00:26:36 -> 00:26:39] it is not postponable and neither earliest.
+[00:26:39 -> 00:26:41] Similarly, it's postponable here,
+[00:26:41 -> 00:26:43] but for some successor,
+[00:26:43 -> 00:26:45] it is neither earliest nor postponable
+[00:26:45 -> 00:26:47] and so this is latest, all right?
+[00:26:47 -> 00:26:48] Whereas all other basic blocks
+[00:26:48 -> 00:26:51] do not kind of satisfy this equation
+[00:26:51 -> 00:26:53] for the expression A plus B.
+[00:26:53 -> 00:26:57] And so we have three basic blocks in this example
+[00:26:57 -> 00:27:01] where we can compute A plus B in a latest way
+[00:27:01 -> 00:27:04] without adding any redundancy.
+[00:27:06 -> 00:27:08] Okay, so the idea is that once we have computed latest
+[00:27:08 -> 00:27:11] using the three data flow analysis that we discussed,
+[00:27:11 -> 00:27:13] we add T equals E at B start
+[00:27:13 -> 00:27:18] for all the expressions E belonging to latest of B, all right?
+[00:27:18 -> 00:27:20] So for every basic block,
+[00:27:20 -> 00:27:23] we basically figure out what are the expressions
+[00:27:23 -> 00:27:26] that can be computed latest at this particular basic block.
+[00:27:26 -> 00:27:27] For all such expressions,
+[00:27:27 -> 00:27:31] we add T equals E at the beginning of that basic block
+[00:27:31 -> 00:27:33] and then we replace E with T globally
+[00:27:33 -> 00:27:35] for all such additions.
+[00:27:35 -> 00:27:36] So once we do this,
+[00:27:36 -> 00:27:39] because of our properties of data flow analysis,
+[00:27:39 -> 00:27:43] it is actually safe to replace E with T globally
+[00:27:43 -> 00:27:45] on the program without having to worry
+[00:27:45 -> 00:27:48] about where we place it and stuff.
+[00:27:48 -> 00:27:50] So just to take an example,
+[00:27:50 -> 00:27:52] in this example, we say X equals A plus B,
+[00:27:52 -> 00:27:54] Y equals A plus B.
+[00:27:55 -> 00:27:56] Our algorithm is going to say
+[00:27:56 -> 00:28:01] that this is the latest location where we should compute
+[00:28:01 -> 00:28:03] and so that's going to say that,
+[00:28:03 -> 00:28:05] okay, let's do T equals A plus B,
+[00:28:05 -> 00:28:08] X equals T and Y equals T
+[00:28:08 -> 00:28:09] and that would be the solution
+[00:28:09 -> 00:28:12] and this is exactly the common sub-expression elimination
+[00:28:12 -> 00:28:13] that we already aware of.
+[00:28:14 -> 00:28:17] Now, here is another example.
+[00:28:17 -> 00:28:20] Once again, here, let's say there was no reuse
+[00:28:20 -> 00:28:21] of the expression A plus B.
+[00:28:21 -> 00:28:24] So A plus B is only being computed once
+[00:28:24 -> 00:28:25] and our algorithm is going to say
+[00:28:25 -> 00:28:27] that this is the latest position
+[00:28:27 -> 00:28:28] where it should be computed
+[00:28:28 -> 00:28:31] and so this is what it's going to transform it to.
+[00:28:31 -> 00:28:33] T equals A plus B and X equals T.
+[00:28:33 -> 00:28:35] Now, this may look unnecessary
+[00:28:35 -> 00:28:36] because there was no need
+[00:28:36 -> 00:28:39] to actually introduce a new temporary variable T
+[00:28:39 -> 00:28:41] and then say X equals T
+[00:28:41 -> 00:28:42] but one easy answer to that
+[00:28:42 -> 00:28:46] is that we can run copy propagation at the very end
+[00:28:46 -> 00:28:49] to eliminate all such unnecessary copies.

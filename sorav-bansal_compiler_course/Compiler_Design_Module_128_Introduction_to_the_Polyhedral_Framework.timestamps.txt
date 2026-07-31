@@ -1,0 +1,341 @@
+Title: Compiler Design Module 128 : Introduction to the Polyhedral Framework
+Video ID: BKcFoP6B4Rw
+Detected language: en
+------------------------------------------------------------
+
+[00:00:00 -> 00:00:06] We have seen matrix multiplication and how its performance can be improved by improving
+[00:00:06 -> 00:00:10] the locality and also we talked about parallelism a little bit.
+[00:00:10 -> 00:00:15] In the next few modules, we are going to focus on affine loop transformations.
+[00:00:15 -> 00:00:16] So what do I mean?
+[00:00:16 -> 00:00:24] Well, we will focus on numerical applications that use arrays as data structures and which
+[00:00:24 -> 00:00:28] have simple regular access patterns on those arrays.
+[00:00:28 -> 00:00:31] So what do I mean by simple regular access patterns?
+[00:00:31 -> 00:00:37] Well, we will assume affine array accesses with respect to surrounding loop indices.
+[00:00:37 -> 00:00:44] So if the loop is iterating from let's say 1 to n, then the access pattern on the
+[00:00:44 -> 00:00:51] array is an affine expression on i which is the iteration variable.
+[00:00:51 -> 00:00:54] And there could be multiple, there could be, this is just one loop, there could
+[00:00:54 -> 00:01:01] be a loop nest of depth 2 or a loop nest of depth 3 and so on and we are going to see
+[00:01:01 -> 00:01:03] some examples.
+[00:01:03 -> 00:01:09] So notice that the key operating word here is affine array accesses and before we talk
+[00:01:09 -> 00:01:15] about this any further, we need to define what's an affine function and affine function
+[00:01:15 -> 00:01:22] on variables x1, x2, xn can be expressed as summation over i ci xi where i goes
+[00:01:22 -> 00:01:30] from 1 to n plus c0, where ci's and c0 are constants, numeric constants.
+[00:01:30 -> 00:01:36] So for example, 2 into x plus 1 is an affine expression on x and when I say affine array
+[00:01:36 -> 00:01:41] accesses with respect to surrounding loop indices, the array accesses can be expressed
+[00:01:41 -> 00:01:49] as affine functions that means this particular form ci xi summation plus c0 of the surrounding
+[00:01:49 -> 00:01:50] loop indices.
+[00:01:50 -> 00:01:51] What are surrounding loop indices?
+[00:01:51 -> 00:01:57] The indices of the loops, the iteration variables of the loops that surround that particular
+[00:01:57 -> 00:01:58] statement.
+[00:01:58 -> 00:02:05] So for example if it was a loop of, a single loop then it's just one variable, one surrounding
+[00:02:05 -> 00:02:07] loop index variable i.
+[00:02:07 -> 00:02:12] If there was a loop nest of depth 2 then there are two index variables, one let's
+[00:02:12 -> 00:02:15] say i and another is let's say j and so on.
+[00:02:15 -> 00:02:20] So here's a simple example, here is a single loop, here's an array a of size
+[00:02:21 -> 00:02:27] let's say 200 and then I have a loop which says for int i equals 0 to 100 i plus plus
+[00:02:27 -> 00:02:30] a of 2 into i equals 4.
+[00:02:30 -> 00:02:38] Now this is an affine array access because the access, the address of the array a
+[00:02:38 -> 00:02:44] of 2 into i is basically I can write this as the address of a which is let's say
+[00:02:44 -> 00:02:52] plus 2 into i into size of whatever is the int.
+[00:02:52 -> 00:03:01] So this whole expression a has a constant address because it's a global variable and
+[00:03:01 -> 00:03:06] size of int is let's say 4 on your machine architecture and so this becomes constant
+[00:03:06 -> 00:03:10] plus 8 into i and that's an affine expression.
+[00:03:10 -> 00:03:15] So overall the array address a of a 2 into i is an affine function of the loop
+[00:03:15 -> 00:03:22] iteration variable, the surrounding loop iteration variable i.
+[00:03:22 -> 00:03:31] Now let's look at the advantage that we have by using such specialized analyses for
+[00:03:31 -> 00:03:33] affine array accesses.
+[00:03:33 -> 00:03:36] First of all I would like to point out that for several numerical applications
+[00:03:36 -> 00:03:44] such as in the domains of image processing, graphics, also recently machine learning it
+[00:03:44 -> 00:03:51] is common to have such patterns where the accesses are affine addresses of the surrounding
+[00:03:51 -> 00:03:56] loop iteration variables or these are also called affine loops and also the loops
+[00:03:56 -> 00:04:00] the iteration variables themselves have a very regular pattern and have a lower
+[00:04:00 -> 00:04:03] and upper bound.
+[00:04:03 -> 00:04:08] And because these are common it makes sense to optimize, have special optimizations for
+[00:04:08 -> 00:04:14] such patterns and what are some optimizations that such patterns enable?
+[00:04:14 -> 00:04:20] Well if you look at this particular loop we can see that all these accesses a of
+[00:04:20 -> 00:04:26] 2 into a the 2 into i-th element of a are all independent so the first element
+[00:04:26 -> 00:04:32] would be a of 0 that will be accessed in the first iteration.
+[00:04:32 -> 00:04:36] In the second iteration it will be a of 2, in the third iteration it will be a of 4 and
+[00:04:36 -> 00:04:42] so on and so one easy analysis that we can do just by looking at this code is that
+[00:04:42 -> 00:04:48] different iterations access different regions of memory or different elements of the memory
+[00:04:48 -> 00:04:52] and so it is possible to perform each iteration in parallel with other iterations
+[00:04:52 -> 00:04:56] because they do not interfere, they do not have any data dependency, they do
+[00:04:56 -> 00:05:01] not touch any common piece of memory.
+[00:05:01 -> 00:05:08] So however let us say if I also had another variable j in this and let us say j was
+[00:05:08 -> 00:05:13] not a loop iteration variable, not a regular loop iteration variable, j was just some
+[00:05:13 -> 00:05:19] other variable and I had this particular statement in my loop aj equals 0.
+[00:05:19 -> 00:05:24] Now suddenly we cannot perform each iteration in parallel with other iterations because
+[00:05:24 -> 00:05:33] we do not know whether j matches with any of the iterations 2 into i and so it is no
+[00:05:33 -> 00:05:40] longer possible to compute each iteration, parallelize each iteration of this loop separately
+[00:05:40 -> 00:05:47] because we do not know if j may be equal to 2 into i for some i and so notice that
+[00:05:47 -> 00:05:54] this is no longer an affine loop nest because j is no longer, I mean aj the address
+[00:05:54 -> 00:05:59] access to aj is no longer an affine expression on the surrounding loop variable because j
+[00:05:59 -> 00:06:04] is not a surrounding loop iteration variable.
+[00:06:04 -> 00:06:11] So the other point here is that if for such affine loop nests the types of transformations
+[00:06:11 -> 00:06:18] that are possible are much richer such as parallelization of the loop iterations.
+[00:06:18 -> 00:06:23] Here is another example, let us say I have a of 2 into i equals a of 2 into i minus
+[00:06:23 -> 00:06:30] 1 star 3 percentage 31, now this is just some made up example but I want to point out
+[00:06:31 -> 00:06:35] that it is not necessary that if all accesses are affine accesses it is always possible
+[00:06:35 -> 00:06:38] to parallelize the iterations of a loop.
+[00:06:38 -> 00:06:42] Notice that in this particular loop all array accesses are actually affine expressions,
+[00:06:42 -> 00:06:45] the addresses are affine expressions of the surrounding loop variables whether you
+[00:06:45 -> 00:06:52] take a of 2 into i or a 2 into i minus 1 these are all affine expressions on i
+[00:06:52 -> 00:06:56] which is where i is the surrounding loop iteration variable.
+[00:06:56 -> 00:07:02] However there is a data dependency across iterations so the element 2 into i, index
+[00:07:02 -> 00:07:09] 2 into i minus 1 will be computed in a previous iteration let us say and or maybe
+[00:07:09 -> 00:07:12] just to make this more clear let us say this was 2 into i minus 2.
+[00:07:12 -> 00:07:19] So in a previous iteration I have computed a of 2 into i minus 2 and this here I
+[00:07:19 -> 00:07:23] am computing 2 into i and there is a data dependency and now it is no longer possible
+[00:07:23 -> 00:07:26] to execute these iterations in parallel.
+[00:07:26 -> 00:07:32] So even though all accesses here are affine accesses inside the loop it is still not
+[00:07:32 -> 00:07:37] possible to execute these iterations in parallel and we would like to develop
+[00:07:37 -> 00:07:42] an analysis that is able to identify when is it possible to execute the iterations
+[00:07:42 -> 00:07:46] in parallel and by how much amount and when it is not and so that is the kind
+[00:07:46 -> 00:07:51] of analysis that we want to develop a because such affine loopness are common
+[00:07:51 -> 00:07:57] and b the types of transformations that such affine loopness enable are actually
+[00:07:57 -> 00:07:58] very rich and very consequential.
+[00:07:58 -> 00:08:04] Okay so to be able to do this we are going to develop a set of algorithms
+[00:08:04 -> 00:08:08] that is commonly called the polyhedral framework.
+[00:08:08 -> 00:08:12] The basic idea here is that we use linear algebra and integer linear
+[00:08:12 -> 00:08:18] programming techniques to reason about these things about inter iteration
+[00:08:18 -> 00:08:25] dependencies and interactions and we try to optimize for parallelism and
+[00:08:25 -> 00:08:28] locality similar to how we try to optimize for parallelism and locality
+[00:08:28 -> 00:08:31] when we were discussing the matrix multiplication example.
+[00:08:31 -> 00:08:36] The assumptions we will make while we are in this polyhedral framework of
+[00:08:36 -> 00:08:40] reasoning and this will this is basically defining the scope of
+[00:08:40 -> 00:08:43] program that we would be trying to optimize based on this polyhedral
+[00:08:43 -> 00:08:47] framework is that all loop iteration variables have a lower and upper bound so
+[00:08:47 -> 00:08:52] all loop iteration variables iterate from some lower bound to some upper bound
+[00:08:52 -> 00:08:58] so you know and we know what those bounds are and the other interesting
+[00:08:58 -> 00:09:01] assumption that we make is that a loop iteration variable increments by
+[00:09:01 -> 00:09:08] one in each iteration so for example it goes from 10 to 20 and increments
+[00:09:08 -> 00:09:12] by one in the every iteration now this may seem like a limiting assumption
+[00:09:12 -> 00:09:15] why do I want the loop iteration variable to increment by one why can't it
+[00:09:15 -> 00:09:19] increment by two or three or four the first the important the important
+[00:09:19 -> 00:09:25] implication here is that it must increment by a constant step okay and
+[00:09:25 -> 00:09:29] if it increments by constant step then it fits in this framework and if
+[00:09:29 -> 00:09:33] it increments by a constant step then it is always possible so if the
+[00:09:33 -> 00:09:37] variable increments by a value which is constant but not equal to one then
+[00:09:37 -> 00:09:41] we can introduce another iteration variable that increments by one and
+[00:09:41 -> 00:09:45] express the original iteration variable in terms of the new variable so let's
+[00:09:45 -> 00:09:48] say there was an iteration variable that was incrementing by two on every
+[00:09:48 -> 00:09:52] iteration let's say this variable was I then what I can do is I can
+[00:09:52 -> 00:09:55] introduce a new variable I prime that only increments by one on every
+[00:09:55 -> 00:10:00] iteration and then just say I equals two into I prime right or express I as
+[00:10:00 -> 00:10:04] in a fine expression of I prime so it's this is called normalization of
+[00:10:04 -> 00:10:08] the iteration variables and I'm going to bring my loops in this normalized
+[00:10:08 -> 00:10:12] form in this canonical form where every loop iteration variable increments by
+[00:10:12 -> 00:10:17] exactly one in each iteration because that just makes the rest of the
+[00:10:17 -> 00:10:20] analysis easier and this can be thought of just as a pre-processing
+[00:10:20 -> 00:10:23] step if it does not increment by one but increments by a constant value
+[00:10:23 -> 00:10:27] we can always you know introduce a new variable so that that variable
+[00:10:27 -> 00:10:30] increments by one and the original variable is written in terms of the
+[00:10:30 -> 00:10:36] new variable here is an example of an affine loop nest affine loop code with
+[00:10:36 -> 00:10:40] the loop nest depth of two so far we have looked at single loops but let's
+[00:10:40 -> 00:10:44] look at this loop for I equals zero I is less than equal to five I plus
+[00:10:44 -> 00:10:49] plus for J equals I now notice that the lower bound need not be a
+[00:10:49 -> 00:10:54] constant it can be a fine function of the surrounding loop variable so
+[00:10:54 -> 00:10:59] here it J is starting from I J is less than 7 once again less than
+[00:10:59 -> 00:11:03] equal to seven and once again the upper bound need not be a constant in this
+[00:11:03 -> 00:11:07] example it is a constant but it could have been some affine function of I
+[00:11:07 -> 00:11:14] J plus plus and then I say Z of J comma I equals zero now there are two
+[00:11:14 -> 00:11:18] things here first of all this expression this array access Z of J
+[00:11:18 -> 00:11:22] comma I is actually an affine address with respect to the surrounding loop
+[00:11:22 -> 00:11:27] variables what are the surrounding loop variables I and J now let's look at
+[00:11:27 -> 00:11:32] the iteration space let's look at what is the iteration space I iterates from
+[00:11:32 -> 00:11:37] zero to five and J iterates from one to seven so I can now represent this
+[00:11:37 -> 00:11:42] iteration space of the loop iteration variables as a graph and here I
+[00:11:42 -> 00:11:48] represent I on the y-axis and J on the x-axis and these are all the
+[00:11:48 -> 00:11:56] points so starting from zero so this is zero and this is five this is
+[00:11:56 -> 00:12:01] seven and this is five all right and so if I draw this shaded region
+[00:12:01 -> 00:12:05] represents all the loop iteration values all the values of the loop
+[00:12:05 -> 00:12:10] iteration indices that this loop is going to go through so for example I
+[00:12:10 -> 00:12:15] iterates from zero to five so this is zero one two three four five and
+[00:12:15 -> 00:12:20] then for every value of I J iterates from I to seven so for I
+[00:12:20 -> 00:12:25] equals zero J iterates from zero to seven so these are all the points zero
+[00:12:25 -> 00:12:29] one two three four five six all the way to seven for I equals zero similarly
+[00:12:29 -> 00:12:33] I equals one it goes from one to seven so one two three four five six seven
+[00:12:33 -> 00:12:38] two three four five six seven three four five six seven and so on and so
+[00:12:38 -> 00:12:46] this this space of I this space are formed by the iteration and by the
+[00:12:46 -> 00:12:50] way it stops at I equals five because that's the upper bound of I now this
+[00:12:50 -> 00:12:55] space of iterations that is shown with this shaded region is is formed by the
+[00:12:55 -> 00:13:00] all is basically representing all the possible values that the tuple I comma
+[00:13:00 -> 00:13:05] J can take right for example I comma J can take the value two comma two but
+[00:13:05 -> 00:13:09] it cannot take the value for example three comma two right because that's
+[00:13:09 -> 00:13:12] outside this space the other interesting thing to note here is that
+[00:13:12 -> 00:13:18] this particular space is actually bounded by straight lines and whatever
+[00:13:18 -> 00:13:23] is the region that is demarcated by these by the by these straight lines by
+[00:13:23 -> 00:13:27] some direction of the straight lines is basically this region and in fact it can
+[00:13:27 -> 00:13:32] be shown that this is always going to be a convex region what do I mean by
+[00:13:32 -> 00:13:36] a convex region the convex region is a region where if you draw a line
+[00:13:36 -> 00:13:40] between any two points in that region then all points in those that line
+[00:13:40 -> 00:13:44] belong to that region so for example this red line here between this point
+[00:13:44 -> 00:13:48] and this point all these points basically belong to this shaded region
+[00:13:48 -> 00:13:53] right that's what a convex region is for example this is not a convex region
+[00:13:53 -> 00:13:58] okay because between this point and this point if I draw a line then there
+[00:13:58 -> 00:14:02] are some points that lie outside the convex region but this particular region
+[00:14:02 -> 00:14:06] is a convex region because irrespective of what points I choose if
+[00:14:06 -> 00:14:09] I draw a line between those two points those points are guaranteed to lie
+[00:14:09 -> 00:14:15] within the shaded region between the iteration space region and so this is
+[00:14:15 -> 00:14:19] actually going to be a property just by the scope of the program that we are
+[00:14:19 -> 00:14:24] looking at which is that everything has an upper bound and a lower bound and
+[00:14:24 -> 00:14:29] increments by one we are going to always get a convex polyhedron and in
+[00:14:29 -> 00:14:34] this case it's a convex polygon in 2d space or convex polyhedron in 2d
+[00:14:34 -> 00:14:41] space a convex polygon an interval in a 1d space is also a convex polygon and in
+[00:14:41 -> 00:14:46] general the space of loop iteration variables for the scope of programs
+[00:14:46 -> 00:14:49] that we are going to study in the polyhedral framework can be represented
+[00:14:49 -> 00:14:54] always as a convex polyhedron in a d-dimensional space alright so we just
+[00:14:54 -> 00:14:58] saw an example of a two-dimensional space but I can now generalize it to a
+[00:14:58 -> 00:15:01] deep dimensional space for example for a 3d dimensional space there will be a 3d
+[00:15:01 -> 00:15:05] pi-polyhedron for a four-dimensional space will be a 4d polyhedron and so on
+[00:15:05 -> 00:15:10] where d is the loopness depth and the number of loop iteration variables so
+[00:15:10 -> 00:15:15] notice that in the previous slide the loopness depth was 2 and so we got a
+[00:15:15 -> 00:15:20] two-dimensional convex polyhedron if it's 3 then we get a three-dimensional
+[00:15:20 -> 00:15:25] polyhedron in general if we have a d-dimensional depth loop nest then we get a
+[00:15:25 -> 00:15:30] d-dimensional space of iterations and where each iteration which each
+[00:15:30 -> 00:15:35] dimension represents one iteration variable corresponding to that particular
+[00:15:35 -> 00:15:45] line or loop in the entire loop nest so in this representation of the loop
+[00:15:45 -> 00:15:51] iteration space every iteration of the loop nest is basically represented by a
+[00:15:51 -> 00:15:55] point in the polyhedral space alright so in other words there's a one-to-one
+[00:15:55 -> 00:16:01] mapping between loop iterations and points in the polyhedral space so we
+[00:16:01 -> 00:16:06] are going to represent the space of loop iterations as these convex polyhedra
+[00:16:06 -> 00:16:12] because that just makes it easier for us to reason about all the kind of
+[00:16:12 -> 00:16:15] dependencies and parallelism and locality opportunities that may be
+[00:16:15 -> 00:16:18] possible and this is also the reason why this is called the polyhedral
+[00:16:18 -> 00:16:23] framework there are two categories of transformations that we are going to
+[00:16:23 -> 00:16:28] study in the polyhedral framework one involves a fine partitioning which
+[00:16:28 -> 00:16:32] means you split up the polyhedron which is in other words I split up
+[00:16:32 -> 00:16:38] the iteration space into components that can be executed in parallel or in
+[00:16:38 -> 00:16:41] general reordered with each other so now that I have basically been able to
+[00:16:41 -> 00:16:46] represent the iterations of my loop as points in a polyhedron now I would
+[00:16:46 -> 00:16:50] want to do some kind of analysis to figure out which of these points can
+[00:16:50 -> 00:16:53] be reordered with which of the other points in other words I may want
+[00:16:53 -> 00:16:57] to basically partition these points into different sets such that it is
+[00:16:57 -> 00:17:02] okay to execute each set in parallel with the other set so maybe within the
+[00:17:02 -> 00:17:07] set I need to follow a certain order but every set can be executed in
+[00:17:07 -> 00:17:11] parallel with any other set more generally any set can be reordered
+[00:17:11 -> 00:17:14] with respect to any other set if it can be reordered then it can also be
+[00:17:14 -> 00:17:18] executed in parallel because the relative order of execution would not
+[00:17:18 -> 00:17:24] matter so for example if this was my loop iteration poly if this was my
+[00:17:24 -> 00:17:27] loop iteration space which is this let's say this rectangle this was
+[00:17:27 -> 00:17:31] representing my convex polyhedron then maybe my partition is going to be
+[00:17:31 -> 00:17:36] these diagonal lines and notice that each of these lines basically has two
+[00:17:36 -> 00:17:39] may have one or more points for example this line has one two three
+[00:17:39 -> 00:17:46] one two three four five points let's say and so this these lines are
+[00:17:46 -> 00:17:50] basically representing partitions so in other words these iterations can be
+[00:17:50 -> 00:17:54] executed in parallel with the iterations on the second line and
+[00:17:54 -> 00:17:57] similarly with the third line and fourth line and so I can divide these
+[00:17:57 -> 00:18:01] iteration space into partitions I can partition this iteration space such
+[00:18:01 -> 00:18:05] that each partition can be execute needs to be executed serially but
+[00:18:05 -> 00:18:11] across partitions I can execute the code in parallel and so this kind of
+[00:18:11 -> 00:18:14] approach is called a fine partitioning and we would want to know
+[00:18:14 -> 00:18:18] do some kind of data dependence analysis to figure out how we can
+[00:18:18 -> 00:18:22] partition an iteration space such that all the data dependencies are still
+[00:18:22 -> 00:18:25] preserved recall that we saw some examples where the loop could be
+[00:18:25 -> 00:18:29] parallelized and some other examples where the loop could not be parallelized
+[00:18:29 -> 00:18:32] and the reason the difference between the two was the nature of data
+[00:18:32 -> 00:18:35] dependencies and sometimes the loop may be
+[00:18:35 -> 00:18:37] parallelized only up to a certain degree for example it was a two
+[00:18:37 -> 00:18:42] loop nest depth but maybe you can only parallelize one of the loop
+[00:18:42 -> 00:18:45] bodies and even there we need to so here the loop may be from
+[00:18:45 -> 00:18:51] for i equals zero to ten for j equals zero to five and that gives you this
+[00:18:51 -> 00:18:55] rectangle as a convex polyhedron but the data dependency the body of the
+[00:18:55 -> 00:18:59] loop basically determines some kind of data dependencies which says
+[00:18:59 -> 00:19:02] oh you cannot you can neither parallelize on i
+[00:19:02 -> 00:19:06] you can nor you can parallelize on j but it is maybe possible to
+[00:19:06 -> 00:19:10] parallelize on i minus j so along this this
+[00:19:10 -> 00:19:14] plane of path it is possible to parallelize it
+[00:19:14 -> 00:19:18] all right we're going to see this in more detail but basically
+[00:19:18 -> 00:19:22] the partition of this iteration space such that
+[00:19:22 -> 00:19:25] within a partition there may be data dependencies but across partition there
+[00:19:25 -> 00:19:29] are no data dependencies and if we partition
+[00:19:29 -> 00:19:32] it in such a way then each partition can be executed in parallel
+[00:19:32 -> 00:19:37] with every other partition and we can achieve better parallelism
+[00:19:37 -> 00:19:40] the other category of transformation that we're going to study is blocking
+[00:19:40 -> 00:19:42] and this is something that we've already been introduced to with the
+[00:19:42 -> 00:19:45] example of matrix multiplication but matrix multiplication was a very
+[00:19:45 -> 00:19:48] special example and we were just studying
+[00:19:48 -> 00:19:51] that in isolation but in general for any loop nest
+[00:19:51 -> 00:19:55] that has a fine accesses recall that matrix multiplication in an example of
+[00:19:55 -> 00:19:58] a loop nest that has only a fine accesses and so
+[00:19:58 -> 00:20:01] it is in a fine loop nest and fits in our polyhedral framework
+[00:20:01 -> 00:20:05] but we would like to generalize that analysis to blocking
+[00:20:05 -> 00:20:09] which basically is able to block any loop nest
+[00:20:10 -> 00:20:14] that has a potential of improving locality due to blocking
+[00:20:14 -> 00:20:17] and so what is blocking blocking creates a hierarchy of
+[00:20:17 -> 00:20:21] iterations recall that we basically from a three loop nest we went to a six
+[00:20:21 -> 00:20:25] loop nest where the upper hierarchy was basically
+[00:20:25 -> 00:20:29] you know iterating with steps of d and the inner hierarchy
+[00:20:29 -> 00:20:32] of the inner three loop nest was doing a block multiply where the
+[00:20:32 -> 00:20:35] iteration step was only one so it creates a hierarchy of
+[00:20:35 -> 00:20:39] iterations and in general given any loop nest it
+[00:20:39 -> 00:20:42] may or may not be a matrix multiplication loop nest
+[00:20:42 -> 00:20:45] how do i figure out whether it is possible to create such a hierarchy
+[00:20:45 -> 00:20:51] of iteration space or iterations such that
+[00:20:51 -> 00:20:55] such that we can exploit the cache locality in a better way
+[00:20:55 -> 00:20:58] and so that both affine partitioning and blocking are categories of
+[00:20:58 -> 00:21:00] transformations that the polyhedral framework will
+[00:21:00 -> 00:21:06] enable basic idea behind polyhedral transformations well
+[00:21:06 -> 00:21:10] the basic idea is that once we have represented the iteration space as
+[00:21:10 -> 00:21:14] convex polyhedrons or convex polyhedra then we're going to use linear algebra
+[00:21:14 -> 00:21:17] techniques to help determine the best affine partition
+[00:21:17 -> 00:21:23] and best blocking strategy okay so for example here is a loop for i
+[00:21:23 -> 00:21:27] equals zero to n i plus plus z i equals x i into
+[00:21:27 -> 00:21:32] two and here our analysis should be able to partition the address space
+[00:21:32 -> 00:21:35] so firstly what is the iteration space the iteration space
+[00:21:35 -> 00:21:38] is it just let's say this was i now the
+[00:21:38 -> 00:21:44] iteration space is zero one dot dot dot n
+[00:21:44 -> 00:21:48] okay and how do how can i partition the address space such that
+[00:21:48 -> 00:21:51] each of the partitions can be executed in parallel well in this case it
+[00:21:51 -> 00:21:55] turns out that these are these have no data dependencies across
+[00:21:55 -> 00:21:59] iterations because they are all accessing different
+[00:21:59 -> 00:22:02] different elements and so the partition is just each partition is
+[00:22:02 -> 00:22:06] basically a singleton element zero zero is a single partition one
+[00:22:06 -> 00:22:08] is another partition two is another partition and so
+[00:22:08 -> 00:22:13] each of these iterations can be executed in parallel
+[00:22:13 -> 00:22:17] in general this is a this is a way to partition this and execute this code
+[00:22:17 -> 00:22:20] in parallel let's say i have m processors then
+[00:22:20 -> 00:22:26] i'm going to define b equals n by m ceiling
+[00:22:26 -> 00:22:30] and so the idea is that i'm going to iterate
+[00:22:30 -> 00:22:33] for you know i'm going to have b iterations
+[00:22:33 -> 00:22:38] in every processor right i have m processors i have n jobs to be done
+[00:22:38 -> 00:22:43] so how many how many jobs do i do on every processor i do n by m
+[00:22:43 -> 00:22:46] jobs and then maybe i take a ceiling because i need an integral number of
+[00:22:46 -> 00:22:51] jobs so for i equals b into p so b
+[00:22:51 -> 00:22:54] p is basically the processor number which
+[00:22:54 -> 00:22:58] ranges between zero and m so i said b into p
+[00:22:58 -> 00:23:01] i is less than minimum i is less than let's say b into p plus one so i
+[00:23:01 -> 00:23:05] want to go from b into p to b into p plus one
+[00:23:05 -> 00:23:11] with the added quirk that the last processor should only
+[00:23:11 -> 00:23:15] it should not go beyond n if n is not a multiple of m so
+[00:23:15 -> 00:23:19] just to take care of that i'm saying minimum of n comma b into p plus one
+[00:23:19 -> 00:23:24] i plus plus and the body remains the same z i equals x i into two
+[00:23:24 -> 00:23:27] so notice that the code is pretty much the same it's just the upper
+[00:23:27 -> 00:23:29] bound and the lower bound that have changed
+[00:23:29 -> 00:23:35] i am now iterating from b into p to b into p plus one and barring the last
+[00:23:35 -> 00:23:39] iteration last processor on every processor
+[00:23:39 -> 00:23:43] and every processor is basically so i partition the space into
+[00:23:43 -> 00:23:47] p partition i partition the iteration space into
+[00:23:47 -> 00:23:50] n partitions and each partition has a label called p
+[00:23:50 -> 00:23:54] and depending on what label it is i execute the corresponding code
+[00:23:54 -> 00:23:57] this kind of a parallelism is also called
+[00:23:57 -> 00:24:02] spmd parallelism single process single processor
+[00:24:02 -> 00:24:07] single process multiple data so basically you have the same logic
+[00:24:07 -> 00:24:12] that is executing on different regions of data for example the first process
+[00:24:12 -> 00:24:16] or the first cpu or the first processor is going to execute
+[00:24:16 -> 00:24:25] the same logic for elements zero to m zero to b right and the second one
+[00:24:25 -> 00:24:29] is going to execute from b to 2b the third one is going to execute from
+[00:24:29 -> 00:24:36] 2b to 3b and so on depending on what what the value of parameter p is i'm
+[00:24:36 -> 00:24:39] going to do the same logic for different
+[00:24:39 -> 00:24:42] regions of data and so in this case there's the same code that is
+[00:24:42 -> 00:24:46] parameterized by p and depending on p i basically use
+[00:24:46 -> 00:24:47] different data and that's why it's called
+[00:24:47 -> 00:24:54] an spmd program also when we do this kind of parallelism
+[00:24:55 -> 00:24:58] after all the processors are done we need barrier synchronization so what is
+[00:24:58 -> 00:25:02] barrier synchronization after everybody is done we wait for
+[00:25:02 -> 00:25:06] everybody to complete before we move on to the next part of the program
+[00:25:06 -> 00:25:10] because we want i mean if the next part of the program depends
+[00:25:10 -> 00:25:13] on all the values in z to be filled in then i need a barrier
+[00:25:13 -> 00:25:16] synchronization and recall that a barrier synchronization basically
+[00:25:16 -> 00:25:20] involves waiting for all the processors to finish before moving
+[00:25:20 -> 00:25:25] before any of the processor moves

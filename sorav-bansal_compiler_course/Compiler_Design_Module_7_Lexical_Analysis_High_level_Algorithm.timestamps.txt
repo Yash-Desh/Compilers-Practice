@@ -1,0 +1,335 @@
+Title: Compiler Design Module 7 : Lexical Analysis High level Algorithm
+Video ID: 6GvdZDnS2r8
+Detected language: en
+------------------------------------------------------------
+
+[00:00:00 -> 00:00:05] Okay, so last time we talked about regular expressions in regular languages and
+[00:00:06 -> 00:00:13] They they fall under the category of formal languages to review if sigma is a set of characters
+[00:00:13 -> 00:00:17] It was called an alphabet then a language over sigma is a set of strings
+[00:00:17 -> 00:00:21] All right, and then we have some way of specifying what that set of strings is
+[00:00:22 -> 00:00:24] All right now
+[00:00:24 -> 00:00:28] We and then every language is associated with a meaning function
+[00:00:28 -> 00:00:31] Typically every language is the meaning function
+[00:00:31 -> 00:00:35] So we saw the language of regular expressions and we have each expression
+[00:00:35 -> 00:00:42] Had a meaning which means each expression represented a set of strings or each expression actually represented a language of its own
+[00:00:43 -> 00:00:45] Which was also called a regular language
+[00:00:45 -> 00:00:47] all right
+[00:00:47 -> 00:00:50] now we are interested in lexical analysis and
+[00:00:51 -> 00:00:57] The reason we discuss formal languages is because we want to specify a language
+[00:00:58 -> 00:01:01] To help our lexical analysis procedure in particular
+[00:01:01 -> 00:01:06] We want to specify the language that can help us recognize the different token tokens
+[00:01:07 -> 00:01:13] And token classes. All right, so let's take an example. For example, let's look at the token class keyword
+[00:01:15 -> 00:01:17] right, so
+[00:01:17 -> 00:01:24] You know for a language maybe all you know, we can list all the keywords. For example, the keywords are if or
+[00:01:25 -> 00:01:29] Then or
+[00:01:29 -> 00:01:31] else or while
+[00:01:33 -> 00:01:39] And so right to be more precise actually actually these are these are strings I should put them in quotes
+[00:01:40 -> 00:01:46] Also, so so I could potentially represent this language of
+[00:01:46 -> 00:01:51] keywords of the programming language keywords as a regular expression, right because
+[00:01:52 -> 00:01:56] Assuming my Sigma contains all these characters are A to Z and so on
+[00:01:57 -> 00:02:03] Then I can specify a keyword as a regular expression as following I can say okay I
+[00:02:05 -> 00:02:07] F
+[00:02:07 -> 00:02:12] By single quotes, I'm used I intend to say that there's the character I and there's the character F
+[00:02:12 -> 00:02:18] I'm going to omit the single quote from now on. I think it's so it should be clear. Hopefully
+[00:02:19 -> 00:02:21] Plus to represent that it could be either I
+[00:02:22 -> 00:02:25] concatenate with F or it could be E concatenated with
+[00:02:26 -> 00:02:32] L is S E plus then plus while
+[00:02:33 -> 00:02:35] And so
+[00:02:35 -> 00:02:37] So I can say that keyword
+[00:02:38 -> 00:02:48] The language of keywords can be represented by this regular expression as follows
+[00:02:49 -> 00:02:55] IF plus ELSE plus THEN plus WHILE plus dot dot dot, right?
+[00:02:55 -> 00:02:56] Okay
+[00:02:56 -> 00:02:59] similarly, let's look at the language of
+[00:02:59 -> 00:03:05] Constant integers in the language. All right, so I could say all right I could first define a
+[00:03:06 -> 00:03:07] language of
+[00:03:07 -> 00:03:09] Let's say a digit
+[00:03:10 -> 00:03:12] And say digit is
+[00:03:14 -> 00:03:21] 0 or 1 or 2 or 9
+[00:03:22 -> 00:03:26] so these are all the 10 digits that I could potentially have in my number and
+[00:03:27 -> 00:03:29] Then I could say an integer
+[00:03:30 -> 00:03:34] The language of a constant integer is basically a
+[00:03:35 -> 00:03:39] digit
+[00:03:39 -> 00:03:42] followed by
+[00:03:42 -> 00:03:52] One or more digits. So this this thing here the dot here means concatenation
+[00:03:56 -> 00:04:00] Okay, so so this this would represent all kinds of num integers, right?
+[00:04:00 -> 00:04:05] For example, it would capture 0 0 1 1 100 132 or whatever
+[00:04:05 -> 00:04:11] Okay, so this would be the language of integers. I could represent the language of integers using regular expressions
+[00:04:12 -> 00:04:13] all right
+[00:04:13 -> 00:04:15] Okay
+[00:04:15 -> 00:04:22] Let's take another example. Let's say I want to represent a number
+[00:04:23 -> 00:04:25] Okay, before I do that, let's let's look at white space
+[00:04:25 -> 00:04:30] So I want to say that there is some amount of white space and I want to emit either emit a single token
+[00:04:30 -> 00:04:34] For the entire white space or completely ignore the white space during a lexical analysis
+[00:04:34 -> 00:04:41] So I could say okay a white space is nothing but a space
+[00:04:42 -> 00:04:44] character or
+[00:04:45 -> 00:04:52] a new line character represented by backslash in or a tab character represented by backslash t and
+[00:04:53 -> 00:04:55] then I could
+[00:04:55 -> 00:04:57] put a
+[00:04:57 -> 00:05:02] Cleanest out on top of this. All right. Is this correct? Well, it's not totally correct
+[00:05:04 -> 00:05:05] because
+[00:05:05 -> 00:05:09] It also includes an empty string and we don't want the empty string to be in the white space
+[00:05:09 -> 00:05:13] So let me just fix this I'm going to define
+[00:05:14 -> 00:05:17] Another language I'm going to say let's say I'm going to define blank as
+[00:05:22 -> 00:05:31] These three characters and then I'm going to say white space is one or more blanks like it's a blank
+[00:05:32 -> 00:05:34] followed by
+[00:05:34 -> 00:05:35] blank star
+[00:05:35 -> 00:05:43] So I'll introduce a new notation here, which is blank
+[00:05:44 -> 00:05:47] Which is a plus, right?
+[00:05:48 -> 00:05:50] so a plus represents
+[00:05:52 -> 00:05:54] One or more occurrences of a
+[00:05:54 -> 00:06:01] Just like the cleaning star a star represents zero or more occurrences a plus represents one or more
+[00:06:01 -> 00:06:03] All right, so and a plus is just equivalence to a
+[00:06:08 -> 00:06:10] Followed by a star
+[00:06:10 -> 00:06:16] So a plus is just a shorthand for a followed by a star and I could in fact write white space as
+[00:06:18 -> 00:06:20] space
+[00:06:20 -> 00:06:24] Plus backslash in plus backslash t
+[00:06:25 -> 00:06:29] Plus all right. Okay. All right
+[00:06:31 -> 00:06:37] What about a number all right a number is different from an integer because it can also have a
+[00:06:37 -> 00:06:42] Decimal point in the middle. All right, but it can only have a single decimal point, right?
+[00:06:42 -> 00:06:48] It doesn't make sense for a number to have more than one decimal points and it could have zero decimal points
+[00:06:48 -> 00:06:51] Also, so a number a number is a generalization over an integer
+[00:06:51 -> 00:06:57] So, let's let's see how one would potentially represent an integer as a regular expression a number as a regular expression
+[00:06:57 -> 00:07:01] So once again, I would define digit and digit would just be zero one
+[00:07:03 -> 00:07:05] Notice that I'm just omitting
+[00:07:05 -> 00:07:10] the single quotes, but these are just consider these and these as characters and
+[00:07:11 -> 00:07:13] Say digits
+[00:07:14 -> 00:07:19] Is one or more occurrences of digits so this is a digit plus
+[00:07:21 -> 00:07:27] I would say okay, so there could be an there could be a fraction no part. That's a
+[00:07:28 -> 00:07:31] Optional fraction it may or may not be there
+[00:07:31 -> 00:07:35] And so I want to represent the language of the fractional part. I could say
+[00:07:36 -> 00:07:37] it
+[00:07:37 -> 00:07:39] begins with
+[00:07:40 -> 00:07:42] Dot and
+[00:07:42 -> 00:07:44] and then
+[00:07:44 -> 00:07:47] digits in one or more digits and
+[00:07:48 -> 00:07:50] Because it's optional I also want to say that
+[00:07:51 -> 00:07:55] The epsilon string is also
+[00:07:55 -> 00:08:00] Accepted by the optional fraction. This means that there was no option. There was no fractional part
+[00:08:01 -> 00:08:03] also notice that I'm putting these back
+[00:08:04 -> 00:08:08] These parentheses were which were not actually part of the regular language specification
+[00:08:08 -> 00:08:16] But you know just I'm just putting them for a better readability just to know what is grouped with what and so on
+[00:08:17 -> 00:08:19] All right, then
+[00:08:19 -> 00:08:21] maybe there is
+[00:08:22 -> 00:08:27] Exponent so languages will allow you to write numbers like 1e
+[00:08:28 -> 00:08:30] plus
+[00:08:30 -> 00:08:32] 2 right which basically means
+[00:08:33 -> 00:08:35] you know
+[00:08:35 -> 00:08:41] 10 to the power 2 or something like that right so so so that's possible and that's also optional and I could say
+[00:08:41 -> 00:08:49] Okay, so this is nothing but the character e to say what it's an exponent and then I could say it is followed by
+[00:08:50 -> 00:08:57] Either the character plus notice that this is the character plus and not the union operator because I'm putting it in single quotes
+[00:08:57 -> 00:09:05] Plus or the minus character so I could also you know represent e minus something to represent division and
+[00:09:05 -> 00:09:15] Then I could say or I could say you know, maybe there was nothing so I could say 1e 2
+[00:09:15 -> 00:09:18] And even that is a nice number right?
+[00:09:18 -> 00:09:21] I mean he doesn't need to be followed either by plus or by minus
+[00:09:21 -> 00:09:27] It could just be followed by number in which case the plus is implicit. So here I'm going to say epsilon
+[00:09:28 -> 00:09:36] All right, so e is concatenated either with the plus character or with the minus character or with nothing and it's followed by
+[00:09:37 -> 00:09:39] digits
+[00:09:39 -> 00:09:42] So this little space here, but I'm just going to continue it here
+[00:09:42 -> 00:09:55] Say digits and then because it's optional the whole thing and plus epsilon
+[00:09:55 -> 00:10:00] So even the empty string is part of my exponent and finally my number
+[00:10:02 -> 00:10:04] Is
+[00:10:05 -> 00:10:15] Digits which means one or more digit followed by an optional fractional part followed by
+[00:10:16 -> 00:10:23] An optional exponent part. Okay, and so this here
+[00:10:28 -> 00:10:33] represents a regular language and it also represents a language that is used by
+[00:10:34 -> 00:10:38] common programming languages to represent an arbitrary number including decimals and
+[00:10:39 -> 00:10:41] Including the use of the exponent operator e
+[00:10:42 -> 00:10:48] All right. So with this we get some sense of how useful regular languages are
+[00:10:48 -> 00:10:50] There is some additional notation
+[00:10:51 -> 00:10:58] Associated with regular languages one of them we have already seen which is a plus. So a plus is nothing but a
+[00:11:00 -> 00:11:02] a star we already seen this
+[00:11:03 -> 00:11:05] another notation is a
+[00:11:05 -> 00:11:07] vertical bar
+[00:11:07 -> 00:11:10] B, which is just another way of saying a plus B
+[00:11:11 -> 00:11:14] All right. Sometimes in some context we may prefer the vertical bar
+[00:11:15 -> 00:11:18] Over the plus operator, but they mean the same thing
+[00:11:19 -> 00:11:23] All right, a question mark is nothing but a
+[00:11:26 -> 00:11:32] Plus epsilon, all right, so a question mark means either there's an a or there's nothing right?
+[00:11:32 -> 00:11:35] So that's that's a shorthand for a plus epsilon and we saw
+[00:11:36 -> 00:11:41] this kind of a pattern appearing when we were discussing the regular language for a number a
+[00:11:43 -> 00:11:45] Numeric constant to be more precise
+[00:11:45 -> 00:11:50] All right, then a to Z is just shorthand for all the
+[00:11:51 -> 00:11:57] Alphabets small case in this case in this example from a to Z and
+[00:11:59 -> 00:12:01] a to Z
+[00:12:01 -> 00:12:03] preceded by the character
+[00:12:03 -> 00:12:06] represents the complement. All right, so complement of
+[00:12:10 -> 00:12:14] all the characters between A and Z
+[00:12:14 -> 00:12:19] This is a shorthand notation that we can that we may find handy by
+[00:12:19 -> 00:12:22] discussing regular expressions in future
+[00:12:22 -> 00:12:24] All right
+[00:12:24 -> 00:12:29] So so what are we interested in doing right? We are interested in finding out
+[00:12:29 -> 00:12:31] So we have a stream of characters which represents
+[00:12:32 -> 00:12:37] the program at the source code program that the user has given us and we are interested in
+[00:12:37 -> 00:12:40] changing this stream of characters into a stream of tokens
+[00:12:41 -> 00:12:46] So how are we going to do that? Well, the idea is the following that we are going to
+[00:12:47 -> 00:12:52] Look at the stream of characters left to right and we are going to identify
+[00:12:53 -> 00:12:59] Token after token, right? So for example, we may take the first three characters and say okay
+[00:12:59 -> 00:13:04] This these three characters represent a numeric constant and so we're going to emit a numeric constant token
+[00:13:04 -> 00:13:05] All right
+[00:13:05 -> 00:13:10] Recall that a token is a token class which would in this case be numeric constant and a lexeme which would be the three
+[00:13:10 -> 00:13:12] characters that we just
+[00:13:12 -> 00:13:14] Took off from the stream
+[00:13:14 -> 00:13:19] All right, and we will keep doing this. All right now assuming that our
+[00:13:24 -> 00:13:31] Language of identifiers is our regular languages just like we saw earlier
+[00:13:32 -> 00:13:37] White space numeric constants identifiers keywords and so on
+[00:13:38 -> 00:13:43] We will now try to develop an algorithm that would that would implement our lexical analysis
+[00:13:44 -> 00:13:46] all right, so
+[00:13:46 -> 00:13:49] so the first step in doing this is we need to write a
+[00:13:50 -> 00:13:52] regular expression
+[00:13:52 -> 00:13:56] For each token class, right just like we did in the previous slide
+[00:13:56 -> 00:14:01] So we for example keyword white space identifier numeric constant and so on
+[00:14:04 -> 00:14:06] Notice that we are assuming here that
+[00:14:06 -> 00:14:11] these token classes can be represented as regular languages only then we can we can do this and
+[00:14:11 -> 00:14:13] and we said in the beginning that
+[00:14:14 -> 00:14:21] Most languages modern languages would use regular languages to denote the language of
+[00:14:23 -> 00:14:26] Tokens or token classes in the programming language today
+[00:14:26 -> 00:14:31] So so that it remains easy to do the parsing and lexing lexical analysis
+[00:14:32 -> 00:14:39] All right, so that's step number one step number two is to construct a giant union regular expression
+[00:14:39 -> 00:14:45] So what we do is we construct a giant union regular expression. So for example, we could say that
+[00:14:46 -> 00:14:48] so so
+[00:14:48 -> 00:14:53] It's a R which is the giant regular expression is equal to let's say keyword
+[00:14:57 -> 00:14:59] plus identifier
+[00:15:00 -> 00:15:07] plus numeric constant and so on right so you just say that okay, you know
+[00:15:07 -> 00:15:13] What is the what are all the possible tokens that are that that are accepted by?
+[00:15:14 -> 00:15:20] Language well, that's the language are and how is it formed? It just formed by unioning all the different
+[00:15:21 -> 00:15:23] token classes
+[00:15:23 -> 00:15:26] Belonging to that language. All right, or we could I mean
+[00:15:27 -> 00:15:33] I'm also going to refer to these different classes as it's just simply r0 r1
+[00:15:35 -> 00:15:42] Or maybe just start with r1 r2 rn, okay
+[00:15:43 -> 00:15:45] So whatever are the token classes we don't really care
+[00:15:45 -> 00:15:51] Let's just say they are r1 r2 r3 rn then we just create a giant regular expression
+[00:15:51 -> 00:15:54] Which is just the union of all these different token classes
+[00:15:56 -> 00:15:58] Okay
+[00:15:58 -> 00:16:00] Now we have an input
+[00:16:00 -> 00:16:02] x1 dot dot xn
+[00:16:02 -> 00:16:10] This is the sequence or string of characters that represents the program source code and now we will check
+[00:16:11 -> 00:16:16] Whether you know so notice that the string of characters has n characters in it
+[00:16:16 -> 00:16:21] So we're going to check whether the first I characters where I is anywhere between 1 and n
+[00:16:22 -> 00:16:24] belongs to one of the token classes and
+[00:16:25 -> 00:16:27] if so, we are going to
+[00:16:29 -> 00:16:31] All right, so so first of all, let's understand this check
+[00:16:31 -> 00:16:37] We're going to check whether x1 dot dot xi belongs to some token class rj for some j
+[00:16:37 -> 00:16:39] Right
+[00:16:39 -> 00:16:41] and if it does then
+[00:16:43 -> 00:16:45] We are going to emit the token
+[00:16:45 -> 00:16:47] corresponding to rj
+[00:16:47 -> 00:16:51] We're going to remove these characters x1 dot dot xi because they've been identified
+[00:16:52 -> 00:16:58] With the token belonging to rj and then we are going to repeat the process in step 3 until
+[00:16:59 -> 00:17:04] The input is fully consumed. All right, so that's that's our algorithm
+[00:17:05 -> 00:17:08] Okay, so so that sounds all right
+[00:17:09 -> 00:17:18] There are a couple of unanswered questions here. First of all, how do I check whether a string belongs to
+[00:17:19 -> 00:17:24] rj right the regular language rj now we have found we have so far studied
+[00:17:25 -> 00:17:33] Regular expressions and the languages that they represent but we haven't really studied how we are going to check whether a given string
+[00:17:33 -> 00:17:36] Belongs to a regular language or not and we're going to see that very soon
+[00:17:37 -> 00:17:39] the other question is
+[00:17:39 -> 00:17:42] What should be I right? How much should I?
+[00:17:42 -> 00:17:45] Bite off from the stream of characters in one go
+[00:17:45 -> 00:17:51] Right and this is this is related to the problem that we had example that we had seen in the very beginning of
+[00:17:51 -> 00:17:53] lexical analysis
+[00:17:53 -> 00:17:58] Let's say I have a stream of characters and the first two characters are greater than and equal to now
+[00:17:59 -> 00:18:02] Both greater than and equal to are themselves
+[00:18:04 -> 00:18:09] Token class, I mean valid lexemes and took and can be converted into tokens
+[00:18:09 -> 00:18:13] But in this case, we don't want them to be separate tokens. We want them to be a single token
+[00:18:14 -> 00:18:17] Isn't it? And and so how do we deal with that?
+[00:18:17 -> 00:18:22] How do we decide whether I should just take one or should that just should I take two or so on?
+[00:18:23 -> 00:18:27] And then similar example is equals versus double equal, right?
+[00:18:28 -> 00:18:32] So a single equal to represent the assignment operator in some languages like C
+[00:18:32 -> 00:18:36] but the double equal to represents the comparison equality comparison operator and
+[00:18:37 -> 00:18:41] when you see a double equal to you want to emit the token saying that this is a
+[00:18:42 -> 00:18:48] Comparison operator rather than you want rather than the assignment operator on the other hand when you see a single equal to
+[00:18:48 -> 00:18:50] then you want to emit a
+[00:18:51 -> 00:18:53] an assignment operator
+[00:18:53 -> 00:19:00] Okay, so to resolve these unsquestions we're going to use some more rules so how much inputs to consume
+[00:19:01 -> 00:19:06] So here the idea is the following that we will always take the longer one, right?
+[00:19:06 -> 00:19:08] So this is how we resolve the problem. We'll always
+[00:19:11 -> 00:19:13] Whenever there's a choice we will always take
+[00:19:14 -> 00:19:21] the longer one so for example if
+[00:19:22 -> 00:19:28] There is double equal to then we're going to first take the single equal to but now we have a choice
+[00:19:28 -> 00:19:31] either we can emit a token for the single equal to sign or
+[00:19:31 -> 00:19:38] You know consume another character and then make a token for both characters to get the string double equal to
+[00:19:39 -> 00:19:40] now
+[00:19:40 -> 00:19:44] Whenever there's a choice like this, we are always going to prefer the one which has a
+[00:19:45 -> 00:19:50] Longer string which consumes a longer string. All right, so this is this is just a this is just a heuristic rule
+[00:19:50 -> 00:19:52] And this rule is also called
+[00:19:53 -> 00:19:57] maximal munch
+[00:19:57 -> 00:20:03] Idea is that you want to munch the biggest string that you can for a single token
+[00:20:03 -> 00:20:09] Or whatever you can all right, and and the reason this is a good heuristic is because this is also how
+[00:20:10 -> 00:20:12] typically
+[00:20:12 -> 00:20:16] Humans work, right? So for example, you know in the English language
+[00:20:16 -> 00:20:21] Let's say there's a word called in and then there's a word word called inform
+[00:20:21 -> 00:20:27] Right and you could potentially just stop at in but the moment you see that there is you know
+[00:20:27 -> 00:20:29] It's followed by the characters F or M
+[00:20:30 -> 00:20:34] Then you don't actually stop at in you say want to read the whole word as one
+[00:20:34 -> 00:20:40] right you want to kind of munch as much as possible for a thing and that's that makes it the
+[00:20:41 -> 00:20:46] Natural that makes the language naturally readable and so it makes sense. All right, so there's nothing there's nothing
+[00:20:47 -> 00:20:53] Technically fundamental about it. It's just a heuristic where we're going to just make a rule that wherever there is
+[00:20:53 -> 00:20:58] Ambiguity wherever there's choice, we're going to prefer the longer one
+[00:20:58 -> 00:21:01] All right, and that's going to resolve this this ambiguity in this case
+[00:21:02 -> 00:21:03] All right
+[00:21:03 -> 00:21:05] Now there is another
+[00:21:05 -> 00:21:07] problem
+[00:21:07 -> 00:21:11] Which token to use so let's say, you know, there is
+[00:21:12 -> 00:21:13] if
+[00:21:13 -> 00:21:18] now if the the the word if the street the string if
+[00:21:19 -> 00:21:27] Can be both a keyword and an identifier right because it belongs to both the languages because in the identifier language
+[00:21:27 -> 00:21:32] We would probably say that it's a it's a sequence or string of characters and numbers
+[00:21:32 -> 00:21:39] It starts with a character and and if basically is you know is just fits in that language so that it's a valid
+[00:21:40 -> 00:21:41] so
+[00:21:41 -> 00:21:42] So there are two options here
+[00:21:43 -> 00:21:49] Either we could you know go into every kind of token class and explicitly remove the ones that do not belong to that belong to
+[00:21:49 -> 00:21:51] other token classes
+[00:21:52 -> 00:22:00] An easier and more kind of engineering friendly approach is to basically prioritize all right, so we're basically going to prioritize
+[00:22:03 -> 00:22:04] token classes
+[00:22:04 -> 00:22:12] So we're going to say that first try this token class and only if it doesn't match this token class go to
+[00:22:12 -> 00:22:16] The next one class and in this case we would say that keyword
+[00:22:17 -> 00:22:24] Token class has higher priority than the identifier token class. Okay, and
+[00:22:25 -> 00:22:33] And that's going to resolve this this issue for us this ambiguity for us. And so in this case the string if would be
+[00:22:34 -> 00:22:43] Recognized as a keyword and not as an identifier. Okay, so that's that's another ambiguity that that we can resolve and that would
+[00:22:44 -> 00:22:48] That would give us a you know desired result in such examples
+[00:22:50 -> 00:22:57] And finally, what if no rule matches? So let's say I get a stream of characters where the first and characters
+[00:22:57 -> 00:22:59] There's nothing that's matching. All right
+[00:22:59 -> 00:23:05] Now one option here is to just throw a throw up through an error and say I couldn't
+[00:23:05 -> 00:23:13] The lexical analysis phase just didn't work. All right, but often you that's not a great way to kind of do this because
+[00:23:14 -> 00:23:18] Compilers are typically do error handling in a way where they try to recover from an error
+[00:23:18 -> 00:23:20] So, all right, there's an error because
+[00:23:21 -> 00:23:25] If you came across a string of characters, which does not match any of the token classes
+[00:23:26 -> 00:23:28] but maybe you can
+[00:23:28 -> 00:23:34] Skip over some of the characters and then again start lexing and parsing the rest of the string and that way
+[00:23:34 -> 00:23:40] You know, you can throw multiple errors to the programmer if if there were more in one go
+[00:23:40 -> 00:23:45] So that the programmer can deal and kind of address each of those errors simultaneously
+[00:23:46 -> 00:23:48] Also, it's possible that
+[00:23:49 -> 00:23:55] You know in sometimes the compiler is not used in this batch execution mode
+[00:23:55 -> 00:24:02] But a compiler is sometimes running as a part of an IDE an integrated development environment. We are maybe the compiler is running every
+[00:24:04 -> 00:24:09] Periodically, maybe every few seconds or something like that in which case the programmers typing the program
+[00:24:09 -> 00:24:12] Maybe the programmer has some error at the top of the program
+[00:24:12 -> 00:24:17] But right now the programmer is kind of writing something at the bottom of the screen and
+[00:24:18 -> 00:24:22] If there is an error at the top and the compiler just stops
+[00:24:22 -> 00:24:28] That's not a very satisfactory response a better response would probably be that the compiler identifies the error
+[00:24:28 -> 00:24:32] marks it for the user but then moves on and then
+[00:24:32 -> 00:24:38] Also kind of checks the later code which the programmer is currently writing. All right to handle such cases
+[00:24:38 -> 00:24:43] One approach one popular approach is to have a special error token class
+[00:24:44 -> 00:24:46] All right, this is
+[00:24:46 -> 00:24:47] this is
+[00:24:47 -> 00:24:48] this is
+[00:24:48 -> 00:24:51] This is another token class and
+[00:24:51 -> 00:24:53] and
+[00:24:53 -> 00:24:59] And what do we do here? What what string should belong to the error token class? Well, the answer is all the strings
+[00:25:00 -> 00:25:02] except that
+[00:25:02 -> 00:25:05] This token class would be the last in the priority order
+[00:25:05 -> 00:25:07] Last in the priority order
+[00:25:07 -> 00:25:14] So only after none of the other token classes matched the string will we go to the error token class in which case it will match
+[00:25:14 -> 00:25:16] the error token class, right and
+[00:25:17 -> 00:25:18] You may you know
+[00:25:18 -> 00:25:24] typically the error token class would just consume a single character from the string and then move to the next character and maybe it will
+[00:25:24 -> 00:25:27] generate multiple error tokens before it starts
+[00:25:27 -> 00:25:29] Lexing successfully lexing the other
+[00:25:30 -> 00:25:32] parts of the string
+[00:25:32 -> 00:25:37] Okay, so so we have some idea of
+[00:25:38 -> 00:25:41] Lexical analysis and how it may proceed. There are still some missing pieces
+[00:25:41 -> 00:25:47] Like how do we check whether a string a string belongs to a regular language or not? We also don't know how
+[00:25:49 -> 00:25:52] So that's that's one thing one part that we're going to discuss next time
+[00:25:52 -> 00:25:58] To summarize regular expressions and a few rules resolve the ambiguities provide a way to do
+[00:25:59 -> 00:26:01] simple lexical analysis as we just saw and
+[00:26:02 -> 00:26:07] Good algorithms can achieve this in a single left to right pass. In fact the algorithm that we just saw
+[00:26:08 -> 00:26:13] Good was kind of a single left to right pass where you just consuming one character after another and
+[00:26:14 -> 00:26:18] And you require a few operations per character. Maybe two or three
+[00:26:19 -> 00:26:21] Operations and typically these operations involve memory

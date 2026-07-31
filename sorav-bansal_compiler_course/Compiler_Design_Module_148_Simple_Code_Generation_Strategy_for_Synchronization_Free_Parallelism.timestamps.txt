@@ -1,0 +1,601 @@
+Title: Compiler Design Module 148 : Simple Code Generation Strategy for Synchronization Free Parallelism
+Video ID: aMT4XyJQJQM
+Detected language: en
+------------------------------------------------------------
+
+[00:00:00 -> 00:00:04] We have now discussed the space partitioning constraints.
+[00:00:04 -> 00:00:09] We have also identified the method to solve those constraints.
+[00:00:09 -> 00:00:10] At the end of all this,
+[00:00:10 -> 00:00:14] we basically, for a given program or a loop nest,
+[00:00:14 -> 00:00:19] we basically get a map for every statement
+[00:00:19 -> 00:00:24] from its iteration space to the processor space.
+[00:00:24 -> 00:00:26] This is using, for example,
+[00:00:26 -> 00:00:27] for statement si,
+[00:00:27 -> 00:00:32] it is given by capital CI matrix and small ci additive vector.
+[00:00:32 -> 00:00:35] Now, once we have these functions from iterations of
+[00:00:35 -> 00:00:39] different statements to processor IDs,
+[00:00:39 -> 00:00:41] what do I do with them?
+[00:00:41 -> 00:00:44] It's not enough. We haven't really finished the whole thing.
+[00:00:44 -> 00:00:48] The remaining part is basically to transform the program so that it
+[00:00:48 -> 00:00:53] becomes parallel or it exploits locality better or things like that.
+[00:00:53 -> 00:00:56] Recall that when we motivated
+[00:00:56 -> 00:00:58] this whole idea of space partitioning constraints,
+[00:00:58 -> 00:01:02] we were interested in what is called synchronization-free parallelism.
+[00:01:02 -> 00:01:05] So we are interested in identifying data parallelism so
+[00:01:05 -> 00:01:07] that different iterations of the loop can be
+[00:01:07 -> 00:01:09] mapped to different processors, number one.
+[00:01:09 -> 00:01:11] Number two, even if the number of processors is
+[00:01:11 -> 00:01:14] smaller or maybe there's only one processor,
+[00:01:14 -> 00:01:19] the transformation basically ensures that all the iterations
+[00:01:19 -> 00:01:22] that are independent are in the outer loops and
+[00:01:22 -> 00:01:25] all the iterations that are data dependent are in the inner loops.
+[00:01:25 -> 00:01:27] In other words, these transformations decrease
+[00:01:27 -> 00:01:31] the reuse distance between data dependencies.
+[00:01:31 -> 00:01:34] So this is meaningful from
+[00:01:34 -> 00:01:36] locality perspective as well on a single processor.
+[00:01:36 -> 00:01:39] So we have to do all these transformations now,
+[00:01:39 -> 00:01:41] given that we have a solution,
+[00:01:41 -> 00:01:44] the maximum rank solution for these functions that are
+[00:01:44 -> 00:01:47] represented by capital C and small c values.
+[00:01:47 -> 00:01:48] These are fine functions.
+[00:01:48 -> 00:01:51] How do I now change the program so
+[00:01:52 -> 00:01:58] that it is either parallel or it has better locality?
+[00:01:58 -> 00:02:02] So for example, we have this S1,
+[00:02:02 -> 00:02:05] S2, these are two different statements.
+[00:02:05 -> 00:02:07] These dots in these sets basically indicate
+[00:02:07 -> 00:02:10] all the iteration points of S1 and S2,
+[00:02:10 -> 00:02:12] and these are functions that are mapping
+[00:02:12 -> 00:02:15] these iteration points to the processor IDs.
+[00:02:15 -> 00:02:17] So these are two different function.
+[00:02:17 -> 00:02:19] Let's say this was my original program.
+[00:02:19 -> 00:02:21] So now I want to change this program
+[00:02:21 -> 00:02:26] based on these functions such that it looks different.
+[00:02:26 -> 00:02:28] So for example, I could say that for us,
+[00:02:28 -> 00:02:31] let's say this was a two-dimensional processor space.
+[00:02:31 -> 00:02:34] Maybe from S1 and S2,
+[00:02:34 -> 00:02:36] I got a two-dimensional processor space.
+[00:02:36 -> 00:02:38] Then the two dimensions of the processor space,
+[00:02:38 -> 00:02:42] PID, is going to be let's say P1 and P2.
+[00:02:42 -> 00:02:46] So P1 for one dimension and P2 for the other dimension.
+[00:02:46 -> 00:02:48] Now we can have an outer loop
+[00:02:48 -> 00:02:51] which is iterating over one dimension of the processor space,
+[00:02:51 -> 00:02:52] and then I can have an inner loop
+[00:02:52 -> 00:02:54] which is iterating on the other dimension
+[00:02:54 -> 00:02:55] of the processor space.
+[00:02:55 -> 00:02:59] So for P1 equals some lower bound to some upper bound,
+[00:02:59 -> 00:03:02] for P2 equals some lower bound to some upper bound,
+[00:03:02 -> 00:03:03] and then I have some code
+[00:03:03 -> 00:03:07] which basically ultimately executes S1 and S2.
+[00:03:07 -> 00:03:10] And so basically, all these outer iterations
+[00:03:10 -> 00:03:13] like the outermost loop on P1
+[00:03:13 -> 00:03:15] is going to be completely embarrassingly parallel
+[00:03:15 -> 00:03:19] or data parallel because I know that this is by design
+[00:03:19 -> 00:03:23] that different iterations of the outer loop
+[00:03:23 -> 00:03:25] would have different values of P1.
+[00:03:25 -> 00:03:28] And so that means in a parallel machine,
+[00:03:28 -> 00:03:30] they could have been mapped to different processors.
+[00:03:30 -> 00:03:33] And so they must not have had any data dependency
+[00:03:33 -> 00:03:38] because that was our original formulation of the problem.
+[00:03:38 -> 00:03:41] Similarly for the inner processor loop as well.
+[00:03:41 -> 00:03:43] And then whatever is inside,
+[00:03:43 -> 00:03:44] that may have data dependency.
+[00:03:44 -> 00:03:46] So that's what I mean.
+[00:03:46 -> 00:03:47] In this case, the transformation looks like
+[00:03:47 -> 00:03:50] it is for locality on a single processor.
+[00:03:50 -> 00:03:51] But I could, for example, you know,
+[00:03:51 -> 00:03:54] just suffix parallel on the top four loops
+[00:03:54 -> 00:03:57] and this would become a parallel for loop.
+[00:03:57 -> 00:03:59] The top two loops, the outer two loops
+[00:03:59 -> 00:04:00] would become parallel for loops
+[00:04:00 -> 00:04:02] and they will become amenable for parallelization
+[00:04:02 -> 00:04:04] on a parallel machine.
+[00:04:04 -> 00:04:07] So this whole step is called code generation
+[00:04:07 -> 00:04:10] and basically we are calling this generating the code
+[00:04:10 -> 00:04:12] for a given space partition.
+[00:04:12 -> 00:04:13] So we already have a space partition
+[00:04:13 -> 00:04:17] which is characterized by all these solutions
+[00:04:17 -> 00:04:19] that we have obtained, capital C, small c.
+[00:04:19 -> 00:04:21] And now given these solutions,
+[00:04:21 -> 00:04:23] I need to generate the codes either on a parallel machine
+[00:04:23 -> 00:04:25] or on a sequential machine
+[00:04:25 -> 00:04:28] such that I improve the parallelism and or locality.
+[00:04:30 -> 00:04:32] Okay, so let's take an example
+[00:04:32 -> 00:04:34] to understand what we're going to do.
+[00:04:34 -> 00:04:38] Also, I want to say that in this module,
+[00:04:38 -> 00:04:39] I'm just going to discuss
+[00:04:39 -> 00:04:41] a very simple code generation strategy
+[00:04:41 -> 00:04:44] and it may not look very optimized.
+[00:04:44 -> 00:04:47] In fact, it may look worse than the original program
+[00:04:47 -> 00:04:49] but slowly we are going to improve that
+[00:04:49 -> 00:04:51] to get our best possible solution
+[00:04:51 -> 00:04:53] which are going to look much better
+[00:04:53 -> 00:04:55] than what the original program was.
+[00:04:55 -> 00:04:58] So here is the original program by way of an example.
+[00:04:58 -> 00:05:01] Once again, I'm going to use this as a running example
+[00:05:01 -> 00:05:03] similar to the example that I've been using all through
+[00:05:03 -> 00:05:06] while even discussing the space partitioning constraints.
+[00:05:06 -> 00:05:07] So I have for i equals zero to 100,
+[00:05:07 -> 00:05:09] for j equals zero to 100,
+[00:05:09 -> 00:05:13] xij equals xij plus yi minus one j
+[00:05:13 -> 00:05:17] and yij equals yij plus xij minus one.
+[00:05:17 -> 00:05:20] And this first statement is called S1
+[00:05:20 -> 00:05:22] and the second statement is called S2
+[00:05:22 -> 00:05:24] and they can be mapped independently
+[00:05:24 -> 00:05:27] provided I can do different processes
+[00:05:27 -> 00:05:29] provided I respect the data dependencies.
+[00:05:29 -> 00:05:32] And we have already solved these kinds of problems
+[00:05:32 -> 00:05:34] and let's say I have my solution.
+[00:05:34 -> 00:05:36] The solution that I have is capital C1
+[00:05:36 -> 00:05:39] is a rank one matrix.
+[00:05:39 -> 00:05:40] That means it has one row,
+[00:05:40 -> 00:05:43] one linearly independent row
+[00:05:43 -> 00:05:45] and it has one minus one
+[00:05:45 -> 00:05:48] and small c1 which is the additive vector is minus one.
+[00:05:49 -> 00:05:51] Capital C2 again, one minus one
+[00:05:51 -> 00:05:53] and small c2 is zero.
+[00:05:53 -> 00:05:55] In other words, for S1,
+[00:05:55 -> 00:05:57] for iteration i comma j of S1,
+[00:05:57 -> 00:06:01] it is going to be mapped to the processor ID P.
+[00:06:02 -> 00:06:04] So processor space is only a one dimensional space
+[00:06:04 -> 00:06:07] because these capital Cs are uni-dimensional.
+[00:06:07 -> 00:06:10] And so P equals i minus j minus one
+[00:06:10 -> 00:06:13] represents the ID of the processor
+[00:06:13 -> 00:06:14] at which S1 is going,
+[00:06:14 -> 00:06:18] the i comma j iteration of S1 is going to run.
+[00:06:18 -> 00:06:21] So for example, if it was the one comma one iteration
+[00:06:21 -> 00:06:25] of S1, then it's going to run on processor ID minus one.
+[00:06:25 -> 00:06:28] All right, similarly for S2,
+[00:06:28 -> 00:06:31] the P function is P equals i minus j.
+[00:06:31 -> 00:06:33] So for example, if it was one comma one,
+[00:06:33 -> 00:06:36] then it's going to run on processor ID zero.
+[00:06:36 -> 00:06:38] So one comma one of S1
+[00:06:38 -> 00:06:39] will run on a different processor ID
+[00:06:39 -> 00:06:41] and one comma one of S2
+[00:06:41 -> 00:06:43] is going to run on a different processor ID.
+[00:06:43 -> 00:06:46] And this is a part of our solution,
+[00:06:46 -> 00:06:47] of our maximum rank solution
+[00:06:47 -> 00:06:50] and yet it satisfies all the data dependencies
+[00:06:50 -> 00:06:51] as we have already discussed before.
+[00:06:51 -> 00:06:52] Now, once I have this,
+[00:06:52 -> 00:06:55] how do I kind of go around transforming this program?
+[00:06:55 -> 00:06:57] And I'm going to transform the program
+[00:06:57 -> 00:07:00] for as though it looks like a uni-processor program.
+[00:07:00 -> 00:07:03] But as I showed in the previous slide,
+[00:07:03 -> 00:07:05] I can always put parallel for loops
+[00:07:05 -> 00:07:08] instead of sequential for loops at the outer loops,
+[00:07:08 -> 00:07:10] which are iterating over different dimensions of the P
+[00:07:10 -> 00:07:13] to basically make it a parallel program as well.
+[00:07:13 -> 00:07:14] So it doesn't really matter
+[00:07:14 -> 00:07:17] whether I'm generating code for a sequential program
+[00:07:17 -> 00:07:20] or a sequential machine or a parallel machine.
+[00:07:20 -> 00:07:22] The code generated is going to look very similar.
+[00:07:22 -> 00:07:26] It's just a matter of changing a sequential for
+[00:07:26 -> 00:07:29] to a parallel for on the outer loops.
+[00:07:29 -> 00:07:32] Okay, so now this is what my,
+[00:07:32 -> 00:07:35] here's my very simple code generation strategy.
+[00:07:35 -> 00:07:38] I iterate over all the processor ID.
+[00:07:38 -> 00:07:40] So what are my processor IDs?
+[00:07:40 -> 00:07:43] Well, P is a single dimensional processor ID.
+[00:07:43 -> 00:07:47] So there'll be only one nested for loop.
+[00:07:47 -> 00:07:48] In my first slide that I showed,
+[00:07:48 -> 00:07:50] I had P1 and P2 because I was assuming
+[00:07:50 -> 00:07:52] that PID is two dimensional.
+[00:07:52 -> 00:07:54] But in this particular example,
+[00:07:54 -> 00:07:56] the solution that I got was one dimensional.
+[00:07:56 -> 00:07:57] So I will have an outer for loop,
+[00:07:57 -> 00:07:59] which is only a single for loop,
+[00:07:59 -> 00:08:03] not two for loops or anything like that.
+[00:08:03 -> 00:08:05] And the only one dimension P is going to iterate
+[00:08:05 -> 00:08:07] from some lower bound to some upper bound.
+[00:08:07 -> 00:08:09] And we're going to discuss how we get these lower bounds
+[00:08:09 -> 00:08:10] and upper bounds.
+[00:08:10 -> 00:08:12] And after that, I just basically,
+[00:08:12 -> 00:08:15] it's basically it's iterating over different processors.
+[00:08:15 -> 00:08:15] And by the way,
+[00:08:15 -> 00:08:18] I could have put a parallel for loop here as well.
+[00:08:18 -> 00:08:20] Okay, that's fine.
+[00:08:20 -> 00:08:22] I mean, so again, you know,
+[00:08:22 -> 00:08:23] it doesn't matter whether I'm generating code
+[00:08:23 -> 00:08:25] for a sequential machine or a parallel machine.
+[00:08:25 -> 00:08:27] But after that, what do I do?
+[00:08:27 -> 00:08:29] Well, here is the simple code generation strategy,
+[00:08:29 -> 00:08:30] which is not very efficient.
+[00:08:30 -> 00:08:32] As I said, we're going to make it more efficient
+[00:08:32 -> 00:08:34] in our successive modules,
+[00:08:34 -> 00:08:36] but at least it should be correct.
+[00:08:37 -> 00:08:39] And here is what we are going to do.
+[00:08:39 -> 00:08:41] We're just going to paste the entire program here
+[00:08:41 -> 00:08:42] as it is, okay?
+[00:08:42 -> 00:08:46] So, you know, all these statements
+[00:08:46 -> 00:08:47] that you see in light brown
+[00:08:47 -> 00:08:49] are basically just taken as it is verbatim
+[00:08:49 -> 00:08:51] from the original program.
+[00:08:51 -> 00:08:52] So for i equals zero,
+[00:08:52 -> 00:08:54] i is less than equal to 100, i plus plus,
+[00:08:54 -> 00:08:55] that's just coming from here.
+[00:08:55 -> 00:08:58] For j equals zero, j is less than equal to 100,
+[00:08:58 -> 00:09:00] j plus plus, that's also coming from here.
+[00:09:00 -> 00:09:02] And now I have all the statements
+[00:09:02 -> 00:09:03] or whatever the statements are, right?
+[00:09:03 -> 00:09:06] So the only change that I will make
+[00:09:06 -> 00:09:08] is that whenever I come across a statement,
+[00:09:08 -> 00:09:10] let's say S1 or S2,
+[00:09:10 -> 00:09:13] then I'm going to prefix it or predicate it
+[00:09:13 -> 00:09:15] with an if statement,
+[00:09:15 -> 00:09:18] which basically says that execute this iteration
+[00:09:18 -> 00:09:21] of the statement only if it matches
+[00:09:21 -> 00:09:23] the corresponding processor ID,
+[00:09:23 -> 00:09:25] or it was mapped to the corresponding processor ID.
+[00:09:25 -> 00:09:27] So notice that what is the outer for loop saying?
+[00:09:27 -> 00:09:29] The outer for loop saying is,
+[00:09:29 -> 00:09:31] it's saying that I'm currently executing
+[00:09:31 -> 00:09:32] on the pth processor, right?
+[00:09:32 -> 00:09:35] Whatever is the processor ID space.
+[00:09:35 -> 00:09:37] So I'm currently executing on the pth processor.
+[00:09:37 -> 00:09:40] And so we only want to execute those iterations of S1,
+[00:09:40 -> 00:09:44] which were mapped to this particular value of p, right?
+[00:09:44 -> 00:09:47] And so how do I find out what are all those values,
+[00:09:47 -> 00:09:48] what are all those iterations that were mapped
+[00:09:48 -> 00:09:51] to this fixed value of small p?
+[00:09:51 -> 00:09:53] Well, that's exactly the function
+[00:09:53 -> 00:09:55] that we had identified for S1, right?
+[00:09:55 -> 00:09:57] Which is p equals i minus j minus one.
+[00:09:57 -> 00:10:00] So we can prefix it with exactly that predicate,
+[00:10:00 -> 00:10:03] is that if p equals i minus j minus one,
+[00:10:03 -> 00:10:04] only then execute it,
+[00:10:04 -> 00:10:06] otherwise don't execute anything.
+[00:10:06 -> 00:10:08] So that's basically saying that execute the statement
+[00:10:08 -> 00:10:12] only if I am on the correct processor, right?
+[00:10:12 -> 00:10:13] For this particular iteration.
+[00:10:13 -> 00:10:15] So that's what this prefixing means.
+[00:10:15 -> 00:10:17] It says if p equals i minus j minus one,
+[00:10:17 -> 00:10:19] then execute S1.
+[00:10:19 -> 00:10:22] Similarly, I have a similar rule for S2.
+[00:10:22 -> 00:10:23] So I just paste S2 as it is,
+[00:10:23 -> 00:10:25] except that I also predicate it
+[00:10:25 -> 00:10:27] with if p equals i minus j.
+[00:10:27 -> 00:10:28] Notice that the function,
+[00:10:28 -> 00:10:31] the mapping function for S2 is different from S1.
+[00:10:31 -> 00:10:33] And so while, and so the checks,
+[00:10:33 -> 00:10:35] the predicates themselves are also different.
+[00:10:35 -> 00:10:38] In one case, we are checking against i minus j minus one,
+[00:10:38 -> 00:10:39] because that's what the function was.
+[00:10:39 -> 00:10:40] And in the other case,
+[00:10:40 -> 00:10:42] I was checking for i minus j.
+[00:10:42 -> 00:10:44] Now I want to kind of just complete the discussion
+[00:10:44 -> 00:10:47] by saying that if it was a two dimensional
+[00:10:47 -> 00:10:48] processor space,
+[00:10:48 -> 00:10:52] then I would have had two outer loops, p1 and p2.
+[00:10:52 -> 00:10:53] And my predicate would have been
+[00:10:53 -> 00:10:56] if p1 equals some function of i comma j
+[00:10:56 -> 00:10:59] and p2 equals some function of i comma j, all right?
+[00:10:59 -> 00:11:02] So basically I will execute that iteration
+[00:11:02 -> 00:11:07] of the statement only if I'm on the correct p1 comma p2 pair.
+[00:11:07 -> 00:11:10] In other words, I'm on the correct processor.
+[00:11:10 -> 00:11:11] And so that's exactly what we are doing
+[00:11:11 -> 00:11:13] in this example as well.
+[00:11:14 -> 00:11:16] So now there are two remaining questions here.
+[00:11:16 -> 00:11:18] One is what is,
+[00:11:18 -> 00:11:20] so one of the important remaining questions here is
+[00:11:20 -> 00:11:24] what, how do I identify what is the lower bound of p
+[00:11:24 -> 00:11:25] and upper bound of p?
+[00:11:25 -> 00:11:26] And this is, in this case,
+[00:11:26 -> 00:11:29] this is only a single dimension of the processor space.
+[00:11:29 -> 00:11:32] If I had a two dimensional processor space,
+[00:11:32 -> 00:11:35] then I would have had to identify the upper bound
+[00:11:35 -> 00:11:38] and lower bound for each of the p1, p2 and so on, right?
+[00:11:38 -> 00:11:40] So in this case, there's only one dimension.
+[00:11:40 -> 00:11:43] So I need to basically identify the lower bound
+[00:11:43 -> 00:11:44] and upper bound for that particular dimension.
+[00:11:44 -> 00:11:47] In this case, I've already given you a solution from,
+[00:11:47 -> 00:11:49] it should be from minus 100 to 99.
+[00:11:49 -> 00:11:51] How do I figure this out?
+[00:11:51 -> 00:11:52] Well, here is a hint.
+[00:11:53 -> 00:11:56] We basically use the Fourier mode scan method
+[00:11:56 -> 00:11:57] to figure this out.
+[00:11:57 -> 00:12:00] And we have already discussed that this is basically
+[00:12:00 -> 00:12:02] just like the changing the axis method
+[00:12:02 -> 00:12:05] in Fourier mode scan, okay?
+[00:12:05 -> 00:12:08] The other question is how do I figure out what is,
+[00:12:08 -> 00:12:10] what are these predicates that I should use?
+[00:12:10 -> 00:12:12] And I've already discussed that these predicates
+[00:12:12 -> 00:12:14] are coming exactly from the mapping functions
+[00:12:14 -> 00:12:17] for the corresponding respective statements.
+[00:12:17 -> 00:12:20] For S1, the mapping function was I minus J minus one.
+[00:12:20 -> 00:12:21] So that's what I'm going to use as a predicate.
+[00:12:21 -> 00:12:23] For S2, it was I minus J.
+[00:12:23 -> 00:12:25] So that's what I'm going to use as a predicate.
+[00:12:26 -> 00:12:27] So now here is the,
+[00:12:27 -> 00:12:28] given that we understand,
+[00:12:28 -> 00:12:31] so this is the solution that I'm going to discuss
+[00:12:31 -> 00:12:32] for code generation.
+[00:12:32 -> 00:12:34] My first point here is that this transformation
+[00:12:34 -> 00:12:37] from here to here is correct, okay?
+[00:12:37 -> 00:12:40] It's not, it doesn't look very pretty
+[00:12:40 -> 00:12:42] in the sense that it's not efficient,
+[00:12:42 -> 00:12:43] but it is correct.
+[00:12:43 -> 00:12:44] And so we're going to at least start
+[00:12:44 -> 00:12:46] from a correct solution
+[00:12:46 -> 00:12:50] where all the parallel threads are at the top level.
+[00:12:50 -> 00:12:53] And then I can kind of parallelize the top level loop.
+[00:12:53 -> 00:12:55] But now, and later I'm going to discuss
+[00:12:55 -> 00:12:56] in the subsequent modules
+[00:12:56 -> 00:12:58] how to make this more efficient as well.
+[00:12:59 -> 00:13:02] Okay, so right now it doesn't look very efficient.
+[00:13:03 -> 00:13:06] All right, so here is the algorithm sketch.
+[00:13:06 -> 00:13:09] We will generate outer loops for PID
+[00:13:09 -> 00:13:11] with depth equal to max rank
+[00:13:11 -> 00:13:14] of the coefficient matrix Ci across all statements Si.
+[00:13:14 -> 00:13:17] So if there are five statements,
+[00:13:17 -> 00:13:19] then we'll have five different capital CIs,
+[00:13:19 -> 00:13:21] the coefficients matrices.
+[00:13:21 -> 00:13:23] And then whichever has the maximum rank,
+[00:13:23 -> 00:13:26] that's the one that we basically going to use
+[00:13:26 -> 00:13:28] as the rank of PID.
+[00:13:28 -> 00:13:31] And that is the number of loops that I'm going to create.
+[00:13:31 -> 00:13:34] So in my example, that value was just one.
+[00:13:34 -> 00:13:35] But if you have two,
+[00:13:35 -> 00:13:37] then you're going to create two nested loops
+[00:13:37 -> 00:13:40] for P1 equals something, for P2 equals something.
+[00:13:40 -> 00:13:40] If there was five,
+[00:13:40 -> 00:13:42] then you're going to create five different loops
+[00:13:42 -> 00:13:43] and so on.
+[00:13:43 -> 00:13:44] So you're going to generate these outer loops
+[00:13:44 -> 00:13:47] and these outer loops are going to be parallel loops
+[00:13:47 -> 00:13:50] if there was a parallel machine, okay?
+[00:13:50 -> 00:13:53] Then I'm going to identify lower and upper bounds
+[00:13:53 -> 00:13:56] for each dimension of the PID.
+[00:13:56 -> 00:14:01] So just like we identify minus 199 or whatever for P,
+[00:14:03 -> 00:14:04] if there was P1, P2,
+[00:14:04 -> 00:14:07] then I need to identify similarly the lower bound for P1
+[00:14:07 -> 00:14:09] and the lower upper bound of P1
+[00:14:09 -> 00:14:11] and lower bound and upper bound of P2.
+[00:14:11 -> 00:14:13] And how do I do this?
+[00:14:13 -> 00:14:15] Well, here is a simple idea.
+[00:14:15 -> 00:14:17] You do this for each statement separately.
+[00:14:17 -> 00:14:18] So for every statement,
+[00:14:18 -> 00:14:20] we already have the iteration space
+[00:14:20 -> 00:14:23] and we have the mapping function
+[00:14:23 -> 00:14:27] from the iteration space to the processor space.
+[00:14:27 -> 00:14:29] And so from that,
+[00:14:29 -> 00:14:30] we have the bounds for the iteration space.
+[00:14:30 -> 00:14:32] For example, I is greater than or equal to zero
+[00:14:32 -> 00:14:34] and I is less than or equal to 100.
+[00:14:34 -> 00:14:35] Similarly, J is greater than or equal to zero,
+[00:14:35 -> 00:14:37] J is less than or equal to 100.
+[00:14:37 -> 00:14:39] And now we have a function that says
+[00:14:39 -> 00:14:41] P equals I minus J minus one.
+[00:14:41 -> 00:14:43] So I can use the Fourier mode scan method
+[00:14:43 -> 00:14:46] to identify what are the lower and upper bounds for P
+[00:14:46 -> 00:14:49] from the lower and upper bounds of I and J.
+[00:14:49 -> 00:14:53] And this is just our idea of eliminating some variables.
+[00:14:54 -> 00:14:57] So for example, I'm going to project on P,
+[00:14:57 -> 00:14:59] this space, this polyhedral space
+[00:14:59 -> 00:15:02] that is formed by I comma J between zero and 100.
+[00:15:02 -> 00:15:03] I'm going to project this polyhedral space
+[00:15:03 -> 00:15:05] on the third dimension P,
+[00:15:05 -> 00:15:10] which is using the identity P equals I minus J minus one
+[00:15:12 -> 00:15:14] or P equals I minus J or whatever.
+[00:15:14 -> 00:15:17] And notice that because these relations
+[00:15:17 -> 00:15:18] between P and I comma J
+[00:15:18 -> 00:15:21] may be different for different statements,
+[00:15:21 -> 00:15:24] each statement separately.
+[00:15:24 -> 00:15:27] And one of the properties of this is that,
+[00:15:27 -> 00:15:29] because it was a polyhedral space,
+[00:15:30 -> 00:15:32] a projection of a polyhedral space
+[00:15:32 -> 00:15:33] will also be polyhedral.
+[00:15:33 -> 00:15:36] This is something that we had discussed for poly,
+[00:15:36 -> 00:15:38] when we were discussing the Fourier mode scan method.
+[00:15:38 -> 00:15:41] And so the projection for every single statement
+[00:15:41 -> 00:15:42] will be polyhedral.
+[00:15:42 -> 00:15:44] It will be convex and it will be polyhedral.
+[00:15:44 -> 00:15:46] But now I will take the union
+[00:15:46 -> 00:15:48] of all these convex polyhedral spaces
+[00:15:48 -> 00:15:50] or I'm also calling them convex ranges
+[00:15:50 -> 00:15:51] to get one convex range.
+[00:15:51 -> 00:15:56] So for example, if for S1 I get P1 is from minus one to five
+[00:15:57 -> 00:16:02] and for S2 I get P goes from seven to 10,
+[00:16:03 -> 00:16:05] then I just take the lowest bound, which is minus one
+[00:16:05 -> 00:16:07] and the upper bound, which is 10
+[00:16:07 -> 00:16:09] and just iterate over that.
+[00:16:09 -> 00:16:11] And it doesn't really matter because after all,
+[00:16:11 -> 00:16:14] you're only going to execute S1 and S2
+[00:16:14 -> 00:16:16] when the corresponding Ps are being matched
+[00:16:16 -> 00:16:18] because you're already predicating them with that.
+[00:16:18 -> 00:16:20] So we just want to find the lower and upper bounds.
+[00:16:20 -> 00:16:22] So notice that when you take the union
+[00:16:22 -> 00:16:24] of all the convex ranges.
+[00:16:24 -> 00:16:26] So I just gave you an example,
+[00:16:26 -> 00:16:28] minus three to five and seven to 10.
+[00:16:28 -> 00:16:30] When I take the union, it doesn't look convex.
+[00:16:30 -> 00:16:31] It's no longer polyhedral
+[00:16:31 -> 00:16:33] because it's two different ranges
+[00:16:33 -> 00:16:34] that I want to take union of.
+[00:16:34 -> 00:16:37] But now I just create a larger polyhedron
+[00:16:37 -> 00:16:41] that just because the space between five and seven
+[00:16:41 -> 00:16:43] wasn't actually part of the union,
+[00:16:43 -> 00:16:45] but now I just kind of extrapolated
+[00:16:45 -> 00:16:48] so that it becomes convex and still remains a polyhedron.
+[00:16:48 -> 00:16:49] And so that's what I'm going to do.
+[00:16:49 -> 00:16:52] It doesn't really matter, as I said earlier.
+[00:16:52 -> 00:16:54] If I add more points to P,
+[00:16:54 -> 00:16:57] it is only going to make my program less efficient
+[00:16:57 -> 00:16:59] because I'm going to iterate more unnecessarily.
+[00:16:59 -> 00:17:00] But at the end of the day,
+[00:17:00 -> 00:17:01] it's not going to make it incorrect
+[00:17:01 -> 00:17:04] because anyway, the execution of any of the statements
+[00:17:04 -> 00:17:08] is predicated based on the value of P anyways.
+[00:17:08 -> 00:17:10] So we take the union of all convex ranges
+[00:17:10 -> 00:17:13] to get one convex range in the outer loop.
+[00:17:14 -> 00:17:17] Okay, now, and finally, we paste the original program
+[00:17:17 -> 00:17:19] after predicating each statement
+[00:17:19 -> 00:17:22] so that only the desired statement
+[00:17:22 -> 00:17:26] iteration indices are executed for a given PID index.
+[00:17:26 -> 00:17:31] So that's exactly if P1 equals some function of i, j
+[00:17:31 -> 00:17:33] and P2 equals some function of i, j
+[00:17:33 -> 00:17:35] only then execute S1, all right?
+[00:17:35 -> 00:17:37] In our previous example, there was only one P.
+[00:17:37 -> 00:17:40] So P equals i minus j minus one.
+[00:17:40 -> 00:17:41] And so that's what predicating is.
+[00:17:41 -> 00:17:44] And so this is going to be a code generation strategy.
+[00:17:44 -> 00:17:45] Once again, it's not very efficient,
+[00:17:45 -> 00:17:47] but it is correct.
+[00:17:48 -> 00:17:51] Okay, so just want to solve this for this example,
+[00:17:51 -> 00:17:54] just to, this is the Fourier mod-skin method
+[00:17:54 -> 00:17:55] to identify the bounds,
+[00:17:55 -> 00:17:57] but maybe you have forgotten it.
+[00:17:57 -> 00:17:59] So let's try to do this again
+[00:17:59 -> 00:18:01] for this particular example.
+[00:18:01 -> 00:18:05] So recall that P equals i minus j minus one for S1.
+[00:18:05 -> 00:18:07] So I'm going to do this separately for every statement.
+[00:18:07 -> 00:18:08] So I first do for S1.
+[00:18:08 -> 00:18:11] So P equals i minus j minus one for S1.
+[00:18:11 -> 00:18:14] i is between zero and 100, j is between zero and 100.
+[00:18:14 -> 00:18:17] So what does it tell me about P?
+[00:18:17 -> 00:18:20] Well, if you recall, basically in Fourier mod-skin,
+[00:18:20 -> 00:18:22] I take an inequality.
+[00:18:22 -> 00:18:24] So I want to project on i, right?
+[00:18:24 -> 00:18:26] So I basically take an inequality
+[00:18:26 -> 00:18:29] and which is less than equal to
+[00:18:29 -> 00:18:31] and another inequality is greater than equal to
+[00:18:31 -> 00:18:34] and kind of put them together
+[00:18:34 -> 00:18:36] by getting rid of the middle element,
+[00:18:36 -> 00:18:38] which was the one I wanted to project out.
+[00:18:39 -> 00:18:41] So here is what I get.
+[00:18:41 -> 00:18:46] For example, when I say i is less than equal to 100,
+[00:18:46 -> 00:18:48] first of all, the first thing I do is I replace,
+[00:18:48 -> 00:18:52] I kind of do Gaussian elimination using this equality
+[00:18:52 -> 00:18:55] to just get, just rewrite i in terms of P.
+[00:18:55 -> 00:18:59] So I have P plus j plus one between zero and 100
+[00:18:59 -> 00:19:01] and j between zero and 100.
+[00:19:01 -> 00:19:03] P plus j plus one is just a rewrite of i.
+[00:19:04 -> 00:19:07] And now basically I have this polyhedral space
+[00:19:07 -> 00:19:09] between P and j instead of i and j,
+[00:19:09 -> 00:19:11] but now I want to project out j.
+[00:19:11 -> 00:19:13] So how do I project out j?
+[00:19:13 -> 00:19:16] Well, I get inequalities which are,
+[00:19:16 -> 00:19:18] which basically express j between,
+[00:19:18 -> 00:19:20] j is less than equal to something
+[00:19:20 -> 00:19:21] and j is greater than equal to something
+[00:19:21 -> 00:19:22] and then kind of combine them.
+[00:19:22 -> 00:19:24] That's a Fourier mode scan method.
+[00:19:24 -> 00:19:26] So example, if I combine j is greater than equal to zero
+[00:19:26 -> 00:19:29] with P plus j plus one is less than equal to 100,
+[00:19:29 -> 00:19:32] I get, if I project out j from here
+[00:19:32 -> 00:19:35] from these two inequalities,
+[00:19:35 -> 00:19:38] this diagonal relation saying that
+[00:19:38 -> 00:19:40] take less than from here and greater than from there,
+[00:19:40 -> 00:19:42] I get j is greater than equal to zero,
+[00:19:43 -> 00:19:45] P plus j plus one is less than equal to 100.
+[00:19:45 -> 00:19:46] So j is greater than zero.
+[00:19:46 -> 00:19:48] So it must be true that P plus one
+[00:19:48 -> 00:19:50] is less than equal to 100, right?
+[00:19:50 -> 00:19:51] Because j is greater than zero
+[00:19:51 -> 00:19:53] and P plus j plus one is less than equal to 100.
+[00:19:53 -> 00:19:55] So I get P plus one is less than equal to 100
+[00:19:55 -> 00:19:57] or P is less than equal to 99.
+[00:19:57 -> 00:20:00] So from S1, I got P is less than equal to 99.
+[00:20:00 -> 00:20:03] So that's one of the upper bounds that I got for S1.
+[00:20:03 -> 00:20:06] Similarly, if I take these, the other diagonal,
+[00:20:06 -> 00:20:08] I get and I project out j,
+[00:20:08 -> 00:20:12] I get P plus j plus one is greater than equal to zero
+[00:20:12 -> 00:20:14] and j is less than equal to 100.
+[00:20:14 -> 00:20:18] So that basically gives me P plus 101
+[00:20:18 -> 00:20:19] is greater than equal to zero
+[00:20:19 -> 00:20:21] because that's the maximum value that j can take.
+[00:20:21 -> 00:20:23] And so that, you know, this P plus j plus one
+[00:20:23 -> 00:20:24] is greater than equal to zero
+[00:20:24 -> 00:20:26] and j is less than equal to 100
+[00:20:26 -> 00:20:30] gives me P plus 101 is always greater than equal to zero.
+[00:20:30 -> 00:20:32] I just projected out j there as well.
+[00:20:32 -> 00:20:35] And that gives me P is greater than equal to minus 101.
+[00:20:35 -> 00:20:38] So minus 101 is the lower bound now for P
+[00:20:38 -> 00:20:40] and 99 is the upper bound for P
+[00:20:40 -> 00:20:42] for when I'm talking about S1.
+[00:20:42 -> 00:20:44] So I already got a range, which is a convex range,
+[00:20:44 -> 00:20:47] which is minus 101, 99.
+[00:20:47 -> 00:20:49] And this is a convex polyhedron
+[00:20:49 -> 00:20:52] because projection of a convex polyhedron
+[00:20:52 -> 00:20:54] is always a convex polyhedron as well.
+[00:20:54 -> 00:20:56] But this is just for S1, okay?
+[00:20:56 -> 00:20:59] Now I want to also do the same thing for S2.
+[00:20:59 -> 00:21:02] And so first of all, you know, I just circled this.
+[00:21:02 -> 00:21:04] So these are the constraints that I got for S1
+[00:21:04 -> 00:21:06] which P is less than equal to 99
+[00:21:06 -> 00:21:08] and P is greater than equal to minus 101.
+[00:21:08 -> 00:21:11] Now I take S2 where P equals i minus j
+[00:21:11 -> 00:21:13] and once again, the iteration indices have constraints,
+[00:21:13 -> 00:21:17] i is between zero and 100 and j is between zero and 100.
+[00:21:17 -> 00:21:19] And once again, I kind of project out,
+[00:21:19 -> 00:21:21] first I do caution elimination on i
+[00:21:21 -> 00:21:23] and then I project out j.
+[00:21:23 -> 00:21:26] And that gives, so this gives me P,
+[00:21:26 -> 00:21:27] caution elimination gives me P plus j
+[00:21:27 -> 00:21:30] between zero and 100 and j between zero and 100.
+[00:21:30 -> 00:21:33] And now I project out j using Fourier-Moyle skin
+[00:21:33 -> 00:21:36] and that gives me P is less than equal to 100
+[00:21:36 -> 00:21:38] and P is greater than equal to minus 100.
+[00:21:38 -> 00:21:39] I haven't shown the working
+[00:21:39 -> 00:21:41] but you can check it for yourself.
+[00:21:41 -> 00:21:44] So I've got two sets of iterations, spaces,
+[00:21:44 -> 00:21:46] two kinds of sets of convex ranges.
+[00:21:46 -> 00:21:49] One is P is between minus 100 and 100,
+[00:21:49 -> 00:21:53] the other is P is between minus 101 and 99.
+[00:21:53 -> 00:21:54] What should I do?
+[00:21:54 -> 00:21:57] I should take the union of these two, all right?
+[00:21:57 -> 00:21:59] And when I take the union of these two,
+[00:21:59 -> 00:22:03] I'm going to get minus 101 to 100.
+[00:22:03 -> 00:22:05] And so that's what I get.
+[00:22:05 -> 00:22:08] I get P is between minus 101 and 100.
+[00:22:08 -> 00:22:11] And if the union was non-convex,
+[00:22:11 -> 00:22:13] in this case it happens to be convex,
+[00:22:13 -> 00:22:15] but if the union was non-convex,
+[00:22:15 -> 00:22:18] then I just create, I just find one union
+[00:22:18 -> 00:22:21] which is convex and which contains each of these things.
+[00:22:21 -> 00:22:24] It's the smallest union that is convex,
+[00:22:24 -> 00:22:25] which contains all these things.
+[00:22:25 -> 00:22:28] For a unidimensional thing,
+[00:22:28 -> 00:22:30] we basically talking, saying that
+[00:22:30 -> 00:22:33] we just basically find the lower bound,
+[00:22:33 -> 00:22:35] the least of the lower bounds
+[00:22:35 -> 00:22:36] across all these statements
+[00:22:36 -> 00:22:38] and the maximum of the upper bounds
+[00:22:38 -> 00:22:39] across all these statements,
+[00:22:39 -> 00:22:44] if it was a single dimensional polyhedron.
+[00:22:44 -> 00:22:48] I want to point out that even if you get this wrong,
+[00:22:48 -> 00:22:49] for example, if you do more iterations,
+[00:22:49 -> 00:22:52] for example, if I iterate from minus 200 to plus 200,
+[00:22:52 -> 00:22:53] the program remains correct,
+[00:22:53 -> 00:22:55] although it becomes less efficient
+[00:22:55 -> 00:22:56] because it remains correct
+[00:22:56 -> 00:22:58] because anyway I'm not going to execute S1
+[00:22:58 -> 00:23:00] until it matches my condition for P.
+[00:23:01 -> 00:23:04] Okay, now, so this is my generated code.
+[00:23:04 -> 00:23:08] Finally, for P equals minus 101 to 100,
+[00:23:08 -> 00:23:10] for I equals zero to 100,
+[00:23:10 -> 00:23:13] for J equals zero to 100 predicated statements
+[00:23:13 -> 00:23:15] for S1 and S2 predicated
+[00:23:15 -> 00:23:17] by their corresponding mapping functions
+[00:23:17 -> 00:23:19] if P equals I minus J minus one
+[00:23:19 -> 00:23:21] and if P equals I minus J.
+[00:23:21 -> 00:23:23] Once again, this is not very efficient.
+[00:23:23 -> 00:23:26] I want to find out that these values that I have here
+[00:23:26 -> 00:23:27] are actually different from the ones
+[00:23:27 -> 00:23:28] that I had in my first slide.
+[00:23:28 -> 00:23:30] So my example on my first slide
+[00:23:30 -> 00:23:32] was actually slightly incorrect
+[00:23:32 -> 00:23:35] because it wasn't counting all the iterations
+[00:23:35 -> 00:23:36] but that's okay.
+[00:23:36 -> 00:23:37] This is the correct solution
+[00:23:37 -> 00:23:42] and we basically have a correct code
+[00:23:42 -> 00:23:44] where the outer loop is parallel.
+[00:23:44 -> 00:23:45] Well, the outer loop is parallel
+[00:23:45 -> 00:23:47] but I mean the inner kind of body
+[00:23:47 -> 00:23:49] of each iteration is very expensive.
+[00:23:49 -> 00:23:52] In fact, I've made it more expensive than before
+[00:23:52 -> 00:23:53] so it's not very satisfying
+[00:23:53 -> 00:23:56] but we're going to fix that in our subsequent modules.
+[00:23:58 -> 00:24:01] The important thing is that this is correct.
+[00:24:01 -> 00:24:03] In other words, the program that I've generated,
+[00:24:03 -> 00:24:05] the code that I've generated is equivalent
+[00:24:05 -> 00:24:09] to the code of the original unoptimized program.

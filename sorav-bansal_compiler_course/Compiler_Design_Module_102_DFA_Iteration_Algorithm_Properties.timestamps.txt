@@ -1,0 +1,161 @@
+Title: Compiler Design Module 102 : DFA Iteration Algorithm Properties
+Video ID: yf0n_ZJpmbQ
+Detected language: en
+------------------------------------------------------------
+
+[00:00:00 -> 00:00:06] So we have talked about a DFA framework and its properties that need to be true for the fixed
+[00:00:06 -> 00:00:14] point iteration algorithm to converge. So given a data flow framework which is specified with
+[00:00:14 -> 00:00:21] F, V and the meat operator which is monotone and the semi-lattice formed by V and the meat
+[00:00:21 -> 00:00:27] operator has finite height, then the fixed point iteration is guaranteed to converge. So
+[00:00:27 -> 00:00:34] we have been stating this result or this theorem but today we are going to discuss this in more
+[00:00:34 -> 00:00:42] detail and also share a proof sketch for this particular theorem. Okay and moreover we say
+[00:00:42 -> 00:00:47] that it's not just true that it converges but if we initialize all the interior points to top,
+[00:00:47 -> 00:00:51] so all the interior points are points that are not part of the boundary condition,
+[00:00:52 -> 00:00:59] then the algorithm is the maximum fixed point solution of the DFA equation. So I'm using this
+[00:00:59 -> 00:01:06] term maximum fixed point solution of the DFA equations. Recall that data flow analysis is
+[00:01:06 -> 00:01:12] basically specified as a system of equations. We are interested in finding a solution that
+[00:01:12 -> 00:01:18] satisfies that system of equations and the fixed point algorithm is one way of identifying
+[00:01:18 -> 00:01:24] such a solution and we are not just interested in any solution, we are interested in the most
+[00:01:24 -> 00:01:31] precise solution and one way to say that is that we are interested in the maximum such solution
+[00:01:31 -> 00:01:36] where maximum is defined with respect to the ordering operator less than equal to of the
+[00:01:36 -> 00:01:43] semi-lattice. In other words we are interested in the maximum fixed point. So what is a
+[00:01:43 -> 00:01:50] maximum fixed point? Let's try to understand that in a little bit more detail. Recall that any
+[00:01:50 -> 00:01:56] solution will have a value associated with each program point. So for example the value at the
+[00:01:56 -> 00:02:00] loop head is going to be something, the value at the loop tail is going to be something and
+[00:02:00 -> 00:02:05] at every basic block in the beginning and the end there'll be some value. An MFP solution,
+[00:02:05 -> 00:02:11] the maximum fixed point solution or MFP solution has the maximum value at each program point
+[00:02:11 -> 00:02:17] such that these values satisfy the equations. So if I look at all the possible solutions that
+[00:02:17 -> 00:02:24] satisfy these equations, there will be one solution where all the values are maximum
+[00:02:24 -> 00:02:32] across at all the program points compared to all the other solutions and we can
+[00:02:32 -> 00:02:39] argue that such a solution will exist and that solution is called the maximum fixed point
+[00:02:39 -> 00:02:44] solution. And where maximum here is based on the less than equal to operator of the semi-lattice.
+[00:02:46 -> 00:02:52] So let's look at an example to understand MFP in more detail. So let's look at the constant
+[00:02:52 -> 00:02:57] propagation example and once again the lattice is formed by top constant value which could be
+[00:02:57 -> 00:03:05] anything and bottom. And then let's look at this particular program. Let's say I initialize
+[00:03:05 -> 00:03:10] x to 3 and then I say y equals z plus w some random stuff and then there's a loop here.
+[00:03:10 -> 00:03:15] Now this solution here which is associating empty set at the beginning of the program
+[00:03:16 -> 00:03:22] x equals 3 at and all the other points of this program is the MFP solution I claim.
+[00:03:23 -> 00:03:26] Here is another solution that would also satisfy the dataflow equations and that
+[00:03:26 -> 00:03:31] solution is basically giving me x equals 3 at this particular point but it's giving me the
+[00:03:31 -> 00:03:37] empty set at all the other locations. Now I'm claiming that both these solutions are satisfying
+[00:03:37 -> 00:03:44] the dataflow equations. So maybe we want to check and so we can see that across in and out
+[00:03:44 -> 00:03:49] this is phi and this is x equals 3 and if I use the gen and kill form of constant propagation
+[00:03:49 -> 00:03:55] transfer functions then the value at the end of this trans statement includes this extra
+[00:03:55 -> 00:04:00] generated mapping from x to 3 and that's true for both the solutions. Now let's look
+[00:04:00 -> 00:04:06] at this particular point at the loop head. Here it needs to be the meat of the values coming from
+[00:04:07 -> 00:04:14] the initialization x equals 3 and the loop tail and in the first case
+[00:04:14 -> 00:04:18] the loop tail is x equals 3 so the loop head is still x equals 3 so everything is good
+[00:04:19 -> 00:04:25] and so the first solution satisfies the equations. Let's look at the second solution
+[00:04:25 -> 00:04:31] which is empty set and empty set. So the first at the loop head I say that it should be a meat
+[00:04:31 -> 00:04:37] of x equals 3 and the loop tail value which is the empty set. So what is the meat of
+[00:04:38 -> 00:04:43] empty set with x equals 3? It's the empty set and so even the second solution actually
+[00:04:43 -> 00:04:48] satisfies the dataflow equation. So both these solutions actually satisfy the dataflow
+[00:04:48 -> 00:04:54] equations but the first solution is the maximum such solution and that's why it's
+[00:04:54 -> 00:05:00] called the MFP. The second solution is a fixed point because it satisfies all the equations
+[00:05:00 -> 00:05:05] so we just call it the FP solution but not the MFP solution. It's a fixed point solution
+[00:05:05 -> 00:05:18] but not MFP. So now what is the explanation that the fixed point iteration algorithm is
+[00:05:18 -> 00:05:25] guaranteed to converge? So here is the rough explanation that value at any program point can
+[00:05:25 -> 00:05:31] only decrease because meat operator just decreases that value so if there's some value somewhere
+[00:05:31 -> 00:05:38] then it can only go down and from there and because we start with all the unknown values
+[00:05:38 -> 00:05:43] at the interior points with top we should hopefully get to the maximum fixed point
+[00:05:43 -> 00:05:48] because we are decreasing only by the amount that is required. We're going to discuss this
+[00:05:48 -> 00:05:54] in more detail very soon. So why are values only decreasing? Because when we meet we are only
+[00:05:55 -> 00:06:00] assuming that the incoming values have decreased the meat value will also decrease
+[00:06:00 -> 00:06:05] and because of monotonicity if the value at the beginning of a basic block for a forward DFA has
+[00:06:05 -> 00:06:09] decreased then the beginning the value at the end of the basic block will also decrease and
+[00:06:09 -> 00:06:14] that's coming from the monotonicity property of the transfer function and so these properties
+[00:06:14 -> 00:06:18] will provide convergence and we're going to discuss this in a little bit more detail.
+[00:06:18 -> 00:06:23] The other question is how do we say that this is the MFP and so for that we basically use
+[00:06:23 -> 00:06:29] this argument that values do not come down unless some constraints from the equations
+[00:06:29 -> 00:06:34] drive them down all right and so the values are brought down by the minimum possible
+[00:06:34 -> 00:06:40] amount such that they start satisfying the constraints and that is our rough argument
+[00:06:40 -> 00:06:48] for the maximum fixed point solution why is it maximum okay so let's try to prove this and I'm
+[00:06:48 -> 00:06:54] going to give show you a proof sketch based on induction and so first we want to prove that the
+[00:06:54 -> 00:07:00] values at the k plus 1th iteration of the fixed point solution are no greater than the values at
+[00:07:00 -> 00:07:04] the kth iteration by no greater I mean they're less than or equal to so the values at the k
+[00:07:04 -> 00:07:08] plus 1th iteration are less than or equal to the values at the kth iteration this is what we
+[00:07:08 -> 00:07:14] want to prove and I'm going to use mathematical induction to try and prove this so here's the
+[00:07:14 -> 00:07:20] base case the base case we want to prove that the values after the first iteration are no
+[00:07:20 -> 00:07:28] greater than the initial values now this is easy because the initial values are just the top value
+[00:07:28 -> 00:07:34] and so this is trivial actually because all initial non-boundary values are top and all
+[00:07:34 -> 00:07:40] the boundary values are anyways fixed so anything any other set of values will always be less than
+[00:07:40 -> 00:07:45] equal to the initial values because that's how we are initializing it so our base case is
+[00:07:45 -> 00:07:50] trivial and that's just coming from our initial values which are set to top for all interior
+[00:07:50 -> 00:07:55] points now here is our induction hypothesis and induction step for mathematical induction
+[00:07:56 -> 00:08:02] so induction hypothesis let's assume that after the kth iteration the values are no
+[00:08:02 -> 00:08:08] greater than those after the k minus 1th iteration so if the values at kth iteration
+[00:08:08 -> 00:08:14] are less than equal to the values at k minus 1th iteration then we want to prove that the
+[00:08:14 -> 00:08:21] values at k plus 1th iteration are also less than equal to the values at the kth iteration
+[00:08:21 -> 00:08:29] in other words if this is the k minus 1 values and if I am able to say that v k minus 1 is
+[00:08:29 -> 00:08:35] less than equal sorry I want to say let's say I've been able to say that vk is less than equal to
+[00:08:35 -> 00:08:41] vk minus 1 and this forms our induction hypothesis right so this forms our induction
+[00:08:41 -> 00:08:49] hypothesis and what is our induction step our induction step is vk plus 1 is less than equal
+[00:08:49 -> 00:08:55] to vk so assuming the induction hypothesis we are interested in proving the induction step
+[00:08:55 -> 00:09:02] okay so how are we going to do this so let's assume forward DFA for this discussion we could
+[00:09:02 -> 00:09:07] have done the same thing with the backward DFA without loss of generality so in the forward
+[00:09:07 -> 00:09:15] DFA we have this let's say we have some basic block and we have multiple incoming predecessors
+[00:09:15 -> 00:09:20] and the value being computed is at the beginning of this basic block that's called
+[00:09:20 -> 00:09:27] in of s right where s stands for some statement or basic block and then we say that in of s
+[00:09:27 -> 00:09:36] equals meet over out of p where p belongs to the set of predecessors of s so we look look
+[00:09:36 -> 00:09:42] we meet the out values of all the predecessors to obtain in s now we know this data flow
+[00:09:42 -> 00:09:46] equation and in our fixed point iteration what do we do we basically keep iterating so at
+[00:09:46 -> 00:09:52] the ith iteration we take the values at the i the out values of the i minus 1th iteration to arrive
+[00:09:52 -> 00:10:00] at the values of the in values of the ith iteration so let so to capture that let in s
+[00:10:00 -> 00:10:07] superscript i and out s i denote the values of in s and out s after the ith iteration for
+[00:10:07 -> 00:10:12] any s including p and everything else right so let in s i and out s i denote the values of
+[00:10:12 -> 00:10:19] in s and out s after the ith iteration just after the ith iteration then we can write this
+[00:10:19 -> 00:10:30] particular equation as the following in s k plus one equals meet of out of p of k so the values
+[00:10:30 -> 00:10:36] at the end of the kth iteration are you know met with each other to produce the value of
+[00:10:36 -> 00:10:41] in s at the k plus one iteration now you know you may say oh why can't i just update so i'm
+[00:10:41 -> 00:10:47] assuming here that you know at one step we just taking an original snapshot and using that to
+[00:10:47 -> 00:10:53] update get the next snapshot in our fixed point iteration algorithm of course when we use the
+[00:10:53 -> 00:10:59] work list algorithm and things like that you know we need to have more nuanced arguments
+[00:10:59 -> 00:11:03] on why this is true but let's just take the simple algorithm where you know we just
+[00:11:03 -> 00:11:08] in one snapshot we just propagate the old values into and meet them into the new value
+[00:11:08 -> 00:11:16] and so this is what our algorithm is going to look like in that case now from here we can show
+[00:11:17 -> 00:11:22] that in of s k plus one is going to be less than equal to in of s of k so how i'm going
+[00:11:22 -> 00:11:28] to use mathematical induction we know that out of p of k is less than equal to out of p
+[00:11:29 -> 00:11:34] at k minus one and this is coming from our induction hypothesis because we said that values
+[00:11:34 -> 00:11:39] at iteration k are less than equal to the values at iteration k minus one so that also
+[00:11:39 -> 00:11:45] means that the out value at any predecessor p at the iteration number k is also less than equal
+[00:11:45 -> 00:11:54] to the same value at the iteration k minus one thus if i meet over all the out p all the
+[00:11:54 -> 00:12:00] meet over all the p's for out p at iteration k that's going to be less than equal to meet
+[00:12:00 -> 00:12:06] over all the p's at iteration k minus one or for out p and that and notice that this is just in of
+[00:12:06 -> 00:12:13] s k plus one and this is just in of s k and so from there we get in of s k plus one is less
+[00:12:13 -> 00:12:18] than equal to in of s k so we have been able to use the induction hypothesis to show that
+[00:12:18 -> 00:12:24] the in values for any basic log at the k plus one iteration will always be less than equal
+[00:12:24 -> 00:12:28] to the in values of the same basic log at the kth iteration now we need to show the same
+[00:12:28 -> 00:12:34] thing for the out values right though that's the only remaining part of the proof and that's also
+[00:12:34 -> 00:12:41] easy notice that out of s k plus one is nothing but transfer function applied to in of s k plus
+[00:12:41 -> 00:12:47] one and we know that in of s k plus one is less than equal to in of s k we just proved
+[00:12:47 -> 00:12:53] it on the previous slide so from the monotonicity property of the transfer function we know that
+[00:12:53 -> 00:13:00] because in of s k plus one is less than equal to in of s k we will know that we know that out
+[00:13:00 -> 00:13:06] s k plus one should also be less than equal to out of s k because f s is monotonic it maps
+[00:13:06 -> 00:13:13] smaller inputs to smaller outputs okay so that's our proof sketch and based on that we have been
+[00:13:13 -> 00:13:20] able to show that the values in the dataflow analysis can only decrease assuming that the
+[00:13:20 -> 00:13:25] framework is monotonic and assuming that the framework is monotonic all right now assume
+[00:13:25 -> 00:13:32] if the values can only decrease then if the semi lattice has finite height then after all
+[00:13:32 -> 00:13:37] at some point they will stop decreasing because at some and in the worst case you're going to
+[00:13:37 -> 00:13:42] all the values are going to reach the minimum value which is the bottom value and so from that
+[00:13:42 -> 00:13:50] we basically can prove that the algorithm will definitely converge or terminate hence we have
+[00:13:50 -> 00:13:55] been able to prove that you know that the algorithm terminates now the second part of
+[00:13:56 -> 00:14:01] the claim which we want to prove is that the iterative algorithm yields the maximum fixed
+[00:14:01 -> 00:14:08] point now this it converges all right but what is the proof that it yields the maximum
+[00:14:08 -> 00:14:13] fixed point now there are two parts to this first of all we need to show that it actually yields a
+[00:14:13 -> 00:14:17] fixed point and that will be easy to show because you know after all it you know we
+[00:14:17 -> 00:14:23] only stop when all the equations are satisfied that means it is a fixed point and the other
+[00:14:23 -> 00:14:29] part is that it is the maximum such fixed point all right and and so here is the proof
+[00:14:29 -> 00:14:34] sketch the algorithm terminates only if all the equations are satisfied and that basically
+[00:14:34 -> 00:14:39] tells us that whatever solution we get at the end of the algorithm when the algorithm has actually
+[00:14:39 -> 00:14:43] terminated it's got it has to be a fixed point because that's the only condition under
+[00:14:43 -> 00:14:50] which the algorithm terminates and second if an equation is not satisfied at any step the
+[00:14:50 -> 00:14:56] value is driven down by only that amount such that so that the equations now becomes satisfied
+[00:14:56 -> 00:15:02] so we basically take the smallest possible step so that the equation becomes satisfied and so
+[00:15:02 -> 00:15:09] from that we know that you know we're going to stop only when you know only after we have
+[00:15:10 -> 00:15:14] we would have taken the smallest amount of number of steps and amount of step
+[00:15:15 -> 00:15:21] gone down in the solution by the smallest amount at every step and so even in the whole
+[00:15:21 -> 00:15:26] we're going to have we would have gotten down by the smallest amount and so that's
+[00:15:26 -> 00:15:30] the argument for the maximum fixed point now this is just a proof sketch more formal proof
+[00:15:30 -> 00:15:34] you can will always will also have more formal details and
+[00:15:34 -> 00:15:39] sketch but that's basically than the sketch but that's that's that's beyond the scope of our
+[00:15:39 -> 00:15:47] discussion

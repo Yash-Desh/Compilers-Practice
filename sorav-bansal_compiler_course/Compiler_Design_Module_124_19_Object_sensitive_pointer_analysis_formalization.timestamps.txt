@@ -1,0 +1,351 @@
+Title: Compiler Design Module 124 19: Object sensitive pointer analysis formalization
+Video ID: lMR6tI_Cmsw
+Detected language: en
+------------------------------------------------------------
+
+[00:00:00 -> 00:00:05] So I'm going to finally wrap up the discussion on object-sensitive analysis,
+[00:00:05 -> 00:00:09] object-sensitive pointer analysis by formalizing the rules
+[00:00:09 -> 00:00:14] for the transfer functions when we're doing object-sensitive analysis.
+[00:00:14 -> 00:00:18] The rules are very similar to all the other pointer analyses that we've seen,
+[00:00:18 -> 00:00:20] for example, context-sensitive pointer analysis.
+[00:00:20 -> 00:00:25] I'm using Anderson's analysis where we're tracking all the points to set.
+[00:00:25 -> 00:00:30] The set of abstract objects that another abstract object may point to.
+[00:00:30 -> 00:00:35] But the only difference is basically in the way we track
+[00:00:35 -> 00:00:40] the context across function calls and across allocation statements.
+[00:00:40 -> 00:00:44] So my first rule here is that if under an object context C,
+[00:00:44 -> 00:00:48] I'm transferring across an allocation statement of the form P equals
+[00:00:48 -> 00:00:52] new something and the allocation site is L,
+[00:00:52 -> 00:01:03] then recall that we would just say that P in context C could point to L in context C,
+[00:01:03 -> 00:01:08] and that was how we would tackle it in call context-sensitive analysis.
+[00:01:08 -> 00:01:10] In object-sensitive analysis,
+[00:01:10 -> 00:01:14] because we are only keeping an object context of one and the context
+[00:01:14 -> 00:01:20] itself is determined by the allocation site and the allocation site abstraction.
+[00:01:20 -> 00:01:26] So we just say that the points to set of P in context C written P subscript C with
+[00:01:26 -> 00:01:33] these square brackets so that this represents the points to set of P in
+[00:01:33 -> 00:01:39] context C that must include this allocation site L.
+[00:01:39 -> 00:01:43] The important thing to note here is that I'm using the allocation site L and not
+[00:01:43 -> 00:01:50] L subscript C because L subscript C would keep track of two allocation sites.
+[00:01:50 -> 00:01:54] C itself is an allocation site and L is also an allocation site.
+[00:01:54 -> 00:01:57] But in object-sensitive analysis with depth one,
+[00:01:57 -> 00:02:00] we are only keeping track of single allocation site.
+[00:02:00 -> 00:02:04] So I'm going to forget C and just keep L.
+[00:02:04 -> 00:02:09] We're going to generalize this later to D-depth object-sensitive analysis.
+[00:02:09 -> 00:02:13] But for now, I'm doing a one-depth object-sensitive analysis.
+[00:02:13 -> 00:02:16] And that's why this is L and not LC.
+[00:02:16 -> 00:02:21] Okay. The other important transfer is across a function called dispatch.
+[00:02:21 -> 00:02:27] So let's say that small o is an object of type capital O.
+[00:02:27 -> 00:02:30] And let's say in context C,
+[00:02:30 -> 00:02:37] I'm transferring across a function called T colon equals o.foo x.
+[00:02:37 -> 00:02:40] So o is the receiving object,
+[00:02:40 -> 00:02:41] foo is a member function,
+[00:02:41 -> 00:02:44] x is an argument in context C,
+[00:02:44 -> 00:02:46] and then T is the return value.
+[00:02:46 -> 00:02:49] Now, you can generalize this.
+[00:02:49 -> 00:02:51] If there was no return value,
+[00:02:51 -> 00:02:54] then that would be a special case of this.
+[00:02:54 -> 00:02:56] So this is the general form of the rule.
+[00:02:56 -> 00:02:59] And let's say this is the definition of
+[00:02:59 -> 00:03:02] the member function f in the class capital O.
+[00:03:02 -> 00:03:05] So o capital O colon colon fa equals e,
+[00:03:05 -> 00:03:10] where e is the body of the function and a is the formal argument.
+[00:03:10 -> 00:03:12] And this is part of the program.
+[00:03:12 -> 00:03:17] And let's assume that within the context C,
+[00:03:17 -> 00:03:19] the points to set of o,
+[00:03:19 -> 00:03:21] or o in context C,
+[00:03:21 -> 00:03:27] is some set that it can point to and defined by the allocation sites.
+[00:03:27 -> 00:03:29] So let's say those allocation sites are k1 and k2.
+[00:03:29 -> 00:03:33] So o itself may be pointing to some allocation sites,
+[00:03:33 -> 00:03:36] some abstract objects represented by k1 and k2,
+[00:03:36 -> 00:03:41] which may appear elsewhere in this program.
+[00:03:41 -> 00:03:42] So now the question is,
+[00:03:42 -> 00:03:46] how does across the dispatch the transfer happen
+[00:03:46 -> 00:03:50] from whatever x is pointing to to whatever a is pointing to?
+[00:03:50 -> 00:03:52] So from how does the transfer happen
+[00:03:52 -> 00:03:55] from the actual argument to the formal argument?
+[00:03:55 -> 00:03:58] How does the transfer happen from o,
+[00:03:58 -> 00:03:59] which is the receiving object,
+[00:03:59 -> 00:04:03] to this keyword in the context of the collie,
+[00:04:03 -> 00:04:06] which is f,
+[00:04:06 -> 00:04:09] especially given that o could point to multiple objects.
+[00:04:09 -> 00:04:11] And now you can generalize this to any number of objects.
+[00:04:11 -> 00:04:14] I'm just using two abstract objects.
+[00:04:15 -> 00:04:17] So first of all,
+[00:04:17 -> 00:04:20] a, I'm going to evaluate,
+[00:04:20 -> 00:04:25] or I'm going to transfer this information for a
+[00:04:25 -> 00:04:26] in two different contexts,
+[00:04:26 -> 00:04:29] because it's an object sensitive context sensitive analysis,
+[00:04:29 -> 00:04:32] or object sensitive analysis.
+[00:04:32 -> 00:04:36] So because o could have pointed to two different k1 and k2,
+[00:04:36 -> 00:04:41] so the collie will be evaluated in both those contexts.
+[00:04:41 -> 00:04:43] So one of those contexts is k1.
+[00:04:43 -> 00:04:45] And so I'm going to say that the formal argument
+[00:04:45 -> 00:04:49] in context k1 will be,
+[00:04:49 -> 00:04:50] I'm going to apply the poppy rule
+[00:04:50 -> 00:04:51] and say that whatever is the poppy rule,
+[00:04:51 -> 00:04:56] so this looks like a k1 equals o c,
+[00:04:56 -> 00:04:58] or sorry, a k1 equals x c,
+[00:04:58 -> 00:04:59] x is the actual argument.
+[00:04:59 -> 00:05:03] And so the points to set of a k1 can be updated
+[00:05:03 -> 00:05:07] using the points to set of x in context c.
+[00:05:08 -> 00:05:12] Similarly, the points to set of this k1,
+[00:05:12 -> 00:05:14] this is in the collies context,
+[00:05:16 -> 00:05:19] which is one of the collie context is k1,
+[00:05:19 -> 00:05:23] is can be updated using the receiving object o
+[00:05:23 -> 00:05:25] in the collars context c.
+[00:05:25 -> 00:05:26] So in other words,
+[00:05:26 -> 00:05:28] the points to set of this k1
+[00:05:28 -> 00:05:32] is the sub-upset of the points to set of o c.
+[00:05:32 -> 00:05:34] And both these rules are only
+[00:05:34 -> 00:05:36] for a single collie context k1,
+[00:05:36 -> 00:05:38] but we want to tackle both the context
+[00:05:38 -> 00:05:41] because o could have pointed to either of them.
+[00:05:41 -> 00:05:42] And so we have two more rules
+[00:05:42 -> 00:05:44] which are completely identical,
+[00:05:44 -> 00:05:46] just replace k1 with k2.
+[00:05:46 -> 00:05:50] So a k2's points to set is updated using x c,
+[00:05:50 -> 00:05:52] just like a k1 was updated.
+[00:05:52 -> 00:05:54] And similarly, this k2's points to set
+[00:05:54 -> 00:05:56] is updated using o c.
+[00:05:56 -> 00:06:01] And this is how the updates happen across a points to,
+[00:06:02 -> 00:06:04] across a function called dispatch.
+[00:06:04 -> 00:06:06] And finally, I want to say that
+[00:06:06 -> 00:06:10] the body of the function itself
+[00:06:10 -> 00:06:12] can be evaluated in two,
+[00:06:12 -> 00:06:14] must be evaluated in two different contexts.
+[00:06:14 -> 00:06:17] And to say that, I say k1,
+[00:06:18 -> 00:06:20] e is evaluated in context k1
+[00:06:20 -> 00:06:24] and e is evaluated in context k2.
+[00:06:24 -> 00:06:26] So that all the rules that we can,
+[00:06:26 -> 00:06:29] all the transfers that we do within e
+[00:06:29 -> 00:06:31] are done both in the context of k1
+[00:06:31 -> 00:06:33] and in the context of k2.
+[00:06:33 -> 00:06:36] Recall that the more contexts we do this in,
+[00:06:36 -> 00:06:38] the less precision we have
+[00:06:38 -> 00:06:40] or the more edges we add to our points to graph.
+[00:06:41 -> 00:06:43] Okay.
+[00:06:43 -> 00:06:45] Similarly, if I talk about function return,
+[00:06:45 -> 00:06:49] so let's say inside the body e,
+[00:06:49 -> 00:06:50] there was a return statement
+[00:06:50 -> 00:06:52] that was getting evaluated in context k.
+[00:06:52 -> 00:06:53] In the previous slide,
+[00:06:53 -> 00:06:56] we saw how k could be either k1 or k2.
+[00:06:56 -> 00:07:00] And k was,
+[00:07:00 -> 00:07:03] k must be part of the points to set of o c
+[00:07:03 -> 00:07:04] as we saw last time.
+[00:07:04 -> 00:07:09] So, for example, k1 or k2 as it was in the previous slide.
+[00:07:09 -> 00:07:12] So if I'm evaluating the return statement
+[00:07:12 -> 00:07:14] in some context k,
+[00:07:14 -> 00:07:19] then the value b in this context k
+[00:07:20 -> 00:07:24] you will be used to update the value t in the context c.
+[00:07:24 -> 00:07:26] In other words,
+[00:07:26 -> 00:07:28] tc points to set should be updated
+[00:07:28 -> 00:07:30] using bk's points to set.
+[00:07:30 -> 00:07:31] Said differently,
+[00:07:31 -> 00:07:34] the points to set of tc should be a superset
+[00:07:34 -> 00:07:36] of the points to set of bk.
+[00:07:36 -> 00:07:39] Once again, k is a context
+[00:07:39 -> 00:07:41] in which the body of f was evaluated,
+[00:07:41 -> 00:07:44] which is defined by the context,
+[00:07:44 -> 00:07:48] by the, which is one of the abstract objects
+[00:07:48 -> 00:07:50] that o c could have pointed to
+[00:07:50 -> 00:07:52] during the function called dispatch.
+[00:07:52 -> 00:07:55] Okay, so this is on the return path.
+[00:07:55 -> 00:07:58] I'm executing the copy statement
+[00:07:59 -> 00:08:02] from the returned value b
+[00:08:02 -> 00:08:06] to the registered t in the color
+[00:08:06 -> 00:08:09] where the return value is getting stored in the color.
+[00:08:09 -> 00:08:12] And I'm applying the copy of a rule
+[00:08:12 -> 00:08:16] to basically update then a t in its context
+[00:08:16 -> 00:08:18] using b in b's context.
+[00:08:18 -> 00:08:21] And this will be done for each of the quality context.
+[00:08:21 -> 00:08:23] So if there were two quality context k1 and k2,
+[00:08:23 -> 00:08:28] then tc will be updated using both bk1 and bk2,
+[00:08:28 -> 00:08:29] the points to sets.
+[00:08:30 -> 00:08:34] Okay, let's use an example to concretize this.
+[00:08:34 -> 00:08:38] So let's say this is an example of a list class,
+[00:08:38 -> 00:08:40] capital class L,
+[00:08:40 -> 00:08:41] which has this function called append,
+[00:08:41 -> 00:08:43] which just appends a key to the list.
+[00:08:43 -> 00:08:46] So if k equals zero, then it doesn't append,
+[00:08:46 -> 00:08:49] else it allocates a new node of type L.
+[00:08:51 -> 00:08:54] It has a, let's say it has a next point field.
+[00:08:54 -> 00:08:56] So it says this.next equals n,
+[00:08:56 -> 00:08:59] the newly allocated object,
+[00:08:59 -> 00:09:01] and n.append k minus one.
+[00:09:01 -> 00:09:05] So this is, it's going to basically append
+[00:09:05 -> 00:09:09] k different nodes to,
+[00:09:10 -> 00:09:13] so append k is going to append k different nodes.
+[00:09:13 -> 00:09:14] So it's a recursive call.
+[00:09:15 -> 00:09:17] If k was zero, then it just returns.
+[00:09:17 -> 00:09:20] If it was non-zero, it was greater than zero,
+[00:09:20 -> 00:09:23] then I'm assuming this is greater than zero.
+[00:09:23 -> 00:09:25] Maybe I should have,
+[00:09:25 -> 00:09:27] this example should have been something like this.
+[00:09:27 -> 00:09:29] So if it is greater than zero,
+[00:09:29 -> 00:09:32] then I append one node,
+[00:09:32 -> 00:09:36] and then to it, I append k minus one nodes.
+[00:09:36 -> 00:09:37] And in the main function,
+[00:09:37 -> 00:09:41] let's say I allocate a new list L,
+[00:09:41 -> 00:09:42] and then I call l.append 10.
+[00:09:43 -> 00:09:46] That's going to append 10 different nodes to L.
+[00:09:47 -> 00:09:49] Okay, so now let's say I run my
+[00:09:49 -> 00:09:53] object-sensitive points to analysis on this program.
+[00:09:53 -> 00:09:54] The first thing to do here
+[00:09:54 -> 00:09:56] is to identify all the allocation sites.
+[00:09:56 -> 00:09:59] So the allocation sites are A1 in the main function,
+[00:09:59 -> 00:10:01] and A2 in the append function.
+[00:10:01 -> 00:10:04] Also, it's important to identify the call sites.
+[00:10:04 -> 00:10:06] So that's C1 here,
+[00:10:06 -> 00:10:08] and the recursive call C2 here.
+[00:10:09 -> 00:10:11] Now I start transferring.
+[00:10:11 -> 00:10:15] So I first transfer across the first statement in main,
+[00:10:15 -> 00:10:17] which is L equals new L,
+[00:10:17 -> 00:10:19] and so I say L in context of main,
+[00:10:19 -> 00:10:22] and then let's say the context of main is zero.
+[00:10:22 -> 00:10:26] So L0 can point to an abstract object allocated at A1.
+[00:10:26 -> 00:10:28] So L0 can point to A1.
+[00:10:28 -> 00:10:30] This is the allocation site abstraction.
+[00:10:30 -> 00:10:32] Then I call l.append 10.
+[00:10:32 -> 00:10:37] So whatever L was the receiving object
+[00:10:37 -> 00:10:42] that is now becoming the this object in append,
+[00:10:42 -> 00:10:44] and the context in which append is called
+[00:10:44 -> 00:10:47] is the object of L.
+[00:10:47 -> 00:10:49] So L itself was A1.
+[00:10:49 -> 00:10:54] So the context in which append is called is A1.
+[00:10:55 -> 00:10:57] The this variable in the append function.
+[00:10:57 -> 00:10:59] So this superscript append means
+[00:10:59 -> 00:11:01] that this variable in the append function.
+[00:11:01 -> 00:11:04] So this append in context A1
+[00:11:04 -> 00:11:07] points to whatever L was pointing to,
+[00:11:07 -> 00:11:10] and L was recall,
+[00:11:10 -> 00:11:12] whatever L in context main was pointing to,
+[00:11:12 -> 00:11:14] or L0 was pointing to,
+[00:11:14 -> 00:11:15] and that recall was pointing to A1.
+[00:11:15 -> 00:11:18] So the points to graph looks something like this.
+[00:11:18 -> 00:11:19] Okay.
+[00:11:19 -> 00:11:22] Now we transfer across if K equals zero,
+[00:11:22 -> 00:11:23] that's not going to do much.
+[00:11:23 -> 00:11:25] We transfer across return.
+[00:11:25 -> 00:11:26] It's not returning a value,
+[00:11:26 -> 00:11:28] so that's not going to do much.
+[00:11:28 -> 00:11:30] But let's look at this transfer function here.
+[00:11:30 -> 00:11:33] So when I look at N equals new capital L,
+[00:11:33 -> 00:11:37] that basically I'm evaluating the append function
+[00:11:37 -> 00:11:39] in the context of L,
+[00:11:39 -> 00:11:41] which is actually A1,
+[00:11:41 -> 00:11:43] because L could point to A1.
+[00:11:43 -> 00:11:47] So I'm evaluating N equals new L in context A1.
+[00:11:47 -> 00:11:50] So I say N subscript A1,
+[00:11:50 -> 00:11:54] which is the context in which N is being evaluated,
+[00:11:54 -> 00:11:57] is pointing to an abstract object allocated at A2.
+[00:11:57 -> 00:12:00] So this is the new edge that I draw
+[00:12:00 -> 00:12:02] with these nodes in my points to graph
+[00:12:02 -> 00:12:04] by virtue of this statement.
+[00:12:04 -> 00:12:08] Now, next I'm going to transfer along this dot next equals N.
+[00:12:08 -> 00:12:11] So this in context A1,
+[00:12:12 -> 00:12:16] this append in context A1, which is this, dot next.
+[00:12:16 -> 00:12:20] So whatever this is pointing to, that's A1,
+[00:12:20 -> 00:12:25] can now will start pointing to whatever N is pointing to,
+[00:12:25 -> 00:12:26] which is A2.
+[00:12:26 -> 00:12:29] In other words, A1 will start pointing to
+[00:12:29 -> 00:12:32] whatever N is pointing to, which is A2.
+[00:12:32 -> 00:12:34] So I'll draw an edge from A1 to A2.
+[00:12:34 -> 00:12:36] So by virtue of this dot next equals N,
+[00:12:36 -> 00:12:39] and assuming field insensitive analysis,
+[00:12:39 -> 00:12:42] I draw an edge from A1 to A2
+[00:12:42 -> 00:12:44] by transferring across this statement.
+[00:12:45 -> 00:12:47] Now, continuing this,
+[00:12:47 -> 00:12:49] I need to transfer across this next call site,
+[00:12:49 -> 00:12:52] which is N dot append K minus one.
+[00:12:52 -> 00:12:54] Now in N dot append K minus one,
+[00:12:56 -> 00:12:58] I'm sorry for this syntax,
+[00:12:58 -> 00:12:59] I mean, this could have been dot or,
+[00:12:59 -> 00:13:02] I'm kind of abusing syntax a little bit there,
+[00:13:02 -> 00:13:04] I'm using arrow and dot interchangeably all through,
+[00:13:04 -> 00:13:05] doesn't matter.
+[00:13:05 -> 00:13:10] So append is being called this time in the context of N,
+[00:13:12 -> 00:13:14] and N is pointing to A2,
+[00:13:14 -> 00:13:18] so append will now be called under the context A2.
+[00:13:18 -> 00:13:22] So I say this append A2 will point to
+[00:13:22 -> 00:13:23] whatever N is pointing to,
+[00:13:23 -> 00:13:25] so that's going to point to A2
+[00:13:25 -> 00:13:29] by virtue of this dispatch from C2 to itself,
+[00:13:29 -> 00:13:30] the recursive call.
+[00:13:31 -> 00:13:34] And once again, I'm going to transfer across
+[00:13:34 -> 00:13:36] if K equals zero, that's not going to do much,
+[00:13:36 -> 00:13:38] transfer across return, that's not going to do much.
+[00:13:38 -> 00:13:41] And now I transfer across A2 again,
+[00:13:41 -> 00:13:46] but this time A2 is being evaluated in the context A2.
+[00:13:46 -> 00:13:48] But recall, I mean, when we do this,
+[00:13:48 -> 00:13:50] then I'm going to say N A2
+[00:13:50 -> 00:13:53] points to the allocation site A2.
+[00:13:53 -> 00:13:55] Recall that we forget the context
+[00:13:55 -> 00:13:57] when we see an allocation site in object sensitive analysis.
+[00:13:57 -> 00:13:59] I don't say A2 subscript A2,
+[00:13:59 -> 00:14:01] I just say A2 when I'm doing a one depth
+[00:14:01 -> 00:14:03] object sensitive analysis.
+[00:14:03 -> 00:14:05] So because N was being evaluated in context A2,
+[00:14:05 -> 00:14:09] so I have a new quantity here, N A2,
+[00:14:09 -> 00:14:11] that can point to A2.
+[00:14:11 -> 00:14:14] And because of this dot next equals N,
+[00:14:15 -> 00:14:18] because this append A2 could point to A2,
+[00:14:18 -> 00:14:20] and N A2 is also pointing to A2,
+[00:14:20 -> 00:14:23] I draw an edge from A2 to itself.
+[00:14:23 -> 00:14:25] So because of this dot next equals N,
+[00:14:25 -> 00:14:29] I draw this cyclical edge from A2 to itself.
+[00:14:29 -> 00:14:33] And I claim this is the fixed point solution
+[00:14:33 -> 00:14:34] for the points to graph,
+[00:14:34 -> 00:14:36] you can check this for yourself.
+[00:14:36 -> 00:14:38] And so this is my final result.
+[00:14:39 -> 00:14:40] We saw this in the previous slide,
+[00:14:40 -> 00:14:44] but written more neatly, it looks something like this.
+[00:14:44 -> 00:14:47] L0, where L0 represents the L variable
+[00:14:47 -> 00:14:50] in the main function can point to A1,
+[00:14:52 -> 00:14:53] an object allocated at A1.
+[00:14:54 -> 00:14:56] And an object allocated at A1 can point
+[00:14:56 -> 00:14:58] to an object allocated at A2,
+[00:14:58 -> 00:15:00] and an object allocated at A2 may point
+[00:15:00 -> 00:15:05] to another object allocated at A2.
+[00:15:06 -> 00:15:08] And this points to graphs also kind of seems
+[00:15:08 -> 00:15:10] to imply that it can also point to itself,
+[00:15:10 -> 00:15:11] which is actually not true,
+[00:15:11 -> 00:15:12] but that's the imprecision we get
+[00:15:12 -> 00:15:14] in this points to analysis.
+[00:15:14 -> 00:15:16] And then there are all these other variables
+[00:15:16 -> 00:15:19] in their respective contexts and where they can point to.
+[00:15:19 -> 00:15:22] And that information is also encoded here,
+[00:15:22 -> 00:15:23] written more neatly in this figure.
+[00:15:24 -> 00:15:27] Now, I just want to finally wrap up the discussion
+[00:15:27 -> 00:15:29] by saying that so far we are considering
+[00:15:29 -> 00:15:31] a one depth object sensitive analysis.
+[00:15:31 -> 00:15:32] It's easy to generalize this
+[00:15:32 -> 00:15:35] to a D depth object sensitive analysis,
+[00:15:35 -> 00:15:37] where instead of saying
+[00:15:37 -> 00:15:39] that I'm going to update the points to set,
+[00:15:39 -> 00:15:40] when I see an allocation statement,
+[00:15:40 -> 00:15:43] I'm not gonna update the points to set up PC using L,
+[00:15:43 -> 00:15:46] but I'm going to have this operator called,
+[00:15:46 -> 00:15:48] let's say, concatenate with D bound.
+[00:15:48 -> 00:15:53] So let me put this as this plus circle plus underscore D,
+[00:15:53 -> 00:15:56] such that depending on D,
+[00:15:56 -> 00:16:00] it's going to take only the most recent,
+[00:16:00 -> 00:16:05] the top D allocation site.
+[00:16:05 -> 00:16:10] So for example, L1, L2, L3, LD concatenated with LD plus one,
+[00:16:12 -> 00:16:15] is just going to give me L2 dot dot dot LD plus one.
+[00:16:15 -> 00:16:17] So I'm going to just forget the L1.
+[00:16:17 -> 00:16:22] And if my concatenation was with a smaller string,
+[00:16:22 -> 00:16:24] so L1 dot dot LE, where E is less than D,
+[00:16:24 -> 00:16:27] then I'm going to keep all of them.
+[00:16:27 -> 00:16:30] So it's easy to see that if I put D equals one,
+[00:16:30 -> 00:16:32] I get exactly what I had in my previous rules.
+[00:16:32 -> 00:16:35] But if I use D equals two or three,
+[00:16:35 -> 00:16:39] then I can actually tolerate bigger strings.
+[00:16:39 -> 00:16:41] And everything else remains the same.
+[00:16:41 -> 00:16:43] So the only thing that changes here
+[00:16:43 -> 00:16:46] is what happens across an allocation site.
+[00:16:46 -> 00:16:50] So because now we keep track of this object
+[00:16:50 -> 00:16:53] was allocated at this allocation site
+[00:16:53 -> 00:16:55] in the context of an object
+[00:16:55 -> 00:16:57] that was allocated at that allocation site.
+[00:16:57 -> 00:17:01] So that would be a two depth object sensitive analysis.
+[00:17:01 -> 00:17:04] And that's what this rule implies.

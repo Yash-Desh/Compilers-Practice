@@ -1,0 +1,361 @@
+Title: Compiler Design Module 142 : Space Partition Constraints
+Video ID: rKQP80V3OaA
+Detected language: en
+------------------------------------------------------------
+
+[00:00:00 -> 00:00:04] So, last time we were talking about how we can partition the iteration space such that
+[00:00:04 -> 00:00:11] each partition is basically mapped to a single processor and we also call these space partition
+[00:00:11 -> 00:00:16] constraints because we are partitioning the iteration space into different processors or
+[00:00:16 -> 00:00:18] another space.
+[00:00:18 -> 00:00:23] And so, for any given statement s, there is an iteration space and notice that if
+[00:00:23 -> 00:00:27] there are two statements or four statements, there will be four different iteration spaces
+[00:00:27 -> 00:00:30] depending on the loop nest depth at which they belong.
+[00:00:30 -> 00:00:34] Also, when I say a statement, I am really talking about a three address code statement.
+[00:00:34 -> 00:00:38] In other words, a statement involves a memory access, a static memory access.
+[00:00:38 -> 00:00:42] So, for example, if it is a C statement, then I am going to divide it into multiple
+[00:00:42 -> 00:00:43] three-axis code statements.
+[00:00:43 -> 00:00:47] So, for every statement s, there is an iteration space that is characterized by
+[00:00:47 -> 00:00:54] b i plus b 0 and then there is a processor space which is a k-dimensional space.
+[00:00:55 -> 00:00:59] So, if my iteration space was an l-dimensional space, my processor space is a k-dimensional
+[00:00:59 -> 00:01:06] space where k is less than or equal to l and then there is a function that maps
+[00:01:06 -> 00:01:10] points in the iteration space to points in the processor space.
+[00:01:10 -> 00:01:17] And if this is an affine function, then it can be represented as c i plus c and
+[00:01:17 -> 00:01:24] in other words, the processor ID, given iteration vector i, the corresponding processor
+[00:01:24 -> 00:01:31] vector or PID which is formed by a k-duple P1, P2, P3 dot dot dot Pk can be
+[00:01:31 -> 00:01:36] formed by just applying this function, first multiplying i with capital C and
+[00:01:36 -> 00:01:37] then adding small c.
+[00:01:37 -> 00:01:41] So, the function itself because it is an affine function can be characterized by
+[00:01:41 -> 00:01:47] a coefficient net matrix capital C and an addition matrix small c, a constant
+[00:01:47 -> 00:01:50] matrix, a constant vector small c.
+[00:01:50 -> 00:01:56] And notice that capital C comma small c are different for every statement s.
+[00:01:56 -> 00:02:00] So, for example, if my program has three statements, then there is C1, capital C1,
+[00:02:00 -> 00:02:07] small c1, capital C2, small c2 and capital C3, small c3 for s1, s2, s3 respectively.
+[00:02:07 -> 00:02:14] And so, in the best case, assuming all these three statements were completely
+[00:02:14 -> 00:02:19] parallel and data independent, then each of them can be mapped, each iteration of
+[00:02:19 -> 00:02:22] each of them can be mapped to a separate processor.
+[00:02:22 -> 00:02:26] And so, that's the motivation of having separate capital C and small c for
+[00:02:26 -> 00:02:28] every statement.
+[00:02:28 -> 00:02:32] However, if there are data dependencies, then we need some constraints on
+[00:02:32 -> 00:02:34] capital C and small c.
+[00:02:34 -> 00:02:37] Okay, and what are those constraints and what would they look like?
+[00:02:37 -> 00:02:40] That is the subject of this question in this particular module.
+[00:02:40 -> 00:02:44] Now, I want to first point out before we move on is that we are basically
+[00:02:44 -> 00:02:48] constraining this mapping function from iteration space to processor space
+[00:02:48 -> 00:02:50] by an affine function.
+[00:02:50 -> 00:02:54] But it is not necessary that this is just a constraint that we have assumed
+[00:02:54 -> 00:02:58] because it makes our solution possible easier to solve.
+[00:02:58 -> 00:03:00] But there are many other variations to this.
+[00:03:00 -> 00:03:03] For example, I could say, oh, it could be any arbitrary function.
+[00:03:03 -> 00:03:07] But then we have to work in a framework that is not necessarily the polyhedral
+[00:03:07 -> 00:03:12] framework because polyhedral framework involves affine relations typically.
+[00:03:12 -> 00:03:13] All right.
+[00:03:13 -> 00:03:15] Here's another relaxation.
+[00:03:15 -> 00:03:18] Instead of the whole function being affine, maybe it's a piecewise affine
+[00:03:18 -> 00:03:19] function.
+[00:03:19 -> 00:03:21] So let's say the function is smaller.
+[00:03:21 -> 00:03:24] It takes an input iteration vector i.
+[00:03:24 -> 00:03:29] And then if for a certain range of values of i, it has capital C1,
+[00:03:29 -> 00:03:30] small c1.
+[00:03:30 -> 00:03:34] For another range of values of i, it has capital C2, small c2, and so on.
+[00:03:34 -> 00:03:37] And so this is a piecewise linear function.
+[00:03:37 -> 00:03:41] Because if capital C1 and C2 and small c1 and small c2 are different,
+[00:03:41 -> 00:03:45] then I basically divided the iteration space into two parts,
+[00:03:45 -> 00:03:49] which are basically represented by these constraints R1, small r1,
+[00:03:49 -> 00:03:54] capital R2, small r2, assuming that these are not overlapping regions.
+[00:03:54 -> 00:03:57] The regions represented by these constraints are not overlapping,
+[00:03:57 -> 00:04:01] in which case basically what I have is a piecewise linear function.
+[00:04:01 -> 00:04:05] So if it belongs to this range, then this is the processor ID.
+[00:04:05 -> 00:04:07] If it belongs to this range, then this is the processor ID.
+[00:04:07 -> 00:04:09] And so it's no longer a fine function.
+[00:04:09 -> 00:04:13] It's a piecewise affine function where the different pieces can have
+[00:04:13 -> 00:04:15] different affine functions.
+[00:04:15 -> 00:04:19] And a piecewise affine function still can be often solved using a
+[00:04:19 -> 00:04:20] polyhedral framework.
+[00:04:20 -> 00:04:24] It can potentially give you better solutions than a completely affine
+[00:04:24 -> 00:04:26] function like we had in our previous slide.
+[00:04:26 -> 00:04:30] But we are going to restrict our discussion to affine functions only
+[00:04:30 -> 00:04:33] because they basically give us the maximum bang for the buck.
+[00:04:33 -> 00:04:37] They give us the maximum returns for the amount of effort and
+[00:04:37 -> 00:04:41] the expensiveness of the computation, the cost of the computation
+[00:04:41 -> 00:04:43] that we have to do to do such transformations.
+[00:04:43 -> 00:04:48] But it's good to know that to understand this nature of the constraint
+[00:04:48 -> 00:04:51] of a fine function versus a more general function like
+[00:04:51 -> 00:04:53] a piecewise affine function.
+[00:04:54 -> 00:04:56] Now let's come back to our original discussion.
+[00:04:56 -> 00:05:02] So if we have a fine function, it can be characterized by a single
+[00:05:02 -> 00:05:06] pair of matrix vector pairs, capital C and small c.
+[00:05:06 -> 00:05:10] And we need to find a solution to capital C and small c that
+[00:05:10 -> 00:05:12] satisfies the data dependence constraints.
+[00:05:12 -> 00:05:18] If there are no data dependencies whatsoever, then these should be
+[00:05:18 -> 00:05:20] as liberal as possible.
+[00:05:20 -> 00:05:24] For example, they can just map every iteration of every statement
+[00:05:24 -> 00:05:26] to a different processor.
+[00:05:26 -> 00:05:30] But we need to also consider the data dependence constraints.
+[00:05:30 -> 00:05:34] Now we already have mathematical formulations of what it means
+[00:05:34 -> 00:05:37] for two statements or two iterations to have a data dependence.
+[00:05:37 -> 00:05:41] And we are going to thus combine that mathematical formulation
+[00:05:41 -> 00:05:45] with the problem of finding capital C, small c so that we are
+[00:05:45 -> 00:05:48] able to find the solution that both satisfies the data dependence
+[00:05:48 -> 00:05:52] constraints and maximizes the amount of parity.
+[00:05:52 -> 00:05:57] So first of all, notice that when I say we need to find a solution
+[00:05:57 -> 00:06:01] to capital C, small c, a trivial solution that will always work
+[00:06:01 -> 00:06:06] is that capital C is the zero matrix and small c is the zero vector.
+[00:06:06 -> 00:06:11] In this case, let's just say that capital C has a single row.
+[00:06:11 -> 00:06:15] So the processor space is a unidimensional space.
+[00:06:15 -> 00:06:22] It's a single dimension, k is 1, and the first row is just 0, 0, 0, 0, 0,
+[00:06:22 -> 00:06:26] which basically means that everything is mapping to just one processor
+[00:06:26 -> 00:06:28] in the processor space.
+[00:06:28 -> 00:06:31] In other words, the dimension of the processor space actually is 0,
+[00:06:31 -> 00:06:32] not even 1.
+[00:06:32 -> 00:06:34] And small c is also 0.
+[00:06:34 -> 00:06:38] It's just an additive constant to basically separate out
+[00:06:38 -> 00:06:41] different spaces.
+[00:06:41 -> 00:06:43] And so both of them are 0.
+[00:06:43 -> 00:06:46] So basically all the iterations map to processor number 0,
+[00:06:46 -> 00:06:49] which means I have no parallelism, and that is a valid solution
+[00:06:49 -> 00:06:52] that will satisfy any data dependence constraints.
+[00:06:52 -> 00:06:55] But that's not a very useful solution.
+[00:06:55 -> 00:06:59] So firstly, why is this a solution?
+[00:06:59 -> 00:07:02] Well, if every iteration is mapped to the same processor,
+[00:07:02 -> 00:07:06] assuming that two iterations are mapped to the same processor,
+[00:07:06 -> 00:07:09] we are going to have some way of preserving their relative order
+[00:07:09 -> 00:07:11] vis-a-vis the original program.
+[00:07:11 -> 00:07:13] We're going to discuss how to do that later on.
+[00:07:13 -> 00:07:15] But if everything is mapped to the same processor,
+[00:07:15 -> 00:07:17] it basically means the program has remained unchanged.
+[00:07:17 -> 00:07:19] We haven't really parallelized anything.
+[00:07:19 -> 00:07:22] We haven't identified any parallelism in the loop.
+[00:07:22 -> 00:07:26] In other words, the degree of parallelism in the output loop nest
+[00:07:26 -> 00:07:29] would be exactly 0.
+[00:07:29 -> 00:07:31] And this is a trivial solution,
+[00:07:31 -> 00:07:36] and this would work for any iteration space to a processor space.
+[00:07:36 -> 00:07:40] But we are interested in maximizing the processor space.
+[00:07:40 -> 00:07:44] In other words, we are interested in a solution for capital C and small c
+[00:07:44 -> 00:07:49] that basically has as large a range as possible for this affine function.
+[00:07:49 -> 00:07:52] So the larger the range of the affine function that we find,
+[00:07:52 -> 00:07:57] the larger the amount of parallelism we have been able to discover.
+[00:07:57 -> 00:07:59] How do I ensure that...
+[00:07:59 -> 00:08:02] What is the other way of saying that the range of this function should be maximum?
+[00:08:02 -> 00:08:07] The other way to say that the range of this function should be maximum
+[00:08:07 -> 00:08:12] is saying that the dimension of the processor space should be as large as possible.
+[00:08:12 -> 00:08:19] And that's one reason why we have represented our processor space also as a k-dimensional space.
+[00:08:19 -> 00:08:21] So we want as large k as possible,
+[00:08:21 -> 00:08:25] so that the larger the k, the more the parallelism.
+[00:08:25 -> 00:08:28] In other words, when will the value of k be large?
+[00:08:28 -> 00:08:35] When capital C would have the number of linearly independent rows in capital C is the maximum.
+[00:08:35 -> 00:08:41] In other words, C is a matrix that the solution should have.
+[00:08:41 -> 00:08:46] It should be a solution that maximizes the rank of the coefficient matrix capital C.
+[00:08:46 -> 00:08:48] We are going to see this more with examples.
+[00:08:48 -> 00:08:53] But notice that the rank of this particular matrix is just zero and that's not very meaningful.
+[00:08:53 -> 00:08:58] Although this is a trivial solution that would satisfy the data dependence constraints,
+[00:08:58 -> 00:09:00] it gives us no parallelism whatsoever.
+[00:09:00 -> 00:09:04] So really what we are interested in is a solution that maximizes the range
+[00:09:04 -> 00:09:10] of the function, in other words, maximizes the rank of the coefficient matrix
+[00:09:10 -> 00:09:14] because that is going to give us the maximum parallelism
+[00:09:14 -> 00:09:18] while satisfying the data dependence constraints.
+[00:09:18 -> 00:09:25] So further I want to point out that this is just a capital C, small c solution for one S.
+[00:09:25 -> 00:09:28] So for different S's we will have different solutions.
+[00:09:28 -> 00:09:35] And we want to maximize the rank of capital C for each of these statements
+[00:09:35 -> 00:09:40] so that each of these statements can be mapped to as large a range as possible
+[00:09:40 -> 00:09:42] to exploit maximum parallelism.
+[00:09:42 -> 00:09:44] And what is an affine partition?
+[00:09:44 -> 00:09:50] An affine partition involves identifying these capital C, small c pairs for every statement.
+[00:09:50 -> 00:09:53] So if there are three statements then I need to identify what is C1,
+[00:09:53 -> 00:09:57] capital C1, small c1, capital C2, small c2 and capital C3, small c3.
+[00:09:57 -> 00:10:01] And once I have identified all these three such that their ranks are maximum,
+[00:10:01 -> 00:10:05] I have basically identified the best possible parallelization solution
+[00:10:05 -> 00:10:09] for this particular program or loop list.
+[00:10:09 -> 00:10:12] Okay, so now let's come to the question of how do I say,
+[00:10:12 -> 00:10:17] how do I basically encode my data dependence constraints under this framework
+[00:10:17 -> 00:10:24] and formulate this problem of finding the maximum rank capital C, small c
+[00:10:24 -> 00:10:26] so that we maximize the parallelism.
+[00:10:26 -> 00:10:32] Well, here is the general structure of what we are going to do.
+[00:10:32 -> 00:10:35] We are interested in finding an affine partition.
+[00:10:35 -> 00:10:38] Recall that an affine partition is not just one capital C and small c.
+[00:10:38 -> 00:10:43] It is a list of capital C, small c, one for each statement.
+[00:10:43 -> 00:10:47] And we say an affine partition is synchronization free.
+[00:10:47 -> 00:10:50] So we are interested in finding an affine partition that is synchronization free.
+[00:10:50 -> 00:10:54] Which basically means that using this affine partition,
+[00:10:54 -> 00:11:02] if iteration 1 is mapped to processor 0 and iteration 2 is mapped to processor 1,
+[00:11:02 -> 00:11:05] then these iterations do not need to synchronize at all.
+[00:11:05 -> 00:11:08] They can proceed in parallel.
+[00:11:08 -> 00:11:11] There needs to be no ordering constraints between the two processors.
+[00:11:11 -> 00:11:13] And that's what I mean by synchronization free.
+[00:11:13 -> 00:11:18] And in our current discussion, we are only discussing synchronization free parallel.
+[00:11:18 -> 00:11:22] So we will map two iterations on these different processors
+[00:11:22 -> 00:11:26] only if we are 100% sure that they don't need to be synchronized.
+[00:11:26 -> 00:11:30] And one way to be 100% sure that they don't need to be synchronized
+[00:11:30 -> 00:11:32] is if they don't have a data dependence.
+[00:11:32 -> 00:11:37] If those two dynamic instances of iterations don't have a data dependence,
+[00:11:37 -> 00:11:39] then they don't need to be synchronized.
+[00:11:39 -> 00:11:42] And so we are interested in synchronization free parallelism.
+[00:11:42 -> 00:11:45] I have not been using the word synchronization free all through.
+[00:11:45 -> 00:11:47] I have just been saying parallelism, parallelism.
+[00:11:47 -> 00:11:50] But really what I really meant was synchronization free parallelism
+[00:11:50 -> 00:11:54] and I have been making it more precise and concrete in this sentence.
+[00:11:54 -> 00:11:58] So an affine partition is synchronization free if and only if
+[00:11:58 -> 00:12:02] for every two not necessarily distinct statements,
+[00:12:02 -> 00:12:08] f1, small f1, capital B1, small b1, f2, small f2, capital B2, small b2.
+[00:12:08 -> 00:12:12] Notice that every statement in my program can be represented by a four-tuple
+[00:12:12 -> 00:12:14] in my polynomial framework.
+[00:12:14 -> 00:12:18] So let's say one is represented by number one.
+[00:12:18 -> 00:12:21] So f1, small f1, b1, small b1.
+[00:12:21 -> 00:12:24] And the other is f2, small f2, b2, small b2.
+[00:12:24 -> 00:12:27] And notice the phrase is not necessarily distinct.
+[00:12:27 -> 00:12:31] It's possible that it's the same statement that we are talking about
+[00:12:31 -> 00:12:35] in which case capital F2 would be equal to small f1, capital F2 would be,
+[00:12:35 -> 00:12:39] small f2 would be equal to small f1 and small f2.
+[00:12:39 -> 00:12:43] So an affine partition is synchronization free if and only if
+[00:12:43 -> 00:12:51] for every two statements, the corresponding capital C1, small c1,
+[00:12:51 -> 00:12:54] that means the corresponding affine functions for each statement are,
+[00:12:54 -> 00:12:56] and they have some constraints, right?
+[00:12:56 -> 00:12:58] So depending on what are capital F1 and small f1,
+[00:12:58 -> 00:13:01] depending on what is capital B1 and small b1,
+[00:13:01 -> 00:13:03] depending on what is capital F2 and small f2,
+[00:13:03 -> 00:13:05] and what is capital B2 and small b2,
+[00:13:05 -> 00:13:07] and notice that these can be the same actually,
+[00:13:07 -> 00:13:09] f1 can be the same as f2,
+[00:13:09 -> 00:13:12] what are the constraints of C1, small c1 and capital C2,
+[00:13:13 -> 00:13:15] so we will have some constraints on that
+[00:13:15 -> 00:13:17] and based on these constraints, we will say,
+[00:13:17 -> 00:13:19] oh, this is synchronization free, okay?
+[00:13:19 -> 00:13:23] And for example, if I map everything to 0,
+[00:13:23 -> 00:13:25] that is also synchronization free because there is no parallelism,
+[00:13:25 -> 00:13:30] so I don't need to do any synchronization across different processes.
+[00:13:30 -> 00:13:34] So, but I need a more general way of specifying this,
+[00:13:34 -> 00:13:36] 0 is just a trivial solution,
+[00:13:36 -> 00:13:38] what is the space of all such solutions,
+[00:13:38 -> 00:13:40] and that's why I have if and only if.
+[00:13:40 -> 00:13:42] So, here is the full constraint,
+[00:13:42 -> 00:13:44] that was just the structure of the constraint,
+[00:13:44 -> 00:13:46] here I complete the sentence,
+[00:13:46 -> 00:13:48] for statement S1,
+[00:13:48 -> 00:13:50] here is the specification of S1,
+[00:13:50 -> 00:13:52] and S2, here is the specification of S2,
+[00:13:52 -> 00:13:56] the partitions C1, small c1, capital C2, small c2
+[00:13:56 -> 00:13:58] must be such that
+[00:13:58 -> 00:14:02] whenever there is a data dependence between two iterations,
+[00:14:02 -> 00:14:07] then the mapping for those two iterations are same, right?
+[00:14:07 -> 00:14:09] So that's what synchronization free actually means,
+[00:14:09 -> 00:14:11] so in other words, I am just defining it here,
+[00:14:11 -> 00:14:13] that's why the if and only if,
+[00:14:13 -> 00:14:16] that whenever there is a data dependence between any two iterations
+[00:14:16 -> 00:14:18] of these statements,
+[00:14:18 -> 00:14:21] let's say statement I1 of statement S1,
+[00:14:21 -> 00:14:24] and iteration I1 of statement S1,
+[00:14:24 -> 00:14:26] and iteration I2 of statement S2,
+[00:14:26 -> 00:14:31] then if there was a data dependency between these two dynamic instances,
+[00:14:31 -> 00:14:32] or dynamic iterations,
+[00:14:32 -> 00:14:34] then they should have mapped to the same process.
+[00:14:34 -> 00:14:37] And I just need to specify this mathematically now,
+[00:14:37 -> 00:14:40] what are the constraints for when there is a data dependence,
+[00:14:40 -> 00:14:42] we have already seen this,
+[00:14:42 -> 00:14:44] we say for all I1 belonging to Z to the power D1,
+[00:14:44 -> 00:14:48] where D1 is the loopness depth of S1,
+[00:14:48 -> 00:14:51] and I2 belonging to Z to the power D2,
+[00:14:51 -> 00:14:54] so I know this is in D1 size tuple of integers,
+[00:14:54 -> 00:14:56] this is a D2 size tuple of integers,
+[00:14:56 -> 00:15:01] if D1 I1 plus D1 is greater than or equal to 0,
+[00:15:01 -> 00:15:04] and D2 I2 plus D2 is greater than or equal to 0,
+[00:15:04 -> 00:15:10] which basically means that I1 belongs to the valid loop iteration space of S1,
+[00:15:10 -> 00:15:14] and I2 belongs to the valid loop iteration space of S2,
+[00:15:14 -> 00:15:20] and I1 plus small f1 equals f2 I2 plus small f2,
+[00:15:20 -> 00:15:23] they are both accessing the same element,
+[00:15:23 -> 00:15:26] and one of them was a write,
+[00:15:26 -> 00:15:28] which is not written here,
+[00:15:28 -> 00:15:31] but that is what basically a data dependence would mean,
+[00:15:31 -> 00:15:33] so let me just write it,
+[00:15:33 -> 00:15:36] 1 is a write,
+[00:15:36 -> 00:15:44] then c1 I1 plus small c1 must be equal to c2 I2 plus small c2,
+[00:15:44 -> 00:15:47] so basically if there is a data dependence between any two iterations,
+[00:15:47 -> 00:15:49] I1 and I2,
+[00:15:49 -> 00:15:54] then it must be true that both I1 and I2 map to the same processor PID,
+[00:15:54 -> 00:15:56] in processor ID or PID,
+[00:15:56 -> 00:15:58] how do I record that,
+[00:15:58 -> 00:16:01] what is the processor ID that I1 maps to,
+[00:16:01 -> 00:16:04] that is c1 I1 plus c1, that is the function,
+[00:16:04 -> 00:16:06] and what is the processor ID that I2 maps to,
+[00:16:06 -> 00:16:08] that is c2 I2 plus c2,
+[00:16:08 -> 00:16:13] and so basically I have this mathematical formulation that whenever there is a data dependence,
+[00:16:13 -> 00:16:17] then they map to the same processor ID,
+[00:16:17 -> 00:16:24] so this is exactly our space partitioning constraints for synchronization free parallelism,
+[00:16:24 -> 00:16:26] and now the question is,
+[00:16:26 -> 00:16:29] what are the sum solutions to capital C1 and small c1,
+[00:16:29 -> 00:16:34] so notice that I1 and I2 are quantified and for all I1 and I2 it must be true,
+[00:16:34 -> 00:16:37] so the only unknowns in this whole equation,
+[00:16:37 -> 00:16:39] capital D1 and small d1 are known,
+[00:16:39 -> 00:16:41] these are just constants,
+[00:16:41 -> 00:16:43] similarly b2 and small b2,
+[00:16:43 -> 00:16:45] f1, small f1, f2, small f2,
+[00:16:45 -> 00:16:47] these are all constant matrices,
+[00:16:47 -> 00:16:52] small I1 and small I2 are quantified using the for all operator,
+[00:16:52 -> 00:16:58] so the only unknowns here are really capital C1 and small c1 and capital C2 and small c2,
+[00:16:58 -> 00:17:03] and we are interested in finding a solution to capital C1, small c1, capital C2, small c2,
+[00:17:03 -> 00:17:06] such that these constraints are satisfied,
+[00:17:06 -> 00:17:12] now once again I would point out that a trivial solution is just use 0 for capital C1 and small c1,
+[00:17:12 -> 00:17:14] and 0 for c2 and small c2,
+[00:17:14 -> 00:17:17] and these constraints would be trivially satisfied,
+[00:17:17 -> 00:17:19] because the then clause would be always true,
+[00:17:19 -> 00:17:22] because the left hand side and the right hand side would both evaluate to 0,
+[00:17:22 -> 00:17:24] it is a trivial solution,
+[00:17:24 -> 00:17:26] so it satisfies these constraints,
+[00:17:26 -> 00:17:29] which I also call the space partition constraints,
+[00:17:29 -> 00:17:32] but it is not a very useful solution,
+[00:17:32 -> 00:17:37] we are interested in a solution that maximizes the rank of capital C1
+[00:17:37 -> 00:17:40] and maximizes the rank of capital C2,
+[00:17:40 -> 00:17:44] and yet satisfies these constraints,
+[00:17:44 -> 00:17:47] and yet satisfies the space partition constraints,
+[00:17:47 -> 00:17:50] so now we have learned about space partition constraints,
+[00:17:50 -> 00:17:53] to draw these constraints using a figure,
+[00:17:53 -> 00:17:56] to depict these space partition constraints using a figure,
+[00:17:56 -> 00:17:58] let's say this is the iteration space of S1,
+[00:17:58 -> 00:18:00] there are some points,
+[00:18:00 -> 00:18:02] let's say this is the iteration space of S2,
+[00:18:02 -> 00:18:03] these are some points,
+[00:18:03 -> 00:18:06] notice that I am using distinct iteration spaces,
+[00:18:06 -> 00:18:08] it is possible that they were the same iteration space,
+[00:18:08 -> 00:18:11] in fact it is also possible that S1 and S2 were the same,
+[00:18:11 -> 00:18:13] in either case, if S1 and S2 were the same,
+[00:18:13 -> 00:18:16] then I didn't really have to draw different iteration spaces,
+[00:18:16 -> 00:18:18] I would have just drawn the same iteration space,
+[00:18:18 -> 00:18:19] but more importantly,
+[00:18:19 -> 00:18:24] there are these red lines that are drawn between points of the iteration space,
+[00:18:24 -> 00:18:26] and they indicate data dependence,
+[00:18:26 -> 00:18:29] so for example this point and this point are data dependent,
+[00:18:29 -> 00:18:32] this point and this point across S1 and S2 are data dependent,
+[00:18:32 -> 00:18:34] and these two points within S2 are data dependent,
+[00:18:34 -> 00:18:37] so what do our space partition constraints say,
+[00:18:37 -> 00:18:41] they say that whenever the two points have a data dependence between them,
+[00:18:41 -> 00:18:46] then they must map to the same processor ID,
+[00:18:46 -> 00:18:48] and so to show that pictorially,
+[00:18:48 -> 00:18:50] let's say this is my processor space,
+[00:18:50 -> 00:18:53] so these are all my processors or K dimensional space of processor IDs,
+[00:18:53 -> 00:18:58] then the mapping should be such that for all things that have a data dependence,
+[00:18:58 -> 00:19:00] so in this case these two points have a data dependence,
+[00:19:00 -> 00:19:03] so they should be mapping to the same processor,
+[00:19:03 -> 00:19:07] on the other hand this point does not have a data dependence with these two points,
+[00:19:07 -> 00:19:10] and so this can potentially map to a different processor ID,
+[00:19:10 -> 00:19:14] so far I have just looked at S1, what about S2,
+[00:19:14 -> 00:19:18] so these mappings are being determined by capital C1 and small c1,
+[00:19:18 -> 00:19:22] because that's the fine function that is dictating what these mappings are going to be,
+[00:19:22 -> 00:19:25] similarly I can have constraint on S2,
+[00:19:25 -> 00:19:29] so just like before these two points have a data dependency,
+[00:19:29 -> 00:19:34] so they must map to the same processor ID using capital C1 and small c2,
+[00:19:34 -> 00:19:36] and across statements as well,
+[00:19:36 -> 00:19:40] so for example this point and this point have a data dependence,
+[00:19:40 -> 00:19:45] and so they must also map to the same point in the processor ID space,
+[00:19:45 -> 00:19:47] so we have three different types of constraints,
+[00:19:47 -> 00:19:50] one is for any two points within S1,
+[00:19:50 -> 00:19:52] for any two points within S2,
+[00:19:52 -> 00:19:55] and for a point in S1 and a point in S2,
+[00:19:55 -> 00:20:05] and basically I need to have these constraints for every possible pair of iteration points in the spaces of S1 and S2,
+[00:20:05 -> 00:20:07] so this is a pair wise comparison,
+[00:20:07 -> 00:20:15] and I need to basically choose my capital C, small c, capital C2, small c2 such for S1 and S2,
+[00:20:15 -> 00:20:20] such that all these constraints across all these different pairs of statements,
+[00:20:20 -> 00:20:24] and when I say pairs of statements, they can be such pairs as well,
+[00:20:24 -> 00:20:26] so between S1 and S1 as well,
+[00:20:26 -> 00:20:30] so between all such pairs, if there are n statements then there will be n square such pairs,
+[00:20:30 -> 00:20:36] so for all such pairs it should be true that the space partitioning constraint that I had
+[00:20:36 -> 00:20:38] in my previous slide are satisfied,
+[00:20:38 -> 00:20:46] pictorially speaking whenever there is a data dependency between two points in the iteration spaces of that pair of statements,
+[00:20:46 -> 00:20:51] then they must map to the same point in the processor space.

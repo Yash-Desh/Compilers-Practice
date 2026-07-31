@@ -1,0 +1,415 @@
+Title: Compiler Design Module 177 : Invariants
+Video ID: j24018p4nok
+Detected language: en
+------------------------------------------------------------
+
+[00:00:00 -> 00:00:04] Now that we are familiar with assertions, preconditions,
+[00:00:04 -> 00:00:06] and post-conditions, let's get introduced
+[00:00:06 -> 00:00:09] to another term, which is invariance.
+[00:00:09 -> 00:00:13] So an invariant, you may have studied about invariance
+[00:00:13 -> 00:00:16] when you talk about even the introductory course
+[00:00:16 -> 00:00:19] in computer science, because invariants are basically
+[00:00:19 -> 00:00:21] the way to reason about correctness of a program.
+[00:00:21 -> 00:00:23] And that's typically what you
+[00:00:23 -> 00:00:26] need to do when you are using formal methods
+[00:00:26 -> 00:00:28] to prove the safety and security of a program as well.
+[00:00:28 -> 00:00:31] So we're going to define what an invariant is more formally.
+[00:00:31 -> 00:00:33] An invariant at a given program point
+[00:00:33 -> 00:00:36] is an assertion that holds during execution
+[00:00:36 -> 00:00:39] whenever control reaches that point.
+[00:00:39 -> 00:00:44] So at a particular PC program location in the program,
+[00:00:44 -> 00:00:47] whenever during execution the control reaches that point,
+[00:00:47 -> 00:00:49] this fact is always true.
+[00:00:49 -> 00:00:52] And if such a fact exists, if such an assertion exists,
+[00:00:52 -> 00:00:55] then that's called an invariant.
+[00:00:55 -> 00:00:57] Okay, so let's look at an example.
+[00:00:57 -> 00:01:02] This is the example of the Euclidean integer division program.
+[00:01:02 -> 00:01:06] So the precondition of this program is that both X and Y
+[00:01:06 -> 00:01:09] are greater than zero,
+[00:01:09 -> 00:01:11] and X can additionally be equal to zero.
+[00:01:11 -> 00:01:13] So X is greater than equal to zero,
+[00:01:13 -> 00:01:15] and Y is strictly greater than zero.
+[00:01:15 -> 00:01:17] So, and then there's the program.
+[00:01:17 -> 00:01:19] If we look at the program, it is, you know,
+[00:01:19 -> 00:01:22] it basically initializes the question Q to zero.
+[00:01:22 -> 00:01:26] The remainder are to X, which is the dividend.
+[00:01:26 -> 00:01:29] And then while R is greater than equal to Y,
+[00:01:29 -> 00:01:32] with Y as a divisor, you do R equals R minus Y.
+[00:01:32 -> 00:01:35] You decrease R by Y, and you do Q equals Q plus one.
+[00:01:35 -> 00:01:38] You increase the quotient by one.
+[00:01:38 -> 00:01:40] And this program, when it ends,
+[00:01:40 -> 00:01:45] it's supposed to give you the result of division,
+[00:01:46 -> 00:01:49] the quotient in Q, and the remainder in R.
+[00:01:50 -> 00:01:53] So first of all, this X greater than equal to zero
+[00:01:53 -> 00:01:55] and Y greater than zero is a precondition.
+[00:01:55 -> 00:01:59] So even a precondition is an invariant,
+[00:01:59 -> 00:02:01] which is enforced by the external environment
+[00:02:01 -> 00:02:02] that calls this program.
+[00:02:02 -> 00:02:05] And this invariant holds at the program location,
+[00:02:05 -> 00:02:06] which is the entry of this program.
+[00:02:06 -> 00:02:08] So right here, this assertion,
+[00:02:08 -> 00:02:11] X greater than equal to zero and Y greater than zero,
+[00:02:11 -> 00:02:12] can be assumed to hold.
+[00:02:12 -> 00:02:15] And it's an assertion that holds
+[00:02:15 -> 00:02:17] whenever program reaches,
+[00:02:17 -> 00:02:19] whenever execution reaches this point.
+[00:02:19 -> 00:02:22] And so the precondition itself is an invariant
+[00:02:22 -> 00:02:24] at the beginning of the program.
+[00:02:24 -> 00:02:27] But there are more invariants that we can identify
+[00:02:27 -> 00:02:28] at other points in the program.
+[00:02:28 -> 00:02:30] And here are some examples.
+[00:02:30 -> 00:02:34] So for example, just after executing Q equals zero,
+[00:02:34 -> 00:02:36] the invariant is whatever was existing before,
+[00:02:36 -> 00:02:37] which is X is greater than equal to zero
+[00:02:37 -> 00:02:39] and Y is greater than zero.
+[00:02:39 -> 00:02:42] And we can further claim that Q is equal to zero,
+[00:02:42 -> 00:02:44] because we're sure that at this point,
+[00:02:44 -> 00:02:45] Q would always be equal to zero
+[00:02:45 -> 00:02:47] because we just assigned Q to zero.
+[00:02:48 -> 00:02:52] Similarly, after the second statement is executed,
+[00:02:52 -> 00:02:53] which is R assigned to X,
+[00:02:54 -> 00:02:56] we know that everything that was holding earlier,
+[00:02:56 -> 00:02:57] which is X is greater than equal to zero,
+[00:02:57 -> 00:03:02] Y is greater than zero, Q equals zero, and R equals X.
+[00:03:02 -> 00:03:05] So there are four different predicates here
+[00:03:05 -> 00:03:09] that are conjuncted using the conjunction operator,
+[00:03:09 -> 00:03:10] the AND operator,
+[00:03:10 -> 00:03:12] which is basically the invariant
+[00:03:12 -> 00:03:14] at this particular point of this program.
+[00:03:14 -> 00:03:17] Once again, this is an assertion that will always hold
+[00:03:17 -> 00:03:20] whenever the program control reaches this point.
+[00:03:20 -> 00:03:21] And of course, we are assuming
+[00:03:21 -> 00:03:23] that the precondition already holds.
+[00:03:23 -> 00:03:26] Precondition is being imposed by the environment,
+[00:03:26 -> 00:03:30] but all the other things are kind of following
+[00:03:30 -> 00:03:32] from both the precondition
+[00:03:32 -> 00:03:33] and the properties of the program,
+[00:03:33 -> 00:03:35] such as the assignment operators.
+[00:03:36 -> 00:03:37] We haven't yet discussed
+[00:03:37 -> 00:03:40] how to identify these invariants or et cetera.
+[00:03:40 -> 00:03:43] We're going to talk about that later on,
+[00:03:43 -> 00:03:46] but at least we should know what are the invariants
+[00:03:46 -> 00:03:47] or what are the possible invariants.
+[00:03:47 -> 00:03:52] Now, the next invariant example is actually interesting
+[00:03:52 -> 00:03:53] because this time I have a loop.
+[00:03:53 -> 00:03:56] And so I can come to this point,
+[00:03:56 -> 00:03:58] which is just after checking
+[00:03:58 -> 00:03:59] whether R is greater than equal to Y or not,
+[00:03:59 -> 00:04:01] from two paths.
+[00:04:01 -> 00:04:03] One is coming directly from the entry path
+[00:04:03 -> 00:04:06] and the other is through the loop path.
+[00:04:06 -> 00:04:07] And so when I come here,
+[00:04:07 -> 00:04:10] I can no longer say that Q equals zero
+[00:04:10 -> 00:04:12] because Q is getting incremented on the loop path.
+[00:04:12 -> 00:04:14] I can also no longer say that R equals X
+[00:04:14 -> 00:04:17] because once again, on this path,
+[00:04:17 -> 00:04:20] R is getting changed, R is becoming R minus Y.
+[00:04:20 -> 00:04:22] What are some invariants that I'm sure of?
+[00:04:22 -> 00:04:26] So I claim, and I'm going to show why,
+[00:04:26 -> 00:04:27] that one of the invariants is that
+[00:04:27 -> 00:04:29] R is greater than equal to Y.
+[00:04:29 -> 00:04:30] Now this is easy to see
+[00:04:30 -> 00:04:33] because if I'm at this location,
+[00:04:33 -> 00:04:34] I can only reach this location
+[00:04:34 -> 00:04:36] after I have basically checked
+[00:04:36 -> 00:04:38] whether R is greater than equal to Y or not.
+[00:04:38 -> 00:04:40] And if R was not greater than equal to Y,
+[00:04:40 -> 00:04:41] I wouldn't have even reached here.
+[00:04:41 -> 00:04:43] I would have actually exited the loop.
+[00:04:43 -> 00:04:46] Similarly, let's look at the other invariant,
+[00:04:46 -> 00:04:47] which is R is greater than equal to zero.
+[00:04:47 -> 00:04:50] So I know that R is greater than equal to zero
+[00:04:50 -> 00:04:52] because I know that R was,
+[00:04:52 -> 00:04:54] if I'm coming on this path,
+[00:04:54 -> 00:04:55] then R was equal to X
+[00:04:55 -> 00:04:58] and we know that X was greater than equal to zero.
+[00:04:58 -> 00:05:00] And so from that, I know that
+[00:05:00 -> 00:05:01] if I'm coming here from the entry,
+[00:05:01 -> 00:05:03] then R is greater than equal to zero.
+[00:05:03 -> 00:05:05] Moreover, because I know that
+[00:05:05 -> 00:05:06] if I look at the loop path,
+[00:05:06 -> 00:05:09] then I get R equals R minus Y.
+[00:05:09 -> 00:05:12] But I already know that R is greater than equal to Y.
+[00:05:12 -> 00:05:13] And so if I do R is,
+[00:05:14 -> 00:05:16] you know, R is equals R minus Y,
+[00:05:16 -> 00:05:17] then that basically means
+[00:05:17 -> 00:05:18] because R was greater than equal to Y,
+[00:05:18 -> 00:05:21] R minus Y will be greater than equal to zero.
+[00:05:21 -> 00:05:23] And so that also gives you R greater than equal to zero.
+[00:05:23 -> 00:05:25] In fact, this actually directly follows
+[00:05:25 -> 00:05:27] from the fact that Y is greater than zero
+[00:05:27 -> 00:05:28] and Y hasn't changed.
+[00:05:28 -> 00:05:29] So because R is greater than equal to Y,
+[00:05:29 -> 00:05:31] R is greater than equal to zero as well
+[00:05:31 -> 00:05:35] because by transitivity of the greater than relation.
+[00:05:36 -> 00:05:39] Similarly, I can prove that Q is greater than equal to zero.
+[00:05:39 -> 00:05:42] So, I mean, I'm sure that whenever program control
+[00:05:42 -> 00:05:42] reaches this point,
+[00:05:42 -> 00:05:44] Q will be greater than equal to zero.
+[00:05:44 -> 00:05:45] How do I know that?
+[00:05:45 -> 00:05:48] Well, you can see that in the first time I come here,
+[00:05:48 -> 00:05:49] Q is equal to zero.
+[00:05:49 -> 00:05:52] And then every other time I come here,
+[00:05:52 -> 00:05:55] I've probably incremented Q by one.
+[00:05:55 -> 00:05:57] And so I cannot ever have a negative value of Q
+[00:05:57 -> 00:06:00] and that's another invariant that I can prove
+[00:06:00 -> 00:06:02] at this particular program location.
+[00:06:02 -> 00:06:06] Or it's another invariant that actually holds
+[00:06:06 -> 00:06:08] for this particular program location.
+[00:06:08 -> 00:06:10] And finally, I can also have an invariant
+[00:06:10 -> 00:06:12] for the program exit.
+[00:06:12 -> 00:06:14] And this will be our post condition.
+[00:06:14 -> 00:06:16] And once again, I could basically say,
+[00:06:16 -> 00:06:17] Q is greater than equal to zero.
+[00:06:17 -> 00:06:19] And that's just going to follow from the fact that,
+[00:06:19 -> 00:06:21] Q was initialized to zero
+[00:06:21 -> 00:06:22] and it can only get incremented.
+[00:06:22 -> 00:06:24] So Q is greater than equal to zero.
+[00:06:24 -> 00:06:26] R is greater than equal to zero.
+[00:06:26 -> 00:06:27] Once again, it's the same logic
+[00:06:27 -> 00:06:29] because R was greater than equal to Y.
+[00:06:29 -> 00:06:33] And I could have at most done R equals R minus Y.
+[00:06:33 -> 00:06:35] So that basically was R was greater than equal to Y,
+[00:06:35 -> 00:06:38] R minus Y would have been greater than equal to zero.
+[00:06:38 -> 00:06:40] And then R would have become less than Y
+[00:06:40 -> 00:06:41] and I would have come here.
+[00:06:41 -> 00:06:43] So R is greater than equal to zero.
+[00:06:43 -> 00:06:45] And the third one is R is less than Y.
+[00:06:45 -> 00:06:46] And why do I know that?
+[00:06:46 -> 00:06:49] The fact that I have exited the loop
+[00:06:49 -> 00:06:52] basically is evidence that R must be less than Y
+[00:06:52 -> 00:06:54] because if R was not less than Y,
+[00:06:54 -> 00:06:55] I wouldn't have exited the loop
+[00:06:55 -> 00:06:57] because the loop condition
+[00:06:57 -> 00:07:00] is basically that R is greater than equal to Y.
+[00:07:00 -> 00:07:02] So these are some examples of invariants
+[00:07:02 -> 00:07:04] in this particular program.
+[00:07:05 -> 00:07:06] Okay.
+[00:07:06 -> 00:07:09] Once again, invariants are just assertions that hold.
+[00:07:09 -> 00:07:11] And how do I prove that these assertions,
+[00:07:11 -> 00:07:13] these invariants actually hold?
+[00:07:13 -> 00:07:15] These invariants actually hold
+[00:07:15 -> 00:07:16] at the respective program points.
+[00:07:16 -> 00:07:19] So if I look at these three things here,
+[00:07:19 -> 00:07:21] I need to show that it holds for the base case,
+[00:07:21 -> 00:07:24] which means if I assume that X is greater than equal
+[00:07:24 -> 00:07:26] to zero and Y is greater than zero,
+[00:07:26 -> 00:07:29] and I execute these assignment statements,
+[00:07:29 -> 00:07:32] Q gets zero and R gets X.
+[00:07:32 -> 00:07:34] And also I execute this branch statement,
+[00:07:34 -> 00:07:37] which says if R is greater than equal to Y,
+[00:07:37 -> 00:07:39] and I actually reach this point,
+[00:07:39 -> 00:07:41] which means the branch was actually evaluated to true,
+[00:07:41 -> 00:07:43] the branch condition was evaluated true,
+[00:07:43 -> 00:07:47] then this is the condition that I get on the loop here.
+[00:07:48 -> 00:07:49] So I need to prove,
+[00:07:49 -> 00:07:53] so one thing, the first part of the proof is going to be,
+[00:07:53 -> 00:07:54] the first part of the proof that the invariant
+[00:07:54 -> 00:07:56] actually holds at this point is going to be
+[00:07:56 -> 00:07:57] that it holds for the base case,
+[00:07:57 -> 00:07:59] which is the entry path.
+[00:07:59 -> 00:08:01] And the second part of the proof
+[00:08:01 -> 00:08:03] is going to be the inductive hypothesis
+[00:08:03 -> 00:08:05] and inductive step.
+[00:08:05 -> 00:08:06] It says, assuming it holds
+[00:08:06 -> 00:08:09] at any arbitrary Kth iteration,
+[00:08:09 -> 00:08:11] it also holds for K plus 1th iteration,
+[00:08:11 -> 00:08:13] where K is a natural number.
+[00:08:13 -> 00:08:15] So I mean, if it holds for the first iteration,
+[00:08:15 -> 00:08:17] then it holds also for the second iteration.
+[00:08:17 -> 00:08:18] If it holds for the second iteration,
+[00:08:18 -> 00:08:21] it also holds for the third iteration and so on.
+[00:08:21 -> 00:08:23] And so this is also easy to see,
+[00:08:23 -> 00:08:24] I actually discussed this
+[00:08:24 -> 00:08:27] before actually talking about the proof,
+[00:08:27 -> 00:08:29] because if R is greater than equal to Y,
+[00:08:29 -> 00:08:31] and I kind of take this path,
+[00:08:31 -> 00:08:33] then I've already kind of executed
+[00:08:33 -> 00:08:34] and I've reached this point,
+[00:08:34 -> 00:08:36] then that basically means that R would still
+[00:08:36 -> 00:08:37] be greater than equal to Y.
+[00:08:37 -> 00:08:39] Similarly, I can prove that Q will be greater
+[00:08:39 -> 00:08:41] than equal to zero because I'm only incrementing Q
+[00:08:41 -> 00:08:43] and I can also show that R is greater than equal to zero,
+[00:08:43 -> 00:08:45] because R is greater than equal to Y
+[00:08:45 -> 00:08:47] and R minus Y,
+[00:08:47 -> 00:08:50] thus would be greater than equal to zero.
+[00:08:50 -> 00:08:51] All right.
+[00:08:53 -> 00:08:56] And so this kind of method of identifying
+[00:08:56 -> 00:08:59] or kind of proving that certain invariants hold
+[00:08:59 -> 00:09:00] is based on the induction
+[00:09:00 -> 00:09:02] on the number of program steps.
+[00:09:02 -> 00:09:03] This is step one,
+[00:09:03 -> 00:09:05] or you can basically, you know,
+[00:09:05 -> 00:09:08] depending on what granularity you're counting steps,
+[00:09:08 -> 00:09:09] if I just count the whole thing as one step,
+[00:09:09 -> 00:09:11] then this is one step,
+[00:09:12 -> 00:09:14] and then every iteration can be counted as another step.
+[00:09:14 -> 00:09:16] And so if I just do induction
+[00:09:16 -> 00:09:19] on the number of steps that the program has executed,
+[00:09:19 -> 00:09:21] I can show that this invariant holds.
+[00:09:22 -> 00:09:23] And for this reason,
+[00:09:23 -> 00:09:25] these invariants are also called inductive invariants
+[00:09:25 -> 00:09:28] because it's an inductive argument
+[00:09:28 -> 00:09:30] that you use to show that these invariants
+[00:09:30 -> 00:09:34] actually hold at their respective program points.
+[00:09:35 -> 00:09:38] Now, those were some invariants
+[00:09:38 -> 00:09:40] and these are just some examples of invariants,
+[00:09:40 -> 00:09:42] but there are some invariants
+[00:09:42 -> 00:09:44] that are more useful than others.
+[00:09:44 -> 00:09:46] For example, in this program,
+[00:09:46 -> 00:09:48] it is the Euclidean integer division example.
+[00:09:48 -> 00:09:51] And so one of the properties that I want to prove
+[00:09:51 -> 00:09:54] is that when this program exits,
+[00:09:54 -> 00:09:57] then I get the right answer in Q and R,
+[00:09:57 -> 00:10:00] which means Q is basically the quotient
+[00:10:00 -> 00:10:02] and R is the remainder,
+[00:10:02 -> 00:10:04] which basically means that X should be equal
+[00:10:04 -> 00:10:05] to Q Y plus R.
+[00:10:05 -> 00:10:08] Moreover, R should be less than the divisor,
+[00:10:08 -> 00:10:10] which is R should be less than Y
+[00:10:10 -> 00:10:12] and R should be greater than equal to zero.
+[00:10:13 -> 00:10:15] And so this is the post condition
+[00:10:15 -> 00:10:16] that I want to prove.
+[00:10:16 -> 00:10:18] This is the property of the program
+[00:10:18 -> 00:10:19] that I want to prove.
+[00:10:19 -> 00:10:21] This is the partial correctness condition
+[00:10:21 -> 00:10:23] that I want to prove.
+[00:10:23 -> 00:10:27] And if I want to express this partial correctness condition,
+[00:10:27 -> 00:10:29] I would say the precondition of the whole triple
+[00:10:29 -> 00:10:31] would be X is greater than equal to zero,
+[00:10:31 -> 00:10:32] comma Y is greater than zero.
+[00:10:32 -> 00:10:35] The program C would be this whole program
+[00:10:35 -> 00:10:36] that involves a loop
+[00:10:36 -> 00:10:38] and the post condition would be these three statements,
+[00:10:38 -> 00:10:40] which is R is between zero and Y,
+[00:10:40 -> 00:10:42] including zero,
+[00:10:42 -> 00:10:44] Q is greater than equal to zero
+[00:10:44 -> 00:10:46] and X equals Q Y plus R.
+[00:10:46 -> 00:10:47] And we want to prove this.
+[00:10:47 -> 00:10:48] And to prove this,
+[00:10:48 -> 00:10:50] we basically need invariants
+[00:10:50 -> 00:10:53] at some intermediate points in the program.
+[00:10:53 -> 00:10:55] In this particular case,
+[00:10:55 -> 00:10:57] I especially need an invariant
+[00:10:57 -> 00:11:00] at the loop somewhere inside the loop body,
+[00:11:00 -> 00:11:02] maybe at the head of the loop,
+[00:11:02 -> 00:11:03] where we basically want to say,
+[00:11:03 -> 00:11:05] okay, can I say something here,
+[00:11:05 -> 00:11:07] which basically allows me to show that
+[00:11:07 -> 00:11:10] this invariant holds at the program exit.
+[00:11:10 -> 00:11:12] And I want to point out that
+[00:11:12 -> 00:11:14] the current set of invariants that we have
+[00:11:14 -> 00:11:17] are not sufficient to prove this property.
+[00:11:17 -> 00:11:19] Although these invariants are actually,
+[00:11:19 -> 00:11:20] they hold,
+[00:11:20 -> 00:11:21] we've already shown that
+[00:11:21 -> 00:11:22] that these invariants are correct.
+[00:11:22 -> 00:11:23] They are not good enough.
+[00:11:23 -> 00:11:25] They are not sufficient
+[00:11:25 -> 00:11:27] to actually prove this property
+[00:11:27 -> 00:11:29] that X equals Q Y plus R at exit,
+[00:11:29 -> 00:11:31] because you know what,
+[00:11:31 -> 00:11:34] how do I show that if I am at the loop head
+[00:11:34 -> 00:11:35] and I exit the loop,
+[00:11:35 -> 00:11:37] then I know that X equals Q Y plus R.
+[00:11:37 -> 00:11:39] I don't have enough information at the loop head
+[00:11:39 -> 00:11:44] to be able to say that this is going to hold.
+[00:11:44 -> 00:11:45] On the other hand,
+[00:11:45 -> 00:11:46] if I never took the loop,
+[00:11:46 -> 00:11:47] then this is obvious,
+[00:11:47 -> 00:11:49] because if Q equals zero,
+[00:11:49 -> 00:11:50] R equals X,
+[00:11:50 -> 00:11:52] and then R is greater than equal to Y
+[00:11:52 -> 00:11:54] actually evaluated to false,
+[00:11:54 -> 00:11:56] that basically would obviously mean
+[00:11:56 -> 00:11:57] that R is less than Y,
+[00:11:57 -> 00:12:00] and because Q is zero,
+[00:12:00 -> 00:12:01] so zero into Y plus R,
+[00:12:01 -> 00:12:02] R is X,
+[00:12:02 -> 00:12:04] so X equals zero plus X,
+[00:12:04 -> 00:12:05] and that's true.
+[00:12:05 -> 00:12:07] So if I don't take the loop,
+[00:12:07 -> 00:12:11] it's clear that this holds at the program exit,
+[00:12:11 -> 00:12:13] but if I take the loop,
+[00:12:13 -> 00:12:16] then I don't have enough information
+[00:12:16 -> 00:12:18] in the invariants at the loop head
+[00:12:18 -> 00:12:19] to be able to prove
+[00:12:19 -> 00:12:22] that this invariant holds at program exit.
+[00:12:23 -> 00:12:25] So here is the solution to this problem,
+[00:12:25 -> 00:12:27] and the solution is that we kind of
+[00:12:27 -> 00:12:31] strengthen the invariant at the loop head.
+[00:12:31 -> 00:12:32] I'm using the word strengthen,
+[00:12:32 -> 00:12:35] I'm basically saying make it more precise,
+[00:12:35 -> 00:12:38] which basically means have stricter covers
+[00:12:38 -> 00:12:40] or have stricter abstractions.
+[00:12:40 -> 00:12:42] Recall that when we said that
+[00:12:42 -> 00:12:44] an assertion is an abstraction,
+[00:12:44 -> 00:12:46] we're basically saying that it's an envelope
+[00:12:46 -> 00:12:48] over all the behaviors.
+[00:12:48 -> 00:12:49] The loose,
+[00:12:49 -> 00:12:50] if an envelope is loose,
+[00:12:50 -> 00:12:53] we say it is a weak abstraction
+[00:12:53 -> 00:12:54] or it's a weak invariant.
+[00:12:54 -> 00:12:55] If the envelope is tight,
+[00:12:55 -> 00:12:58] then we say it's a stronger abstraction
+[00:12:58 -> 00:12:59] or a stronger invariant.
+[00:12:59 -> 00:13:00] And in this case,
+[00:13:00 -> 00:13:01] we can strengthen the invariant
+[00:13:01 -> 00:13:03] by tightening the abstraction,
+[00:13:03 -> 00:13:05] so by adding one more predicate
+[00:13:05 -> 00:13:07] as a conjunctive clause and say,
+[00:13:07 -> 00:13:08] in addition to these three,
+[00:13:08 -> 00:13:10] another fact holds at the loop head,
+[00:13:10 -> 00:13:13] which is X equals QY plus R.
+[00:13:13 -> 00:13:14] And once again,
+[00:13:14 -> 00:13:16] you would see that it is possible to prove this
+[00:13:16 -> 00:13:18] using the same inductive argument.
+[00:13:18 -> 00:13:20] When I come from entry,
+[00:13:20 -> 00:13:22] then Q would be zero and R would be X,
+[00:13:22 -> 00:13:23] so this holds.
+[00:13:23 -> 00:13:26] And if it holds at the Kth iteration,
+[00:13:26 -> 00:13:28] and I make one iteration here,
+[00:13:28 -> 00:13:30] then I just decrement R by Y
+[00:13:30 -> 00:13:31] and increment Q by one.
+[00:13:31 -> 00:13:32] And you would say,
+[00:13:32 -> 00:13:34] see that if it holds in the Kth iteration,
+[00:13:34 -> 00:13:37] then it also holds in the K plus one iteration.
+[00:13:37 -> 00:13:40] Moreover, if it holds for any Kth iteration here
+[00:13:40 -> 00:13:43] and I don't come back to the same location
+[00:13:43 -> 00:13:45] and instead if I exit the loop,
+[00:13:45 -> 00:13:46] once again, I can show that
+[00:13:46 -> 00:13:49] because X was equal to QY plus R,
+[00:13:49 -> 00:13:52] and I just executed the body only once,
+[00:13:52 -> 00:13:53] when I come out,
+[00:13:53 -> 00:13:55] I know that R is less than Y
+[00:13:55 -> 00:13:57] and I would know that X equals QY plus R
+[00:13:57 -> 00:13:59] because once again, by the same argument,
+[00:13:59 -> 00:14:01] R has been decremented by Y
+[00:14:01 -> 00:14:04] and Q has been incremented by Y,
+[00:14:04 -> 00:14:06] Q incremented by one,
+[00:14:06 -> 00:14:09] and so that kind of makes this assertion still hold.
+[00:14:09 -> 00:14:11] We're going to see this more mathematically,
+[00:14:11 -> 00:14:13] these proof obligations,
+[00:14:13 -> 00:14:14] also called verification conditions,
+[00:14:14 -> 00:14:17] more formally in our next module,
+[00:14:17 -> 00:14:20] but I just want to kind of motivate the fact
+[00:14:20 -> 00:14:23] that identifying the correct invariant
+[00:14:23 -> 00:14:26] at the loop head is of prime importance.
+[00:14:26 -> 00:14:29] In other words, identifying the correct abstraction
+[00:14:29 -> 00:14:32] for my program at different program points
+[00:14:32 -> 00:14:34] is important because if I identify an abstraction
+[00:14:34 -> 00:14:38] that's too loose or an invariant that is too weak,
+[00:14:38 -> 00:14:40] then that does not allow me to prove
+[00:14:40 -> 00:14:42] my desired post condition,
+[00:14:42 -> 00:14:45] in this case, X equals QY plus R.
+[00:14:45 -> 00:14:47] But the moment I strengthen it appropriately,
+[00:14:47 -> 00:14:51] then I'm able to identify the corresponding proof
+[00:14:51 -> 00:14:53] for that required post condition.
+[00:14:55 -> 00:14:56] So here is the proof.
+[00:14:56 -> 00:14:59] I mean, if I come from the entry, then this holds
+[00:14:59 -> 00:15:01] and if I take one iteration,
+[00:15:01 -> 00:15:02] if I assume that it holds in the beginning
+[00:15:02 -> 00:15:04] of the Kth iteration,
+[00:15:04 -> 00:15:05] then I can show that it also holds
+[00:15:05 -> 00:15:08] at the beginning of the K plus 1th iteration.

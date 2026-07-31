@@ -1,0 +1,511 @@
+Title: Compiler Design Module 110 : Loop Inversion
+Video ID: Kio_nQxlYRk
+Detected language: en
+------------------------------------------------------------
+
+[00:00:00 -> 00:00:02] we have been discussing a lot of
+[00:00:02 -> 00:00:05] transformations and analysis for programs,
+[00:00:05 -> 00:00:10] and one of the subtleties of
+[00:00:10 -> 00:00:13] all these analyses is dealing with loops.
+[00:00:13 -> 00:00:15] So in dataflow analysis,
+[00:00:15 -> 00:00:17] because of the presence of loops,
+[00:00:17 -> 00:00:19] we require multiple iterations of
+[00:00:19 -> 00:00:21] the dataflow analysis iteration algorithm,
+[00:00:21 -> 00:00:23] the fixed-point iteration algorithm.
+[00:00:23 -> 00:00:25] For example, if there were no loops in our programs,
+[00:00:25 -> 00:00:27] then dataflow analysis would have just finished,
+[00:00:27 -> 00:00:29] the fixed-point iteration algorithm would have
+[00:00:29 -> 00:00:31] just finished the iteration.
+[00:00:31 -> 00:00:34] So that's good for handling some types
+[00:00:34 -> 00:00:37] of analysis that are required for loops.
+[00:00:37 -> 00:00:39] But there are so many other types of
+[00:00:39 -> 00:00:42] interesting optimizations and transformations and
+[00:00:42 -> 00:00:45] analyses that can be performed on loops that
+[00:00:45 -> 00:00:52] do not really fit as dataflow analysis.
+[00:00:52 -> 00:00:54] So we're going to discuss some of
+[00:00:54 -> 00:00:56] them in the coming few modules.
+[00:00:56 -> 00:00:59] Now, why are we looking at loops specifically?
+[00:00:59 -> 00:01:00] Because loops are firstly,
+[00:01:00 -> 00:01:02] very commonly present in our programs.
+[00:01:02 -> 00:01:06] I'm not aware of any practical,
+[00:01:06 -> 00:01:10] useful program that does not have at least some loops.
+[00:01:10 -> 00:01:12] Also, most of the runtime
+[00:01:12 -> 00:01:14] of a program is actually spent in loops.
+[00:01:14 -> 00:01:17] So if you can optimize loops better,
+[00:01:17 -> 00:01:19] you must try to do that.
+[00:01:19 -> 00:01:20] The question here is that,
+[00:01:20 -> 00:01:22] okay, what are the
+[00:01:22 -> 00:01:24] optimizations that are possible for loops?
+[00:01:24 -> 00:01:26] Once we discuss those optimizations,
+[00:01:26 -> 00:01:28] how they fit with all the other
+[00:01:28 -> 00:01:30] optimizations that we have discussed,
+[00:01:30 -> 00:01:32] which were modeled as dataflow analysis.
+[00:01:32 -> 00:01:36] So let's look at an example of a loop transformation.
+[00:01:36 -> 00:01:39] I'm using this example on the slide.
+[00:01:39 -> 00:01:41] Let's say there is a computation,
+[00:01:41 -> 00:01:43] t equals m plus n,
+[00:01:43 -> 00:01:44] and then there's a loop.
+[00:01:44 -> 00:01:46] The loop is really simple and see,
+[00:01:46 -> 00:01:50] there's a for loop for i equals 0 to n,
+[00:01:50 -> 00:01:53] i plus plus, ai equals t.
+[00:01:53 -> 00:01:55] Now, you can see that this program
+[00:01:55 -> 00:01:59] already has loop invariant port motion implemented,
+[00:01:59 -> 00:02:00] and this is something that we have already discussed.
+[00:02:00 -> 00:02:02] So there is no redundancy.
+[00:02:02 -> 00:02:04] There's no partial redundancy
+[00:02:04 -> 00:02:05] in this particular program,
+[00:02:05 -> 00:02:09] because loop ai is different for every iteration.
+[00:02:09 -> 00:02:11] t is just a variable
+[00:02:11 -> 00:02:14] because it has been already moved out.
+[00:02:14 -> 00:02:17] The computation for t has already been moved out.
+[00:02:17 -> 00:02:19] But we can still make this loop better, all right?
+[00:02:19 -> 00:02:22] So how can we make this loop better?
+[00:02:22 -> 00:02:25] Well, I claim that the version on the right
+[00:02:25 -> 00:02:28] is A, equivalent to the version on the left,
+[00:02:28 -> 00:02:30] and B, it is actually a better version
+[00:02:30 -> 00:02:33] in terms of runtime than the left.
+[00:02:33 -> 00:02:34] Although it looks bigger,
+[00:02:34 -> 00:02:36] so it looks like it's slightly bigger in port size,
+[00:02:36 -> 00:02:39] perhaps, but from a runtime perspective,
+[00:02:39 -> 00:02:42] the right-side program would typically be faster
+[00:02:42 -> 00:02:43] than the left-side program.
+[00:02:43 -> 00:02:45] So let's first look at the right-side program.
+[00:02:45 -> 00:02:47] So the right-side program says,
+[00:02:47 -> 00:02:52] if n is greater than zero, i equals zero, do while.
+[00:02:52 -> 00:02:55] So in the original program, I had for,
+[00:02:55 -> 00:02:58] which is also similar to the while loop construct.
+[00:02:58 -> 00:02:59] Here, I have a do while construct.
+[00:02:59 -> 00:03:02] So the difference between while do and do while is,
+[00:03:02 -> 00:03:05] in do while, the first iteration is always executed.
+[00:03:05 -> 00:03:07] All right, so the first iteration is executed.
+[00:03:07 -> 00:03:10] In this case, it would be a zero equals zero,
+[00:03:10 -> 00:03:13] i plus plus, and then we will check.
+[00:03:13 -> 00:03:14] And if the check succeeds,
+[00:03:14 -> 00:03:18] we are going to go back to the start of the do while loop,
+[00:03:18 -> 00:03:20] which means this statement.
+[00:03:20 -> 00:03:21] And if it fails,
+[00:03:21 -> 00:03:23] then we are going to come out of the do while loop.
+[00:03:23 -> 00:03:25] Now you can check for yourself
+[00:03:25 -> 00:03:28] that both the programs are kind of functionally equivalent
+[00:03:28 -> 00:03:32] in the sense that they assign the same values
+[00:03:32 -> 00:03:36] to the array A from i to n.
+[00:03:36 -> 00:03:37] They just assign both of them,
+[00:03:37 -> 00:03:39] both of these programs are assigning the same values
+[00:03:39 -> 00:03:41] to the elements of array A.
+[00:03:42 -> 00:03:44] So these programs are equivalent,
+[00:03:45 -> 00:03:47] but what is the point?
+[00:03:47 -> 00:03:48] Why is this a good transformation?
+[00:03:48 -> 00:03:50] Why is this an optimization?
+[00:03:51 -> 00:03:53] So to understand that,
+[00:03:53 -> 00:03:55] let's look at the control flow graphs
+[00:03:55 -> 00:03:56] of the two programs.
+[00:03:56 -> 00:03:58] In the first program,
+[00:03:58 -> 00:04:03] this, the first block is maybe doing t equals m plus n.
+[00:04:03 -> 00:04:05] The second block is probably doing i,
+[00:04:05 -> 00:04:08] it's also doing i equals zero, right?
+[00:04:08 -> 00:04:10] Because this is the initialization condition
+[00:04:10 -> 00:04:14] that gets executed before the loop starts, right?
+[00:04:14 -> 00:04:16] The first, before the first iteration of the loop
+[00:04:16 -> 00:04:18] and then it never executes, right?
+[00:04:18 -> 00:04:19] So that's what a for loop means.
+[00:04:19 -> 00:04:22] So i equals zero also gets executed in this basic block.
+[00:04:22 -> 00:04:25] And then I check whether i is less than n.
+[00:04:25 -> 00:04:29] If i is less than n, then if it is false,
+[00:04:29 -> 00:04:31] then you exit.
+[00:04:31 -> 00:04:32] If it is true,
+[00:04:32 -> 00:04:34] then you execute the body of the loop
+[00:04:34 -> 00:04:37] and the body of the loop is probably ai equals t.
+[00:04:38 -> 00:04:40] And then after you execute ai equals t,
+[00:04:40 -> 00:04:45] there is an unconditional branch to the condition,
+[00:04:45 -> 00:04:46] the header of the loop,
+[00:04:46 -> 00:04:49] which is the condition of this particular for loop,
+[00:04:49 -> 00:04:50] which is i is less than n.
+[00:04:50 -> 00:04:52] So this is an unconditional branch
+[00:04:52 -> 00:04:54] and this is a conditional branch, right?
+[00:04:54 -> 00:04:57] Because here there are two things that are going out.
+[00:04:57 -> 00:05:00] Here there is a single branch that's coming out.
+[00:05:00 -> 00:05:00] So it's this,
+[00:05:00 -> 00:05:02] because it's a single branch that's coming out,
+[00:05:02 -> 00:05:03] it's an unconditional branch
+[00:05:03 -> 00:05:05] because it says two branches that are coming out,
+[00:05:05 -> 00:05:06] it's a conditional branch
+[00:05:07 -> 00:05:08] because depending on the condition,
+[00:05:08 -> 00:05:10] it's going to go one way or the other.
+[00:05:10 -> 00:05:13] Now, why is this an unconditional branch?
+[00:05:13 -> 00:05:15] Well, it's very clear that this is a branch
+[00:05:15 -> 00:05:19] because it wants to jump to the top of the loop.
+[00:05:19 -> 00:05:22] So it's not like it's going to be a fall through region.
+[00:05:22 -> 00:05:26] I cannot place the condition after the body, right?
+[00:05:26 -> 00:05:30] So that won't make sense.
+[00:05:30 -> 00:05:35] So I can't place i is less than n after ai equals t.
+[00:05:35 -> 00:05:38] So I have to execute the branch
+[00:05:38 -> 00:05:39] to get back to i is less than n.
+[00:05:39 -> 00:05:42] So I need an unconditional branch.
+[00:05:42 -> 00:05:44] Now let's look at the program on the right.
+[00:05:44 -> 00:05:45] And this is the control flow graph
+[00:05:45 -> 00:05:47] of the program on the right.
+[00:05:47 -> 00:05:50] I first do t equals m plus n,
+[00:05:51 -> 00:05:55] then I check whether n is greater than zero or not.
+[00:05:55 -> 00:05:56] If it is false, then I go to exit.
+[00:05:56 -> 00:06:00] If it's true, then I go to this particular basic block,
+[00:06:00 -> 00:06:03] which is the body, which is not still,
+[00:06:03 -> 00:06:05] which is, you know,
+[00:06:05 -> 00:06:08] so actually I should have added one more basic block here,
+[00:06:08 -> 00:06:09] which I'm missing.
+[00:06:09 -> 00:06:10] So let me just add it.
+[00:06:10 -> 00:06:10] So on the two branch,
+[00:06:10 -> 00:06:12] there should have been one more basic block,
+[00:06:12 -> 00:06:17] which would say i equals zero, okay?
+[00:06:17 -> 00:06:21] And then we basically just fall through.
+[00:06:21 -> 00:06:22] So it's not a branch.
+[00:06:22 -> 00:06:24] I mean, it's just the next instruction
+[00:06:24 -> 00:06:28] to the body of the loop.
+[00:06:28 -> 00:06:29] So this is going to be the body of the loop.
+[00:06:29 -> 00:06:31] And this is basically,
+[00:06:31 -> 00:06:32] the first statement of the body of the loop
+[00:06:32 -> 00:06:36] is going to be ai equals i, all right?
+[00:06:36 -> 00:06:38] And then maybe I'm going to do one more thing.
+[00:06:38 -> 00:06:42] I'm going to say i plus plus, okay?
+[00:06:42 -> 00:06:45] And then I have a conditional branch.
+[00:06:45 -> 00:06:47] Now I'm going to check here
+[00:06:47 -> 00:06:49] that whether i is less than n or not.
+[00:06:49 -> 00:06:52] So maybe I do i plus plus here rather than there.
+[00:06:52 -> 00:06:54] And in this particular basic block,
+[00:06:54 -> 00:06:56] let me just write this again.
+[00:06:56 -> 00:06:58] This, let me check i is less than n.
+[00:07:00 -> 00:07:01] Now, if i is less than n,
+[00:07:01 -> 00:07:04] then if it's true, then you jump back.
+[00:07:04 -> 00:07:06] If it's false, then you jump to exit.
+[00:07:06 -> 00:07:08] So this is what the new program,
+[00:07:08 -> 00:07:10] transform program looks like.
+[00:07:11 -> 00:07:15] Now, why is this a better
+[00:07:16 -> 00:07:20] or faster program than the first program?
+[00:07:20 -> 00:07:23] And the answer is, you should know,
+[00:07:23 -> 00:07:24] what is the most important?
+[00:07:24 -> 00:07:26] It seems like the program has become bigger,
+[00:07:26 -> 00:07:29] slightly bigger, because maybe I have two checks.
+[00:07:29 -> 00:07:30] I have if n is greater than zero,
+[00:07:30 -> 00:07:32] and then while i is less than n.
+[00:07:32 -> 00:07:34] So it seems like there are two checks in this program.
+[00:07:34 -> 00:07:35] Whereas in the original program,
+[00:07:35 -> 00:07:36] there was only one check,
+[00:07:36 -> 00:07:38] which was i less than n.
+[00:07:38 -> 00:07:40] So why is this program better?
+[00:07:40 -> 00:07:41] Well, to answer this question,
+[00:07:41 -> 00:07:42] you have to first ask,
+[00:07:42 -> 00:07:46] where is this program spending most of its time in?
+[00:07:46 -> 00:07:48] And so we're going to make the assumption
+[00:07:48 -> 00:07:50] that most of the time the program is spending
+[00:07:50 -> 00:07:51] in the loop,
+[00:07:51 -> 00:07:53] because the initialization is gonna only happen once,
+[00:07:53 -> 00:07:55] but maybe the loop is going to get executed
+[00:07:55 -> 00:07:56] a million times.
+[00:07:56 -> 00:08:01] And so if the loop is getting executed a million times,
+[00:08:01 -> 00:08:04] all the instructions that are a part of the loop
+[00:08:04 -> 00:08:06] are going to be executed a million times.
+[00:08:06 -> 00:08:09] And so if we can reduce one instruction in the loop,
+[00:08:09 -> 00:08:12] that's a reduction of million instructions overall.
+[00:08:13 -> 00:08:16] So I'm going to claim that the second program,
+[00:08:16 -> 00:08:17] the program on the right,
+[00:08:17 -> 00:08:19] has fewer instructions in the loop
+[00:08:19 -> 00:08:20] than the program on the left.
+[00:08:20 -> 00:08:22] And so that can be seen,
+[00:08:22 -> 00:08:24] because in the program on the right,
+[00:08:24 -> 00:08:27] there is ai equals i, i plus plus,
+[00:08:27 -> 00:08:29] and then there is a conditional branch.
+[00:08:29 -> 00:08:31] So there's only one conditional branch,
+[00:08:31 -> 00:08:35] or only one branch, conditional or unconditional,
+[00:08:35 -> 00:08:36] in the body of the loop.
+[00:08:36 -> 00:08:37] That conditional branch either jumps
+[00:08:37 -> 00:08:39] to the beginning of the loop,
+[00:08:39 -> 00:08:40] the head of the loop,
+[00:08:40 -> 00:08:42] or it just exits, all right?
+[00:08:42 -> 00:08:43] Where on the program on the left
+[00:08:43 -> 00:08:45] actually has two branches.
+[00:08:45 -> 00:08:47] One of them is the conditional branch,
+[00:08:47 -> 00:08:49] which is coming just from the beginning
+[00:08:49 -> 00:08:51] of the header of the loop,
+[00:08:51 -> 00:08:53] and the other is the unconditional branch
+[00:08:53 -> 00:08:55] that's jumping back to the header of the loop.
+[00:08:55 -> 00:08:57] So if you look at that,
+[00:08:57 -> 00:09:00] then also, I mean, of course this is not complete,
+[00:09:00 -> 00:09:01] this should have been i plus plus as well.
+[00:09:01 -> 00:09:03] All right, so when you look at this,
+[00:09:03 -> 00:09:05] you can see that there are two branches,
+[00:09:05 -> 00:09:07] everything else is the same,
+[00:09:07 -> 00:09:09] but the program on the left has two branches,
+[00:09:09 -> 00:09:11] one unconditional branch and one conditional branch,
+[00:09:11 -> 00:09:14] whereas the program on the right has only one branch,
+[00:09:14 -> 00:09:18] just the conditional branch, inside the loop body.
+[00:09:18 -> 00:09:22] And so we are saving one branch
+[00:09:22 -> 00:09:24] in the transform program in the loop body,
+[00:09:24 -> 00:09:26] although there may be more branches
+[00:09:26 -> 00:09:27] in the rest of the program,
+[00:09:27 -> 00:09:29] which is going to be executed less often,
+[00:09:29 -> 00:09:30] but inside the loop body,
+[00:09:30 -> 00:09:33] we have been able to save an instruction.
+[00:09:33 -> 00:09:34] More importantly, a branch.
+[00:09:34 -> 00:09:37] And in fact, a branch is one
+[00:09:37 -> 00:09:39] of the more expensive instructions
+[00:09:39 -> 00:09:43] if you consider the computer architecture,
+[00:09:43 -> 00:09:45] underlying computer architecture,
+[00:09:45 -> 00:09:48] if you take, for example, a five-step pipeline,
+[00:09:48 -> 00:09:50] or even if you take a more complex,
+[00:09:50 -> 00:09:52] modern superscalar machine,
+[00:09:52 -> 00:09:56] a branch can make problems difficult for the hardware
+[00:09:56 -> 00:09:59] because either it has to correctly predict
+[00:09:59 -> 00:10:01] what is the target of the branch,
+[00:10:01 -> 00:10:02] or it has to flush the pipeline.
+[00:10:02 -> 00:10:05] So branches are actually expensive propositions
+[00:10:05 -> 00:10:09] compared to other instructions like arithmetic.
+[00:10:09 -> 00:10:11] And so saving a branch is a big deal.
+[00:10:11 -> 00:10:14] It's a bigger deal than saving an instruction.
+[00:10:14 -> 00:10:18] In both cases, because it's a part of the loop,
+[00:10:18 -> 00:10:20] if you save even some part of it,
+[00:10:20 -> 00:10:22] then you just multiply it by a factor
+[00:10:22 -> 00:10:25] of the number of times the loop is going to execute.
+[00:10:25 -> 00:10:28] And so this is a very worthy optimization.
+[00:10:28 -> 00:10:30] And so here is, I mean, basically,
+[00:10:30 -> 00:10:33] here is a summary of why this is a transformation.
+[00:10:33 -> 00:10:35] In this particular program,
+[00:10:35 -> 00:10:37] there are two branches per iteration.
+[00:10:37 -> 00:10:39] And in this particular program,
+[00:10:39 -> 00:10:41] there's only one branch per iteration.
+[00:10:42 -> 00:10:44] Okay, great.
+[00:10:44 -> 00:10:47] And we already discussed that branches become difficult
+[00:10:47 -> 00:10:49] to predict in hardware,
+[00:10:49 -> 00:10:51] and so reducing a branch
+[00:10:51 -> 00:10:53] is actually a significant optimization.
+[00:10:54 -> 00:10:59] All right, so this kind of transformation
+[00:10:59 -> 00:11:01] is actually called loop inversion,
+[00:11:01 -> 00:11:03] because in a way, we have inverted the loop.
+[00:11:03 -> 00:11:07] From for loop, we have made it a do-while loop, right?
+[00:11:07 -> 00:11:08] So we have the first iteration
+[00:11:08 -> 00:11:10] is definitely going to execute,
+[00:11:10 -> 00:11:11] and then we are going to check after that.
+[00:11:11 -> 00:11:13] So in the original loop,
+[00:11:13 -> 00:11:15] the check was present at the beginning of the loop.
+[00:11:15 -> 00:11:16] In the new loop,
+[00:11:16 -> 00:11:18] the check is present at the end of the loop,
+[00:11:18 -> 00:11:21] and we have one extra check outside the loop, right?
+[00:11:21 -> 00:11:23] And so this kind of transformation
+[00:11:23 -> 00:11:26] is also called loop inversion, right?
+[00:11:26 -> 00:11:28] So we also call this loop inversion.
+[00:11:29 -> 00:11:32] All right, so, all right.
+[00:11:33 -> 00:11:37] Now, this is just one example of a loop transformation
+[00:11:37 -> 00:11:39] and why it is an effective transformation.
+[00:11:39 -> 00:11:41] Also notice that this transformation
+[00:11:41 -> 00:11:44] has very little to do with kind of transformations
+[00:11:44 -> 00:11:45] that we have discussed earlier,
+[00:11:45 -> 00:11:47] which were based on data flow analysis.
+[00:11:47 -> 00:11:49] This kind of transformation requires us
+[00:11:49 -> 00:11:50] to understand the loop structure
+[00:11:50 -> 00:11:53] and then transform it
+[00:11:53 -> 00:11:55] based on our understanding of what it is.
+[00:11:55 -> 00:11:58] And so what is a loop structure anyway?
+[00:11:58 -> 00:12:00] And I think, you know,
+[00:12:00 -> 00:12:02] typically most loops are going to have this structure,
+[00:12:02 -> 00:12:05] which is there's some initialization,
+[00:12:06 -> 00:12:08] there is some condition to check
+[00:12:08 -> 00:12:09] on every iteration of the loop,
+[00:12:09 -> 00:12:11] including the first iteration,
+[00:12:11 -> 00:12:13] before the first iteration,
+[00:12:13 -> 00:12:14] and then there is some step
+[00:12:14 -> 00:12:17] which is executed at the end of the loop.
+[00:12:17 -> 00:12:18] And because it's a common pattern,
+[00:12:18 -> 00:12:21] the fault construct was introduced
+[00:12:21 -> 00:12:25] in high-level languages like C and everything above it.
+[00:12:25 -> 00:12:28] And so, I mean, one way to easily see this loop structure
+[00:12:28 -> 00:12:30] is to just use the fault construct.
+[00:12:30 -> 00:12:33] And so there's an initialization condition,
+[00:12:33 -> 00:12:35] a con, there's an initialization statement,
+[00:12:35 -> 00:12:37] a condition, and a step.
+[00:12:37 -> 00:12:38] And if I look at it
+[00:12:38 -> 00:12:40] from a control flow graph perspective,
+[00:12:40 -> 00:12:42] I first execute init, all right,
+[00:12:42 -> 00:12:44] for example, i equals zero.
+[00:12:44 -> 00:12:46] Then I execute con,
+[00:12:46 -> 00:12:48] so I'm gonna check whether i is less than n or not.
+[00:12:48 -> 00:12:51] If it is false, then just exit the loop.
+[00:12:51 -> 00:12:53] If it's true, then execute the body of the loop.
+[00:12:53 -> 00:12:54] All right, notice that I haven't
+[00:12:54 -> 00:12:56] executed the step yet.
+[00:12:56 -> 00:12:58] After we have executed the body,
+[00:12:58 -> 00:13:02] then execute the step, for example, i++.
+[00:13:02 -> 00:13:05] And then you jump back to the condition.
+[00:13:05 -> 00:13:08] And so this is a very common structure of a loop,
+[00:13:08 -> 00:13:11] especially a for loop is exactly this kind of structure.
+[00:13:12 -> 00:13:14] So with this structure, you know,
+[00:13:14 -> 00:13:15] we can basically, once we understand
+[00:13:15 -> 00:13:18] and we are able to identify the structure of the loop,
+[00:13:18 -> 00:13:20] we can do many things with it.
+[00:13:20 -> 00:13:22] And loop inversion was something that we have seen.
+[00:13:22 -> 00:13:24] And so let's try to see this in this abstract world, right?
+[00:13:24 -> 00:13:27] So we saw loop inversion using a concrete example.
+[00:13:27 -> 00:13:29] Now I'm going to try to show
+[00:13:29 -> 00:13:33] how loop inversion should be modeled in the abstract world
+[00:13:33 -> 00:13:35] where we're just considering these statements
+[00:13:35 -> 00:13:39] as arbitrary statements in it, con, body and step.
+[00:13:40 -> 00:13:41] So before I do that,
+[00:13:41 -> 00:13:45] let me say that it is very easy to basically see
+[00:13:45 -> 00:13:47] that once you're able to identify the structure,
+[00:13:47 -> 00:13:49] then you can easily say,
+[00:13:49 -> 00:13:52] okay, let me unroll the loop a little bit
+[00:13:52 -> 00:13:57] and put the first few iterations with the initialization.
+[00:13:57 -> 00:13:59] And so I can kind of remove some iterations of the loop
+[00:13:59 -> 00:14:03] and kind of put them just outside the loop.
+[00:14:03 -> 00:14:07] And this kind of transformation is called loop peeling.
+[00:14:07 -> 00:14:08] All right, so what is loop peeling?
+[00:14:08 -> 00:14:10] Well, here's an example of loop peeling.
+[00:14:10 -> 00:14:13] I kind of took these three statements,
+[00:14:13 -> 00:14:15] con, body and step,
+[00:14:15 -> 00:14:19] and just created a copy of them here, right?
+[00:14:19 -> 00:14:20] Now created a copy of them,
+[00:14:20 -> 00:14:24] and then I kind of pasted the loop again.
+[00:14:24 -> 00:14:27] And so I claim that the program on the right
+[00:14:27 -> 00:14:29] is equivalent to the program on the left
+[00:14:29 -> 00:14:32] because in both cases I do in it,
+[00:14:32 -> 00:14:33] then I check con,
+[00:14:33 -> 00:14:37] then if it's false, then I exit the loop, all right?
+[00:14:37 -> 00:14:40] If it's true, then I execute the body,
+[00:14:40 -> 00:14:42] then I execute the step,
+[00:14:42 -> 00:14:43] and then I check con again,
+[00:14:43 -> 00:14:46] but in this case, I just go back to check the con again.
+[00:14:46 -> 00:14:49] So I have kind of peeled,
+[00:14:49 -> 00:14:52] sorry, the word is peeled,
+[00:14:52 -> 00:14:58] the first iteration of the loop, right?
+[00:14:58 -> 00:14:59] So it's like, it's a loop,
+[00:14:59 -> 00:15:02] I just peeled the first iteration
+[00:15:02 -> 00:15:04] and put it before the header of the loop,
+[00:15:04 -> 00:15:06] in the pre-header of the loop, all right?
+[00:15:06 -> 00:15:09] So this is, you know, I just put it after the init,
+[00:15:09 -> 00:15:11] and now this part is not a part of the loop.
+[00:15:11 -> 00:15:13] Now this is called loop peeling.
+[00:15:15 -> 00:15:17] Now once again, to implement loop peeling,
+[00:15:17 -> 00:15:19] we need to understand the structure of the loop,
+[00:15:19 -> 00:15:22] just like we had to understand the structure of the loop
+[00:15:22 -> 00:15:25] to implement loop inversion.
+[00:15:25 -> 00:15:27] And we're going to, you know,
+[00:15:27 -> 00:15:29] there are many situations where loop peeling
+[00:15:29 -> 00:15:31] is going to actually result in a speed up,
+[00:15:31 -> 00:15:34] and we're going to see examples of that later.
+[00:15:34 -> 00:15:36] But first thing I want to point out
+[00:15:36 -> 00:15:37] that even loop inversion
+[00:15:37 -> 00:15:40] is just a special form of loop peeling,
+[00:15:40 -> 00:15:41] because in loop inversion,
+[00:15:41 -> 00:15:45] we are just peeling out some parts of the first iteration,
+[00:15:45 -> 00:15:46] not the entire, so in this example,
+[00:15:46 -> 00:15:49] I have peeled out the entire first iteration,
+[00:15:49 -> 00:15:51] which includes cond, body, and step.
+[00:15:51 -> 00:15:56] What if I just peeled out the cond and not body and step?
+[00:15:56 -> 00:15:58] Then I would have got loop inversion.
+[00:15:58 -> 00:16:00] So how does that work?
+[00:16:00 -> 00:16:03] Loop inversion is a special case of loop peeling.
+[00:16:03 -> 00:16:07] I just peeled out cond, and that's all, right?
+[00:16:07 -> 00:16:10] So I just kind of created two copies of cond.
+[00:16:10 -> 00:16:11] First is outside the loop,
+[00:16:11 -> 00:16:14] and the other is inside the loop, just like before.
+[00:16:14 -> 00:16:17] And also because of that, the cond is now, you know,
+[00:16:17 -> 00:16:20] so cond is now moved at the end of the loop,
+[00:16:20 -> 00:16:22] because it's like, it's a circular thing.
+[00:16:22 -> 00:16:26] If I pick one out, then the other, you know,
+[00:16:26 -> 00:16:28] the one from the next iteration
+[00:16:28 -> 00:16:30] just moves to the bottom of the loop.
+[00:16:30 -> 00:16:31] In the previous slide,
+[00:16:31 -> 00:16:34] I had pulled the entire iteration out,
+[00:16:34 -> 00:16:35] so the loop looked identical.
+[00:16:35 -> 00:16:37] In this inversion case,
+[00:16:37 -> 00:16:39] I just pulled one component of the first iteration out,
+[00:16:39 -> 00:16:43] and so that component's copy inside the loop
+[00:16:43 -> 00:16:45] now moves to the end of the loop.
+[00:16:45 -> 00:16:47] And so this is what the new loop looks like.
+[00:16:47 -> 00:16:49] Say init, then you do the condition,
+[00:16:49 -> 00:16:51] just like you would have done in the original program.
+[00:16:51 -> 00:16:52] If it's false, you exit.
+[00:16:52 -> 00:16:56] If it's true, then you execute the body in both the cases.
+[00:16:56 -> 00:16:59] Then you execute the step in both the cases.
+[00:16:59 -> 00:17:01] And in this case, you would have done an extra branch
+[00:17:01 -> 00:17:02] to get back to the cond.
+[00:17:02 -> 00:17:03] Here, you don't need the extra branch.
+[00:17:03 -> 00:17:04] You just do the cond
+[00:17:04 -> 00:17:06] because of the fall through of the program.
+[00:17:06 -> 00:17:08] And then if the cond is true,
+[00:17:08 -> 00:17:09] then you jump back to the body.
+[00:17:09 -> 00:17:14] Otherwise, you jump to the exit.
+[00:17:14 -> 00:17:17] So functionally, these two programs are equivalent.
+[00:17:17 -> 00:17:19] Structurally, they are slightly different.
+[00:17:19 -> 00:17:23] In one case, I have basically peeled out
+[00:17:23 -> 00:17:27] one condition check of the first iteration
+[00:17:27 -> 00:17:29] of the loop outside.
+[00:17:29 -> 00:17:32] And I'm claiming that this is exactly,
+[00:17:32 -> 00:17:35] I mean, this kind of transformation
+[00:17:35 -> 00:17:39] is nothing but loop inversion, okay?
+[00:17:39 -> 00:17:41] So let's go back to our original example.
+[00:17:41 -> 00:17:43] In our original example,
+[00:17:43 -> 00:17:46] this was the original code control flow graph.
+[00:17:46 -> 00:17:47] T equals M plus N.
+[00:17:49 -> 00:17:51] No, so this was the original code program.
+[00:17:51 -> 00:17:54] I equals zero, I is less than N, AI equals T.
+[00:17:54 -> 00:17:57] And this is basically the inverted version.
+[00:18:00 -> 00:18:02] And in the inverted version, what I have done is,
+[00:18:02 -> 00:18:05] if this is, you know, in this code,
+[00:18:05 -> 00:18:07] this is the initialization.
+[00:18:07 -> 00:18:09] This is the condition.
+[00:18:09 -> 00:18:10] And this is the step.
+[00:18:11 -> 00:18:14] And now, in the transform program,
+[00:18:14 -> 00:18:17] I again do initialization first.
+[00:18:17 -> 00:18:18] Then I do condition.
+[00:18:20 -> 00:18:23] But I have just put the condition outside the loop.
+[00:18:23 -> 00:18:25] Then I execute the body.
+[00:18:26 -> 00:18:27] Then I do the condition again.
+[00:18:27 -> 00:18:29] So I have created two copies of the condition.
+[00:18:29 -> 00:18:31] That's what I have done.
+[00:18:31 -> 00:18:32] And then if the condition is true,
+[00:18:32 -> 00:18:33] I go back to the loop.
+[00:18:33 -> 00:18:34] And if the condition is false,
+[00:18:34 -> 00:18:36] I jump out of the loop.
+[00:18:36 -> 00:18:38] I go to exit of the loop.
+[00:18:38 -> 00:18:42] Also, I think I forgot to also draw an exit
+[00:18:42 -> 00:18:44] from the first condition.
+[00:18:44 -> 00:18:47] Now, you may say, oh, the condition was I is less than N.
+[00:18:47 -> 00:18:49] How did you get zero is less than N?
+[00:18:49 -> 00:18:51] Well, that, you know, you could have just,
+[00:18:51 -> 00:18:54] I just kind of omitted a step.
+[00:18:54 -> 00:18:56] You could have said I is less than N here too.
+[00:18:56 -> 00:18:59] Just that I, you know, now that I have peeled out this,
+[00:18:59 -> 00:19:01] it's very easy to see that I can constant propagate I,
+[00:19:01 -> 00:19:03] because at this particular location,
+[00:19:03 -> 00:19:06] in the transform code, I is definitely a constant.
+[00:19:06 -> 00:19:09] And so I can just replace I with zero.
+[00:19:09 -> 00:19:14] And so that becomes zero is less than N.
+[00:19:14 -> 00:19:17] And that's exactly the code that we have on the right.
+[00:19:17 -> 00:19:18] So zero is less than N,
+[00:19:18 -> 00:19:21] just translates to N is greater than zero.
+[00:19:21 -> 00:19:23] I should point out that loop inversion
+[00:19:23 -> 00:19:25] is a very, very common transformation,
+[00:19:25 -> 00:19:28] because A, it saves a branch in the loop body.
+[00:19:28 -> 00:19:30] And we have already discussed that saving
+[00:19:30 -> 00:19:32] even a single instruction in the loop body
+[00:19:32 -> 00:19:35] may mean saving millions of instructions overall.
+[00:19:35 -> 00:19:38] And second, it is actually applicable to all loops, right?
+[00:19:38 -> 00:19:41] Because firstly, most of us write loops in this way,
+[00:19:41 -> 00:19:42] humans write loops in this way,
+[00:19:42 -> 00:19:45] whereas this is the more optimized implementation
+[00:19:45 -> 00:19:46] of the same loop.
+[00:19:46 -> 00:19:48] And notice that this transformation
+[00:19:48 -> 00:19:50] is not making any assumptions about what the loop is.
+[00:19:50 -> 00:19:54] For example, it doesn't need any kind of properties
+[00:19:54 -> 00:19:56] that N should be a constant or I, you know,
+[00:19:56 -> 00:19:58] there should be this structure to the loop,
+[00:19:58 -> 00:20:00] or this is how the value should be used.
+[00:20:00 -> 00:20:02] Almost every loop that has this structure
+[00:20:02 -> 00:20:04] can be transformed to this structure.
+[00:20:04 -> 00:20:07] And that is what typically modern compilers also do.
+[00:20:07 -> 00:20:09] And so loop inversion is a very,
+[00:20:09 -> 00:20:10] very common transformation.
+[00:20:11 -> 00:20:15] To summarize, optimizations that make a loop faster
+[00:20:15 -> 00:20:17] are usually very consequential.
+[00:20:17 -> 00:20:20] And so much effort has gone into this.
+[00:20:20 -> 00:20:23] And we are going to study some of these efforts
+[00:20:23 -> 00:20:25] to understand what is the state of the art
+[00:20:25 -> 00:20:27] in trying to optimize loops.

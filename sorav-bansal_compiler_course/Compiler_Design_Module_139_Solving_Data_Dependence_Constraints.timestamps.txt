@@ -1,0 +1,397 @@
+Title: Compiler Design Module 139 : Solving Data Dependence Constraints
+Video ID: VbLKIqSWs7M
+Detected language: en
+------------------------------------------------------------
+
+[00:00:00 -> 00:00:04] Last time we were talking about how we can identify
+[00:00:04 -> 00:00:06] what are the statements in the program
+[00:00:06 -> 00:00:08] that have data dependencies.
+[00:00:08 -> 00:00:12] Recall that a data dependency involves two conditions.
+[00:00:12 -> 00:00:14] One is that one of them needs to be a right,
+[00:00:14 -> 00:00:16] and the other is that there needs to be
+[00:00:16 -> 00:00:19] some dynamic instance of the first statement
+[00:00:19 -> 00:00:22] and some dynamic instance of the second statement,
+[00:00:22 -> 00:00:25] which basically access the same memory location.
+[00:00:25 -> 00:00:26] And when I say statement,
+[00:00:26 -> 00:00:29] I'm really talking about the static memory access.
+[00:00:29 -> 00:00:31] So it's not one C statement,
+[00:00:31 -> 00:00:33] it's one C statement could have
+[00:00:33 -> 00:00:34] many different static accesses,
+[00:00:34 -> 00:00:38] and I'm just considering each static access
+[00:00:38 -> 00:00:42] as one statement in this discussion.
+[00:00:42 -> 00:00:45] So recall that for the second constraint,
+[00:00:45 -> 00:00:48] we basically get constraints of the following form,
+[00:00:48 -> 00:00:51] b i plus b is greater than equal to zero,
+[00:00:51 -> 00:00:53] where i is the iteration vector
+[00:00:53 -> 00:00:55] for the loop nest of the first statement.
+[00:00:57 -> 00:00:58] Similarly, b prime i prime plus b prime
+[00:00:58 -> 00:00:59] is greater than equal to zero,
+[00:00:59 -> 00:01:01] where i prime is the iteration vector
+[00:01:01 -> 00:01:03] for the loop nest of the second statement.
+[00:01:03 -> 00:01:05] And capital B and small b,
+[00:01:05 -> 00:01:07] capital B prime and small b prime
+[00:01:07 -> 00:01:09] basically dictate the loop bounds
+[00:01:09 -> 00:01:11] of these iteration variables.
+[00:01:11 -> 00:01:14] And finally, we have the constraint
+[00:01:14 -> 00:01:17] which says that there exists i comma i prime
+[00:01:17 -> 00:01:19] such that fi plus small f
+[00:01:19 -> 00:01:22] equals f prime i prime plus small f prime.
+[00:01:22 -> 00:01:25] In other words, there exists a dynamic instance
+[00:01:25 -> 00:01:27] of the first statement that conflicts
+[00:01:27 -> 00:01:30] with some dynamic instance of the second statement.
+[00:01:30 -> 00:01:33] i and i prime are arbitrary variables.
+[00:01:33 -> 00:01:35] Further, for some cases where we are interested
+[00:01:35 -> 00:01:37] in identifying whether there's a data dependency
+[00:01:37 -> 00:01:40] between two different dynamic instances
+[00:01:40 -> 00:01:42] of the same statement or static access,
+[00:01:42 -> 00:01:44] then we also have an extra constraint
+[00:01:44 -> 00:01:47] which is i should not be equal to i prime.
+[00:01:47 -> 00:01:52] So now, basically the problem of determining
+[00:01:52 -> 00:01:56] whether two statements have a data dependency or not
+[00:01:56 -> 00:01:58] has been reduced to the problem of finding
+[00:01:58 -> 00:02:02] whether there exists a solution to i comma i prime
+[00:02:02 -> 00:02:04] such that i and i prime satisfy
+[00:02:04 -> 00:02:06] these system of equations that we have.
+[00:02:08 -> 00:02:10] And so question now reduces to the problem
+[00:02:10 -> 00:02:14] of trying to solve these system of equations.
+[00:02:14 -> 00:02:16] And so that's the problem of solving
+[00:02:16 -> 00:02:17] the data dependence constraints.
+[00:02:17 -> 00:02:20] And the question is, does there exist a vector i
+[00:02:20 -> 00:02:21] and a vector i prime
+[00:02:21 -> 00:02:23] that satisfies the system of equations?
+[00:02:24 -> 00:02:27] And so what do we know about this problem?
+[00:02:27 -> 00:02:30] First of all, I want to point out
+[00:02:30 -> 00:02:34] that these system of equations consists of inequalities
+[00:02:34 -> 00:02:36] which are greater than equal to
+[00:02:36 -> 00:02:38] and less than equal to, greater than less than.
+[00:02:38 -> 00:02:40] These are called inequalities.
+[00:02:40 -> 00:02:44] Equalities which are fi plus f equals
+[00:02:44 -> 00:02:46] f prime i prime plus f prime.
+[00:02:46 -> 00:02:48] And notice that any equality can also be written
+[00:02:48 -> 00:02:50] as a conjunction of inequalities
+[00:02:50 -> 00:02:52] because if it's equal to,
+[00:02:52 -> 00:02:54] then I can say it's both less than equal to
+[00:02:54 -> 00:02:55] and greater than equal to.
+[00:02:55 -> 00:02:56] And the conjunction of these two
+[00:02:56 -> 00:02:58] basically imply that it's equal to
+[00:02:58 -> 00:03:00] because it's both less than equal to
+[00:03:00 -> 00:03:01] and greater than equal to
+[00:03:01 -> 00:03:03] so the only option remaining is equal to.
+[00:03:03 -> 00:03:05] So in other words, the first four components,
+[00:03:05 -> 00:03:07] the first three components or four components
+[00:03:07 -> 00:03:09] of this system of equations
+[00:03:09 -> 00:03:12] can be represented as a set of,
+[00:03:12 -> 00:03:14] as a conjunction of inequalities
+[00:03:14 -> 00:03:16] on the variables i comma i prime.
+[00:03:16 -> 00:03:19] And these are, notice that these are all
+[00:03:19 -> 00:03:21] linear in equations, linear inequalities
+[00:03:21 -> 00:03:24] because there's only a fine multiple
+[00:03:24 -> 00:03:25] or a fine inequality
+[00:03:25 -> 00:03:28] because there's only a constant multiple
+[00:03:28 -> 00:03:31] of i and i prime appearing in these equations.
+[00:03:31 -> 00:03:35] Even here in the second, in capital F equations,
+[00:03:35 -> 00:03:38] in equations, I can just bring i prime to the left
+[00:03:38 -> 00:03:40] and then I can start representing this
+[00:03:40 -> 00:03:43] in the similar form as bi plus b greater than equal to.
+[00:03:43 -> 00:03:46] So these are all of the similar kind of form.
+[00:03:46 -> 00:03:48] And finally, there is,
+[00:03:48 -> 00:03:51] for some kinds of data dependencies,
+[00:03:51 -> 00:03:53] those involving different dynamic instances
+[00:03:53 -> 00:03:54] of the same statement,
+[00:03:54 -> 00:03:56] we also need an extra constraint
+[00:03:56 -> 00:03:57] which is i is not equal to i prime.
+[00:03:57 -> 00:04:00] And this is important because for those cases,
+[00:04:00 -> 00:04:03] we don't want solutions that are just trivial solutions.
+[00:04:03 -> 00:04:08] And this kind of an equation
+[00:04:08 -> 00:04:09] or this kind of a constraint
+[00:04:09 -> 00:04:10] is called a disequality.
+[00:04:10 -> 00:04:13] So notice that I'm using the word inequality
+[00:04:15 -> 00:04:17] for the first type of equations
+[00:04:17 -> 00:04:18] that are greater than equal to
+[00:04:18 -> 00:04:20] or less than equal to and things like that.
+[00:04:20 -> 00:04:23] And then I'm using the word disequality
+[00:04:24 -> 00:04:26] for not equal to, all right?
+[00:04:26 -> 00:04:30] And disequality is a different nature of constraint
+[00:04:30 -> 00:04:34] than inequality because it puts,
+[00:04:34 -> 00:04:36] actually it makes a little bit more,
+[00:04:36 -> 00:04:37] things a little bit more complex
+[00:04:37 -> 00:04:39] as we're going to discuss next.
+[00:04:40 -> 00:04:42] So when we have a disequality,
+[00:04:42 -> 00:04:43] i is not equal to i prime,
+[00:04:43 -> 00:04:46] disequalities can be written as a disjunction.
+[00:04:46 -> 00:04:48] Notice that so far we were only talking about
+[00:04:48 -> 00:04:49] conjunction of inequalities,
+[00:04:49 -> 00:04:51] but for the first time because of a disequality,
+[00:04:51 -> 00:04:54] we'll have to deal with a disjunction of inequalities.
+[00:04:54 -> 00:04:58] And how can I represent a disequality
+[00:04:58 -> 00:05:00] as a disjunction of inequalities?
+[00:05:00 -> 00:05:03] Well, i is not equal to i prime is the same as saying
+[00:05:03 -> 00:05:05] either i is less than i prime
+[00:05:05 -> 00:05:07] or i is greater than i prime,
+[00:05:07 -> 00:05:08] but i is not equal.
+[00:05:08 -> 00:05:10] So notice that the equal to sign is missing
+[00:05:10 -> 00:05:12] in these inequalities.
+[00:05:12 -> 00:05:15] But the important thing to point out here
+[00:05:15 -> 00:05:17] is that it's an odd.
+[00:05:17 -> 00:05:19] So it's a disjunction and not a conjunction.
+[00:05:19 -> 00:05:21] Here it was an and, right?
+[00:05:21 -> 00:05:24] So when I say all these constraints should be satisfied,
+[00:05:24 -> 00:05:26] all these constraints should be satisfied,
+[00:05:26 -> 00:05:27] I'm basically saying the conjunction
+[00:05:27 -> 00:05:28] of the constraints are satisfied.
+[00:05:28 -> 00:05:31] Here I want to have a disjunction because of the odd
+[00:05:31 -> 00:05:34] and that causes a little bit more complexity
+[00:05:34 -> 00:05:36] in the system of equations.
+[00:05:36 -> 00:05:37] Okay, now let's figure out
+[00:05:37 -> 00:05:41] how one could potentially go about solving this problem.
+[00:05:41 -> 00:05:42] And the first thing to do,
+[00:05:42 -> 00:05:46] to kind of do when you're trying to solve a problem
+[00:05:46 -> 00:05:47] is to characterize the problem.
+[00:05:47 -> 00:05:50] And the characterization of this problem
+[00:05:50 -> 00:05:52] is that the problem is NP-complete.
+[00:05:52 -> 00:05:54] And you can call it a bad news
+[00:05:54 -> 00:05:57] because that basically means that trying to find
+[00:05:58 -> 00:06:01] solutions to just data dependency constraints
+[00:06:01 -> 00:06:04] may be very expensive
+[00:06:04 -> 00:06:06] because we don't really know yet
+[00:06:06 -> 00:06:08] any polynomial algorithm
+[00:06:08 -> 00:06:11] to solve such a system of equations.
+[00:06:11 -> 00:06:13] However, the good news or the better news
+[00:06:13 -> 00:06:16] is that efficient algorithms or heuristics
+[00:06:16 -> 00:06:20] exist for identifying a solution for the common cases.
+[00:06:20 -> 00:06:23] So there are many heuristics
+[00:06:23 -> 00:06:25] that can be used to basically check
+[00:06:25 -> 00:06:29] for the common cases and basically be able to decide
+[00:06:29 -> 00:06:32] whether there exists an I or an I prime or not.
+[00:06:33 -> 00:06:34] And for those cases,
+[00:06:36 -> 00:06:39] for some subset of these problems,
+[00:06:39 -> 00:06:43] we will be able to identify a yes or no answer.
+[00:06:43 -> 00:06:46] And for other subset of these problems,
+[00:06:47 -> 00:06:48] we will have to resolve to something
+[00:06:48 -> 00:06:49] which is more expensive,
+[00:06:49 -> 00:06:51] for example, an exponential time algorithm.
+[00:06:51 -> 00:06:53] Moreover, the other thing to notice here
+[00:06:53 -> 00:06:56] is that the vectors I and I prime are not that large.
+[00:06:56 -> 00:07:00] So even though the problem is NP-complete,
+[00:07:00 -> 00:07:01] even exponential time algorithms
+[00:07:01 -> 00:07:04] will not, I mean, may be tractable
+[00:07:04 -> 00:07:07] depending on the size of the number,
+[00:07:07 -> 00:07:10] the dimensions of the vectors and things like that.
+[00:07:10 -> 00:07:14] Okay, so the other interesting thing
+[00:07:14 -> 00:07:17] is that this problem can be represented or reduced
+[00:07:17 -> 00:07:20] to the problem of integer linear programming
+[00:07:20 -> 00:07:22] and what is integer linear programming,
+[00:07:22 -> 00:07:25] also called ILP, I'm going to discuss in my next slide,
+[00:07:25 -> 00:07:26] which is also NP-complete.
+[00:07:26 -> 00:07:28] Of course, if this problem can be reduced to ILP
+[00:07:28 -> 00:07:30] and this problem is NP-complete,
+[00:07:30 -> 00:07:32] then ILP must also be NP-complete
+[00:07:32 -> 00:07:34] because if ILP was not NP-complete,
+[00:07:34 -> 00:07:36] then this problem cannot be NP-complete
+[00:07:36 -> 00:07:37] because there's a reduction.
+[00:07:37 -> 00:07:40] Now I'm claiming that this problem can be reduced to ILP.
+[00:07:41 -> 00:07:43] And the good thing about ILP
+[00:07:43 -> 00:07:46] is that ILP is a very standard problem
+[00:07:46 -> 00:07:48] and many important problems,
+[00:07:49 -> 00:07:50] many important mathematical problems,
+[00:07:50 -> 00:07:53] discrete mathematical problems can be reduced to ILP
+[00:07:53 -> 00:07:56] and for this reason, there's a lot of research
+[00:07:56 -> 00:07:59] that has gone into trying to solve ILP
+[00:07:59 -> 00:08:01] in efficient manner using heuristics
+[00:08:01 -> 00:08:05] and things like that in a best effort way,
+[00:08:05 -> 00:08:06] as much as possible.
+[00:08:06 -> 00:08:10] And so these kinds of solutions
+[00:08:10 -> 00:08:10] that people have developed
+[00:08:10 -> 00:08:14] have been developed in the form of software artifacts
+[00:08:14 -> 00:08:16] and these are also called solvers.
+[00:08:16 -> 00:08:17] So these are called ILP solvers
+[00:08:17 -> 00:08:19] and so you need to construct an ILP,
+[00:08:19 -> 00:08:21] an integer linear program,
+[00:08:21 -> 00:08:22] and give it to the solver
+[00:08:22 -> 00:08:24] and the solver is going to return,
+[00:08:24 -> 00:08:26] it's going to apply all the possible heuristics
+[00:08:26 -> 00:08:28] that it knows it's going to do
+[00:08:28 -> 00:08:29] some kind of search algorithm,
+[00:08:29 -> 00:08:32] which is also going to be some kind of guided heuristic,
+[00:08:32 -> 00:08:36] machine learning based search, perhaps.
+[00:08:36 -> 00:08:37] And eventually, if nothing else works,
+[00:08:37 -> 00:08:40] then it's going to do a brute force search,
+[00:08:40 -> 00:08:42] which may be an exponential algorithm.
+[00:08:42 -> 00:08:44] But the good thing is that there's a lot of research,
+[00:08:44 -> 00:08:49] a lot of people, a lot of existing software
+[00:08:49 -> 00:08:52] that is available to solve these ILP problems
+[00:08:52 -> 00:08:56] and so if we can reduce this problem to ILP,
+[00:08:56 -> 00:08:58] even though the problem still remains NP complete,
+[00:08:58 -> 00:09:00] we don't have to kind of reinvent the wheel,
+[00:09:00 -> 00:09:03] we can just piggyback on all the effort
+[00:09:03 -> 00:09:07] that people have done in writing ILP solvers.
+[00:09:08 -> 00:09:10] So question is what is ILP?
+[00:09:10 -> 00:09:13] Okay, so ILP is basically a system of equations
+[00:09:13 -> 00:09:14] of the following form.
+[00:09:14 -> 00:09:17] Let's say the unknown is X, which is a vector.
+[00:09:17 -> 00:09:20] So there's a matrix A multiplied by X
+[00:09:20 -> 00:09:21] should be less than equal to B.
+[00:09:21 -> 00:09:25] So this is one form, this is one type of constraint
+[00:09:25 -> 00:09:26] and this basically represents, you know,
+[00:09:26 -> 00:09:29] you can have, depending on the number of rows
+[00:09:29 -> 00:09:30] in A and B,
+[00:09:30 -> 00:09:34] you have lots of different inequality constraints on X.
+[00:09:34 -> 00:09:37] For example, it could be four X plus three Y
+[00:09:37 -> 00:09:40] plus Z is less than equal to 10, all right,
+[00:09:40 -> 00:09:41] I'm just making it up
+[00:09:41 -> 00:09:43] and there could be several such constraints
+[00:09:43 -> 00:09:46] that are encoded by just a single equation
+[00:09:46 -> 00:09:47] in matrix vector form,
+[00:09:47 -> 00:09:49] which is AX is less than equal to B.
+[00:09:49 -> 00:09:51] Then the other constraint of ILP
+[00:09:51 -> 00:09:54] is that all the X values are non-negative.
+[00:09:54 -> 00:09:56] In other words, X is greater than equal to zero
+[00:09:56 -> 00:09:59] and the third constraint of the ILP
+[00:09:59 -> 00:10:02] is that the unknown X must be an integer
+[00:10:02 -> 00:10:04] and now this is an important constraint
+[00:10:04 -> 00:10:06] and that's why it's called integer linear programming
+[00:10:06 -> 00:10:08] as opposed to just linear programming.
+[00:10:08 -> 00:10:11] It's called linear because these are all affine constraints.
+[00:10:11 -> 00:10:13] So, you know, these are affine inequalities.
+[00:10:15 -> 00:10:17] Then it becomes integer linear programming
+[00:10:17 -> 00:10:20] because we say that the unknowns must be integers
+[00:10:20 -> 00:10:22] and it turns out that because of this constraint
+[00:10:22 -> 00:10:24] that the unknowns should be integers,
+[00:10:24 -> 00:10:26] the problem becomes NP-complete.
+[00:10:26 -> 00:10:28] If the unknowns were not constrained to be integers,
+[00:10:28 -> 00:10:31] the problem can be solved in polynomial time
+[00:10:31 -> 00:10:33] and that's called the problem of linear programming.
+[00:10:33 -> 00:10:34] But that's not what we're interested in
+[00:10:34 -> 00:10:37] because in our exam, in our setting,
+[00:10:37 -> 00:10:40] the variables i and i prime also need to be integers
+[00:10:40 -> 00:10:43] because they are the iteration indices of the loop
+[00:10:43 -> 00:10:45] and it doesn't make sense for the iteration index
+[00:10:45 -> 00:10:48] of a loop to be fractional.
+[00:10:48 -> 00:10:52] I should point out that often these ILP solvers rely on,
+[00:10:52 -> 00:10:54] you know, try to basically,
+[00:10:54 -> 00:10:56] one of the approaches to solving ILP problems
+[00:10:56 -> 00:10:59] is to first solve the LP problem, which is polynomial
+[00:10:59 -> 00:11:02] and then based on that kind of develop some guesses
+[00:11:02 -> 00:11:05] on what may be the integer linear programming solution
+[00:11:05 -> 00:11:07] to this, if any.
+[00:11:07 -> 00:11:11] Notice that when we give an ILP problem to an ILP solver,
+[00:11:11 -> 00:11:14] there are two types of solutions that it can produce.
+[00:11:14 -> 00:11:16] It can either say, yes, there exists a solution
+[00:11:16 -> 00:11:19] and here is an example of a solution,
+[00:11:19 -> 00:11:21] or it could say, no, there exists no solution
+[00:11:21 -> 00:11:24] and I'm 100% sure that there exists no solution
+[00:11:24 -> 00:11:25] to this system of equations.
+[00:11:25 -> 00:11:27] So that's what an ILP solver returns.
+[00:11:27 -> 00:11:30] So ILP solver takes as input the system of equations,
+[00:11:31 -> 00:11:34] notice it's a conjunction of inequalities
+[00:11:34 -> 00:11:38] and this constraint that X belongs to a vector of integers.
+[00:11:38 -> 00:11:41] So in other words, each of the elements of X is an integer
+[00:11:41 -> 00:11:45] and the output is either a yes or a no.
+[00:11:45 -> 00:11:48] A yes basically means yes, there exists a value of X
+[00:11:48 -> 00:11:50] which satisfies the system of equations
+[00:11:50 -> 00:11:53] and potentially it can also give you that value of X
+[00:11:53 -> 00:11:56] back, or it says no, I'm 100% sure
+[00:11:56 -> 00:11:58] that there cannot exist a solution
+[00:11:58 -> 00:11:59] to this system of equations.
+[00:11:59 -> 00:12:02] In other words, the system of equations is infeasible.
+[00:12:03 -> 00:12:05] Okay, so now that we understand what is ILP,
+[00:12:05 -> 00:12:08] let's figure out how to rewrite
+[00:12:08 -> 00:12:10] or how to reduce our system of equations,
+[00:12:10 -> 00:12:14] the data dependence constraints to ILP.
+[00:12:14 -> 00:12:17] And the first few constraints
+[00:12:17 -> 00:12:21] which are relating to the iteration space B, B, B prime
+[00:12:21 -> 00:12:26] and F I plus F equals F prime I plus F prime
+[00:12:26 -> 00:12:29] can simply be written as inequality.
+[00:12:29 -> 00:12:31] We've already discussed how inequality
+[00:12:31 -> 00:12:33] can be represented as a conjunction of inequalities
+[00:12:33 -> 00:12:36] and so what we really have is just a conjunction
+[00:12:36 -> 00:12:38] of four different inequalities here
+[00:12:38 -> 00:12:40] and that can always be represented
+[00:12:40 -> 00:12:44] as a single inequality matrix K X is less than equal to B
+[00:12:44 -> 00:12:46] and also you can choose X in such a way
+[00:12:46 -> 00:12:47] from I and I prime,
+[00:12:47 -> 00:12:49] so that X is greater than equal to zero.
+[00:12:49 -> 00:12:52] In fact, recall that when we started our discussion
+[00:12:52 -> 00:12:53] on quality to analysis,
+[00:12:53 -> 00:12:57] we assumed that I is basically incrementing by one
+[00:12:57 -> 00:12:59] and starting at zero or something like that
+[00:12:59 -> 00:13:02] and so already we can basically,
+[00:13:02 -> 00:13:04] just use X equals I, I prime,
+[00:13:04 -> 00:13:06] but in just in case your integration indices
+[00:13:06 -> 00:13:08] start from a negative number
+[00:13:08 -> 00:13:10] or end at a negative number or something like that,
+[00:13:10 -> 00:13:13] then you can always add an offset,
+[00:13:13 -> 00:13:14] a constant offset to it
+[00:13:14 -> 00:13:16] such that X is greater than equal to zero.
+[00:13:16 -> 00:13:18] And now this is in conjunction of equations
+[00:13:18 -> 00:13:21] that is in a form that can be taken
+[00:13:21 -> 00:13:24] as input by an ILP solver
+[00:13:24 -> 00:13:26] and then we can rely on the ILP solver
+[00:13:26 -> 00:13:27] to either tell us,
+[00:13:27 -> 00:13:28] yes, there exists a solution to X
+[00:13:28 -> 00:13:31] in which case there is a data dependency
+[00:13:31 -> 00:13:32] or it would say, no,
+[00:13:32 -> 00:13:34] there cannot exist a solution to X
+[00:13:34 -> 00:13:36] in which case we are sure that these two statements
+[00:13:36 -> 00:13:39] do not have any data dependency
+[00:13:39 -> 00:13:40] and because they do not have a data dependency,
+[00:13:40 -> 00:13:41] we may be able to,
+[00:13:41 -> 00:13:45] the compiler may be able to reorder those two statements
+[00:13:45 -> 00:13:47] with respect to each other.
+[00:13:47 -> 00:13:48] But right now, so far,
+[00:13:48 -> 00:13:51] I've only talked about these first three constraints.
+[00:13:51 -> 00:13:53] What about the fourth constraint,
+[00:13:53 -> 00:13:54] which is a disequality?
+[00:13:54 -> 00:13:59] How do we model that as a conjunction of inequalities?
+[00:14:00 -> 00:14:03] Now recall that a disequality is a disjunction,
+[00:14:03 -> 00:14:05] not a conjunction of inequalities
+[00:14:05 -> 00:14:09] and so it cannot directly be reduced to an ILP.
+[00:14:09 -> 00:14:10] The trick we can use here
+[00:14:10 -> 00:14:12] is that we can create two ILP problems
+[00:14:12 -> 00:14:15] and solve each of them independently.
+[00:14:15 -> 00:14:16] The first ILP problem can be
+[00:14:16 -> 00:14:19] I is greater than equal to I prime plus one
+[00:14:19 -> 00:14:24] and so just this constraint with all these constraints
+[00:14:24 -> 00:14:27] and then we basically construct an ILP out of it
+[00:14:27 -> 00:14:29] and say, does there exist a solution to this?
+[00:14:29 -> 00:14:30] If the answer is yes,
+[00:14:30 -> 00:14:32] we know that there exists a solution
+[00:14:32 -> 00:14:35] to this original set of constraints
+[00:14:35 -> 00:14:36] because there exists a solution
+[00:14:36 -> 00:14:39] to I is greater than equal to I prime plus one
+[00:14:39 -> 00:14:41] or in other words, I is greater,
+[00:14:41 -> 00:14:43] strictly greater than I prime plus one
+[00:14:43 -> 00:14:44] and everything else.
+[00:14:44 -> 00:14:47] So that also means I is not equal to I prime
+[00:14:47 -> 00:14:50] and so we know that there exists a data dependency
+[00:14:50 -> 00:14:51] and if the answer is no,
+[00:14:51 -> 00:14:54] then we use the other constraint
+[00:14:54 -> 00:14:55] along with all the other constraints as well.
+[00:14:55 -> 00:14:58] So basically this along with the other,
+[00:14:58 -> 00:15:00] the first three constraints
+[00:15:00 -> 00:15:02] and again give it to the ILP solver.
+[00:15:02 -> 00:15:05] So we make two ILP solver queries
+[00:15:05 -> 00:15:09] to solve one data dependence constraints problem.
+[00:15:09 -> 00:15:11] One with I is greater than equal to I prime plus one
+[00:15:11 -> 00:15:13] and the other with I is less than equal
+[00:15:13 -> 00:15:15] to I prime minus one.
+[00:15:15 -> 00:15:19] If any of these ILP problems returns yes,
+[00:15:19 -> 00:15:21] then there exists a data dependency.
+[00:15:22 -> 00:15:23] If both these problems return no,
+[00:15:23 -> 00:15:25] there does not exist a solution,
+[00:15:25 -> 00:15:27] then there exists no data dependency.
+[00:15:27 -> 00:15:28] So we have reduced this problem
+[00:15:28 -> 00:15:30] of solving data dependence constraints
+[00:15:30 -> 00:15:37] to two problems of integer linear programming.
+[00:15:37 -> 00:15:38] This slide just shows that.
+[00:15:38 -> 00:15:40] So basically this is the first problem
+[00:15:40 -> 00:15:44] which is AII prime is just using an example
+[00:15:44 -> 00:15:47] assuming that this is I and I prime are non-negative,
+[00:15:47 -> 00:15:50] then I can just say AII prime is less than equal to B,
+[00:15:50 -> 00:15:52] I is less than equal to I prime minus one.
+[00:15:52 -> 00:15:57] This forms one problem for ILP
+[00:15:57 -> 00:16:00] and this forms the other problem for ILP
+[00:16:00 -> 00:16:02] and if any of them return yes,
+[00:16:02 -> 00:16:03] the answer is yes.
+[00:16:03 -> 00:16:05] If both of them return no,
+[00:16:05 -> 00:16:07] then the answer is no.

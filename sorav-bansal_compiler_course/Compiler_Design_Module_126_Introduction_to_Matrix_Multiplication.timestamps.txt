@@ -1,0 +1,509 @@
+Title: Compiler Design Module 126 : Introduction to Matrix Multiplication
+Video ID: _z1cNO4xUoQ
+Detected language: en
+------------------------------------------------------------
+
+[00:00:00 -> 00:00:06] So, today I am going to talk about matrix-matrix multiplication and we are hopefully all familiar
+[00:00:06 -> 00:00:12] with matrix-matrix multiplication. Here is a pseudo-code for a naive implementation.
+[00:00:12 -> 00:00:22] For i equals 0, i to n, i++. For j equals 0 to n, j++. For k equals 0 to n, k++.
+[00:00:22 -> 00:00:34] Cij equals Cij plus Aik into Bkj. This is a very common operation, matrix multiplication.
+[00:00:34 -> 00:00:40] It is used in many applications. It basically involves calculating the i comma jth element
+[00:00:40 -> 00:00:51] of C based on, by iterating over k, over the row of A and over the column of B. Alright,
+[00:00:51 -> 00:00:59] so if I was to show this in a diagrammatic form, this would look something like the following.
+[00:00:59 -> 00:01:04] Let me just draw this. So, let's say this is C. So, if I want to calculate i comma
+[00:01:04 -> 00:01:11] jth element here of C, then let's say this is A. So, this is C, this is A and this
+[00:01:11 -> 00:01:20] is B. Then I go through the ith row and I go through the jth column and take a
+[00:01:20 -> 00:01:26] dot product of these two vectors. So, I take the dot product of the ith row in A and the
+[00:01:26 -> 00:01:32] jth column in B and that gives me one element in C. So, this particular loop, if you look
+[00:01:32 -> 00:01:37] at it, is actually an order n cube loop because there are three nested loops. Each
+[00:01:37 -> 00:01:43] of them iterating a variable from 0 to n. Also, in this implementation, I have
+[00:01:43 -> 00:01:48] made a simplification. I have not initialized Cij to 0. I am assuming that initially
+[00:01:48 -> 00:01:55] before this loop nest even starts, the values of C are all 0. So, for example, what I am saying
+[00:01:55 -> 00:02:01] is, I have not really done Cij equals 0 here. And that's on purpose and we are going to
+[00:02:01 -> 00:02:07] understand why I am not doing this. Just for now, assume that, we can assume that even
+[00:02:07 -> 00:02:12] before this loop nest starts, C has been initialized to 0. And so, the execution of
+[00:02:12 -> 00:02:19] this three depth loop nest basically gives me a multiplication of A and B into C.
+[00:02:19 -> 00:02:26] Alright. So, I want to understand the performance of the loop that I just
+[00:02:26 -> 00:02:32] showed to you in the previous slide of the loop nest, which had three nested
+[00:02:32 -> 00:02:38] loops. And basically, we are going to say that the performance will largely
+[00:02:38 -> 00:02:45] depend on the behavior of the caches. Recall that CPU has a cache and then
+[00:02:45 -> 00:02:50] there's main memory. Actually, there's a cache hierarchy, but I'm
+[00:02:50 -> 00:02:55] basically simplifying the diagram here. There's L1, L2, L3 caches. But let's just say
+[00:02:55 -> 00:02:59] there's one cache and it has the best-case latency of
+[00:02:59 -> 00:03:04] one cycle and it has a grain size of one byte. So, CPU can basically
+[00:03:04 -> 00:03:09] access the cache at a byte granularity. I can just say that, give me the byte at
+[00:03:09 -> 00:03:14] address 100 and it will just give me one byte. So, that's what I mean by grain
+[00:03:14 -> 00:03:20] size. But when I look at the interface between cache to main memory, the
+[00:03:20 -> 00:03:28] latencies are almost 100x more, 100x lower, between let's say L1, which is
+[00:03:28 -> 00:03:31] going to be accessed in a single cycle versus main memory, which is going
+[00:03:31 -> 00:03:35] to take hundreds of cycles to access. Of course, this is the worst-case
+[00:03:35 -> 00:03:39] latency if it's between L3 and main memory. The factor may be somewhere
+[00:03:39 -> 00:03:43] anywhere between 10 and 100. But in the worst case, it can be 100 or 100
+[00:03:43 -> 00:03:48] plus. And the grain size here is cache line. So, it's not a single
+[00:03:48 -> 00:03:52] byte, but if I want to get something from the main memory into the cache,
+[00:03:52 -> 00:03:57] the smallest grain that I can get in one go is basically one cache line,
+[00:03:57 -> 00:04:03] which is typically, let's say, 64 bytes. So, why do we have a larger grain size
+[00:04:03 -> 00:04:06] between cache and main memory and a smaller grain size between CPU and
+[00:04:06 -> 00:04:10] cache? Well, it's just a matter of distance. It's something that's close
+[00:04:10 -> 00:04:13] to you. You can basically do more fine-grained access. The latencies
+[00:04:13 -> 00:04:18] are smaller. Something that's farther from you, you need to do. You want
+[00:04:18 -> 00:04:21] to get more things in a batch. It's not very different from retailer
+[00:04:21 -> 00:04:25] and wholesaler. You can get small things from your retail shop. But
+[00:04:26 -> 00:04:28] when you get something from the wholesale, you would typically want to
+[00:04:28 -> 00:04:32] get things in bulk because the latencies are higher. All right. So,
+[00:04:33 -> 00:04:37] what are some characteristics of this cache hierarchy subsystem? First
+[00:04:37 -> 00:04:40] of all, this whole idea of using a cache line that's bigger than a
+[00:04:40 -> 00:04:43] single byte, larger grain size of, let's say, 64 bytes or larger,
+[00:04:44 -> 00:04:47] and some prefetching also. So, in fact, at this interface between
+[00:04:47 -> 00:04:51] cache and main memory, there is some intelligence built into the
+[00:04:51 -> 00:04:55] hardware which says that, oh, if there's been access of this type,
+[00:04:55 -> 00:05:00] then start prefetching addresses that follow that. So, cache line
+[00:05:00 -> 00:05:04] and prefetching together, they are meant to exploit spatial locality.
+[00:05:04 -> 00:05:08] Spatial locality is the property of a program to access spatially
+[00:05:08 -> 00:05:11] closed locations, closed in time. So, if I've been accessing, let's
+[00:05:11 -> 00:05:15] say, AI, AI plus one, AI plus two, very likely I'm going to also
+[00:05:15 -> 00:05:19] access AI plus three. And so, some of this is going to get absorbed
+[00:05:19 -> 00:05:24] by the cache line size itself because maybe all AI, AI plus one, AI
+[00:05:24 -> 00:05:26] plus two that are spatially closed are going to fit in a single
+[00:05:26 -> 00:05:30] cache line. So, when I've brought AI into the cache, automatically
+[00:05:30 -> 00:05:33] AI plus one, plus two, plus three, and so on also came into
+[00:05:33 -> 00:05:36] the cache. And that helped me with my spatial locality.
+[00:05:36 -> 00:05:38] And that's one of the big advantages of having a larger
+[00:05:38 -> 00:05:41] cache line. The other thing is prefetching. The intelligence
+[00:05:41 -> 00:05:44] built into the hardware can actually figure out that there's a
+[00:05:44 -> 00:05:47] stride pattern in which the program is accessing memory. So,
+[00:05:47 -> 00:05:52] it probably will help if I just try to speculate and bring
+[00:05:52 -> 00:05:54] more stuff into the cache. Now, there's an opportunity cost
+[00:05:54 -> 00:05:57] for doing this, but oftentimes hardware does this kind of
+[00:05:57 -> 00:06:02] thing and does this successfully because programs do have
+[00:06:02 -> 00:06:04] predictable patterns. And if the prediction is correct,
+[00:06:04 -> 00:06:08] this is a win. And so, both cache line and prefetching are
+[00:06:08 -> 00:06:11] meant to exploit spatial locality. And then the cache
+[00:06:11 -> 00:06:13] is typically has some kind of replacement policy. For
+[00:06:13 -> 00:06:17] example, it may have an LRU replacement policy or a FIFO
+[00:06:17 -> 00:06:21] replacement policy. And these policies are meant to capture
+[00:06:21 -> 00:06:25] temporal locality, which means that things that have been
+[00:06:25 -> 00:06:29] accessed recently are going to likely be accessed in
+[00:06:29 -> 00:06:34] future shortly. So, this is the typical past equals future
+[00:06:34 -> 00:06:36] assumption that we make in computer systems. Something
+[00:06:36 -> 00:06:39] that has happened in past is also likely to happen in
+[00:06:39 -> 00:06:42] future. Something that has happened close in past will
+[00:06:42 -> 00:06:45] likely happen close in future as well. And that is exactly
+[00:06:45 -> 00:06:50] the property of temporal locality. The other way to
+[00:06:50 -> 00:06:52] state the property of temporal locality is that there is
+[00:06:52 -> 00:06:57] low reuse distance. The distance between two uses of
+[00:06:57 -> 00:07:02] the same location is small. And that is the assumption of
+[00:07:02 -> 00:07:05] temporal locality, typically small or statistically
+[00:07:05 -> 00:07:07] speaking it is small. So, this is the assumption of
+[00:07:07 -> 00:07:10] low reuse distance. The reuse of the same location, the
+[00:07:10 -> 00:07:14] distance between the two uses or reuses of the same
+[00:07:14 -> 00:07:18] location are typically small. And if that is true, then
+[00:07:18 -> 00:07:21] the program exhibits temporal locality and if the program
+[00:07:21 -> 00:07:24] exhibits temporal locality to a certain degree, the
+[00:07:24 -> 00:07:28] hardware is designed to exploit that temporal locality
+[00:07:28 -> 00:07:32] using the cache replacement policies such as LRU or
+[00:07:32 -> 00:07:36] first in first out FIFO. All right. So, let's
+[00:07:36 -> 00:07:39] understand in this context of the caching hierarchy, the
+[00:07:39 -> 00:07:43] implementation of the matrix multiplication that I showed
+[00:07:43 -> 00:07:46] you in the first slide and its performance. So, once again,
+[00:07:46 -> 00:07:50] it's a triple nest for i from 0 to n, j from 0 to n, k from
+[00:07:50 -> 00:07:55] 0 to n, c i j equals c i j plus 8 i k star b k j.
+[00:07:55 -> 00:07:58] And this particular, this last loop here is basically
+[00:07:58 -> 00:08:04] implementing a dot product, right? Dot product between the
+[00:08:04 -> 00:08:10] ith row in A and the jth column in B. Now, one thing
+[00:08:10 -> 00:08:14] to notice here is that in this last nest here, c i j is
+[00:08:14 -> 00:08:18] pretty much not, the address of c i j is pretty much not
+[00:08:18 -> 00:08:21] getting changed and so what I can do is I can just
+[00:08:21 -> 00:08:25] register allocate c i j. In fact, even the value is not
+[00:08:25 -> 00:08:29] going to get, you know, assuming that c i j, c A and
+[00:08:29 -> 00:08:32] B are distinct memory regions. So, c does not overlap
+[00:08:32 -> 00:08:36] with A and c does not overlap with B and so on,
+[00:08:36 -> 00:08:40] then I can just basically register allocate c i j and in
+[00:08:40 -> 00:08:43] fact, rewrite this code such that this c i j, I basically
+[00:08:43 -> 00:08:47] say r and then this I say r and then at the very end,
+[00:08:47 -> 00:08:51] I can just say c i j equals r, all right? And at the
+[00:08:51 -> 00:08:55] beginning of the loop, I can say r equals c i j and this
+[00:08:55 -> 00:08:58] is basically nothing but register allocation of c i j
+[00:08:58 -> 00:09:02] and I can do this assuming, I can assume that c and A do
+[00:09:02 -> 00:09:06] not, areas or do not, cannot point to c, c, no
+[00:09:06 -> 00:09:09] location in c can point to the same location as some
+[00:09:09 -> 00:09:12] location in A or some location in B. Notice that if
+[00:09:12 -> 00:09:15] it was possible for c and A or c and B to overlap, then
+[00:09:15 -> 00:09:19] it is not correct to register allocate c i j in this
+[00:09:19 -> 00:09:23] particular loop, all right? So, so what are the
+[00:09:23 -> 00:09:25] memory accesses in this inner loop, which is
+[00:09:25 -> 00:09:27] basically the loop that's going to get, the body of
+[00:09:27 -> 00:09:29] this loop is basically going to get executed the
+[00:09:29 -> 00:09:33] most often, most, most with higher frequency and so
+[00:09:33 -> 00:09:36] in this, this register r is just going to take less
+[00:09:36 -> 00:09:39] than a cycle to access because this register is just
+[00:09:39 -> 00:09:45] inside the CPU. But if I look at A i k and B k j, it
+[00:09:45 -> 00:09:48] does not make sense to basically register allocate
+[00:09:48 -> 00:09:51] these, these locations because in this particular
+[00:09:51 -> 00:09:53] loop, it's just been, every location has been
+[00:09:53 -> 00:09:56] accessed only once and so I'll have to pay
+[00:09:56 -> 00:09:58] memory accesses to access these locations.
+[00:09:59 -> 00:10:01] Notice that for c i j, I just had to have one
+[00:10:01 -> 00:10:04] memory access for the entire loop but for A i k
+[00:10:04 -> 00:10:07] and B k j, I need one memory access for every
+[00:10:07 -> 00:10:11] iteration of the loop. Now, but even though
+[00:10:11 -> 00:10:14] there are different, both A and B c look
+[00:10:14 -> 00:10:16] symmetric in terms of the number of memory
+[00:10:16 -> 00:10:18] accesses that they make per iteration of the
+[00:10:18 -> 00:10:21] loop, the access pattern that they exhibit in
+[00:10:21 -> 00:10:24] the memory is actually very different. A i k
+[00:10:24 -> 00:10:27] basically iterates on the second argument, so
+[00:10:27 -> 00:10:29] for example, the first access is A i 0, the
+[00:10:29 -> 00:10:32] second access is A i 1, third access is A i 2
+[00:10:32 -> 00:10:36] and so on and assuming that the first, first
+[00:10:36 -> 00:10:39] argument here i is the row argument and the
+[00:10:39 -> 00:10:42] second argument is the column argument and
+[00:10:42 -> 00:10:44] assuming that the array was laid out in row
+[00:10:44 -> 00:10:47] major form, then A i 0, A i 1, A i 2 are
+[00:10:47 -> 00:10:50] basically consecutive locations in memory.
+[00:10:50 -> 00:10:51] In other words, they have consecutive
+[00:10:51 -> 00:10:54] addresses. On the other hand, if I look at
+[00:10:54 -> 00:10:57] B k j, then the accesses in the inner
+[00:10:57 -> 00:11:02] loop are going to be B 0 j, B 1 j, B 2 j
+[00:11:02 -> 00:11:04] and so on and if it is a row major
+[00:11:04 -> 00:11:06] layout for the B array, then this is
+[00:11:06 -> 00:11:08] basically going all the way across a row
+[00:11:08 -> 00:11:11] to get to the second element. So B 0 j
+[00:11:11 -> 00:11:14] and B 1 j are really far apart in the
+[00:11:14 -> 00:11:17] memory address space. B 0 j, there are
+[00:11:17 -> 00:11:20] n elements between B 0 j and B 1 j,
+[00:11:20 -> 00:11:22] whereas there is only one element
+[00:11:22 -> 00:11:27] between A i 0 and A i 1. Okay, so
+[00:11:27 -> 00:11:30] assuming row major memory layout, of
+[00:11:30 -> 00:11:31] course, I can, you know, if I use the
+[00:11:31 -> 00:11:33] column major memory layout, the
+[00:11:33 -> 00:11:35] argument would flip. In that case, B
+[00:11:35 -> 00:11:38] would be, B would have spatial locality
+[00:11:38 -> 00:11:40] and A would not have spatial locality,
+[00:11:40 -> 00:11:42] but assuming, you know, I'm just going
+[00:11:42 -> 00:11:44] to pick one of them, it doesn't matter
+[00:11:44 -> 00:11:46] without loss of generality. Assume that
+[00:11:46 -> 00:11:49] the memory layout is row major,
+[00:11:49 -> 00:11:52] then A i k's accesses are likely to
+[00:11:52 -> 00:11:55] be cache hits because A i k minus one
+[00:11:55 -> 00:11:56] would have been likely, very likely
+[00:11:56 -> 00:11:59] accessed recently and because A i k
+[00:11:59 -> 00:12:01] minus one was accessed recently, the
+[00:12:01 -> 00:12:02] whole cache line must have been
+[00:12:02 -> 00:12:05] present in the cache and very likely
+[00:12:05 -> 00:12:08] or perhaps because of prefetching
+[00:12:08 -> 00:12:10] and so there would be spatial locality
+[00:12:10 -> 00:12:12] and so most of these accesses for
+[00:12:12 -> 00:12:16] A i k would be cache hits. On the
+[00:12:16 -> 00:12:18] other hand, if I look at B k j,
+[00:12:18 -> 00:12:20] then these will likely be cache
+[00:12:20 -> 00:12:21] misses because the recent access would
+[00:12:21 -> 00:12:24] have been to B k minus one j and B
+[00:12:24 -> 00:12:27] k minus one j is very far from B k
+[00:12:27 -> 00:12:29] j because it's a row major layout and
+[00:12:29 -> 00:12:31] so B k minus j is a significant
+[00:12:31 -> 00:12:33] distance away and it does not fit in
+[00:12:33 -> 00:12:36] the same cache line of say 64 bytes
+[00:12:36 -> 00:12:37] and so this exhibits a very high
+[00:12:37 -> 00:12:39] reused distance.
+[00:12:39 -> 00:12:41] So the first access here, A i k
+[00:12:41 -> 00:12:43] exhibits low reused distance,
+[00:12:43 -> 00:12:46] has good spatial locality, B k j has
+[00:12:46 -> 00:12:48] high reused distance and
+[00:12:48 -> 00:12:50] low spatial locality. A i k has high
+[00:12:50 -> 00:12:52] spatial locality, B k j has
+[00:12:52 -> 00:12:53] low spatial locality assuming row
+[00:12:53 -> 00:12:57] major memory layout.
+[00:12:57 -> 00:12:59] So what are the total number of
+[00:12:59 -> 00:13:01] misses that this loop is going to
+[00:13:01 -> 00:13:04] have? If I look, basically this
+[00:13:04 -> 00:13:05] particular statement here is going to
+[00:13:05 -> 00:13:08] be executing N cubed times
+[00:13:08 -> 00:13:11] of which C i j is going to be
+[00:13:11 -> 00:13:14] register allocated, A i k is going to
+[00:13:14 -> 00:13:15] be mostly
+[00:13:15 -> 00:13:18] cache hit, sometimes cache miss and B
+[00:13:18 -> 00:13:19] k j is going to be
+[00:13:19 -> 00:13:21] almost always a cache miss. So the
+[00:13:21 -> 00:13:23] number of misses that I'm going to
+[00:13:23 -> 00:13:23] have
+[00:13:23 -> 00:13:25] is going to be order N cubed and
+[00:13:25 -> 00:13:27] that's going to be dominated
+[00:13:27 -> 00:13:29] by the accesses to B and not to
+[00:13:29 -> 00:13:32] either C or A and so B k j is going to
+[00:13:32 -> 00:13:34] be my
+[00:13:34 -> 00:13:36] performance bottleneck, the access to B
+[00:13:36 -> 00:13:37] k j is going to be my performance
+[00:13:37 -> 00:13:39] bottleneck in this particular loop
+[00:13:39 -> 00:13:40] because it's going to be a likely
+[00:13:40 -> 00:13:42] miss on each iteration. Recall that
+[00:13:42 -> 00:13:43] a miss is
+[00:13:43 -> 00:13:47] almost 100x slower than a hit and so
+[00:13:47 -> 00:13:50] so you know this is basically going
+[00:13:50 -> 00:13:51] to be the most
+[00:13:51 -> 00:13:54] significant performance drag
+[00:13:54 -> 00:13:58] in our code. So
+[00:13:58 -> 00:14:00] to see this diagrammatically if I was to
+[00:14:00 -> 00:14:03] basically compute the value of C i j
+[00:14:03 -> 00:14:06] marked by this x then I iterate over
+[00:14:06 -> 00:14:10] the ith row of A using k
+[00:14:10 -> 00:14:14] and the jth column of B using k
+[00:14:14 -> 00:14:16] when I iterate over the ith row of A
+[00:14:16 -> 00:14:18] it has very high spatial locality
+[00:14:18 -> 00:14:19] assuming row major
+[00:14:19 -> 00:14:20] memory layout because all these
+[00:14:20 -> 00:14:21] locations all these consecutive
+[00:14:21 -> 00:14:23] locations that I'm accessing
+[00:14:23 -> 00:14:25] are likely to be closed in address
+[00:14:25 -> 00:14:27] space of the physical memory
+[00:14:27 -> 00:14:28] and so they're going to fit in the same
+[00:14:28 -> 00:14:30] cache line or they're going to benefit
+[00:14:30 -> 00:14:31] from prefetching.
+[00:14:31 -> 00:14:34] On the other hand these accesses are
+[00:14:34 -> 00:14:35] really far because they have
+[00:14:35 -> 00:14:38] all this between this access
+[00:14:38 -> 00:14:41] and the next access there are all
+[00:14:41 -> 00:14:42] these addresses that are marked with
+[00:14:42 -> 00:14:43] the yellow
+[00:14:43 -> 00:14:45] pen here which is a large distance away
+[00:14:45 -> 00:14:47] and so there is very little
+[00:14:47 -> 00:14:48] spatial locality or no spatial
+[00:14:48 -> 00:14:52] locality in the accesses to B.
+[00:14:52 -> 00:14:54] In other words the reuse distance in
+[00:14:54 -> 00:14:59] A is 1 because we basically reuse the
+[00:14:59 -> 00:15:00] same cache line again
+[00:15:00 -> 00:15:03] while the reuse distance of at the
+[00:15:03 -> 00:15:05] cache line generality for B
+[00:15:05 -> 00:15:07] is n because I reuse the same cache
+[00:15:07 -> 00:15:09] line only after I have done
+[00:15:09 -> 00:15:13] n accesses okay
+[00:15:13 -> 00:15:16] or or actually maybe that I don't
+[00:15:16 -> 00:15:17] have any reuse at all
+[00:15:17 -> 00:15:19] okay so in other words this one has
+[00:15:19 -> 00:15:21] low reuse distance compared when I'm
+[00:15:21 -> 00:15:22] talking about cache line generality
+[00:15:22 -> 00:15:24] and this one has very high
+[00:15:24 -> 00:15:26] reuse distance or no
+[00:15:26 -> 00:15:29] n or even higher okay all right
+[00:15:29 -> 00:15:34] so if cache has c cache lines
+[00:15:34 -> 00:15:36] what is the number of misses for one
+[00:15:36 -> 00:15:37] iteration of the
+[00:15:37 -> 00:15:39] outer loop so now let's try to make
+[00:15:39 -> 00:15:40] this slightly
+[00:15:40 -> 00:15:43] more nuanced and say that let's say
+[00:15:43 -> 00:15:45] c the cache has some finite size
+[00:15:45 -> 00:15:48] and let's say it has c cache lines
+[00:15:48 -> 00:15:49] recall that
+[00:15:49 -> 00:15:51] the cache basically transacts in the
+[00:15:51 -> 00:15:52] generality of cache lines
+[00:15:52 -> 00:15:53] and so we're going to assume that there
+[00:15:53 -> 00:15:56] are c cache lines so what is the number
+[00:15:56 -> 00:15:57] of misses for one
+[00:15:57 -> 00:15:59] iteration of the outer loop so what is
+[00:15:59 -> 00:16:03] the number of iterations for one
+[00:16:03 -> 00:16:05] for one iteration of the outer loop
+[00:16:05 -> 00:16:06] it is order n square
+[00:16:06 -> 00:16:09] we said order n cube for the entire
+[00:16:09 -> 00:16:11] loop nest but if I just you know
+[00:16:11 -> 00:16:12] take one iteration of the outer
+[00:16:12 -> 00:16:14] loop that's going to be
+[00:16:14 -> 00:16:15] all the iterations of the inner
+[00:16:15 -> 00:16:17] loops the two inner loops and nested
+[00:16:17 -> 00:16:18] loops and that's going to be order n
+[00:16:18 -> 00:16:19] square
+[00:16:19 -> 00:16:22] and so that has basically what you're
+[00:16:22 -> 00:16:23] going to get it
+[00:16:23 -> 00:16:25] that b has least locality and that needs
+[00:16:25 -> 00:16:27] n square accesses
+[00:16:27 -> 00:16:28] and so in the worst case each of
+[00:16:28 -> 00:16:30] those accesses are going to be a miss
+[00:16:30 -> 00:16:32] none of those accesses is going to
+[00:16:32 -> 00:16:34] be available in the cache that has
+[00:16:34 -> 00:16:35] c cache lines
+[00:16:35 -> 00:16:36] and so in the worst case I'm going
+[00:16:36 -> 00:16:39] to get order n square misses
+[00:16:39 -> 00:16:41] however there's a best case and the
+[00:16:41 -> 00:16:43] best case here is that let's say c
+[00:16:43 -> 00:16:45] columns of b fit in cache
+[00:16:45 -> 00:16:47] so let's say you know starting from
+[00:16:47 -> 00:16:48] this
+[00:16:48 -> 00:16:50] the c columns here actually fit in
+[00:16:50 -> 00:16:52] cache which basically means n should
+[00:16:52 -> 00:16:54] have been a very small number because
+[00:16:54 -> 00:16:57] that basically means that c into n
+[00:16:57 -> 00:16:59] fits in c cache lines right so
+[00:16:59 -> 00:17:01] basically that means that the number
+[00:17:01 -> 00:17:03] of cache lines is
+[00:17:03 -> 00:17:05] the n is somehow smaller than the
+[00:17:05 -> 00:17:07] number of cache lines or something
+[00:17:07 -> 00:17:07] like that
+[00:17:07 -> 00:17:10] and just in case that happens then
+[00:17:10 -> 00:17:11] this would be the best case because
+[00:17:11 -> 00:17:12] then what will happen is
+[00:17:12 -> 00:17:15] that once I go through this column
+[00:17:15 -> 00:17:16] then I go to the next column j plus
+[00:17:16 -> 00:17:19] 1 and now j plus one's and
+[00:17:19 -> 00:17:21] columns entries are going to be
+[00:17:21 -> 00:17:22] available in the cache
+[00:17:22 -> 00:17:24] because the entire column the c
+[00:17:24 -> 00:17:26] columns could fit in the cache
+[00:17:26 -> 00:17:28] and so the next c columns are already
+[00:17:28 -> 00:17:30] in the cache by the time I start
+[00:17:30 -> 00:17:32] with j plus one th column
+[00:17:32 -> 00:17:34] the entries of all the j plus one
+[00:17:34 -> 00:17:35] column are already in the cache
+[00:17:35 -> 00:17:37] because when I brought the entries
+[00:17:37 -> 00:17:38] of jth column
+[00:17:38 -> 00:17:40] the cache lines came into the cache
+[00:17:40 -> 00:17:41] and because those cache lines fit in
+[00:17:41 -> 00:17:42] the cache
+[00:17:42 -> 00:17:44] when I start doing j plus one column
+[00:17:44 -> 00:17:48] I'm able to reuse those available cache lines in the cache.
+[00:17:48 -> 00:17:52] And so that's the best case when C columns of B fit in the cache.
+[00:17:52 -> 00:17:55] The worst case is when less than equal to one columns of B fit in the cache.
+[00:17:55 -> 00:17:57] And the worst case is going to be the common case.
+[00:17:57 -> 00:18:01] If the arrays are big, then less than equal to one column,
+[00:18:01 -> 00:18:03] because one column basically means n elements.
+[00:18:03 -> 00:18:07] And if n is some large number, let's say million or something like that,
+[00:18:07 -> 00:18:08] then that's not going to fit in the cache.
+[00:18:08 -> 00:18:10] And so that's the worst case.
+[00:18:10 -> 00:18:14] But if n is let's say small, let's say n is 100 or something like that,
+[00:18:14 -> 00:18:17] then maybe the C columns can fit in the cache.
+[00:18:17 -> 00:18:18] And then I would have better answers.
+[00:18:19 -> 00:18:25] And so in this case, in the best case, I can expect n squared by C misses,
+[00:18:25 -> 00:18:29] because every time I go through a column,
+[00:18:30 -> 00:18:37] I only need to fetch the first column of a C-sized area.
+[00:18:37 -> 00:18:39] So for example, this is size C.
+[00:18:39 -> 00:18:43] So of this, I need to only fetch the first one
+[00:18:43 -> 00:18:44] and all the others are going to be available.
+[00:18:44 -> 00:18:48] And so because of that, I'll have n squared by C misses in the best case
+[00:18:49 -> 00:18:53] and n squared misses in the worst case as we discussed earlier.
+[00:18:53 -> 00:18:55] So in the worst case, I'll have order n squared misses.
+[00:18:56 -> 00:18:59] In the best case, I'll have n squared by C misses.
+[00:19:00 -> 00:19:04] Now that's for one iteration of the outer loop of this program.
+[00:19:05 -> 00:19:09] So in other words, for one iteration of the outer loop,
+[00:19:09 -> 00:19:13] the number of misses that I can experience is anywhere between n squared by C
+[00:19:13 -> 00:19:16] and n squared, depending on the size of these arrays.
+[00:19:17 -> 00:19:21] One can also argue that this also depends on the cache replacement policy.
+[00:19:21 -> 00:19:23] The cache replacement policy is somehow very smart
+[00:19:23 -> 00:19:25] and it's able to figure out that this something
+[00:19:25 -> 00:19:28] should be retained in the cache and things like that.
+[00:19:28 -> 00:19:31] Then it's possible that we get something which is less than n squared,
+[00:19:31 -> 00:19:33] even when n was bigger.
+[00:19:33 -> 00:19:36] And so the precise answer is that the number of misses
+[00:19:36 -> 00:19:39] will be somewhere between n squared by C and n squared.
+[00:19:39 -> 00:19:42] Best case is n squared by C, worst case is n squared
+[00:19:42 -> 00:19:46] and typically we'll have some number which is in the middle of these two values.
+[00:19:47 -> 00:19:50] So that's for one iteration of the outer loop.
+[00:19:50 -> 00:19:52] What about for n iterations of the outer loop,
+[00:19:52 -> 00:19:53] which means the entire loop nest.
+[00:19:54 -> 00:19:56] For n iterations of the outer loop, once again,
+[00:19:57 -> 00:20:00] the worst case is just multiply n squared by n
+[00:20:00 -> 00:20:02] because for every iteration of the outer loop,
+[00:20:02 -> 00:20:05] I basically have a fresh set of n squared misses.
+[00:20:05 -> 00:20:06] And so that's n cubed.
+[00:20:06 -> 00:20:10] And that's basically because the arrays just don't fit in the cache.
+[00:20:10 -> 00:20:13] However, in the best case now, I still have n squared by C.
+[00:20:13 -> 00:20:16] And here I'm going to know the reason I get n squared by C
+[00:20:16 -> 00:20:19] and not n cubed by C is because the best case is
+[00:20:19 -> 00:20:21] when the entire B fits in the cache.
+[00:20:21 -> 00:20:23] And if the entire B fits in the cache,
+[00:20:23 -> 00:20:28] then I basically just need to bring B for one inner loop iteration.
+[00:20:28 -> 00:20:30] I just need to bring B once into the cache
+[00:20:30 -> 00:20:33] and that's going to take n squared by C cache misses
+[00:20:33 -> 00:20:35] because the size of B is n squared.
+[00:20:35 -> 00:20:40] And so I get n squared by C cache misses
+[00:20:40 -> 00:20:44] because in one cache miss I get C elements in one row.
+[00:20:44 -> 00:20:45] And so n squared by C cache misses
+[00:20:45 -> 00:20:47] when entire B fits in the cache
+[00:20:47 -> 00:20:50] and n cubed misses when less than equal to one column
+[00:20:50 -> 00:20:51] of B fits in the cache.
+[00:20:51 -> 00:20:54] And so for n iterations of the outer loop,
+[00:20:54 -> 00:20:57] I'm going to experience anywhere between n squared by C
+[00:20:57 -> 00:20:59] and n cubed misses in this loop nest.
+[00:21:00 -> 00:21:02] Okay, so now that we have discussed
+[00:21:02 -> 00:21:04] how to analyze the number of misses
+[00:21:04 -> 00:21:06] for that particular code,
+[00:21:06 -> 00:21:08] let's also see how one would go about
+[00:21:08 -> 00:21:09] parallelizing that particular code.
+[00:21:09 -> 00:21:12] And let's assume that I have P processors in my system.
+[00:21:12 -> 00:21:15] So one nice strategy is row by row parallelization.
+[00:21:16 -> 00:21:20] I just take the first n by P iterations of the outer loop
+[00:21:20 -> 00:21:22] and give it to first processor.
+[00:21:22 -> 00:21:24] The next n by P to the second processor,
+[00:21:24 -> 00:21:26] the third n by P to the third processor and so on
+[00:21:26 -> 00:21:29] and the last n by P to the last processor.
+[00:21:29 -> 00:21:31] And this is called row by row parallelization.
+[00:21:31 -> 00:21:34] Do n by P outer loop iterations for each processor.
+[00:21:35 -> 00:21:38] And if I do that, then worst case number of cache misses
+[00:21:38 -> 00:21:42] for n by P outer loop iterations is going to be,
+[00:21:43 -> 00:21:45] we know that for one iteration, it's n squared.
+[00:21:45 -> 00:21:47] This is the analysis we did earlier.
+[00:21:47 -> 00:21:50] We just multiply that with the number of loop iterations
+[00:21:50 -> 00:21:51] for that particular processor.
+[00:21:51 -> 00:21:55] So per processor, I will have n by P into n squared
+[00:21:55 -> 00:21:56] cache misses.
+[00:21:57 -> 00:21:59] And so each of these processors
+[00:21:59 -> 00:22:00] is going to have cache misses.
+[00:22:01 -> 00:22:02] Each of these processors in the worst case
+[00:22:02 -> 00:22:05] would have n cubed by P cache misses,
+[00:22:05 -> 00:22:07] even with parallelization.
+[00:22:07 -> 00:22:09] So what is the total number of cache misses
+[00:22:09 -> 00:22:10] across all processors?
+[00:22:10 -> 00:22:13] Well, I just multiply that by P and so P into n by P.
+[00:22:17 -> 00:22:19] So what is the total number of cache misses
+[00:22:19 -> 00:22:20] across all processors?
+[00:22:20 -> 00:22:22] Well, I just multiply that by P.
+[00:22:22 -> 00:22:24] So P into n by P into n squared
+[00:22:24 -> 00:22:25] and that just gives me n cubed.
+[00:22:25 -> 00:22:27] So the worst case number of cache misses
+[00:22:27 -> 00:22:31] for n by P outer loop iterations is n cubed by P,
+[00:22:31 -> 00:22:34] but total number of cache misses across all processors
+[00:22:34 -> 00:22:35] is still n cubed.
+[00:22:35 -> 00:22:37] You may say, oh, but these cache misses
+[00:22:37 -> 00:22:39] are going to be served in parallel.
+[00:22:39 -> 00:22:40] And that's largely true.
+[00:22:40 -> 00:22:44] However, recall that the architecture
+[00:22:44 -> 00:22:47] of the hardware is a little bit more complex
+[00:22:47 -> 00:22:49] and there is a single main memory
+[00:22:49 -> 00:22:50] that has many memory bands.
+[00:22:50 -> 00:22:52] So there is some parallelism.
+[00:22:52 -> 00:22:53] But at the end of the day,
+[00:22:53 -> 00:22:55] all these cache misses are going to come
+[00:22:55 -> 00:22:56] to the main memory.
+[00:22:56 -> 00:22:59] And so we are basically limited by the parallelism
+[00:22:59 -> 00:23:02] in the main memory and not in the parallelism in the CPU.
+[00:23:02 -> 00:23:05] So even if I have, let's say, thousand CPUs,
+[00:23:06 -> 00:23:07] all these cache misses are going
+[00:23:07 -> 00:23:08] to go to the main memory.
+[00:23:08 -> 00:23:11] And if the main memory does not have enough parallelism,
+[00:23:11 -> 00:23:12] in the worst case, let's say the main memory
+[00:23:12 -> 00:23:15] can only serve one miss at a time.
+[00:23:15 -> 00:23:17] In that case, all the n cubed misses
+[00:23:17 -> 00:23:18] across all the processors
+[00:23:18 -> 00:23:20] are going to get bottlenecked at the main memory.
+[00:23:20 -> 00:23:23] And our program is not going to be any faster,
+[00:23:23 -> 00:23:27] even though we are parallelizing the program
+[00:23:27 -> 00:23:28] on P different processors.
+[00:23:30 -> 00:23:33] Typically, main memory has some amount of parallelism built in
+[00:23:33 -> 00:23:36] through multiple parallel channels and banks
+[00:23:36 -> 00:23:37] and things like that.
+[00:23:37 -> 00:23:39] And it does give you some parallelism,
+[00:23:39 -> 00:23:43] but that parallelism is not as high
+[00:23:43 -> 00:23:45] as the amount of parallelism that we see
+[00:23:45 -> 00:23:47] at the CPU level or core level.
+[00:23:47 -> 00:23:49] You can have machines that have hundreds of cores,
+[00:23:50 -> 00:23:53] but main memory would not have that many channels.
+[00:23:53 -> 00:23:56] And so even though in my matrix multiplication example,
+[00:23:56 -> 00:23:58] if I do row by row parallelism,
+[00:23:58 -> 00:24:00] I would still be bottlenecked by the main memory,
+[00:24:01 -> 00:24:03] which is going to serve all my cache misses.
+[00:24:04 -> 00:24:07] So this was just some motivation to understand
+[00:24:07 -> 00:24:10] how to reason about the performance of code
+[00:24:10 -> 00:24:14] that accesses memory and goes through the cache hierarchy.
+[00:24:15 -> 00:24:16] In the subsequent lectures,
+[00:24:16 -> 00:24:18] we're going to look at techniques
+[00:24:18 -> 00:24:22] to manage this situation in a better way
+[00:24:22 -> 00:24:24] so that we can exploit the cache hierarchy
+[00:24:24 -> 00:24:27] in a better way for our desired logic
+[00:24:27 -> 00:24:30] that we want to implement, such as matrix multiplication.

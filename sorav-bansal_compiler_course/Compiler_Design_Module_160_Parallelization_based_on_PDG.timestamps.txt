@@ -1,0 +1,366 @@
+Title: Compiler Design Module 160 : Parallelization based on PDG
+Video ID: SC8DqhbYAWc
+Detected language: en
+------------------------------------------------------------
+
+[00:00:00 -> 00:00:02] So we've been discussing how we could add
+[00:00:02 -> 00:00:04] a small amount of synchronization.
+[00:00:04 -> 00:00:08] In fact, I could call it a constant amount of synchronization
+[00:00:08 -> 00:00:09] where the amount of synchronization
+[00:00:09 -> 00:00:12] is actually dependent on the program size
+[00:00:12 -> 00:00:14] and not dependent on the number of iterations
+[00:00:14 -> 00:00:15] in that program.
+[00:00:15 -> 00:00:17] So a constant amount of synchronization
+[00:00:17 -> 00:00:20] to basically extract more parallelism out of the program.
+[00:00:20 -> 00:00:24] And the idea is that we basically divide the program
+[00:00:24 -> 00:00:26] potentially using loop vision,
+[00:00:26 -> 00:00:29] such that we put barrier synchronization in the middle
+[00:00:29 -> 00:00:34] so that we are able to treat every kind of partition
+[00:00:34 -> 00:00:35] based on the barrier synchronization
+[00:00:35 -> 00:00:39] as a separate program and then parallelize it
+[00:00:39 -> 00:00:42] using our synchronization-free parallelization algorithm
+[00:00:42 -> 00:00:44] based on space partitioning constraints.
+[00:00:45 -> 00:00:48] So here is the high-level idea of the algorithm.
+[00:00:48 -> 00:00:50] Let's say I have some program.
+[00:00:50 -> 00:00:54] I first construct a program dependence graph or PDG.
+[00:00:54 -> 00:00:57] And recall that for PDG, every statement is a node
+[00:00:57 -> 00:01:01] and I draw an edge from statement S1 to S2
+[00:01:01 -> 00:01:03] if there is some instance of S1
+[00:01:03 -> 00:01:06] that is data-dependent on a later instance of S2.
+[00:01:07 -> 00:01:11] Data dependence is really easy to identify.
+[00:01:11 -> 00:01:13] We already know this.
+[00:01:13 -> 00:01:16] That's just the solution of equations
+[00:01:16 -> 00:01:19] fi plus small f equals f prime i prime
+[00:01:19 -> 00:01:22] plus small f prime and bi plus b is greater than
+[00:01:22 -> 00:01:23] or equal to zero and b prime i prime
+[00:01:23 -> 00:01:25] plus b prime is greater than or equal to zero.
+[00:01:25 -> 00:01:28] But there's an extra constraint which is later.
+[00:01:28 -> 00:01:30] So it should be the later instance
+[00:01:30 -> 00:01:33] that is data-dependent on some instance of S1,
+[00:01:33 -> 00:01:35] later instance of S2.
+[00:01:35 -> 00:01:37] And so this later clause basically causes
+[00:01:37 -> 00:01:40] more complication.
+[00:01:40 -> 00:01:42] And so what we do is we encode
+[00:01:42 -> 00:01:44] this later clause mathematically.
+[00:01:44 -> 00:01:46] And this was a precedence relation.
+[00:01:46 -> 00:01:49] And we lower the precedence relation into inequalities
+[00:01:49 -> 00:01:53] and potentially disjunction of inequalities and equalities.
+[00:01:53 -> 00:01:55] And then each of these disjunctions
+[00:01:55 -> 00:01:57] we basically solve using an integer
+[00:01:57 -> 00:01:59] linear programming solver.
+[00:01:59 -> 00:02:03] And if any of them results in a satisfiable answer,
+[00:02:03 -> 00:02:05] which means that there is a potential
+[00:02:05 -> 00:02:08] instance of S1 that is data-dependent
+[00:02:08 -> 00:02:11] on some later instance of S2.
+[00:02:11 -> 00:02:15] So that can only happen if these constraints
+[00:02:15 -> 00:02:18] that we have formed are satisfiable.
+[00:02:18 -> 00:02:19] And if they are satisfiable,
+[00:02:19 -> 00:02:22] then we draw an edge from S1 to S2.
+[00:02:22 -> 00:02:24] And similarly, we try S2 to S1.
+[00:02:24 -> 00:02:27] And similarly, we try S1 to S1 and S2 to S2.
+[00:02:27 -> 00:02:30] And this is for every pair of statements
+[00:02:30 -> 00:02:32] occurring in the program.
+[00:02:32 -> 00:02:33] So that's the PDG.
+[00:02:33 -> 00:02:35] And from the PDG, once I have drawn the edges,
+[00:02:35 -> 00:02:39] what I do is I basically identify
+[00:02:39 -> 00:02:41] what are the places where I can put a barrier.
+[00:02:41 -> 00:02:44] And what was the algorithm to basically decide
+[00:02:44 -> 00:02:46] whether I can put a barrier or not?
+[00:02:46 -> 00:02:47] I was saying that it should be
+[00:02:47 -> 00:02:50] a unidirectional dependence flow.
+[00:02:50 -> 00:02:52] In other words, it shouldn't be the case
+[00:02:52 -> 00:02:54] that there are edges going in both directions
+[00:02:54 -> 00:02:57] across that particular cross-section of the program.
+[00:02:57 -> 00:03:00] And another way to say that is that
+[00:03:00 -> 00:03:02] every strongly connected component,
+[00:03:02 -> 00:03:04] recall that in a directed graph,
+[00:03:04 -> 00:03:08] a strongly connected component is a subset of the graph
+[00:03:08 -> 00:03:10] where any node can reach any other node.
+[00:03:10 -> 00:03:13] So there are, for example,
+[00:03:13 -> 00:03:15] any cycle is a strongly connected component.
+[00:03:15 -> 00:03:18] So what I do is I identify the strongly
+[00:03:18 -> 00:03:21] connected component in the directed graph
+[00:03:21 -> 00:03:24] that is formed by the program dependence graph.
+[00:03:24 -> 00:03:27] And once I identify the strongly connected components,
+[00:03:27 -> 00:03:29] each of these strongly connected components
+[00:03:29 -> 00:03:32] can be thought of as one vertex in the graph.
+[00:03:32 -> 00:03:34] And then I basically do a topological sort
+[00:03:34 -> 00:03:36] on this strongly connected component
+[00:03:36 -> 00:03:37] to figure out which are the ones
+[00:03:37 -> 00:03:40] that must execute before the other, right?
+[00:03:40 -> 00:03:45] And that's basically exactly the logic we are using
+[00:03:45 -> 00:03:46] to decide where to put the barrier.
+[00:03:46 -> 00:03:49] So basically we would put a barrier from
+[00:03:49 -> 00:03:51] only if I'm sure that everything on the left
+[00:03:52 -> 00:03:55] of the barrier has to execute
+[00:03:55 -> 00:03:57] before anything on the right of the barrier executes.
+[00:03:57 -> 00:03:59] And that's basically what is going to be on the left
+[00:03:59 -> 00:04:00] and what is going to be on the right
+[00:04:00 -> 00:04:03] depends on the topological sort of this graph,
+[00:04:03 -> 00:04:05] of the program dependence graph.
+[00:04:05 -> 00:04:07] And so we transform the graph
+[00:04:07 -> 00:04:10] to execute each strongly connected component
+[00:04:10 -> 00:04:12] in topological sort order.
+[00:04:12 -> 00:04:14] So it is always correct.
+[00:04:14 -> 00:04:17] And firstly, there are many topological sorts
+[00:04:17 -> 00:04:18] for the same graph.
+[00:04:18 -> 00:04:20] So we can pick any of those topological sorts.
+[00:04:20 -> 00:04:22] It should not matter, it does not matter.
+[00:04:22 -> 00:04:27] And a topological sort is a correct schedule of execution
+[00:04:27 -> 00:04:32] because we are sure that things that are data independent,
+[00:04:33 -> 00:04:35] things that are data dependent are executed
+[00:04:35 -> 00:04:38] after the statements on which they were dependent, right?
+[00:04:38 -> 00:04:40] So basically the dependency graph
+[00:04:40 -> 00:04:41] is telling me the dependencies
+[00:04:41 -> 00:04:43] and the topological sort is saying
+[00:04:43 -> 00:04:45] that things that are dependent
+[00:04:45 -> 00:04:48] should be executed after things that they depend on.
+[00:04:49 -> 00:04:52] So transform the graph to execute each SAC
+[00:04:52 -> 00:04:53] in topological sort order.
+[00:04:53 -> 00:04:58] And notice that when I convert my program to PDG,
+[00:04:58 -> 00:05:00] I have basically abstracted out
+[00:05:00 -> 00:05:03] whether S1 and S2 belong to the same body or not.
+[00:05:03 -> 00:05:07] I'm just treating S1 and S2 as independent instructions,
+[00:05:07 -> 00:05:09] independent statements in the program.
+[00:05:09 -> 00:05:11] And so if there was an edge from S1 to S2
+[00:05:11 -> 00:05:15] and I decide to first execute S1 and then execute S2,
+[00:05:15 -> 00:05:17] even though S1 and S2 were together
+[00:05:17 -> 00:05:19] in the original program, in the new program,
+[00:05:19 -> 00:05:21] they have to be in separate loopness.
+[00:05:21 -> 00:05:23] In other words, I have to apply loop fission.
+[00:05:23 -> 00:05:25] And it would be safe to apply loop fission
+[00:05:25 -> 00:05:30] if S1 and S2 do not form a strongly connected component.
+[00:05:30 -> 00:05:33] In other words, only, for example, S1 can reach S2,
+[00:05:33 -> 00:05:35] but S2 cannot reach S1.
+[00:05:35 -> 00:05:37] Then it is always safe to perform loop fission
+[00:05:37 -> 00:05:41] and execute all of S1 before any of S2.
+[00:05:41 -> 00:05:44] So we transform to execute each SAC
+[00:05:44 -> 00:05:45] in topological sort order.
+[00:05:46 -> 00:05:48] For example, execute all of S1s
+[00:05:48 -> 00:05:53] after executing all of, before executing any of S2.
+[00:05:53 -> 00:05:55] And we will apply loop fission if necessary,
+[00:05:55 -> 00:05:58] as I just discussed in the example of S1 and S2.
+[00:05:59 -> 00:06:03] And finally, I parallelize each SAC
+[00:06:03 -> 00:06:04] using synchronization-free parallelism.
+[00:06:04 -> 00:06:07] What I've done is I've divided the programs,
+[00:06:07 -> 00:06:10] divided the program into partitions such that,
+[00:06:10 -> 00:06:12] this partition should,
+[00:06:12 -> 00:06:13] if this partition executes first,
+[00:06:13 -> 00:06:15] then this partition executes second, and so on.
+[00:06:16 -> 00:06:17] And now within a partition,
+[00:06:17 -> 00:06:18] I cannot divide it any further,
+[00:06:18 -> 00:06:20] because that is my algorithm.
+[00:06:20 -> 00:06:21] I just basically divided the program
+[00:06:21 -> 00:06:23] into as many partitions as possible
+[00:06:23 -> 00:06:25] using the topological sort
+[00:06:25 -> 00:06:27] and strongly connected component inference.
+[00:06:27 -> 00:06:29] And once I have partitioned the program,
+[00:06:29 -> 00:06:31] I cannot partition it any further.
+[00:06:31 -> 00:06:33] And so for each partition,
+[00:06:33 -> 00:06:35] I just use a parallelization algorithm,
+[00:06:35 -> 00:06:38] which is basically our original
+[00:06:38 -> 00:06:39] space partitioning constraint based
+[00:06:39 -> 00:06:42] synchronization-free parallelism algorithm.
+[00:06:42 -> 00:06:43] So I parallelize each SAC
+[00:06:43 -> 00:06:46] using synchronization-free parallelism.
+[00:06:46 -> 00:06:48] For example, if it is S1,
+[00:06:48 -> 00:06:51] then I check whether iterations of S1
+[00:06:51 -> 00:06:53] can be parallelized or not, et cetera.
+[00:06:53 -> 00:06:56] And finally, I add barriers.
+[00:06:56 -> 00:06:58] That was the whole idea of doing the topological sort.
+[00:06:58 -> 00:07:01] I can now add barriers between the different SCCs
+[00:07:01 -> 00:07:04] so that every SCC is basically completed
+[00:07:04 -> 00:07:08] before the next SCC in topological sort is started.
+[00:07:10 -> 00:07:13] Okay, so this is my algorithm
+[00:07:13 -> 00:07:17] to identify parallelism with synchronization.
+[00:07:17 -> 00:07:19] Notice that this algorithm makes use
+[00:07:19 -> 00:07:22] of the algorithm that we first discussed of
+[00:07:22 -> 00:07:24] to use synchronization-free parallelism.
+[00:07:24 -> 00:07:26] The idea is that we first partition the program
+[00:07:26 -> 00:07:27] and then for each partition,
+[00:07:27 -> 00:07:29] we use synchronization-free parallelism.
+[00:07:29 -> 00:07:31] But there are some weaknesses of this algorithm
+[00:07:31 -> 00:07:33] and I have not addressed them so far.
+[00:07:33 -> 00:07:35] In fact, I'm not going to address them
+[00:07:35 -> 00:07:37] in the next few lecture modules as well.
+[00:07:37 -> 00:07:40] I'm going to address these limitations at the very end
+[00:07:40 -> 00:07:42] after we have discussed all the different ways
+[00:07:42 -> 00:07:44] of parallelizing in a fine loop nest.
+[00:07:44 -> 00:07:45] And I'm going to combine them
+[00:07:45 -> 00:07:47] into a one single elegant algorithm
+[00:07:47 -> 00:07:50] such that you basically get the best possible answer
+[00:07:50 -> 00:07:52] for a given program.
+[00:07:52 -> 00:07:54] But for now, I'm just going to discuss the weaknesses
+[00:07:54 -> 00:07:57] of this algorithm based on the program dependence graph.
+[00:07:57 -> 00:07:59] So what is the weakness of this algorithm?
+[00:07:59 -> 00:08:01] The biggest weakness of this algorithm
+[00:08:01 -> 00:08:04] is that it may introduce unnecessary synchronization.
+[00:08:04 -> 00:08:06] In fact, even if the program
+[00:08:06 -> 00:08:07] didn't require any synchronization,
+[00:08:07 -> 00:08:10] I may unnecessarily add the synchronization
+[00:08:10 -> 00:08:11] if I just blindly use this algorithm.
+[00:08:11 -> 00:08:16] So this algorithm should be used not as a standalone
+[00:08:17 -> 00:08:18] but as a part of a bigger algorithm.
+[00:08:18 -> 00:08:20] I'm not discussing that bigger algorithm now,
+[00:08:20 -> 00:08:23] but it's good to know at least that this algorithm
+[00:08:23 -> 00:08:25] by itself is not going to give me the optimal answer.
+[00:08:25 -> 00:08:26] And here's an example.
+[00:08:26 -> 00:08:29] For i equals zero to n, i plus plus,
+[00:08:29 -> 00:08:31] let's say a i equals zero and b i equals one.
+[00:08:31 -> 00:08:34] Now it's very clear that this loop nest,
+[00:08:34 -> 00:08:37] different iterations of this loop are data independent.
+[00:08:37 -> 00:08:40] And in fact, I can just parallelize S1 and S2
+[00:08:40 -> 00:08:42] completely on different processors.
+[00:08:42 -> 00:08:45] In fact, I have a two into n amount of parallelism.
+[00:08:45 -> 00:08:47] If I apply my space partitioning constraints
+[00:08:47 -> 00:08:50] for synchronization-free parallelism algorithm,
+[00:08:50 -> 00:08:53] then I'm going to actually get that optimal solution
+[00:08:53 -> 00:08:56] of two into n processors.
+[00:08:56 -> 00:08:59] However, if I apply my PDG algorithm,
+[00:08:59 -> 00:09:02] which requires constant amount of synchronization,
+[00:09:02 -> 00:09:03] what am I going to do?
+[00:09:03 -> 00:09:06] I'm going to construct a PDG between S1 and S2.
+[00:09:06 -> 00:09:07] So what is the PDG going to have?
+[00:09:07 -> 00:09:11] It's going to have nodes for S1 and S2.
+[00:09:11 -> 00:09:13] And now I'm going to draw edges
+[00:09:13 -> 00:09:14] whenever there are data dependencies.
+[00:09:14 -> 00:09:17] But notice that different iterations of S1
+[00:09:17 -> 00:09:19] are data independent with respect to each other.
+[00:09:19 -> 00:09:21] Similarly, different iterations of S2
+[00:09:21 -> 00:09:24] are data independent with respect to each other.
+[00:09:24 -> 00:09:27] Moreover, different iterations of S1 and S2,
+[00:09:27 -> 00:09:29] if I take the pair in either order,
+[00:09:29 -> 00:09:30] are data independent.
+[00:09:30 -> 00:09:32] And so the PDG that I get is just two nodes
+[00:09:32 -> 00:09:34] with no edges whatsoever,
+[00:09:34 -> 00:09:36] no dependency edges whatsoever.
+[00:09:36 -> 00:09:39] And so there are no edges between S1 and S2,
+[00:09:39 -> 00:09:40] or S2 to S1.
+[00:09:40 -> 00:09:44] And now if I just execute topological sort
+[00:09:44 -> 00:09:45] on this particular PDG,
+[00:09:45 -> 00:09:48] I could either execute all instances of S1
+[00:09:48 -> 00:09:52] before all instances of S2, or vice versa, all right?
+[00:09:52 -> 00:09:53] And it doesn't really matter.
+[00:09:53 -> 00:09:57] But the algorithm itself is going to separate S1 and S2.
+[00:09:57 -> 00:10:00] It's going to separate them using loop vision.
+[00:10:00 -> 00:10:02] And so what I'm going to basically end up with
+[00:10:02 -> 00:10:04] is a graph which has loop vision,
+[00:10:04 -> 00:10:06] where all of S1 is executed
+[00:10:06 -> 00:10:07] before all of S2.
+[00:10:07 -> 00:10:11] So for i equals zero to ni++, ai equals zero,
+[00:10:11 -> 00:10:13] that becomes my first loop nest.
+[00:10:13 -> 00:10:17] Then I would have a barrier maybe.
+[00:10:17 -> 00:10:20] And then I would say for i equals zero to n,
+[00:10:20 -> 00:10:21] bi equals one.
+[00:10:21 -> 00:10:23] And this is just by design,
+[00:10:23 -> 00:10:26] by the, that is what the algorithm would produce.
+[00:10:26 -> 00:10:27] It's not the optimal solution,
+[00:10:27 -> 00:10:29] but this is what the algorithm would produce.
+[00:10:29 -> 00:10:32] And then finally, I will basically parallelize
+[00:10:32 -> 00:10:35] the first loop and then I will parallelize the second loop.
+[00:10:35 -> 00:10:36] So even though I have full parallelism
+[00:10:36 -> 00:10:37] within each of the loops,
+[00:10:37 -> 00:10:40] I have an unnecessary barrier in the middle.
+[00:10:40 -> 00:10:43] I could have actually just executed everything in parallel
+[00:10:43 -> 00:10:46] and there was no need for a barrier.
+[00:10:46 -> 00:10:50] And so there's unnecessary synchronization.
+[00:10:50 -> 00:10:51] So one way to write this is
+[00:10:51 -> 00:10:53] that this for loop is a parallel for loop,
+[00:10:53 -> 00:10:55] which means I spawn a thread
+[00:10:55 -> 00:10:57] for every different iteration of this for loop.
+[00:10:57 -> 00:10:59] Similarly, the second for loop is also a parallel for loop
+[00:10:59 -> 00:11:01] and then I put a barrier in the middle.
+[00:11:01 -> 00:11:03] But this is unnecessary synchronization
+[00:11:03 -> 00:11:05] and this is what I'm calling a weakness of the algorithm.
+[00:11:05 -> 00:11:07] And this is a simple example.
+[00:11:07 -> 00:11:10] In general, I have situations
+[00:11:10 -> 00:11:11] where I'm unnecessarily adding barriers
+[00:11:11 -> 00:11:14] where barriers may not be necessary.
+[00:11:14 -> 00:11:16] And that's the artifact of this algorithm.
+[00:11:16 -> 00:11:18] In fact, if I had, for example,
+[00:11:18 -> 00:11:21] just run the synchronization free algorithm first
+[00:11:21 -> 00:11:22] on this example,
+[00:11:22 -> 00:11:24] then I would have just got the best possible solution
+[00:11:24 -> 00:11:25] and then I wouldn't have to worry
+[00:11:25 -> 00:11:28] about running this particular algorithm.
+[00:11:28 -> 00:11:31] And that's basically going to be the structure
+[00:11:31 -> 00:11:32] of our higher level algorithm,
+[00:11:32 -> 00:11:34] which decides which algorithm to use,
+[00:11:34 -> 00:11:36] whether they use synchronization free algorithm
+[00:11:36 -> 00:11:40] or the PDG based algorithm for constant synchronization.
+[00:11:41 -> 00:11:43] And finally, there's one more big weakness
+[00:11:43 -> 00:11:44] of this algorithm.
+[00:11:44 -> 00:11:47] And that is that it requires the program
+[00:11:47 -> 00:11:48] to execute in lockstep.
+[00:11:48 -> 00:11:51] So the whole SCC executes, maybe parallelized
+[00:11:51 -> 00:11:52] and then there's a barrier.
+[00:11:52 -> 00:11:55] So wait for all the CPUs to come there.
+[00:11:55 -> 00:11:56] If one of the CPUs is slow,
+[00:11:56 -> 00:12:00] then it would cause the entire program to become slower
+[00:12:00 -> 00:12:01] because a barrier synchronization has to wait
+[00:12:01 -> 00:12:04] for even the slowest CPU to catch up.
+[00:12:05 -> 00:12:07] And the other problem is that there is no consideration
+[00:12:07 -> 00:12:08] for data locality.
+[00:12:08 -> 00:12:11] So anytime there's a barrier,
+[00:12:11 -> 00:12:13] then across the barrier,
+[00:12:14 -> 00:12:16] the parallelization schemes could be totally different.
+[00:12:16 -> 00:12:20] For example, if I am accessing an array AIJ,
+[00:12:20 -> 00:12:22] and this is an example that I've used earlier.
+[00:12:22 -> 00:12:26] So before the barrier, I may be parallelizing on I,
+[00:12:26 -> 00:12:29] and after the barrier, I may be parallelizing on J.
+[00:12:29 -> 00:12:31] But if I do that, then at the barrier,
+[00:12:31 -> 00:12:32] there will be a lot of synchronization
+[00:12:32 -> 00:12:35] because when I parallelize on I,
+[00:12:35 -> 00:12:37] then for a single value of...
+[00:12:37 -> 00:12:40] So one CPU's cache is warmed up
+[00:12:40 -> 00:12:41] with a single value of I.
+[00:12:42 -> 00:12:44] When I parallelize on J,
+[00:12:44 -> 00:12:47] then every single CPU needs to access different values
+[00:12:47 -> 00:12:49] of I, but for a single value of J.
+[00:12:49 -> 00:12:52] And so at the barrier point,
+[00:12:52 -> 00:12:54] then across the barrier,
+[00:12:54 -> 00:12:56] there will be a lot of communication.
+[00:12:56 -> 00:12:58] For a shared memory machine,
+[00:12:58 -> 00:12:59] that basically means there'll be a lot
+[00:12:59 -> 00:13:01] of cache coherence traffic.
+[00:13:01 -> 00:13:02] If it's a message passing machine,
+[00:13:02 -> 00:13:04] that basically means that you need
+[00:13:04 -> 00:13:05] to exchange a lot of messages.
+[00:13:05 -> 00:13:07] You have to basically send data
+[00:13:07 -> 00:13:10] from a CPU's before the barrier
+[00:13:10 -> 00:13:11] that held that data before the barrier
+[00:13:11 -> 00:13:14] to CPU's that held the data after the barrier.
+[00:13:14 -> 00:13:16] In most cases, this communication overhead
+[00:13:16 -> 00:13:18] across the barrier is justified
+[00:13:18 -> 00:13:20] because it's kind of okay,
+[00:13:20 -> 00:13:22] because you've always also gained
+[00:13:22 -> 00:13:26] because of parallelism in different partitions
+[00:13:26 -> 00:13:27] that were created by the barrier.
+[00:13:27 -> 00:13:28] But across the barrier,
+[00:13:28 -> 00:13:31] you have to pay an extra synchronization cost.
+[00:13:31 -> 00:13:35] In some situations, this may be more costly.
+[00:13:35 -> 00:13:37] The benefit of doing the parallelization
+[00:13:37 -> 00:13:39] may be less than the cost of synchronization,
+[00:13:39 -> 00:13:41] the cost of communication.
+[00:13:41 -> 00:13:43] In other cases, it may be the other way around
+[00:13:43 -> 00:13:45] and you would have gained something.
+[00:13:46 -> 00:13:49] Overall, also it depends on the machine.
+[00:13:49 -> 00:13:50] If the machine has,
+[00:13:50 -> 00:13:52] you know, if it's a distributed machine,
+[00:13:52 -> 00:13:54] for example, if it's a distributed shared memory
+[00:13:54 -> 00:13:55] and there are lots of different machines
+[00:13:55 -> 00:13:57] connected over a slow network,
+[00:13:57 -> 00:13:59] then this communication cost over the network
+[00:13:59 -> 00:14:01] would become large.
+[00:14:01 -> 00:14:05] And so the advantage of parallelism would become less.
+[00:14:05 -> 00:14:07] In any case, you know,
+[00:14:07 -> 00:14:12] these kinds of cost judgments can be done separately
+[00:14:12 -> 00:14:14] and that's an orthogonal topic.
+[00:14:14 -> 00:14:17] The topic that at least we have a mechanism
+[00:14:17 -> 00:14:20] to analyze if that is going to give you a better answer.
+[00:14:20 -> 00:14:24] And then finally, there could be a compiler module
+[00:14:24 -> 00:14:27] that basically checks whether the transformed program
+[00:14:27 -> 00:14:29] is actually faster than the original program or not,
+[00:14:29 -> 00:14:31] or which transformations are profitable
+[00:14:31 -> 00:14:32] and which transformations are not.
+[00:14:32 -> 00:14:36] And depending on that, apply only those transformations.

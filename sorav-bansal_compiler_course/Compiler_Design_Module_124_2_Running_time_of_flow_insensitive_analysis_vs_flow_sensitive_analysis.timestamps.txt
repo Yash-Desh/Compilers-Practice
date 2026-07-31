@@ -1,0 +1,197 @@
+Title: Compiler Design Module 124 2: Running time of flow insensitive analysis vs  flow sensitive analysis
+Video ID: _6sKeWRlB5Q
+Detected language: en
+------------------------------------------------------------
+
+[00:00:00 -> 00:00:06] In this module, I'm going to discuss the running time of a flow sensitive DFA vis-a-vis a flow
+[00:00:06 -> 00:00:13] insensitive DFA. Now it is common understanding and knowledge that a flow insensitive DFA is
+[00:00:13 -> 00:00:19] faster than a flow sensitive DFA and we're going to try and dig this further in more detail on
+[00:00:19 -> 00:00:27] why this is so. So in both cases, whether it's a flow insensitive DFA or a flow sensitive DFA,
+[00:00:27 -> 00:00:34] we use Kildal's work list algorithm to figure out which edges to consider for relaxation of
+[00:00:34 -> 00:00:41] the DFA value. Recall that even for the flow insensitive DFA, where we maintain a global value,
+[00:00:41 -> 00:00:47] we typically proceed the DFA using the same work list algorithm so that we have a better
+[00:00:47 -> 00:00:55] shot at identifying which edges to consider for the relaxation. Now in both cases and when I,
+[00:00:55 -> 00:01:00] the other trade-off between a flow sensitive DFA and a flow insensitive DFA is of course
+[00:01:00 -> 00:01:05] the fact that a flow insensitive DFA is less precise than a flow sensitive DFA.
+[00:01:05 -> 00:01:10] However, we have also discussed that once we convert the program into SSA form,
+[00:01:12 -> 00:01:17] then a flow insensitive DFA has equal precision to the flow sensitive DFA,
+[00:01:17 -> 00:01:24] assuming all the quantities of the interest in the DFA have been converted to SSA.
+[00:01:24 -> 00:01:32] For example, most IRs would convert all the scalars to SSA and if the DFA is tracking scalars,
+[00:01:32 -> 00:01:36] then a flow insensitive DFA will be as precise as a flow sensitive DFA.
+[00:01:37 -> 00:01:44] Now, the maximum number of updates that a fixed point algorithm, data flow analysis
+[00:01:44 -> 00:01:50] algorithm makes or could make is basically number of program points into the height of
+[00:01:50 -> 00:01:55] the semi-lattice and the argument here is that every update is going to bring the value,
+[00:01:56 -> 00:02:03] some value at some program point, one step down in the semi-lattice and because the semi-lattice
+[00:02:03 -> 00:02:07] is a bounded finite height semi-lattice, eventually all values will come down to the
+[00:02:07 -> 00:02:12] bottom value in that semi-lattice and that would be the termination, that's the termination
+[00:02:12 -> 00:02:17] condition of the fixed point algorithm and that has to be the termination condition and
+[00:02:17 -> 00:02:24] so the maximum number of updates that can happen in a flow sensitive DFA is the number
+[00:02:24 -> 00:02:28] of program points into the semi-lattice height. Now when I talk about the number,
+[00:02:28 -> 00:02:33] maximum number of updates in a flow insensitive DFA, in that case there's only a single global
+[00:02:33 -> 00:02:39] value and that global value can only go, for any update it can go one step down in the
+[00:02:39 -> 00:02:44] semi-lattice height and so you may be tempted to think that the maximum number of updates
+[00:02:44 -> 00:02:51] in a flow insensitive DFA is only H which is the semi-lattice height. However because we have
+[00:02:51 -> 00:02:56] converted the program into SSA form, the height, the semi-lattice height has actually become bigger
+[00:02:56 -> 00:03:01] because the number may have become bigger for most DFA's because the number of variables has
+[00:03:01 -> 00:03:06] become bigger and recall for many of the DFA's the height is proportional to the number of
+[00:03:06 -> 00:03:10] statements or the number of variables and both of them increase when we convert the program
+[00:03:10 -> 00:03:16] to an SSA height and in general you know the number of updates that is still proportional
+[00:03:16 -> 00:03:21] to the number of program points into the semi-lattice height for the original semi-lattice
+[00:03:21 -> 00:03:25] on the flow sensitive DFA. Even if you convert it to SSA and run a flow insensitive DFA,
+[00:03:25 -> 00:03:30] the semi-lattice structure doesn't really change and so the height remains similar
+[00:03:31 -> 00:03:36] and so the maximum number of updates is the same in both a flow sensitive DFA and a flow
+[00:03:36 -> 00:03:41] insensitive DFA and that's given by N into H which is where N is the number of program points
+[00:03:41 -> 00:03:48] and H is the semi-lattice height of the original program. Okay now we have already
+[00:03:50 -> 00:03:54] said that the maximum number of updates is order N into H. Now the question is what's
+[00:03:54 -> 00:04:01] the time taken between two updates in the Kildal's work list algorithm. Now recall that
+[00:04:01 -> 00:04:07] when we run the Kildal's work list algorithm in a flow sensitive mode then every time a
+[00:04:07 -> 00:04:14] node value a value at a node changes we add all the incident edges to the work list so
+[00:04:14 -> 00:04:20] for if it's a forward DFA then we add all the outgoing edges to the work list and then we
+[00:04:20 -> 00:04:29] check whether the values at the destination of those forward edges or the two node of those
+[00:04:29 -> 00:04:34] forward edges does that need to be relaxed based on the change at the from node of that forward edge
+[00:04:34 -> 00:04:39] and if that node does not need to be relaxed then we just remove it from the work list.
+[00:04:39 -> 00:04:44] If it needs to be relaxed then we relax it and we add its forward edges to the work list
+[00:04:44 -> 00:04:48] and so on and we keep doing this. That's recall the Kildal's work list algorithm.
+[00:04:48 -> 00:04:55] So the maximum number of steps that you need to take in a flow sensitive algorithm between
+[00:04:55 -> 00:05:02] two updates is basically the typical degree or the number of incident edges
+[00:05:02 -> 00:05:07] to that to that node for example if the number of outgoing edges in a forward DFA from a node
+[00:05:07 -> 00:05:15] was four then at most I would take four I would do four different explorations before I hit
+[00:05:15 -> 00:05:22] one update. If none of those four had an update then I would just actually I would declare
+[00:05:22 -> 00:05:26] that I've reached a fixed point I'll terminate the algorithm but if there was there was supposed
+[00:05:26 -> 00:05:31] to be an update then that update must be among those one of the four outgoing edges
+[00:05:31 -> 00:05:35] and the maximum gap between the maximum amount of work that you would do between
+[00:05:35 -> 00:05:39] the original update which is at the from node and the new update which is at one of the
+[00:05:39 -> 00:05:43] two nodes is four because you may have to look at you know four different edges before
+[00:05:43 -> 00:05:48] you actually get something that you want to update. If you are lucky maybe the first edge
+[00:05:48 -> 00:05:54] that you looked at was needed to be updated in which case it could be order one. So in the
+[00:05:54 -> 00:06:02] flow insensitive case the order the number of the time taken between two updates two value
+[00:06:02 -> 00:06:07] updates is between order one and order D where D could be the out degree or the in degree
+[00:06:07 -> 00:06:13] I've written out degree and written this as DO because I'm just using a forward DFA as an
+[00:06:13 -> 00:06:20] example without loss of generality. If it's a flow insensitive analysis however then when we relax
+[00:06:20 -> 00:06:27] the value and there's only one global value then we basically add all the nodes all the program
+[00:06:27 -> 00:06:33] points as part of all the edges in the program as part of my work list and this is done
+[00:06:33 -> 00:06:40] because we don't know which other instruction in the program may be using the value which
+[00:06:40 -> 00:06:46] has been changed in this particular step of the DFA and so in the flow insensitive case the maximum
+[00:06:46 -> 00:06:51] distance between two updates can be again order one if we are lucky or it could be as high as
+[00:06:51 -> 00:06:55] order n which is the size of the program because when something changes in a flow insensitive
+[00:06:55 -> 00:06:59] algorithm we add all the edges or all the instructions as part of the work list all of
+[00:06:59 -> 00:07:04] them need to be checked to be sure that we have reached a fixed point or not and if we
+[00:07:04 -> 00:07:07] have not reached a fixed point it's possible in the worst case that I have to look through
+[00:07:07 -> 00:07:12] n minus one instructions before I look at that that word particular instruction that was using
+[00:07:12 -> 00:07:18] the result of the newly updated value and in which case the maximum amount of distance or
+[00:07:18 -> 00:07:23] time taken between two updates can be as high as order n in flow insensitive so it seems like
+[00:07:23 -> 00:07:28] the amount of work that can in the worst case that it has to be done between two updates is
+[00:07:28 -> 00:07:34] higher in flow insensitive than in flow sensitive. However recall that we use we typically
+[00:07:34 -> 00:07:41] use the reverse post order for forward DFAs or the post order for a backward DFA to quickly
+[00:07:41 -> 00:07:46] identify the nodes the likely nodes where we need or the likely instructions where we need to
+[00:07:48 -> 00:07:54] relax the DFA value and that actually is very very effective typically and typically the amount
+[00:07:54 -> 00:07:59] of work that you have to do between updating a value and then identifying another value that
+[00:07:59 -> 00:08:04] needs to be updated as a result of the previous update is typically order one and that's what
+[00:08:05 -> 00:08:09] that's what I'm going to assume in the rest of this analysis so although the worst case
+[00:08:09 -> 00:08:16] values are ordered out degree or order n the time taken between two updates the typical value
+[00:08:16 -> 00:08:25] is actually just order one okay finally we have we have already characterized the maximum number
+[00:08:25 -> 00:08:30] of updates we have also characterized the number of the time taken between two updates
+[00:08:30 -> 00:08:34] the third thing we need to characterize to be able to characterize the overall running time
+[00:08:34 -> 00:08:41] is the time taken by a single update so recall that when we do an update then we have you
+[00:08:41 -> 00:08:45] know let's say we are doing an update across an instruction S then we have some value input
+[00:08:45 -> 00:08:50] value at the beginning of S once again without loss of generality I'm assuming a forward DFA
+[00:08:50 -> 00:08:56] so we have an input value at the beginning of S and we transfer it across S to obtain a transferred
+[00:08:56 -> 00:09:01] value in in transferred or I'm calling it in expert or in transferred I'm going to call it
+[00:09:01 -> 00:09:10] so I'm transfer in to in transfer and then using in transfer I update out which is which
+[00:09:10 -> 00:09:15] is the original value at the out of S and this this update can involve a meet operation
+[00:09:15 -> 00:09:25] between in a transfer and out now the time taken by an update basically involves changing
+[00:09:25 -> 00:09:29] the out value from whatever it was originally to its new value and that involves first
+[00:09:29 -> 00:09:36] transferring from in to in expert and then applying it to out and if delta and let delta
+[00:09:36 -> 00:09:43] be the magnitude of change between out and in and this is the this is the amount of work
+[00:09:43 -> 00:09:50] I claim that has to be done from in this transfer because after all whatever was the in you know
+[00:09:50 -> 00:09:55] whatever is the distance between in and out that much amount of changes need to be made
+[00:09:55 -> 00:10:00] at in out and at a minimum because after all you know some changes have to be made and
+[00:10:00 -> 00:10:05] whatever is the what the time taken to make the modification is at least proportional to the
+[00:10:05 -> 00:10:11] amount that the size of the change that that has that has resulted from this transfer
+[00:10:13 -> 00:10:18] okay so let's try to understand what the size of a change could be so for example let's say the
+[00:10:18 -> 00:10:24] transfer function for a statement S involves you know using the kill and gen sets the X minus
+[00:10:24 -> 00:10:31] kill union gen then the size of a change is basically less than the size of these sets
+[00:10:31 -> 00:10:38] kill and gen for that instruction S and this delta S is the distance between in transferred
+[00:10:38 -> 00:10:41] and in it's not the distance between in and out I'm going to come to that later so I'm
+[00:10:41 -> 00:10:45] going to characterize the distance between in and out and divide it into two parts one is the
+[00:10:45 -> 00:10:50] distance between in and in transferred and another is the distance between in transferred
+[00:10:50 -> 00:10:55] and out so if I look at the distance between in transferred and in then that
+[00:10:55 -> 00:11:01] distance is characterized by you know by delta S which is less than equal to
+[00:11:02 -> 00:11:07] in this case the sizes of kill and gen and typically these sizes are much smaller than the
+[00:11:07 -> 00:11:12] program size for example for many BFAs this size is just a constant for in three address code
+[00:11:12 -> 00:11:17] for example if I talk about liveness then kill is just all the values that are defined in that
+[00:11:18 -> 00:11:23] statement and gen is all the values that are used and because it's three address code these
+[00:11:23 -> 00:11:27] these sets have to be small maybe one or two size because it's a three address code
+[00:11:27 -> 00:11:33] representation similarly constant propagation would just require a constant number of
+[00:11:34 -> 00:11:39] kill and gen sets for every instruction however there it's not necessary that these are constant
+[00:11:39 -> 00:11:45] for example for available expressions we may kill all the values that contain a particular
+[00:11:45 -> 00:11:49] variable in which case it can be non-constant but even when they are non-constant they are
+[00:11:49 -> 00:11:53] actually much smaller than the size of the program or the size of the overall
+[00:11:55 -> 00:12:02] set of possible values that this program that this analysis could produce okay so we are
+[00:12:02 -> 00:12:07] going to go ahead with the assumption that delta S which is the distance the size of the change
+[00:12:07 -> 00:12:11] between a previous value of out and the new value of out between the value of in and value of
+[00:12:11 -> 00:12:19] out is actually sorry delta S which is the distance between the in transferred and the
+[00:12:19 -> 00:12:28] in is small okay now the distance between in and out the change between in and out is
+[00:12:28 -> 00:12:33] upper bounded by the change between in and in transferred and the change between in transferred
+[00:12:33 -> 00:12:38] and out there's a standard triangle inequality and we already have characterized the change
+[00:12:38 -> 00:12:43] between in and in transfer which depends on S and we call it delta S and we have already
+[00:12:43 -> 00:12:49] said that delta S is typically much smaller for most DFA's than the size of the overall program
+[00:12:49 -> 00:12:53] the next question that remains to be answered is what's the delta between in transferred
+[00:12:53 -> 00:12:59] and out and that would tell us what is the time taken by a single update typically so let's look
+[00:12:59 -> 00:13:03] at let's study this quantity in trans the delta between in transferred and out and we're going
+[00:13:03 -> 00:13:09] to discuss this separately for a flow sensitive analysis and the flow insensitive analysis so
+[00:13:09 -> 00:13:16] let's first look at the flow sensitive analysis in a flow sensitive DFA the in transfer so you
+[00:13:16 -> 00:13:22] know if there was an original value out it's basically flowing through the entire program
+[00:13:22 -> 00:13:26] and after flowing through the entire program it may have flowed into in because of let's say
+[00:13:26 -> 00:13:32] some cycle or something like that and that may have created in transfer so the path between
+[00:13:32 -> 00:13:37] out and in could be pretty long and because of that all the deltas could have pretty much
+[00:13:37 -> 00:13:42] accumulated across this path and so the gap between in transfer and out can be pretty
+[00:13:42 -> 00:13:48] large because it may include changes due to many statements and this is this is true for
+[00:13:48 -> 00:13:52] a flow sensitive DFA because in a flow sensitive DFA we are maintaining different values at different
+[00:13:52 -> 00:14:00] program points so for example out and out next would have be different by delta s and then out
+[00:14:00 -> 00:14:04] next and out next next would be different by another delta s and so on and all this can pretty
+[00:14:04 -> 00:14:08] much accumulate into a big value and a big difference and that could show up in the delta
+[00:14:08 -> 00:14:14] between in transfer and out and this could be as big as order n or it could be as you know
+[00:14:14 -> 00:14:18] depending on if the value size is small depending on the DFA if the value size
+[00:14:18 -> 00:14:22] which is the size of the maximum value of course you know the change set cannot be bigger
+[00:14:22 -> 00:14:27] than the size of the maximum value so you can say that this order of minimum of n comma value
+[00:14:27 -> 00:14:34] size okay so why is it once again why is it n because after all there could be up to n
+[00:14:34 -> 00:14:40] different changes and but if the value size is smaller than n then the maximum difference
+[00:14:40 -> 00:14:45] the distance between any two values whether they are in transfer and out cannot be
+[00:14:46 -> 00:14:52] bigger than value size so we also use a min to denote that okay but if I look at a flow
+[00:14:52 -> 00:14:57] insensitive analysis recall that in a flow insensitive analysis the out value and the
+[00:14:57 -> 00:15:02] in value are the same there's just one single global value and so the distance between in
+[00:15:02 -> 00:15:08] transfer and out is actually also upper bounded by delta s because after all out and inverse is
+[00:15:08 -> 00:15:13] the same and if the distance between in and in transfer is delta s then the distance between
+[00:15:13 -> 00:15:17] in transfer and out is also delta s in other words even though there could have been a big
+[00:15:17 -> 00:15:24] path that that the DFA transfers the DFA traverses before transferring to in transfer
+[00:15:25 -> 00:15:32] that the updates have been applied are being applied incrementally across every statement
+[00:15:32 -> 00:15:36] as the DFA progresses so we don't have you know across a single
+[00:15:38 -> 00:15:44] update we don't have a very big distance between in transfer and out in a flow insensitive
+[00:15:44 -> 00:15:49] analysis unlike a flow sensitive analysis so delta in and out is actually on the order of
+[00:15:49 -> 00:15:55] delta s because we know that n equals out in a flow sensitive insensitive analysis so in a
+[00:15:55 -> 00:16:01] flow insensitive analysis the distance between the gap between the value update is small it's
+[00:16:01 -> 00:16:06] local it depends on s but in a flow sensitive analysis it could be much bigger it could be
+[00:16:06 -> 00:16:12] global it could be as big as order n or order value size whichever is smaller and that that
+[00:16:12 -> 00:16:16] actually is a big difference between a flow sensitive and a flow insensitive analysis
+[00:16:16 -> 00:16:20] running time that comes up as a big difference in the running time of the two analysis
+[00:16:21 -> 00:16:26] okay so to summarize the maximum number of updates in both a flow sensitive and a flow
+[00:16:26 -> 00:16:31] insensitive analysis is similar it's both n into h where h is the size height of the semi
+[00:16:31 -> 00:16:37] lattice of the original non-ssa program the time taken between updates in the worst case is
+[00:16:37 -> 00:16:42] only you know out degree or in degree depending on whether it's a forward analysis or backward
+[00:16:42 -> 00:16:47] analysis in flow sensitive and it's order n in flow insensitive but typically because of
+[00:16:47 -> 00:16:53] the partial order the post order or the reverse post order this is order one but the
+[00:16:53 -> 00:16:59] time taken by a single update can be as high as minimum of n comma value size because it's a
+[00:16:59 -> 00:17:04] summation of all the delta s's whereas in the case of flow insensitive this is only order one
+[00:17:04 -> 00:17:10] to say whatever is the maximum delta s for a given statement and so the typical total time
+[00:17:10 -> 00:17:18] is basically obtained by multiplying n into h with the time taken with the single by single
+[00:17:18 -> 00:17:22] update because if you assume that the time taken between two updates is just order one
+[00:17:22 -> 00:17:26] then the time overall time taken by an algorithm is the number of updates
+[00:17:26 -> 00:17:33] into time taken by a single update which in this case is n into h into minimum of n
+[00:17:33 -> 00:17:39] comma value size and if i take the value size to be as big as n then it can be as bad
+[00:17:39 -> 00:17:45] as order n squared h whereas here it's just order n into h into delta s and if i assume
+[00:17:45 -> 00:17:50] that delta s is constant size with respect to the size of the program then this actually is
+[00:17:50 -> 00:17:56] order n h and this is the reason why a flow insensitive analysis with ssa is typically
+[00:17:56 -> 00:18:02] much faster to do than a flow sensitive analysis without ssa and that's one of the reasons why
+[00:18:02 -> 00:18:10] compilers or compiler developers prefer to use an ssa ir like the llvm ir because it allows
+[00:18:10 -> 00:18:16] faster analyses without you losing precision of those data flow analysis

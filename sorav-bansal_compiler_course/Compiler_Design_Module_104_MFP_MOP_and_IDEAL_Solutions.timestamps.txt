@@ -1,0 +1,86 @@
+Title: Compiler Design Module 104 : MFP, MOP, and IDEAL Solutions
+Video ID: bmaHXgbPty4
+Detected language: en
+------------------------------------------------------------
+
+[00:00:00 -> 00:00:07] So to review, we looked at the maximum fixed point solution with respect to the ideal solution
+[00:00:07 -> 00:00:09] and the meet over path solution.
+[00:00:09 -> 00:00:13] MFP versus MOP versus ideal.
+[00:00:13 -> 00:00:18] Ideal is when you meet over executable paths, MOP is when you meet over all paths and you
+[00:00:18 -> 00:00:21] meet at the very end.
+[00:00:21 -> 00:00:27] Similarly for ideal, you meet at the very end and so if I look at what is MOP of
+[00:00:27 -> 00:00:38] some input x, then that is ideal of x met with transfer function fp applied to x for
+[00:00:38 -> 00:00:42] all paths p, so for all unexecuted paths p.
+[00:00:42 -> 00:00:50] So ideal x contains all the executed paths and MOP also contains all the unexecuted
+[00:00:50 -> 00:00:51] paths.
+[00:00:51 -> 00:00:56] So if I meet the ideal solution with the solution that is obtained by meeting all
+[00:00:57 -> 00:01:03] the transfer functions across all the unexecuted paths, I am going to get my MOP solution.
+[00:01:03 -> 00:01:08] And so it is clear from this equation itself that MOP must be less than equal to ideal
+[00:01:08 -> 00:01:14] because MOP is ideal meet with something and so a meet b is always less than equal
+[00:01:14 -> 00:01:16] to a and b.
+[00:01:16 -> 00:01:21] That's just by the definition of the meet operator and so from this we can infer
+[00:01:21 -> 00:01:26] that MOP of x for any x is always less than equal to ideal of x.
+[00:01:26 -> 00:01:31] And here is a short way of writing that you just were to say MOP is less than equal
+[00:01:31 -> 00:01:32] to ideal.
+[00:01:32 -> 00:01:35] So that's the relation between the MOP solution and the ideal solution.
+[00:01:35 -> 00:01:39] Now the next thing you want to talk about is how does MFP compare to both these
+[00:01:39 -> 00:01:40] two.
+[00:01:40 -> 00:01:44] So recall that MFP involves meeting at intermediate points.
+[00:01:44 -> 00:01:49] So both MOP and ideal meet at the very end, whereas MFP also meets in the
+[00:01:49 -> 00:01:50] middle.
+[00:01:50 -> 00:01:55] It can meet in the middle, meet wherever there is a joint point it meets the
+[00:01:55 -> 00:02:01] values and so if there was an example, a control flow graph like the one drawn
+[00:02:01 -> 00:02:06] here, then MOP would be, so let's say the value that's coming out of this
+[00:02:06 -> 00:02:11] basic block is x and the value that's coming on this basic block is y.
+[00:02:11 -> 00:02:14] Then the MOP solution is going to be fx meet with fy.
+[00:02:14 -> 00:02:18] So that's the value that's going to come out at the end of the program.
+[00:02:18 -> 00:02:21] Whereas the MFP solution is going to be first meet and then apply the
+[00:02:21 -> 00:02:22] transfer function.
+[00:02:22 -> 00:02:26] So it's going to be f of x meet y.
+[00:02:26 -> 00:02:37] And so just to see that more clearly, MFP is f of x meet y and MOP is f of x meet
+[00:02:37 -> 00:02:38] with f of y.
+[00:02:38 -> 00:02:40] So in one case, we are meeting after applying the transfer function.
+[00:02:40 -> 00:02:44] In the other case, we are first meeting and then applying the transfer function.
+[00:02:44 -> 00:02:47] And what do we know?
+[00:02:47 -> 00:02:51] What can we say about the MFP and MOP from this formulation?
+[00:02:51 -> 00:02:57] We know that from monotonicity, f of x meet y must always be less than equal to f of
+[00:02:57 -> 00:02:58] x meet f of y.
+[00:02:58 -> 00:03:01] That's coming from the monotonicity of the DFA framework.
+[00:03:01 -> 00:03:06] And from there, we basically say that MFP is less than equal to MOP.
+[00:03:06 -> 00:03:10] Moreover, if the DFA framework is distributed, recall that the reaching
+[00:03:10 -> 00:03:15] definitions framework was distributed, in which case fx meet y is equal to fx
+[00:03:15 -> 00:03:16] meet fy.
+[00:03:16 -> 00:03:20] For a distributed framework, it doesn't really matter whether you apply the
+[00:03:20 -> 00:03:25] transfer function first before meeting or whether you apply the meet operator first
+[00:03:25 -> 00:03:27] and then apply the transfer function.
+[00:03:27 -> 00:03:29] You always get the same result.
+[00:03:29 -> 00:03:37] And there's a well-formed check or expression that we can check to see
+[00:03:37 -> 00:03:40] whether some framework is distributed or not.
+[00:03:40 -> 00:03:44] And that is that we just check that for arbitrary x and y and for an arbitrary
+[00:03:45 -> 00:03:48] belonging to the family of transfer functions.
+[00:03:48 -> 00:03:52] Is it true that fx meet y equals fx meet fy?
+[00:03:52 -> 00:03:57] If that's true, then the framework is distributed.
+[00:03:57 -> 00:04:02] And if the framework is distributed, then this formulation also tells us that the
+[00:04:02 -> 00:04:04] MFP equals MOP.
+[00:04:04 -> 00:04:08] Recall that if a framework is distributed, it doesn't really matter whether you meet
+[00:04:08 -> 00:04:12] first or you meet second, right, or whether you apply the transfer function first or
+[00:04:12 -> 00:04:14] whether you meet first.
+[00:04:14 -> 00:04:16] And so it doesn't really matter.
+[00:04:16 -> 00:04:21] And so the MFP solution is also the MOP solution.
+[00:04:21 -> 00:04:26] To summarize, any fixed point solution is always less than equal to the maximum
+[00:04:26 -> 00:04:28] fixed point solution that's coming.
+[00:04:28 -> 00:04:33] We have discussed any fixed point solution can be a bad solution, but the most
+[00:04:33 -> 00:04:37] precise solution for a data flow system of data flow equations is the maximum
+[00:04:37 -> 00:04:38] fixed point solution.
+[00:04:38 -> 00:04:42] And we get it because we initialize all our interior values at the top.
+[00:04:42 -> 00:04:47] So fp is less than equal to MFP, MFP is less than equal to MOP, and MOP is less
+[00:04:47 -> 00:04:48] than equal to ideal.
+[00:04:48 -> 00:04:54] We just saw these relations between MFP, MOP, and ideal in this module.
+[00:04:54 -> 00:04:55] And that's the general case.
+[00:04:55 -> 00:05:00] But for distributed frameworks, instead of the less than equal to, we
+[00:05:00 -> 00:05:05] actually get MFP equals MOP, which is still less than equal to ideal,
+[00:05:05 -> 00:05:10] because ideal recall also basically distinguishes between paths that may be
+[00:05:10 -> 00:05:13] executed and paths that never execute.
+[00:05:13 -> 00:05:17] And that's an undecidable problem, so we don't even try to get to the ideal.
+[00:05:17 -> 00:05:20] But it's good to know that MFP is at least equal to MOP for
+[00:05:20 -> 00:05:22] distributed frameworks.

@@ -1,0 +1,486 @@
+Title: Compiler Design Module 124 18: Introduction to Object sensitive pointer analysis
+Video ID: jZCasUNk8Xc
+Detected language: en
+------------------------------------------------------------
+
+[00:00:00 -> 00:00:03] So we've been discussing how call context-sensitive
+[00:00:03 -> 00:00:06] points to analysis is more precise
+[00:00:06 -> 00:00:09] than a context-insensitive analysis.
+[00:00:09 -> 00:00:12] But now, I mean, I'm going to introduce a new idea
+[00:00:12 -> 00:00:16] by first showing the limitations of call context.
+[00:00:16 -> 00:00:19] So recall this example of a program
+[00:00:19 -> 00:00:24] which has a memory class, which has a field called M,
+[00:00:24 -> 00:00:27] and this is the main program that sets M
+[00:00:27 -> 00:00:31] with two different objects of different derived classes,
+[00:00:31 -> 00:00:34] and then finally calls getM and then calls virtual function.
+[00:00:34 -> 00:00:38] And we saw how a call context-sensitive analysis
+[00:00:38 -> 00:00:42] with a context depth of one, call context depth of one,
+[00:00:42 -> 00:00:47] is able to precisely identify that this F is D1's F
+[00:00:47 -> 00:00:51] and this F is D2's F, and F is the virtual function,
+[00:00:51 -> 00:00:55] and D1's F and D2's F are the two implementations.
+[00:00:55 -> 00:00:57] And statically, the compiler can figure out
+[00:00:57 -> 00:00:59] that these are actually D1's F and D2's F,
+[00:00:59 -> 00:01:02] and that can allow it to generate faster code
+[00:01:02 -> 00:01:04] at the dispatch of these functions.
+[00:01:05 -> 00:01:09] And the reason for that was because the call context
+[00:01:09 -> 00:01:12] at each of these call sites of setM were different,
+[00:01:12 -> 00:01:14] so LD1 and LD2 in this example.
+[00:01:14 -> 00:01:19] And so the object pointers were versioned
+[00:01:19 -> 00:01:21] based on the call context, so LD1 and LD2.
+[00:01:21 -> 00:01:25] And as a result, the corresponding updates
+[00:01:25 -> 00:01:28] were also versioned based, so SM was versioned
+[00:01:28 -> 00:01:31] using LD1 and LD2, and correspondingly,
+[00:01:31 -> 00:01:35] the corresponding versions of the object were updated.
+[00:01:35 -> 00:01:37] For example, through this dispatch,
+[00:01:37 -> 00:01:40] it was this LD1 that was updated,
+[00:01:40 -> 00:01:41] and through this dispatch,
+[00:01:41 -> 00:01:46] it was this keyword's LD2 version that was updated.
+[00:01:46 -> 00:01:48] And that's why we got a precise answer.
+[00:01:48 -> 00:01:50] But let's say I change my example a little.
+[00:01:50 -> 00:01:54] And let's say setM does not directly update M,
+[00:01:54 -> 00:01:57] but setM actually calls the helper function H,
+[00:01:57 -> 00:01:59] and H now updates them.
+[00:01:59 -> 00:02:03] So I've just increased the call depth on this path
+[00:02:03 -> 00:02:06] from setM to H to the actual information to two,
+[00:02:06 -> 00:02:08] from one.
+[00:02:08 -> 00:02:12] And now the call context-sensitive analysis
+[00:02:12 -> 00:02:16] will become imprecise, as I want to show you quickly,
+[00:02:17 -> 00:02:20] if the call context depth is only one.
+[00:02:20 -> 00:02:23] Of course, the analysis becomes precise
+[00:02:24 -> 00:02:26] if you increase the call context depth to two,
+[00:02:26 -> 00:02:29] but increasing the call context depth to two
+[00:02:29 -> 00:02:32] has a multiplicative factor increase
+[00:02:32 -> 00:02:33] in the running time of the analysis.
+[00:02:35 -> 00:02:38] It can go from N to N squared, for example.
+[00:02:38 -> 00:02:40] And so that is usually not done.
+[00:02:40 -> 00:02:43] And no matter what call context depth you use,
+[00:02:43 -> 00:02:44] I can always create a program
+[00:02:44 -> 00:02:46] where it's going to give you imprecise results
+[00:02:46 -> 00:02:50] by just engineering the call context depth,
+[00:02:50 -> 00:02:53] or the call depth, the calling depth,
+[00:02:54 -> 00:02:55] or the call stack depth,
+[00:02:55 -> 00:02:58] to be greater than that call context depth analysis's
+[00:02:58 -> 00:02:59] call context depth.
+[00:02:59 -> 00:03:00] So let's look at this example
+[00:03:00 -> 00:03:02] where I'm going to analyze this example
+[00:03:02 -> 00:03:04] with a call context depth of one.
+[00:03:04 -> 00:03:06] Then the first thing I need to do
+[00:03:06 -> 00:03:08] is I need to give this call site a label.
+[00:03:08 -> 00:03:11] So let's say this call site is LH.
+[00:03:11 -> 00:03:13] Now I'm going to label all the variables
+[00:03:13 -> 00:03:14] based on these call sites
+[00:03:14 -> 00:03:18] in my call context-sensitive analysis with depth one.
+[00:03:18 -> 00:03:22] And so this means that this variable in setM
+[00:03:22 -> 00:03:26] is going to be versioned using LD1 and LD2 call context
+[00:03:26 -> 00:03:29] because LD1 and LD2 are the two call sites.
+[00:03:29 -> 00:03:31] Similarly, this variable in getM
+[00:03:31 -> 00:03:34] is going to get versioned using the two call sites,
+[00:03:34 -> 00:03:37] LR1 and LR2 of the getM function.
+[00:03:38 -> 00:03:42] And this variable of H is going to get versioned
+[00:03:42 -> 00:03:45] with its call site.
+[00:03:45 -> 00:03:48] And there's only one call site for H, which is LH.
+[00:03:48 -> 00:03:49] Even though LH,
+[00:03:50 -> 00:03:53] setM may be called through two different call sites,
+[00:03:53 -> 00:03:55] H will only be called through one call site.
+[00:03:55 -> 00:04:00] And so there's only one version of this variable in H,
+[00:04:01 -> 00:04:03] and that's this LH.
+[00:04:03 -> 00:04:05] And this is going to be the problem,
+[00:04:05 -> 00:04:08] this is going to be the precision issue in our example
+[00:04:08 -> 00:04:12] because both M1 and M2 are going to
+[00:04:14 -> 00:04:18] be potential pointies of this LH.
+[00:04:18 -> 00:04:19] And because of that,
+[00:04:19 -> 00:04:24] we will basically say that M1 may point to M2's fields
+[00:04:25 -> 00:04:27] and M2 may point to M1's fields
+[00:04:27 -> 00:04:31] in our over-approximate conservative points to analysis.
+[00:04:31 -> 00:04:32] Okay, let's see how this is going to work.
+[00:04:32 -> 00:04:35] So this is the original solution without H.
+[00:04:35 -> 00:04:38] Notice that here the getM,
+[00:04:38 -> 00:04:43] this was pointing to M1 in context LR1
+[00:04:43 -> 00:04:47] and getM's this in LR2 was pointing to M2
+[00:04:47 -> 00:04:49] and the corresponding allocation sites
+[00:04:49 -> 00:04:52] are L0, M1 and L0, M2.
+[00:04:52 -> 00:04:53] Where 0 represents the call context
+[00:04:53 -> 00:04:55] of the top level main function.
+[00:04:55 -> 00:04:58] Similarly, this setM, LD1 and this setM, LD2
+[00:04:58 -> 00:05:00] point to the respective objects.
+[00:05:00 -> 00:05:02] And as a result, we get a precise answer
+[00:05:02 -> 00:05:07] that R1 can point to a D1 object
+[00:05:07 -> 00:05:09] and R2 can point to a D2 object.
+[00:05:09 -> 00:05:12] And so we can resolve the virtual function calls precisely.
+[00:05:12 -> 00:05:13] And this is the original solution.
+[00:05:13 -> 00:05:15] When there was no H,
+[00:05:15 -> 00:05:18] the helper function H in the memory class.
+[00:05:18 -> 00:05:20] But now because of the helper function H,
+[00:05:20 -> 00:05:23] what happens is that this variable in the helper function,
+[00:05:23 -> 00:05:28] so this helper has only one version
+[00:05:28 -> 00:05:31] as we saw previously, which is the LH call site
+[00:05:31 -> 00:05:33] or one context in which it's called.
+[00:05:33 -> 00:05:35] And because it has only one context
+[00:05:35 -> 00:05:38] and it's actually being called on two call site paths,
+[00:05:38 -> 00:05:41] so this variable can point to either an M1 object
+[00:05:41 -> 00:05:43] that which is represented by this call site,
+[00:05:43 -> 00:05:46] that allocation site L0, M1 or to an M2 object,
+[00:05:46 -> 00:05:47] this is L0, M2.
+[00:05:48 -> 00:05:50] And so this is the first place
+[00:05:50 -> 00:05:53] where you kind of see something
+[00:05:53 -> 00:05:57] that's going to point to both M1 or M2.
+[00:05:57 -> 00:06:00] And this imprecision causes more imprecision
+[00:06:00 -> 00:06:01] in our fixed point solution.
+[00:06:01 -> 00:06:03] So when we do more transfers, we're going to say,
+[00:06:03 -> 00:06:06] okay, so when we transfer across this.m
+[00:06:06 -> 00:06:11] equals SM or HM in the helper function,
+[00:06:11 -> 00:06:12] so recall that there's a statement
+[00:06:12 -> 00:06:15] called this.m.equalsHM.
+[00:06:15 -> 00:06:18] So this LH can point to either M1 or M2.
+[00:06:18 -> 00:06:20] And so it seems like,
+[00:06:20 -> 00:06:25] and so HM on the other hand could point to either,
+[00:06:25 -> 00:06:28] so HM would have, let's say two versions.
+[00:06:28 -> 00:06:30] Actually, HM can also only have one version,
+[00:06:30 -> 00:06:34] but so eventually what happens is that it appears like L0,
+[00:06:34 -> 00:06:38] the M1 object can point through the M field
+[00:06:38 -> 00:06:42] to the D2 pointer, because there's only one version,
+[00:06:42 -> 00:06:44] and we're only tracking one version of this
+[00:06:44 -> 00:06:45] and one version of HM.
+[00:06:45 -> 00:06:49] So it appears, and because this LH can point
+[00:06:49 -> 00:06:52] to either M1 or M2, it appears,
+[00:06:52 -> 00:06:55] and HM can also point to either D1 or D2.
+[00:06:55 -> 00:06:58] It appears that M1 can point to D2
+[00:06:58 -> 00:06:59] and M2 can point to D1.
+[00:06:59 -> 00:07:04] And this kind of accumulates the imprecision
+[00:07:04 -> 00:07:07] that was caused because of this first imprecision
+[00:07:07 -> 00:07:10] that we saw, which is the single version
+[00:07:10 -> 00:07:12] of this pointer in helper.
+[00:07:12 -> 00:07:13] Okay.
+[00:07:14 -> 00:07:16] Finally, because of this imprecision,
+[00:07:16 -> 00:07:18] when we actually do the getM call,
+[00:07:18 -> 00:07:21] then it appears that this point,
+[00:07:21 -> 00:07:25] the M variable of this pointer
+[00:07:26 -> 00:07:31] can point either to a D1 object or to a D2 object.
+[00:07:31 -> 00:07:33] So as a result,
+[00:07:33 -> 00:07:36] when we do this fixed point computation further,
+[00:07:36 -> 00:07:39] we see that R1 as a result can point
+[00:07:39 -> 00:07:43] either to a D1 object or to a D2 object.
+[00:07:43 -> 00:07:46] And this is represented by these extra edges
+[00:07:46 -> 00:07:50] from R10 to L0 D2 and R20 to L0 D1.
+[00:07:50 -> 00:07:51] And this is an imprecise solution
+[00:07:51 -> 00:07:54] because now the compiler cannot statically resolve
+[00:07:54 -> 00:07:56] the calls to the virtual function F.
+[00:07:57 -> 00:07:58] Okay, so what was the problem?
+[00:07:58 -> 00:08:01] The problem was that when there was a call
+[00:08:01 -> 00:08:04] to the helper function H from setM,
+[00:08:04 -> 00:08:08] the call context changed from let's say LD1 to LH
+[00:08:08 -> 00:08:12] or in the other call path, LD2 to LH.
+[00:08:12 -> 00:08:14] Now, can you avoid this?
+[00:08:14 -> 00:08:17] Well, one approach is to increase the depth
+[00:08:17 -> 00:08:18] of the call context,
+[00:08:18 -> 00:08:21] but we already said that that's going to be too expensive.
+[00:08:21 -> 00:08:23] Well, one idea here is that,
+[00:08:23 -> 00:08:24] okay, instead of a call context,
+[00:08:24 -> 00:08:27] let's use some other context that makes more sense
+[00:08:27 -> 00:08:30] or is likely to yield better results.
+[00:08:30 -> 00:08:33] And notice that you can actually group these contexts
+[00:08:33 -> 00:08:34] any way you like.
+[00:08:34 -> 00:08:37] And usually we engineer these contexts carefully
+[00:08:37 -> 00:08:40] such that they capture a maximum number of,
+[00:08:40 -> 00:08:42] they give you most precision
+[00:08:42 -> 00:08:44] for the least amount of running time of the analysis.
+[00:08:44 -> 00:08:49] And one idea here is that you use an object context.
+[00:08:49 -> 00:08:52] So if there's a transition from one function
+[00:08:52 -> 00:08:54] to another function within the same object,
+[00:08:54 -> 00:08:58] then we assume that the object context does not change
+[00:08:58 -> 00:09:00] even though the call context in this example changed
+[00:09:00 -> 00:09:03] because the call site changed, the last call site changed,
+[00:09:03 -> 00:09:07] but the object in which the context for this object
+[00:09:07 -> 00:09:10] under which I'm still executing has not changed.
+[00:09:10 -> 00:09:12] And so that's what I'm going to call the object context.
+[00:09:12 -> 00:09:16] And this likely would work better than call context,
+[00:09:16 -> 00:09:17] at least in object-oriented languages
+[00:09:17 -> 00:09:21] because this kind of helper function calling pattern
+[00:09:21 -> 00:09:24] is very common in such languages.
+[00:09:24 -> 00:09:26] Okay, so the basic idea of object context
+[00:09:26 -> 00:09:28] is that you track that this object
+[00:09:28 -> 00:09:30] under which the function body is being analyzed.
+[00:09:30 -> 00:09:33] And if this object remains the same,
+[00:09:33 -> 00:09:38] then we keep that context of this object with us.
+[00:09:39 -> 00:09:43] And this is only possible for object-oriented languages.
+[00:09:43 -> 00:09:45] And the rationale is that the program's behavior
+[00:09:45 -> 00:09:47] will likely be similar within a single object
+[00:09:47 -> 00:09:50] and different across different object contexts.
+[00:09:50 -> 00:09:55] Okay, so just like call context was a heuristic idea
+[00:09:55 -> 00:09:57] which may or may not work,
+[00:09:57 -> 00:09:59] the object context is also a heuristic idea
+[00:09:59 -> 00:10:00] which may or may not work.
+[00:10:00 -> 00:10:03] There are examples where object context will work
+[00:10:03 -> 00:10:04] worse than call context,
+[00:10:04 -> 00:10:07] and then there are examples where object context
+[00:10:07 -> 00:10:08] would work better than call context,
+[00:10:08 -> 00:10:11] for example, the last example that we saw.
+[00:10:11 -> 00:10:14] But in general, for object-oriented languages,
+[00:10:14 -> 00:10:16] it is usually typically the case
+[00:10:16 -> 00:10:19] that object context work better than call context.
+[00:10:20 -> 00:10:24] Okay, so how do you assign an object context?
+[00:10:24 -> 00:10:26] Well, recall just like for call context,
+[00:10:26 -> 00:10:30] we need a finite number of statically identifiable contexts.
+[00:10:30 -> 00:10:32] In the case of call context,
+[00:10:32 -> 00:10:33] we would just look at all the call sites
+[00:10:33 -> 00:10:35] and say these are all the call contexts
+[00:10:35 -> 00:10:36] that I wanna consider.
+[00:10:36 -> 00:10:37] If it's depth two,
+[00:10:37 -> 00:10:41] then I'm gonna look at all the two-depth call contexts
+[00:10:41 -> 00:10:42] that can potentially appear in the program.
+[00:10:42 -> 00:10:44] Similarly, I need to have some way
+[00:10:44 -> 00:10:47] of identifying statically a finite number
+[00:10:47 -> 00:10:49] of object contexts.
+[00:10:49 -> 00:10:51] But recall that the number of runtime objects
+[00:10:51 -> 00:10:51] is unbounded.
+[00:10:51 -> 00:10:53] So the same function may be called
+[00:10:54 -> 00:10:58] an unbounded number of object context,
+[00:10:58 -> 00:11:00] because there could be different number of allocations,
+[00:11:00 -> 00:11:04] an unbounded number of allocations of a particular class.
+[00:11:04 -> 00:11:06] And for each of those objects of that class,
+[00:11:06 -> 00:11:08] you can invoke a member function.
+[00:11:08 -> 00:11:11] So there's an unbounded number of runtime objects.
+[00:11:11 -> 00:11:14] But we already know how to deal with something like this.
+[00:11:14 -> 00:11:15] We use abstract objects
+[00:11:15 -> 00:11:17] to represent the call object context.
+[00:11:17 -> 00:11:22] So we basically group all the objects that are allocated,
+[00:11:22 -> 00:11:23] let's say at an allocation site,
+[00:11:23 -> 00:11:25] if you're using an allocation site abstraction
+[00:11:25 -> 00:11:27] for the abstract objects,
+[00:11:27 -> 00:11:30] under the same abstract object, okay?
+[00:11:30 -> 00:11:34] And we use that abstract object as the context
+[00:11:34 -> 00:11:37] under which a member function of that object
+[00:11:37 -> 00:11:39] is being evaluated.
+[00:11:39 -> 00:11:42] Okay, so let's see that with an example.
+[00:11:42 -> 00:11:44] So in this example,
+[00:11:44 -> 00:11:47] this is an allocation site, LM1,
+[00:11:47 -> 00:11:49] and this allocation site will act both
+[00:11:49 -> 00:11:51] as an allocation site,
+[00:11:51 -> 00:11:55] as we've been doing that for identifying abstract objects
+[00:11:55 -> 00:11:59] and using them as nodes in a points to graph,
+[00:11:59 -> 00:12:01] and also as an object context
+[00:12:01 -> 00:12:04] for member function calls through that object.
+[00:12:04 -> 00:12:07] So for example, M1 is an object that has been created.
+[00:12:07 -> 00:12:08] When I say M1.setM,
+[00:12:08 -> 00:12:13] then because M1 is belonging to the abstract object LM1,
+[00:12:13 -> 00:12:17] setM will be analyzed in the abstract object LM1.
+[00:12:17 -> 00:12:19] If M1 represents an object
+[00:12:19 -> 00:12:22] that could belong to potentially multiple abstract objects,
+[00:12:22 -> 00:12:25] possible, then we analyze setM
+[00:12:25 -> 00:12:29] in all those abstract object contexts.
+[00:12:29 -> 00:12:31] In this example, setM is called
+[00:12:31 -> 00:12:33] only in a single abstract object context,
+[00:12:33 -> 00:12:37] so it's going to be analyzed in that context
+[00:12:37 -> 00:12:38] for this call.
+[00:12:38 -> 00:12:39] For this call, it's going to be analyzed
+[00:12:39 -> 00:12:42] in LM2's context.
+[00:12:42 -> 00:12:44] Similarly, at this call here,
+[00:12:44 -> 00:12:45] it's going to be analyzed
+[00:12:45 -> 00:12:48] in whatever is the abstract object
+[00:12:48 -> 00:12:50] corresponding to M1, which is again LM1.
+[00:12:50 -> 00:12:53] So getM will also get analyzed in LM1
+[00:12:53 -> 00:12:55] and LM2 due to this call.
+[00:12:55 -> 00:12:57] So I've written this here.
+[00:12:57 -> 00:13:00] setM is analyzed in two contexts,
+[00:13:00 -> 00:13:03] which is LM1 and LM2.
+[00:13:03 -> 00:13:06] H is also analyzed in the same two contexts,
+[00:13:06 -> 00:13:10] because when you make a transition from setM to H,
+[00:13:10 -> 00:13:13] this time we are not going to look at the call site
+[00:13:13 -> 00:13:15] for context, because this is an object-sensitive analysis.
+[00:13:15 -> 00:13:16] We're just going to look at
+[00:13:16 -> 00:13:18] what was the abstract object
+[00:13:18 -> 00:13:23] corresponding to this pointer at this call, at setM.
+[00:13:23 -> 00:13:26] And in this case, it will be either LM1 or LM2,
+[00:13:26 -> 00:13:27] depending on which one it is,
+[00:13:27 -> 00:13:30] it will call H under the same call context,
+[00:13:30 -> 00:13:34] so which will also be either this LM1 or this LM2.
+[00:13:34 -> 00:13:36] And similarly, the object context for getM
+[00:13:36 -> 00:13:39] would be this LM1 or this LM2.
+[00:13:39 -> 00:13:41] Recall that when we're doing call context,
+[00:13:41 -> 00:13:45] then we had this LD1 and this LD2 for setM.
+[00:13:45 -> 00:13:50] This H for H, and this LR1 and this LR2 for getM,
+[00:13:51 -> 00:13:54] because that was a call context.
+[00:13:54 -> 00:13:56] Because now we have changed the definition
+[00:13:56 -> 00:13:57] of what a context is,
+[00:13:57 -> 00:14:00] the object contexts are completely different.
+[00:14:00 -> 00:14:02] And notice that the big improvement
+[00:14:02 -> 00:14:04] that we have in this example at least
+[00:14:04 -> 00:14:06] is that now we have two object contexts
+[00:14:06 -> 00:14:08] for the function H.
+[00:14:08 -> 00:14:10] And we know, depending on where it's flowing from,
+[00:14:10 -> 00:14:13] it's going to be precisely identifiable
+[00:14:13 -> 00:14:16] that this is actually referring to an M1 object,
+[00:14:16 -> 00:14:18] and this is actually referring to an M2 object,
+[00:14:18 -> 00:14:21] and we actually run our points to analysis.
+[00:14:21 -> 00:14:22] So that's a basic idea.
+[00:14:22 -> 00:14:25] Now on the left, I show the solution
+[00:14:25 -> 00:14:30] without the H function at call context depth one
+[00:14:30 -> 00:14:32] that we had seen in our previous module
+[00:14:32 -> 00:14:33] as a precise solution.
+[00:14:33 -> 00:14:34] And on the right, I will try to build
+[00:14:34 -> 00:14:38] the same similar solution with the H function
+[00:14:38 -> 00:14:40] using an object context.
+[00:14:40 -> 00:14:43] So recall that our program had these allocation sites,
+[00:14:43 -> 00:14:46] M1 equals new memory, and this was LM1,
+[00:14:46 -> 00:14:48] and then M2 equals new memory,
+[00:14:48 -> 00:14:50] and this allocation site was LM2.
+[00:14:50 -> 00:14:52] And just like before, we basically say,
+[00:14:52 -> 00:14:55] because of the by virtue of these two allocation statements,
+[00:14:55 -> 00:14:57] say M1 in context zero,
+[00:14:57 -> 00:15:00] and zero represents the context of the main function,
+[00:15:00 -> 00:15:02] the object context of the main function.
+[00:15:02 -> 00:15:05] So because main does not execute in any object,
+[00:15:05 -> 00:15:08] so we just use the zero object context
+[00:15:08 -> 00:15:09] for the main function.
+[00:15:09 -> 00:15:14] So the M1, zero may point to an allocation performed
+[00:15:14 -> 00:15:18] at allocation site LM1 in context zero,
+[00:15:18 -> 00:15:20] because that's where I'm analyzing this memory.
+[00:15:21 -> 00:15:24] Similarly, M2, zero can point to LM2, zero.
+[00:15:24 -> 00:15:25] And this is exactly the same
+[00:15:25 -> 00:15:27] as we were doing for the call context.
+[00:15:27 -> 00:15:30] However, there is a slight difference.
+[00:15:30 -> 00:15:31] Because we are going to assume
+[00:15:31 -> 00:15:33] that the object context has depth one,
+[00:15:34 -> 00:15:39] then I'm going to forget the last context
+[00:15:39 -> 00:15:41] when we do an allocation site.
+[00:15:41 -> 00:15:42] So unlike the call context
+[00:15:42 -> 00:15:46] where we remember this context zero,
+[00:15:46 -> 00:15:47] in the object context,
+[00:15:47 -> 00:15:48] I'm going to forget that context zero,
+[00:15:48 -> 00:15:52] because after all, when I go to another object,
+[00:15:52 -> 00:15:55] then to another object context,
+[00:15:55 -> 00:15:57] I cannot keep track of all the object context
+[00:15:57 -> 00:15:58] through which I came through
+[00:15:58 -> 00:16:00] because I need a finite number of object context.
+[00:16:00 -> 00:16:03] And so assuming my object context depth is one,
+[00:16:04 -> 00:16:05] and I'm going to later discuss
+[00:16:05 -> 00:16:08] how to deal with K-depth object context.
+[00:16:08 -> 00:16:11] But if my object context depth is one,
+[00:16:11 -> 00:16:16] then I'm going to replace the zero with M1.
+[00:16:16 -> 00:16:19] And because zero was the old object context,
+[00:16:19 -> 00:16:20] and because of the new allocation,
+[00:16:20 -> 00:16:23] and the allocation itself represents a new context.
+[00:16:23 -> 00:16:26] So this is going to be LM1 instead of L0M1
+[00:16:26 -> 00:16:27] as it was in the call context case.
+[00:16:27 -> 00:16:30] Because the call context increases the context
+[00:16:30 -> 00:16:31] across a call.
+[00:16:31 -> 00:16:34] In object context, the context increases
+[00:16:34 -> 00:16:35] because of an allocation.
+[00:16:35 -> 00:16:36] And so that's why,
+[00:16:36 -> 00:16:39] while here we keep the context, here we do not.
+[00:16:39 -> 00:16:42] And similarly, M2, zero points to LM1.
+[00:16:44 -> 00:16:45] Okay, now let's continue
+[00:16:45 -> 00:16:48] and build the points to graph for this example.
+[00:16:48 -> 00:16:51] So by virtue of this new D1,
+[00:16:51 -> 00:16:53] I create an allocation site LD1,
+[00:16:53 -> 00:16:55] just like I did LM1.
+[00:16:55 -> 00:16:58] And because by virtue of this dispatch,
+[00:16:58 -> 00:17:03] I say SM in object context of the abstract object
+[00:17:04 -> 00:17:06] corresponding to M1, which is LM1.
+[00:17:06 -> 00:17:10] So that's why it's called SM subscript LM1
+[00:17:10 -> 00:17:13] can now points to the object
+[00:17:13 -> 00:17:14] that was allocated at LD1.
+[00:17:14 -> 00:17:17] So this is the corresponding edge that gets drawn
+[00:17:17 -> 00:17:18] because of this dispatch.
+[00:17:18 -> 00:17:21] Similarly, SM LM2 can point to LD2.
+[00:17:22 -> 00:17:25] And recall that when we do this dispatch,
+[00:17:25 -> 00:17:29] then we also update the formal,
+[00:17:29 -> 00:17:33] the this pointer across this kind of member function
+[00:17:33 -> 00:17:33] dispatch.
+[00:17:33 -> 00:17:35] So the this pointer for setM is,
+[00:17:35 -> 00:17:38] let's say this setM being analyzed
+[00:17:38 -> 00:17:41] in the object context of M1, which is LM1.
+[00:17:41 -> 00:17:45] And that can point to whatever was,
+[00:17:45 -> 00:17:49] whatever is the receiving object, which is M1,
+[00:17:49 -> 00:17:51] which is represented by abstract object LM1.
+[00:17:51 -> 00:17:56] So this setM LM1 can now point to LM1.
+[00:17:56 -> 00:17:59] Similarly, this setM LM2,
+[00:17:59 -> 00:18:01] so this setM in context LM2
+[00:18:01 -> 00:18:06] can point to an object allocated at location LM2.
+[00:18:06 -> 00:18:09] So that's because of this dispatch to setM.
+[00:18:09 -> 00:18:14] Now, this function setM is going to call edge
+[00:18:14 -> 00:18:18] under its own this pointer, which is this setM.
+[00:18:18 -> 00:18:22] And so we're going to see, again, two pointers added,
+[00:18:22 -> 00:18:24] two edges added to my points to graph.
+[00:18:24 -> 00:18:27] One is by virtue of this argument SM to HM.
+[00:18:27 -> 00:18:29] So whatever SM LM1 was pointing to,
+[00:18:29 -> 00:18:31] HM LM1 will also start pointing to.
+[00:18:31 -> 00:18:34] Now, notice here is the improvement in precision.
+[00:18:34 -> 00:18:39] The context of HM is whatever was the context of SM
+[00:18:39 -> 00:18:41] or whatever is the context of this, more precisely,
+[00:18:41 -> 00:18:45] this setM LM1, which is just LM1, okay?
+[00:18:45 -> 00:18:48] Or whatever this setM LM1 could point to.
+[00:18:48 -> 00:18:50] And so that's HM LM1.
+[00:18:50 -> 00:18:53] When I say a context of a receiving object,
+[00:18:53 -> 00:18:57] I really mean that if it was this pointer,
+[00:18:57 -> 00:18:58] then what could it point to?
+[00:18:58 -> 00:19:01] In this case, M1 could point to LM1,
+[00:19:01 -> 00:19:06] and so LM1 becomes the context of this function setM.
+[00:19:06 -> 00:19:10] Similarly here, LM2 becomes the context of setM.
+[00:19:10 -> 00:19:13] If M1 could point to multiple objects,
+[00:19:13 -> 00:19:15] then all of them become a context of setM,
+[00:19:15 -> 00:19:17] and I need to update for,
+[00:19:17 -> 00:19:19] I need to kind of do these transfers
+[00:19:19 -> 00:19:22] for all those contexts independently.
+[00:19:22 -> 00:19:24] And in this example, there are only one context,
+[00:19:24 -> 00:19:27] but later I'm going to show you rules where we have,
+[00:19:27 -> 00:19:29] what happens when we have multiple contexts.
+[00:19:29 -> 00:19:32] So in this case, M1 has a single,
+[00:19:32 -> 00:19:34] M1 is pointing to a single object LM1,
+[00:19:34 -> 00:19:37] so that's why we got SM of LM1.
+[00:19:37 -> 00:19:39] If there were more, we would have also updated
+[00:19:39 -> 00:19:44] those SM version for those abstract object context.
+[00:19:44 -> 00:19:46] Similarly, HMLM1 can now point to
+[00:19:46 -> 00:19:49] whatever SMLM1 was pointing to, which is LD1.
+[00:19:50 -> 00:19:53] Similarly, this HLM1,
+[00:19:53 -> 00:19:56] so this is the this of the H function
+[00:19:56 -> 00:19:58] in the context, in the same context LM1,
+[00:19:58 -> 00:20:01] because that's where I'm coming from,
+[00:20:01 -> 00:20:03] can point to whatever this setMLM1 can point to,
+[00:20:03 -> 00:20:04] and that's again LM1.
+[00:20:04 -> 00:20:07] And the same thing happens for the M2 object.
+[00:20:08 -> 00:20:13] Finally, we execute the M equals HM function.
+[00:20:13 -> 00:20:17] So when we execute the M equals HM function, this one,
+[00:20:17 -> 00:20:22] then we draw an edge from whatever this could point to,
+[00:20:23 -> 00:20:26] to whatever HM could point to, like this,
+[00:20:26 -> 00:20:27] and if it's a field-sensitive analysis,
+[00:20:27 -> 00:20:28] we label it with M.
+[00:20:28 -> 00:20:32] The same thing happens here.
+[00:20:32 -> 00:20:37] And finally, this is my final solution.
+[00:20:40 -> 00:20:43] I guess now we need to worry about getM,
+[00:20:43 -> 00:20:45] so maybe that's in my next slide.
+[00:20:45 -> 00:20:47] So and then when you do the getM,
+[00:20:47 -> 00:20:49] then you basically look at,
+[00:20:49 -> 00:20:51] so when you do getM here,
+[00:20:51 -> 00:20:56] then this getM LM1 can point to whatever M1 can point to,
+[00:20:56 -> 00:20:58] so that's this.
+[00:20:58 -> 00:21:01] And this getMLM2 can point to whatever M2 can point to,
+[00:21:01 -> 00:21:02] that's this.
+[00:21:02 -> 00:21:05] And then when you reference this.m in getM,
+[00:21:05 -> 00:21:09] then you just follow the M edge here,
+[00:21:09 -> 00:21:12] and it can only point to LD2,
+[00:21:12 -> 00:21:14] and this can only point to LD2.
+[00:21:14 -> 00:21:15] So that's my next slide.
+[00:21:15 -> 00:21:18] So when you dereference this.m,
+[00:21:18 -> 00:21:21] then you basically say that R1,0 can point to whatever
+[00:21:21 -> 00:21:26] this getM LM1, whatever it can point to,
+[00:21:26 -> 00:21:28] and then like to hop from there, that's LD1.
+[00:21:28 -> 00:21:30] So R1,0 can point to LD1,
+[00:21:30 -> 00:21:33] and similarly R2,0 can point to LD2.
+[00:21:33 -> 00:21:35] So this is the precise solution that you can obtain
+[00:21:35 -> 00:21:37] using an object-sensitive analysis.
+[00:21:37 -> 00:21:38] For this example,
+[00:21:38 -> 00:21:41] even in the presence of multiple helper function calls,
+[00:21:41 -> 00:21:43] there could be arbitrary unbounded number
+[00:21:43 -> 00:21:48] of helper function calls within a single class
+[00:21:48 -> 00:21:49] to its own functions,
+[00:21:49 -> 00:21:51] and object-sensitive analysis would still work
+[00:21:51 -> 00:21:53] without having to increase the depth
+[00:21:53 -> 00:21:55] of the object-sensitive analysis.
+[00:21:56 -> 00:21:58] This solution that I have on the right
+[00:21:58 -> 00:21:59] is as precise as the solution
+[00:21:59 -> 00:22:04] without the edge helper function using call context.
+[00:22:04 -> 00:22:07] And I hope this example also throws some light
+[00:22:07 -> 00:22:09] on why we expect an object-sensitive analysis
+[00:22:09 -> 00:22:11] to work better in practice,
+[00:22:11 -> 00:22:13] at least for object-oriented languages.

@@ -1,0 +1,82 @@
+Title: Compiler Design Module 112 : Immediate Dominators
+Video ID: EjI-O1RLRQI
+Detected language: en
+------------------------------------------------------------
+
+[00:00:00 -> 00:00:05] So let's look at the dominator relation in more detail. Recall that node d dominates node
+[00:00:05 -> 00:00:12] n in a graph if and only if every path from the start node that reaches n goes through
+[00:00:12 -> 00:00:18] d. And also we said that the dominator relation is reflexive which means a node dominates
+[00:00:18 -> 00:00:27] itself. And we write ddomn to indicate that d dominates n. And if I say node dominates
+[00:00:27 -> 00:00:33] itself that's same as saying ndomn. Alright, so we understand what's a dominator relation.
+[00:00:33 -> 00:00:38] We also looked at an example to understand what it means in the context of a control
+[00:00:38 -> 00:00:44] flow graph. I'm going to define an other relation and that's called immediate dominance
+[00:00:44 -> 00:00:49] and that's derived from the dominance relation. And the idea is that we want to figure
+[00:00:49 -> 00:00:54] out what is the node that immediately dominates a node n. So there are many nodes that
+[00:00:54 -> 00:00:59] may dominate a node n. There are many nodes that must be traversed through on every path
+[00:00:59 -> 00:01:03] but there will be a single node that's the immediate dominator. And what is the immediate
+[00:01:03 -> 00:01:11] dominator? I mean intuitively it is the last node in the flow of the program that
+[00:01:11 -> 00:01:18] dominates this node without being equal. So the immediate dominator relation is not
+[00:01:18 -> 00:01:27] reflexive. Alright, so let's see. Node d immediately dominates node n in a graph written
+[00:01:27 -> 00:01:37] didomn if and only if d dominates n, d is not equal to n and there does not exist
+[00:01:37 -> 00:01:44] another node m such that m is different from both n and d and d dominates m and
+[00:01:44 -> 00:01:53] m dominates n. So in other words a node d immediately dominates node n if there
+[00:01:53 -> 00:01:59] exists no other node no third node such that you know d dominates that node
+[00:01:59 -> 00:02:03] and that node dominates n. So there's nothing in between d and n in terms of
+[00:02:03 -> 00:02:08] the dominator relation. So this is the you know this is this is the
+[00:02:08 -> 00:02:12] tightest domination relation for n and so that's why it's called the
+[00:02:12 -> 00:02:17] immediate dominator. So once again node d immediately dominates node n in a
+[00:02:17 -> 00:02:22] graph. If d dominates n, so it needs to dominate but then there are extra
+[00:02:22 -> 00:02:26] conditions. Firstly it should not be equal. Recall that dominator is a
+[00:02:26 -> 00:02:30] reflexive relation idom is not a reflexive relation so d cannot be
+[00:02:30 -> 00:02:36] equal to n and there does not exist another node such that you know there's
+[00:02:36 -> 00:02:39] transitivity. That means d dominates that node and that node dominates n.
+[00:02:39 -> 00:02:43] There should not be such a node. Only then we can say that d immediately dominates n.
+[00:02:43 -> 00:02:49] Alright so let's look at this example to see to understand what is the
+[00:02:49 -> 00:02:53] immediate dominates relation. So if I say what is the immediate dominator of
+[00:02:53 -> 00:02:56] n? Recall that there were many nodes that were dominating n. So there was
+[00:02:56 -> 00:03:00] b1 that was dominating n there was b4 that was dominating n. But if I say
+[00:03:00 -> 00:03:05] what is the immediate dominator of n? Is b1 an immediate dominator of n?
+[00:03:05 -> 00:03:11] Answer is no because b1 dominates b4 and b4 dominates n and so there is
+[00:03:11 -> 00:03:15] exists an intermediate node that you know that has transitivity with
+[00:03:15 -> 00:03:19] respect to the dominator relation and so we're not going to say that b1
+[00:03:19 -> 00:03:23] does not dominate n right. So let me just write that down b1 does not
+[00:03:23 -> 00:03:30] but b1 does not immediately dominate n. Does not idom n okay. Does b2
+[00:03:30 -> 00:03:35] immediately dominate n? The answer is no because b2 doesn't even dominate n.
+[00:03:35 -> 00:03:38] So forget about immediately it doesn't even dominate n because there are
+[00:03:38 -> 00:03:42] exists paths which can reach n without going through b2. So b2 does not
+[00:03:42 -> 00:03:46] dominate n. Similarly b3 does not dominate n and so b3 does not
+[00:03:46 -> 00:03:50] immediately dominate n either. Does b4 immediately dominate n? So firstly we
+[00:03:50 -> 00:03:54] have to ask the question does b4 dominate n? The answer is yes. Is b4 not equal
+[00:03:54 -> 00:03:58] to n? The answer is yes. Does there exist a node such that b4 dominates
+[00:03:58 -> 00:04:03] that node and that node dominates n? Well I can't really find any such node
+[00:04:03 -> 00:04:07] right. So I mean if I just look at all the other nodes no such node satisfies
+[00:04:07 -> 00:04:09] the condition that b4 dominates that node and that node dominates n. For
+[00:04:09 -> 00:04:14] example if I look at b1, b1 dominates n but b4 doesn't dominate b1
+[00:04:14 -> 00:04:19] all right. So the answer is that b4 immediately dominates n. So the
+[00:04:19 -> 00:04:24] immediate dominator of n is b4. Now what is the immediate
+[00:04:24 -> 00:04:31] dominator of b3? Now we know that b1 dominates b3 and actually there is no
+[00:04:31 -> 00:04:35] other node that dominates b3 in this particular control flow graph and so
+[00:04:35 -> 00:04:39] it also satisfies the other two relations. It's not equal to and there
+[00:04:39 -> 00:04:44] does not exist any other node that dominates b3 and is dominated by b1.
+[00:04:44 -> 00:04:48] Similarly b1 immediately dominates b2. So b1 immediately dominates b3, b1
+[00:04:48 -> 00:04:55] immediately dominates b4. What about b4? Which node immediately dominates b4? Now
+[00:04:55 -> 00:04:58] does b2 immediately dominate b4? The answer is no because b2 doesn't even
+[00:04:58 -> 00:05:02] dominate b4 because there exist paths from the start to b4 which do not
+[00:05:02 -> 00:05:07] go through b2. Similarly does b3 dominate b4? The answer is no
+[00:05:07 -> 00:05:12] because there exist paths that go to b4 that do not even go through b3.
+[00:05:12 -> 00:05:20] Does b1 immediately dominate b4? The answer is let's see b1 dominates b4
+[00:05:20 -> 00:05:26] true, b1 is not equal to b4 true. Does there exist a node such that b1
+[00:05:26 -> 00:05:31] dominates that node and that node dominates b4? So let's look at b2, b1
+[00:05:31 -> 00:05:36] dominates b2 right but does b2 dominate b4? No. Alright similarly for
+[00:05:36 -> 00:05:45] b3 and so the immediate dominator of b4 is b1 okay because there is no other
+[00:05:45 -> 00:05:51] node such that b1 dominates that node and that node dominates b4. b2 and b3
+[00:05:51 -> 00:05:55] do not satisfy that property and so the immediate dominator of b4 is
+[00:05:55 -> 00:06:01] actually b1. It's an interesting fact that immediate dominance relationships
+[00:06:01 -> 00:06:09] So if I was just I had to draw a graph where I draw you know each CFG node is
+[00:06:09 -> 00:06:13] a node in the new graph and then I draw an edge from one node to the
+[00:06:13 -> 00:06:21] other if and only if I draw an edge from node n1 to node n2 if and
+[00:06:21 -> 00:06:26] only if n1 immediately dominates n2 and if I do such a if I draw such a
+[00:06:26 -> 00:06:30] graph I'm going to end up with a tree and we can see that in this
+[00:06:30 -> 00:06:34] particular example as well and this is a convenient representation because now
+[00:06:34 -> 00:06:39] if I want to say you know check whether something dominates something I
+[00:06:39 -> 00:06:43] can just check whether it's reachable in this tree or not

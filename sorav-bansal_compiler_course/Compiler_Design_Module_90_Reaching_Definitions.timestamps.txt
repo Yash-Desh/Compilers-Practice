@@ -1,0 +1,235 @@
+Title: Compiler Design Module 90 : Reaching Definitions
+Video ID: xmj5shfHq4U
+Detected language: en
+------------------------------------------------------------
+
+[00:00:00 -> 00:00:07] Now I want to introduce another very popular data flow analysis, which is called the reaching definitions analysis.
+[00:00:07 -> 00:00:18] To understand what is reaching and definitions and why we need it, let's try to run the constant propagation analysis, the constant propagation DFA, on this particular example.
+[00:00:18 -> 00:00:23] So in this example, this is a control flow graph. It has six different basic blocks.
+[00:00:23 -> 00:00:30] In the first basic block, we are assigning A to 4. Then there is branching and then on one branch B is assigned 1.
+[00:00:30 -> 00:00:34] On another branch B is assigned 2 plus Z for some variable Z.
+[00:00:34 -> 00:00:39] And then they both meet at a single basic block, which again branches.
+[00:00:39 -> 00:00:45] And in this part of the branch, there is some computation S equals S plus A into B.
+[00:00:45 -> 00:00:51] I equals I plus 1 and then there is a loop back to the condition I is less than N.
+[00:00:51 -> 00:01:00] This whole part is the loop and this is probably the portion of the program where the program is going to spend most of its time because that's the loop.
+[00:01:00 -> 00:01:07] And typically loops will be executing thousands if not millions or billions of time in the lifetime of a program.
+[00:01:07 -> 00:01:13] Whereas if the statement is not within a loop, it will probably only execute one or few number of times.
+[00:01:13 -> 00:01:22] On the other hand, if I is not less than N, then this branch is basically the loop exit and this loop exit basically returns using the return statement.
+[00:01:22 -> 00:01:28] Now, if we run the constant propagation algorithm on this particular example, then we will see.
+[00:01:28 -> 00:01:36] And if we want to basically look at this particular program point, so just before just before S equals S plus A into B,
+[00:01:36 -> 00:01:41] I want to know whether A is a constant and whether B is a constant at this point.
+[00:01:41 -> 00:01:48] So what do you think? So the question that we want to ask is what are the definitions of A and B that may reach here?
+[00:01:48 -> 00:01:52] And if some of those definitions are constant or not?
+[00:01:52 -> 00:01:59] So, for example, when I look at A, then A comma 4 may reach this point, right?
+[00:01:59 -> 00:02:07] And in fact, when we do the constant propagation DFA, then we were going to infer the relationship A comma 4 because on all possible program paths, right?
+[00:02:07 -> 00:02:11] So what are all the possible program paths that can reach this program point?
+[00:02:11 -> 00:02:16] Notice that this is a possible program path. This is a possible program path.
+[00:02:16 -> 00:02:21] This and a loop is a possible, one iteration of the loop is a possible program path.
+[00:02:21 -> 00:02:23] Two iterations of the loop are possible.
+[00:02:23 -> 00:02:28] So there's actually potentially unbounded number of paths that can reach this program.
+[00:02:28 -> 00:02:34] But we can prove using our constant propagation DFA that on all such paths,
+[00:02:34 -> 00:02:40] A will always have the hold the value 4 by the time the control reaches this point in the program.
+[00:02:40 -> 00:02:44] Now we can do this because and it's easy to see this because no matter what path it is,
+[00:02:44 -> 00:02:49] it has to go through the first basic block and the first basic block we're setting A to 4.
+[00:02:49 -> 00:02:56] And our DFA is also supposed to return this answer and it will return the answer based on the DFA that we formulated in the previous modules.
+[00:02:56 -> 00:02:58] Now let's look at B.
+[00:02:58 -> 00:03:04] So when we look at B, then we say that, OK, on this particular program path here,
+[00:03:04 -> 00:03:09] B is 1 and on this particular program path here, B is 2 plus Z.
+[00:03:09 -> 00:03:12] And then even when I take the loop, B remains unchanged.
+[00:03:12 -> 00:03:17] So on one of the program paths is B equals 1 and on the other program path, it's B, it's 2 plus Z.
+[00:03:17 -> 00:03:21] So there are two possible values of B that can reach here.
+[00:03:21 -> 00:03:27] Now in our constant propagation algorithm, we would just say, oh, that means B is not a constant and we would set B to bottom.
+[00:03:27 -> 00:03:30] So that's how we will deal with it.
+[00:03:30 -> 00:03:35] But in the reaching definitions analysis, we are going to do a more fine grained analysis.
+[00:03:35 -> 00:03:38] First of all, we are not going to restrict ourselves to constant definitions.
+[00:03:38 -> 00:03:44] So not only am I going to look at B, 1 type of associations,
+[00:03:44 -> 00:03:50] but also, you know, this is a definition which is basically B is associated with 2 plus Z.
+[00:03:50 -> 00:03:53] So in this particular definition, B is being assigned 2 plus Z.
+[00:03:54 -> 00:03:57] And I say that what are all the definitions that can reach this point?
+[00:03:57 -> 00:04:01] Well, it is B, it is B colon equals 1.
+[00:04:01 -> 00:04:06] So if I label this statement, let's call this S1 and I call this S2,
+[00:04:06 -> 00:04:12] then S1 and S2 are the two definitions of B that may reach this particular program point.
+[00:04:12 -> 00:04:15] Let me call this program point P.
+[00:04:15 -> 00:04:19] So S1 and S2 may reach program point P.
+[00:04:19 -> 00:04:23] And compare this with, for example, available expressions.
+[00:04:23 -> 00:04:27] Available expressions would have said that, oh, because on this path,
+[00:04:27 -> 00:04:30] the expression 1 is available on this path,
+[00:04:30 -> 00:04:33] the expression 2 plus Z is available on this path.
+[00:04:33 -> 00:04:37] But then at the meet point, I would take the intersection and I would say,
+[00:04:37 -> 00:04:40] oh, there's no expression that's available on it
+[00:04:40 -> 00:04:43] because I want to basically ensure that it's available on all paths.
+[00:04:43 -> 00:04:47] So on one of the paths, it's 1, on one of the paths, it's 2 plus Z.
+[00:04:47 -> 00:04:49] So I'm going to say in my available expressions,
+[00:04:49 -> 00:04:51] recall that the meet operator was an intersection.
+[00:04:51 -> 00:04:54] And so I'm just going to say, oh, I don't have any value in B.
+[00:04:54 -> 00:04:57] But in my reaching definitions, I'm not going to do that.
+[00:04:57 -> 00:05:00] I want to say, okay, you know, S1 is reaching here,
+[00:05:00 -> 00:05:04] which is assigning 1 to B and S2 is reaching here on this path
+[00:05:04 -> 00:05:06] and that's assigning 2 plus Z to B.
+[00:05:06 -> 00:05:08] And now same thing for P.
+[00:05:08 -> 00:05:10] So even if I go back around the loop,
+[00:05:10 -> 00:05:13] it would be only either S1 or S2 that reach here
+[00:05:13 -> 00:05:15] because B is not being modified inside the loop.
+[00:05:15 -> 00:05:17] Now, how is this information useful?
+[00:05:17 -> 00:05:20] So basically, this is called the reaching definitions analysis.
+[00:05:20 -> 00:05:23] We're going to look at it in slightly more detail later as well.
+[00:05:23 -> 00:05:26] But basically, we are interested in knowing that at a given program point,
+[00:05:26 -> 00:05:30] what are all the definitions of B that may reach that program point?
+[00:05:30 -> 00:05:34] And in this case, there are two definitions of B that may reach.
+[00:05:34 -> 00:05:38] If the set of definitions that may reach a program point is a singleton set,
+[00:05:38 -> 00:05:40] which means only one definition can reach,
+[00:05:40 -> 00:05:43] and that definition is a constant, for example,
+[00:05:43 -> 00:05:48] then, you know, we'll have a constant propagation is going to P
+[00:05:48 -> 00:05:50] and can be kind of implemented in this way, right?
+[00:05:50 -> 00:05:52] Or available expressions would say that,
+[00:05:52 -> 00:05:54] okay, it needs to be a singleton set, right?
+[00:05:54 -> 00:05:55] Or things like that.
+[00:05:55 -> 00:05:57] So reaching definitions is kind of being more relaxed
+[00:05:57 -> 00:05:59] and saying, okay, even if there are multiple things,
+[00:05:59 -> 00:06:00] I want to know all of the things.
+[00:06:00 -> 00:06:02] Now, you may ask, what is the reason
+[00:06:02 -> 00:06:04] for collecting multiple definitions of B?
+[00:06:04 -> 00:06:08] And here is one interesting transformation that can be done.
+[00:06:08 -> 00:06:12] So first of all, I can just replace A by 4
+[00:06:12 -> 00:06:14] because I know it's a singleton set.
+[00:06:14 -> 00:06:17] So it's very similar to constant propagation algorithm.
+[00:06:17 -> 00:06:19] It's a singleton set and it's a constant for A,
+[00:06:19 -> 00:06:22] and so I can just replace it by that constant.
+[00:06:22 -> 00:06:25] In this case, that happens to be the constant 4.
+[00:06:25 -> 00:06:28] But even for B, what I can do is I can specialize the code.
+[00:06:28 -> 00:06:30] So I say, because in this case,
+[00:06:30 -> 00:06:32] I know that there are only two definitions that are reaching,
+[00:06:32 -> 00:06:35] and one of them is a constant and the other is not a constant.
+[00:06:35 -> 00:06:37] So the one that's constant is 1,
+[00:06:37 -> 00:06:40] and the one that's not a constant is 2 plus Z.
+[00:06:40 -> 00:06:41] So I can specialize the code.
+[00:06:41 -> 00:06:43] So on one branch, I can replicate the code.
+[00:06:43 -> 00:06:48] The entire loop can be replicated for the branch where B equals 1,
+[00:06:48 -> 00:06:51] and then the same code can be replicated again
+[00:06:51 -> 00:06:55] for the branch which is for B equals 2 plus Z.
+[00:06:55 -> 00:06:57] Now, what is the advantage of doing that?
+[00:06:57 -> 00:06:59] Well, the advantage of doing that is now
+[00:06:59 -> 00:07:01] because on this particular branch, B equals 1,
+[00:07:01 -> 00:07:03] I avoid a multiplication, right?
+[00:07:03 -> 00:07:05] So it becomes because I know B is 1,
+[00:07:05 -> 00:07:09] and now on this branch, I can just do constant propagation
+[00:07:09 -> 00:07:12] and then get B to be, replace B by 1,
+[00:07:12 -> 00:07:15] and so I can basically improve the performance of my loop.
+[00:07:15 -> 00:07:17] And recall, we said that the loop is where
+[00:07:17 -> 00:07:19] the program is spending most of its time.
+[00:07:19 -> 00:07:21] So even though we are duplicating the code,
+[00:07:21 -> 00:07:24] which means we are increasing the code size of the program,
+[00:07:24 -> 00:07:26] typically, we will be making the program faster
+[00:07:26 -> 00:07:28] because the loop will probably execute thousands,
+[00:07:28 -> 00:07:30] if not millions or billions of times.
+[00:07:30 -> 00:07:32] And so this removal of a multiplication operator
+[00:07:32 -> 00:07:34] in the body of the loop
+[00:07:34 -> 00:07:36] is going to be a meaningful optimization.
+[00:07:36 -> 00:07:38] So this is just one of the applications
+[00:07:38 -> 00:07:39] of reaching definitions.
+[00:07:39 -> 00:07:41] There are many more applications,
+[00:07:41 -> 00:07:44] but I just wanted to motivate it with an example.
+[00:07:44 -> 00:07:47] So how are we going to implement reaching definitions?
+[00:07:47 -> 00:07:50] Well, reaching definition basically involves
+[00:07:50 -> 00:07:52] keeping track of statements
+[00:07:52 -> 00:07:54] which are basically of the form, let's say,
+[00:07:54 -> 00:07:56] X colon equals some function of Y and Z.
+[00:07:56 -> 00:07:58] So I'm using plus as a function.
+[00:07:58 -> 00:08:01] So let's say X colon equals Y plus Z.
+[00:08:01 -> 00:08:03] Then we need to define the transfer function
+[00:08:03 -> 00:08:04] of the statement.
+[00:08:04 -> 00:08:06] So the transfer function is,
+[00:08:06 -> 00:08:08] we're going to define it in terms of
+[00:08:08 -> 00:08:10] the gen set and the kill set,
+[00:08:10 -> 00:08:12] as we said that some of the transfer functions
+[00:08:12 -> 00:08:14] can be expressed
+[00:08:14 -> 00:08:16] just as a characteristic of the statement.
+[00:08:16 -> 00:08:18] And typically, you say,
+[00:08:18 -> 00:08:22] what are elements of the set that are being generated
+[00:08:22 -> 00:08:24] and what are elements of the set that are being killed?
+[00:08:24 -> 00:08:26] And in this case, first of all,
+[00:08:26 -> 00:08:27] what is the domain of values?
+[00:08:27 -> 00:08:29] The domain of values for our reaching definition expression
+[00:08:29 -> 00:08:31] is going to be statements
+[00:08:31 -> 00:08:34] which are characterized by the LHS of that statement,
+[00:08:34 -> 00:08:35] in this case X,
+[00:08:35 -> 00:08:37] and the RHS of the statement,
+[00:08:37 -> 00:08:38] which is Y plus Z,
+[00:08:38 -> 00:08:40] which is the expression that's being put into X.
+[00:08:40 -> 00:08:43] So firstly, it's going to be a forward data flow analysis
+[00:08:43 -> 00:08:45] because reaching definitions is basically
+[00:08:45 -> 00:08:47] what are the definitions that are reaching
+[00:08:47 -> 00:08:49] at a particular program point?
+[00:08:49 -> 00:08:51] So the direction of flow of information
+[00:08:51 -> 00:08:53] is forward because I want to know
+[00:08:53 -> 00:08:55] what is happening before my...
+[00:08:55 -> 00:08:57] At any program point, I need to know
+[00:08:57 -> 00:09:00] the reaching definitions that are coming from upstairs
+[00:09:00 -> 00:09:02] or from the beginning of the program
+[00:09:02 -> 00:09:04] or from the earlier parts of the program.
+[00:09:04 -> 00:09:06] And so that's why it's a forward data flow analysis.
+[00:09:06 -> 00:09:08] That's an easy way to figure out
+[00:09:08 -> 00:09:10] whether it's forward data flow analysis
+[00:09:10 -> 00:09:12] or backward data flow analysis.
+[00:09:12 -> 00:09:14] If the information is moving from the bottom of the program,
+[00:09:14 -> 00:09:16] then it's a backward data flow analysis.
+[00:09:16 -> 00:09:18] If the information is moving from the top of the program,
+[00:09:18 -> 00:09:20] then it's a forward data flow analysis.
+[00:09:20 -> 00:09:22] So in this case, it's a forward data flow analysis.
+[00:09:22 -> 00:09:25] So what is the gen set for this particular thing?
+[00:09:25 -> 00:09:27] Well, it's the statement itself,
+[00:09:27 -> 00:09:32] itself which is you know you can say s colon x comma y plus z you can represent it either
+[00:09:32 -> 00:09:38] as a statement or as the pupil lhs comma rhs so lhs comma rhs is x comma y plus z
+[00:09:38 -> 00:09:45] and what is the kill set when anything else that was defining that that already had x in it so
+[00:09:45 -> 00:09:50] any other definition that had x in it because that definition has now been overwritten by s
+[00:09:50 -> 00:09:55] right because if some let's say there was x equals 10 that was coming on this path but
+[00:09:55 -> 00:10:04] now i have said s equals y plus z then 10 is no longer reaching the point after this statement
+[00:10:04 -> 00:10:10] right because by reaching definitions i mean the definitions that basically have can potentially
+[00:10:10 -> 00:10:18] reach that point and so if a definition has been occluded which means overwritten then we kind of
+[00:10:18 -> 00:10:24] want to kill that and so that's why this is kill s equals anything that is assigning to x
+[00:10:25 -> 00:10:29] all right and what's the meet operator now in this case the meet operator is going to be
+[00:10:30 -> 00:10:35] set union operator and that's the big difference between reaching definitions and the other
+[00:10:35 -> 00:10:39] analysis that we have seen so far is including constant propagation and available expressions
+[00:10:39 -> 00:10:45] where the where the meet operator was intersection so why is the meet operator a union well
+[00:10:45 -> 00:10:51] because we are basically interested in all the definitions that may reach that point so if the
+[00:10:51 -> 00:10:57] definition may reach on any path then we want to count it right so whenever there's a word any
+[00:10:57 -> 00:11:02] then we want to use union whenever there's a word all then we want to use intersection so in
+[00:11:02 -> 00:11:06] the case of reaching definitions we were interested in any in the definitions that may reach that
+[00:11:06 -> 00:11:11] point on any path and that those are the definitions that we want to call reaching
+[00:11:11 -> 00:11:16] definitions and thus the meet operator is going to be union so you can say in s equals union
+[00:11:16 -> 00:11:24] of out p1 dot dot out pn so what is the ordering if union is the meet operator what does it mean
+[00:11:24 -> 00:11:30] it means that the greatest lower bound operator is represented by union so what does it tell us
+[00:11:30 -> 00:11:36] about the ordering well you know i leave this a little bit as homework but think about it
+[00:11:36 -> 00:11:48] the greatest lower bound is basically defined as glv equals x comma y equals z if z if z is less
+[00:11:48 -> 00:11:57] than equal to x and z is less than equal to y and z is the maximum such value so if i'm
+[00:11:57 -> 00:12:01] doing union what do you think should be the ordering such that glv comes out to be union
+[00:12:01 -> 00:12:07] out to be union well it's you know here's the hint it's going to it's probably going
+[00:12:07 -> 00:12:12] to have something to do with the superset operator so something is less than equal to
+[00:12:12 -> 00:12:18] something if it is the superset of so x is less than equal to y if x is a superset of y and
+[00:12:18 -> 00:12:24] that's you know that's just you know in earlier cases you may have we have used subset
+[00:12:24 -> 00:12:28] this time you're using superset and that's that's what's the difference between intersection
+[00:12:29 -> 00:12:34] so notice that you know i can just say what is the meet operator or i could have just specified the
+[00:12:34 -> 00:12:41] ordering now the amount of information contained in these two statements that the glv is a union
+[00:12:41 -> 00:12:46] or i could have just said the ordering is superset it's the same amount of information
+[00:12:46 -> 00:12:50] we're going to discuss this in more detail more formally later on as well now let's compare
+[00:12:50 -> 00:12:56] reaching definitions with available expressions so they are very similar you know x colon
+[00:12:56 -> 00:13:03] equals y plus z let's say the same statement then gen s is identical it's x colon x comma y plus z
+[00:13:04 -> 00:13:12] kill s is basically anything that is you know that has x in the left hand side and also
+[00:13:12 -> 00:13:16] anything that has x on the right hand side because when we are doing available expressions
+[00:13:16 -> 00:13:21] we are worried about expressions when we are doing reaching definitions we are worried about
+[00:13:21 -> 00:13:26] definitions and so there's a difference between definitions and expressions and because we are
+[00:13:26 -> 00:13:30] interested in expressions when we are talking about available expressions you know we want to
+[00:13:30 -> 00:13:35] kind of kill anything where x is also we want to also kill anything where x is appearing on the
+[00:13:35 -> 00:13:40] right hand side which means because x has now been updated so now you know let's say the
+[00:13:40 -> 00:13:46] expression that was present already in my set was x plus z then because x has been redefined
+[00:13:46 -> 00:13:50] now x plus z is no longer available in whatever it was available let's say y it's
+[00:13:50 -> 00:13:55] no longer available so we want to kill that whereas no such restriction needs to be there
+[00:13:55 -> 00:14:00] when we are talking about definition so there are two differences here one is you know so and the
+[00:14:00 -> 00:14:03] other thing is that the meet operator here is intersection because we wanted the expression to
+[00:14:03 -> 00:14:08] be available in all parts and we have talked about the ordering the ordering in this case
+[00:14:08 -> 00:14:12] would be the subset operator whereas the ordering in this case would be the superset
+[00:14:12 -> 00:14:17] operator okay so the two major differences between available expressions and reaching
+[00:14:17 -> 00:14:22] definitions one is here we are talking about expressions here we are talking about definitions
+[00:14:22 -> 00:14:32] so s is a definition y plus z is an expression okay and also here we want it to be available
+[00:14:32 -> 00:14:37] on all program paths here we are interested in any program path and so that makes the
+[00:14:37 -> 00:14:39] difference in the meet operator

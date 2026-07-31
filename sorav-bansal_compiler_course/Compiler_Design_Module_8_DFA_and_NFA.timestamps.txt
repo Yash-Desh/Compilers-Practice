@@ -1,0 +1,199 @@
+Title: Compiler Design Module 8 : DFA and NFA
+Video ID: uKoPV5DoRYc
+Detected language: en
+------------------------------------------------------------
+
+[00:00:00 -> 00:00:06] Okay, so today we are going to discuss about finite autometons or for the finite automator meta and
+[00:00:06 -> 00:00:13] There are two types of automatons deterministic and non deterministic. So here is here's an example of a automaton
+[00:00:14 -> 00:00:20] An automaton is basically a machine or a program that can be run on a given input data
+[00:00:21 -> 00:00:23] to check whether
+[00:00:23 -> 00:00:27] That string that input belongs to a regular language or not. All right
+[00:00:27 -> 00:00:35] So, so let's understand this automaton. This is just a review lecture. I hope hopefully you have already studied finite automatons
+[00:00:36 -> 00:00:39] In some previous course, so this particular
+[00:00:40 -> 00:00:43] Automaton has three states s 0 s 1 and s 2
+[00:00:45 -> 00:00:51] The state s 0 is special because it is the start state and this is indicated by this incoming arrow
+[00:00:52 -> 00:00:54] That's drawn here
+[00:00:54 -> 00:00:59] So this basically means that the program or the machine starts in state s 0
+[00:01:00 -> 00:01:06] Also notice that s 0 is drawn with a concentric circle, which means that it is an accepting state
+[00:01:06 -> 00:01:12] Which means if the end of the input data and at state s 0 then that particular input is
+[00:01:13 -> 00:01:17] Accepted by the regular language. Otherwise, it is not accepted. All right
+[00:01:17 -> 00:01:22] so and a string is accepted by a regular language if and only if it at the end of
+[00:01:23 -> 00:01:28] After the entire string has been consumed the automaton is on an accepting state
+[00:01:29 -> 00:01:35] All right, if I'm at state s 0 and the next string is 0 then I am going to stay in state s 0
+[00:01:35 -> 00:01:37] That's what this transition indicates
+[00:01:37 -> 00:01:41] If if I'm at state s 0 and I get 1 then I'm going to transition to state s 1
+[00:01:42 -> 00:01:47] If I'm at state s 1 and I get 0 then there is no outgoing transition
+[00:01:47 -> 00:01:54] Which basically means that it's going to transition to some special error state. All right, which means that
+[00:01:54 -> 00:02:00] This string is not accepted by the regular language on the other hand if I'm at s 1 and I get 1 as my next character
+[00:02:00 -> 00:02:02] Then I'm going to transition to s 0
+[00:02:03 -> 00:02:05] Similarly if I'm at s 2
+[00:02:09 -> 00:02:12] So actually this is is not what I originally intended
+[00:02:13 -> 00:02:16] So let me just redraw this automaton slightly
+[00:02:17 -> 00:02:21] So let's assume that this is a 0, okay
+[00:02:22 -> 00:02:25] So so now if I'm at s 1 and I get a 0
+[00:02:26 -> 00:02:30] Then it's going to come back to s 0 if I'm at s 1 and it's a 1 then I'm going to go to s 2
+[00:02:31 -> 00:02:36] If I'm at s 2 and I get a 0 then I'm going to come back to s 1 and if I get a 1 on s 2
+[00:02:36 -> 00:02:38] Then I'm going to stay on s 2
+[00:02:39 -> 00:02:45] Now if now this is an automaton and we can you know run this on some input string to see if that input string
+[00:02:45 -> 00:02:52] Belongs to the regular language or not. Let's take a couple of examples. So let's say there is the input string 0 0
+[00:02:53 -> 00:02:56] 0 0 is going to start on s 0 the first
+[00:02:56 -> 00:03:00] Character 0 so it's going to stay in s 0. The next character is also 0
+[00:03:00 -> 00:03:04] So it's going to still stay in s 0 and indeed s
+[00:03:05 -> 00:03:11] We have reached the end of the input and we are at s 0 and so s 0 is an accepting state
+[00:03:11 -> 00:03:15] And so 0 0 is belongs to the regular language represented by this automaton
+[00:03:17 -> 00:03:19] Now let's take another string. Let's say it's 0 1
+[00:03:20 -> 00:03:24] So once again, I start at s 0 the first character is 0
+[00:03:24 -> 00:03:29] So I remain at s 0 the next character is a 1 and so I transition to s 1
+[00:03:29 -> 00:03:36] Now this is the end of my input and I am at s 1 and s 1 is not an accepting state and so 0 1 is not
+[00:03:36 -> 00:03:38] Accepted by the regular language
+[00:03:38 -> 00:03:40] represented by this automaton
+[00:03:41 -> 00:03:46] Now also notice that this automaton is a deterministic automaton. All right
+[00:03:46 -> 00:03:52] Why is this a deterministic automaton because at any state for any input character
+[00:03:53 -> 00:03:55] There is only one possibility
+[00:03:55 -> 00:04:00] Right example if I'm in s 1 and I get a 0 there's only one possibility. I'll just move to s 0, right?
+[00:04:00 -> 00:04:02] There is another there is a larger category of
+[00:04:03 -> 00:04:05] automatons which are
+[00:04:05 -> 00:04:11] Which can have non-determinism so they would they could either move to s 0 or s 1 and we'll see an example
+[00:04:11 -> 00:04:15] Moreover, there are no epsilon moves and we'll see what an epsilon move is
+[00:04:16 -> 00:04:21] All right. So here the second example here is so let me just fix this automaton also
+[00:04:21 -> 00:04:26] The second example here is a non deterministic automaton
+[00:04:27 -> 00:04:32] Okay, why is this a non deterministic automaton? Well consider this state s 1
+[00:04:33 -> 00:04:37] if it gets an input 1 then it's going to
+[00:04:38 -> 00:04:42] It could either stay in s 1 or it could transition to s 2
+[00:04:42 -> 00:04:48] Now this is the non determinism machine could move and make any of those moves and any of those moves would be a legal move
+[00:04:48 -> 00:04:52] And so such an automaton is called a non deterministic automaton
+[00:04:53 -> 00:04:57] Moreover, there are some special epsilon characters here, right? What is an epsilon character?
+[00:04:57 -> 00:05:04] It basically means that I move without actually consuming any character in the string recall that the epsilon represents the empty string
+[00:05:04 -> 00:05:10] And so in this case there there are epsilon moves. So which means that if I'm at s 2 I can
+[00:05:11 -> 00:05:19] Decide the automaton can decide to move from s 2 to s 0 without consuming any character. All right, so that's called an epsilon move
+[00:05:20 -> 00:05:26] As opposed to the other types of moves which always consume a character and epsilon move does not consume a character of the string
+[00:05:26 -> 00:05:32] And so this is also a non determinism the non deterministic machine can choose to move between
+[00:05:33 -> 00:05:38] You know to traverse epsilon edges and these are called epsilon moves
+[00:05:38 -> 00:05:40] Okay, so this is an example of a non deterministic automaton
+[00:05:42 -> 00:05:47] Okay, so this is a result in theoretical computer science that the language
+[00:05:48 -> 00:05:50] accepted by a
+[00:05:50 -> 00:05:52] deterministic finite automaton so DFA
+[00:05:54 -> 00:05:56] deterministic finite automaton and
+[00:05:57 -> 00:06:00] An NFA which is the non deterministic
+[00:06:03 -> 00:06:07] finite automaton
+[00:06:07 -> 00:06:10] Are actually the same. So in other words
+[00:06:11 -> 00:06:15] If it's not like the whatever language can be accepted by a
+[00:06:16 -> 00:06:21] deterministic finite automaton and non deterministic finite automaton can also be accepted by another
+[00:06:22 -> 00:06:24] Maybe a different
+[00:06:24 -> 00:06:30] deterministic finite automaton so it's not like NFAs will have will accept a wider category of languages or anything like that
+[00:06:31 -> 00:06:38] So that's a that's a significant result in theoretical computer science moreover the languages that can be accepted through these
+[00:06:39 -> 00:06:45] finite automatons deterministic or non deterministic are exactly the category of regular languages and
+[00:06:45 -> 00:06:48] Recall what are regular languages regular languages are languages that can be
+[00:06:49 -> 00:06:51] Represented through regular expressions, right?
+[00:06:51 -> 00:06:56] So we call that a regular expression its meaning of a regular expression is a set of strings
+[00:06:56 -> 00:06:58] which is the language it represents and
+[00:06:59 -> 00:07:02] And it turns out that a DFA or an NFA
+[00:07:03 -> 00:07:08] Language that is accepted by a DFA or NFA can also be represented using a regular expression and vice versa
+[00:07:08 -> 00:07:10] And this is this is a major result
+[00:07:11 -> 00:07:14] this is an important kind of significant result isn't it and
+[00:07:16 -> 00:07:21] All right, and just to give you an intuition why why this is true well
+[00:07:22 -> 00:07:25] both DFA and NFA are basically
+[00:07:26 -> 00:07:31] Examples of machines that have finite amount of memory and this memory is basically how many states
+[00:07:31 -> 00:07:38] You know how many different states that does the machine have that determines how much memory it maintains at any given point of execution
+[00:07:39 -> 00:07:42] similarly a regular expression also has a finite amount of
+[00:07:44 -> 00:07:45] Memory
+[00:07:45 -> 00:07:49] You know so basically a regular language can be represented
+[00:07:49 -> 00:07:52] Can be a string in a regular language can be
+[00:07:53 -> 00:07:59] Identified using a machine with a finite amount of memory and so this correspondence holds of course a more rigorous
+[00:08:00 -> 00:08:04] Explanation of this this result is a subject of theory of computation
+[00:08:05 -> 00:08:07] All right
+[00:08:07 -> 00:08:12] So here's a quick review of how you could you know given it in an NFA if you would like to
+[00:08:13 -> 00:08:21] Identify the DFA the corresponding DFA for that NFA there exists in algorithm recall that I just told you in the previous slide that
+[00:08:21 -> 00:08:29] The category of language is accepted by an NFA is the equivalent to the category of language is accepted by DFA's which means that
+[00:08:29 -> 00:08:33] if they if if you if you give me any NFA and
+[00:08:33 -> 00:08:37] That NFA accepts some language then I
+[00:08:38 -> 00:08:42] Can give you a DFA a corresponding DFA which will accept
+[00:08:43 -> 00:08:51] Exactly the same language right and so in fact there is an algorithm that we use to convert any given NFA to a
+[00:08:51 -> 00:08:52] corresponding DFA
+[00:08:52 -> 00:08:57] So there are two steps to the algorithm the algorithm is rather rather simple
+[00:08:57 -> 00:09:03] First is you find the epsilon closure of every state so for any given state in the NFA you identify
+[00:09:03 -> 00:09:05] All the states that can be reached from that state
+[00:09:06 -> 00:09:13] With through epsilon moves alone all right and the idea is that you know in the DFA there are no epsilon moves
+[00:09:13 -> 00:09:16] So what we're going to do is we're going to club all such states that can be reached
+[00:09:17 -> 00:09:22] With epsilon moves alone into one big state and we're going to put that state in our DFA
+[00:09:22 -> 00:09:26] All right, and the other idea here is that
+[00:09:26 -> 00:09:32] In an NFA recall that the machine can move non-deterministically between any two moves
+[00:09:34 -> 00:09:36] across any two transitions and
+[00:09:38 -> 00:09:43] And so in the DFA what we're going to track is what are the possibilities
+[00:09:43 -> 00:09:50] For the NFA at the current point right for example if in if the NFA could have moved
+[00:09:51 -> 00:09:53] on the one character it
+[00:09:53 -> 00:10:00] Consuming a character one if it could have moved to two states S0 and S1 S0 or S1
+[00:10:01 -> 00:10:05] Non-deterministically then in the DFA we would like to record the fact that
+[00:10:05 -> 00:10:10] The NFA could be either in S0 or in S1 and to record this fact
+[00:10:10 -> 00:10:13] I'm going to create a new state called S0 comma S1
+[00:10:13 -> 00:10:18] That's going to record the fact that the NFA could have been either in S0 or in S1
+[00:10:18 -> 00:10:19] All right
+[00:10:19 -> 00:10:24] And once I do that then it becomes easy to identify how to draw the edges
+[00:10:24 -> 00:10:28] I'm going to I'm just going to show you an example of how to convert an NFA to a DFA
+[00:10:28 -> 00:10:33] Running through this example is only intended to kind of show you how this algorithm works
+[00:10:34 -> 00:10:40] Also the point of this exercise is only to show that any NFA can be converted to a DFA because they are equivalent
+[00:10:40 -> 00:10:44] Power in terms of what they can recognize of course a more detailed
+[00:10:45 -> 00:10:47] Discussion of this is a subject of theory of computation
+[00:10:47 -> 00:10:51] So here's an NFA it starts at state S0
+[00:10:51 -> 00:10:58] If it gets if it consumes zero or one then it's remain item then it could either remain in S0 or transition to S1
+[00:10:59 -> 00:11:01] if it is at S1 and it
+[00:11:02 -> 00:11:05] Consumes a one then it transitions to S2 which is also an accepting state
+[00:11:07 -> 00:11:12] Further from S2 it could move have an epsilon transition to S1
+[00:11:12 -> 00:11:17] Notice that I haven't drawn some missing edges. For example, if there was a
+[00:11:18 -> 00:11:23] Zero transition from S1 then I would just go to a special state called the error state
+[00:11:23 -> 00:11:26] Right, which which is not an accepting state
+[00:11:26 -> 00:11:29] And so I will remain the error state from there on and so the error state
+[00:11:29 -> 00:11:35] You know, you just remain in the error state for all the further inputs and basically means that this string is not
+[00:11:35 -> 00:11:38] Not accepted, but I'm not drawing such edges just for simplicity
+[00:11:39 -> 00:11:41] All right
+[00:11:41 -> 00:11:47] Well, so if I want to convert this NFA to a DFA, my first job is to identify the epsilon closure
+[00:11:47 -> 00:11:49] So what is the epsilon closure?
+[00:11:49 -> 00:11:55] Well, what is the epsilon closure of S0? It's just S0 because there are no outgoing epsilon edges from S0
+[00:11:55 -> 00:12:01] What is the epsilon closure of S1? It's just S1. What's the epsilon closure of S2?
+[00:12:01 -> 00:12:04] Well, it's S2 and S1
+[00:12:04 -> 00:12:10] Right, because it could know if it's an S2 it could non-thermistically just choose to go to S1 whenever it likes
+[00:12:11 -> 00:12:17] All right, so so I'm going to do that. So we're going to have states S0, S1 and S2, S1
+[00:12:17 -> 00:12:19] But let's start from the beginning
+[00:12:20 -> 00:12:23] So so this is S0. So in the
+[00:12:24 -> 00:12:29] At the very beginning if I have not consumed any character then the NFA is going to be
+[00:12:29 -> 00:12:34] In state S0 and there's no other possibility right because there's only one start state in the NFA
+[00:12:35 -> 00:12:39] So even in the DFA we're going to be only in state S0
+[00:12:39 -> 00:12:41] Now if I get a 0 on
+[00:12:44 -> 00:12:48] While I'm in S0 then I could either move
+[00:12:49 -> 00:12:56] Then there's only one possibility actually and so I'll remain in S0 and so in the DFA
+[00:12:56 -> 00:12:58] I'm just going to draw this edge from
+[00:12:59 -> 00:13:02] S0 to S0 on input 0
+[00:13:03 -> 00:13:08] Now if I get a 1 on state S0, then I have two possibilities
+[00:13:08 -> 00:13:11] I could either remain in S0 or I could transition to S1
+[00:13:12 -> 00:13:17] So to represent this fact recall that I'm going to have a state called S0, S1
+[00:13:18 -> 00:13:24] Which represents that the NFA could be either in S0 or in S1 and I will say that if I get a Z1
+[00:13:25 -> 00:13:28] While I was in state S0, then I'm going to transition to the state
+[00:13:29 -> 00:13:31] S0, S1
+[00:13:31 -> 00:13:33] Okay
+[00:13:33 -> 00:13:40] Now let's continue if I'm in state S0 or S1 and I get a 0
+[00:13:40 -> 00:13:45] Then what happens? Well, if I am in state S1 and I get a 0
+[00:13:45 -> 00:13:49] I don't go anywhere which basically means I go to the error state which I'm not interested in drawing
+[00:13:50 -> 00:13:54] But if I am in state S0 and I get a 0 then I stay in state S0
+[00:13:55 -> 00:13:59] So if I'm in state either S0 or S1 and I get a 0
+[00:14:00 -> 00:14:07] Then the only possibility after this is actually in the NFA is going back to S0 because I couldn't remain in S1
+[00:14:09 -> 00:14:11] Alright
+[00:14:11 -> 00:14:13] now if I'm in
+[00:14:13 -> 00:14:14] also
+[00:14:14 -> 00:14:20] Now let's look at what happens if I'm in either if I'm in S0 or S1 why I got a 1
+[00:14:21 -> 00:14:25] So if I get a 1 while I'm in S0, S1 I will move to S2
+[00:14:25 -> 00:14:33] But recall that S2 has an epsilon closure, which is S1. So I'm going to draw S2, S1
+[00:14:34 -> 00:14:35] Because S1 is in the epsilon closure
+[00:14:35 -> 00:14:40] So if I'm in S2, I could also be in S1, right by default but because of the epsilon move
+[00:14:40 -> 00:14:45] Further because S2 is an accepting state S2, S1 will also be an accepting state
+[00:14:45 -> 00:14:51] So if any of the states in the is an accepting state, then we're going to consider that an accepting state
+[00:14:51 -> 00:14:53] all right and
+[00:14:53 -> 00:14:56] Now if I'm either in S0 or in S1
+[00:14:57 -> 00:14:59] Then if I get a 1
+[00:14:59 -> 00:15:03] Then if I'm in S0 and I get a 1 then I would stay in S1
+[00:15:03 -> 00:15:04] All right
+[00:15:04 -> 00:15:10] So so from S1 if I get a 1 if I if I was in S0 and I get a 1 I would have stayed in S1
+[00:15:10 -> 00:15:15] if I am in S1 and I get a 1 then I could have transitioned to S2 and
+[00:15:16 -> 00:15:22] That's almost like saying that I could have been either in S1 or in S2 because there's because the epsilon
+[00:15:22 -> 00:15:27] So overall if I'm either in S0 or in S1 and I get a 1
+[00:15:27 -> 00:15:30] Then I would be either in S1 or in S2
+[00:15:33 -> 00:15:38] Okay, and that's it. So this is the DFA and so this is the DFA for the NFA that we just saw

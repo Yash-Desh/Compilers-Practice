@@ -1,0 +1,373 @@
+Title: Compiler Design Module 164 : Pipeline Code Generation
+Video ID: phZLtg_N1vw
+Detected language: en
+------------------------------------------------------------
+
+[00:00:00 -> 00:00:03] For pipelining for fully permutable loops,
+[00:00:03 -> 00:00:07] we basically have seen how if the outermost two loops
+[00:00:07 -> 00:00:11] are fully permutable, then we can use the inner loop
+[00:00:11 -> 00:00:16] as the tasks, as the stages and the outer loop as a task,
+[00:00:16 -> 00:00:19] and we can now pipeline it with order and synchronization.
+[00:00:19 -> 00:00:22] In general, a loop with k outermost
+[00:00:22 -> 00:00:24] fully permutable loops,
+[00:00:24 -> 00:00:27] so if there are k outermost fully permutable loops,
+[00:00:27 -> 00:00:29] in the example that we have seen so far,
+[00:00:29 -> 00:00:33] k was two, then it can be structured as a pipeline
+[00:00:33 -> 00:00:36] with order k minus one dimensions
+[00:00:36 -> 00:00:37] with order and synchronization.
+[00:00:37 -> 00:00:40] So one of the dimensions is used for synchronization
+[00:00:40 -> 00:00:44] and the other order k minus one dimensions
+[00:00:44 -> 00:00:46] can be used for the pipelining
+[00:00:46 -> 00:00:47] and can be used as the tasks
+[00:00:47 -> 00:00:49] that are basically getting pipelined.
+[00:00:51 -> 00:00:54] And so for the SOAR example, k was equal to two.
+[00:00:54 -> 00:00:57] Here, I want to point out that k is basically
+[00:00:57 -> 00:01:01] the number of fully permutable outermost loops
+[00:01:01 -> 00:01:04] and n is the iterations of a single loop.
+[00:01:05 -> 00:01:08] In fact, it is the iterations of the loop
+[00:01:08 -> 00:01:12] on which we are basically doing the pipeline.
+[00:01:12 -> 00:01:14] In other words, it's the number of stages.
+[00:01:14 -> 00:01:15] In our two-dimensional loop,
+[00:01:15 -> 00:01:18] it's the number of iterations of the inner loop.
+[00:01:18 -> 00:01:20] Okay.
+[00:01:20 -> 00:01:23] So the other thing we kind of discussed
+[00:01:23 -> 00:01:27] in our last module is that ignoring boundary conditions,
+[00:01:27 -> 00:01:30] a processor p can execute iteration i
+[00:01:30 -> 00:01:35] or stage i of any task only after processor p minus one
+[00:01:35 -> 00:01:39] has executed iteration i minus one of the same task.
+[00:01:39 -> 00:01:40] So if there is one task,
+[00:01:40 -> 00:01:42] which is let's say in the row,
+[00:01:42 -> 00:01:44] in the diagrams that we have been drawing,
+[00:01:44 -> 00:01:48] then i-th iteration of that particular task
+[00:01:48 -> 00:01:52] can only execute after the i minus one iteration
+[00:01:52 -> 00:01:54] of that task is executed.
+[00:01:54 -> 00:01:57] The i-th iteration executes on processor p,
+[00:01:57 -> 00:02:00] the i minus one iteration executes on processor p minus one,
+[00:02:00 -> 00:02:02] and so there needs to be some synchronization.
+[00:02:02 -> 00:02:07] And processor p must wait for p minus one
+[00:02:07 -> 00:02:09] to finish i minus one and then say,
+[00:02:09 -> 00:02:12] I'm done, only then p should start with iteration i.
+[00:02:14 -> 00:02:15] And to do the synchronization,
+[00:02:15 -> 00:02:17] we are going to use condition variables
+[00:02:17 -> 00:02:19] and that's what I'm going to discuss
+[00:02:19 -> 00:02:20] in today's module.
+[00:02:20 -> 00:02:25] On every iteration, processor p would execute weight
+[00:02:25 -> 00:02:28] on processor p minus one before executing,
+[00:02:28 -> 00:02:32] before the body and signal p plus one after the body
+[00:02:32 -> 00:02:34] and this is ignoring boundary conditions.
+[00:02:34 -> 00:02:37] So basically any processor for every task
+[00:02:37 -> 00:02:42] is going to wait for processor p minus one to signal
+[00:02:42 -> 00:02:44] and it's going to signal processor p plus one
+[00:02:44 -> 00:02:46] so that if p plus one was waiting,
+[00:02:46 -> 00:02:47] then it can move forward.
+[00:02:49 -> 00:02:52] So let's understand how we are going to generate code.
+[00:02:52 -> 00:02:54] This is our familiar SOR-SOR example.
+[00:02:56 -> 00:02:57] I think you are familiar with this
+[00:02:57 -> 00:03:00] and this is not fully permutable,
+[00:03:00 -> 00:03:02] but we know how to convert this
+[00:03:02 -> 00:03:03] to a fully permutable loop.
+[00:03:03 -> 00:03:08] The idea is we just use a transform of the axis
+[00:03:09 -> 00:03:11] and the inner loop becomes for j equals i,
+[00:03:11 -> 00:03:14] j is less than equal to i plus n, j plus plus
+[00:03:14 -> 00:03:16] and the whole body of the SOR loop.
+[00:03:16 -> 00:03:18] And this is the diagram.
+[00:03:18 -> 00:03:20] Notice that this is a parallelogram instead of a rectangle
+[00:03:20 -> 00:03:23] because of the transformed axis.
+[00:03:23 -> 00:03:25] And in this diagram,
+[00:03:25 -> 00:03:26] I claim that this new loop
+[00:03:26 -> 00:03:28] is basically a fully permutable loop.
+[00:03:28 -> 00:03:30] You can, one way to check that
+[00:03:30 -> 00:03:31] is that all the dependency edges
+[00:03:31 -> 00:03:33] that have been drawn in green in this figure
+[00:03:33 -> 00:03:37] are, you know, have their angles theta
+[00:03:37 -> 00:03:40] with respect to the x-axis between zero and 90 degrees.
+[00:03:41 -> 00:03:45] And so basically, you know, all the points,
+[00:03:45 -> 00:03:47] all the different values of j,
+[00:03:47 -> 00:03:50] which is the x-axis, i is the y-axis,
+[00:03:50 -> 00:03:51] all the different values of j
+[00:03:51 -> 00:03:54] basically form the different stages
+[00:03:54 -> 00:03:56] that can be executed.
+[00:03:56 -> 00:04:00] And all the different values of i
+[00:04:00 -> 00:04:02] basically represent the different tasks.
+[00:04:02 -> 00:04:06] So for example, this is task zero, stage zero,
+[00:04:06 -> 00:04:09] task zero, stage one, task zero, stage two,
+[00:04:09 -> 00:04:10] task zero, stage three.
+[00:04:10 -> 00:04:15] And every CPU is basically specializing on one stage,
+[00:04:15 -> 00:04:16] right?
+[00:04:16 -> 00:04:19] So CPU two is specializing on stage two.
+[00:04:19 -> 00:04:23] So CPU two is going to execute task zero, stage two,
+[00:04:23 -> 00:04:26] then it's going to execute task one, stage two,
+[00:04:26 -> 00:04:28] then it's going to execute task two, stage two,
+[00:04:28 -> 00:04:29] and so on.
+[00:04:30 -> 00:04:33] All right, so that's the idea.
+[00:04:33 -> 00:04:35] And now question is how do I generate the code, right?
+[00:04:35 -> 00:04:37] So this is, we already know
+[00:04:37 -> 00:04:39] that this is fully permutable.
+[00:04:39 -> 00:04:40] That means it's pipeline-able.
+[00:04:40 -> 00:04:42] Question is how to generate the code.
+[00:04:42 -> 00:04:43] And the first thing here is
+[00:04:43 -> 00:04:47] how many CPUs are going to be used to execute this code?
+[00:04:47 -> 00:04:49] How many parallel CPUs are going to be used
+[00:04:49 -> 00:04:51] to execute this code?
+[00:04:51 -> 00:04:52] Why do I say parallel?
+[00:04:52 -> 00:04:54] Well, I want to point out once again
+[00:04:54 -> 00:04:56] that for example, this iteration here
+[00:04:56 -> 00:04:59] that I'm pointing is going to execute
+[00:04:59 -> 00:05:01] in parallel with this iteration, right?
+[00:05:01 -> 00:05:03] So there is still significant,
+[00:05:03 -> 00:05:05] even though there's a lot of dependencies
+[00:05:05 -> 00:05:06] and there's a lot of synchronization.
+[00:05:06 -> 00:05:09] You know, if I draw 135 degree line, for example,
+[00:05:09 -> 00:05:12] all these points can execute in parallel, right?
+[00:05:12 -> 00:05:14] So there's a significant amount of parallelism,
+[00:05:14 -> 00:05:15] even with pipeline.
+[00:05:16 -> 00:05:19] And so the first thing to notice here
+[00:05:19 -> 00:05:21] is that the number of stages, distinct stages
+[00:05:21 -> 00:05:23] across all the different tasks.
+[00:05:23 -> 00:05:25] For a single task, there are only N stages
+[00:05:25 -> 00:05:29] because for any single task, I go from I to I plus N.
+[00:05:29 -> 00:05:32] So for any single task, there are only N stages.
+[00:05:32 -> 00:05:33] But across all the tasks,
+[00:05:33 -> 00:05:36] there are N plus N plus one stages
+[00:05:36 -> 00:05:40] because for the zero task, the task IDs are zero to N.
+[00:05:40 -> 00:05:43] So for a single task, there are N plus one stages.
+[00:05:43 -> 00:05:46] And so for zero task, there are N plus one stages
+[00:05:46 -> 00:05:49] from zero to N plus one, zero to N.
+[00:05:49 -> 00:05:53] Then for task one, the stages are one to N plus one.
+[00:05:53 -> 00:05:56] For task two, the stages are two to N plus two
+[00:05:56 -> 00:05:57] and so on.
+[00:05:57 -> 00:06:00] And so the total number of CPUs that are required
+[00:06:00 -> 00:06:04] is basically the minimum number stage is basically zero
+[00:06:04 -> 00:06:06] and the maximum number stage is basically
+[00:06:06 -> 00:06:09] when I equals N, so that becomes N plus N.
+[00:06:09 -> 00:06:13] And so we go from all the way from zero to N plus N
+[00:06:13 -> 00:06:15] inclusive of both zero and N plus N.
+[00:06:15 -> 00:06:19] So we get number of CPUs is N plus N plus one.
+[00:06:20 -> 00:06:21] And so that's what I do.
+[00:06:21 -> 00:06:22] For my code generation,
+[00:06:22 -> 00:06:26] I basically spawn N plus N plus one threads.
+[00:06:26 -> 00:06:30] And let me label each thread or each process
+[00:06:30 -> 00:06:32] based on the inner loop ID J.
+[00:06:32 -> 00:06:35] So J belongs to either this set of values,
+[00:06:35 -> 00:06:38] this interval of values, zero comma N plus N
+[00:06:38 -> 00:06:40] including zero and including N plus N.
+[00:06:40 -> 00:06:42] So that's N plus N plus one values.
+[00:06:42 -> 00:06:44] And for each CPU,
+[00:06:44 -> 00:06:47] I'm going to basically execute some body of the loop.
+[00:06:47 -> 00:06:49] What is each CPU going to do?
+[00:06:49 -> 00:06:51] It's going to basically execute stage.
+[00:06:51 -> 00:06:55] So CPU number J is going to execute stage number J
+[00:06:55 -> 00:06:56] for all the tasks, right?
+[00:06:56 -> 00:06:58] So for example, it's going to execute stage number J
+[00:06:58 -> 00:07:00] for task zero.
+[00:07:00 -> 00:07:02] Then it's going to execute stage number J
+[00:07:02 -> 00:07:04] for task one and so on.
+[00:07:04 -> 00:07:06] The idea is that it specializes on stage J.
+[00:07:06 -> 00:07:08] And so what are all the tasks
+[00:07:08 -> 00:07:10] we are going to have to execute?
+[00:07:10 -> 00:07:12] Well, recall that the tasks are basically given
+[00:07:12 -> 00:07:13] by the outer loop.
+[00:07:13 -> 00:07:16] So for I equals, I'm not written what the lower bound is
+[00:07:16 -> 00:07:19] and what the upper bound is,
+[00:07:19 -> 00:07:22] but in the original loop, it was zero and M.
+[00:07:22 -> 00:07:25] We, because we already know the value of J,
+[00:07:25 -> 00:07:27] we can restrict this further.
+[00:07:27 -> 00:07:30] We don't need to, and this is our familiar way
+[00:07:30 -> 00:07:31] of kind of tightening the loop bounds
+[00:07:31 -> 00:07:34] and eliminating empty iterations.
+[00:07:34 -> 00:07:39] So how do I eliminate empty iterations?
+[00:07:39 -> 00:07:41] Well, we basically check what are the lower bounds
+[00:07:41 -> 00:07:43] and upper bounds in I.
+[00:07:43 -> 00:07:44] So from the upper outer loop,
+[00:07:44 -> 00:07:47] you already know that I must be greater than equal to zero.
+[00:07:47 -> 00:07:48] So I put it here.
+[00:07:48 -> 00:07:50] And then I should be less than equal to M.
+[00:07:50 -> 00:07:51] So I put it here.
+[00:07:51 -> 00:07:54] The other thing I know from the inner loop is that,
+[00:07:54 -> 00:07:57] because J is iterating from I upwards,
+[00:07:57 -> 00:08:00] so I must be less than equal to J.
+[00:08:00 -> 00:08:04] And similarly, I must be greater than equal to J minus N.
+[00:08:04 -> 00:08:06] And so I get I is less than equal to J
+[00:08:06 -> 00:08:10] because J is iterating from I all the way to I plus N.
+[00:08:10 -> 00:08:12] And I must be greater than equal to J minus N.
+[00:08:12 -> 00:08:15] So notice that these extra constraints I'm getting
+[00:08:15 -> 00:08:17] because I already know the value of J.
+[00:08:17 -> 00:08:19] It's like, you know, it's somewhat similar
+[00:08:19 -> 00:08:23] to saying that I switched the two loops basically.
+[00:08:23 -> 00:08:25] I kind of interchange the two loops.
+[00:08:25 -> 00:08:26] And so when I interchange the loop,
+[00:08:26 -> 00:08:28] I already know J.
+[00:08:28 -> 00:08:31] And based on that, I can tighten my loop bounds for I.
+[00:08:32 -> 00:08:34] So these are my constraints.
+[00:08:34 -> 00:08:35] I should be greater than equal to zero
+[00:08:35 -> 00:08:37] and greater than equal to J minus N.
+[00:08:37 -> 00:08:39] I should be less than equal to M
+[00:08:39 -> 00:08:40] and less than equal to J.
+[00:08:40 -> 00:08:44] And basically that gives me the following loop bounds.
+[00:08:44 -> 00:08:47] I goes from max of zero comma J minus N.
+[00:08:47 -> 00:08:50] So that because both of these are lower bounds
+[00:08:50 -> 00:08:52] to min of J comma M
+[00:08:52 -> 00:08:54] because both J and M are upper bounds.
+[00:08:55 -> 00:08:58] And so these represent for the CPU,
+[00:08:58 -> 00:09:00] basically what they represent is the number of tasks,
+[00:09:00 -> 00:09:03] is a set of tasks or the sequence of tasks
+[00:09:03 -> 00:09:05] that are going to execute for stage J.
+[00:09:05 -> 00:09:09] Notice that for any stage J,
+[00:09:09 -> 00:09:12] it's not that all tasks basically execute stage J
+[00:09:12 -> 00:09:15] because, you know, J goes from zero to M plus N.
+[00:09:15 -> 00:09:17] So for example, the N plus one at stage
+[00:09:17 -> 00:09:21] is not executed by task zero
+[00:09:21 -> 00:09:23] and similarly other things, right?
+[00:09:23 -> 00:09:27] So basically this represents what are the tasks
+[00:09:27 -> 00:09:29] that are going to execute in stage J.
+[00:09:29 -> 00:09:30] And what do I need to do in the body?
+[00:09:30 -> 00:09:32] What do I need to do for every task?
+[00:09:32 -> 00:09:35] I need to wait for the CPU on my left
+[00:09:37 -> 00:09:40] and then execute the CPU,
+[00:09:40 -> 00:09:41] the job that I have to do
+[00:09:41 -> 00:09:43] for that particular point I comma J
+[00:09:43 -> 00:09:47] and then wait and then signal the CPU on the right.
+[00:09:47 -> 00:09:50] So I wait for the signal CPU on the left.
+[00:09:50 -> 00:09:52] So what's the CPU on the left?
+[00:09:52 -> 00:09:53] It's J minus one.
+[00:09:53 -> 00:09:55] So I basically call weight of J minus one,
+[00:09:55 -> 00:09:59] but I don't call weight of J minus one indiscriminately.
+[00:09:59 -> 00:10:02] I basically check whether I'm the boundary node or not.
+[00:10:03 -> 00:10:05] If I'm the left boundary node,
+[00:10:05 -> 00:10:07] then I don't need to wait, right?
+[00:10:07 -> 00:10:09] And so I put an if condition.
+[00:10:09 -> 00:10:10] I haven't specified
+[00:10:10 -> 00:10:12] what that condition is going to look like,
+[00:10:12 -> 00:10:14] but basically, you know, in this if condition,
+[00:10:14 -> 00:10:16] I'm going to check that the CPU
+[00:10:16 -> 00:10:18] is a left boundary node or not.
+[00:10:18 -> 00:10:20] If it is not a left boundary node,
+[00:10:20 -> 00:10:24] only then I should wait for the J minus one processor.
+[00:10:24 -> 00:10:25] Then I execute the body.
+[00:10:25 -> 00:10:26] What is the body?
+[00:10:26 -> 00:10:31] Body is basically this statement of the SOR loop,
+[00:10:31 -> 00:10:33] and so that this is, you know,
+[00:10:33 -> 00:10:34] I'm not written the whole body,
+[00:10:34 -> 00:10:37] but it's XJ minus I plus one equals dot, dot, dot,
+[00:10:37 -> 00:10:40] which is, you know, this divide by three
+[00:10:40 -> 00:10:43] of these three values, sum of these three values.
+[00:10:43 -> 00:10:44] And then I'm done with the body,
+[00:10:44 -> 00:10:47] but then I've executed the I comma J-th point
+[00:10:47 -> 00:10:48] in my iteration space.
+[00:10:48 -> 00:10:50] I want to signal J plus one,
+[00:10:50 -> 00:10:51] but once again, I want to check
+[00:10:51 -> 00:10:55] that I'm not the right boundary node,
+[00:10:55 -> 00:10:56] so rightmost boundary node.
+[00:10:56 -> 00:10:57] If I'm the rightmost boundary node,
+[00:10:57 -> 00:11:00] then I don't need to signal J plus one.
+[00:11:00 -> 00:11:03] I only signal if I am not the rightmost boundary node.
+[00:11:03 -> 00:11:04] So this is it.
+[00:11:04 -> 00:11:05] I mean, we basically,
+[00:11:05 -> 00:11:07] this is the code that I'm going to generate
+[00:11:07 -> 00:11:12] for every CPU J to implement my pipeline schedule.
+[00:11:12 -> 00:11:14] The only thing remaining is how do I check
+[00:11:14 -> 00:11:16] whether I'm the boundary node or not?
+[00:11:16 -> 00:11:17] Well, that is actually pretty easy
+[00:11:17 -> 00:11:19] because if you look at it,
+[00:11:19 -> 00:11:21] if I'm on the CPU J,
+[00:11:21 -> 00:11:23] then I would be a boundary
+[00:11:23 -> 00:11:26] if I basically was equal to I,
+[00:11:26 -> 00:11:30] because for J, the leftmost node,
+[00:11:30 -> 00:11:35] the task which where I'll be the leftmost node
+[00:11:35 -> 00:11:37] would be J equals I.
+[00:11:37 -> 00:11:40] Similarly, the task where I'm the rightmost node
+[00:11:40 -> 00:11:43] would be when J equals I plus N, all right?
+[00:11:43 -> 00:11:46] And so basically, if I want to check
+[00:11:46 -> 00:11:49] that I am not the leftmost node,
+[00:11:49 -> 00:11:52] that means I should check that J is not equal to I.
+[00:11:52 -> 00:11:54] In other words, J should be strictly greater than I.
+[00:11:54 -> 00:11:57] Anyway, we know that J is greater than equal to I.
+[00:11:57 -> 00:12:00] So to check that I'm not the leftmost boundary node,
+[00:12:00 -> 00:12:02] I basically say if J is greater than I,
+[00:12:02 -> 00:12:04] and similarly to check whether J,
+[00:12:04 -> 00:12:06] whether I'm not the rightmost boundary node,
+[00:12:06 -> 00:12:09] I check that J is strictly less than I plus N.
+[00:12:09 -> 00:12:11] When J equals I plus N,
+[00:12:11 -> 00:12:13] then I become the rightmost boundary node,
+[00:12:13 -> 00:12:15] so in which case I don't want to execute signal.
+[00:12:15 -> 00:12:16] So I only execute the signal
+[00:12:16 -> 00:12:20] when I'm not the rightmost boundary node.
+[00:12:20 -> 00:12:22] So that is the code generation strategy
+[00:12:22 -> 00:12:26] for a pipeline schedule for this particular SOAR example.
+[00:12:27 -> 00:12:30] We're going to generalize how to do pipelining in general.
+[00:12:30 -> 00:12:31] I mean, for the SOAR example,
+[00:12:31 -> 00:12:33] we just said that we're going to,
+[00:12:33 -> 00:12:34] we basically check whether,
+[00:12:34 -> 00:12:36] because it's a two-dimensional loop,
+[00:12:36 -> 00:12:37] we basically transform the loops
+[00:12:37 -> 00:12:40] as that theta comes between zero and 90,
+[00:12:40 -> 00:12:44] and so we know that they are fully permutable loops.
+[00:12:44 -> 00:12:47] Once we have the fully permutable loop nest
+[00:12:47 -> 00:12:48] for some number of,
+[00:12:48 -> 00:12:50] K number of outermost loop iterations,
+[00:12:50 -> 00:12:53] then it becomes really easy to do pipelining
+[00:12:53 -> 00:12:57] because what I do is I use the innermost loop
+[00:12:57 -> 00:13:00] of that fully permutable loop nest
+[00:13:00 -> 00:13:02] as my pipeline, as my stages,
+[00:13:02 -> 00:13:06] and then I basically have my code,
+[00:13:06 -> 00:13:10] I figure out what are the loop boundaries for every stage,
+[00:13:10 -> 00:13:12] and then I do my code generation
+[00:13:12 -> 00:13:14] just like I showed in the previous slide.
+[00:13:14 -> 00:13:18] If I compare pipelining with barrier synchronization,
+[00:13:18 -> 00:13:22] which we used for constant synchronization,
+[00:13:22 -> 00:13:25] parallelization algorithms that we discussed earlier,
+[00:13:25 -> 00:13:27] which were based on program-dependence graphs,
+[00:13:27 -> 00:13:29] notice that for program-dependence graphs,
+[00:13:29 -> 00:13:30] things were executing in lockstep.
+[00:13:30 -> 00:13:32] So all the threads basically execute
+[00:13:32 -> 00:13:33] this section of the program,
+[00:13:33 -> 00:13:36] and then they synchronize with a barrier,
+[00:13:36 -> 00:13:38] and then they execute the next section of the program,
+[00:13:38 -> 00:13:40] and then the things are synchronized with a barrier.
+[00:13:40 -> 00:13:42] When you do this kind of barrier synchronization,
+[00:13:42 -> 00:13:44] it has lockstep semantics,
+[00:13:44 -> 00:13:46] and that's a little bit of a problem,
+[00:13:46 -> 00:13:50] especially if some of the CPUs are much slower
+[00:13:50 -> 00:13:51] than the other CPUs,
+[00:13:51 -> 00:13:52] in which case the faster guys
+[00:13:52 -> 00:13:55] have to wait for the slower CPUs.
+[00:13:55 -> 00:13:57] But pipelining has greater asynchrony
+[00:13:57 -> 00:14:00] because it's more like I just keep signaling the next CPU.
+[00:14:00 -> 00:14:03] So for example, if the next CPU is slow,
+[00:14:03 -> 00:14:05] it's lagging behind, no problem.
+[00:14:05 -> 00:14:06] I've already signaled it.
+[00:14:06 -> 00:14:08] When it reaches that point,
+[00:14:08 -> 00:14:10] it's going to be able to pick up my signal
+[00:14:10 -> 00:14:11] and move forward.
+[00:14:12 -> 00:14:14] But that doesn't mean I don't need to wait
+[00:14:15 -> 00:14:18] if there's a CPU that comes after me,
+[00:14:18 -> 00:14:21] then I don't need to wait for that CPU to finish
+[00:14:21 -> 00:14:23] because I only need to wait
+[00:14:23 -> 00:14:24] for the CPUs that are on my left,
+[00:14:24 -> 00:14:27] never wait for the CPUs that are on my right.
+[00:14:27 -> 00:14:30] So one way to kind of organize your schedule
+[00:14:30 -> 00:14:32] is to keep the faster CPUs on the left
+[00:14:32 -> 00:14:35] and the slow CPUs on the right, for example.
+[00:14:36 -> 00:14:39] All right, so, and this kind of pipelining schedule
+[00:14:39 -> 00:14:40] gives you a relaxed wavefront.
+[00:14:40 -> 00:14:43] It's like the first CPU executes,
+[00:14:43 -> 00:14:45] then it basically says, okay, now CPU two can execute,
+[00:14:45 -> 00:14:48] sometimes later CPU two starts executing,
+[00:14:48 -> 00:14:50] and now it says now CPU three can execute,
+[00:14:50 -> 00:14:53] and now sometime later CPU three is executing.
+[00:14:53 -> 00:14:56] And at this time, notice that it's possible
+[00:14:56 -> 00:14:58] that all three of the CPUs are basically busy
+[00:14:58 -> 00:15:00] in parallel, and that's where the parallelism
+[00:15:00 -> 00:15:02] in the pipeline is coming from.
+[00:15:02 -> 00:15:04] But this is also a relaxed wavefront.
+[00:15:04 -> 00:15:05] There's no kind of,
+[00:15:05 -> 00:15:08] I'm just kind of signaling other people,
+[00:15:08 -> 00:15:09] but I don't need to wait for them
+[00:15:09 -> 00:15:11] and I kind of just keep doing my own work
+[00:15:11 -> 00:15:13] and I keep signaling the other person.
+[00:15:13 -> 00:15:15] And so that's basically called a relaxed wavefront
+[00:15:15 -> 00:15:18] where one CPU can be slower and then the other,
+[00:15:18 -> 00:15:21] and yet it need not wait.
+[00:15:21 -> 00:15:23] I shouldn't say none may have to wait,
+[00:15:23 -> 00:15:24] but it may not need to wait, right?
+[00:15:24 -> 00:15:28] So it may not have to wait.

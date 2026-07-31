@@ -1,0 +1,95 @@
+Title: Compiler Design Module 99 1 : Examples of Families of Transfer Functions
+Video ID: 5H2t_uol4nk
+Detected language: en
+------------------------------------------------------------
+
+[00:00:00 -> 00:00:06] So, I'm going to discuss another example of a family of transfer functions to check whether
+[00:00:06 -> 00:00:13] this family of transfer functions is actually obeying the three rules that we laid out
+[00:00:13 -> 00:00:17] in the previous module and we're going to take the familiar example of constant propagation
+[00:00:17 -> 00:00:23] for a single variable x and recall that the semi lattice formed for this particular
+[00:00:23 -> 00:00:29] data flow analysis was consisting of these values top and bottom, top was basically
+[00:00:29 -> 00:00:35] representing the unreachable value or the program point hasn't been reached so far,
+[00:00:35 -> 00:00:40] then all these constant values which represent all the possible constants that this variable
+[00:00:40 -> 00:00:45] x can take assuming x is an integer variable then maybe it can take all these integer
+[00:00:45 -> 00:00:51] values and then bottom basically says that we cannot be sure that it is a constant and so
+[00:00:51 -> 00:00:57] it may not be a constant and that's what bottom means and now if we look at all
+[00:00:57 -> 00:01:01] the transfer functions that we discussed one of the transfer functions was that if the program
+[00:01:01 -> 00:01:10] involves a statement which assigns a constant to the variable x then the transfer function
+[00:01:10 -> 00:01:18] was defined as follows that given an input value in the output value should be less than
+[00:01:18 -> 00:01:23] equal to if we are basically modeling this as a set of constraints or equal to if we are
+[00:01:23 -> 00:01:30] modeling this as an algorithm then if in equals top which means if in is not reachable then even
+[00:01:30 -> 00:01:34] out is not reachable else it is just constant because we know that x is equal and equal to
+[00:01:34 -> 00:01:39] c is going to always produce a constant in the variable x and the transfer function says
+[00:01:39 -> 00:01:45] that if in is top then out is also top otherwise out is c now this is one transfer function
+[00:01:45 -> 00:01:50] similarly there was another transfer function which was for another statement where we are
+[00:01:50 -> 00:01:56] not assigning x to a constant c but some arbitrary expression which I am denoting with this dot dot
+[00:01:56 -> 00:02:01] dot and in this case the transfer function looks like the the one shown here which I'm
+[00:02:01 -> 00:02:06] labeling as the second transfer function the first one as I'm calling it the first transfer
+[00:02:06 -> 00:02:12] function so it says if in equals top then top just like the first transfer function else bottom
+[00:02:12 -> 00:02:17] because we are assigning some arbitrary expression to x we can't be sure that it is that
+[00:02:17 -> 00:02:22] arbitrary expression is going to be a constant or not so conservatively we just assign the value
+[00:02:22 -> 00:02:25] bottom and this forms our second transfer function in the family of transfer functions
+[00:02:25 -> 00:02:30] for this particular data flow analysis of constant propagation on a single variable
+[00:02:30 -> 00:02:37] finally there was this transfer function which did not involve x I did not write to x at all so
+[00:02:37 -> 00:02:42] for example if you know if there is a statement which just assigns to another variable y or if
+[00:02:42 -> 00:02:49] there was a brand statement or something like that then the out value is just you know a copy
+[00:02:49 -> 00:02:55] of the in value or the transfer function is just the identity function or Fn equals in and so
+[00:02:55 -> 00:02:59] this forms our third transfer function and you know we could potentially make the transfer
+[00:02:59 -> 00:03:03] functions more sophisticated but let's assume that these are the only three transfer functions
+[00:03:03 -> 00:03:07] available and these actually suffice for I mean although they may not give the most precise
+[00:03:07 -> 00:03:12] answer but they actually we have covered all the possible cases that a program statement may
+[00:03:12 -> 00:03:16] be in a three address code IR program and so these are the three transfer functions that we have
+[00:03:16 -> 00:03:21] discussed the first one says you know I'm using this ternary operation this ternary operator
+[00:03:21 -> 00:03:26] question mark in colon as it is used in the C language for example so if x equals top then
+[00:03:26 -> 00:03:33] top otherwise C another transfer function was if x equals top then top otherwise bottom and the
+[00:03:33 -> 00:03:37] third transfer function was the identity function which is FX equals X which was if
+[00:03:37 -> 00:03:43] we are not writing to X at all okay so these are the three transfer functions and I want to
+[00:03:43 -> 00:03:49] check whether it satisfies these three this set of functions satisfies the rules for it to be a
+[00:03:49 -> 00:03:54] family of functions usable in a data flow analysis and the first property was that for
+[00:03:54 -> 00:03:59] all the transfer functions belonging to this family which is this family of three functions
+[00:03:59 -> 00:04:07] is it true that all the functions map you know the same domain of values take a value
+[00:04:07 -> 00:04:12] from the domain of values and return a value again in the domain of values so it's easy to
+[00:04:12 -> 00:04:16] see that because I mean it you know the domain of values is either top bottom or one of the
+[00:04:16 -> 00:04:20] constants and the values that are being returned by each of these functions are also one of
+[00:04:20 -> 00:04:24] either top bottom or one of the constants so we it's very easy to see that all the three
+[00:04:24 -> 00:04:29] functions actually satisfy the first requirement if I look at the second requirement it says
+[00:04:29 -> 00:04:33] that the ID function the identity function should belong to the family of transfer functions
+[00:04:34 -> 00:04:38] and that's also true because the third function is indeed the identity function just returns
+[00:04:38 -> 00:04:43] the input value so that's also easy to check now let's look at the third one which is you
+[00:04:43 -> 00:04:49] know which is slightly more complex it says that for all pair for all F comma G belonging
+[00:04:49 -> 00:04:56] to capital F is it true that the composition of F and G also belongs to capital F now we
+[00:04:56 -> 00:05:00] have three different transfer functions in this family so the possible number of compositions
+[00:05:00 -> 00:05:04] that I can create are you know I can have three values for F so that's three and then
+[00:05:04 -> 00:05:09] I have can have three values three different possible values for G so three cross three
+[00:05:09 -> 00:05:13] nine so you know I need to check three nine different combinations to see whether
+[00:05:13 -> 00:05:18] the nine combinations each of them is belonging to my family of transfer functions or not
+[00:05:18 -> 00:05:23] so let's start from let's say the first combination so F is one and let's say G
+[00:05:23 -> 00:05:30] is two so one basically says that if X equals top then top LC so I'm writing
+[00:05:30 -> 00:05:35] one here and now it's getting composed with two so I first apply one and then I apply two so
+[00:05:35 -> 00:05:40] let's say the first you know if the input was X if I apply one then this is what I get this
+[00:05:40 -> 00:05:44] expression that's shown here and then whatever is the return value from this function I apply
+[00:05:44 -> 00:05:49] two on it which basically means that I apply two on it and so this whole value gets checked
+[00:05:49 -> 00:05:55] against top and if the answer is true then the return value is top otherwise it's bottom
+[00:05:55 -> 00:06:00] because that's the second transfer function that we have now this is the transfer function
+[00:06:00 -> 00:06:07] that we obtain by composing one and two and if I just simplify it slightly then I can see that
+[00:06:07 -> 00:06:12] this this thing in the brackets this expression in the brackets actually just evaluates to X
+[00:06:12 -> 00:06:16] equals top because this this purple expression will be equal to top if and only if X was
+[00:06:16 -> 00:06:22] equal to top otherwise it will be C and so this whole expression actually simplifies to
+[00:06:22 -> 00:06:27] X equals top and that actually is nothing but now it becomes X equals top then top otherwise
+[00:06:27 -> 00:06:31] bottom which actually looks exactly like this second transfer function and so indeed
+[00:06:31 -> 00:06:35] that is just the second transfer functions because just X equals top then give me top
+[00:06:35 -> 00:06:40] otherwise give me bottom and so one composed with two actually gives me two and so here
+[00:06:40 -> 00:06:45] this check passes and so we kind of check all the other possibilities so one composed
+[00:06:45 -> 00:06:50] with two is two similarly you can check for yourself that two composed with one
+[00:06:50 -> 00:06:57] is just one the same argument applies again also because three is just an identity function
+[00:06:57 -> 00:07:01] so anything composed with three is just going to be that so X composed with three is three
+[00:07:01 -> 00:07:06] similarly three composed with X is X where X could be one two or three so these two rules
+[00:07:06 -> 00:07:11] here actually represent six different rules because you know you can replace X with either
+[00:07:11 -> 00:07:16] one two or three and similarly here you could replace X with one two or three so so far we
+[00:07:16 -> 00:07:22] have covered six plus two eight cases there's one there are a few more cases left and those
+[00:07:22 -> 00:07:29] are basically these ones here so one composed with one what happens you know it's you
+[00:07:29 -> 00:07:32] can check it for yourself that's going to give me one and two composed with two
+[00:07:32 -> 00:07:38] is also going to give me two and so overall you know we have exhaustively checked
+[00:07:38 -> 00:07:43] that the composition of any pair of functions is going to give me a function which belongs
+[00:07:43 -> 00:07:48] to the family of functions and so we are we satisfy all the three requirements for it to be
+[00:07:48 -> 00:07:51] a family of functions for the data flow analysis framework

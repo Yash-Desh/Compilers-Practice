@@ -1,0 +1,563 @@
+Title: Compiler Design Module 85 : Register Allocation
+Video ID: 8jPpJkm6HVE
+Detected language: en
+------------------------------------------------------------
+
+[00:00:00 -> 00:00:03] So now we are going to discuss register allocation.
+[00:00:03 -> 00:00:07] Recall that when we designed our intermediate representation
+[00:00:07 -> 00:00:10] for assembly language, we basically assumed
+[00:00:10 -> 00:00:12] that there are an unlimited number of temporaries.
+[00:00:12 -> 00:00:15] Now, that assumption was great
+[00:00:15 -> 00:00:17] because it simplified our code generation.
+[00:00:17 -> 00:00:20] If you recall, we had a function called cgen,
+[00:00:20 -> 00:00:21] where we had to worry
+[00:00:21 -> 00:00:23] about which registers are getting used.
+[00:00:23 -> 00:00:25] In fact, cgen was only able to use
+[00:00:25 -> 00:00:27] a few of the registers.
+[00:00:27 -> 00:00:28] And then there was igen,
+[00:00:28 -> 00:00:30] which was generating intermediate representation,
+[00:00:30 -> 00:00:34] where we were just generating temporaries at will.
+[00:00:34 -> 00:00:36] And so there, we were just assuming
+[00:00:36 -> 00:00:38] that there are an unlimited number of temporaries.
+[00:00:38 -> 00:00:41] And in fact, an SSA intermediate representation
+[00:00:41 -> 00:00:43] just here does not pay any heed
+[00:00:43 -> 00:00:44] to the number of available registers
+[00:00:44 -> 00:00:48] because it just kind of keeps versioning the same value
+[00:00:48 -> 00:00:50] and creates multiple registers
+[00:00:50 -> 00:00:54] for the same original register in the source code.
+[00:00:54 -> 00:00:57] So all these things actually simplifies code generation
+[00:00:57 -> 00:01:01] and optimizations because you can delay these decisions
+[00:01:01 -> 00:01:05] of what to allocate in the register and whatnot,
+[00:01:05 -> 00:01:06] because you can do a lot of optimization
+[00:01:06 -> 00:01:09] before you actually do the register allocation.
+[00:01:09 -> 00:01:11] In fact, you can also try to figure out
+[00:01:11 -> 00:01:13] what instructions to use,
+[00:01:13 -> 00:01:15] whether to do vectorization or not,
+[00:01:15 -> 00:01:18] without having to know whether this has been allocated
+[00:01:18 -> 00:01:20] to a register or not.
+[00:01:21 -> 00:01:23] But now, it's not something
+[00:01:23 -> 00:01:25] that we can completely get rid of.
+[00:01:25 -> 00:01:27] So at some point, we need to do register allocation.
+[00:01:27 -> 00:01:30] And so this is the final translation to assembly,
+[00:01:30 -> 00:01:31] and that gets slightly complicated
+[00:01:31 -> 00:01:34] because now we have to convert this program
+[00:01:34 -> 00:01:36] that we have optimized and transformed
+[00:01:36 -> 00:01:39] into a program that can actually execute on the machine,
+[00:01:39 -> 00:01:42] and the machine only has a small number of registers.
+[00:01:42 -> 00:01:43] And so we need to do this mapping
+[00:01:43 -> 00:01:46] from an potentially unlimited number of temporaries
+[00:01:46 -> 00:01:48] to a small number of registers.
+[00:01:48 -> 00:01:50] And so this phase of register allocation
+[00:01:50 -> 00:01:54] is just going to rename the temporaries
+[00:01:54 -> 00:01:58] to registers, such that the total number of registers
+[00:01:58 -> 00:02:01] used by the program are still within the bound,
+[00:02:01 -> 00:02:02] within the number of registers
+[00:02:02 -> 00:02:05] that are supported by the machine architecture.
+[00:02:05 -> 00:02:07] All right, so here's the problem statement.
+[00:02:07 -> 00:02:08] You rewrite the IR code,
+[00:02:08 -> 00:02:11] so we are not actually translating to assembly code,
+[00:02:11 -> 00:02:14] we're just rewriting the intermediate representation itself.
+[00:02:14 -> 00:02:16] So we are rewriting the IR code
+[00:02:16 -> 00:02:17] to use no more temporaries
+[00:02:17 -> 00:02:19] than there are machine registers.
+[00:02:19 -> 00:02:20] And if we can do that,
+[00:02:20 -> 00:02:23] then we have basically been able
+[00:02:23 -> 00:02:25] to find a register allocation.
+[00:02:26 -> 00:02:27] Okay, and it's possible
+[00:02:27 -> 00:02:29] that it's not always possible to do that.
+[00:02:29 -> 00:02:31] And if it's not possible to do that,
+[00:02:31 -> 00:02:34] we are going to spill some of the temporaries to memory,
+[00:02:34 -> 00:02:36] and we're going to later see how we can do that.
+[00:02:36 -> 00:02:38] All right, but at least let's understand
+[00:02:38 -> 00:02:39] what is the process,
+[00:02:39 -> 00:02:42] what is the way to think about this renaming
+[00:02:42 -> 00:02:44] of temporaries such that the total number
+[00:02:44 -> 00:02:46] of temporaries used by the program
+[00:02:46 -> 00:02:49] is less than equal to the number of machine registers.
+[00:02:49 -> 00:02:51] And here's one potential method.
+[00:02:51 -> 00:02:55] You assign multiple temporaries to one register,
+[00:02:55 -> 00:02:57] but without changing the program behavior.
+[00:02:57 -> 00:03:02] So let's say there are 10 temporaries that are being used,
+[00:03:02 -> 00:03:05] and let's say there are only eight registers
+[00:03:05 -> 00:03:06] in your machine,
+[00:03:06 -> 00:03:08] then if you can find mapping
+[00:03:08 -> 00:03:11] from the 10 temporaries to eight registers,
+[00:03:11 -> 00:03:13] such that some of the temporaries
+[00:03:13 -> 00:03:14] are mapping to the same register
+[00:03:14 -> 00:03:16] without changing program behavior,
+[00:03:16 -> 00:03:17] then that would be great.
+[00:03:17 -> 00:03:18] And this would be, of course,
+[00:03:18 -> 00:03:20] a many to one mapping typically,
+[00:03:20 -> 00:03:21] because typically you would expect
+[00:03:21 -> 00:03:23] the number of temporaries would be larger
+[00:03:23 -> 00:03:24] than the number of registers.
+[00:03:24 -> 00:03:26] If they're not larger than the number of registers,
+[00:03:26 -> 00:03:27] then there's no problem.
+[00:03:27 -> 00:03:30] Then register allocation is really easy,
+[00:03:30 -> 00:03:33] but we are really interested in the problem
+[00:03:33 -> 00:03:35] when the number of temporaries are bigger
+[00:03:35 -> 00:03:36] than the number of registers.
+[00:03:36 -> 00:03:38] Now, once again, I should point out
+[00:03:38 -> 00:03:41] that it's possible to think about solutions
+[00:03:41 -> 00:03:44] where you use different mappings
+[00:03:44 -> 00:03:45] at different points of the program.
+[00:03:45 -> 00:03:47] So example, you can say that T1 is mapped
+[00:03:47 -> 00:03:51] to register R1 at this point of the program,
+[00:03:51 -> 00:03:52] but at this point of the program,
+[00:03:52 -> 00:03:53] T1 is actually in memory,
+[00:03:53 -> 00:03:56] and then at a third point in the program,
+[00:03:56 -> 00:03:58] T1 is again mapped to some other register, R2,
+[00:03:58 -> 00:03:59] and so on.
+[00:03:59 -> 00:04:02] And so those are all part of the solution space,
+[00:04:02 -> 00:04:07] but the wider we make the solution space,
+[00:04:07 -> 00:04:10] the more complicated the solution would need to be
+[00:04:10 -> 00:04:12] to be able to capture all those points
+[00:04:12 -> 00:04:13] in the solution space.
+[00:04:13 -> 00:04:16] So we're going to make some simplifying assumptions here,
+[00:04:16 -> 00:04:18] and so one of the simplifying assumptions is that
+[00:04:18 -> 00:04:20] if a temporary is mapped to a register,
+[00:04:20 -> 00:04:21] then it is mapped to a register
+[00:04:21 -> 00:04:24] for the entire duration of the program,
+[00:04:24 -> 00:04:27] and that just drastically simplifies
+[00:04:27 -> 00:04:30] the way to think about register allocation,
+[00:04:30 -> 00:04:31] and we're going to later discuss
+[00:04:31 -> 00:04:35] how this thing happens in practice
+[00:04:35 -> 00:04:36] and whether these assumptions
+[00:04:36 -> 00:04:38] are actually meaningful in practice
+[00:04:38 -> 00:04:40] or are something else useful, right?
+[00:04:40 -> 00:04:42] So for now, we're going to assume
+[00:04:42 -> 00:04:45] that if a temporary has been mapped to a register,
+[00:04:45 -> 00:04:48] that mapping is valid for the entire duration
+[00:04:48 -> 00:04:49] of the program.
+[00:04:50 -> 00:04:53] Okay, so here is an example.
+[00:04:53 -> 00:04:55] So let's say I have a program which says
+[00:04:55 -> 00:04:59] A is assigned C plus D, E is assigned A plus B,
+[00:04:59 -> 00:05:02] F is assigned E minus one, okay?
+[00:05:02 -> 00:05:05] And let's assume that A and E are dead
+[00:05:05 -> 00:05:06] at the end of this program.
+[00:05:06 -> 00:05:08] So at this point here,
+[00:05:08 -> 00:05:10] A and E are not going to get used, all right?
+[00:05:10 -> 00:05:14] So A and E are dead.
+[00:05:14 -> 00:05:16] Now, in this program,
+[00:05:17 -> 00:05:19] let's say register allocate,
+[00:05:19 -> 00:05:22] and how many temporaries do you have in this program?
+[00:05:22 -> 00:05:23] Temporaries are variables, same thing.
+[00:05:23 -> 00:05:25] So how many variables do I have in the program?
+[00:05:25 -> 00:05:27] Six, A, B, C, D, E, F.
+[00:05:27 -> 00:05:30] And let's say my machine has four registers.
+[00:05:30 -> 00:05:33] So how will I map a program which has six temporaries
+[00:05:33 -> 00:05:35] to a program which has four registers?
+[00:05:35 -> 00:05:37] And we're going to use the simplifying assumption
+[00:05:37 -> 00:05:38] that I just stated,
+[00:05:38 -> 00:05:41] which is that the mappings from temporaries
+[00:05:41 -> 00:05:42] to registers are static
+[00:05:42 -> 00:05:44] in the sense that they're basically
+[00:05:44 -> 00:05:47] independent of the program location.
+[00:05:47 -> 00:05:49] The entire program, it will be the same mapping,
+[00:05:49 -> 00:05:50] whatever we choose, right?
+[00:05:50 -> 00:05:52] And first question is, is it even possible
+[00:05:52 -> 00:05:55] to map these temporaries to four registers?
+[00:05:55 -> 00:05:56] And if it is possible,
+[00:05:56 -> 00:05:59] what is the corresponding mapping, all right?
+[00:05:59 -> 00:06:01] Okay, so here is the solution.
+[00:06:01 -> 00:06:03] And in fact, it is possible.
+[00:06:03 -> 00:06:05] And the solution is the following,
+[00:06:05 -> 00:06:10] that notice that A and E are dead after use.
+[00:06:10 -> 00:06:13] So after, at the end of this program,
+[00:06:13 -> 00:06:14] A and E are dead.
+[00:06:14 -> 00:06:19] And so A, E, F can be assigned to R1,
+[00:06:20 -> 00:06:22] C can be assigned to R2,
+[00:06:22 -> 00:06:24] D can be assigned to R3,
+[00:06:24 -> 00:06:25] and B can be assigned to R4.
+[00:06:25 -> 00:06:27] Now, how do I know
+[00:06:27 -> 00:06:29] whether this is the correct mapping or not?
+[00:06:29 -> 00:06:30] So recall that we,
+[00:06:30 -> 00:06:32] I'm assuming that there are four registers,
+[00:06:32 -> 00:06:33] but then how am I sure
+[00:06:33 -> 00:06:34] that this is the correct mapping?
+[00:06:34 -> 00:06:36] Well, if I look at the program now,
+[00:06:36 -> 00:06:38] it says A is colon equal to C plus D.
+[00:06:38 -> 00:06:41] So I say R1 is colon equal to R2 plus R3,
+[00:06:41 -> 00:06:43] because A has been mapped to R1.
+[00:06:44 -> 00:06:47] And I say E is colon equal to A plus B.
+[00:06:47 -> 00:06:51] Now, both A and E are mapped to R1,
+[00:06:51 -> 00:06:54] but notice that, you know, I can use R1.
+[00:06:54 -> 00:06:56] So I can, you know, I can first,
+[00:06:56 -> 00:06:59] the program is supposed to first compute the RHS,
+[00:06:59 -> 00:06:59] which is A plus B,
+[00:06:59 -> 00:07:02] and that I can do using R1 plus R4,
+[00:07:02 -> 00:07:04] and then it is supposed to assign to E.
+[00:07:04 -> 00:07:08] And so then the computed value can be assigned to R1.
+[00:07:08 -> 00:07:09] And that's great,
+[00:07:09 -> 00:07:12] because now A is not going to get used after this.
+[00:07:12 -> 00:07:14] In other words, at this point here,
+[00:07:16 -> 00:07:16] A is dead.
+[00:07:18 -> 00:07:20] And because A is dead,
+[00:07:20 -> 00:07:25] it is okay to assign some other register to R1.
+[00:07:25 -> 00:07:26] Originally, A was assigned to R1,
+[00:07:26 -> 00:07:28] but now E can be assigned to R1.
+[00:07:28 -> 00:07:31] And so after you are done computing R1 plus R4,
+[00:07:31 -> 00:07:33] you will just assign it to R1.
+[00:07:33 -> 00:07:35] So it says you just change it to R1 colon equals
+[00:07:35 -> 00:07:37] R1 plus R4, okay?
+[00:07:37 -> 00:07:38] And this is okay.
+[00:07:38 -> 00:07:39] I mean, if you look at the logic,
+[00:07:39 -> 00:07:42] it's actually going to work out fine, right?
+[00:07:43 -> 00:07:46] In R1, we have R2 plus R3.
+[00:07:46 -> 00:07:48] And now, after the second statement,
+[00:07:48 -> 00:07:51] it is R2 plus R3 plus R4.
+[00:07:51 -> 00:07:55] And that's exactly equal to C plus D plus B.
+[00:07:55 -> 00:07:57] And that's what we were looking for.
+[00:07:57 -> 00:08:00] And then finally we have F is colon equal to E minus one.
+[00:08:00 -> 00:08:04] And once again, E is dead at this point, right?
+[00:08:04 -> 00:08:07] And so how do I say that?
+[00:08:07 -> 00:08:10] I say R1 is colon equal to R1 minus one.
+[00:08:10 -> 00:08:11] Sorry, I had a typo.
+[00:08:11 -> 00:08:13] It should be minus one.
+[00:08:13 -> 00:08:15] So I say R1 is colon equal to R1 minus one.
+[00:08:15 -> 00:08:19] So once again, the value of E is available in R1.
+[00:08:19 -> 00:08:21] So I can use that while computing the RHS.
+[00:08:21 -> 00:08:24] And I say E minus one just becomes R1 minus one.
+[00:08:24 -> 00:08:27] And now after this computation is done,
+[00:08:27 -> 00:08:29] then E is not useful.
+[00:08:29 -> 00:08:32] So I can just store it as global R1
+[00:08:32 -> 00:08:33] with the value of F.
+[00:08:33 -> 00:08:36] And at this point, it is F that is mapped to R1.
+[00:08:36 -> 00:08:38] So that's basically the idea.
+[00:08:38 -> 00:08:44] And this actually, it's almost like D SSA-ing the IR.
+[00:08:44 -> 00:08:46] When we were doing SSA, we were basically
+[00:08:46 -> 00:08:51] just creating more temporaries for every different variable.
+[00:08:51 -> 00:08:54] Now we are basically, for variables
+[00:08:54 -> 00:08:56] that can be actually mapped to the same variable,
+[00:08:56 -> 00:08:58] we are trying to kind of do that.
+[00:08:58 -> 00:09:01] And so in a way, maybe A, E, and F
+[00:09:01 -> 00:09:03] were just different versions of the same value.
+[00:09:03 -> 00:09:05] And now we are kind of de-versioning them
+[00:09:05 -> 00:09:07] and creating a single value for all of them
+[00:09:07 -> 00:09:13] because that, in this case, is represented by R1.
+[00:09:13 -> 00:09:15] So that's an example.
+[00:09:15 -> 00:09:18] And what is the insight that we gain from this example?
+[00:09:18 -> 00:09:22] The insight is that A, E, and F could map to the same register
+[00:09:22 -> 00:09:29] because at no program point, at no program point,
+[00:09:29 -> 00:09:32] all of them are live simultaneously.
+[00:09:32 -> 00:09:34] So these are the keywords.
+[00:09:34 -> 00:09:36] At no program point, live simultaneously.
+[00:09:36 -> 00:09:44] And that's true because at this point here, A is live,
+[00:09:44 -> 00:09:45] but E is not live.
+[00:09:45 -> 00:09:48] E is not even present, and F is not present.
+[00:09:48 -> 00:09:49] At this point, E is live.
+[00:09:49 -> 00:09:51] So here, A is live.
+[00:09:51 -> 00:09:54] Here, E is live, but A and F are not live.
+[00:09:54 -> 00:09:57] And here, F is live, but A and E are not live.
+[00:09:57 -> 00:10:01] And so at no program point, any two of them are live.
+[00:10:01 -> 00:10:04] So actually, it's not necessarily
+[00:10:04 -> 00:10:05] all of them need to be live,
+[00:10:05 -> 00:10:08] but even no two of them are live simultaneously.
+[00:10:08 -> 00:10:10] So, for example, A and E are not live simultaneously
+[00:10:10 -> 00:10:12] at any program point.
+[00:10:12 -> 00:10:14] Or E and F are not live at any program point
+[00:10:16 -> 00:10:18] in this program, okay?
+[00:10:18 -> 00:10:21] So that's a property that we have used
+[00:10:21 -> 00:10:24] to be able to allocate them simultaneously.
+[00:10:24 -> 00:10:26] And let's try to generalize that.
+[00:10:26 -> 00:10:30] So we can say that temporary T1 and T2
+[00:10:30 -> 00:10:32] can share the same register
+[00:10:32 -> 00:10:35] if at any program point,
+[00:10:35 -> 00:10:39] at most one of T1 or T2 is live, right?
+[00:10:39 -> 00:10:42] So for any pair of temporaries,
+[00:10:42 -> 00:10:44] we can check whether they can share a register or not,
+[00:10:44 -> 00:10:47] whether they can be mapped to the same register or not
+[00:10:47 -> 00:10:49] in our many-to-one mapping.
+[00:10:49 -> 00:10:50] Recall that in our simplified assumption,
+[00:10:50 -> 00:10:52] we're just assuming that there's a many.
+[00:10:52 -> 00:10:53] We have to figure out a many-to-one mapping
+[00:10:53 -> 00:10:55] from the temporaries to the registers.
+[00:10:55 -> 00:10:57] And we say that two temporaries
+[00:10:57 -> 00:11:00] can map to the same register
+[00:11:00 -> 00:11:04] if at most one of T1 or T2 is live at any program point.
+[00:11:04 -> 00:11:06] So this is our quantification
+[00:11:06 -> 00:11:07] over all possible program points.
+[00:11:09 -> 00:11:11] But if T1 and T2 are live simultaneously
+[00:11:11 -> 00:11:12] at any program point,
+[00:11:12 -> 00:11:14] then they cannot share a register, right?
+[00:11:14 -> 00:11:18] So that is the corollary of our first statement.
+[00:11:18 -> 00:11:20] Another way of saying that
+[00:11:20 -> 00:11:22] is that if T1 and T2 are live simultaneously,
+[00:11:22 -> 00:11:24] they cannot share a register.
+[00:11:24 -> 00:11:27] So once again, if T1 and T2 are not live
+[00:11:27 -> 00:11:29] at any program point,
+[00:11:29 -> 00:11:32] then they can be mapped to the same register.
+[00:11:32 -> 00:11:36] Conversely, if T1 and T2 are live at any program point
+[00:11:36 -> 00:11:39] or at any, you know,
+[00:11:39 -> 00:11:40] if there exists a program point
+[00:11:40 -> 00:11:42] where they are two live simultaneously,
+[00:11:42 -> 00:11:44] then they cannot share a register.
+[00:11:45 -> 00:11:46] So here's an example.
+[00:11:46 -> 00:11:48] Let's say this is a program.
+[00:11:48 -> 00:11:49] It has control flow.
+[00:11:49 -> 00:11:50] It has a loop.
+[00:11:50 -> 00:11:52] It says A is colon equal to B plus C.
+[00:11:52 -> 00:11:53] D is colon equal to minus A.
+[00:11:53 -> 00:11:55] I'm omitting some statements,
+[00:11:55 -> 00:11:58] but let's say there's this control flow structure.
+[00:11:58 -> 00:12:00] And then let's say at the end of the program here,
+[00:12:00 -> 00:12:02] we assume that B is live, right?
+[00:12:02 -> 00:12:03] So I haven't drawn the whole program,
+[00:12:03 -> 00:12:06] but maybe at these points, B is live.
+[00:12:06 -> 00:12:07] Now, what am I going to do?
+[00:12:07 -> 00:12:10] I'm going to execute our liveness analysis
+[00:12:10 -> 00:12:11] that we have already discussed
+[00:12:11 -> 00:12:13] to figure out what are the live variables
+[00:12:13 -> 00:12:15] at every program point,
+[00:12:15 -> 00:12:16] and this would be our solution.
+[00:12:16 -> 00:12:17] So these are the live temporaries
+[00:12:17 -> 00:12:18] at every program point.
+[00:12:18 -> 00:12:21] So for example, at this particular program point,
+[00:12:21 -> 00:12:23] the live variables are B, C, and F.
+[00:12:23 -> 00:12:24] How come?
+[00:12:24 -> 00:12:27] Well, B is live because it's live at these edges,
+[00:12:27 -> 00:12:29] and C and F are live at the loop edge
+[00:12:29 -> 00:12:31] because C is getting used here,
+[00:12:31 -> 00:12:32] F is getting used here,
+[00:12:32 -> 00:12:35] and so we can figure out that both of them are live.
+[00:12:36 -> 00:12:41] All right, and so that's good.
+[00:12:41 -> 00:12:43] And similarly, we can do a backward data flow analysis.
+[00:12:43 -> 00:12:44] I'm not showing the execution
+[00:12:44 -> 00:12:45] of the backward data flow analysis,
+[00:12:45 -> 00:12:48] but if we do the backward data flow analysis,
+[00:12:48 -> 00:12:50] then the fixed point solution is going to be
+[00:12:50 -> 00:12:52] that B, C, and F are live here,
+[00:12:52 -> 00:12:54] A, C, and F live here, and so on.
+[00:12:54 -> 00:12:56] And so this is the entire solution, right?
+[00:12:56 -> 00:13:00] So all these kind of things in the purple pen
+[00:13:00 -> 00:13:02] are basically variables that are live
+[00:13:02 -> 00:13:03] at every program point.
+[00:13:04 -> 00:13:06] Now, based on this, what can we say?
+[00:13:06 -> 00:13:09] What are the pairs of variables
+[00:13:09 -> 00:13:12] that are not live simultaneously at any program point?
+[00:13:12 -> 00:13:17] So for example, notice that A and E
+[00:13:17 -> 00:13:20] are not live simultaneously anywhere, all right?
+[00:13:20 -> 00:13:25] In fact, A and D are also not live simultaneously.
+[00:13:25 -> 00:13:29] And so we can potentially look at every pair of variables
+[00:13:29 -> 00:13:32] and see which of them are not live simultaneously
+[00:13:32 -> 00:13:33] at any program point.
+[00:13:33 -> 00:13:36] And here is what I could figure out.
+[00:13:36 -> 00:13:40] Temporaries A and D, A and D, A and D,
+[00:13:40 -> 00:13:42] and in fact, B and D
+[00:13:42 -> 00:13:44] are also not live simultaneously, right?
+[00:13:44 -> 00:13:45] So how do I figure this out?
+[00:13:45 -> 00:13:48] I just need to go through each of the program points
+[00:13:48 -> 00:13:49] and see what is the solution
+[00:13:49 -> 00:13:52] and see what are the variables that are live, right?
+[00:13:52 -> 00:13:54] So we're going to see an algorithm
+[00:13:54 -> 00:13:55] on how to do this.
+[00:13:56 -> 00:13:58] So we're going to see how to do this efficiently.
+[00:13:58 -> 00:14:01] But now, if we know that these are the temporaries
+[00:14:01 -> 00:14:05] that are not live simultaneously at any program point,
+[00:14:05 -> 00:14:07] that also means that these are the temporaries
+[00:14:07 -> 00:14:08] that may share a resistor.
+[00:14:08 -> 00:14:11] So it is okay to, for example, map A and B
+[00:14:11 -> 00:14:13] to the same resistor, all right?
+[00:14:13 -> 00:14:17] It is also okay to map A and D to the same resistor.
+[00:14:17 -> 00:14:20] And in fact, it is also possible to map B and D
+[00:14:20 -> 00:14:21] to the same resistor.
+[00:14:21 -> 00:14:23] So in fact, from these three, we can say that
+[00:14:23 -> 00:14:24] A and D can be mapped to the same resistor.
+[00:14:24 -> 00:14:26] But then there is A and E
+[00:14:26 -> 00:14:28] that can also be mapped to the same resistor,
+[00:14:28 -> 00:14:31] but E and D cannot be mapped to the same resistor
+[00:14:31 -> 00:14:31] because we don't have,
+[00:14:31 -> 00:14:33] E and D are actually occurring together,
+[00:14:33 -> 00:14:34] for example, here.
+[00:14:34 -> 00:14:37] And so while A and D can be mapped
+[00:14:37 -> 00:14:38] to the same resistor,
+[00:14:38 -> 00:14:41] A, E, and D cannot simultaneously
+[00:14:41 -> 00:14:42] be mapped to the same resistor.
+[00:14:42 -> 00:14:43] So you have to make a choice in your algorithm.
+[00:14:43 -> 00:14:46] Either you map A and E to the same resistor
+[00:14:46 -> 00:14:48] or you map A and D to the same,
+[00:14:48 -> 00:14:49] or map a same resistor, right?
+[00:14:49 -> 00:14:52] But you cannot map A, D, and E simultaneously
+[00:14:52 -> 00:14:53] to the same resistor,
+[00:14:53 -> 00:14:54] and that would be wrong.
+[00:14:54 -> 00:14:56] So this is the kind of solution
+[00:14:56 -> 00:14:58] that we are looking for.
+[00:15:00 -> 00:15:03] And here is a way to arrive at the solution.
+[00:15:03 -> 00:15:05] The idea is we'll construct an undirected graph
+[00:15:05 -> 00:15:08] where every node is one temporary variable.
+[00:15:08 -> 00:15:10] So let's say A, B, C, D, E, F.
+[00:15:10 -> 00:15:14] And there's an edge between a temporary T1 and T2
+[00:15:14 -> 00:15:17] if they are simultaneously live at some program point.
+[00:15:17 -> 00:15:19] So even if there is some program point,
+[00:15:19 -> 00:15:20] one program point,
+[00:15:20 -> 00:15:22] where T1 and T2 are simultaneously live
+[00:15:22 -> 00:15:23] in this undirected graph,
+[00:15:23 -> 00:15:26] I'm going to draw an edge, an undirected edge
+[00:15:26 -> 00:15:28] between T1 and T2, right?
+[00:15:28 -> 00:15:30] And so there's nodes and there are edges.
+[00:15:30 -> 00:15:32] A node for each temporary and an edge
+[00:15:32 -> 00:15:35] between T1 and T2 if they are simultaneously live
+[00:15:35 -> 00:15:36] at some program point.
+[00:15:36 -> 00:15:38] So let's try to do this for the example
+[00:15:38 -> 00:15:39] that we just discussed.
+[00:15:40 -> 00:15:41] Before we do that,
+[00:15:41 -> 00:15:43] this kind of undirected graph
+[00:15:43 -> 00:15:45] is called a register interference graph,
+[00:15:45 -> 00:15:47] or RIG for short.
+[00:15:47 -> 00:15:50] And the idea is that if I have a RIG,
+[00:15:51 -> 00:15:52] if I have a register interference graph,
+[00:15:52 -> 00:15:56] then T1 and T2 can be allocated to the same register
+[00:15:56 -> 00:15:59] if no edge is present between them, right?
+[00:15:59 -> 00:16:01] So if there's no edge between T1 and T2,
+[00:16:01 -> 00:16:03] that basically means that they were not live
+[00:16:03 -> 00:16:04] at any program point,
+[00:16:04 -> 00:16:07] because we draw an edge if they are live
+[00:16:07 -> 00:16:08] at some program point.
+[00:16:08 -> 00:16:09] So if there is no edge,
+[00:16:09 -> 00:16:10] then basically means they're not live
+[00:16:10 -> 00:16:13] at any, simultaneously at any program point.
+[00:16:13 -> 00:16:17] And that means that they can be given the same register,
+[00:16:17 -> 00:16:18] same machine register.
+[00:16:19 -> 00:16:20] So for example,
+[00:16:20 -> 00:16:22] this is the register interference graph
+[00:16:22 -> 00:16:25] for the example program that we saw.
+[00:16:25 -> 00:16:28] So first of all, I just drew all the nodes,
+[00:16:28 -> 00:16:32] A, B, C, D, E, F are the nodes of my graph.
+[00:16:32 -> 00:16:34] Then I look at all the program points.
+[00:16:34 -> 00:16:36] For example, I have B, C, F.
+[00:16:36 -> 00:16:38] So I draw edges from B to F,
+[00:16:38 -> 00:16:42] B to C, and C to F, right?
+[00:16:42 -> 00:16:44] So all these three edges are because of,
+[00:16:44 -> 00:16:46] let's say this particular program point.
+[00:16:46 -> 00:16:47] Then we have ACF.
+[00:16:48 -> 00:16:49] So once again, I have A to C,
+[00:16:49 -> 00:16:52] and A to F, and C to F.
+[00:16:52 -> 00:16:53] Then I have CDF.
+[00:16:53 -> 00:16:58] So C to D, C to F, and D to F, right?
+[00:16:59 -> 00:17:03] So any pairwise, any pair of temporary
+[00:17:03 -> 00:17:05] that has the same simultaneously live,
+[00:17:05 -> 00:17:06] we need to draw in it.
+[00:17:06 -> 00:17:08] So it's a pairwise reasoning
+[00:17:08 -> 00:17:10] that we are doing here, right?
+[00:17:10 -> 00:17:13] CDEF, so we already did CDF,
+[00:17:13 -> 00:17:15] so maybe now we have to worry about E.
+[00:17:15 -> 00:17:18] So E to C, E to D, E to F.
+[00:17:19 -> 00:17:21] Again, CDEF, we have done this before.
+[00:17:21 -> 00:17:26] BCEF, so B to E, B to C, B to F, and C to F.
+[00:17:26 -> 00:17:28] BCF, already done this.
+[00:17:28 -> 00:17:29] CF, already done this.
+[00:17:29 -> 00:17:32] CE, CE also we have already done.
+[00:17:32 -> 00:17:36] CF we have already done because of CDEF, and that's it.
+[00:17:36 -> 00:17:39] And so that's our resistor interference graph, or RIG.
+[00:17:40 -> 00:17:43] And notice that, once again,
+[00:17:43 -> 00:17:46] nodes that are not connected by an edge
+[00:17:46 -> 00:17:48] can be assigned the same resistor.
+[00:17:48 -> 00:17:51] So for example, A and B can be assigned the same resistor.
+[00:17:51 -> 00:17:54] A and D can be assigned the same resistor.
+[00:17:54 -> 00:17:58] But A and F cannot be assigned the same resistor.
+[00:17:58 -> 00:18:00] And we are interested in finding out a solution
+[00:18:00 -> 00:18:03] such that we use the minimum number of resistors,
+[00:18:03 -> 00:18:05] or at least the number of resistors that we use
+[00:18:05 -> 00:18:07] is going to be less than the available number
+[00:18:07 -> 00:18:10] of resistors that we have in our machine.
+[00:18:10 -> 00:18:12] And so, first of all, the RIG,
+[00:18:12 -> 00:18:14] the resistor interference graph,
+[00:18:14 -> 00:18:16] exactly extracts the information required
+[00:18:16 -> 00:18:19] to characterize the legal resistor assignments,
+[00:18:19 -> 00:18:21] and gives us a global picture,
+[00:18:21 -> 00:18:22] because now we don't have to worry about
+[00:18:22 -> 00:18:24] at what program point and so on.
+[00:18:24 -> 00:18:27] We just kind of globally extracted this graph,
+[00:18:27 -> 00:18:29] which summarizes the information
+[00:18:29 -> 00:18:32] at all program points in the program.
+[00:18:32 -> 00:18:34] And then we basically use this,
+[00:18:34 -> 00:18:37] and the problem now reduces,
+[00:18:37 -> 00:18:39] the problem of resistor allocation now reduces
+[00:18:39 -> 00:18:41] to the problem of graph coloring.
+[00:18:41 -> 00:18:42] So this is a well-known problem
+[00:18:42 -> 00:18:44] in theoretical computer science.
+[00:18:44 -> 00:18:47] A coloring of a graph is an assignment
+[00:18:47 -> 00:18:48] of colors to nodes,
+[00:18:48 -> 00:18:50] such that nodes connected by an edge
+[00:18:50 -> 00:18:51] have different colors.
+[00:18:51 -> 00:18:53] So graph coloring is a problem
+[00:18:53 -> 00:18:56] for undirected graphs, first of all.
+[00:18:56 -> 00:18:58] And we say a coloring of an undirected graph
+[00:18:58 -> 00:19:00] is an assignment of colors to nodes.
+[00:19:00 -> 00:19:02] So for every node is given a color.
+[00:19:02 -> 00:19:05] Think of that, I just want to color every node.
+[00:19:05 -> 00:19:07] But there is a constraint that nodes connected
+[00:19:07 -> 00:19:10] by an edge must have different colors.
+[00:19:10 -> 00:19:13] And that's exactly what we are looking for.
+[00:19:13 -> 00:19:16] So for example, you can say A is given a color,
+[00:19:16 -> 00:19:18] and B is given a color.
+[00:19:18 -> 00:19:20] Because A and B are not connected by an edge,
+[00:19:20 -> 00:19:22] they can have the same color.
+[00:19:22 -> 00:19:24] But the color that F has should be different
+[00:19:24 -> 00:19:26] from the color that A has,
+[00:19:26 -> 00:19:28] because they are connected by an edge.
+[00:19:28 -> 00:19:31] So we just kind of, for us,
+[00:19:31 -> 00:19:32] we are one way to think about this,
+[00:19:32 -> 00:19:34] and at least in theoretical computer science,
+[00:19:34 -> 00:19:38] the way they think about this is coloring of nodes.
+[00:19:38 -> 00:19:41] And the constraints are exactly what we are looking for
+[00:19:41 -> 00:19:43] in our register allocation problem.
+[00:19:43 -> 00:19:46] And so we say a graph is key colorable
+[00:19:46 -> 00:19:48] if it has a coloring with K colors.
+[00:19:48 -> 00:19:51] So is it possible, is it even possible
+[00:19:51 -> 00:19:54] to color this graph in K colors?
+[00:19:54 -> 00:19:56] So of course, if the graph has N nodes,
+[00:19:56 -> 00:19:59] then it should be always possible to cover it,
+[00:19:59 -> 00:20:00] color it with N different colors.
+[00:20:00 -> 00:20:02] I mean, that's easy.
+[00:20:02 -> 00:20:05] But is it possible to now color it in N minus one colors?
+[00:20:05 -> 00:20:08] Is it possible to color it in N by two colors?
+[00:20:08 -> 00:20:09] Is it possible to color it
+[00:20:09 -> 00:20:12] in some arbitrary number K colors?
+[00:20:12 -> 00:20:14] And so that is a problem.
+[00:20:14 -> 00:20:16] And the graph is K colorable
+[00:20:16 -> 00:20:17] if it has a coloring with K colors.
+[00:20:17 -> 00:20:21] And so that's what this problem kind of reduces to.
+[00:20:21 -> 00:20:23] But then this problem is not an easy problem.
+[00:20:23 -> 00:20:25] So it's an NP-hard problem.
+[00:20:25 -> 00:20:27] What is the, is a graph K colorable?
+[00:20:27 -> 00:20:31] That's unfortunately an NP-hard problem.
+[00:20:31 -> 00:20:35] But there are some solutions to kind of solve these problems,
+[00:20:35 -> 00:20:36] maybe not the optimal solution,
+[00:20:36 -> 00:20:38] but close to optimal solutions and things like that.
+[00:20:38 -> 00:20:41] And I'm going to discuss one possible algorithm
+[00:20:41 -> 00:20:42] to do graph coloring.
+[00:20:42 -> 00:20:44] And the point is that for us,
+[00:20:44 -> 00:20:46] colors are nothing but machine registers.
+[00:20:46 -> 00:20:48] So when I say that, let's say I color A
+[00:20:48 -> 00:20:53] with some register color, I color the node A.
+[00:20:53 -> 00:20:55] That basically means I assign the node
+[00:20:55 -> 00:20:57] corresponding to the color to node A, right?
+[00:20:57 -> 00:20:58] Or temporary A, right?
+[00:20:58 -> 00:21:01] So there's a one-to-one mapping
+[00:21:01 -> 00:21:04] between temporaries and nodes,
+[00:21:04 -> 00:21:07] and colors and machine registers.
+[00:21:07 -> 00:21:11] And K here is going to be the number of machine registers.
+[00:21:11 -> 00:21:13] So what I'm really interested in knowing
+[00:21:13 -> 00:21:15] is that is it possible to color this node
+[00:21:15 -> 00:21:17] with K colors,
+[00:21:17 -> 00:21:20] where K is the number of registers I have
+[00:21:20 -> 00:21:21] in my machine.
+[00:21:21 -> 00:21:22] And if so, what is that coloring?
+[00:21:22 -> 00:21:24] And once I have that coloring, then it's easy.
+[00:21:24 -> 00:21:26] I just kind of rewrite my IRs
+[00:21:26 -> 00:21:30] with that assignment of nodes to colors
+[00:21:30 -> 00:21:32] or temporaries to machine registers,
+[00:21:32 -> 00:21:37] just like we did in our example.
+[00:21:37 -> 00:21:40] Just so you know, this graph is four-colorable here,
+[00:21:40 -> 00:21:42] but it is not three-colorable, all right?
+[00:21:42 -> 00:21:46] So it is possible to color this graph in four colors,
+[00:21:46 -> 00:21:48] but it's not possible to color this graph
+[00:21:48 -> 00:21:49] in three colors.
+[00:21:49 -> 00:21:50] This is a small example,
+[00:21:50 -> 00:21:52] so it's possible to solve this,
+[00:21:52 -> 00:21:54] but for larger graphs,
+[00:21:54 -> 00:21:57] it would become intractable to solve this
+[00:21:57 -> 00:21:59] because the problem is NP-hard.
+[00:21:59 -> 00:22:01] Next time, we're going to look at an algorithm
+[00:22:01 -> 00:22:03] to try to solve this in a heuristic way.

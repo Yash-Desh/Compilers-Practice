@@ -1,0 +1,597 @@
+Title: Compiler Design Module 138 : Array Data Dependencies
+Video ID: Rxlb1p2s_Z4
+Detected language: en
+------------------------------------------------------------
+
+[00:00:00 -> 00:00:02] When we talk about compiler transformations,
+[00:00:02 -> 00:00:07] one of the first things we talk about is data dependence,
+[00:00:07 -> 00:00:11] because you cannot move statements across each other if they were,
+[00:00:11 -> 00:00:14] they had data dependencies with each other.
+[00:00:14 -> 00:00:15] So in this case also,
+[00:00:15 -> 00:00:18] and when you're talking about polyhedral transformations,
+[00:00:18 -> 00:00:20] we want to worry about data dependencies.
+[00:00:20 -> 00:00:21] In this particular case,
+[00:00:21 -> 00:00:23] we call them array data dependencies.
+[00:00:23 -> 00:00:26] So there are three types of dependencies,
+[00:00:26 -> 00:00:29] just like any other kind of data dependency,
+[00:00:29 -> 00:00:31] that you may have studied.
+[00:00:31 -> 00:00:34] Read-after-write, also called R-A-W or raw,
+[00:00:34 -> 00:00:36] also called true dependence.
+[00:00:36 -> 00:00:39] Write-after-read, W-A-R or war,
+[00:00:39 -> 00:00:41] also called anti-dependence,
+[00:00:41 -> 00:00:43] and write-after-write, W-A-W,
+[00:00:43 -> 00:00:46] war, also called output dependence.
+[00:00:46 -> 00:00:50] So I'm just going to call them raw,
+[00:00:50 -> 00:00:51] war, and war,
+[00:00:51 -> 00:00:54] and these are three different types of dependencies.
+[00:00:55 -> 00:00:58] Why do we have a read-after-write dependency?
+[00:00:58 -> 00:01:01] Because if somebody is writing,
+[00:01:01 -> 00:01:03] and then somebody is reading from that same location,
+[00:01:03 -> 00:01:05] then you cannot reorder between the two,
+[00:01:05 -> 00:01:07] because then the value that is read
+[00:01:07 -> 00:01:11] in the second statement would be incorrect.
+[00:01:11 -> 00:01:12] It would be the old value.
+[00:01:12 -> 00:01:13] Similarly, write-after-read,
+[00:01:13 -> 00:01:17] if you do a read and then you do a write,
+[00:01:17 -> 00:01:19] you cannot reorder the write before the read,
+[00:01:19 -> 00:01:22] because then what you will be reading
+[00:01:22 -> 00:01:23] in the first instruction would be wrong,
+[00:01:23 -> 00:01:25] because you would have written,
+[00:01:25 -> 00:01:26] or clobbered the value, and then you're reading.
+[00:01:26 -> 00:01:30] So you cannot reorder across a write followed by a read.
+[00:01:30 -> 00:01:32] And similarly, you cannot reorder
+[00:01:32 -> 00:01:33] across a write followed by a write,
+[00:01:33 -> 00:01:36] because then the final output state
+[00:01:36 -> 00:01:39] of your machine state would be different,
+[00:01:39 -> 00:01:41] because earlier you had the second write
+[00:01:43 -> 00:01:44] clobbering the first write,
+[00:01:44 -> 00:01:45] but if you reorder,
+[00:01:45 -> 00:01:47] you'll have the first write clobbering the second write,
+[00:01:47 -> 00:01:49] and so the final machine state would be different.
+[00:01:49 -> 00:01:52] So these are three different types of dependencies,
+[00:01:52 -> 00:01:53] are raw, war, and war.
+[00:01:54 -> 00:01:58] Here is an example to understand these in more detail.
+[00:01:58 -> 00:02:02] So I have A two into I plus one equals zero,
+[00:02:02 -> 00:02:04] and A of two into I equals one.
+[00:02:04 -> 00:02:06] So here there are two writes.
+[00:02:06 -> 00:02:08] So the only dependency that can happen
+[00:02:08 -> 00:02:11] is potentially write after write.
+[00:02:11 -> 00:02:13] I'm only considering array dependencies here.
+[00:02:13 -> 00:02:16] I'm not worried about dependencies across variables
+[00:02:16 -> 00:02:19] like I and N and things like that.
+[00:02:19 -> 00:02:21] I'm only interested in dependencies
+[00:02:21 -> 00:02:24] across memory locations that belong to the array A.
+[00:02:24 -> 00:02:25] And then in this case,
+[00:02:25 -> 00:02:27] both the memory locations are being written to.
+[00:02:27 -> 00:02:28] And my question is,
+[00:02:28 -> 00:02:31] is there a dependency between the first write,
+[00:02:31 -> 00:02:34] which is to A of two into I plus one,
+[00:02:34 -> 00:02:36] and is there a dependent with the second one,
+[00:02:36 -> 00:02:39] second statement, which is A of two into I.
+[00:02:40 -> 00:02:42] And the answer here is that,
+[00:02:42 -> 00:02:44] notice that the first statement
+[00:02:44 -> 00:02:47] is only writing to the odd elements in A.
+[00:02:47 -> 00:02:49] But it's two into I plus one,
+[00:02:49 -> 00:02:49] so it can only be,
+[00:02:49 -> 00:02:50] let's say if I is zero,
+[00:02:50 -> 00:02:55] then this becomes one, three, five, seven
+[00:02:55 -> 00:02:58] for I equals one, two, three, four,
+[00:02:58 -> 00:03:00] and so on, respectively.
+[00:03:00 -> 00:03:01] And similarly, the second statement
+[00:03:01 -> 00:03:03] is only writing to even elements.
+[00:03:03 -> 00:03:06] For example, it's writing to zero, two, four, six, eight.
+[00:03:06 -> 00:03:10] And so the set of memory locations
+[00:03:10 -> 00:03:11] that the two statements,
+[00:03:11 -> 00:03:13] that's two static accesses,
+[00:03:13 -> 00:03:15] are writing to are disjoint.
+[00:03:15 -> 00:03:17] And so I'm going to claim
+[00:03:17 -> 00:03:19] that they don't have a data dependency
+[00:03:19 -> 00:03:21] between them.
+[00:03:21 -> 00:03:22] So in other words,
+[00:03:22 -> 00:03:23] there is no data dependency
+[00:03:23 -> 00:03:24] between the first statement
+[00:03:24 -> 00:03:25] and the second statement
+[00:03:25 -> 00:03:27] because there is no instance
+[00:03:27 -> 00:03:30] of the first statement's execution
+[00:03:30 -> 00:03:33] that accesses the same location,
+[00:03:33 -> 00:03:34] or writes to the same location
+[00:03:34 -> 00:03:38] as any instance of the second access,
+[00:03:38 -> 00:03:39] which is A of two into I,
+[00:03:39 -> 00:03:40] because the first access
+[00:03:40 -> 00:03:42] only writes to odd locations,
+[00:03:42 -> 00:03:43] and the second access
+[00:03:43 -> 00:03:44] only writes to even location.
+[00:03:44 -> 00:03:47] And so there is no overlap
+[00:03:47 -> 00:03:51] between the two sets of locations.
+[00:03:51 -> 00:03:52] And so because there's no data dependence,
+[00:03:52 -> 00:03:55] for example, the compiler is free
+[00:03:55 -> 00:03:56] to do transformations
+[00:03:56 -> 00:03:57] like the one shown here.
+[00:03:57 -> 00:03:59] This transformation is also called loop vision.
+[00:03:59 -> 00:04:00] Here I create,
+[00:04:00 -> 00:04:02] I split the loop into two loops
+[00:04:02 -> 00:04:03] for I equal,
+[00:04:03 -> 00:04:04] in the first loop,
+[00:04:04 -> 00:04:05] I just write the first statement.
+[00:04:05 -> 00:04:06] In the second loop,
+[00:04:06 -> 00:04:08] I have only the second statement.
+[00:04:08 -> 00:04:10] Depending on how you want to look at it,
+[00:04:10 -> 00:04:12] I can also think of,
+[00:04:12 -> 00:04:14] I can also try to analyze this loop
+[00:04:14 -> 00:04:16] and say what is this program,
+[00:04:16 -> 00:04:17] this transform program,
+[00:04:17 -> 00:04:19] and say is there a dependency
+[00:04:19 -> 00:04:23] between this statement and this statement?
+[00:04:23 -> 00:04:24] No, is there a dependency between
+[00:04:24 -> 00:04:29] A two into I plus one equals zero,
+[00:04:29 -> 00:04:31] and A of two into J equals one?
+[00:04:31 -> 00:04:32] These are two memory accesses.
+[00:04:32 -> 00:04:34] Is there an array dependence between the two?
+[00:04:34 -> 00:04:35] And the answer is again no.
+[00:04:35 -> 00:04:37] Once again, because of the same reason,
+[00:04:37 -> 00:04:38] one is writing only to odd locations,
+[00:04:38 -> 00:04:40] the other is writing to the even location.
+[00:04:40 -> 00:04:42] And so in a different setting,
+[00:04:42 -> 00:04:43] maybe you want to transform it
+[00:04:43 -> 00:04:46] back to the original,
+[00:04:46 -> 00:04:48] to the first program that I had shown earlier.
+[00:04:48 -> 00:04:50] And this transformation in the reverse direction
+[00:04:50 -> 00:04:52] would be called loop fusion.
+[00:04:53 -> 00:04:54] Okay?
+[00:04:54 -> 00:04:57] But the point is that I could do either loop fission,
+[00:04:57 -> 00:05:00] splitting into multiple loops or do fusion,
+[00:05:00 -> 00:05:02] merging into a single loop,
+[00:05:02 -> 00:05:04] only because I was sure that there's no data dependency
+[00:05:04 -> 00:05:06] between the two static accesses.
+[00:05:06 -> 00:05:08] And how am I basically deciding
+[00:05:08 -> 00:05:09] whether there's a data dependence
+[00:05:09 -> 00:05:11] between the two static accesses?
+[00:05:11 -> 00:05:13] That there is no dynamic instance
+[00:05:13 -> 00:05:16] of either access that accesses the same location.
+[00:05:16 -> 00:05:19] And that's true in this particular example.
+[00:05:19 -> 00:05:20] Now let's look at another example.
+[00:05:20 -> 00:05:22] And in this example,
+[00:05:23 -> 00:05:25] we have a two depth loop nest
+[00:05:26 -> 00:05:27] for I equals zero,
+[00:05:27 -> 00:05:29] I is less than N, I plus plus,
+[00:05:29 -> 00:05:32] J equals zero, J is less than N, J plus plus,
+[00:05:32 -> 00:05:35] A I comma two star I equals zero,
+[00:05:35 -> 00:05:39] and A I plus J comma two star I plus J plus one
+[00:05:39 -> 00:05:40] equals one.
+[00:05:40 -> 00:05:42] And once again, with the same argument
+[00:05:42 -> 00:05:44] that I had in my previous slide,
+[00:05:44 -> 00:05:46] I'm claiming that there is no data dependence
+[00:05:46 -> 00:05:47] between the first access here
+[00:05:47 -> 00:05:49] and between the second access here.
+[00:05:49 -> 00:05:53] Once again, because the second dimension of the access
+[00:05:53 -> 00:05:56] is always even for the first access,
+[00:05:56 -> 00:05:59] it's always two into I, and I is an integer,
+[00:05:59 -> 00:06:02] so two into I is always going to be an even number.
+[00:06:02 -> 00:06:04] Whereas it's always odd in the second access,
+[00:06:04 -> 00:06:07] it's two star I plus J plus one,
+[00:06:07 -> 00:06:09] and that's one added to an even number,
+[00:06:09 -> 00:06:10] so that's guaranteed to be odd.
+[00:06:10 -> 00:06:12] And so once again, I can reason
+[00:06:12 -> 00:06:14] that these two are disjoint.
+[00:06:15 -> 00:06:18] The sets of locations accessed by these two accesses,
+[00:06:21 -> 00:06:22] static accesses is disjoint,
+[00:06:22 -> 00:06:24] and so there is no data dependence,
+[00:06:24 -> 00:06:26] and once again, I'm free to do my loop fusion
+[00:06:26 -> 00:06:28] or fission in this case
+[00:06:28 -> 00:06:32] as the compiler optimization demands.
+[00:06:33 -> 00:06:35] All right, but let's look at another example.
+[00:06:35 -> 00:06:37] In this case, I have the same program
+[00:06:37 -> 00:06:38] that I had earlier,
+[00:06:38 -> 00:06:41] but I just changed the second access
+[00:06:41 -> 00:06:45] to I plus J comma I plus three into J plus one.
+[00:06:45 -> 00:06:47] So now I plus three into J plus one
+[00:06:47 -> 00:06:52] is no longer guaranteed to be odd, right?
+[00:06:52 -> 00:06:53] Unlike my previous example.
+[00:06:53 -> 00:06:57] And now I claim that there is a data dependence
+[00:06:57 -> 00:07:01] from between AI comma two star I,
+[00:07:01 -> 00:07:04] and I plus J comma I plus three star J plus one.
+[00:07:04 -> 00:07:07] And how do I figure out what is the data dependence?
+[00:07:07 -> 00:07:10] Well, I basically figure out what are the,
+[00:07:10 -> 00:07:11] if I look at all the locations
+[00:07:11 -> 00:07:13] that are accessed by the first statement,
+[00:07:13 -> 00:07:15] and I look at all the accesses
+[00:07:15 -> 00:07:16] that are made by the second statement,
+[00:07:16 -> 00:07:17] all the locations that are accessed
+[00:07:17 -> 00:07:18] by the second statement,
+[00:07:18 -> 00:07:20] and I take their intersection,
+[00:07:20 -> 00:07:22] then basically if that intersection is non-empty,
+[00:07:22 -> 00:07:26] then I basically say that there is a data dependency.
+[00:07:26 -> 00:07:28] In this case, these both are rights,
+[00:07:28 -> 00:07:31] and so it's a right after right data dependency.
+[00:07:31 -> 00:07:33] Now here are some examples.
+[00:07:33 -> 00:07:38] Then I comma J is one comma zero for the first statement.
+[00:07:39 -> 00:07:42] The first statement would be accessing one comma,
+[00:07:42 -> 00:07:44] the location one comma zero.
+[00:07:44 -> 00:07:47] And also if the second statement,
+[00:07:47 -> 00:07:49] also if the iteration,
+[00:07:49 -> 00:07:51] the point in the iteration space is one comma zero,
+[00:07:51 -> 00:07:53] then the second statement would also be accessing
+[00:07:53 -> 00:07:58] one comma one plus three into J plus one,
+[00:07:58 -> 00:07:59] and that's not zero, okay?
+[00:07:59 -> 00:08:02] So this is actually a wrong one.
+[00:08:03 -> 00:08:04] Let me just cut this out.
+[00:08:06 -> 00:08:07] Oh, sorry.
+[00:08:07 -> 00:08:08] This is fine.
+[00:08:08 -> 00:08:09] Let me just bring this back.
+[00:08:09 -> 00:08:14] So the first one is going to access I one comma two, right?
+[00:08:16 -> 00:08:18] For iteration point one comma zero,
+[00:08:18 -> 00:08:20] I comma J is one comma zero.
+[00:08:20 -> 00:08:23] So the access that is made is I comma two into I,
+[00:08:23 -> 00:08:24] which is one comma two.
+[00:08:24 -> 00:08:26] And the second one is also at one comma zero
+[00:08:26 -> 00:08:28] going to make an access to one comma two,
+[00:08:29 -> 00:08:30] because I plus J is one,
+[00:08:30 -> 00:08:34] and I plus three into J plus one is two
+[00:08:34 -> 00:08:37] for I comma J equals one comma zero.
+[00:08:37 -> 00:08:39] But in this case, this just happens to be an example
+[00:08:39 -> 00:08:41] where it's the same iteration point,
+[00:08:41 -> 00:08:43] one comma zero for both statements,
+[00:08:43 -> 00:08:45] but that's not necessary.
+[00:08:45 -> 00:08:47] Recall that we're just taking the list of locations
+[00:08:47 -> 00:08:49] accessed across all possible iteration points.
+[00:08:49 -> 00:08:53] And so for example, any point which has three for I
+[00:08:53 -> 00:08:54] and anything for J,
+[00:08:54 -> 00:08:56] so for example, it could be three comma zero
+[00:08:56 -> 00:08:58] or three comma one or three comma two,
+[00:08:59 -> 00:09:01] that has a conflict or a data dependence
+[00:09:01 -> 00:09:03] with iteration point two comma one
+[00:09:03 -> 00:09:04] for the second statement.
+[00:09:04 -> 00:09:07] So for example, two comma one for the second statement
+[00:09:07 -> 00:09:12] is going to access three comma six.
+[00:09:12 -> 00:09:15] And that's exactly what three comma star,
+[00:09:15 -> 00:09:17] three comma anything for J
+[00:09:17 -> 00:09:18] is going to access for the first statement.
+[00:09:18 -> 00:09:20] So three comma star versus two comma one
+[00:09:20 -> 00:09:22] have data dependencies.
+[00:09:22 -> 00:09:24] So notice that the iteration points
+[00:09:24 -> 00:09:25] can be different for the two statements
+[00:09:25 -> 00:09:27] for them to be called data dependent.
+[00:09:27 -> 00:09:28] And similarly, here's another example,
+[00:09:28 -> 00:09:31] five comma star versus three comma two
+[00:09:31 -> 00:09:33] for the second statement.
+[00:09:33 -> 00:09:34] Here's another example.
+[00:09:34 -> 00:09:37] In this case, the two statements need not be part
+[00:09:37 -> 00:09:39] of the same depth of the loop nest.
+[00:09:39 -> 00:09:41] In fact, they can belong
+[00:09:41 -> 00:09:43] to completely different loop nest as well.
+[00:09:43 -> 00:09:45] And still we should be able to talk about
+[00:09:45 -> 00:09:47] the data dependencies between them.
+[00:09:47 -> 00:09:50] In this case, A I comma two star I
+[00:09:50 -> 00:09:51] is in the outer loop
+[00:09:51 -> 00:09:54] and the A I plus J comma I plus four J plus one
+[00:09:54 -> 00:09:56] is in the inner loop.
+[00:09:56 -> 00:09:58] And once again, there is a walk dependence
+[00:09:58 -> 00:10:02] for one comma zero for the first statement
+[00:10:02 -> 00:10:05] and one comma zero for the second statement.
+[00:10:05 -> 00:10:07] Actually, I could have just said one
+[00:10:07 -> 00:10:10] versus one comma zero because there's no J
+[00:10:10 -> 00:10:11] for the first statement,
+[00:10:11 -> 00:10:13] it's only I because it's in the outer loop.
+[00:10:13 -> 00:10:15] Similarly, I don't need to know
+[00:10:15 -> 00:10:17] when I equals four
+[00:10:17 -> 00:10:20] and I comma for the first statement
+[00:10:20 -> 00:10:22] and then I comma J equals three comma one
+[00:10:22 -> 00:10:23] for the second statement,
+[00:10:23 -> 00:10:24] I have a conflict,
+[00:10:24 -> 00:10:25] I have a data dependence
+[00:10:25 -> 00:10:27] and it's a walk data dependence.
+[00:10:27 -> 00:10:28] And so there's a data dependence
+[00:10:28 -> 00:10:30] between the static accesses as well.
+[00:10:30 -> 00:10:32] So whenever there is a data dependence
+[00:10:32 -> 00:10:34] between the static accesses for our compiler,
+[00:10:34 -> 00:10:36] it basically means I cannot reorder
+[00:10:36 -> 00:10:38] these two statements with respect to each other.
+[00:10:38 -> 00:10:39] For example, I can't just move,
+[00:10:39 -> 00:10:42] I can't just reorder these two statements.
+[00:10:42 -> 00:10:45] For example, I can't move A I comma two star I
+[00:10:45 -> 00:10:47] after this particular loop
+[00:10:47 -> 00:10:49] or I cannot perform some kind of loop vision
+[00:10:49 -> 00:10:50] or anything like that.
+[00:10:52 -> 00:10:54] Okay, so now we have some context
+[00:10:54 -> 00:10:56] of what do I mean by array data dependencies
+[00:10:56 -> 00:10:58] across static array accesses.
+[00:10:58 -> 00:10:59] To define it more formally,
+[00:10:59 -> 00:11:03] a static access depends on an other static access
+[00:11:03 -> 00:11:06] as long as there exists
+[00:11:06 -> 00:11:09] even one dynamic instance of the first access
+[00:11:09 -> 00:11:12] that depends on some dynamic instance
+[00:11:12 -> 00:11:13] of the second access.
+[00:11:13 -> 00:11:16] So they do not need to be the same dynamic instance.
+[00:11:16 -> 00:11:18] Some dynamic instance of the first access
+[00:11:18 -> 00:11:21] has a dependency on some dynamic instance
+[00:11:21 -> 00:11:22] of the second access,
+[00:11:22 -> 00:11:24] then we say that the static accesses
+[00:11:24 -> 00:11:25] depend on each other.
+[00:11:25 -> 00:11:28] What do I mean by dependence here?
+[00:11:28 -> 00:11:29] When does one dynamic instance
+[00:11:29 -> 00:11:31] depend on another dynamic instance?
+[00:11:31 -> 00:11:34] Well, when they access the same memory location
+[00:11:34 -> 00:11:36] and when one of them is a right.
+[00:11:36 -> 00:11:39] So raw, war or war,
+[00:11:39 -> 00:11:43] notice that all these cases are cases of dependence
+[00:11:43 -> 00:11:45] and where one of them is a right.
+[00:11:46 -> 00:11:49] So to define it more formally
+[00:11:49 -> 00:11:51] using our mathematical notation,
+[00:11:51 -> 00:11:53] let there be two static accesses,
+[00:11:53 -> 00:11:55] capital F, small f, capital B, small b.
+[00:11:55 -> 00:11:58] This is how we have been talking about array accesses
+[00:11:58 -> 00:12:01] by a given access, by a given static access.
+[00:12:01 -> 00:12:02] Capital F is the coefficient matrix,
+[00:12:02 -> 00:12:06] small f is the offset for the memory address.
+[00:12:06 -> 00:12:10] Capital B and small b define the iteration space
+[00:12:10 -> 00:12:12] for that particular access, static access
+[00:12:12 -> 00:12:14] in a D depth loop nest.
+[00:12:14 -> 00:12:17] And similarly, and notice that D depth loop nest
+[00:12:17 -> 00:12:20] basically tells you what is the dimension
+[00:12:20 -> 00:12:23] of the iteration space in capital B.
+[00:12:23 -> 00:12:25] Similarly, capital F prime, small f prime,
+[00:12:25 -> 00:12:27] capital B prime, small b prime
+[00:12:27 -> 00:12:28] in a D prime depth loop nest.
+[00:12:28 -> 00:12:32] So even the dimensions of capital B and small b,
+[00:12:32 -> 00:12:34] capital B and D prime do not need to be the same.
+[00:12:34 -> 00:12:36] Dimensions of capital F and f prime
+[00:12:36 -> 00:12:37] do not need to be the same.
+[00:12:37 -> 00:12:40] We don't really care what the dimensions are.
+[00:12:40 -> 00:12:41] These are two completely different accesses.
+[00:12:41 -> 00:12:43] They could be in different loop nest.
+[00:12:43 -> 00:12:44] They could be at different depths
+[00:12:44 -> 00:12:45] of the same loop nest.
+[00:12:45 -> 00:12:47] We don't know, we don't care.
+[00:12:47 -> 00:12:51] We could still talk about their data dependence,
+[00:12:51 -> 00:12:53] the data dependence of these static accesses.
+[00:12:53 -> 00:12:55] If first of all, at least one of them needs to be right.
+[00:12:55 -> 00:12:56] If both of them are reads,
+[00:12:56 -> 00:12:57] then there's no data dependence.
+[00:12:57 -> 00:12:59] At least one of them is right.
+[00:12:59 -> 00:13:04] And there exists some iterations vector I
+[00:13:04 -> 00:13:09] belongs to a D-tuple of integers, Z to the power D.
+[00:13:10 -> 00:13:12] And some integer vector I prime
+[00:13:12 -> 00:13:15] that belongs to a D prime tuple of integers,
+[00:13:15 -> 00:13:16] Z to the power D prime,
+[00:13:16 -> 00:13:19] such that I belongs to the iteration space
+[00:13:19 -> 00:13:21] of the first statement, first access.
+[00:13:21 -> 00:13:24] So in other words, B I plus B is greater than equals zero.
+[00:13:24 -> 00:13:26] I prime belongs to the iteration space
+[00:13:26 -> 00:13:27] of the second statement.
+[00:13:27 -> 00:13:29] In other words, B prime I prime
+[00:13:29 -> 00:13:31] plus B prime is greater than equals zero.
+[00:13:31 -> 00:13:35] And the two accesses for I and I prime
+[00:13:35 -> 00:13:37] are actually accessing the same memory location.
+[00:13:37 -> 00:13:40] In other words, capital F I plus small f
+[00:13:40 -> 00:13:44] equals capital F prime I prime plus small f prime.
+[00:13:45 -> 00:13:47] So this is our mathematical representation
+[00:13:47 -> 00:13:49] of saying that there is a data dependence
+[00:13:49 -> 00:13:50] between two static accesses
+[00:13:50 -> 00:13:53] if there exists a dynamic instance,
+[00:13:53 -> 00:13:55] which accesses the same location
+[00:13:57 -> 00:13:59] for some dynamic instance of the first access
+[00:13:59 -> 00:14:01] and some dynamic instance of second access
+[00:14:01 -> 00:14:04] that happen to access the same memory location.
+[00:14:04 -> 00:14:06] And at least one of those accesses is right.
+[00:14:08 -> 00:14:12] So let's apply this to some of the examples
+[00:14:12 -> 00:14:13] that we have looked at.
+[00:14:13 -> 00:14:17] So let's say I have A I comma two star I equals zero
+[00:14:17 -> 00:14:21] and I plus J comma I plus two into J plus one equals zero.
+[00:14:21 -> 00:14:25] In this case, the capital F for the first access
+[00:14:25 -> 00:14:29] is just, there's only one iteration variable here, right?
+[00:14:29 -> 00:14:30] And for the first access, which is I
+[00:14:30 -> 00:14:35] and so capital F is one, two and small f is zero, right?
+[00:14:35 -> 00:14:37] Because I comma two I, so the multipliers
+[00:14:37 -> 00:14:39] for the first dimension is one,
+[00:14:39 -> 00:14:41] the second dimension is zero, two
+[00:14:41 -> 00:14:43] and then the offset is just zero
+[00:14:44 -> 00:14:45] because there's no additive constant.
+[00:14:45 -> 00:14:46] So that's for the first access.
+[00:14:46 -> 00:14:49] For the second access, it's I plus J comma
+[00:14:49 -> 00:14:50] I plus two star J plus one.
+[00:14:50 -> 00:14:54] So capital F prime becomes one, one for I plus J
+[00:14:54 -> 00:14:56] and one, two for I plus two star J
+[00:14:56 -> 00:14:58] and then smaller becomes zero, one
+[00:14:58 -> 00:15:00] because there's no offset in the first dimension
+[00:15:00 -> 00:15:04] and there is offset of one for the second dimension.
+[00:15:04 -> 00:15:07] And now I can basically solve these equations
+[00:15:07 -> 00:15:09] and say, okay, what is iteration space
+[00:15:09 -> 00:15:10] for the outer loop?
+[00:15:10 -> 00:15:15] So I lies between zero and N, N excluded
+[00:15:15 -> 00:15:17] and what is the iteration space for the inner statement
+[00:15:17 -> 00:15:21] which can also be expressed using capital V prime
+[00:15:21 -> 00:15:22] and small v prime.
+[00:15:22 -> 00:15:23] And now we can solve these equations
+[00:15:23 -> 00:15:24] to basically figure out
+[00:15:24 -> 00:15:28] whether there's a data dependence or not.
+[00:15:28 -> 00:15:31] Dependencies across, so dependencies,
+[00:15:31 -> 00:15:33] I mean, sometimes we are also interested
+[00:15:33 -> 00:15:34] in figuring out whether they are dependent.
+[00:15:34 -> 00:15:37] So in previous examples that we've been using,
+[00:15:37 -> 00:15:39] we have been talking about dependencies
+[00:15:39 -> 00:15:41] across two different static accesses.
+[00:15:41 -> 00:15:42] But it is sometimes also meaningful
+[00:15:42 -> 00:15:44] to talk about dependencies
+[00:15:44 -> 00:15:46] across different dynamic instances
+[00:15:46 -> 00:15:47] of the same static access.
+[00:15:47 -> 00:15:49] For example, I have the static access
+[00:15:49 -> 00:15:52] A I plus J, I plus two star J plus one.
+[00:15:52 -> 00:15:55] Are there dependencies across dynamic instances
+[00:15:55 -> 00:15:57] of the same access?
+[00:15:57 -> 00:15:59] And so in this case, all I need to do
+[00:15:59 -> 00:16:01] is I use the same set of equations
+[00:16:01 -> 00:16:05] but I basically use capital F prime
+[00:16:05 -> 00:16:06] to be the same as capital F
+[00:16:06 -> 00:16:08] and small f prime to be the same as small f,
+[00:16:08 -> 00:16:10] capital V prime to be same as capital B
+[00:16:10 -> 00:16:12] and small v prime to be the same as small v.
+[00:16:12 -> 00:16:14] So it's like, is there any instance
+[00:16:14 -> 00:16:17] of the same statement
+[00:16:17 -> 00:16:20] that has a dependency on itself?
+[00:16:20 -> 00:16:22] And sometimes you may want to know this
+[00:16:22 -> 00:16:24] because if there is no dependency,
+[00:16:24 -> 00:16:26] then I can kind of split the iteration space
+[00:16:26 -> 00:16:27] without worrying about it
+[00:16:27 -> 00:16:29] and reorder the iteration space
+[00:16:29 -> 00:16:30] without worrying about things.
+[00:16:30 -> 00:16:31] But if there is a dependence,
+[00:16:31 -> 00:16:33] then I'll have to be more careful.
+[00:16:33 -> 00:16:35] And so this is the way to basically,
+[00:16:35 -> 00:16:36] I mean, the same set of equations
+[00:16:36 -> 00:16:37] can be used to also identify
+[00:16:37 -> 00:16:40] whether different dynamic instances
+[00:16:40 -> 00:16:42] of the same access, static access,
+[00:16:42 -> 00:16:44] could potentially have data dependencies.
+[00:16:44 -> 00:16:47] There is one subtle point here.
+[00:16:47 -> 00:16:48] When we are solving these equations,
+[00:16:48 -> 00:16:50] we are only interested in those values
+[00:16:50 -> 00:16:53] of I and I prime, if they exist,
+[00:16:53 -> 00:16:55] where I is not equal to I prime
+[00:16:55 -> 00:16:58] because one trivial solution to this set of equations
+[00:16:58 -> 00:16:59] is when I equals I prime,
+[00:16:59 -> 00:17:00] where everything is the same,
+[00:17:00 -> 00:17:02] it's the same access, same statement.
+[00:17:02 -> 00:17:04] And we are ready, if it's the same statement,
+[00:17:04 -> 00:17:06] we are not interested in the same point
+[00:17:06 -> 00:17:07] in the iteration space.
+[00:17:07 -> 00:17:09] We are interested in points that are different
+[00:17:09 -> 00:17:10] in the iteration space.
+[00:17:10 -> 00:17:12] So for this particular case,
+[00:17:12 -> 00:17:14] when we are looking at the same static access,
+[00:17:14 -> 00:17:16] then we add an additional constraint,
+[00:17:16 -> 00:17:18] I is not equal to I prime.
+[00:17:18 -> 00:17:20] Recall that when we are talking about different accesses,
+[00:17:20 -> 00:17:21] we don't add this constraint
+[00:17:21 -> 00:17:26] because even if it's the same iteration space point
+[00:17:26 -> 00:17:29] for which the two accesses have a data dependency,
+[00:17:29 -> 00:17:30] we are interested in that data dependency.
+[00:17:30 -> 00:17:32] That means we can't reorder those two statements.
+[00:17:32 -> 00:17:35] But when we are talking about the same static access,
+[00:17:35 -> 00:17:37] we are looking at different points
+[00:17:38 -> 00:17:39] in the iteration space
+[00:17:39 -> 00:17:41] for them to have a data dependency.
+[00:17:41 -> 00:17:45] Okay, here is some examples.
+[00:17:45 -> 00:17:47] So let's say I have for I equals one to 10,
+[00:17:47 -> 00:17:50] ZI equals ZI minus one.
+[00:17:50 -> 00:17:54] So is there a data dependency between ZI and ZI minus one?
+[00:17:54 -> 00:17:58] And the answer can be found by formulating the equations
+[00:17:58 -> 00:18:01] for if I look at my iteration space
+[00:18:01 -> 00:18:02] using capital B and small b,
+[00:18:02 -> 00:18:05] it's a scalar so I'm just writing it
+[00:18:05 -> 00:18:07] as a single equation, single inequality.
+[00:18:07 -> 00:18:09] One is less than equal to I is less than equal to 10.
+[00:18:09 -> 00:18:11] Similarly, one is less than equal to I prime
+[00:18:11 -> 00:18:12] is less than equal to 10,
+[00:18:12 -> 00:18:15] where I is the iteration variable of ZI
+[00:18:15 -> 00:18:18] and I prime is the iteration instance variable
+[00:18:18 -> 00:18:20] for ZI minus one.
+[00:18:20 -> 00:18:22] And from this, and then I want to say
+[00:18:22 -> 00:18:25] that capital F plus small f,
+[00:18:26 -> 00:18:30] capital F I plus small f equals capital F prime,
+[00:18:30 -> 00:18:32] I prime plus small f prime
+[00:18:32 -> 00:18:35] and capital F here is just one
+[00:18:35 -> 00:18:39] and small f is zero for the first axis,
+[00:18:39 -> 00:18:42] capital F prime is one and small f prime is minus one.
+[00:18:42 -> 00:18:47] And so that basically gives me I equals I prime minus one
+[00:18:48 -> 00:18:50] or I've written it in the other way,
+[00:18:50 -> 00:18:52] it should have probably,
+[00:18:52 -> 00:18:53] I mean, the way I'm talking is
+[00:18:53 -> 00:18:56] it should have been I equals I prime minus one.
+[00:18:56 -> 00:18:58] And now basically the answer is
+[00:18:58 -> 00:19:02] does there exist a solution to this system of equations?
+[00:19:02 -> 00:19:04] The answer is yes.
+[00:19:04 -> 00:19:09] For example, if I prime equals two, I equals one,
+[00:19:09 -> 00:19:11] then it satisfies one comma two,
+[00:19:11 -> 00:19:13] basically two comma one,
+[00:19:13 -> 00:19:16] one comma two basically satisfies all these equations.
+[00:19:16 -> 00:19:19] And so there is a data dependency
+[00:19:19 -> 00:19:21] between these two array axes,
+[00:19:21 -> 00:19:23] these two static axes.
+[00:19:23 -> 00:19:24] Notice that even though I'm writing this
+[00:19:24 -> 00:19:25] as one statement,
+[00:19:26 -> 00:19:29] I use the word access and statement interchangeably,
+[00:19:29 -> 00:19:31] it's also always possible to write this
+[00:19:31 -> 00:19:32] as two different statements.
+[00:19:32 -> 00:19:35] And I would say T equals Z I minus one,
+[00:19:35 -> 00:19:38] and then Z I equals T.
+[00:19:38 -> 00:19:40] And so these are two different statements
+[00:19:40 -> 00:19:43] or two different accesses in that sense.
+[00:19:43 -> 00:19:44] Okay, so for example,
+[00:19:44 -> 00:19:46] I comma I prime is two, one, three, two, and so on.
+[00:19:47 -> 00:19:52] Okay, now what about Z I with itself?
+[00:19:52 -> 00:19:54] Are there data dependencies of Z I with itself?
+[00:19:54 -> 00:19:56] So I will have a system of equation says,
+[00:19:56 -> 00:19:58] I is between one and 10,
+[00:19:58 -> 00:20:00] I prime is between one and 10,
+[00:20:00 -> 00:20:01] I equals I prime,
+[00:20:01 -> 00:20:03] because that's what,
+[00:20:03 -> 00:20:05] I mean, for there to be a data dependency,
+[00:20:05 -> 00:20:07] I need to have capital F I plus small f
+[00:20:07 -> 00:20:11] equals capital F prime I prime plus small f prime.
+[00:20:11 -> 00:20:14] But F prime and small f prime are the same
+[00:20:14 -> 00:20:15] as capital F and smaller
+[00:20:15 -> 00:20:19] because we're doing dynamic instances of same access.
+[00:20:19 -> 00:20:20] So that basically means,
+[00:20:22 -> 00:20:25] F I plus F equals F I prime plus F,
+[00:20:25 -> 00:20:28] capital F is just one, small f is zero.
+[00:20:28 -> 00:20:31] So that just gives me I equals I prime.
+[00:20:32 -> 00:20:33] And then recall that when we are talking
+[00:20:33 -> 00:20:34] about the same access,
+[00:20:34 -> 00:20:36] and we add an additional constraint which says,
+[00:20:36 -> 00:20:38] I should not be equal to I prime.
+[00:20:38 -> 00:20:41] And now if I look at this system of equations,
+[00:20:41 -> 00:20:43] there is no solution to this system of equations
+[00:20:43 -> 00:20:46] because we have contradictory conditions.
+[00:20:46 -> 00:20:48] One requires that I should be equal to I prime,
+[00:20:48 -> 00:20:50] another requires I should not be equal to I prime.
+[00:20:50 -> 00:20:52] And so there are no data dependencies
+[00:20:52 -> 00:20:54] between Z I with itself.
+[00:20:56 -> 00:20:57] Here is another example.
+[00:20:57 -> 00:21:00] Let's say instead of Z I, this was Z zero,
+[00:21:01 -> 00:21:03] just to make things clearer.
+[00:21:03 -> 00:21:07] Once again, my iteration space remains unchanged,
+[00:21:07 -> 00:21:08] I is between zero and 10,
+[00:21:08 -> 00:21:09] I prime is one and 10,
+[00:21:09 -> 00:21:11] I prime is also between one and 10.
+[00:21:11 -> 00:21:14] But now F I plus F equals F,
+[00:21:14 -> 00:21:17] F I prime plus F becomes zero equals zero
+[00:21:17 -> 00:21:19] because in this case F is zero,
+[00:21:19 -> 00:21:21] capital F is zero and small f is also zero.
+[00:21:21 -> 00:21:22] And so we get zero equals zero
+[00:21:22 -> 00:21:25] and we have the additional constraint just like before,
+[00:21:25 -> 00:21:27] I is not equal to I prime.
+[00:21:27 -> 00:21:30] Is there a solution to this system of equations?
+[00:21:30 -> 00:21:31] The answer is yes.
+[00:21:31 -> 00:21:34] In fact, one comma two, one comma three,
+[00:21:34 -> 00:21:35] one comma four, two comma three,
+[00:21:35 -> 00:21:36] two comma four, three comma four.
+[00:21:36 -> 00:21:39] In fact, all possible pairs of I comma I prime
+[00:21:39 -> 00:21:42] that are satisfied by the iteration space constraints,
+[00:21:42 -> 00:21:44] which is I is less than,
+[00:21:44 -> 00:21:45] I is between one and 10
+[00:21:45 -> 00:21:49] and I prime is between one and 10 are basically valid.
+[00:21:49 -> 00:21:51] And so indeed there is a data dependence
+[00:21:51 -> 00:21:54] between Z zero and itself,
+[00:21:54 -> 00:21:56] between dynamic instances of Z zero and itself.
+[00:21:56 -> 00:21:58] And because it says right in this case,
+[00:21:58 -> 00:22:00] so Z zero is going to be,
+[00:22:00 -> 00:22:02] it is going to be a right after right dependency.
+[00:22:03 -> 00:22:06] Now I could have done the same thing on the other side.
+[00:22:06 -> 00:22:09] For example, it says Z I equals Z zero.
+[00:22:09 -> 00:22:10] And in this case also,
+[00:22:10 -> 00:22:13] I mean the equations just look exactly the same.
+[00:22:13 -> 00:22:16] However, there is no data dependence in this case.
+[00:22:16 -> 00:22:17] There is no data dependence
+[00:22:17 -> 00:22:20] because it's only reads to Z zero
+[00:22:20 -> 00:22:21] and recall one of our conditions
+[00:22:21 -> 00:22:22] for there to be a data dependence
+[00:22:22 -> 00:22:25] between one statement and the other.
+[00:22:25 -> 00:22:27] The statements could also be the same
+[00:22:27 -> 00:22:29] is that at least one of them should be a right.
+[00:22:29 -> 00:22:32] So between Z zero and Z zero dynamic instances,
+[00:22:32 -> 00:22:35] there is no data dependence, only reuse.
+[00:22:35 -> 00:22:36] So we already talked about reuse
+[00:22:36 -> 00:22:37] and we know that there's reuse
+[00:22:37 -> 00:22:39] because it's the same location that's being accessed.
+[00:22:39 -> 00:22:41] There is self temporal reuse in this case,
+[00:22:41 -> 00:22:43] but there is no data dependence.

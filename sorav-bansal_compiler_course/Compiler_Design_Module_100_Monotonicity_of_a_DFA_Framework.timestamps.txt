@@ -1,0 +1,228 @@
+Title: Compiler Design Module 100 : Monotonicity of a DFA Framework
+Video ID: 3C-o8lSTAJ4
+Detected language: en
+------------------------------------------------------------
+
+[00:00:00 -> 00:00:11] So we started talking about the family of transfer functions and we also discussed a few properties such that a set of functions can be called a family of transfer functions.
+[00:00:11 -> 00:00:20] To recap, the properties are that every function should map the same domain of values to the same range of values.
+[00:00:20 -> 00:00:27] It should have the identity function as part of the set and the set should be closed under composition.
+[00:00:27 -> 00:00:43] But the next question you want to ask is, do we need some more properties from these transfer functions or from this family of transfer functions such that we can reason or we can guarantee the properties of our fixed-point iteration algorithm.
+[00:00:43 -> 00:00:50] And recall that one of the big properties of our fixed-point iteration algorithm that we are interested in is its convergence property.
+[00:00:50 -> 00:00:57] What does the convergence property mean? That we expect the fixed-point iteration to terminate in a finite number of iterations.
+[00:00:57 -> 00:01:10] And recall that we actually had a requirement on the semi-lattice and the requirement was that the semi-lattice should have finite height to guarantee convergence of the fixed-point iteration.
+[00:01:10 -> 00:01:30] So in other words, if the semi-lattice has finite height and maybe some requirements on capital F, which is the family of transfer functions, then we will have a terminating or converging fixed-point iteration algorithm for that particular DFA framework.
+[00:01:30 -> 00:01:42] So the question we want to ask in this module is, do we have any requirements from the family of transfer functions F to guarantee convergence of our DFA fixed-point iteration algorithm.
+[00:01:42 -> 00:01:51] So let's take this particular example in which the set of values is basically just a set of two values, true and false.
+[00:01:51 -> 00:02:01] And let's say the meet operator is logical AND. So as soon as we say that the meet operator is logical AND, this is our semi-lattice diagram.
+[00:02:01 -> 00:02:06] True is the top value and false is the bottom value.
+[00:02:06 -> 00:02:16] So in other words, the less than equal to operator basically says that false is less than equal to true.
+[00:02:16 -> 00:02:18] What is the set of transfer functions?
+[00:02:18 -> 00:02:30] Well, because there are only two values, the total number of functions that can be possible for values of true and false are basically actually just four functions.
+[00:02:30 -> 00:02:39] One is the identity function, one is the not function, one is the function that always returns true, and one is the function that always returns false.
+[00:02:39 -> 00:02:43] So these are the four functions in our family of transfer functions.
+[00:02:43 -> 00:03:01] Notice that this set of transfer functions forms a family because all these four functions, ID, not, true and false, take an argument which belongs to set V and returns a value which also belongs to set V.
+[00:03:01 -> 00:03:05] Also, the ID function is a part of F. So that's good.
+[00:03:05 -> 00:03:12] And further, all these functions are, this set of functions is closed under composition.
+[00:03:12 -> 00:03:18] So you can compose any two functions and you would get a function which belongs to F already.
+[00:03:18 -> 00:03:23] For example, if I compose, let's say not followed by true, what is that?
+[00:03:23 -> 00:03:29] That's just true because I first take a not and then use true on that, then I just get true.
+[00:03:29 -> 00:03:33] Similarly, not composed with false is just false.
+[00:03:33 -> 00:03:37] Not composed with ID is just not.
+[00:03:37 -> 00:03:40] Similarly, ID composed with not is just not.
+[00:03:40 -> 00:03:43] Not composed with not is ID.
+[00:03:43 -> 00:03:49] So you click any combination of these functions and you would get a function which is belonging to the set.
+[00:03:49 -> 00:03:50] So it is a family of functions.
+[00:03:50 -> 00:03:53] Let's close under composition.
+[00:03:53 -> 00:03:55] So this is the definition of not.
+[00:03:55 -> 00:03:57] Not of true is false.
+[00:03:57 -> 00:03:59] Not of false is true.
+[00:03:59 -> 00:04:01] That's the intuitive definition that we already know.
+[00:04:01 -> 00:04:05] And ID of X, where X can be either true or false, is just X itself.
+[00:04:05 -> 00:04:10] True of any input is just true and false of any input is just false.
+[00:04:10 -> 00:04:12] So true and false are functions.
+[00:04:12 -> 00:04:19] Notice that I'm using the capital T and capital F for the functions and small t and small f for the values.
+[00:04:19 -> 00:04:31] So capital true of X gives me small true and capital false of X gives me small false for both values of X.
+[00:04:31 -> 00:04:33] All right.
+[00:04:33 -> 00:04:39] So let's look at all the requirements that we have discussed so far on the semi lattice and on the family of trans functions.
+[00:04:39 -> 00:04:41] Is it a finite height semi lattice?
+[00:04:41 -> 00:04:43] Indeed, it is a finite height semi lattice.
+[00:04:43 -> 00:04:45] Just the height is just one.
+[00:04:45 -> 00:04:50] And because there's only one edge, the longest path length is just one.
+[00:04:50 -> 00:04:52] Identity function belongs to F.
+[00:04:52 -> 00:04:53] Indeed, it does.
+[00:04:53 -> 00:04:54] That's the ID function.
+[00:04:54 -> 00:04:55] Is it closed under composition?
+[00:04:55 -> 00:05:00] We just discussed that the set of this family of functions is closed under composition.
+[00:05:00 -> 00:05:09] Now let's try to understand that what is this DFA framework formed by these three elements F, V and the meet operator.
+[00:05:09 -> 00:05:13] Does this DFA framework satisfy?
+[00:05:13 -> 00:05:21] I mean, will the fixed point iteration when run on this particular DFA framework, will it converge or not?
+[00:05:21 -> 00:05:25] And to see that, let's use this particular example.
+[00:05:25 -> 00:05:33] And in this example, I'm assuming that there is a basic block B1.
+[00:05:33 -> 00:05:34] All right.
+[00:05:34 -> 00:05:36] There's a basic block B1.
+[00:05:36 -> 00:05:38] There's another basic block B2.
+[00:05:38 -> 00:05:40] And then there is exit.
+[00:05:40 -> 00:05:41] All right.
+[00:05:41 -> 00:05:43] And these green edges are basically representing control flow.
+[00:05:43 -> 00:05:46] So you start at basic block B1.
+[00:05:46 -> 00:05:50] Then from B1, you transfer control to B2.
+[00:05:50 -> 00:05:53] B2 can either loop to itself.
+[00:05:53 -> 00:05:55] So that's this particular edge here.
+[00:05:55 -> 00:05:59] Or it could exit or branch to the exit location.
+[00:05:59 -> 00:06:01] And that's our simple program.
+[00:06:01 -> 00:06:02] All right.
+[00:06:02 -> 00:06:07] Now, let us assume that the initialization condition, which is the bound.
+[00:06:07 -> 00:06:09] Let's assume first of all that it's a forward DFA.
+[00:06:09 -> 00:06:14] I'm just using this example to illustrate a point.
+[00:06:14 -> 00:06:18] So we could have used a backward DFA as well, but let's assume a forward DFA.
+[00:06:19 -> 00:06:26] So in the forward DFA, let's assume that the boundary condition is that at the beginning of this program, the value is true.
+[00:06:26 -> 00:06:27] OK.
+[00:06:27 -> 00:06:39] And now I want to kind of do, you know, execute my fixed point iteration to basically find the values at all the other points in the and all the other program points.
+[00:06:39 -> 00:06:40] OK.
+[00:06:40 -> 00:06:43] So how is my fixed point iteration algorithm going to work?
+[00:06:43 -> 00:06:48] Well, maybe it is going to first apply the transfer function of B1 on true.
+[00:06:48 -> 00:06:53] Then it's going to apply the transfer function of B2 on whatever is the result after B1.
+[00:06:53 -> 00:06:57] And then and then this is going to go on until we reach a fixed point.
+[00:06:57 -> 00:07:01] So, you know, the transfer function of B2 will get met.
+[00:07:01 -> 00:07:06] So this value will get met with this value and so on and until we reach a fixed point.
+[00:07:06 -> 00:07:10] And similarly, I'm going to have a value at the exit as well.
+[00:07:10 -> 00:07:11] All right.
+[00:07:11 -> 00:07:21] So I'm drawing this, you know, this true here, this particular true annotation here basically indicates that the boundary condition is true.
+[00:07:21 -> 00:07:22] All right.
+[00:07:22 -> 00:07:25] I could have also, for example, written it horizontally here.
+[00:07:25 -> 00:07:32] But I just want, I mean, it's written writing it on top of it because just to indicate that it's a boundary condition.
+[00:07:32 -> 00:07:37] Also, I am going to have some transfer functions for B1 and B2.
+[00:07:37 -> 00:07:41] Recall that the transfer function needs to be drawn from the family of transfer functions.
+[00:07:41 -> 00:07:50] So, you know, maybe B1 would have one of these four functions as its transfer function and B2 would also have one of these four functions as its transfer function.
+[00:07:50 -> 00:08:00] And, you know, I'm just assuming in this example that the transfer function for B1 is ID and the transfer function of B2 is not.
+[00:08:00 -> 00:08:10] So if the transfer function of B1 is ID, then if I apply the transfer function of the value true, I'm going to get the value true.
+[00:08:10 -> 00:08:15] Similarly, if I apply the transfer function not on value true, I'm going to get false.
+[00:08:15 -> 00:08:22] So that's what I mean when I say that B1's transfer function is ID and B2's transfer function is not.
+[00:08:22 -> 00:08:26] So let's start executing our fixed point iteration algorithm.
+[00:08:26 -> 00:08:34] So the first part of the fixed point iteration algorithm is to initialize all the interior points of the program with the top value.
+[00:08:34 -> 00:08:39] So what is the top value here? The top value is true, right?
+[00:08:39 -> 00:08:42] So true is also the top value in our semi lattice.
+[00:08:42 -> 00:08:45] So we're going to initialize all the values with the top value.
+[00:08:45 -> 00:08:48] So let's do that. And that's what we have.
+[00:08:48 -> 00:08:51] This particular true here indicates the boundary condition.
+[00:08:51 -> 00:08:57] And so because of the boundary condition, this value is true and all the other values are also true.
+[00:08:57 -> 00:09:00] And that's coming from the fact that true is also the top value.
+[00:09:00 -> 00:09:03] And we're just initializing all the program points to the top value.
+[00:09:03 -> 00:09:08] So this is the initial state. So this is the initial state.
+[00:09:08 -> 00:09:14] All right. Now we are going to basically execute our DFA algorithm.
+[00:09:14 -> 00:09:18] And we could implement it. We could pick any particular node.
+[00:09:18 -> 00:09:21] For example, we could use reverse postorder as we have discussed.
+[00:09:21 -> 00:09:23] But it doesn't really matter what order we pick.
+[00:09:23 -> 00:09:28] So let's say we first pick B1. So when we pick B1, we basically get true here.
+[00:09:28 -> 00:09:31] All right. So because of B1, this becomes this remains true.
+[00:09:31 -> 00:09:35] And so now we continue now from B1.
+[00:09:35 -> 00:09:39] Basically, I come here and this one also.
+[00:09:39 -> 00:09:43] So here we basically meet over both the incoming values.
+[00:09:43 -> 00:09:47] So at this particular program point, there are two incoming edges.
+[00:09:47 -> 00:09:50] So I meet over them. What is the value on one of them? It's true.
+[00:09:50 -> 00:09:53] What is the value on the other one? It is also true.
+[00:09:53 -> 00:09:55] So the value still remains true.
+[00:09:55 -> 00:10:01] Okay. Now the third step, I want to apply the not function to the true value.
+[00:10:01 -> 00:10:05] And so when I do that, then I get false here.
+[00:10:05 -> 00:10:09] All right. So notice that this value has now become false.
+[00:10:09 -> 00:10:17] Because I just applied this transfer function not on this value true and I get false.
+[00:10:17 -> 00:10:24] Okay. So now that I get false here, I basically again, you know, so this is the value false.
+[00:10:24 -> 00:10:29] And now maybe the next time I'm going to just propagate this value and this will become false.
+[00:10:29 -> 00:10:32] But also this false is going to go propagate here.
+[00:10:32 -> 00:10:35] And now I'm going to meet true with false.
+[00:10:35 -> 00:10:39] And recall what is true meet false in our semi lattice.
+[00:10:39 -> 00:10:41] True meet false is false. Right.
+[00:10:42 -> 00:10:47] So this value is going to change to false in the next iteration.
+[00:10:47 -> 00:10:53] So let's do that. And indeed, in our next iteration, this value has changed to false.
+[00:10:53 -> 00:10:57] So now we have two false. One here and one here.
+[00:10:57 -> 00:11:01] Now we again apply the not transfer function to the false value.
+[00:11:01 -> 00:11:05] And what do we get? Oh, we get true here.
+[00:11:05 -> 00:11:08] All right. So now we're just remaining with one false and this true here.
+[00:11:09 -> 00:11:15] And now true and now once again, I'm going to propagate true on this particular edge on the loop edge.
+[00:11:15 -> 00:11:17] And now it becomes true meet true.
+[00:11:17 -> 00:11:20] And now this value now again becomes true.
+[00:11:20 -> 00:11:22] So now this becomes true again.
+[00:11:22 -> 00:11:25] And notice that this can just keep going on forever.
+[00:11:25 -> 00:11:30] Once again, I would apply not on true and this would become false, for example.
+[00:11:30 -> 00:11:32] And then once again, false would get propagated.
+[00:11:32 -> 00:11:36] The beginning of the basic block B2 will become false.
+[00:11:36 -> 00:11:42] And so it will just keep toggling, oscillating between true, false, true, false, true, false and so on.
+[00:11:42 -> 00:11:45] And it can just keep going on forever.
+[00:11:45 -> 00:11:53] So even though our semi lattice is finite height, even though our set of transfer functions is a family of transfer functions,
+[00:11:53 -> 00:11:58] because it is composed, you know, it is closed under composition.
+[00:11:58 -> 00:12:01] It has the identity function and so on.
+[00:12:02 -> 00:12:08] Even with all these properties, the fixed point iteration in this particular example is not going to converge.
+[00:12:08 -> 00:12:09] So what is the problem?
+[00:12:09 -> 00:12:20] The problem is that this particular function not is kind of a funny function because it just toggles the value from true to false and false to true.
+[00:12:20 -> 00:12:29] And this is not typically how we expect our data flow analysis functions to occur because we want that if it is true.
+[00:12:29 -> 00:12:31] So, you know, we have certain ordering.
+[00:12:31 -> 00:12:33] So this is true and this is false.
+[00:12:33 -> 00:12:43] And so if the transfer function basically, you know, if the transfer function takes value true to some other value,
+[00:12:43 -> 00:12:49] then the value that transfer function takes false to should be less than equal to this value.
+[00:12:49 -> 00:12:54] So f of true should be greater than equal to f of false.
+[00:12:54 -> 00:13:02] But not does not obey this property because in not, you know, f of false is actually true and f of true is false.
+[00:13:02 -> 00:13:06] And so, you know, it's not it's not actually obeying the property.
+[00:13:06 -> 00:13:15] And so let me just we need first of all, we need some constraints on f so that the fixed point iteration is guaranteed to converge.
+[00:13:15 -> 00:13:22] We can clearly see that the existing set of constraints is insufficient, as we have seen using this particular example.
+[00:13:22 -> 00:13:27] All right. And the problem really is that the not function in f keeps oscillating.
+[00:13:27 -> 00:13:30] And we typically do not expect this in a data flow analysis.
+[00:13:30 -> 00:13:34] All right. It's not in a data flow analysis.
+[00:13:34 -> 00:13:38] Things just don't keep oscillating. I mean, things are moving in a particular direction.
+[00:13:38 -> 00:13:45] And so to formalize that, we're going to define the notion of monotonicity of a data flow analysis framework.
+[00:13:45 -> 00:13:47] So what is monotonicity?
+[00:13:47 -> 00:14:01] A framework f we mean is monotone if and only if x is less than equal to y implies f x is less than equal to f y for all f belonging to capital F.
+[00:14:01 -> 00:14:07] All right. So all our transfer functions need to be monotone with respect to the semi-ladders,
+[00:14:07 -> 00:14:17] which basically means that if x is less than equal to y, then it must be true that f x is less than equal to f y.
+[00:14:17 -> 00:14:23] All right. Which means that they drive smaller values to smaller results or less than equal to values.
+[00:14:23 -> 00:14:34] So values that are not greater than cannot produce inputs that are not greater than equal to the other input can only produce outputs that are also not greater than the other output.
+[00:14:34 -> 00:14:41] That simply smaller inputs produce smaller outputs, whereas the not function doesn't do that.
+[00:14:41 -> 00:14:50] It smaller input can actually produce a bigger output because true is less than equal to false is false is less than equal to true.
+[00:14:50 -> 00:14:58] In our semi-latus example, yet not of a false is greater than equal to not of true.
+[00:14:59 -> 00:15:10] So in our example, false is less than equal to true, but not of false is not less than equal to not of true in our particular semi-latus that we discussed.
+[00:15:10 -> 00:15:15] And so this particular function not is not monotone.
+[00:15:15 -> 00:15:25] And so the framework is not monotone because all functions belonging to the family of transfer functions are not monotone.
+[00:15:25 -> 00:15:38] Another way of specifying the monotonicity property is that a framework is monotone if and only if f x meet y is less than equal to f x meet f y for all x and y.
+[00:15:38 -> 00:15:45] So of course, these are both these statements, both these kind of definitions are universally quantified over x and y.
+[00:15:45 -> 00:15:56] So even here for all possible x and y, it should be true that x meet y, f of x meet y is less than equal to f x meet f y.
+[00:15:56 -> 00:15:59] And I'm claiming that these two definitions are actually equivalent.
+[00:15:59 -> 00:16:05] So if I say x is less than equal to y implies f x is less than equal to f y for all x and y.
+[00:16:05 -> 00:16:10] That is equivalent to saying that f x meet y is less than equal to f x meet f y.
+[00:16:10 -> 00:16:18] When I say it's equivalent to saying, it means that using this statement, I can derive the statement and vice versa.
+[00:16:18 -> 00:16:23] So these two statements are equivalent. So I can have either definition of monotonicity.
+[00:16:23 -> 00:16:26] I mean, both these definitions are actually equal.
+[00:16:26 -> 00:16:31] And it's a good exercise to try to prove this on your own.
+[00:16:31 -> 00:16:34] I'm not doing this in these lecture modules.
+[00:16:35 -> 00:16:49] So let's look at this example, the example that we discussed and see why that by the example actually also violates this particular property that f x meet y is less than equal to f x meet f y.
+[00:16:49 -> 00:16:56] Well, in our example, not of false meet true is not less than equal to not of false meet not of true.
+[00:16:56 -> 00:17:06] So let's see that let's draw a semi lattice recall that our semi lattice basically has two values true and false and false is less than equal to true.
+[00:17:06 -> 00:17:13] Now, what is what is false meet true in our semi lattice false meet true is false.
+[00:17:13 -> 00:17:16] So in our framework, false is less than equal to true.
+[00:17:16 -> 00:17:31] And so if I if I look at if I just kind of write this framework and replace not for f, then I get not of x meet y is less than equal to not of x meet not of y.
+[00:17:31 -> 00:17:35] And then let's choose false for x and true for y.
+[00:17:35 -> 00:17:49] And if I do that, then I get this particular this particular equation in equation, which is not of false meet true is less than is it less than equal to not of false meet not of true.
+[00:17:49 -> 00:17:54] And we'll see that this is not true because false of false meet true is nothing but false.
+[00:17:54 -> 00:17:57] And so not of false meet true is true.
+[00:17:58 -> 00:18:01] Similarly, not of false is true and not of true is false.
+[00:18:01 -> 00:18:11] And so true meet false is false and true is not less than equal to false because true is actually greater than false in our semi lattice.
+[00:18:11 -> 00:18:17] And so because not is not monotonic because it does not satisfy this particular property either.
+[00:18:17 -> 00:18:23] And recall that I'm just saying that this property is actually equivalent to saying the property that we had earlier.
+[00:18:23 -> 00:18:26] All right. So we can see that not does not satisfy any of these properties.
+[00:18:26 -> 00:18:30] And so this framework is not monotone.
+[00:18:30 -> 00:18:44] OK, so I'm going to claim and we're going to see this more clearly in our later modules that if the family of transfer functions is such that it makes the framework monotonic,
+[00:18:44 -> 00:18:54] which means all the all the functions inside that family obey the monotonicity property, then the fixed point iteration algorithm is guaranteed to converge.
+[00:18:54 -> 00:19:04] So let's look at another example, which is a more realistic data flow analysis example, which we've been using throughout the course, which is the reaching definitions example.
+[00:19:04 -> 00:19:13] So in the reaching definitions, a transfer function is basically given by X minus some kill set, union, some gen set.
+[00:19:13 -> 00:19:19] And we basically form a family of such transfer functions using different values of kill and gen.
+[00:19:19 -> 00:19:28] So is this family of transfer functions and the framework associated with it for reaching definitions, is it monotone or not?
+[00:19:28 -> 00:19:36] Now, recall that in reaching definitions, X1 is less than equal to X2 is equivalent to saying X1 is a superset of X2.
+[00:19:36 -> 00:19:44] So the less than equal to operator in the reaching definition semi lattice can be replaced with the superset operator.
+[00:19:44 -> 00:19:49] In other words, the meet operator in the reaching definition is the union operator, set union operator.
+[00:19:50 -> 00:20:00] So what is FX1 for any X1? It is X1 minus kill union gen. What is FX2 for any X2? It is X2 minus kill union gen.
+[00:20:00 -> 00:20:07] Notice that all these values here, X1, kill and gen are completely abstract, so they can be any values.
+[00:20:07 -> 00:20:16] And yet we can show with these definitions that if X1 is less than equal to X2, then FX1 is less than equal to FX2.
+[00:20:16 -> 00:20:22] In other words, if X1 is a superset of X2, then FX1 is a superset of FX2.
+[00:20:22 -> 00:20:33] And that's very clear from these equations. If X1 has all the elements that X2 has, then FX1 will also have all the elements that FX2 has.
+[00:20:33 -> 00:20:41] Because these operators just basically do not really, I mean, they're just subtracting some elements and then adding them.
+[00:20:41 -> 00:20:46] And so if we start with a bigger set, we are going to end up with a bigger set as well.
+[00:20:46 -> 00:20:50] And so that's what that's exactly what our monotonicity property is saying.
+[00:20:50 -> 00:20:58] And so in this particular case, for our reaching definitions example, the frame, the DFA framework formed by F, V and meet is monotone.

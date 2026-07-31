@@ -1,0 +1,218 @@
+Title: Compiler Design Module 167 : Undefined Behaviour In IR
+Video ID: Zh_mtwKEz0c
+Detected language: en
+------------------------------------------------------------
+
+[00:00:00 -> 00:00:06] We've seen before that undefined behavior or UB in the source programming language actually
+[00:00:06 -> 00:00:11] enables optimization and to recall this let's look at this example that we have seen before.
+[00:00:11 -> 00:00:16] So let's say there is a variable n and I have I'm doing some computation which involves
+[00:00:16 -> 00:00:19] computing n plus one anywhere in the program.
+[00:00:19 -> 00:00:26] In this particular program I'm computing n plus one inside the check of the for loop.
+[00:00:26 -> 00:00:32] Now n plus one for an assigned integer in C can potentially overflow and so the question
+[00:00:32 -> 00:00:37] is what should be the semantics if n plus one overflows and one possible answer could
+[00:00:37 -> 00:00:42] have been that n plus one actually discards the most significant bit or in other words
+[00:00:42 -> 00:00:48] this is also called wraps around to zero in that case but that actually disables
+[00:00:48 -> 00:00:53] some optimizations and we've seen before one of the kind of transformation that would
+[00:00:53 -> 00:00:57] be a common transformation is you want to change i is less than n plus one to let's
+[00:00:57 -> 00:01:03] say i is less than equal to n and this transformation which looks really simple transformation and
+[00:01:03 -> 00:01:08] something that we take for granted is actually not valid if we use the wrap around
+[00:01:08 -> 00:01:17] semantics for integer overflows operations and so what programming languages like C
+[00:01:17 -> 00:01:22] which are very conscious of optimization and performance do is that they basically
+[00:01:22 -> 00:01:26] say that n plus one is undefined behavior or n plus one should never happen because
+[00:01:26 -> 00:01:32] n plus one triggers you be and if the program triggers you be the abstract machine can
+[00:01:32 -> 00:01:37] do anything it's basically means that the program was actually wrong and so because
+[00:01:37 -> 00:01:41] of those semantics we can now do these transformations because the compiler can
+[00:01:41 -> 00:01:45] assume that you know the compiler only needs to preserve semantics for correct
+[00:01:45 -> 00:01:49] programs if the program is illegal then the compiler does not need to worry about
+[00:01:49 -> 00:01:55] and for all legal programs which means there is no overflow this transformation i is less than n
+[00:01:55 -> 00:02:00] plus one can to i is less than equal to n is actually a legal transformation and so we have
+[00:02:00 -> 00:02:06] seen that non-determinism caused due to undefined behavior in the source language is
+[00:02:06 -> 00:02:12] actually good thing because it increases the choices of a compiler because there is
+[00:02:12 -> 00:02:16] non-determinism because there's undefined behavior semantics in the source language the
+[00:02:16 -> 00:02:21] compiler can have has bigger space to play around with for example it can do this transformation
+[00:02:21 -> 00:02:25] from i is less than n plus one to i is less than equal to n and so undefined behavior is
+[00:02:25 -> 00:02:33] actually very critical for compiler optimization but what if we want to introduce non-deterministic
+[00:02:33 -> 00:02:38] operators in the target that would that seems like that was going to cause problems because
+[00:02:38 -> 00:02:42] if there are non-deterministic operators in the target which means there are operators that
+[00:02:42 -> 00:02:48] could cause undefined behavior in the target then you know it becomes a little bit tricky
+[00:02:48 -> 00:02:54] because now you want to make sure that if there is non-determinism the target that agrees with
+[00:02:54 -> 00:02:59] whatever the semantics of the source program is you cannot introduce more non-determinism
+[00:02:59 -> 00:03:03] than was already present in the source program so i'm going to use examples to explain this
+[00:03:03 -> 00:03:10] further so let's say i have a program which is which looks like this and so
+[00:03:11 -> 00:03:21] most transformations in our compiler toolchain basically are ir to ir transformation so recall
+[00:03:21 -> 00:03:26] that a compiler pipeline basically involves first starting with the source language then the abstract
+[00:03:26 -> 00:03:30] syntax free then the intermediate representation and there could be multiple intermediate
+[00:03:30 -> 00:03:36] representation for different levels of abstraction and optimization and then finally you generate
+[00:03:36 -> 00:03:41] code for the machine language maybe assembly language or something like that now because
+[00:03:41 -> 00:03:49] most transformations are ir to ir this scenario where target language can also have non-determinism
+[00:03:49 -> 00:03:53] is most relevant when i do ir to ir transformations in other words i should
+[00:03:53 -> 00:03:58] represent my source program also in the ir and the target program also in the ir so
+[00:03:58 -> 00:04:02] i'm going to represent the program that we just saw which was this for loop in my
+[00:04:04 -> 00:04:12] three address code like syntax with ssa form with five nodes and things like that this
+[00:04:12 -> 00:04:18] syntax is actually pretty similar to the llbm ir syntax which is also a three address code
+[00:04:18 -> 00:04:23] syntax so in this syntax this is just the same you know there's the same program that
+[00:04:23 -> 00:04:28] we saw in the previous slide which is this program in latency but here i write it in you
+[00:04:28 -> 00:04:34] know ir syntax the first basic block which i'm calling the entry basic block or e just
+[00:04:34 -> 00:04:41] initializes i to zero because it's ssa form i also version the i variable and say i1 equals
+[00:04:41 -> 00:04:48] zero then i have the loop head which where i say i2 equals and i use a phi node because
+[00:04:48 -> 00:04:52] there are two values of phi that are flowing in one is flowing from e and the value that's
+[00:04:52 -> 00:04:57] flowing from e is i1 and the other is flowing from the back edge of the loop and the value
+[00:04:57 -> 00:05:02] that's flowing in from the back edge of the loop which i call l is i3 we're going to see what i3
+[00:05:02 -> 00:05:08] is going to be then we have a check which says if i2 is greater than equal to n plus one we go
+[00:05:08 -> 00:05:12] to n so this is our loop condition it says i is less than n plus n so if i is less than
+[00:05:12 -> 00:05:19] n plus i1 then we strain the loop otherwise we go to the end of the loop then the rest of
+[00:05:19 -> 00:05:25] the body and this is the kind of increment operator of the loop which is the step of
+[00:05:25 -> 00:05:29] the loop the step of the for loop which is i equals i plus one and once again because
+[00:05:29 -> 00:05:39] it is ssa i do i3 equals i2 plus one and then i do go to h now and on the target side basically
+[00:05:39 -> 00:05:43] what i'm doing going to do ir to ir transformation the kind of transformation that i just showed
+[00:05:43 -> 00:05:49] before i'm going to say because i want to change i2 is less than n plus one to i2 is
+[00:05:49 -> 00:05:53] less than equal to n so that basically you know roughly translates to a conditional branch
+[00:05:53 -> 00:05:59] which says if i2 is greater than n go to end basically saying if i2 is less than equal to n
+[00:05:59 -> 00:06:06] then strain the loop now i mean i'm just using a very rough representation of the ir also it is
+[00:06:06 -> 00:06:10] not the most optimized representation of the program but it just gives you an idea of what
+[00:06:10 -> 00:06:14] the ir representation is going to look like for the programs that i showed you in the
+[00:06:14 -> 00:06:19] previous slide which was written in the c syntax these if statements here with go to
+[00:06:19 -> 00:06:25] are basically representing conditional branches that are typically a part of any three address code
+[00:06:25 -> 00:06:30] intermediate representation syntax the most relevant ir feature that i want you to remember
+[00:06:30 -> 00:06:37] from this example is ssa all right notice that this is an ssa representation which means
+[00:06:37 -> 00:06:44] you know every variable is assigned at most once and statically speaking in the program so
+[00:06:44 -> 00:06:48] for example if i is being assigned twice or thrice in the program so in this case i was
+[00:06:48 -> 00:06:53] actually being assigned twice one was the initialization value zero and the other was
+[00:06:53 -> 00:07:00] the increment i equals i plus one and to basically model this i had to version i1 and i3 for the
+[00:07:00 -> 00:07:06] two updates and for the meet point i use the final and so i end up with three versions of i
+[00:07:06 -> 00:07:12] i1 i2 and i3 and this is going to come in handy when i'm going to discuss the semantics
+[00:07:12 -> 00:07:19] of undefined behavior in at the ir level later on so i just wanted to kind of you know point
+[00:07:19 -> 00:07:24] out that irs are typically ssa and we're going to use that in our undefined behavior semantics
+[00:07:24 -> 00:07:29] we're going to talk about in the next few modules okay so let me come back to my
+[00:07:29 -> 00:07:34] original syntax and you know i just wanted to show that ir syntax to motivate the fact that
+[00:07:34 -> 00:07:39] you know the most the ir that we're going to consider is going to be an ssa form but
+[00:07:39 -> 00:07:44] it's a little bit hard to read ir so i'm going to go back to my c syntax just that i'm going
+[00:07:44 -> 00:07:49] to ensure that every variable is assigned only once so that we maintain this ssa property
+[00:07:51 -> 00:07:56] now let's look at another program just like we saw one example where non-determinism
+[00:07:56 -> 00:08:00] caused due to undefined behavior actually increases transformation opportunities let's
+[00:08:00 -> 00:08:06] look at another example where we may find the opposite which means non-determinism in
+[00:08:06 -> 00:08:13] the language semantics actually decreases optimization opportunity and i'm going to
+[00:08:13 -> 00:08:17] take the scenario where i'm doing ir to ir transformations because as i already said
+[00:08:17 -> 00:08:23] this is the most common form of transformation where you transform one program a program
+[00:08:23 -> 00:08:30] written in the ir to another program written in the same ir and so once again even though i'm
+[00:08:30 -> 00:08:35] using the c syntax it's basically you know an abstracted form of the ir syntax and i'm just
+[00:08:35 -> 00:08:41] using the c syntax for easy readability really we are actually operating in the ssa ir syntax
+[00:08:41 -> 00:08:46] so let's say this program we have a variable x of type int and then somewhere in the program
+[00:08:46 -> 00:08:53] i have if some condition c a boolean valued condition c y equals x plus one now recall that
+[00:08:53 -> 00:09:00] my ir is ssa so basically on this path y should have some value and on this path y should have
+[00:09:00 -> 00:09:05] another value and because this is ssa we'll introduce a new variable z at the meet point
+[00:09:05 -> 00:09:09] so you know it's like a diamond structure i come here there is an if condition so this is
+[00:09:09 -> 00:09:17] an if condition i assign y to something and then i join here and at this join point i want
+[00:09:17 -> 00:09:22] if i want to if i want to use the value of y at this point i need to define the new
+[00:09:22 -> 00:09:27] variable z which says z equals phi node and on this value the value the value that's flowing
+[00:09:27 -> 00:09:33] in some is something and on this path the value is that is flowing is y and so that's
+[00:09:33 -> 00:09:41] what i represent using using this phi node here which is that you know this if i come
+[00:09:41 -> 00:09:46] from this path this blue line that shows one path then i use some value that i'm not really
+[00:09:46 -> 00:09:51] shown i'm using dot dot and if i come from the if path then i use the value y because
+[00:09:51 -> 00:09:55] y is only available on because there's only one assignment to y in this ssa form and that is
+[00:09:55 -> 00:10:01] within if so y can y cannot be defined here and so if i want to use the value of y then
+[00:10:01 -> 00:10:08] i want to i'll need to have a phi just that okay now let's say i want to transform this
+[00:10:08 -> 00:10:14] program into something like the following i basically version y into two variables y1 and y2
+[00:10:15 -> 00:10:22] equals x plus one and say y2 equals y1 minus one so in other words you know if i execute
+[00:10:22 -> 00:10:27] y1 equals x plus one and say y2 equals y1 minus one what i'm really getting hopefully is
+[00:10:27 -> 00:10:33] y2 equals x and also i do y2 equals y1 minus one only when condition is not true so i also
+[00:10:33 -> 00:10:41] negate c and then i have the same z at the meet point and basically say z equals phi and
+[00:10:41 -> 00:10:47] if i'm coming from the if condition then i use the other value which is the dot dot dot value
+[00:10:47 -> 00:10:54] and if i'm coming from the you know without the if condition then i use y1 and i claim that for
+[00:10:54 -> 00:11:00] for regular values for values that don't cause any undefined behavior or any over so
+[00:11:00 -> 00:11:05] on anything like that the value of y1 at this point that z will get would be identical to
+[00:11:05 -> 00:11:09] the value of y in the original program that z would get you can see that clearly because
+[00:11:09 -> 00:11:17] if c was true then y would have been x plus one and in this case if c was true then also
+[00:11:17 -> 00:11:22] y1 would have been x plus one and that's you know that's basically what it is if c was false
+[00:11:22 -> 00:11:27] then this would have got some other value which i'm calling dot dot and even here even here if
+[00:11:27 -> 00:11:32] c was false then it's getting some other value dot dot so i'm saying that in both cases z gets
+[00:11:32 -> 00:11:38] the same value and i really want i mean this transformation seems like an okay transformation
+[00:11:38 -> 00:11:42] but i put a question mark here because i'm going to show that this transformation is actually not
+[00:11:42 -> 00:11:50] an okay transformation in the presence of undefined behavior semantics so notice that
+[00:11:50 -> 00:11:54] in the language semantics as we have already studied for let's say language like c
+[00:11:54 -> 00:12:02] x plus one has ub for some values of x and that values for example would be when x equals
+[00:12:02 -> 00:12:09] int max then x plus one will overflow okay and yet we are hoisting its computation so for example
+[00:12:09 -> 00:12:16] in this case x plus one was only going to be computed if c was true but in the target x plus
+[00:12:16 -> 00:12:21] one is always computed irrespective of whether c is true or not and so that's called hoisting
+[00:12:21 -> 00:12:26] of the computation computation is going to occur in more scenarios than it would have
+[00:12:26 -> 00:12:32] occurred in the original program and so it will be computed in the target even if it would
+[00:12:32 -> 00:12:39] not have been computed in the source and so that is wrong that would be incorrect in the case when
+[00:12:39 -> 00:12:45] x was equal to int max and c was equal to false in the source program if c was false x plus one
+[00:12:45 -> 00:12:50] one won't having even been computed and so you know it would basically the program would
+[00:12:50 -> 00:12:55] behave as a no-opt in the source program because c is false you know you don't even
+[00:12:55 -> 00:12:59] execute x plus one and you basically come to z and z takes the other value which is dot
+[00:12:59 -> 00:13:06] dot but in the target i compute y one equals x plus one irrespective of whether c is true or
+[00:13:06 -> 00:13:12] false and so right here i'm going to trigger ub and the program is incorrect and so for these
+[00:13:12 -> 00:13:17] values even though the z is going to still get the correct value but even before that the
+[00:13:17 -> 00:13:21] program has triggered ub and because the program has triggered ub the abstract machine
+[00:13:21 -> 00:13:26] can now do anything it can crash the program it can remove your files whatever right so
+[00:13:26 -> 00:13:30] because it's an illegal program and so so this is a this is actually an incorrect
+[00:13:30 -> 00:13:36] transformation because there is some computation that could trigger ub that was for some
+[00:13:36 -> 00:13:41] particular input that ub gets triggered in the target but it does not get triggered in the
+[00:13:41 -> 00:13:46] source and so this transformation becomes an illegal transformation here's another example
+[00:13:46 -> 00:13:50] so let's say i have you know i have an integer variable x and i have a y loop
+[00:13:50 -> 00:13:56] and inside the y loop i define the new variable y and y equals x plus one and then i use y once
+[00:13:56 -> 00:14:03] again i'm using you know i'm using an abstract representation of the ir program i'm basically
+[00:14:03 -> 00:14:07] obeying the ssa property and every variable is i'm assuming is only assigned at most once
+[00:14:08 -> 00:14:15] okay now can i hoist this y equals x plus one assuming x was loop invariant can i kind
+[00:14:15 -> 00:14:18] of do loop invariant code motion a transformation that we've actually studied
+[00:14:18 -> 00:14:23] in the past to above the loop and say y equals x plus one and then i have
+[00:14:23 -> 00:14:28] my loop body and the loop body may be using y now this looks like a perfectly
+[00:14:28 -> 00:14:32] valid transformation in fact this is a transformation that we have discussed
+[00:14:32 -> 00:14:36] in detail when we discuss loop invariant code motion and this is a very profitable
+[00:14:36 -> 00:14:41] transformation however this becomes incorrect in the presence of ub semantics because once again
+[00:14:42 -> 00:14:49] x plus one can cause ub and in the source program x plus one is executed only if the
+[00:14:49 -> 00:14:54] loop is entered at least once if the loop is not even entered once then x plus one is not
+[00:14:54 -> 00:14:59] even executed and source doesn't do anything but in the target x plus one is always executed
+[00:14:59 -> 00:15:05] irrespective of whether the loop is entered even once or not and so if x was equal to
+[00:15:05 -> 00:15:12] int max then target would exhibit ub whereas the source would conditionally execute ub
+[00:15:12 -> 00:15:17] depending on whether the loop was entered even once or not and so consider the case when x
+[00:15:17 -> 00:15:22] equals int max and loop is never entered then source is basically behaving as though it's a
+[00:15:22 -> 00:15:27] no-op but the target triggers ub and that's that doesn't seem like an incorrect transformation
+[00:15:27 -> 00:15:33] a transformation is correct if the target program behaves identically or i mean the
+[00:15:33 -> 00:15:37] behaviors of the target program are a subset of the behaviors of the source program for all
+[00:15:37 -> 00:15:42] possible inputs but here is an input which is x equals int max and you know some condition
+[00:15:42 -> 00:15:47] such that loop is never entered in this case the source is behaving as a no-op but the
+[00:15:47 -> 00:15:51] target is triggering ub which means anything can happen target is showing a non-deterministic
+[00:15:51 -> 00:15:55] behavior where the source is showing a deterministic behavior and that is not acceptable
+[00:15:55 -> 00:16:02] so basically what we have what we are finding is that if there is ub semantics in the source
+[00:16:02 -> 00:16:07] program or in the source language then that enables optimizations because that kind of gives
+[00:16:07 -> 00:16:13] more space for the compiler to do transformations because the semantics are non-deterministic
+[00:16:13 -> 00:16:19] the compiler can choose any possible implementation for that non-deterministic semantics
+[00:16:19 -> 00:16:25] because it increases transformation space for the compiler on the other hand ub semantics
+[00:16:25 -> 00:16:31] in the target program disable optimization because because they're because of this kind of
+[00:16:31 -> 00:16:35] non-determinism the target you have to be sure that the non-determinism the target can only
+[00:16:35 -> 00:16:41] happen if the equivalent non-determinism was also present in the source and so that requirement
+[00:16:41 -> 00:16:45] actually causes many of our very common transformations that we have been reading
+[00:16:45 -> 00:16:51] about and studying about and invalid and so ub semantics in target actually disable
+[00:16:51 -> 00:16:56] optimization because that decrease the transformation space for example they
+[00:16:56 -> 00:17:03] disallow hoisting of computation so given this fact i mean ideally one would have lied
+[00:17:03 -> 00:17:08] that source is some high level ub like c high level programming language like c which has a
+[00:17:08 -> 00:17:12] high amount of ub so c is called a ub heavy language so because the source would have a high
+[00:17:12 -> 00:17:16] amount of ub the compiler will have a lot of space and the target should be some low
+[00:17:16 -> 00:17:20] level assembly language which does not have any non-determinism or does not have any ub
+[00:17:20 -> 00:17:26] and that would be the ideal scenario for a compiler but what is actually happening in
+[00:17:26 -> 00:17:31] a compiler pipeline for software engineering reasons is that source is also an intermediate
+[00:17:31 -> 00:17:36] representation and the target is also intermediate representation so that as i said most transformations
+[00:17:36 -> 00:17:42] are ir to ir and so the source and the target are actually in the same representation
+[00:17:42 -> 00:17:48] and so whatever ub semantics are present in the source are also present in the target
+[00:17:48 -> 00:17:52] and if that is the case then i have to design the ub semantics very carefully
+[00:17:52 -> 00:17:57] the way i chose the ub semantics for a programming language like c where i just
+[00:17:57 -> 00:18:01] said that the program is illegal if this happens is not a good enough answer for
+[00:18:01 -> 00:18:07] an intermediate representation semantics because you know compiler is not typically
+[00:18:07 -> 00:18:13] transforming c to c but the compiler is transforming transforming ir to ir and so
+[00:18:13 -> 00:18:19] while c can be more kind of non-deterministic in its outlook and say okay if this if this error
+[00:18:19 -> 00:18:25] condition happens then the program is illegal ir cannot be so non-deterministic because as we
+[00:18:25 -> 00:18:30] have seen through examples that level of non-determinism actually causes some transformations
+[00:18:30 -> 00:18:35] to become incorrect some very common and profitable transformations to become incorrect
+[00:18:36 -> 00:18:41] and so that makes the problem interesting for the ir designer because the ir designer now needs
+[00:18:41 -> 00:18:47] to walk a tight rope while deciding what semantics to use for ub for undefined
+[00:18:47 -> 00:18:53] kind of error conditions in the in the intermediate representation if the designer
+[00:18:53 -> 00:19:00] basically disables all ub then we then it also it loses transformations it is if it uses very
+[00:19:00 -> 00:19:06] aggressive ub semantics then also it loses many transformations because now the ub can
+[00:19:06 -> 00:19:11] also show up in the target side and so it means the designer needs to use such a semantics that
+[00:19:11 -> 00:19:17] transformations are still available on source the common ones and and even if the ub is present
+[00:19:17 -> 00:19:22] in target yet some transformations like hoisting are still available and so that's going to be
+[00:19:22 -> 00:19:27] our topic of discussion in our next few lecture modules about what should be the
+[00:19:27 -> 00:19:33] typical semantics of what are the typical semantics of modern irs with respect to undefined
+[00:19:33 -> 00:19:40] behavior
