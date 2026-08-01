@@ -1,0 +1,333 @@
+Title: CS 6120: Lesson 2: Representing Programs
+Video ID: 1_vnx6laq9
+Detected language: en
+------------------------------------------------------------
+
+[00:00:00 -> 00:00:07] Hi, and welcome to Lesson 2 of 6120. Today I want to talk about how we represent programs
+[00:00:07 -> 00:00:12] for a compiler. What exactly do I mean by representing programs? Basically, I mean what
+[00:00:12 -> 00:00:16] the programming, what we consider to be the programming language when we are manipulating
+[00:00:16 -> 00:00:21] programs as part of the compilation process. So what we read in and transform and eventually
+[00:00:21 -> 00:00:26] translate into another language as part of the, as part of a compiler. Of course,
+[00:00:26 -> 00:00:30] the most obvious way to represent programs is as text, that is, as concrete syntax,
+[00:00:30 -> 00:00:33] the actual things that you type into a text editor when you're writing a program. So that
+[00:00:33 -> 00:00:38] looks like this for JavaScript language, for example. It has lots of really nice properties.
+[00:00:38 -> 00:00:43] I'd like you to think for a second now about what makes this, what are the strengths
+[00:00:43 -> 00:00:47] and weaknesses of representing programs as concrete text? Pause the video for a
+[00:00:47 -> 00:00:51] second, not for too long, to think about what's good about this representation and
+[00:00:51 -> 00:00:57] what's bad about this representation for representing in a compiler. Obviously,
+[00:00:57 -> 00:01:00] this is a really easy representation to write. That's kind of the whole point,
+[00:01:00 -> 00:01:03] but it's a terrible representation for actually transforming. You don't really understand any of
+[00:01:03 -> 00:01:07] the, this is not the right level of abstraction for understanding the semantics of programs,
+[00:01:07 -> 00:01:11] which you really need to do in order to transform it, which is what we're going to
+[00:01:11 -> 00:01:18] do in all of 6120. So the next obvious step that, the next obvious kind of
+[00:01:18 -> 00:01:22] program representation that you might imagine is abstract syntax. So instead of the concrete
+[00:01:22 -> 00:01:27] syntax of this program, it's easy to imagine a data structure that represents this, represents
+[00:01:27 -> 00:01:31] the same syntax, the same program, but in an abstract way. And that's an AST, or an
+[00:01:31 -> 00:01:35] abstract syntax that you're doubtless aware of from any previous effort that you've,
+[00:01:35 -> 00:01:38] from any previous working with program languages that you've done. If you have a written
+[00:01:38 -> 00:01:41] interpreter, you've probably used an AST. But just to give you an idea of what that looks
+[00:01:41 -> 00:01:46] like, the idea is that you have these, it's just a data structure. It looks like a tree
+[00:01:46 -> 00:01:51] where you have nodes in the tree that represent different parts of the program. So for example,
+[00:01:51 -> 00:01:55] we might have this top level notion of a program that contains, in this case,
+[00:01:55 -> 00:02:02] like a block of statements, and that has its own children for the four statements in this
+[00:02:02 -> 00:02:08] program that we just saw. Like for example, there's a let statement, a let statement,
+[00:02:08 -> 00:02:17] a for statement, and this expression for the console.log. So these are all nodes in the
+[00:02:17 -> 00:02:21] tree. You notice that at this level, we haven't expanded out what goes into the
+[00:02:22 -> 00:02:26] the let statement, but I will now fast forward and show you the rest of this tree.
+[00:02:38 -> 00:02:41] So I got a little bit tired of drawing the entire tree, but I think you can see what
+[00:02:41 -> 00:02:45] I'm getting at here. In this program, in this representation of the program, the tree is,
+[00:02:46 -> 00:02:53] the tree represents like sort of every concept that you can have in the language as a node
+[00:02:53 -> 00:02:57] in this tree-like data structure. This by itself is already a vast improvement of the
+[00:02:57 -> 00:03:01] concrete syntax, and it's a lot easier to reason about what the program actually does.
+[00:03:01 -> 00:03:05] And it's not a bad representation for compilers. I'd like you to pause again, however, and think
+[00:03:05 -> 00:03:10] a little bit about the the pros and cons of this representation, what makes this good for a
+[00:03:10 -> 00:03:16] compiler, and what makes this challenging for a compiler. Great ideas. Personally speaking,
+[00:03:16 -> 00:03:20] I'd say that this representation, the AST representation, is perfect for writing an
+[00:03:20 -> 00:03:25] interpreter. It's really easy to see how to take a tree and use a recursive function to
+[00:03:25 -> 00:03:29] process the levels in the tree, and recall yourself, and to run the program. That is
+[00:03:29 -> 00:03:34] to process a block, for example, you just recursively need to interpret all the statements
+[00:03:34 -> 00:03:37] in the block while updating some reflection of the program's environment. It's perfect
+[00:03:37 -> 00:03:41] for doing that kind of a thing. In fact, it's really convenient for a lot of compilers.
+[00:03:42 -> 00:03:46] Plenty of compilers do all of their work on an AST representation of the program.
+[00:03:46 -> 00:03:50] It's not a terrible idea. In fact, I've written compilers myself that do exactly
+[00:03:50 -> 00:03:54] this kind of thing, that never really transition out of an AST that reflects
+[00:03:54 -> 00:03:58] the structure of the original program. For this class, however, I want to show you
+[00:03:58 -> 00:04:01] a different approach, a different representation of programs that looks quite a bit different
+[00:04:01 -> 00:04:05] than the AST approach that is going to be more convenient for writing a lot of interesting
+[00:04:05 -> 00:04:11] compiler optimizations. That's to represent programs as lists of instructions. The main
+[00:04:11 -> 00:04:16] thing that this shift in representation is going to do is to make the representation more
+[00:04:17 -> 00:04:22] regular. That is the one big downside that I see of the AST approach is that all the
+[00:04:22 -> 00:04:28] different types of nodes in this tree have different behavior. If you want to write an
+[00:04:28 -> 00:04:34] compiler analysis that can process any program, you have to constantly be
+[00:04:34 -> 00:04:37] reasoning about the difference in semantics of all these different types of nodes.
+[00:04:37 -> 00:04:45] For example, this example has a let expression that has children that are the value to assign
+[00:04:45 -> 00:04:53] into and the expression to evaluate on the right-hand side to put into that variable.
+[00:04:54 -> 00:05:01] The thing about this is that the children mean very different things from each other.
+[00:05:01 -> 00:05:05] They mean very different things still from, for example, this dot expression that I put
+[00:05:05 -> 00:05:10] over here, where the left-hand side is the name of the variable that we're accessing
+[00:05:10 -> 00:05:14] and the right-hand side is the name of the field that we're going to be looking things up in.
+[00:05:15 -> 00:05:20] This goes on for the for statement and the assignment statements that we see throughout
+[00:05:20 -> 00:05:24] the rest of this program. All these different kinds of expressions, different kinds of
+[00:05:24 -> 00:05:29] syntax nodes, have very different meaning of what their children are relative to the node.
+[00:05:30 -> 00:05:35] This is great for representing programs as humans write them, a sort of intermediate-level
+[00:05:35 -> 00:05:39] abstraction between the concrete syntax and something that a program can actually run.
+[00:05:39 -> 00:05:42] However, I think we can do better. That is, we can make things more regular and
+[00:05:42 -> 00:05:45] more predictable specifically for the purpose of transforming in a compiler.
+[00:05:49 -> 00:05:52] That's the next representation I want to consider. It's the one that we'll be using
+[00:05:52 -> 00:05:56] throughout the rest of 6120, which is representing programs as lists of instructions.
+[00:05:56 -> 00:06:03] The idea in this technique is that you transform the program into something that looks like an
+[00:06:03 -> 00:06:07] assembly language. It's an idealized assembly language in the sense that it doesn't have a
+[00:06:07 -> 00:06:11] fixed number of registers. It doesn't have weird things like condition flags. It doesn't
+[00:06:11 -> 00:06:16] have all the other horrible addressing nodes that x86 has, for instance. It looks like an
+[00:06:16 -> 00:06:21] assembly language in the sense that all it really consists of is a list of instructions.
+[00:06:21 -> 00:06:26] Those instructions have a very regular form. That is, there's just a name of an operation
+[00:06:26 -> 00:06:32] and there's a bunch of arguments to that operation. They can move values around from
+[00:06:33 -> 00:06:37] one variable to another. This is the kind of representation for What's Worth that underlies
+[00:06:37 -> 00:06:42] LLVM. It's the same style of representation they'll be using in a programming language
+[00:06:42 -> 00:06:46] that I created just for 6120 that we'll be learning more about soon. This is an example
+[00:06:46 -> 00:06:51] of the same program that we've seen in the previous slide represented as instructions
+[00:06:51 -> 00:06:57] in that simple language that we use in 6120. The idea is that in this version of the program,
+[00:06:57 -> 00:07:01] in order to represent things, there's not a bunch of different kinds of syntax nodes.
+[00:07:01 -> 00:07:07] There's actually only a few. You can declare functions like this. You can declare labels,
+[00:07:07 -> 00:07:12] which work just like assembly language labels. Then you can run instructions. These instructions
+[00:07:12 -> 00:07:19] have an extremely simple and regular form. That is, they have a destination here result.
+[00:07:19 -> 00:07:26] They have a type of that destination and then they have an opcode saying what to do. Then
+[00:07:26 -> 00:07:31] they have a list of operands. This, for example, the ID operation is just the identity
+[00:07:31 -> 00:07:36] operation. It does this very simple thing. It reads the value V1, does absolutely nothing to
+[00:07:36 -> 00:07:41] it, and puts the result into the variable called result. It says that that thing has type int.
+[00:07:41 -> 00:07:45] This is a tremendously inconvenient way to write programs if you are human.
+[00:07:45 -> 00:07:49] You would never want to write down programs in assembly language structure, even if you get
+[00:07:49 -> 00:07:54] rid of the limits on the numbers of registers you can use, for example. This is a terrible,
+[00:07:54 -> 00:07:59] terrible way to write programs. However, it's a really, really convenient way to process
+[00:07:59 -> 00:08:05] programs as part of a compiler. I wonder, besides, however, that it is technically true
+[00:08:05 -> 00:08:12] that this instruction kind of representation of programs can also have concrete syntax and
+[00:08:12 -> 00:08:17] abstract syntax. It's just that the abstract syntax for instruction-based representations
+[00:08:17 -> 00:08:24] are super, super simple and extremely regular. If we were to draw out the abstract syntax tree
+[00:08:24 -> 00:08:27] for this program using an instruction-based representation, it would just sort of look
+[00:08:27 -> 00:08:33] like this. There'd be sort of a top-level function node that takes the name of the
+[00:08:33 -> 00:08:41] function we're declaring, and then all of the children are just a very, very flat
+[00:08:42 -> 00:08:48] representation of all of the things in the body. That is, like, there's just a big list of
+[00:08:48 -> 00:08:52] instructions and labels. So the first thing in this program is a const instruction.
+[00:08:52 -> 00:09:00] So the const instruction has a few children. It has the variable we're assigning into.
+[00:09:00 -> 00:09:05] It has its type, and it has the value that we're going to put in there of that type.
+[00:09:05 -> 00:09:13] So that's 8. The second thing is an ID instruction. It, too, has a child that's the
+[00:09:13 -> 00:09:19] value we're assigning into. That's value here. It has the type of that thing, just like const.
+[00:09:20 -> 00:09:24] And then it has a list of arguments. Here, only one argument, and that's v0.
+[00:09:25 -> 00:09:28] Eventually, there are also labels in here. So there's going to be a label
+[00:09:28 -> 00:09:37] whose name is forcond, for example, and on and on. So the thing about this abstract
+[00:09:37 -> 00:09:41] syntax tree is it's very short and squat. It is technically an abstract syntax tree of a
+[00:09:41 -> 00:09:46] very different-looking program, but the key is that this language is so much simpler and so
+[00:09:46 -> 00:09:50] much more regular that it's going to be really convenient for doing compiler analyses.
+[00:09:51 -> 00:09:55] Now would be a great time to pause and reflect on the advantages and disadvantages
+[00:09:55 -> 00:10:00] of this representation. That is, what do you like about representing things as instruction-based
+[00:10:00 -> 00:10:09] languages and what do you dislike about them? Based on that instruction-based representation
+[00:10:09 -> 00:10:13] of programs, I want to talk about some of the ways that we extract better structure out of
+[00:10:13 -> 00:10:18] these programs for doing analyses. Rather than just treating things as one big flat list of
+[00:10:18 -> 00:10:22] instructions, there are obviously different ways to look at the program that will be useful in
+[00:10:22 -> 00:10:26] different scenarios for understanding different properties. The first one I want to talk to you
+[00:10:26 -> 00:10:34] about is a control flow graph. So the basic idea in a CFG is that every vertex is an instruction
+[00:10:34 -> 00:10:38] that is like something you might execute in the program, not a label, and edges between
+[00:10:38 -> 00:10:43] the instructions represent the transfer of control. So in this very, very tiny program
+[00:10:43 -> 00:10:47] written in this instruction-based language, there are only two instructions. There's one
+[00:10:47 -> 00:10:51] constant instruction and there's one print instruction. Super simple program. So
+[00:10:52 -> 00:10:59] by my definition of a CFG, there better be two nodes. There is a const node that represents the
+[00:10:59 -> 00:11:04] first instruction and there is a print node that represents the second. And the entire program
+[00:11:04 -> 00:11:08] for this one function called main can be represented as just a graph with an edge from
+[00:11:08 -> 00:11:13] this one to that one. That is that control, the program counter of the virtual machine that
+[00:11:13 -> 00:11:17] executes this program, will start with the constant instruction. And when that's done, it
+[00:11:18 -> 00:11:22] will transfer control across the edge here to the print instruction.
+[00:11:24 -> 00:11:29] Let's do a more complicated example. Not much more complicated, but here's a program that has
+[00:11:29 -> 00:11:33] a jump in it. The jump works exactly as you are familiar with in an assembly. That is that this
+[00:11:33 -> 00:11:38] jump will transfer control to this label right here and then start executing after that.
+[00:11:38 -> 00:11:51] Please draw now the control flow graph for this function. Great work. Here's my CFG that I drew.
+[00:11:51 -> 00:11:56] It has four instructions. That is I didn't draw anywhere in here the label for somewhere.
+[00:11:56 -> 00:11:59] I just drew the four instructions that are normal instructions. That is not labels.
+[00:12:01 -> 00:12:05] Clearly we have a constant instruction that immediately after that executes a jump
+[00:12:05 -> 00:12:09] instruction. And the thing about that is that we know that the thing that will execute right
+[00:12:09 -> 00:12:13] after the jump instruction is the print instruction. So there's an edge representing
+[00:12:13 -> 00:12:17] that transfer of control. And we have one very lonely instruction hanging out
+[00:12:17 -> 00:12:21] all by its lonesome with no edges going in that is guaranteed never to be executed.
+[00:12:21 -> 00:12:25] And you can see that by the structure of the control flow graph. So it's actually
+[00:12:26 -> 00:12:31] worth noting now that this very simple alternate representation of programs that is rather than
+[00:12:31 -> 00:12:35] just a big list of instructions but as a control flow graph has already led us to a
+[00:12:35 -> 00:12:39] really obvious conclusion. That is that there is some code in here that is totally useless and
+[00:12:39 -> 00:12:43] could be deleted. If we wanted to write our very first compiler pass on these programs,
+[00:12:43 -> 00:12:49] we could just construct a control flow graph and look for the lonely nodes that are guaranteed
+[00:12:49 -> 00:12:52] never to be executed and delete them. And that would be a form of dead code elimination.
+[00:12:53 -> 00:12:58] The important thing to emphasize though is by shifting the representation of the program,
+[00:12:58 -> 00:13:02] we were able to look at the semantics of the program differently and different properties
+[00:13:02 -> 00:13:07] became obvious. Here's another program. It shows off a different aspect of the language
+[00:13:07 -> 00:13:12] we haven't seen before, which is that there are branch instructions. The semantics of the
+[00:13:12 -> 00:13:16] branch instruction is that you read a variable and then you decide based on whether that
+[00:13:16 -> 00:13:21] variable, which is a Boolean, is true or false, whether to go here, to that label, or to this
+[00:13:21 -> 00:13:29] label. Please pause the video and draw the CFG for this program now. Here I've started
+[00:13:29 -> 00:13:34] drawing my CFG and already I've run into an interesting issue, which is that when we
+[00:13:34 -> 00:13:38] draw branch instructions, it's important to... This is the first time we've seen
+[00:13:38 -> 00:13:42] two children of a given node. That is an out degree of greater than one for a node.
+[00:13:43 -> 00:13:46] For branch instructions, there is a difference between the two different destinations you can
+[00:13:46 -> 00:13:50] go. If you want to faithfully resent the semantics of the program, you have to distinguish
+[00:13:50 -> 00:13:55] between these two. So it might even be helpful to, for example, label the true branch
+[00:13:55 -> 00:14:00] and the false branch. There's no need to label all the rest of the branches because
+[00:14:00 -> 00:14:04] the... All the rest of the edges rather, because there's only one edge coming out of
+[00:14:04 -> 00:14:10] every given node. That indicates just sort of going to the next instruction. There's also one
+[00:14:10 -> 00:14:14] edge missing from this diagram so far. I haven't drawn the CFG edge that goes from
+[00:14:15 -> 00:14:20] this instruction after it executes. As in any other assembly language, it will proceed onto
+[00:14:20 -> 00:14:26] the next instruction, ignoring any labels onto V. So I need an edge from after executing this
+[00:14:26 -> 00:14:32] instruction to executing this one. And then finally, we are done. In CFGs, it's usually
+[00:14:32 -> 00:14:37] super useful to label the entry and exit to the CFG. That is where execution begins and
+[00:14:37 -> 00:14:43] ends. In this CFG, and in this language in general, the first instruction in the program
+[00:14:43 -> 00:14:49] is the first one to execute. So this is the entry instruction. We can label that in the CFG.
+[00:14:49 -> 00:14:55] And the exit instruction is the one at the very end of the function right before it returns.
+[00:14:55 -> 00:14:59] There's no explicit return statement here because this function doesn't return anything.
+[00:14:59 -> 00:15:04] But the last one that terminates execution of the function is the print statement. So we
+[00:15:04 -> 00:15:08] can label that too. The next evolution of these representations that I want to show you
+[00:15:08 -> 00:15:12] relies on the fact that this CFG representation I've been showing you so far
+[00:15:12 -> 00:15:17] feels a little bit redundant. That is, in particular, these chains of instructions
+[00:15:17 -> 00:15:22] that look like this are super, super common in normal programs. That is, it's really often
+[00:15:22 -> 00:15:27] that you'll draw the CFG with a whole bunch of blocks that are connected just one after the
+[00:15:27 -> 00:15:31] other with a chain of edges. And that's because that's how we normally write programs.
+[00:15:31 -> 00:15:36] That is, it often takes more than one instruction to run between interesting
+[00:15:36 -> 00:15:40] controls of transversal control. That is, we need to do a few instructions,
+[00:15:40 -> 00:15:44] and then we need to jump to another series of a few instructions, and so on.
+[00:15:44 -> 00:15:49] So it feels kind of wasteful to be representing things as individual instructions
+[00:15:49 -> 00:15:52] when we can sort of think of them as one big block of instructions.
+[00:15:52 -> 00:15:59] And that's the concept of coarsening a control photograph to use basic blocks.
+[00:15:59 -> 00:16:03] The intuitive definition of a basic block is that it is a chunk of instructions that
+[00:16:03 -> 00:16:07] all execute together. That is, if execution starts at the beginning of a basic block,
+[00:16:07 -> 00:16:11] it is going to finish executing at the end of the basic block.
+[00:16:11 -> 00:16:14] So it's one of those structures in the instruction-based control flow graph,
+[00:16:14 -> 00:16:18] where you just sort of jump inevitably from one instruction to the next,
+[00:16:18 -> 00:16:20] or just gather those together and call those a control flow graph.
+[00:16:21 -> 00:16:26] To put it a little bit more crisply, a basic block is a sequence of instructions
+[00:16:26 -> 00:16:31] where jumps and branches, that is, transfers of control outside of just going to the next
+[00:16:31 -> 00:16:36] instruction, can only happen at the beginning and the end of a basic block.
+[00:16:36 -> 00:16:39] That is, you can't have a jump or a branch instruction anywhere in the middle of a basic
+[00:16:39 -> 00:16:43] block. It can only happen at the end. And any jump anywhere in the program,
+[00:16:43 -> 00:16:48] any branch, can only ever transfer control to the top of a different basic block.
+[00:16:50 -> 00:16:54] So to scroll back up to our longer example of an instruction,
+[00:16:55 -> 00:16:58] it's really easy to visually see the basic blocks in this example.
+[00:17:02 -> 00:17:07] This is a basic block because all the instructions come one after the other.
+[00:17:07 -> 00:17:10] That is, that there are no jumps anywhere in this range. However,
+[00:17:11 -> 00:17:16] we can't extend that basic block one step farther past this label because
+[00:17:16 -> 00:17:20] control will eventually transfer to that label called forcond.
+[00:17:20 -> 00:17:28] Because there is a jump that goes here, that must end the basic block.
+[00:17:30 -> 00:17:38] So that's a block. This is a block. And we have to stop it there because
+[00:17:38 -> 00:17:42] there is a branch instruction and you're not allowed to keep growing a basic block
+[00:17:42 -> 00:17:47] beyond a branch instruction. Here is a basic block.
+[00:17:47 -> 00:17:49] And of course, that has to end because there's a jump.
+[00:17:51 -> 00:17:54] And then finally, there's a basic block down here. So it's really visually easy
+[00:17:54 -> 00:17:57] to see them in these programs because they're separated by the labels.
+[00:17:57 -> 00:18:06] And as long as you're jumping to a given label, that label must be the beginning of a basic block.
+[00:18:09 -> 00:18:14] Returning to our definition, the nice thing about basic blocks from a compiler analysis
+[00:18:14 -> 00:18:18] perspective is that you can assume that if any instruction in a basic block executes,
+[00:18:18 -> 00:18:22] then all the instructions must execute. And this comes up a lot when you're doing analyses.
+[00:18:22 -> 00:18:24] You don't really need to think about individual instructions.
+[00:18:24 -> 00:18:29] You can think about entire chunks of them and know that they all sort of execute together.
+[00:18:29 -> 00:18:34] So here's the same program we just drew a control flow graph a second ago at the instruction level.
+[00:18:34 -> 00:18:38] I would now like you to draw a control flow graph at the basic block level.
+[00:18:38 -> 00:18:42] Draw a CFG and label the entry and exit nodes just as you did before,
+[00:18:42 -> 00:18:44] but this time do it for entire basic blocks.
+[00:18:49 -> 00:18:52] Here's my CFG. Did you get the same one? Great.
+[00:18:53 -> 00:18:57] One additional piece of terminology I wanted to layer on top here is that the set of
+[00:18:57 -> 00:19:02] instructions that end the formation of basic blocks has a special name.
+[00:19:02 -> 00:19:06] So for example, this branch instruction means that you can't continue making a larger basic
+[00:19:06 -> 00:19:10] block past this point if you imagine trying to grow your basic blocks as big as possible.
+[00:19:11 -> 00:19:15] These things are called terminators, entertainingly.
+[00:19:19 -> 00:19:22] So in this little language that we've been experimenting with,
+[00:19:22 -> 00:19:26] the only terminators that exist are the branch instruction and the jump instruction.
+[00:19:27 -> 00:19:29] So when you represent basic blocks in memory, you can think of them
+[00:19:29 -> 00:19:34] as just lists of instructions, where the last one is the only one that can be a terminator.
+[00:19:34 -> 00:19:39] All the rest of the instructions have to be non-terminator instructions.
+[00:19:40 -> 00:19:43] And of course, there are basic blocks in this program that don't have terminators,
+[00:19:43 -> 00:19:45] and that's because they fall through to the next instruction.
+[00:19:47 -> 00:19:51] So we've now seen two fundamentally different representations of these instruction-based
+[00:19:51 -> 00:19:55] programs. You can either think of them as just linear lists of instructions and labels,
+[00:19:55 -> 00:19:59] or you can think of them as control flow graphs, possibly at the granularity of basic blocks.
+[00:19:59 -> 00:20:02] We really need an algorithm to go from a linear list of instructions,
+[00:20:02 -> 00:20:04] which is how you might like store these programs on disk, for example,
+[00:20:05 -> 00:20:11] to extract a graph-based representation, to extract a CFG for doing interesting analyses.
+[00:20:12 -> 00:20:14] The first step is just to form the basic blocks.
+[00:20:14 -> 00:20:17] So we're not going to try to make a control flow graph yet. We'll do that in the next step.
+[00:20:17 -> 00:20:21] We're just going to try to take a linear list of instructions and chunk it up
+[00:20:21 -> 00:20:24] into blocks that we'll then analyze to make a CFG.
+[00:20:24 -> 00:20:26] So get out some paper, and we're going to, together,
+[00:20:27 -> 00:20:30] write the pseudocode for forming basic blocks.
+[00:20:31 -> 00:20:34] I like to write my pseudocode in kind of like Python-ish format,
+[00:20:34 -> 00:20:37] but you can do it however you like. But the way this is going to work is that you're going to
+[00:20:37 -> 00:20:46] start with an input list of instructions, and you're going to produce an output list called
+[00:20:46 -> 00:20:59] blocks. So this thing is just the flat list of instructions slash labels that you've seen so far.
+[00:20:59 -> 00:21:09] So for example, this might contain like v0 colon int equals const 2. That's one instruction.
+[00:21:09 -> 00:21:16] And it might also contain like this great label statement and so on.
+[00:21:16 -> 00:21:23] The blocks, that's going to be a list of instructions.
+[00:21:29 -> 00:21:35] So think now about how you would structure this search by walking over the list of
+[00:21:36 -> 00:21:43] instructions. Hilariously, I misspelled that. Call this instars. How would you
+[00:21:43 -> 00:21:48] loop over the list of instructions and create lists of instructions to put into this list of
+[00:21:49 -> 00:21:53] instructions that's going to be all the basic blocks in the program? Pause this video now and
+[00:21:53 -> 00:21:57] give it a shot. You don't need to completely work this out, but give it a try, and then
+[00:21:57 -> 00:22:06] we'll come back together and see if we got the same answer. So here's what I would do.
+[00:22:06 -> 00:22:09] Because I like to write my pseudocode in like fake Python, I would start out with a
+[00:22:09 -> 00:22:16] for loop that says like for i in instars. So the way this is going to work out is I'm
+[00:22:16 -> 00:22:20] going to walk over every single instruction and sequence and hope that I can glue together
+[00:22:20 -> 00:22:26] blocks on the fly. As a kind of supporting data structure, I'm going to need a list for
+[00:22:26 -> 00:22:31] the current block that I'm currently forming. So the block starts out empty and then we're
+[00:22:31 -> 00:22:35] going to fill this up and then empty it out and then fill it back up again and then empty
+[00:22:35 -> 00:22:39] it out every time adding it onto the list of blocks. Inside the loop, the main thing
+[00:22:39 -> 00:22:47] that I need to do is check whether the instruction is something that should end the
+[00:22:47 -> 00:22:50] basic block. So if it's just a normal instruction, we'll put it on the block,
+[00:22:50 -> 00:22:56] and otherwise we will end the basic block. So the things that matter here is if i is a
+[00:23:05 -> 00:23:09] label, that means we have to end the basic block because a jump might be incoming to
+[00:23:09 -> 00:23:17] the next instruction, or it's a terminator, that is branch or jump. If so, then we need
+[00:23:17 -> 00:23:20] to end this basic block. So here's a pseudocode for that. Again, in Python-y style,
+[00:23:21 -> 00:23:42] I will say that we will empty out the block, but before we do that we'll put onto the end
+[00:23:42 -> 00:23:47] of our output list of blocks the current thing that we have built up as our current basic block.
+[00:23:49 -> 00:23:52] Of course, this algorithm isn't that great yet because it doesn't actually put anything
+[00:23:52 -> 00:23:56] into any of the blocks. It's just going to append a bunch of empty blocks to the output.
+[00:23:56 -> 00:24:02] What we also need to do is actually put these instructions into the blocks. The way I'm going
+[00:24:02 -> 00:24:07] to do that is that whenever we see an instruction, as long as that thing is not a label, we'll put
+[00:24:07 -> 00:24:19] it into the current basic block before terminating it. So I'll just say in Python-style
+[00:24:21 -> 00:24:28] block to append i. So that way that works is that everything, including terminators,
+[00:24:28 -> 00:24:33] is going to go at the end of the currently being formed block, and that also if it was
+[00:24:33 -> 00:24:39] a terminator, or if we saw a label, then we'll end that block there and start a new one to fresh.
+[00:24:39 -> 00:24:43] So that's the algorithm for forming basic blocks. I hope you got the same thing as I did.
+[00:24:43 -> 00:24:49] The next thing that we're going to do is use that list of blocks to form a control flow
+[00:24:49 -> 00:24:57] graph. To do this we will, I'll just give you a hint, we're going to need an additional data
+[00:24:57 -> 00:25:03] structure that we didn't do when we were forming basic blocks, which is to map from labels to
+[00:25:03 -> 00:25:10] basic blocks. That is, we're going to need to know which labels mark the beginning of
+[00:25:10 -> 00:25:16] which basic blocks. So going back to one of these example programs, we sort of want to
+[00:25:16 -> 00:25:23] associate this label with this block that follows it. You can sort of think of it almost
+[00:25:23 -> 00:25:29] as like the name, the identifier, of that block is here so that we know that anywhere in the
+[00:25:29 -> 00:25:33] program where we jump to the label here, we know that we in the control flow graph need to think
+[00:25:33 -> 00:25:39] of an edge going to the here block. So you can imagine that we've done that in the basic block
+[00:25:39 -> 00:25:48] formation process. That's really easy to do. All we need to do is come up with another label to
+[00:25:49 -> 00:25:54] block data structure. This can just be a dictionary, and the way that it will
+[00:25:56 -> 00:26:08] look is it will map label names, which are just strings, to these like lists of instructions.
+[00:26:09 -> 00:26:19] I'm sure you can see how to modify the basic block formation process to also keep track of
+[00:26:19 -> 00:26:24] the labels that are associated with each block, and then in the next step we will use those
+[00:26:24 -> 00:26:29] to form the control flow graph. So in the CFG formation step,
+[00:26:29 -> 00:26:32] we're going to start with those inputs that we just computed in the basic block formation step,
+[00:26:32 -> 00:26:37] and we're going to compute exactly one output, a variable we can just call CFG,
+[00:26:37 -> 00:26:43] which we're going to make a dictionary. This is going to be a representation of the graph
+[00:26:43 -> 00:26:48] just using an edge list format. So this CFG dictionary is going to map labels,
+[00:26:48 -> 00:26:52] which remember are just strings identified as basic blocks, to a list of all the labels
+[00:26:52 -> 00:27:01] of the successor blocks. Successors are CFG terminology for just the nodes on the other end
+[00:27:01 -> 00:27:07] of the out edges from the current block. So if this is us, if this is some block that we're
+[00:27:08 -> 00:27:15] processing, then the things that have edges into this, all of these blocks are called
+[00:27:16 -> 00:27:21] predecessors, and all of these blocks that have out edges from the current block,
+[00:27:21 -> 00:27:26] those are called successors. So this CFG thing, again, is going to map blocks to a list of all
+[00:27:26 -> 00:27:31] the successors of that block, and that will serve as a representation of the CFG. So imagine
+[00:27:31 -> 00:27:34] you have already formed the basic blocks, and now it's time to write the pseudocode for
+[00:27:34 -> 00:27:39] forming a CFG. So please pause the video and give it your best shot. Again, you don't need
+[00:27:39 -> 00:27:44] to completely finish this, but give it a try and see what you come up with at an appropriate
+[00:27:44 -> 00:27:54] level of detail, and we'll come back together and compare our answers. Here's my rough sketch
+[00:27:54 -> 00:28:00] of the algorithm. It's going to start just like it did with the basic block formation thing,
+[00:28:00 -> 00:28:04] which is that we're going to start with a for loop that loops over all the stuff. In this case,
+[00:28:04 -> 00:28:11] we will look at all of the blocks in this list of blocks that we computed in the previous step.
+[00:28:12 -> 00:28:17] The strategy I'm going to use on every block is to look at its last instruction.
+[00:28:17 -> 00:28:20] Let's look at the thing that might be a terminator or might be just nothing if we're
+[00:28:20 -> 00:28:25] going to follow through. So we'll get that last instruction, call it last. This is just an
+[00:28:25 -> 00:28:29] instruction. And in Python terms, the last thing in the list, that's block negative one. Okay,
+[00:28:29 -> 00:28:41] I'll use that. So I'm going to divide into three cases. The instruction might be a...
+[00:28:43 -> 00:28:48] actually, let's do jump first. So if it's a jump instruction, the jump instructions only
+[00:28:48 -> 00:28:53] have one destination. There's only one successor of this block. So the thing we'll
+[00:28:53 -> 00:29:05] need to do is just add an edge to the graph that goes from the current block that we're processing
+[00:29:05 -> 00:29:15] to the destination of that.

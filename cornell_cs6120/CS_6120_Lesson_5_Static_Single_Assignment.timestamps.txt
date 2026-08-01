@@ -1,0 +1,731 @@
+Title: CS 6120: Lesson 5: Static Single Assignment
+Video ID: 1_130pq2fh
+Detected language: en
+------------------------------------------------------------
+
+[00:00:04 -> 00:00:08] Hey, this video is about SSA, or Static Single Assignment Form.
+[00:00:08 -> 00:00:13] SSA is kind of a philosophy, in addition to a shift in representation of programs,
+[00:00:13 -> 00:00:16] that makes a lot of analyses a lot easier.
+[00:00:17 -> 00:00:20] In particular, you may have noticed, undoubtedly noticed,
+[00:00:20 -> 00:00:23] when implementing some optimizations for braille already,
+[00:00:23 -> 00:00:28] that a lot of the problems that we have to deal with when analyzing programs
+[00:00:28 -> 00:00:30] have to do with variable name conflicts.
+[00:00:30 -> 00:00:32] That is, everything would be a lot easier
+[00:00:32 -> 00:00:37] if we didn't have to worry about the fact that we are constantly reassigning to variables,
+[00:00:37 -> 00:00:39] which is a fact of life in real imperative programs,
+[00:00:39 -> 00:00:41] but it's just plain annoying.
+[00:00:41 -> 00:00:45] Like, for example, here's a simple braille program that's perfectly valid,
+[00:00:45 -> 00:00:51] but it's kind of annoying because it reassigns to both A and B.
+[00:00:51 -> 00:00:54] And so, when you want to optimize this program,
+[00:00:54 -> 00:00:58] or you want to eliminate dead code or do constant propagation, for example,
+[00:00:59 -> 00:01:01] you have to deal with the constant propagation itself,
+[00:01:01 -> 00:01:03] or the dead code elimination itself,
+[00:01:03 -> 00:01:06] but also the fact that there are reuses of the same variable name.
+[00:01:07 -> 00:01:11] It would be way more convenient if we could somehow magically
+[00:01:11 -> 00:01:15] only deal with programs where variable names are always unique.
+[00:01:15 -> 00:01:17] That is, every time you assign to a variable,
+[00:01:17 -> 00:01:21] that is the one and only static location in the program that the variable is ever assigned to.
+[00:01:21 -> 00:01:24] Like, for example, if we could just convert programs into this form,
+[00:01:24 -> 00:01:29] where we have an A1 and an A2, and those are totally different from each other,
+[00:01:29 -> 00:01:33] finally, when we do a print, it is now not ambiguous,
+[00:01:33 -> 00:01:36] it's entirely obvious just by looking at the static text of the program,
+[00:01:36 -> 00:01:41] where that assignment to B2 comes from, because there is one and only location.
+[00:01:41 -> 00:01:43] This would be really nice if we only ever had to deal with programs
+[00:01:44 -> 00:01:46] that assign to every variable exactly once,
+[00:01:46 -> 00:01:52] we could rule out a whole class of worries that have plagued us when doing optimizations so far.
+[00:01:52 -> 00:01:53] Of course, it's not quite that simple.
+[00:01:53 -> 00:01:57] When people write programs in imperative languages, they do reassign to variables.
+[00:01:58 -> 00:02:00] Mutation is sort of a fact of life.
+[00:02:00 -> 00:02:04] So, it is not as simple as just wishing that programs didn't reassign to variables,
+[00:02:04 -> 00:02:07] we need to do something a little bit more complicated than that.
+[00:02:08 -> 00:02:13] The idea behind SSA form is to do a conversion from the ordinary variable mutating form of
+[00:02:13 -> 00:02:17] programs, for example in braille where variables can be reused as many times as you like,
+[00:02:17 -> 00:02:20] into a form with a static single assignment.
+[00:02:20 -> 00:02:24] That is, every variable has statically, that is in the program text,
+[00:02:24 -> 00:02:26] exactly one assignment into it.
+[00:02:26 -> 00:02:29] This is slightly trickier than it sounds, but it's not that hard.
+[00:02:29 -> 00:02:33] And then once we're in that form, we can do optimizations taking advantage of the
+[00:02:33 -> 00:02:36] nice properties that we get from being an SSA form.
+[00:02:36 -> 00:02:38] Then finally, at the very end of the pipeline,
+[00:02:38 -> 00:02:42] you'll want to translate back out of SSA so you can execute programs on a real machine,
+[00:02:43 -> 00:02:46] and do so efficiently by reusing storage.
+[00:02:46 -> 00:02:50] That is, real machines would be terribly inefficient if every single location in memory
+[00:02:50 -> 00:02:53] could only ever be used by one instruction, one static instruction.
+[00:02:53 -> 00:02:58] So we need to do something to convert back into an ordinary form in order to do this.
+[00:02:59 -> 00:03:05] The only tricky part about SSA form has to do with situations where control flow
+[00:03:05 -> 00:03:08] makes it harder than the simple straight line example we've seen so far
+[00:03:08 -> 00:03:09] to get rid of mutation.
+[00:03:10 -> 00:03:13] This program that I'm showing on the screen in the form of a CFG
+[00:03:13 -> 00:03:16] makes it slightly trickier to convert into SSA form
+[00:03:16 -> 00:03:18] than the straight line program we saw so far.
+[00:03:18 -> 00:03:22] In particular, we can start by doing the implicit transformation we did before
+[00:03:22 -> 00:03:24] by renaming all the variables.
+[00:03:24 -> 00:03:31] So for example, I'll cross out A here and write A.1 to indicate that's this version of A.
+[00:03:31 -> 00:03:34] This program essentially does an if, so we will need to
+[00:03:35 -> 00:03:40] relabel both blocks, both sides of the if, to use that new name.
+[00:03:40 -> 00:03:44] So in both cases, both these blocks are referring to the first version of A.
+[00:03:44 -> 00:03:46] So I'll label them as A.1.
+[00:03:46 -> 00:03:49] However, it's two different static assignments to the A variable,
+[00:03:49 -> 00:03:52] so we're going to have to invent a new name for both of them.
+[00:03:52 -> 00:03:56] This left one I'll call A.2, and this right one I'll call A.3.
+[00:03:57 -> 00:03:59] Finally, we need to print out A.
+[00:03:59 -> 00:04:03] And the difficult part about this program is that we don't know which A to print.
+[00:04:03 -> 00:04:07] That is, the A that we want to print
+[00:04:07 -> 00:04:10] depends on the path we took through the control flow graph.
+[00:04:10 -> 00:04:13] It won't work, for example, to cross this out and say A.2,
+[00:04:13 -> 00:04:17] because that won't be defined along the left side of the control flow graph.
+[00:04:18 -> 00:04:19] Similarly, it won't work for A.3.
+[00:04:19 -> 00:04:21] We have to do something else.
+[00:04:21 -> 00:04:24] And the something else is a finode.
+[00:04:24 -> 00:04:28] In SSA, there is a special kind of instruction just to deal with cases like this.
+[00:04:28 -> 00:04:32] That is, when the value you want to use depends on the control flow that happened.
+[00:04:33 -> 00:04:36] Finodes work like ordinary instructions,
+[00:04:36 -> 00:04:39] except they have this magical ability to tell
+[00:04:39 -> 00:04:42] something about the history of where control flow went in the past.
+[00:04:43 -> 00:04:46] So to make this work in an SSA form, we will insert
+[00:04:47 -> 00:04:51] a new instruction labeled as a finode that
+[00:04:51 -> 00:04:56] selects between the versions A.2 and A.3
+[00:04:56 -> 00:04:57] and stores this into a new variable name.
+[00:04:57 -> 00:04:59] Let's call it A.4.
+[00:04:59 -> 00:05:00] Somehow it selects between those two.
+[00:05:00 -> 00:05:05] And then finally, we can change this print statement to use A.4.
+[00:05:06 -> 00:05:10] The finode needs to select between these two options,
+[00:05:10 -> 00:05:14] depending on the control flow edge that is incoming to the current block.
+[00:05:14 -> 00:05:17] So either it's that one, or it's this one.
+[00:05:17 -> 00:05:21] And depending on which one, we'll choose either A.2 or A.3.
+[00:05:22 -> 00:05:25] A typical way to do this, there's many different ways to conceptualize
+[00:05:25 -> 00:05:28] how to label the different edges that you're incoming on.
+[00:05:28 -> 00:05:33] But a typical one is to use the labels of the incoming blocks.
+[00:05:33 -> 00:05:38] That is to say that if we came from left, then use A.2.
+[00:05:38 -> 00:05:41] And if we came from right,
+[00:05:41 -> 00:05:46] the basic block whose label, whose top most label is right,
+[00:05:46 -> 00:05:48] then use A.3.
+[00:05:48 -> 00:05:51] And depending on that choice, assign to A.4.
+[00:05:53 -> 00:05:57] Brill does have an SSA extension that includes a PHI instruction.
+[00:05:57 -> 00:06:00] It looks pretty much like the cartoon I just do on the screen,
+[00:06:00 -> 00:06:02] except it's spelled with PHI instead of a Greek letter.
+[00:06:03 -> 00:06:04] Here's that instruction.
+[00:06:05 -> 00:06:07] You can find out more about how exactly this instruction works
+[00:06:07 -> 00:06:09] in the Brill documentation.
+[00:06:09 -> 00:06:13] There's an extension called SSA that has exactly one new instruction,
+[00:06:13 -> 00:06:14] and that's the PHI instruction.
+[00:06:15 -> 00:06:21] The PHI instruction needs to take n arguments, n variable arguments,
+[00:06:21 -> 00:06:26] and n labels for any n, from 1 off to as many as you like.
+[00:06:28 -> 00:06:34] And the labels are associated with the corresponding variables.
+[00:06:34 -> 00:06:37] And the semantics of the PHI instruction is that
+[00:06:37 -> 00:06:41] if the most recently executed block was labeled with that label,
+[00:06:41 -> 00:06:43] think about it differently,
+[00:06:43 -> 00:06:47] the second most recent label to be passed by interpretation,
+[00:06:47 -> 00:06:50] if that one is the most recent or the second most recent label,
+[00:06:50 -> 00:06:53] then use the corresponding variable and move it into the result.
+[00:06:55 -> 00:06:58] But you can think about this as just selecting between variables
+[00:06:58 -> 00:07:01] depending on the incoming control flow graph edge.
+[00:07:02 -> 00:07:03] One tiny note about Brill.
+[00:07:03 -> 00:07:05] This looks like a sort of funny order
+[00:07:05 -> 00:07:07] for how this instruction is written out,
+[00:07:07 -> 00:07:14] but the order of variables and labels in the instruction
+[00:07:15 -> 00:07:17] is actually not important.
+[00:07:17 -> 00:07:20] So this thing that says PHI 8.2, 8.3, left, right,
+[00:07:20 -> 00:07:24] is exactly the same in the JSON representation
+[00:07:24 -> 00:07:29] as PHI dot left, 8.2 dot right.
+[00:07:29 -> 00:07:31] That indicates a label 8.3.
+[00:07:32 -> 00:07:35] So I find that a slightly more logical way to write it out,
+[00:07:35 -> 00:07:36] but it is totally up to you,
+[00:07:36 -> 00:07:38] and they are identical in the JSON representation
+[00:07:38 -> 00:07:40] because labels and variable arguments
+[00:07:40 -> 00:07:42] are kept entirely separate.
+[00:07:42 -> 00:07:47] Let's do this again in a slightly more complicated
+[00:07:47 -> 00:07:47] control flow graph.
+[00:07:47 -> 00:07:50] And I do mean slightly, but this is a program
+[00:07:50 -> 00:07:53] that is like the previous example that has an if in it.
+[00:07:53 -> 00:07:55] This one has a loop in it.
+[00:07:55 -> 00:07:56] I would like you to proceed as we did before
+[00:07:56 -> 00:07:59] by relabeling, renaming all the variables
+[00:07:59 -> 00:08:01] so that the assignments are unique,
+[00:08:01 -> 00:08:05] so we go into SSA form, and see where you get stuck.
+[00:08:05 -> 00:08:08] That is like see where a PHI node is required
+[00:08:08 -> 00:08:10] in order to complete the renaming of the variables.
+[00:08:16 -> 00:08:18] All right, now I'm going to give it a try.
+[00:08:18 -> 00:08:20] The variable that gets reassigned multiple times
+[00:08:20 -> 00:08:22] in this example is i.
+[00:08:22 -> 00:08:24] There's an assignment here and an assignment here.
+[00:08:24 -> 00:08:27] So I'm going to try disambiguating those names.
+[00:08:27 -> 00:08:29] I'm going to cross out i here and say,
+[00:08:29 -> 00:08:31] well, that's i dot one now,
+[00:08:31 -> 00:08:32] and all the uses of that assignment
+[00:08:33 -> 00:08:36] are going to have to refer to i dot one.
+[00:08:37 -> 00:08:42] The body of the loop will refer again to i dot one twice,
+[00:08:43 -> 00:08:46] but this is a new assignment, so this will be i dot two.
+[00:08:47 -> 00:08:48] Here is where we run into a problem,
+[00:08:49 -> 00:08:54] because this statement here that looks at i,
+[00:08:54 -> 00:08:56] that is the loop iteration variable in this example,
+[00:08:56 -> 00:08:59] it needs to get its value either from the initialization
+[00:08:59 -> 00:09:02] at the beginning of the loop or from the body
+[00:09:02 -> 00:09:04] that is the previous execution of the loop
+[00:09:04 -> 00:09:05] when we incremented i.
+[00:09:06 -> 00:09:08] So in this case, it's actually not correct,
+[00:09:08 -> 00:09:11] and I was wrong to write i dot one here,
+[00:09:11 -> 00:09:13] because it's not necessarily every single time
+[00:09:13 -> 00:09:15] that we're going to get the value of this from i dot one.
+[00:09:16 -> 00:09:19] Instead, what we need is another phi node in here
+[00:09:19 -> 00:09:23] that somehow creates, let's call it i dot three,
+[00:09:23 -> 00:09:26] and somehow gets the value from i dot one and i dot two.
+[00:09:27 -> 00:09:30] And then we can refer to i dot three here
+[00:09:31 -> 00:09:34] and relabel this down here to i dot three.
+[00:09:34 -> 00:09:35] The example I have on the slide
+[00:09:36 -> 00:09:37] works pretty much the same way.
+[00:09:37 -> 00:09:39] I happen to choose different numbers for the variables,
+[00:09:39 -> 00:09:40] but this is equivalent.
+[00:09:42 -> 00:09:44] So I hope this helps you recognize
+[00:09:44 -> 00:09:46] where phi nodes are important.
+[00:09:46 -> 00:09:47] We need to insert phi instructions
+[00:09:47 -> 00:09:51] when converting to SSA when different control flow graphs
+[00:09:51 -> 00:09:53] use the same variable,
+[00:09:53 -> 00:09:55] that is assigned to the same variable along different paths.
+[00:09:55 -> 00:09:59] And it's not just like that inconvenient programmers
+[00:09:59 -> 00:10:00] decided to reuse variable names.
+[00:10:00 -> 00:10:03] It is sometimes essential to the semantics of the program,
+[00:10:03 -> 00:10:06] like this is the correct way to write a for loop
+[00:10:06 -> 00:10:08] is to update a value as you go around the loop.
+[00:10:08 -> 00:10:09] That's how you know when you finish.
+[00:10:09 -> 00:10:10] So it's not like we're dealing
+[00:10:10 -> 00:10:12] with the bad habits of programmers or something
+[00:10:12 -> 00:10:14] that we need to rename variables.
+[00:10:14 -> 00:10:15] Phi nodes are actually essential
+[00:10:15 -> 00:10:18] to representing the semantics of imperative programs
+[00:10:18 -> 00:10:20] when we want to do it in SSA form.
+[00:10:20 -> 00:10:22] In a moment, we're going to see
+[00:10:22 -> 00:10:24] a more complete presentation of the algorithm
+[00:10:24 -> 00:10:28] for converting from unrestricted programs into SSA form.
+[00:10:28 -> 00:10:30] But I want to emphasize on a little detour here
+[00:10:30 -> 00:10:35] that SSA is not just a restriction of the form of programs.
+[00:10:35 -> 00:10:37] It's also kind of a shift in philosophy
+[00:10:37 -> 00:10:38] that can change the way you think
+[00:10:38 -> 00:10:40] about analyzing and optimizing programs.
+[00:10:41 -> 00:10:43] The thing about SSA
+[00:10:43 -> 00:10:45] is that once you get rid of the possibility
+[00:10:45 -> 00:10:46] to reassign variables,
+[00:10:46 -> 00:10:49] a few different concepts that felt like distinct things
+[00:10:49 -> 00:10:51] in the representations of programs
+[00:10:51 -> 00:10:54] have now suddenly collapsed
+[00:10:54 -> 00:10:56] and are now a single thing.
+[00:10:56 -> 00:10:58] And this is sort of hard to convey,
+[00:10:58 -> 00:11:01] but there's a few equivalences that arise from SSA.
+[00:11:01 -> 00:11:03] The first and most straightforward
+[00:11:03 -> 00:11:06] is that definitions and variables are the same thing.
+[00:11:06 -> 00:11:07] I think you can see this
+[00:11:07 -> 00:11:10] that now if you have a variable
+[00:11:10 -> 00:11:13] that says like x equals add y, z, for example,
+[00:11:14 -> 00:11:17] we used to have to keep track of the definition,
+[00:11:17 -> 00:11:19] this instruction as being separate
+[00:11:19 -> 00:11:21] from the variable it assigns to.
+[00:11:21 -> 00:11:24] But now every variable is assigned to exactly once
+[00:11:24 -> 00:11:27] in the entire global domain of the function.
+[00:11:27 -> 00:11:30] So now we can think of these as one in the same.
+[00:11:30 -> 00:11:32] That is, if you're doing reaching definitions, for example,
+[00:11:32 -> 00:11:37] you no longer have to keep track of which variable,
+[00:11:37 -> 00:11:40] like which assignment to which variable is the definition.
+[00:11:40 -> 00:11:42] You can think of variables and assignments
+[00:11:42 -> 00:11:44] as just one unified entity.
+[00:11:45 -> 00:11:47] A consequence is that you can think of instructions
+[00:11:47 -> 00:11:48] as static values.
+[00:11:48 -> 00:11:52] So if you think back to implementing local value numbering,
+[00:11:52 -> 00:11:55] we used to kind of have to think of values
+[00:11:55 -> 00:11:56] as being abstracted with something
+[00:11:56 -> 00:11:58] that instructions compute.
+[00:11:58 -> 00:12:02] But now values can be thought of as instructions themselves.
+[00:12:02 -> 00:12:04] That is, this whole thing we can think of
+[00:12:04 -> 00:12:07] as that's the canonical source for the idea
+[00:12:07 -> 00:12:10] of adding together two other values, y and z.
+[00:12:11 -> 00:12:15] The final and most powerful, in my opinion, identity in SSA
+[00:12:15 -> 00:12:18] is that you can think of arguments to instructions
+[00:12:18 -> 00:12:20] as being data flow graphs.
+[00:12:20 -> 00:12:21] In a data flow graph,
+[00:12:21 -> 00:12:24] you can think of the values as nodes.
+[00:12:24 -> 00:12:27] For example, we got like x and y, for example,
+[00:12:27 -> 00:12:30] and then we got a operator on those things,
+[00:12:30 -> 00:12:33] and the edges indicate like data from this thing
+[00:12:33 -> 00:12:34] flowing into this computation here,
+[00:12:34 -> 00:12:36] and then finally we get a result out.
+[00:12:37 -> 00:12:39] So this kind of data flow graph
+[00:12:39 -> 00:12:41] immediately tells you
+[00:12:41 -> 00:12:43] where the values for operations came from.
+[00:12:44 -> 00:12:45] And in SSA form,
+[00:12:45 -> 00:12:48] you can think of the edges in data flow graphs
+[00:12:48 -> 00:12:51] as being the arguments to instructions.
+[00:12:51 -> 00:12:53] So if instructions are actually values
+[00:12:53 -> 00:12:55] and we have x equals add y, z,
+[00:12:55 -> 00:13:00] and I'll do like a equals mole x, y, for example,
+[00:13:00 -> 00:13:02] then when we represent this,
+[00:13:02 -> 00:13:07] we can think of this reference to the variable x
+[00:13:07 -> 00:13:09] as being an edge in the data flow graph
+[00:13:09 -> 00:13:13] that points to the value that is the instruction add y, z.
+[00:13:13 -> 00:13:16] That is, in SSA form,
+[00:13:16 -> 00:13:18] variable names become irrelevant
+[00:13:18 -> 00:13:20] because variables are exactly the same things
+[00:13:20 -> 00:13:21] than instructions.
+[00:13:21 -> 00:13:24] So when we refer to variables as arguments,
+[00:13:24 -> 00:13:26] what we're actually doing is just having a pointer
+[00:13:26 -> 00:13:29] to the instruction where that value comes from.
+[00:13:29 -> 00:13:31] In fact, in LLVM, for example,
+[00:13:31 -> 00:13:34] instructions literally are represented in memory
+[00:13:34 -> 00:13:36] using pointers from instructions
+[00:13:36 -> 00:13:38] to other instructions.
+[00:13:38 -> 00:13:40] So when an LLVM program is represented in memory,
+[00:13:40 -> 00:13:42] not in textual form,
+[00:13:42 -> 00:13:44] because it's hard to write down pointers in text form,
+[00:13:44 -> 00:13:48] then there are sort of optional annotations
+[00:13:48 -> 00:13:50] for when you want to have a variable name,
+[00:13:50 -> 00:13:53] but in memory form, those are just like for human readability.
+[00:13:53 -> 00:13:57] What's actually going on is that the instruction
+[00:13:57 -> 00:14:00] for this multiply contains a direct pointer
+[00:14:00 -> 00:14:02] to this instruction for the add,
+[00:14:02 -> 00:14:04] and that pointer tells you where the argument comes from
+[00:14:05 -> 00:14:06] and forms the data flow graph
+[00:14:06 -> 00:14:08] from one instruction to another.
+[00:14:09 -> 00:14:12] So I hope you can see how this shift in representation
+[00:14:12 -> 00:14:14] that is getting rid of the possibility
+[00:14:14 -> 00:14:15] of reassigning variables
+[00:14:16 -> 00:14:19] has also led to a shift in the way of thinking
+[00:14:19 -> 00:14:21] about the representation of programs.
+[00:14:21 -> 00:14:25] That is, now you can sort of see the text of a program in this form
+[00:14:25 -> 00:14:28] as not just being text, but also a graph
+[00:14:28 -> 00:14:30] where the nodes are instructions
+[00:14:30 -> 00:14:32] and the edges are uses in the form of arguments.
+[00:14:33 -> 00:14:34] I would love for you to take a moment
+[00:14:34 -> 00:14:36] and just ponder this for a second
+[00:14:36 -> 00:14:38] and think about what it means for your life.
+[00:14:44 -> 00:14:46] Our next step is deriving the algorithms
+[00:14:46 -> 00:14:49] for converting arbitrary programs into SSA form.
+[00:14:49 -> 00:14:53] The question I have for you is where the phi nodes should go.
+[00:14:53 -> 00:14:55] That is, knowing what you know about phi nodes
+[00:14:55 -> 00:14:57] and the role that they play and the semantics that they have,
+[00:14:57 -> 00:15:01] for example, in Brill, where should you insert phi nodes?
+[00:15:01 -> 00:15:03] Where are they necessary to put in?
+[00:15:03 -> 00:15:05] Can you come up with a general rule
+[00:15:05 -> 00:15:07] for where phi nodes are supposed to go?
+[00:15:07 -> 00:15:08] No need to come up with this
+[00:15:08 -> 00:15:10] all the way down to developing an algorithm,
+[00:15:10 -> 00:15:13] but just try to come up with a short summary
+[00:15:13 -> 00:15:17] of your understanding of the idea
+[00:15:17 -> 00:15:19] of where phi nodes should be inserted
+[00:15:19 -> 00:15:21] when we're converting to SSA.
+[00:15:21 -> 00:15:21] Go for it.
+[00:15:27 -> 00:15:29] Clearly, the main thing that causes you
+[00:15:29 -> 00:15:31] to need to insert a phi node
+[00:15:31 -> 00:15:34] is when you have two different assignments
+[00:15:34 -> 00:15:37] to the same variable, one way or the other.
+[00:15:37 -> 00:15:39] But the question still remains,
+[00:15:39 -> 00:15:41] not just do we need a phi node,
+[00:15:41 -> 00:15:42] but where should it go?
+[00:15:43 -> 00:15:47] The rough idea is that the phi node
+[00:15:47 -> 00:15:48] needs to be inserted
+[00:15:48 -> 00:15:50] somewhere in the control flow graph
+[00:15:50 -> 00:15:52] after these assignments.
+[00:15:52 -> 00:15:53] So I'm going to use squiggly lines
+[00:15:53 -> 00:15:55] to indicate not edges in the control flow graph,
+[00:15:55 -> 00:15:57] but like entire paths.
+[00:15:57 -> 00:15:59] That is, if there's some path
+[00:15:59 -> 00:16:00] from this assignment to X
+[00:16:00 -> 00:16:02] and this assignment to X,
+[00:16:02 -> 00:16:03] then we at this point
+[00:16:03 -> 00:16:05] where the control converges,
+[00:16:05 -> 00:16:07] that's where we need a phi node.
+[00:16:07 -> 00:16:11] So here we will need to insert a phi node
+[00:16:11 -> 00:16:14] and then rename this variable
+[00:16:14 -> 00:16:15] to let's call it X1
+[00:16:15 -> 00:16:16] and this variable to X2.
+[00:16:16 -> 00:16:18] And this phi node will select between them
+[00:16:18 -> 00:16:20] based on the path that was taken
+[00:16:20 -> 00:16:21] from those two assignments.
+[00:16:22 -> 00:16:23] To put it differently,
+[00:16:23 -> 00:16:25] you don't need a phi node.
+[00:16:25 -> 00:16:26] Anywhere in the control flow graph
+[00:16:26 -> 00:16:29] that is dominated by a particular definition.
+[00:16:29 -> 00:16:31] So if this is the entry block
+[00:16:32 -> 00:16:34] and it has paths to both of these assignments,
+[00:16:35 -> 00:16:37] then in all of the places
+[00:16:37 -> 00:16:39] where in the control flow graph
+[00:16:39 -> 00:16:43] is dominated by this assignment,
+[00:16:43 -> 00:16:44] there's no ambiguity
+[00:16:44 -> 00:16:46] to which X you're referring to.
+[00:16:46 -> 00:16:48] And same with everything
+[00:16:48 -> 00:16:49] dominated by this assignment.
+[00:16:49 -> 00:16:51] It's only when we leave
+[00:16:51 -> 00:16:53] the sphere of dominance
+[00:16:53 -> 00:16:54] of these two assignments
+[00:16:54 -> 00:16:55] that we need a phi node.
+[00:16:55 -> 00:16:56] That is when there's some ambiguity,
+[00:16:56 -> 00:16:58] when there is some way
+[00:16:58 -> 00:16:59] to go from the entry block
+[00:17:00 -> 00:17:02] and use X, for example,
+[00:17:02 -> 00:17:04] without going through that assignment.
+[00:17:05 -> 00:17:07] You may recall from the previous video
+[00:17:07 -> 00:17:09] a concept that we used
+[00:17:09 -> 00:17:10] that told us
+[00:17:10 -> 00:17:12] where was the place
+[00:17:12 -> 00:17:13] in the control flow graph
+[00:17:13 -> 00:17:14] that is just beyond
+[00:17:14 -> 00:17:15] the reach of dominance
+[00:17:15 -> 00:17:17] of a given instruction,
+[00:17:17 -> 00:17:18] a given basic block.
+[00:17:18 -> 00:17:20] And that is the dominance frontier.
+[00:17:20 -> 00:17:23] The key to converting to SSA
+[00:17:23 -> 00:17:24] is dominance frontiers.
+[00:17:24 -> 00:17:25] You'll want to compute
+[00:17:25 -> 00:17:27] the dominance frontier of a CFG.
+[00:17:27 -> 00:17:29] And essentially the rough idea
+[00:17:29 -> 00:17:30] is that we're going to need
+[00:17:30 -> 00:17:32] to put phi nodes
+[00:17:32 -> 00:17:33] in the dominance frontier
+[00:17:33 -> 00:17:35] of definitions.
+[00:17:36 -> 00:17:36] Here's a cartoon
+[00:17:36 -> 00:17:37] to kind of remind you
+[00:17:37 -> 00:17:39] what a dominance frontier looks like.
+[00:17:39 -> 00:17:40] All of the nodes
+[00:17:40 -> 00:17:43] that are dominated by a given block,
+[00:17:43 -> 00:17:44] call it A,
+[00:17:44 -> 00:17:44] those things are not
+[00:17:44 -> 00:17:46] in the dominance frontier.
+[00:17:46 -> 00:17:47] The dominance frontier
+[00:17:47 -> 00:17:48] occurs just beyond that.
+[00:17:48 -> 00:17:49] That is the blocks
+[00:17:49 -> 00:17:50] that are reachable,
+[00:17:50 -> 00:17:52] that is like reachable
+[00:17:52 -> 00:17:53] by a single jump
+[00:17:53 -> 00:17:55] away from the set of nodes
+[00:17:55 -> 00:17:56] dominated by A,
+[00:17:56 -> 00:17:58] but are not dominated by A,
+[00:17:58 -> 00:17:59] that is have edges in
+[00:17:59 -> 00:18:01] from somewhere else in the CFG.
+[00:18:01 -> 00:18:02] They're reachable otherwise
+[00:18:02 -> 00:18:03] not through A
+[00:18:03 -> 00:18:03] from the entry node.
+[00:18:04 -> 00:18:07] The algorithm for converting to SSA
+[00:18:07 -> 00:18:08] uses the dominance frontier
+[00:18:08 -> 00:18:10] and proceeds in two main steps.
+[00:18:10 -> 00:18:11] The first step
+[00:18:11 -> 00:18:13] is to insert phi nodes.
+[00:18:13 -> 00:18:14] That is to use the dominance frontier
+[00:18:14 -> 00:18:15] to figure out where phi nodes
+[00:18:15 -> 00:18:16] have to go in the first place.
+[00:18:16 -> 00:18:17] And then the second step
+[00:18:17 -> 00:18:19] after we've inserted all that stuff
+[00:18:19 -> 00:18:21] is to rename all the variables
+[00:18:21 -> 00:18:22] so that assignments are unique.
+[00:18:22 -> 00:18:24] So we get into SSA form.
+[00:18:25 -> 00:18:26] This might sound a little bit weird,
+[00:18:26 -> 00:18:27] like what are we going to do
+[00:18:27 -> 00:18:28] with phi nodes
+[00:18:28 -> 00:18:29] if we haven't yet renamed things?
+[00:18:29 -> 00:18:30] And it does in fact
+[00:18:30 -> 00:18:31] look a little bit weird.
+[00:18:31 -> 00:18:33] That is like in the intermediate stage
+[00:18:33 -> 00:18:33] between these,
+[00:18:33 -> 00:18:35] we're going to have a bunch of instructions
+[00:18:35 -> 00:18:36] that look like, you know,
+[00:18:36 -> 00:18:39] like x equals phi
+[00:18:39 -> 00:18:42] and then like x, x, and x, and x,
+[00:18:42 -> 00:18:43] and like each of these
+[00:18:43 -> 00:18:44] comes with a different label.
+[00:18:44 -> 00:18:45] That is we're saying
+[00:18:45 -> 00:18:46] we're choosing between,
+[00:18:46 -> 00:18:47] well, you can either
+[00:18:47 -> 00:18:48] get the value from x
+[00:18:48 -> 00:18:49] or you can get it from x
+[00:18:49 -> 00:18:50] or you can get it from x
+[00:18:50 -> 00:18:52] depending on where you came from
+[00:18:52 -> 00:18:53] in the control flow graph.
+[00:18:53 -> 00:18:54] And that's super weird
+[00:18:54 -> 00:18:55] and it's definitely not SSA
+[00:18:55 -> 00:18:57] but it's the stepping stone along the way.
+[00:18:57 -> 00:18:59] That is we need to like find these locations
+[00:18:59 -> 00:19:01] and then later in a second pass
+[00:19:01 -> 00:19:03] we'll go, okay, well, this is like x12
+[00:19:03 -> 00:19:07] and this is like seven, three, five, nine
+[00:19:07 -> 00:19:08] or something.
+[00:19:08 -> 00:19:10] And then after doing all of that
+[00:19:10 -> 00:19:11] then we will finally have an SSA form
+[00:19:11 -> 00:19:13] that has phi nodes in the right place.
+[00:19:14 -> 00:19:16] If you like, you can pause the video now
+[00:19:16 -> 00:19:17] to think a little bit
+[00:19:17 -> 00:19:19] about how you would derive the pseudocode
+[00:19:19 -> 00:19:21] for the algorithms for these two steps.
+[00:19:21 -> 00:19:23] That is where to insert phi nodes
+[00:19:23 -> 00:19:25] and then how to do the renaming.
+[00:19:25 -> 00:19:26] This is fairly involved
+[00:19:26 -> 00:19:28] so give it some time if you feel like it
+[00:19:28 -> 00:19:30] but we'll step through the pseudocode together.
+[00:19:36 -> 00:19:37] Here's the algorithm
+[00:19:37 -> 00:19:38] for how to go about that.
+[00:19:38 -> 00:19:41] We will do something for every variable.
+[00:19:41 -> 00:19:42] That is we'll do phi insertion
+[00:19:42 -> 00:19:43] for every single variable
+[00:19:43 -> 00:19:45] in the program independently.
+[00:19:46 -> 00:19:49] The idea is to loop over all the definitions.
+[00:19:49 -> 00:19:50] That is we're going to insert things
+[00:19:50 -> 00:19:52] into the dominance frontier of the definitions.
+[00:19:52 -> 00:19:54] So we need to have built up
+[00:19:54 -> 00:19:55] a list of all the blocks
+[00:19:55 -> 00:19:56] that define a given variable.
+[00:19:56 -> 00:19:57] This is not too hard to do.
+[00:19:57 -> 00:19:59] It doesn't need data flow analysis.
+[00:19:59 -> 00:20:01] You just look at the instructions
+[00:20:01 -> 00:20:02] that write to a given variable name.
+[00:20:03 -> 00:20:05] Then we will just go through
+[00:20:05 -> 00:20:07] the entire dominance frontier of that block.
+[00:20:07 -> 00:20:09] So we have pre-computed the dominance frontier
+[00:20:10 -> 00:20:11] using the algorithm from the other video.
+[00:20:12 -> 00:20:14] Then we insert a phi node into that block
+[00:20:14 -> 00:20:16] but not if we have done so already.
+[00:20:16 -> 00:20:17] That is it's possible for blocks
+[00:20:17 -> 00:20:19] to be in different dominance frontiers
+[00:20:19 -> 00:20:21] for different definitions
+[00:20:21 -> 00:20:22] in which case we don't need to add
+[00:20:22 -> 00:20:24] two different phi nodes for the same variable.
+[00:20:25 -> 00:20:26] Then we will...
+[00:20:27 -> 00:20:28] This is kind of the tricky part.
+[00:20:28 -> 00:20:30] We need to add that block
+[00:20:30 -> 00:20:31] if we have modified it.
+[00:20:31 -> 00:20:34] That is if we have added a phi node to it
+[00:20:34 -> 00:20:36] to our list of blocks
+[00:20:36 -> 00:20:38] that define the variable.
+[00:20:38 -> 00:20:40] So we have this map called V
+[00:20:40 -> 00:20:41] that like holds a set of all blocks
+[00:20:41 -> 00:20:42] that define the variable V.
+[00:20:42 -> 00:20:44] We need to add this new block
+[00:20:44 -> 00:20:46] that we just put a phi node into
+[00:20:46 -> 00:20:48] into that list because it now defines V.
+[00:20:48 -> 00:20:50] That is the instruction looks something like
+[00:20:50 -> 00:20:54] V equals phi of V and V for example
+[00:20:54 -> 00:20:56] and that means that it's now writing to V
+[00:20:56 -> 00:20:57] and we're going to have to go back
+[00:20:57 -> 00:20:58] and look at its dominance frontier
+[00:20:58 -> 00:21:00] and possibly put in a phi node there.
+[00:21:01 -> 00:21:02] But once we've done that
+[00:21:02 -> 00:21:03] with that one little trick
+[00:21:03 -> 00:21:05] all we're doing is inserting phi nodes
+[00:21:05 -> 00:21:06] into all the dominance frontiers
+[00:21:06 -> 00:21:07] of all the definitions.
+[00:21:09 -> 00:21:10] Next let's rename the variables
+[00:21:10 -> 00:21:12] and this one's a tiny bit more complicated.
+[00:21:13 -> 00:21:14] The main data structure that we will need
+[00:21:14 -> 00:21:16] is a stack to keep track
+[00:21:16 -> 00:21:18] of all the variable names.
+[00:21:18 -> 00:21:19] That is we will keep track
+[00:21:19 -> 00:21:21] of a stack of new names
+[00:21:21 -> 00:21:23] for every old variable name.
+[00:21:23 -> 00:21:25] So if your old variable is called x
+[00:21:25 -> 00:21:26] then this will be a stack of things
+[00:21:26 -> 00:21:29] like x1 and x5 and x12 and such
+[00:21:29 -> 00:21:30] and we'll organize this in a stack
+[00:21:30 -> 00:21:32] that's pushing things onto it
+[00:21:32 -> 00:21:32] and popping things off
+[00:21:32 -> 00:21:34] for reasons you'll see in a moment.
+[00:21:34 -> 00:21:35] Another interesting thing
+[00:21:35 -> 00:21:36] about this algorithm is that
+[00:21:36 -> 00:21:37] unlike I think every other pseudocode algorithm
+[00:21:37 -> 00:21:40] I've shown so far this one's recursive.
+[00:21:40 -> 00:21:42] That is it really helps to be able to
+[00:21:42 -> 00:21:44] define a function that processes a given block
+[00:21:44 -> 00:21:46] and then we will recursively call this function.
+[00:21:46 -> 00:21:48] There are of course also nice for loops
+[00:21:48 -> 00:21:50] but this is a recursive function
+[00:21:50 -> 00:21:54] that will eventually will rename the entry block.
+[00:21:57 -> 00:21:58] So for the implementation
+[00:21:58 -> 00:22:00] of this recursive rename function
+[00:22:00 -> 00:22:03] the first step is to apply
+[00:22:03 -> 00:22:06] current renames and generate new names.
+[00:22:06 -> 00:22:07] So if you think about it this way
+[00:22:07 -> 00:22:09] if we have a instruction that looks like add
+[00:22:11 -> 00:22:13] x equals add yz for example
+[00:22:13 -> 00:22:16] then we will this should say the top of the stack.
+[00:22:17 -> 00:22:19] So we will rename all the arguments
+[00:22:19 -> 00:22:21] to be like well this is y5
+[00:22:21 -> 00:22:23] and this is z12 for example
+[00:22:23 -> 00:22:25] using the current names of the variables
+[00:22:25 -> 00:22:27] that will be located at the top of the stack.
+[00:22:27 -> 00:22:29] Then we will generate a brand new name
+[00:22:29 -> 00:22:30] for the destination.
+[00:22:30 -> 00:22:33] So this is like x17 for example
+[00:22:33 -> 00:22:36] and we'll push that onto the stack
+[00:22:36 -> 00:22:37] for the old name of x.
+[00:22:37 -> 00:22:41] So now the stack x for example
+[00:22:43 -> 00:22:44] may be very tall
+[00:22:44 -> 00:22:47] but it will have x17 on top.
+[00:22:47 -> 00:22:51] So we are using the new names for all the arguments
+[00:22:51 -> 00:22:53] and generating new names
+[00:22:53 -> 00:22:54] for all the destinations
+[00:22:54 -> 00:22:56] of all the assignments in this given block.
+[00:22:57 -> 00:22:58] And I hope you can see how this makes sure
+[00:22:58 -> 00:23:02] that globally we will end up with unique names
+[00:23:02 -> 00:23:04] because we're just we're generating a new name
+[00:23:04 -> 00:23:06] every single time we assign to a variable
+[00:23:07 -> 00:23:08] and just making sure we push onto the stack
+[00:23:08 -> 00:23:10] so we know what variable to use later.
+[00:23:10 -> 00:23:11] The next step is similar
+[00:23:11 -> 00:23:13] but instead of processing instructions
+[00:23:13 -> 00:23:14] in the current block
+[00:23:14 -> 00:23:16] this looks at all the current block successors
+[00:23:16 -> 00:23:18] and instead of processing normal instructions
+[00:23:18 -> 00:23:20] this one processes all the phi nodes.
+[00:23:21 -> 00:23:24] This ensures that all the immediate successors
+[00:23:24 -> 00:23:26] of this block use the same names
+[00:23:26 -> 00:23:29] as we just generated in our block.
+[00:23:29 -> 00:23:30] So we process all the successors
+[00:23:30 -> 00:23:31] and for each one
+[00:23:31 -> 00:23:33] we basically give it the same treatment
+[00:23:33 -> 00:23:36] that is read again from the top of the stack
+[00:23:36 -> 00:23:37] for those given variables.
+[00:23:37 -> 00:23:38] Remember we've inserted phi nodes
+[00:23:38 -> 00:23:40] that say phi of v, v, v, v, v
+[00:23:40 -> 00:23:42] now we will replace those
+[00:23:42 -> 00:23:44] with the actual concrete new names
+[00:23:44 -> 00:23:46] of the renamed variables.
+[00:23:46 -> 00:23:50] Then the final step is to make the recursive calls
+[00:23:50 -> 00:23:52] and for that we need to use the dominance tree.
+[00:23:52 -> 00:23:53] You remember the dominance tree
+[00:23:53 -> 00:23:55] is a data structure to sort of efficiently store
+[00:23:55 -> 00:23:57] all the domination relationships
+[00:23:57 -> 00:23:59] in a control flow graph.
+[00:23:59 -> 00:24:01] The dominance tree if we look at our children
+[00:24:01 -> 00:24:04] that gives us the blocks
+[00:24:04 -> 00:24:06] that are immediately dominated by the current block
+[00:24:06 -> 00:24:07] that is dominated by us
+[00:24:07 -> 00:24:09] but not by a third one in between
+[00:24:09 -> 00:24:10] if that makes sense.
+[00:24:11 -> 00:24:14] We need to recursively call the rename function
+[00:24:14 -> 00:24:15] for all of those things
+[00:24:15 -> 00:24:16] that we immediately dominate
+[00:24:16 -> 00:24:19] and we will sort of recursively traverse down
+[00:24:19 -> 00:24:22] the dominance tree in this order
+[00:24:22 -> 00:24:25] so we process and rename variables in the right way.
+[00:24:25 -> 00:24:28] The final step is to pop off
+[00:24:28 -> 00:24:29] all the variable names
+[00:24:29 -> 00:24:30] we just generated in the first step.
+[00:24:30 -> 00:24:32] That is we created a bunch of new names
+[00:24:32 -> 00:24:35] and we inserted them everywhere in all the blocks
+[00:24:35 -> 00:24:37] in our little subtree of the dominance tree.
+[00:24:37 -> 00:24:39] We need to now remove those names
+[00:24:39 -> 00:24:42] and return the stacks to their old way of being
+[00:24:42 -> 00:24:45] for the other recursive calls to the rename function.
+[00:24:45 -> 00:24:47] That is when we return from this function
+[00:24:47 -> 00:24:48] we should be forgetting about those names
+[00:24:48 -> 00:24:50] and letting other blocks have a chance.
+[00:24:51 -> 00:24:52] That's the entire algorithm.
+[00:24:52 -> 00:24:53] It's worth spending some time with
+[00:24:53 -> 00:24:55] to sort of convince yourself
+[00:24:55 -> 00:24:56] that this is at least on the right track.
+[00:24:56 -> 00:24:58] I don't think there's going to be a flash of light
+[00:24:58 -> 00:24:59] where you suddenly see,
+[00:24:59 -> 00:25:00] ah yes this is how we get
+[00:25:00 -> 00:25:03] perfectly consistent naming for SSA
+[00:25:03 -> 00:25:05] which is why part of your tasks
+[00:25:05 -> 00:25:07] for this week are implementing this algorithm.
+[00:25:07 -> 00:25:07] Once you do that
+[00:25:07 -> 00:25:09] I think you'll be slightly more convinced
+[00:25:09 -> 00:25:10] that this is the correct thing
+[00:25:10 -> 00:25:11] and it will introduce you
+[00:25:11 -> 00:25:14] to the mystical philosophy that is SSA.
+[00:25:15 -> 00:25:16] The last step that we need
+[00:25:16 -> 00:25:18] is a way to convert out of SSA form
+[00:25:18 -> 00:25:20] into an ordinary mutating form of the program
+[00:25:20 -> 00:25:22] doing kind of the reverse of what we just saw.
+[00:25:23 -> 00:25:25] Real machines don't have a file instruction.
+[00:25:25 -> 00:25:26] That's just an invention of compilers
+[00:25:26 -> 00:25:28] and even if they did
+[00:25:28 -> 00:25:30] the idea that every single instruction
+[00:25:30 -> 00:25:31] every static assignment
+[00:25:31 -> 00:25:33] would use a different location memory
+[00:25:33 -> 00:25:34] or a separate register
+[00:25:34 -> 00:25:36] would be terribly inefficient.
+[00:25:36 -> 00:25:38] So eventually we need to convert
+[00:25:38 -> 00:25:40] back to a mutating form
+[00:25:40 -> 00:25:41] bringing us back to the real world
+[00:25:41 -> 00:25:43] of programs that we actually want to execute.
+[00:25:44 -> 00:25:46] This is a little bit more simple
+[00:25:46 -> 00:25:48] than converting to SSA form
+[00:25:48 -> 00:25:50] but let's think about where
+[00:25:50 -> 00:25:52] you need to do some sort of conversion.
+[00:25:52 -> 00:25:53] For every PHY node
+[00:25:53 -> 00:25:55] you need to get rid of this PHY node
+[00:25:55 -> 00:25:56] by sort of collapsing things
+[00:25:56 -> 00:25:57] back to the same variable.
+[00:25:57 -> 00:25:58] So let's think about
+[00:25:58 -> 00:26:00] where PHY nodes appear in programs.
+[00:26:00 -> 00:26:03] If we have a PHY instruction like this
+[00:26:03 -> 00:26:05] in a Brill program
+[00:26:05 -> 00:26:06] it must be the case
+[00:26:06 -> 00:26:09] that there is a assignment to V1
+[00:26:09 -> 00:26:11] and an assignment to V2
+[00:26:11 -> 00:26:13] somewhere preceding this block in the program.
+[00:26:13 -> 00:26:14] And by preceding I mean
+[00:26:14 -> 00:26:15] that these are in basic blocks
+[00:26:16 -> 00:26:19] that are along paths
+[00:26:19 -> 00:26:21] that eventually reach this point.
+[00:26:21 -> 00:26:22] Remember that squiggle means
+[00:26:22 -> 00:26:23] not just an edge in the CFG
+[00:26:23 -> 00:26:24] but an entire path.
+[00:26:24 -> 00:26:26] In any case there must be
+[00:26:26 -> 00:26:28] a V1 assignment, a V2 assignment
+[00:26:28 -> 00:26:29] so that we can be reading them
+[00:26:29 -> 00:26:30] in this PHY instruction.
+[00:26:31 -> 00:26:35] The rough idea behind eliminating PHY nodes
+[00:26:35 -> 00:26:37] is to invent new blocks
+[00:26:37 -> 00:26:39] that go along these paths.
+[00:26:41 -> 00:26:42] So invent a new block here
+[00:26:42 -> 00:26:44] that is the immediate predecessor
+[00:26:45 -> 00:26:46] along this path
+[00:26:48 -> 00:26:50] and here's a straight edge to say
+[00:26:51 -> 00:26:52] you jump directly to this block.
+[00:26:53 -> 00:26:55] Then all you do is you
+[00:26:56 -> 00:26:57] erase this PHY instruction
+[00:26:57 -> 00:26:58] and you just say
+[00:27:00 -> 00:27:05] that V gets assigned to V1.
+[00:27:05 -> 00:27:06] I ran out of space
+[00:27:06 -> 00:27:06] but you can think of this
+[00:27:06 -> 00:27:08] as an ID instruction in Brill.
+[00:27:09 -> 00:27:12] And then V gets V2 along this path.
+[00:27:12 -> 00:27:14] So you can see that just before
+[00:27:14 -> 00:27:15] we go into that block
+[00:27:15 -> 00:27:17] that used to have the PHY node in it
+[00:27:17 -> 00:27:18] that would choose from this
+[00:27:18 -> 00:27:19] whether we came in from this path
+[00:27:19 -> 00:27:20] or that path
+[00:27:20 -> 00:27:22] we can actually just put in a block
+[00:27:22 -> 00:27:23] along those paths
+[00:27:23 -> 00:27:25] that does the same copy.
+[00:27:25 -> 00:27:26] So now we're going back
+[00:27:26 -> 00:27:27] to a control representation
+[00:27:27 -> 00:27:29] instead of an instruction representation
+[00:27:29 -> 00:27:31] of exactly the same functionality.
+[00:27:31 -> 00:27:33] Here's that same CFG
+[00:27:33 -> 00:27:35] drawn in a slightly more readable way.
+[00:27:35 -> 00:27:38] The point is that these ID instructions
+[00:27:38 -> 00:27:40] need to go in the control flow paths
+[00:27:40 -> 00:27:41] that they referred
+[00:27:41 -> 00:27:43] that the PHY node used to refer to
+[00:27:43 -> 00:27:45] and by doing the copies there
+[00:27:45 -> 00:27:46] we get the same effect
+[00:27:46 -> 00:27:47] as the PHY instruction.
+[00:27:48 -> 00:27:49] This simple algorithm
+[00:27:49 -> 00:27:51] for just like inserting copies
+[00:27:51 -> 00:27:52] works just fine.
+[00:27:53 -> 00:27:55] I think that's the one to implement
+[00:27:55 -> 00:27:57] for this week's tasks.
+[00:27:57 -> 00:27:58] However, I do want to point out
+[00:27:58 -> 00:28:00] that there are fancier algorithms out there
+[00:28:00 -> 00:28:02] that you can find in the compiler's literature
+[00:28:02 -> 00:28:03] for reducing the amount
+[00:28:03 -> 00:28:05] of needless copying that is done.
+[00:28:05 -> 00:28:07] That is, this one is perfectly sufficient
+[00:28:07 -> 00:28:07] for correctness
+[00:28:07 -> 00:28:09] but there might be more copies
+[00:28:09 -> 00:28:11] than you strictly need.
+[00:28:11 -> 00:28:12] So if you're interested
+[00:28:12 -> 00:28:12] you can read more
+[00:28:12 -> 00:28:14] in some of the links associated
+[00:28:14 -> 00:28:16] with this week's lesson
+[00:28:16 -> 00:28:18] to find out about fancier algorithms
+[00:28:18 -> 00:28:20] for converting out of SSA form.
+[00:28:20 -> 00:28:31] Good luck!

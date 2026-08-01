@@ -1,0 +1,391 @@
+Title: CS 6120: Lesson 12: Program Synthesis
+Video ID: 1_mxclvd8z
+Detected language: en
+------------------------------------------------------------
+
+[00:00:05 -> 00:00:11] Program synthesis is a term for a very broad set of techniques that try to automatically
+[00:00:11 -> 00:00:17] generate a program that fits a specification. So the idea is you feed in just a specification
+[00:00:17 -> 00:00:21] of what you want the program to do, and you get a program out of the program synthesizer.
+[00:00:21 -> 00:00:25] There's a lot hidden in the notion of what makes a specification, and it's interpreted
+[00:00:25 -> 00:00:31] very broadly. Sometimes people mean, like, a logical relationship between the input and
+[00:00:31 -> 00:00:36] output of the function. Sometimes people mean just a few examples, and the synthesizer's job
+[00:00:36 -> 00:00:40] is to fill in the rest of the details. It goes all the way to saying that we're going to synthesize
+[00:00:40 -> 00:00:45] programs from natural language. This sounds sort of like science fiction, that we're just going
+[00:00:45 -> 00:00:50] to give a description, like a logical formula, and get a sequence of machine instructions out,
+[00:00:50 -> 00:00:55] or, like, give a very precise type for a function and get an OCaml function out,
+[00:00:55 -> 00:01:00] but it's an active area of research because it sounds so exciting. A cartoony understanding
+[00:01:00 -> 00:01:04] of what program synthesis is capable of is that it's going to take away all our jobs as
+[00:01:04 -> 00:01:09] programmers. That doesn't seem very likely to me, but it doesn't mean that program synthesis
+[00:01:09 -> 00:01:14] is totally a fiction, even today. There's lots of examples of more constrained domains
+[00:01:14 -> 00:01:19] where automatically generating programs from some form of specification can be extremely helpful.
+[00:01:19 -> 00:01:24] A common pattern is that you have a really restricted set of semantics that is a very
+[00:01:24 -> 00:01:29] domain-specific language, and it takes considerable effort, nonetheless, to kind
+[00:01:29 -> 00:01:33] of navigate that space, and there's sort of an easier way for the programmer to express their
+[00:01:33 -> 00:01:38] intent. A very famous deployed example of program synthesis, for instance, is the Flash Fill feature
+[00:01:38 -> 00:01:43] in Excel, which will take a few examples and try to guess the formula you are trying to write
+[00:01:43 -> 00:01:49] to relate the inputs to the outputs. I think that at first, the idea of program synthesis
+[00:01:49 -> 00:01:53] can seem sort of like magic. We're using fancy tools like automatic theorem provers,
+[00:01:53 -> 00:01:57] we're using complicated search space techniques, and somehow we go from something
+[00:01:57 -> 00:02:01] that doesn't look like a program at all to coming up with a program more or less from scratch.
+[00:02:02 -> 00:02:05] However, I actually don't think that the basics of doing program synthesis,
+[00:02:05 -> 00:02:10] especially when aided by really great off-the-shelf automated reasoning tools,
+[00:02:10 -> 00:02:15] are all that complicated. The basics of program synthesis are not magical at all.
+[00:02:15 -> 00:02:19] In this lesson, we'll go through the construction of a basic program synthesizer
+[00:02:19 -> 00:02:23] more or less from scratch. We're going to go through this blog post that I wrote a couple
+[00:02:23 -> 00:02:29] of years ago entitled Program Synthesis is Possible. I wrote this blog post as a unit
+[00:02:29 -> 00:02:35] for lessons in program languages in compiler's classes. This will guide you through constructing
+[00:02:35 -> 00:02:39] a program synthesis tool, and I encourage you to pause this video often to catch up
+[00:02:39 -> 00:02:44] and do the programming yourself. You can also find my full implementation online on GitHub if
+[00:02:44 -> 00:02:48] you want, but I think it's more instructive to go through the motions and constructing it
+[00:02:48 -> 00:02:52] from scratch. I'm going to do this with Python, but you can use whatever tools you want.
+[00:02:52 -> 00:02:55] Python will make it possible to follow my instructions literally.
+[00:02:55 -> 00:02:59] Okay, so when I said we were going to start from scratch, I was pretty much lying,
+[00:02:59 -> 00:03:03] because we're actually going to start with an extremely powerful off-the-shelf open source
+[00:03:03 -> 00:03:09] tool called a Satisfiability Modulo Theories Solver, or SMT solver, known as Z3 out of
+[00:03:09 -> 00:03:15] Microsoft research. SMT solvers are a foundation of a lot of modern synthesis techniques.
+[00:03:15 -> 00:03:20] We're going to see how to take a theorem prover and use it to build a program
+[00:03:20 -> 00:03:26] synthesizer. The first step in this lesson, therefore, is to install Z3. For following
+[00:03:26 -> 00:03:33] along in Python, you'll also need the Z3 bindings. It's not that hard. Z3 is a reasonably
+[00:03:33 -> 00:03:37] popular package, so you can find it in most package managers already. You probably don't
+[00:03:37 -> 00:03:42] need to compile it from source. For example, I'm doing this on a Mac, so I can just do
+[00:03:42 -> 00:03:46] brew install Z3, and I should be good to go. At this point, it should be possible to
+[00:03:46 -> 00:03:51] launch a Python interpreter and type import Z3 without getting an error, and that will
+[00:03:51 -> 00:03:57] give us a convenient interface to using Z3. Z3, like any SMT solver, works by taking
+[00:03:57 -> 00:04:02] in a logical formula and saying whether it's satisfiable or unsatisfiable. It can also,
+[00:04:02 -> 00:04:09] of course, time out, and then we don't get a useful answer. SMT is like SAT in the sense
+[00:04:09 -> 00:04:14] that we're trying to solve a satisfiability query, but SAT just works on Boolean formulas
+[00:04:14 -> 00:04:20] where all of the variables can just be true or false. SMT solvers augment a SAT-like framework
+[00:04:20 -> 00:04:24] with Boolean variables and and and or and implication and stuff, but with something
+[00:04:24 -> 00:04:30] called theories. Theories are domains of variables and the operations of those variables
+[00:04:30 -> 00:04:35] that can be involved in your query. So, for example, you can say that X is greater than Y,
+[00:04:35 -> 00:04:40] where X and Y are both integers, or you can say that like A plus B equals C, where A,
+[00:04:40 -> 00:04:45] B, and C are all 32-bit floating point numbers. The integers and the floating point numbers,
+[00:04:45 -> 00:04:51] those are theories that get plugged into a SAT-like framework to make an SMT solver,
+[00:04:51 -> 00:04:55] and it's all those theories that make SMT solvers so useful for reasoning about program
+[00:04:55 -> 00:05:00] semantics. I'm first going to demonstrate to you what SMT solvers, and Z3 in particular,
+[00:05:00 -> 00:05:05] are capable of, just by themselves, just when issuing queries, and to be honest,
+[00:05:05 -> 00:05:10] I'm constantly shocked by the insights that modern SMT solvers are able to come up with
+[00:05:10 -> 00:05:16] relatively quickly. Then the next step will be to see how to take SMT queries and turn them
+[00:05:16 -> 00:05:20] into actual program synthesis. All right, let's get started with just an empty Python program,
+[00:05:20 -> 00:05:26] and I'll type import Z3 to get started. The Z3 Python bindings have a bunch of convenient
+[00:05:26 -> 00:05:31] operator overloads for writing SMT formulas. The way you get started is by declaring a
+[00:05:31 -> 00:05:37] variable first. So if I say z3.capital int and I give it a name, this declares an SMT variable
+[00:05:37 -> 00:05:42] named x that is of type int, that uses the integer theory in the Z3 SMT solver.
+[00:05:43 -> 00:05:47] Now you can do things like, say, if you just divide this by 7, that doesn't actually do a
+[00:05:47 -> 00:05:53] division, we've overloaded, or Z3's Python bindings have overloaded the division operator
+[00:05:53 -> 00:06:00] to instead say, create me a formula that does a division of the SMT variable x divided by 7.
+[00:06:00 -> 00:06:06] So I can just bind the result of this thing, which again is a formula object, to a variable,
+[00:06:06 -> 00:06:13] and I'll just try printing that out for now. So if I run that, I get the formula x divided
+[00:06:13 -> 00:06:20] by 7 in a completely unsurprising way. I can also, to make this into a Boolean formula
+[00:06:20 -> 00:06:24] that can actually be satisfiable or not, I can use double equals. Again, that's overloaded,
+[00:06:24 -> 00:06:31] and we'll get the formula that is true if for all values of x when divided by 7 equals 6.
+[00:06:32 -> 00:06:36] So now it would be great if we could solve this, that is ask for a value of x that makes this
+[00:06:36 -> 00:06:42] thing true. And that is what the SMT solver is for, of course. So we can just write a
+[00:06:42 -> 00:06:47] little function here to do the dance to invoke Z3 in the most straightforward possible way.
+[00:06:47 -> 00:06:57] We need to create a solver, add a formula to it, and then check, the check method runs
+[00:06:57 -> 00:07:02] the solver to see if this thing is satisfiable or not, and then return s.model. The model is
+[00:07:02 -> 00:07:06] just the name for the valuation of the formula. That is, for a satisfiable formula, and I'm going
+[00:07:06 -> 00:07:11] to hope that all the formulas I feed in here are satisfiable, what are the values of the
+[00:07:11 -> 00:07:16] variables that make it true, that are sort of a certificate that the formula is satisfiable.
+[00:07:17 -> 00:07:24] So I'll do the standard Python thing for having an actual program here with a main.
+[00:07:26 -> 00:07:31] So instead of just printing out this formula, now I can print out the solution to this formula.
+[00:07:31 -> 00:07:34] So this will run the solver and get the model and tell me an appropriate value of x.
+[00:07:36 -> 00:07:44] x is 42, just as I hoped. Fantastic! So this, I hope, gives you a view into the power of SMT
+[00:07:44 -> 00:07:49] solvers. You can write these sort of SAT-like logical queries that can be kind of sort of
+[00:07:49 -> 00:07:54] arbitrarily connected with Boolean connectors that do comparisons of actual variables,
+[00:07:54 -> 00:07:57] and you can ask it for valuations of those variables that make them true.
+[00:07:57 -> 00:08:02] For this tutorial, instead of using integers, I'm going to use the theory of bit vectors.
+[00:08:02 -> 00:08:06] Bit vectors are, instead of idealized integers that can go off into infinity,
+[00:08:06 -> 00:08:10] bit vectors are sort of finite representations like we have in actual computers.
+[00:08:10 -> 00:08:18] So instead of using int, we can also do, we can have, we can write, for example, that
+[00:08:18 -> 00:08:25] y is a bit vector named y. Here y is a collection of eight bits that we can treat as
+[00:08:25 -> 00:08:31] an integer. So for example, we can say y shifted left by three, which is a thing you can do to bit
+[00:08:31 -> 00:08:37] vectors, equals 40. And we can just, if we want to know what value of y makes that work,
+[00:08:37 -> 00:08:50] we can print the solution to this formula. Awesome! Another thing that makes SMT solvers
+[00:08:50 -> 00:08:53] super useful is that they also, they have quantifiers. That is, you're not just stuck
+[00:08:53 -> 00:08:57] by saying find me some value of y that makes this sort of like top-level quantified
+[00:08:57 -> 00:09:02] formula true. We can write things like for all and there exists. So for example,
+[00:09:03 -> 00:09:09] the way that you do for all is to say z3.for all, and then you have two arguments here.
+[00:09:09 -> 00:09:12] We need to give it a list of variables we want to quantify over and then a sub-formula.
+[00:09:12 -> 00:09:17] So I'll say that, like, I'll start with, I'll go back to integers just for this example,
+[00:09:17 -> 00:09:22] z3.int z. I'll make two variables this way. It's often convenient to like create
+[00:09:22 -> 00:09:27] variables and then bind them to actual Python variables for constructing formulas.
+[00:09:27 -> 00:09:37] So we do this. I want to find a value that for all z's, we have z times n is equal to z.
+[00:09:38 -> 00:09:41] So I wonder what that value could possibly be. I would like to know,
+[00:09:42 -> 00:09:51] I would like to know what the n is that makes this true for all possible z's. I'll
+[00:09:51 -> 00:09:59] bind that to the formula, I suppose, and then print out the solution here. And totally
+[00:09:59 -> 00:10:05] unsurprisingly, it tells us that an example of an n that makes this true is one. That is,
+[00:10:05 -> 00:10:11] everything times one equals itself, which you probably guessed already, but z3 knows that too.
+[00:10:12 -> 00:10:17] Okay, so now you understand SMT all by itself. Now I want to flip over and turn these SMT
+[00:10:17 -> 00:10:22] formulas into something that feels more like a proper program synthesizer. I said up top that
+[00:10:24 -> 00:10:27] program synthesizers have many different definitions of what they mean by specification.
+[00:10:27 -> 00:10:31] Program synthesis is supposed to take in some sort of specification and generate a program.
+[00:10:31 -> 00:10:34] What we're going to use as a specification is a reference program. That is, we're going to take
+[00:10:34 -> 00:10:38] in an existing program. We're going to try to find an equivalent program that hopefully runs
+[00:10:38 -> 00:10:45] faster. We're going to use this with a further piece of information called a sketch. Sketch
+[00:10:45 -> 00:10:49] based program synthesis takes in a partial program and tries to complete it. This can
+[00:10:49 -> 00:10:54] make it a lot easier to find a program than trying to synthesize an entire program from
+[00:10:54 -> 00:11:01] scratch. EZ is good for SMT solvers that need to quantify over all possible expressions.
+[00:11:02 -> 00:11:09] So to motivate this, I'm going to try to synthesize faster versions of programs that
+[00:11:09 -> 00:11:13] use bit twiddling instead of arithmetic. So for example, you probably know that if you
+[00:11:13 -> 00:11:17] write x times two, where x is a bit vector that is like an actual computer integer,
+[00:11:17 -> 00:11:22] that's the same as shifting x left by one. Let's imagine we're in a scenario where we
+[00:11:22 -> 00:11:26] want to do multiplications, but we can't remember what the rule is. We just can remember
+[00:11:26 -> 00:11:30] that we want to do left shifts, but we don't know by how much. So this is going to ask
+[00:11:30 -> 00:11:34] questions like this. That is, we will say, here's our reference program. It's x times two.
+[00:11:34 -> 00:11:38] I know there's a faster program that does exactly the same thing as this. That is,
+[00:11:38 -> 00:11:43] it's perfectly equivalent and it looks like this. X shifted left by something. The question
+[00:11:43 -> 00:11:47] question mark question mark thing here is often called a whole in sketch based synthesis.
+[00:11:47 -> 00:11:51] And we want to guess a value for the whole that is an expression to put here
+[00:11:51 -> 00:11:55] that makes this true. This is our program synthesis task for this tutorial.
+[00:11:56 -> 00:12:01] Here's how to make it work in the most basic setting. We're going to set up a couple of
+[00:12:01 -> 00:12:06] formulas that represent the reference implementation and the sketch that we want to fill in.
+[00:12:06 -> 00:12:11] So I'll start with trying to just write down the reference implementation. And we'll
+[00:12:11 -> 00:12:20] need to do this in an SMT formula. So we need to declare the bit vector variable
+[00:12:20 -> 00:12:28] that we just as we did before when constructing individual queries. And then I'll say that my
+[00:12:28 -> 00:12:31] slow expression, that is the program, the reference program that we're going to use here,
+[00:12:31 -> 00:12:36] that's just x times two. Okay. So now I need the sketch. That is the fast program that
+[00:12:36 -> 00:12:42] we want to complete. For that, I'm going to create a whole. I'll call it H because you
+[00:12:42 -> 00:12:47] can't call variables question mark question mark, but believe me, I would if I could in Python.
+[00:12:47 -> 00:12:52] So this is supposed to be the whole that we're trying to fill in. So the fast expression,
+[00:12:52 -> 00:12:56] that's the sketch, is going to be x shifted left by H. And our question is going to be
+[00:12:56 -> 00:13:02] what is the H that makes us equivalent to the other program? So we have these two
+[00:13:02 -> 00:13:06] expressions. We now need to construct one formula that we can pass over to the SMT
+[00:13:06 -> 00:13:12] solver to ask it to complete the sketch. We can use quantifiers to do this. What we need
+[00:13:12 -> 00:13:17] is a for all. That is something to say for all possible values of x, these two things
+[00:13:17 -> 00:13:22] are equivalent to each other. So I'll say for all x, that is for all the free variables
+[00:13:22 -> 00:13:27] that you think of as inputs to the expression. We want it to be the case that the value of the
+[00:13:27 -> 00:13:32] slow expression is equal to the fast expression. I want to remind you that there is no actual
+[00:13:32 -> 00:13:37] comparison going on here. This is an overloaded double equals that is not saying this
+[00:13:37 -> 00:13:43] expression is equal to this expression, yes or no. It's returning a new formula that we will then
+[00:13:43 -> 00:13:47] solve. So this is overloaded, taken two formulas and produce a new one that's connected by
+[00:13:47 -> 00:13:53] double equals that will then hand over to z3. So this thing is not true or false. It's just
+[00:13:53 -> 00:13:58] also a formula. I can't stress this enough, operator overloading is magical and amazing,
+[00:13:58 -> 00:14:02] but it can also be a little bit confusing. So this is the goal formula that we actually want.
+[00:14:02 -> 00:14:09] That is, we want to find a value of h that makes this true for all x's. If we can do that,
+[00:14:09 -> 00:14:13] then we will have completed the program. That is, we'll have done a really basic form
+[00:14:13 -> 00:14:18] of program synthesis, filling in the hole to get us a program that matches our specification
+[00:14:18 -> 00:14:25] in the form of a reference program. So let me solve this and see what we get.
+[00:14:26 -> 00:14:30] Yay! One! Great! We can even try this a few more times, like what is when you do x times
+[00:14:30 -> 00:14:34] four? What is that equivalent to shifting left by two? Fantastic! So I think this is
+[00:14:34 -> 00:14:38] working. That is, in a weird way, if you kind of squint, we kind of have a program synthesis
+[00:14:38 -> 00:14:43] thing going. I have to admit though, this doesn't really feel all that much like program
+[00:14:43 -> 00:14:47] synthesis because there's not really a programming language going on here. All we're doing is
+[00:14:47 -> 00:14:52] writing Python expressions that turn into z3 expressions and then solving that stuff.
+[00:14:52 -> 00:14:58] So the next step is to turn this into operating on something that feels a little
+[00:14:58 -> 00:15:01] bit more like a real programming language with a real interpreter and stuff.
+[00:15:01 -> 00:15:06] I'm going to give you a moment now to pause and catch up, however, and play around z3 and see
+[00:15:06 -> 00:15:10] what it can do. I challenge you, for example, to find a formula that makes z3 take a really
+[00:15:10 -> 00:15:14] long time. That is, to think more than just like a couple of milliseconds like it has so
+[00:15:14 -> 00:15:19] far. See what the limits are here for the questions that you can ask z3 and get results
+[00:15:19 -> 00:15:29] in a reasonable amount of time. So the first step in making this kind of manual
+[00:15:29 -> 00:15:33] manipulation of formulas feel more like we're doing real program synthesis on a real programming
+[00:15:33 -> 00:15:38] language is to have an actual language. And for that, of course, we will need the most
+[00:15:38 -> 00:15:44] fascinating topic in all of compilers, which is a parser. We'll need a parser for the
+[00:15:44 -> 00:15:47] programming language that we're synthesizing. I'm going to fast forward a little bit here.
+[00:15:47 -> 00:15:52] I have a pre-written parser. If you want, you can use the same parsing library that I
+[00:15:52 -> 00:15:56] used called Lark. Lark is pretty cool. It's got like several different parsing algorithms
+[00:15:56 -> 00:16:01] built in, and I find its syntax for defining grammars really straightforward. So here's
+[00:16:01 -> 00:16:05] the grammar that I've pre-written. It looks like this. So we're going to have a grammar
+[00:16:05 -> 00:16:12] that just looks like little arithmetic expressions. So we will have add and subtract
+[00:16:12 -> 00:16:19] and multiply, divide, shift left and shift right. And then I'll have negation. Anyway,
+[00:16:19 -> 00:16:23] just like arithmetic on bid vectors is all that this little tiny language can do.
+[00:16:23 -> 00:16:28] I'll also add in these ifs, that is these ternary expressions. So like an expression,
+[00:16:28 -> 00:16:33] question mark expression, colon, another expression that means if this is non-zero,
+[00:16:33 -> 00:16:41] then use this, otherwise use this. So now that I have a grammar for this,
+[00:16:42 -> 00:16:49] I will change my main down here to use the grammar to parse programs that come from
+[00:16:49 -> 00:16:57] strings. So I can just say like, here's my parser. Great. Lark. Give it a grammar.
+[00:17:01 -> 00:17:10] For example, I'll just say like x times three and that whole thing shifted left by y. Great.
+[00:17:10 -> 00:17:16] Okay. Excellent program. We can print this out to just convince you that my parser is working.
+[00:17:21 -> 00:17:28] Of course, you will need to install Lark, which I will warn you is not called Lark in the Python
+[00:17:28 -> 00:17:34] package index. It's called Lark parser. Okay. So now I have this tree. So I just have a little
+[00:17:34 -> 00:17:38] syntax tree for this tiny program language. The next thing that you have when you're
+[00:17:38 -> 00:17:42] conjuring a program language from scratch is probably an interpreter. So we will write an
+[00:17:42 -> 00:17:47] interpreter too. I'll just write an interpreter that just works as simply as possible. So we
+[00:17:47 -> 00:17:52] take in one of these trees that like at the top is a shift left, and then it has some children
+[00:17:52 -> 00:18:00] here. And I will also start out that way. That is I'll just say that like we can say
+[00:18:01 -> 00:18:07] tree.data. We can say like if tree.data equals add, then the left-hand side is like
+[00:18:08 -> 00:18:18] of tree.children zero. And the right-hand side is the result of recursively calling
+[00:18:18 -> 00:18:23] this interpreter on tree.children one, especially if you spell children correctly.
+[00:18:25 -> 00:18:32] Then we will just return LHS plus RHS because we're in the add case. I'm also going to fast
+[00:18:32 -> 00:18:36] forward a little bit here and make things and fill in a bunch of these cases of the
+[00:18:36 -> 00:18:40] interpreter. But we're just doing nothing fancy, nothing you haven't seen before. I'm
+[00:18:40 -> 00:18:44] just going to write a completely normal interpreter that just like uses recursive
+[00:18:44 -> 00:18:52] invocation on this stuff. I'm going to copy and paste all this. Okay, so the only interesting
+[00:18:52 -> 00:18:55] thing is I've covered add mole sub div, shift left, shift right, all the kind of like
+[00:18:55 -> 00:19:00] ordinary binary operators. I have the negation operator. I have literal numbers so that we
+[00:19:00 -> 00:19:05] just like take the string from the syntax tree and return the integer value of that thing.
+[00:19:05 -> 00:19:10] We will also have a variable lookup. So here's the first place where things get a little bit
+[00:19:10 -> 00:19:14] tricky. I'm going to make this interpreter function take in a lookup function to tell
+[00:19:14 -> 00:19:20] us what to do with variables. And I'm just going to call that function on the name of
+[00:19:20 -> 00:19:24] the variable. So this is not doing anything fancy. We're just using a lookup function as
+[00:19:24 -> 00:19:28] a map to resolve the names of variables in our interpreter. The next thing I will do is
+[00:19:29 -> 00:19:34] implement conditionals. Conditions I'm going to do in a slightly weird way that I will reveal
+[00:19:34 -> 00:19:39] to you the purpose of later. But the actual mechanics of doing interpretation are not
+[00:19:39 -> 00:19:45] that odd. We have to recursively evaluate the condition, the true branch and the false
+[00:19:45 -> 00:19:49] branch. And then I'm going to do this odd thing with like comparisons and multiplication
+[00:19:49 -> 00:19:55] that is multiplying the result of comparing the condition with zero in order to get the
+[00:19:55 -> 00:19:58] result that I want. I know this looks a little bit odd, but you can stare at this for a moment
+[00:19:58 -> 00:20:03] and convince yourself that it is in fact doing an if. It is working like an interpreter for
+[00:20:03 -> 00:20:07] this language. So if you are convinced of that, then we can interpret this little expression that
+[00:20:07 -> 00:20:15] I wrote down here. That is if I can come up with a, I need to, I want to interpret this tree,
+[00:20:15 -> 00:20:21] but I need like some way, some function to look up the values of X and Y. This isn't
+[00:20:21 -> 00:20:25] terribly meaningful if I don't have a value of X and Y. So for that, I guess I'll make a little
+[00:20:25 -> 00:20:34] environment dictionary that says like X is two and Y is nine for some reason. And we'll do like,
+[00:20:35 -> 00:20:40] we'll now create a function that can be called on this. So I'll just say like for some variable,
+[00:20:40 -> 00:20:44] just look that thing up in the environment. So if we do this, I should be able to now
+[00:20:44 -> 00:20:48] interpret this expression that I just wrote and get an actual value back. It worked. Great.
+[00:20:48 -> 00:20:54] Okay. So now we have an interpreter. This is just a little detour to just conjure an actual
+[00:20:54 -> 00:20:59] language that we're going to do synthesis on. Now comes some truly funky magic that's going
+[00:20:59 -> 00:21:05] to rely on Python and operator overloading to make this work. We're going to take this
+[00:21:05 -> 00:21:13] interpreter and we're going to, in one fell swoop, transform it into a constraint generator.
+[00:21:13 -> 00:21:18] That is what we have here so far is an invocation of an interpreter that runs
+[00:21:18 -> 00:21:23] expressions on actual concrete values, actual numbers, like two and nine.
+[00:21:23 -> 00:21:29] What we actually want to do is run the same interpreter, but run it on symbolic values.
+[00:21:29 -> 00:21:36] That is on Z three variables. So we'll say we'll give it a variable named X and a variable
+[00:21:36 -> 00:21:42] named Y and ask the interpreter to build up a formula that has equivalent semantics to the
+[00:21:42 -> 00:21:47] way that we interpreted this function. So the trick that we need here is that instead
+[00:21:47 -> 00:21:52] of giving an actual environment, we're going to give it a lookup variable that every time
+[00:21:52 -> 00:22:00] you create, every time you reference a variable, it conjures out of nowhere a Z three variable that
+[00:22:00 -> 00:22:05] corresponds to that variable in our programming language. So to do that, I'll just say like
+[00:22:05 -> 00:22:09] given the name of the variable, I'll just say invoke the Z three library and say,
+[00:22:09 -> 00:22:14] we'll make a bit vector variable there with that name and an eight bit size.
+[00:22:14 -> 00:22:20] This means that when I feed this variable that comes from the var rule, that is like we'll just
+[00:22:20 -> 00:22:26] return that here in the interpreter, then eventually through a recursive call, we'll do
+[00:22:26 -> 00:22:32] something like multiplying or shifting by left, something involving a constant on one side and
+[00:22:32 -> 00:22:37] a variable on the other side. Then as you saw before, through the magic of operator overloading,
+[00:22:37 -> 00:22:42] this doesn't actually do a shift left by some number. It just creates a new formula that
+[00:22:42 -> 00:22:48] represents a shift left that then we can ship off to Z three to solve. So if I run this now,
+[00:22:48 -> 00:22:54] we won't get the number 3072. I took out all the actual numbers from the environment down here.
+[00:22:54 -> 00:22:58] Instead, we should get a Z three formula that represents the semantics of this program
+[00:22:58 -> 00:23:04] for an arbitrary X and Y variable. And in fact, we do. It looks like this. It looks exactly
+[00:23:04 -> 00:23:08] like the input, but it means something very different. Now this is representation of the
+[00:23:08 -> 00:23:13] Now this is representation of the semantics of the program as an SMT formula. And that's the key.
+[00:23:13 -> 00:23:21] That's what we need in order to do synthesis on this program language by a sort of reinterpretation
+[00:23:21 -> 00:23:26] of the interpreter as a constraint generator. We are almost there. We're just now going to
+[00:23:26 -> 00:23:31] bring back that sketch based synthesis paradigm that you saw a moment ago with the programs
+[00:23:31 -> 00:23:35] with holes and put it now into this language. The way that I wanted this to work is I'm going
+[00:23:35 -> 00:23:44] to have two different programs both written in the same language, both parsed in the same way.
+[00:23:44 -> 00:23:51] So I'll say that we'll start with a slow program that we want to find a faster
+[00:23:51 -> 00:23:54] implementation of. And I'll say that we'll just do like X times 10 for now.
+[00:23:54 -> 00:23:58] And the fast program that we want to, this is the sketch we want to fill the holes in
+[00:23:58 -> 00:24:05] for, is going to work by shifting left by something and adding and shifting left by
+[00:24:05 -> 00:24:09] another thing. So this is like upping the difficulty a tiny bit from before.
+[00:24:09 -> 00:24:12] It's kind of like hard to remember exactly what you have to like add together,
+[00:24:12 -> 00:24:15] what two different shifts you need to do to get something that's a non-power of two.
+[00:24:15 -> 00:24:18] Instead of using double question marks though to just be able to reuse exactly the same
+[00:24:18 -> 00:24:22] grammar I had before, I'm going to introduce a naming convention that says that anything
+[00:24:22 -> 00:24:25] beginning with an H, that's considered a hole. And that way we can tell these two
+[00:24:25 -> 00:24:29] holes apart from each other. I'll call it H1 for the first hole and H2 for the second hole.
+[00:24:30 -> 00:24:36] That we'll need to use to try to fill in all the like H starting variables in the second
+[00:24:36 -> 00:24:41] program to make it equivalent to the first program. So to do that I'll just
+[00:24:45 -> 00:24:55] parse both of these things. And I want to run our symbolic interpreter, that is our normal
+[00:24:55 -> 00:25:02] interpreter with symbolic values for all the variables on it. I wrote a little convenience
+[00:25:02 -> 00:25:06] function for myself to do this that you can find in the second example file here called like
+[00:25:07 -> 00:25:12] the 3xper, I think it's called. Anyway, I'll steal this from my pre-written one.
+[00:25:12 -> 00:25:17] This function is not fancy. It takes in the tree that you want to interpret,
+[00:25:17 -> 00:25:24] and then optionally you can supply existing variables to the interpretation. Otherwise it
+[00:25:24 -> 00:25:29] just like lazily creates a variable every time it gets referenced for the first time.
+[00:25:29 -> 00:25:34] So that just invokes the interpreter with this special lookup function that does that lazy
+[00:25:34 -> 00:25:38] creation of variables and then gives you back the set of variables that we're using,
+[00:25:41 -> 00:25:45] with the new ones that were added by evaluating lazily adding variables from the expression.
+[00:25:46 -> 00:25:53] So we can do that. So we can just say z3xper on both of these things.
+[00:25:57 -> 00:26:01] And we should have the two programs that we want to make equivalent.
+[00:26:01 -> 00:26:05] The next step is just a little bit of trickery to pull out the holes from these things.
+[00:26:05 -> 00:26:11] That is, we'll get the variables here, then we will call those like the variables for program
+[00:26:11 -> 00:26:16] one, and then like feed variables one into here, and I'll get variables two out with
+[00:26:16 -> 00:26:23] the updated stuff. So what I want is the variables without all the holes. So I want like x in
+[00:26:23 -> 00:26:27] this example, or y if we use it, but not h1 and h2. So for that I'll just do a little
+[00:26:27 -> 00:26:42] bit of Python trickery to construct a dictionary. So it starts with h just means that it's like h1
+[00:26:42 -> 00:26:47] or something. That's just an operation on the string name of the variable. Now we need to
+[00:26:47 -> 00:26:52] concoct the formula that we want to give to z3. This is going to look just like before.
+[00:26:52 -> 00:26:58] We need to for all all the variables, just now for all the variables instead of just for x.
+[00:26:58 -> 00:27:07] So z3.for all. So that's all the things like x, for example, in here. And I'll say
+[00:27:07 -> 00:27:12] I want the slow program to equal the fast program for all those variables. And again,
+[00:27:12 -> 00:27:16] this is constructing a formula that sets those two things as equal to each other.
+[00:27:17 -> 00:27:23] So all I really need to do now is to solve the goal. And I've done that,
+[00:27:23 -> 00:27:30] I will have values for all of the variables. So this tells me that I can get the same effect
+[00:27:30 -> 00:27:35] as multiplying x by 10 if I first shift it left by one and then add that to shifting it right
+[00:27:35 -> 00:27:41] to left by three. That's awesome. We now have an actual program synthesizer. I can ask, for example,
+[00:27:41 -> 00:27:48] if it's possible to do this for 12. It tells me that yes, it is. 11. No, this says model
+[00:27:48 -> 00:27:53] not available because this was unsat. That is, the formula is not satisfiable,
+[00:27:53 -> 00:27:56] so there is no combination of holes that you can use to fill this in.
+[00:27:58 -> 00:28:01] I've done just a couple of fancier things in the actual
+[00:28:02 -> 00:28:14] thing called x2 here. x2 does exactly the same lazy setup here and does the same synthesis goal
+[00:28:14 -> 00:28:20] as we had before. It now do something slightly trickier, which is just for aesthetic purposes,
+[00:28:20 -> 00:28:24] take those values of the holes and interpolate them back into the program. And it will do
+[00:28:24 -> 00:28:27] this on text files. So it'll actually load the programs from text files just to make
+[00:28:27 -> 00:28:31] it feel more like a programming language. So if you look, for example, in the sketches
+[00:28:31 -> 00:28:37] directory in my GitHub repository, there is a bunch of files that look like this. That is,
+[00:28:37 -> 00:28:44] that have the slow program and the fast program with holes in it on just two separate lines.
+[00:28:44 -> 00:28:50] And then we can just run example two on some of these things. So I can say sketches s1,
+[00:28:51 -> 00:28:57] for instance. I forgot that this needs a less than. So this will say that if you want
+[00:28:57 -> 00:29:01] x times eight and you want to fit that into an x shift left by something,
+[00:29:01 -> 00:29:04] you can shift that left by three and it interpolates it back into the program.
+[00:29:04 -> 00:29:11] Let's try it a few more. Sketches s2. This is the one we just saw, so I won't even run it.
+[00:29:12 -> 00:29:18] s3. This one's a little bit more interesting. It's here in the examples directory in order
+[00:29:18 -> 00:29:22] to make a point. That point is that so far we've done something that feels like
+[00:29:23 -> 00:29:27] kind of synthesis, sort of, in the sense that all we're doing is synthesizing constants
+[00:29:27 -> 00:29:33] to go into variables. That is, we're asking for actual bit vector values that can go into
+[00:29:33 -> 00:29:37] a given hole. That doesn't really feel like generating a program, though. It's sort of
+[00:29:37 -> 00:29:40] generating a program, but really it's just generating the constants for a program.
+[00:29:40 -> 00:29:45] So how do we get to generating entire expressions? And here's the trick to doing
+[00:29:45 -> 00:29:49] that. We actually don't need to change our synthesis engine at all because it already
+[00:29:49 -> 00:29:55] has support for conditionals for those ternary expressions. So, for example, if we want to do
+[00:29:55 -> 00:30:02] a less constrained version of the sketching where we don't know whether we want to multiply by a
+[00:30:02 -> 00:30:07] variable or by a constant, we can just express that as a condition. That is, think of this
+[00:30:07 -> 00:30:13] entire parenthesized expression as kind of a meta-hole. That is, in the actual system,
+[00:30:13 -> 00:30:17] you would just ask programmers to write down something like x times question mark question
+[00:30:17 -> 00:30:22] mark, and you'd expand that automatically to this Boolean expression. This Boolean expression
+[00:30:22 -> 00:30:27] says, I'm not sure whether I want the variable x, that is a reference to a variable that already
+[00:30:27 -> 00:30:33] exists, or a constant in order to get there. That is, you choose for me by choosing the first
+[00:30:33 -> 00:30:38] hole which kind of expression to use, and then depending on the kind of expression there may
+[00:30:38 -> 00:30:49] be additional holes that you need to fill in to make this work. If you kind of squinted this,
+[00:30:49 -> 00:30:52] we've built a program synthesizer that doesn't just synthesize constants anymore.
+[00:30:52 -> 00:30:57] It synthesizes expressions. It does that by encoding the choice
+[00:30:57 -> 00:31:03] of what expression to use as a variable itself. So I want to demonstrate that this works too,
+[00:31:12 -> 00:31:21] and indeed it does. This has selected that we need to multiply x by x. To make this even more
+[00:31:21 -> 00:31:28] interesting, now we can, I'm taking that idea of like using meta-holes to its logical conclusion.
+[00:31:28 -> 00:31:32] So this is saying that like I want to do x times 9, and I think that I have to do that
+[00:31:32 -> 00:31:38] with a x shifted left by something plus something. So I know that I need to sort of like offset by
+[00:31:38 -> 00:31:43] something else. But in both cases, I'm going to pretend that I don't know what kind of expression
+[00:31:43 -> 00:31:47] at all that I want. Here I'm using a really simple ternary expression that just selects
+[00:31:47 -> 00:31:53] again between variables and constants. So here's the Boolean hole that chooses what to do
+[00:31:53 -> 00:32:00] in each of those locations, and then that can choose whether to use x, that is a reference
+[00:32:00 -> 00:32:12] to an existing variable, or synthesize a constant. And this tells us that we want to shift left by
+[00:32:12 -> 00:32:18] 3 and then add x. That is, it chooses a constant for the first meta-hole and then a variable for
+[00:32:18 -> 00:32:23] the second meta-hole. All of you can see that you can take this to its logical conclusion,
+[00:32:23 -> 00:32:29] and you can make by a clever nesting of integers and comparisons and ternary expressions,
+[00:32:29 -> 00:32:32] you can make this synthesize lots of different expressions. That is, it doesn't just have to
+[00:32:32 -> 00:32:37] choose between variables and constants. It could say, well, I'm not sure if I need a variable or a
+[00:32:37 -> 00:32:42] constant or a shift where one side is either a variable or a constant or a shift. And you
+[00:32:42 -> 00:32:47] can do this to some finite depth and phrase some really complicated synthesis problems.
+[00:32:48 -> 00:32:53] That's a sure-fired way to make Z3 time out, but it shows you that this paradigm,
+[00:32:53 -> 00:32:57] even though it started simple with just synthesizing constants, is enough to ask
+[00:32:57 -> 00:33:02] interesting questions where we're getting Z3 to write real programs for us, given an infinite
+[00:33:02 -> 00:33:07] amount of time. Of course, doing all this ternary operator trick required that funky trick I
+[00:33:08 -> 00:33:12] alluded to earlier when writing the interpreter. That is, this case for the condition.
+[00:33:12 -> 00:33:16] The obvious way to do that in Python would just been to say, okay, so we've evaluated
+[00:33:16 -> 00:33:20] the condition, the true and the false value, those are all constants, so I can just say
+[00:33:20 -> 00:33:26] true if con del's false, which is the moral equivalent of the question mark colon in our
+[00:33:26 -> 00:33:31] source language. This, of course, will not work if true and con and false, those are all
+[00:33:32 -> 00:33:36] symbolic values, any of them might be symbolic values, especially if the con is a symbolic
+[00:33:36 -> 00:33:40] value. The Python if doesn't work that way, it can't be overloaded to do different things,
+[00:33:40 -> 00:33:45] unlike equals and shift left and shift right and all that stuff in Python. So we need to
+[00:33:45 -> 00:33:50] find some other way to generate something, to generate an equivalent Z3 expression. And that
+[00:33:50 -> 00:33:55] is this. This expression happens to work both in Python under normal interpreter mode and
+[00:33:55 -> 00:34:01] also in Z3 operator overloader mode because it doesn't use if, it just uses not equals and
+[00:34:01 -> 00:34:07] times and plus and stuff. So that's how I sort of snuck in a case in the interpreter that
+[00:34:07 -> 00:34:12] worked in the normal interpreter mode and then also happened to work in the symbolic
+[00:34:12 -> 00:34:17] interpreter mode. But once you do that, you kind of have a pretty general program synthesizer.
+[00:34:17 -> 00:34:20] As you make more and more complicated meta-holes, you can make more and more
+[00:34:20 -> 00:34:26] complicated synthesis problems. So your task for this lesson is to start with this paradigm
+[00:34:26 -> 00:34:30] and follow the tutorial, get yourself up and running with a real program synthesizer like this
+[00:34:30 -> 00:34:34] one, and then make it more interesting. It's totally open-ended, you can add whatever feature
+[00:34:34 -> 00:34:38] you want. There is, as usual, no need to spend a huge amount of time on this, but I'm
+[00:34:38 -> 00:34:42] interested in what you come up with to make this language more expressive. I'm also interested
+[00:34:42 -> 00:34:47] in where you start to run to scalability issues. That is, dealing with complex programs
+[00:34:47 -> 00:34:52] and large programs is the hard part of program synthesis, and it's what a lot of the literature
+[00:34:52 -> 00:34:56] is about. Letting these techniques that work on small examples scale up to real complicated
+[00:34:56 -> 00:35:01] programs that programmers actually want to synthesize in the real world. Good luck and
+[00:35:01 -> 00:35:04] have fun synthesizing.

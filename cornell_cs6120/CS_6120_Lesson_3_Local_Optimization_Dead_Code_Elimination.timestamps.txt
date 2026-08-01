@@ -1,0 +1,105 @@
+Title: CS 6120: Lesson 3: Local Optimization & Dead Code Elimination
+Video ID: 1_6k52flbg
+Detected language: en
+------------------------------------------------------------
+
+[00:00:04 -> 00:00:09] Today we're going to dive in and write our first compiler optimization. We're going to start with
+[00:00:09 -> 00:00:14] a few simple optimizations around the theme of dead code elimination. But before we do that,
+[00:00:14 -> 00:00:18] I want to give some framing for different kinds of optimizations we'll study in 6.1.20.
+[00:00:19 -> 00:00:25] The difference is between how we deal with control flow in the program. So you'll remember
+[00:00:25 -> 00:00:29] from last time that we started drawing control flow graphs. That is, breaking up
+[00:00:29 -> 00:00:33] programs from just sequences of instructions to these graphs,
+[00:00:35 -> 00:00:40] indicating basic blocks and how control transfers between the basic blocks.
+[00:00:40 -> 00:00:46] So here's a sample CFG. At a very high level in this class, we're going to categorize
+[00:00:46 -> 00:00:54] optimizations into three different categories. Local optimizations work within a single basic
+[00:00:54 -> 00:00:58] block. That means they don't have to deal with control flow. They just have to deal
+[00:00:58 -> 00:01:06] with the ordering of instructions in a sort of linear scan. Global optimizations work on an
+[00:01:06 -> 00:01:13] entire function. This means they have to deal with control flow. And as we will demonstrate
+[00:01:13 -> 00:01:17] in this video and the next one, dealing with control flow makes optimizations,
+[00:01:17 -> 00:01:22] typically speaking, much more complicated. Finally, there's a third category of
+[00:01:22 -> 00:01:30] optimizations we'll get to later in this semester, which has to deal with multiple functions.
+[00:01:31 -> 00:01:41] And those things are called interprocedural optimizations. Local and global optimizations
+[00:01:41 -> 00:01:48] can also be called intraprocedural, especially if you spell it correctly.
+[00:01:55 -> 00:01:59] But the words interprocedural and intraprocedural sound so incredibly similar to
+[00:01:59 -> 00:02:03] each other that it's more useful to say local and global when you're referring to things that
+[00:02:03 -> 00:02:09] work within the scope of a single function. But one thing to remember is that when you say
+[00:02:09 -> 00:02:12] global, you might think that, well, global, that means the entire program. That's not what
+[00:02:12 -> 00:02:17] people mean. By global optimizations, people mean global with respect to a single function.
+[00:02:18 -> 00:02:24] Interprocedural optimizations are an even fancier level that goes beyond global and looks
+[00:02:24 -> 00:02:28] at calls from one function to another. So this basic block, for example, had a call
+[00:02:28 -> 00:02:32] to this function. We'd have to sort of reason about those calls. When we're doing global
+[00:02:32 -> 00:02:37] optimization, we don't even reason about calls. We're going to start out by thinking locally,
+[00:02:37 -> 00:02:41] that is within a single basic block. We will also see some optimizations that apply globally
+[00:02:41 -> 00:02:45] to the entire function in a kind of trivial way first. And then later in a few more
+[00:02:45 -> 00:02:50] lessons, we're going to see more sophisticated ways to reason globally, that is to reason
+[00:02:50 -> 00:02:54] about control flow. And I hope that one of the things you'll take away from this video
+[00:02:54 -> 00:02:59] is understanding what the fundamental shift in thinking is that has to happen when you
+[00:02:59 -> 00:03:04] transition from thinking within a single basic block to thinking about an entire CFG.
+[00:03:04 -> 00:03:07] Let's start out by looking at a braille program that's possible to optimize.
+[00:03:07 -> 00:03:10] We're going to start out by thinking about dead code elimination, which is a simple kind
+[00:03:10 -> 00:03:14] of optimization that removes code that can't possibly have an effect on the output,
+[00:03:14 -> 00:03:19] thereby making the program faster. I hope you're getting more familiar with braille programs
+[00:03:19 -> 00:03:24] and this instruction-based syntax and the semantics of the various instructions.
+[00:03:24 -> 00:03:28] So I hope you're able to understand this simple program that just has a couple of
+[00:03:28 -> 00:03:33] adds of constants. And my question to you is, what should we do to this program in
+[00:03:33 -> 00:03:35] order to make it faster? Where is the optimization opportunity?
+[00:03:39 -> 00:03:43] Of course, it's not too hard to see. There is this one instruction here,
+[00:03:43 -> 00:03:47] this assignment to the variable C, that is never used anywhere in the program.
+[00:03:47 -> 00:03:50] And so it's possible to delete this instruction and to get an equivalent program
+[00:03:50 -> 00:03:54] that runs faster. That is, it uses one less instruction when executing,
+[00:03:54 -> 00:03:58] but does exactly the same thing. So the next question I have for you is,
+[00:03:58 -> 00:04:02] what is the general principle, that is, can you phrase it in a sentence,
+[00:04:02 -> 00:04:07] for what opportunities exist like this one for optimizing braille programs?
+[00:04:08 -> 00:04:11] That is, if we were to implement an optimization, what would we be looking for?
+[00:04:12 -> 00:04:15] Try to phrase that in a sentence. Try actually writing it down.
+[00:04:15 -> 00:04:23] Here's how I would phrase it. We can delete any instruction that assigns to a variable
+[00:04:23 -> 00:04:30] that is never used as an argument anywhere in the function, as long as that instruction has
+[00:04:30 -> 00:04:35] no side effects. By side effects, I just mean that we shouldn't eliminate instructions that
+[00:04:35 -> 00:04:39] don't seem to assign to a variable, and yet they have an effect on the outside world.
+[00:04:39 -> 00:04:45] For example, braille has a print instruction. You can say like print C, for example,
+[00:04:45 -> 00:04:48] and it shouldn't be penalized for the fact that it doesn't assign to a variable,
+[00:04:48 -> 00:04:53] and therefore it seems to be dead because it doesn't produce any values used elsewhere.
+[00:04:53 -> 00:05:00] The criterion that we can use to do some dead code elimination is just to eliminate every
+[00:05:00 -> 00:05:07] instruction that has this pure semantics that all it does is assign to a variable,
+[00:05:07 -> 00:05:12] and that variable is never used by any instruction everywhere in the entire program.
+[00:05:13 -> 00:05:18] Therefore, this is a global property. We've come up with the framework, at least for a global
+[00:05:18 -> 00:05:21] optimization, that needs to look at the entire function. We happen to be looking at a function
+[00:05:21 -> 00:05:26] here that only has one basic block, but this is a global property. It's not possible to implement
+[00:05:26 -> 00:05:32] by looking at a single basic block. It's possible that you don't use C in this basic
+[00:05:32 -> 00:05:36] block, but in a larger function, for example, then you jump to another basic block that does
+[00:05:36 -> 00:05:42] use C. Therefore, this is a global property. To turn this into a real optimization, I would
+[00:05:42 -> 00:05:48] like you to now try writing the pseudocode for an optimization that carries out these instructions,
+[00:05:48 -> 00:05:53] that is, that analyzes a program and deletes every instruction that is dead by this definition
+[00:05:53 -> 00:05:57] of assigned to a variable that is never used anywhere and also not having any side effects
+[00:05:57 -> 00:06:04] within the instruction. Go for it. Here's my pseudocode. It works in a kind of two-pass
+[00:06:04 -> 00:06:08] style. There are two loops. The first loop loops over all the instructions and accumulates
+[00:06:08 -> 00:06:12] a big set of all the variables that are ever used anywhere in the function. The second loop
+[00:06:12 -> 00:06:17] goes over all the instructions a second time and looks for instructions that have a destination
+[00:06:17 -> 00:06:22] and that destination is not in the used set, and it deletes those instructions.
+[00:06:22 -> 00:06:27] This relies on a simple property about braille, which is that the instructions,
+[00:06:27 -> 00:06:30] the operations that are built into the standard braille don't have side effects
+[00:06:31 -> 00:06:34] if they assign to a value. That is, they can do one of two things. Either they are
+[00:06:34 -> 00:06:39] effect operations that don't produce results or they're value operations that don't have
+[00:06:39 -> 00:06:43] side effects and they only produce results. This is true of the basic braille instructions.
+[00:06:43 -> 00:06:46] If we're to make more complicated instructions, we'd have to think more carefully about what the
+[00:06:46 -> 00:06:51] side effects of instructions are. But for example, the print statement doesn't have
+[00:06:51 -> 00:07:00] a destination field. It doesn't assign to anything. So the print instructions
+[00:07:00 -> 00:07:03] won't have a destination and therefore we will never delete those instructions.
+[00:07:03 -> 00:07:08] So that's a really simple implementation of our very first optimization. Great work!
+[00:07:10 -> 00:07:14] I want to now show you a second program that we're going to want to worry about how to
+[00:07:14 -> 00:07:19] optimize. As a first step for this program, I want you to try in your mind running your
+[00:07:19 -> 00:07:24] pseudocode for dead code elimination on this program. Do that now and figure out
+[00:07:24 -> 00:07:30] which instructions it would delete. My implementation at least would
+[00:07:30 -> 00:07:35] delete only this instruction. That is, this is the only instruction that's unused.
+[00:07:35 -> 00:07:40] And the tricky thing about this is that by thinking with your human brain, you can also
+[00:07:40 -> 00:07:45] realize that this instruction is also needless because it feeds into instruction that is never
+[00:07:45 -> 00:07:49] used anywhere. But it doesn't meet the criterion that I set out in my pseudocode.
+[00:07:49 -> 00:07:53] That is, this instruction, the one that assigns to C, it doesn't have the property
+[00:07:53 -> 00:07:57] that it is never used in any instruction ever. So it's sort of disappointing. We know
+[00:07:57 -> 00:08:03] there is more opportunity to optimize here than we are giving credit for. That is, we're
+[00:08:03 -> 00:08:07] unable to do an optimization we'd like to do. So now I would like you to think for a second
+[00:08:07 -> 00:08:11] about how you can rectify this, how you can take the pseudocode that we wrote for
+[00:08:11 -> 00:08:14] simple dead code elimination and make it slightly more powerful to capture this case
+[00:08:14 -> 00:08:20] as well as the previous case. There are several ways to do it,
+[00:08:20 -> 00:08:24] but there's one way that's particularly easy, which is just to do the same thing multiple
+[00:08:24 -> 00:08:30] times. That is to run the algorithm repeatedly until it converges. And by that I just mean in

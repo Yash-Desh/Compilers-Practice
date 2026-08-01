@@ -1,0 +1,330 @@
+Title: CS 6120: Lesson 6: Writing an LLVM Pass
+Video ID: 1_4nrtmvc9
+Detected language: en
+------------------------------------------------------------
+
+[00:00:05 -> 00:00:09] Now that you've gotten to explore LLVM a bit, the next step is to walk through creating a really
+[00:00:09 -> 00:00:14] boring pass. It's going to be your job, your task for this lesson, to make the pass do something
+[00:00:14 -> 00:00:19] interesting. If we return to the tutorial that we're following, there's a recommendation that we
+[00:00:19 -> 00:00:24] clone this starter repository, and I really recommend that you do this. That is,
+[00:00:24 -> 00:00:28] follow the starter repository instead of starting from scratch, just because the build
+[00:00:28 -> 00:00:31] system is kind of annoying to set up. You have to set up all these CMake variables to
+[00:00:31 -> 00:00:35] make stuff work. Anyway, let's check out what's here in this pass before we move on.
+[00:00:42 -> 00:00:46] There's a skeleton directory that contains the code. All the actual code is in this thing
+[00:00:46 -> 00:00:50] called skeleton.cpp, and if we open this up, you can see that it's a pretty short file.
+[00:00:51 -> 00:00:57] The pass is just a subclass of function pass, which you can find in the LLVM documentation,
+[00:00:57 -> 00:01:03] and the main thing that it has is this runOnFunction method. This takes a function object,
+[00:01:03 -> 00:01:06] an LLVM function object, that represents that thing like main, like we saw in the
+[00:01:06 -> 00:01:10] previous video, and we will do something with it. At the moment, we're going to do the dumbest
+[00:01:10 -> 00:01:15] possible thing, which is just to print out the name and move on. This thing that returns false
+[00:01:15 -> 00:01:19] indicates whether we change the function. In this case, we are just reading the function,
+[00:01:19 -> 00:01:22] so we return false. Eventually, we're going to be modifying the function on the fly
+[00:01:22 -> 00:01:26] during the pass, and we will need to return true from this method.
+[00:01:26 -> 00:01:32] Any case, let's compile and run this method. Oh, one more thing. There's also this errors
+[00:01:32 -> 00:01:39] thing, which you can think of as roughly similar to Cout or Cair from the C++ standard library.
+[00:01:39 -> 00:01:43] Anyway, errors is a special C++ output stream that you can use to print out debugging
+[00:01:43 -> 00:01:49] information. It's in the LLVM namespace that I have done using namespace, so that's the
+[00:01:49 -> 00:01:55] same as just doing explicitly using errors from the LLVM namespace with the double colon
+[00:01:55 -> 00:02:01] thing. All right, so let's build this. Inside here, the way to build this is as a standard
+[00:02:01 -> 00:02:05] with using CMake. You've got to make yourself a build directory, and then you go in there,
+[00:02:05 -> 00:02:09] and then you have to do a CMake and then tell where the stuff is that we want to build.
+[00:02:10 -> 00:02:15] On a lot of systems, including the macOS with where LLVM is installed from Homebrew,
+[00:02:15 -> 00:02:19] you need to tell CMake where your LLVM installation is, and you can do that with
+[00:02:19 -> 00:02:25] the LLVM dur environment variable. For me and for Homebrew in general, LLVM is located here.
+[00:02:26 -> 00:02:33] Inside the LLVM installation, you need to have this CMake directory, LLVM. In any case,
+[00:02:33 -> 00:02:38] you need to tell CMake that this is where the CMake files are for LLVM itself. Okay,
+[00:02:38 -> 00:02:45] then we need to do that command, so CMake dot dot. That will generate the build files for us.
+[00:02:47 -> 00:02:51] Then next, we just have to type make to actually build our pass.
+[00:02:51 -> 00:02:58] This will build a thing. Under this build directory, there'll be a directory called
+[00:02:58 -> 00:03:03] skeleton where the build products are, and libskeletonpass.so, or something similar like
+[00:03:03 -> 00:03:07] this, is the output of the build process. So it's a shared object that is a dynamically
+[00:03:07 -> 00:03:12] linked library that will be loaded into LLVM to actually use it to do stuff. Now let's
+[00:03:12 -> 00:03:16] actually run that pass. So I'll go back up to this directory, and I'm going to make a
+[00:03:17 -> 00:03:24] a file to build. I'll just call it main.a.c again. I'll just make this even simpler.
+[00:03:24 -> 00:03:30] I'll just return 42 from this thing. Anyway, I will want to compile this while running our
+[00:03:30 -> 00:03:34] pass on it. The way we do this is we run Clang, and we have to make sure now,
+[00:03:34 -> 00:03:40] if you are not sure, check that you are using Clang from the same LLVM installation
+[00:03:40 -> 00:03:44] that you just built your pass against. So the same thing from that LLVM dir
+[00:03:44 -> 00:03:48] that we just used. We need a few magic incantations to actually use our pass,
+[00:03:48 -> 00:03:53] and this is what you do. You do xclang load, xclang. I know this looks weird,
+[00:03:53 -> 00:03:58] but now you have to give the path to the shared library that we just built. So that's
+[00:03:58 -> 00:04:04] in build skeleton, and then libskeletonpass, and on my machine it's .so. Then we have to
+[00:04:04 -> 00:04:09] give it the file that we want to run it on. And this, indeed, compiles the file. In fact,
+[00:04:09 -> 00:04:13] it just does a normal thing. It creates a.out as Clang does in its default configuration,
+[00:04:13 -> 00:04:21] while also running our pass on the code as it goes by. So we get to see the output from
+[00:04:21 -> 00:04:24] this output statement that just like prints out the name of the function.
+[00:04:24 -> 00:04:29] And congratulations, if you've done this, you have compiled and run your very first LLVM pass.
+[00:04:32 -> 00:04:36] Let's now look a little more closely at the LLVM intermediate representation.
+[00:04:36 -> 00:04:41] The programs that you get to manipulate as a pass in LLVM are just C++ objects,
+[00:04:41 -> 00:04:46] like function that we already saw. Now I'm going to show you a piece of the blog post that has this
+[00:04:46 -> 00:04:50] diagram that illustrates some of the most important objects, that is C++ classes,
+[00:04:50 -> 00:04:53] that you're going to have to deal with when manipulating programs as an LLVM pass.
+[00:04:55 -> 00:05:00] First there's module. Module is a, you can think of it as roughly corresponding to like
+[00:05:00 -> 00:05:04] an original C source file that got compiled with Clang, but roughly it's kind of this
+[00:05:04 -> 00:05:10] container that contains everything that will eventually be translated into an object file.
+[00:05:10 -> 00:05:13] So this includes functions and globals and other stuff like that.
+[00:05:14 -> 00:05:18] I want to emphasize that everything I'm going to be talking about is just a C++ class that
+[00:05:18 -> 00:05:22] you can find documented in that big Doxygen reference that I referred to in the previous
+[00:05:22 -> 00:05:28] video. The most important thing that modules contain are functions. Functions like main that
+[00:05:28 -> 00:05:36] we saw in that little snippet of LLVM earlier. They in turn contain basic blocks, and those
+[00:05:36 -> 00:05:41] in turn contain instructions. In Brill you might be used to thinking functions contain
+[00:05:41 -> 00:05:45] instructions and then it's up to me to construct the basic blocks. That's not true in the LLVM
+[00:05:45 -> 00:05:50] in memory representation. That is the infrastructure has already done the work of
+[00:05:51 -> 00:05:56] translating the file into this kind of objecty representation where this containment holds,
+[00:05:56 -> 00:06:00] where it's already organized things into basic blocks for you and the instructions already
+[00:06:00 -> 00:06:05] point to each other in an SSA form. And that's one reason why LLVM can actually be easier
+[00:06:05 -> 00:06:11] to use than Brill, even though it's a much more complicated language because it has all
+[00:06:11 -> 00:06:15] this existing tooling behind it that you get immediately as soon as you start writing your
+[00:06:15 -> 00:06:19] pass. To show you what all these objects look like, I want to start by just printing them
+[00:06:19 -> 00:06:24] out. So I'm going to go back to this small pass and let's change it a little bit to
+[00:06:24 -> 00:06:29] actually print out to sort of traverse from object to object in the representation of
+[00:06:29 -> 00:06:34] programs and to print stuff out. So here I was previously just printing out the name
+[00:06:34 -> 00:06:43] of the function. A different thing you can do is print out functions themselves. So you can say
+[00:06:49 -> 00:06:55] if you want to print out the function f including its entire text representation of its body,
+[00:06:55 -> 00:07:15] you can do this. As you can see this has printed out the text representation of the main
+[00:07:15 -> 00:07:22] function. I've got my message and then it printed out the body. It serialized the function
+[00:07:22 -> 00:07:26] object as text so that I can look at it. It's going to be important when doing anything with
+[00:07:26 -> 00:07:31] these programs to traverse down that hierarchy of objects. That is to open up the function
+[00:07:31 -> 00:07:35] and to look inside and process its basic blocks and look inside those basic blocks
+[00:07:35 -> 00:07:40] and look at its instructions. So we can do that too. In fact the modern C++ makes
+[00:07:40 -> 00:07:44] this pretty easy. All we have to do is write one of these foreach loops using the auto
+[00:07:44 -> 00:07:50] keywords. So for example we can say for every basic block b in the function f do some stuff
+[00:07:50 -> 00:07:57] and for every instruction i in that basic block do some other stuff. So I'll do it this way.
+[00:07:57 -> 00:08:08] That is I'll say I'm processing a basic block now. It's a little shorter than the way I wrote
+[00:08:08 -> 00:08:18] it before. And then inside here I will print out every instruction as I process it. This
+[00:08:18 -> 00:08:23] will be super redundant but it will help us see exactly what's going on with every level in
+[00:08:23 -> 00:08:39] that containment hierarchy of the program. Great so you can see that the outer loop ran once
+[00:08:39 -> 00:08:43] the rather the outer loop ran once and the inner loop ran once and the inner inner loop
+[00:08:43 -> 00:08:48] ran three times once for each instruction. In each case just as a debugging tool it can be
+[00:08:48 -> 00:08:52] helpful just to print out the thing you're looking at. You can print out basic blocks,
+[00:08:52 -> 00:08:55] you can print out functions, you can even print out modules if you ever get your hands on
+[00:08:55 -> 00:09:01] a module object. I encourage you to pause the video now and try writing this yourself in the
+[00:09:02 -> 00:09:06] pass that you have cloned from github and even try playing around with it and see if you can
+[00:09:06 -> 00:09:10] find other interesting things to do just by traversing the hierarchy of objects and printing
+[00:09:10 -> 00:09:20] stuff out. Next I want to make this pass a tiny bit more interesting by doing two important
+[00:09:20 -> 00:09:25] things that you will always need to do in any interesting LLVM pass. That is processing
+[00:09:25 -> 00:09:30] the program to look for patterns and then transforming the program when you encounter that
+[00:09:30 -> 00:09:35] pattern. I'm going to do something very simple which is just to process the program
+[00:09:35 -> 00:09:40] and find the first binary operator that occurs that is like a plus or a minus or a divide or
+[00:09:40 -> 00:09:45] something and replace it with a multiply. So super useful that is if I'm just adding together
+[00:09:45 -> 00:09:48] two numbers and the first add I do will be changed with multiplying together those two
+[00:09:48 -> 00:09:54] numbers. So let's get started by trying to recognize the first binary operator. I'm going
+[00:09:54 -> 00:10:03] to delete all these printouts that I don't need anymore and I'm going to keep this structure
+[00:10:03 -> 00:10:07] that loops over the function then looks over the blocks and to get to all the instructions in the
+[00:10:07 -> 00:10:12] block. I'm going to look for the first one that looks like a binary operator. Here's how to do
+[00:10:12 -> 00:10:16] that. You're going to want to use this utility called dyncast. It is a C++ template and it's
+[00:10:16 -> 00:10:20] parameterized with a type and it tries to do a cast to that type and it tells you whether
+[00:10:20 -> 00:10:27] it succeeded. So we're going to try to cast i or rather a pointer to i to the instruction
+[00:10:27 -> 00:10:34] to the the class of instructions that represents binary operators. There's a class in lvm that is
+[00:10:34 -> 00:10:47] called binary operator that you can find as usual in the documentation. Here it is if you
+[00:10:47 -> 00:10:51] are ever curious about like other instructions you can diverse the the class hierarchy but in
+[00:10:51 -> 00:10:56] case we just want to tell whether i happens to be of type binary operator. The way dyncast
+[00:10:56 -> 00:11:01] works is it produces a pointer of type binary operator star so we can do auto star
+[00:11:01 -> 00:11:07] op and assign it to this but it also can return a null pointer if the thing was not of that type
+[00:11:07 -> 00:11:11] so every other instruction will produce null binary operators will produce the same pointer
+[00:11:11 -> 00:11:16] as the original thing but now give you a thing of a different type. So we can wrap that in if
+[00:11:16 -> 00:11:24] as is often done in C++ to tell whether this is a tell whether this cast succeeded that is
+[00:11:24 -> 00:11:28] if we got a non-null pointer. So for now I'm just going to try this out by doing by just
+[00:11:28 -> 00:11:36] printing out op itself only in the case that it is a binary operator so instead of giving every
+[00:11:36 -> 00:11:40] instruction we should now only get this one. I think that the program that compiling so far
+[00:11:40 -> 00:11:46] doesn't have any binary operators so I'm just going to real quick check oh no I need to import
+[00:11:46 -> 00:11:54] things so this happens all the time too you will note that we didn't add any includes when
+[00:11:54 -> 00:11:59] we started using a new class at the top of the doxygen reference for most classes it tells you
+[00:11:59 -> 00:12:04] what header you need to import in order to get the thing so it's convenient to just copy and
+[00:12:04 -> 00:12:09] paste and I hope this now works. It did okay so I think that what I was saying before was
+[00:12:09 -> 00:12:14] that I think the source file doesn't have any binary operators so I think this should print
+[00:12:14 -> 00:12:20] nothing and it does okay great in order to avoid optimizations here I'm going to put in
+[00:12:20 -> 00:12:34] the standard arguments that that you get from unix and I will just print out arg c plus five
+[00:12:34 -> 00:12:41] just to have some sort of binary operator going on in here that linter is mad at me that I didn't
+[00:12:41 -> 00:12:46] actually use argv but that is intentional okay so let's do it now great awesome so it printed
+[00:12:46 -> 00:12:50] out the only binary operator in this program which is an add instruction if you're curious
+[00:12:50 -> 00:12:54] what nsw does that has to do with undefined behavior it says no signed wrap in any case
+[00:12:54 -> 00:13:00] in any case this is an add instruction that does that adds a register somewhere else in the ir
+[00:13:00 -> 00:13:04] and the constant five that it got from the source code the next step now that we have the
+[00:13:04 -> 00:13:09] instruction we want to replace is to construct the new instruction that is the multiply
+[00:13:09 -> 00:13:14] instruction that will replace the old instruction with to do that we're going to use a thing
+[00:13:14 -> 00:13:19] called the ir builder an ir builder is a part of the lvm library that's super super useful
+[00:13:20 -> 00:13:24] constructing instructions so what's technically possible to just use like c plus plus new or
+[00:13:24 -> 00:13:30] whatever to create a new instruction it's going to be way better to call methods on the ir
+[00:13:30 -> 00:13:36] builder to create the instruction we want as usual it's useful just to copy the appropriate
+[00:13:36 -> 00:13:44] include out of the documentation and we're going to construct an ir builder so we'll need
+[00:13:44 -> 00:13:49] an instance of this ir builder class and when you construct the builder you need to tell it
+[00:13:49 -> 00:13:53] where you're going to be inserting instructions and one convenient way to do that is to give
+[00:13:53 -> 00:13:59] it the existing instruction where you're going to insert at the whose location you're going to
+[00:13:59 -> 00:14:04] use for inserting new instructions so we need to construct this new multiply instruction
+[00:14:04 -> 00:14:10] this new multiply instruction we will need to get the existing operands of whatever binary
+[00:14:10 -> 00:14:18] operation it is that we're replacing so op is our old instruction instructions that use operands
+[00:14:18 -> 00:14:24] have these have the method get operand so we can say get operand zero to get the left-hand side
+[00:14:24 -> 00:14:30] the type of this thing is some some other value value is a really important class in
+[00:14:31 -> 00:14:40] lvm values are the base class for a whole bunch of stuff in lvm including functions
+[00:14:40 -> 00:14:46] and instructions and even basic blocks and they're basically anything that you can refer to
+[00:14:46 -> 00:14:53] from code so the operand for the the left-hand side operand for our burning operator might be
+[00:14:53 -> 00:14:58] another instruction or it might be a constant value or it might be a reference to a global
+[00:14:58 -> 00:15:04] for example all of these things are subclasses of value so i'm going to take this left-hand
+[00:15:04 -> 00:15:13] and put it into a value pointer and i'll do the same thing for get operand one which is the
+[00:15:13 -> 00:15:16] right-hand side because as a binary operator we know that there are exactly two operands
+[00:15:17 -> 00:15:22] now i want to create a multiply for these two operands some just to be clear here i'm
+[00:15:22 -> 00:15:26] throwing away the old instruction and i'm going to construct a completely new instruction
+[00:15:26 -> 00:15:32] for the multiply so i'll do that by again making a new value for the multiply but now
+[00:15:32 -> 00:15:37] i'm going to ask the builder to create this for us we're going to call a method on builder
+[00:15:37 -> 00:15:42] to create a multiply instruction so returning to the documentation ir builder inherits from
+[00:15:42 -> 00:15:46] this ir builder base thing which is where all the interesting methods are and there's a
+[00:15:46 -> 00:15:50] whole bunch of things called create blah and one of the things is going to be create mole
+[00:15:50 -> 00:15:56] to create a new mole instruction multiply instruction from the lvm language reference
+[00:15:56 -> 00:16:03] so i'm going to call the create mole method on this builder and the things that it needs
+[00:16:04 -> 00:16:09] are just the two operands so all i need to pass in are lhs and rhs so regardless of what form
+[00:16:09 -> 00:16:13] those lhs and rhs are that can be used as operands to the new multiply instruction
+[00:16:15 -> 00:16:19] so now i have created this multiply instruction and if we were to compile this it would also
+[00:16:19 -> 00:16:25] be inserted into the new program however we need to replace the old instruction with the
+[00:16:25 -> 00:16:31] new one the way to do this is to look for all the places that the old instruction was used that
+[00:16:31 -> 00:16:36] is where its result was the operand to some other instruction and then we'll replace those
+[00:16:36 -> 00:16:40] uses with uses of the new instruction and the old instruction will still be there but it will
+[00:16:40 -> 00:16:45] be dead code and eliminated when we compile the rest of the way so here's how to do that
+[00:16:45 -> 00:16:51] the old instruction op has this collection called uses so we can iterate over this too
+[00:16:51 -> 00:16:59] so i can say like auto and i'll take a reference to every use which is an object by itself in op
+[00:17:01 -> 00:17:08] ops uses we can then get the user that is like who is actually using this thing
+[00:17:09 -> 00:17:13] i'm feeling very divided apparently about which side of the space to put my
+[00:17:13 -> 00:17:20] my stars and ends please forgive me if you you is a use and we can ask it what its user is
+[00:17:20 -> 00:17:27] a user is any value that has operands so this is the super class for example of binary operators
+[00:17:27 -> 00:17:33] which have two operands in any case we can set the we can take users so let's imagine this is
+[00:17:33 -> 00:17:38] some other instruction that is consuming the old the result of the old binary operator and
+[00:17:38 -> 00:17:43] we'll do set operands this is the opposite of get operand that you saw before we'll need to
+[00:17:43 -> 00:17:49] give it an index and then we'll need to give it the thing we want to replace we want to set
+[00:17:49 -> 00:17:53] that operand to and thing we want to set it to is multiply that is going to take the old operand
+[00:17:53 -> 00:17:59] throw it away and then insert our multiply in its place um recall that this is totally following
+[00:17:59 -> 00:18:04] the ssa philosophy that is to say that this multiply instruction is one in the same as the
+[00:18:04 -> 00:18:09] location that it puts its result in that is there is no distinction between like the
+[00:18:09 -> 00:18:15] instruction itself and the value the instruction produces those are both the same thing so that's
+[00:18:15 -> 00:18:19] we need to figure out like which index of the operand we want to replace is
+[00:18:20 -> 00:18:24] fortunately if we were to look up the this use object in the lvm documentation there's a way
+[00:18:24 -> 00:18:29] to get that directly so out of you we can say get operand number and that tells us exactly
+[00:18:29 -> 00:18:34] the thing we need in order to do this replacement okay let's try building that
+[00:18:38 -> 00:18:45] that worked and let's try transforming it great okay so i think we have now successfully
+[00:18:45 -> 00:18:50] replaced this old instruction with the new one oh wait there's one thing i forgot which is that
+[00:18:50 -> 00:18:56] now we need to return true i'll just return true at this point here just to say that we're
+[00:18:56 -> 00:19:01] going to abort after replacing our first instruction we return true to tell the rest of
+[00:19:01 -> 00:19:07] the pipeline that we have uh have modified this function now let's check whether this pass is
+[00:19:07 -> 00:19:10] actually working it's going to be a little bit funky you can make this easier with an
+[00:19:10 -> 00:19:14] actual printf but just bear with me for a second so we can if we compile this thing
+[00:19:14 -> 00:19:19] normally with normal clang this produces a program that we can execute it doesn't print
+[00:19:19 -> 00:19:24] anything out there's no printf in here but we can ask what its return code is and it should be
+[00:19:24 -> 00:19:29] the number of arguments that we gave to it plus five and i know this is a very contrived example
+[00:19:29 -> 00:19:33] but again please bear with me so this got one argument that's the name of the executable
+[00:19:33 -> 00:19:39] and the unix convention plus five this worked out great uh let's see we can do like abc or
+[00:19:39 -> 00:19:45] something this should be four plus five is nine i know how to do math great okay awesome so uh
+[00:19:45 -> 00:19:50] now let's recompile the same source code now using our pass so this won't print anything
+[00:19:50 -> 00:19:55] out i've taken the printout of the pass but it will produce an updated version of the
+[00:19:55 -> 00:20:00] executable and so this will be very exciting if now this produces the number of operands
+[00:20:00 -> 00:20:06] that is in this case one times five instead of added to five let's see what it prints out
+[00:20:12 -> 00:20:20] well that's to be expected i suppose because one times five is five uh but let's do a dot out
+[00:20:20 -> 00:20:28] abc and indeed that is four times five is 20 instead of four plus five is nine i hope you've
+[00:20:28 -> 00:20:32] enjoyed this like very ridiculous program and this transformation we have made but i still
+[00:20:32 -> 00:20:36] think it's kind of exciting that we've taken a real program written in a real program in
+[00:20:36 -> 00:20:40] language c and transformed it to do our bidding that is to do something that we absolutely
+[00:20:40 -> 00:20:44] didn't ask it to do in the original source code it's a tremendous amount of power that we have as
+[00:20:44 -> 00:20:51] an lvm pass the next trick i want to show you is how to insert calls to a runtime library to
+[00:20:51 -> 00:20:56] do more interesting instrumentation so so far we have just replaced one binary operator with
+[00:20:56 -> 00:21:00] another but what if you want to do something complicated something as complicated as printing
+[00:21:00 -> 00:21:04] to the screen for example when something happens inside the code this can be useful
+[00:21:04 -> 00:21:08] if you're counting events or if you want to like do extra logging while you're transforming
+[00:21:08 -> 00:21:14] a program one way to do this is to manually generate the lvm instructions to do the behavior
+[00:21:14 -> 00:21:19] you want as part of your pass so you can use ir builder to say create me an instruction that
+[00:21:19 -> 00:21:23] makes a format string create a call to printf then put it all together and then ship off the
+[00:21:23 -> 00:21:28] call you can do that but it's super painful an easier way to do that is just to insert
+[00:21:28 -> 00:21:34] calls to functions that you'll write yourself and then combine the original program with your
+[00:21:34 -> 00:21:39] library of functions and then execute that so you get to write your instrumentation code in c
+[00:21:39 -> 00:21:44] instead of in like funky c plus plus that generates lvm instructions that then does what
+[00:21:44 -> 00:21:51] you want so let's do that what i'm going to do is instead of replacing instructions i don't
+[00:21:51 -> 00:21:55] know if i'm going to replace instructions and everyone want to generate multiplies and then
+[00:21:55 -> 00:21:59] you're going to need the left hand side and right hand side i'm going to insert a call to
+[00:21:59 -> 00:22:05] a function that will just log the result of the first binary operator in order to get a
+[00:22:05 -> 00:22:09] reference to the function that we're going to call we're going to need to use the module that
+[00:22:09 -> 00:22:13] contains the function we're instrumenting remember modules are containers that contain
+[00:22:13 -> 00:22:18] functions and globals and other stuff like that we're going to need to insert a definition
+[00:22:18 -> 00:22:21] of the function that we're going of the runtime function we're going to call even
+[00:22:21 -> 00:22:25] though this isn't going to contain any code that's going to come later we do need to have
+[00:22:26 -> 00:22:31] a declaration of the function available so the way that works is we're going to take f our function
+[00:22:31 -> 00:22:35] and we can say get parent and that is the module remember that modules contain functions
+[00:22:35 -> 00:22:42] so this function's parent is a module modules have a method called get or insert function
+[00:22:43 -> 00:22:47] there's several different forms of it but there's an easy one where you give it the
+[00:22:47 -> 00:22:51] name of the function that you're going to call here i'm just going to say that it's
+[00:22:52 -> 00:23:02] log this binary operation and we need to give it the return type so that would be a is going
+[00:23:02 -> 00:23:05] to have a void return type i'm going to fill in the arguments to this thing later it's a
+[00:23:05 -> 00:23:12] little bit annoying but we got to do get int 32 tie i'm going to make this take an
+[00:23:12 -> 00:23:17] integer as an argument so the argument to these things you will find is something
+[00:23:17 -> 00:23:21] called an lvm context lvm context is a really common object you often have to deal with
+[00:23:21 -> 00:23:26] which just sort of contains a bunch of general information about the about the environment
+[00:23:26 -> 00:23:30] surrounding all of the lvm based processing you're doing there's a way to get a context
+[00:23:30 -> 00:23:36] from most stuff that you already have we can do and get a context from f that we are
+[00:23:36 -> 00:23:41] processing that's the argument to these to these get void types that returns a type object
+[00:23:41 -> 00:23:46] that represents the void type that is like the c void type that is not returning anything
+[00:23:46 -> 00:23:55] at all got to return context there and pass in context there and there already so i think we now
+[00:23:55 -> 00:24:00] have the function we're going to call oh yeah i'm going to let's call that log func
+[00:24:01 -> 00:24:05] the type of it doesn't matter that's called the function callee in any case we will we now
+[00:24:05 -> 00:24:09] have a reference to the function and we can use that to insert calls so lower down here
+[00:24:09 -> 00:24:13] where we are processing binary operations remember we've already done our sort of pattern
+[00:24:13 -> 00:24:17] matching to make sure that we're processing the kind of code we want in this case the kind of code
+[00:24:17 -> 00:24:22] is binary operator we just need to insert instead of a multiply now a call to this function
+[00:24:22 -> 00:24:28] so by default when we when we passed in up as the insertion point for this builder
+[00:24:28 -> 00:24:31] that by default does it right before the instruction we passed in we want to do this
+[00:24:31 -> 00:24:37] right after so we can pass in the result of the binary operator to do that ir builder has
+[00:24:38 -> 00:24:44] a method called set insert point so we can tell it which basic block we want and we can tell it to
+[00:24:45 -> 00:24:52] increase the the location within that basic block by saying get your current insert point
+[00:24:52 -> 00:24:59] as went before to increase by one to go right after so this sort of moves us right after the
+[00:24:59 -> 00:25:06] right after op where we want to consume the result now we need to do builder dot create
+[00:25:06 -> 00:25:11] call so like everything else it's like create something in builder this does the actual work
+[00:25:11 -> 00:25:15] of creating an instruction inserting it into the basic block at the desired location the there are
+[00:25:15 -> 00:25:20] many different forms of create call again look at the documentation but one of them says you
+[00:25:20 -> 00:25:25] can give it the function you're trying to call and some arguments the arguments you will
+[00:25:25 -> 00:25:30] want to construct separately so an easy way to do this when you're making making arguments to
+[00:25:30 -> 00:25:38] a create call function to method call is to use c++ syntax for doing for initializing a ordinary
+[00:25:38 -> 00:25:44] c array so this is that we can say a value pointer args that is going to be an array of
+[00:25:44 -> 00:25:49] values you can use this curly brace syntax to construct the initial value of the array
+[00:25:50 -> 00:25:56] we have only one operand we want to feed in that is the result of op that is the output
+[00:25:56 -> 00:26:01] of doing the binary operator remember in ssa results are the same thing as functions so we
+[00:26:01 -> 00:26:07] want to pass in the result of that instruction we'll just pass in op itself and now we have
+[00:26:07 -> 00:26:20] created the call to the runtime function so let's try this out great just as expected our
+[00:26:20 -> 00:26:26] instrumented code now contains a call to a function called log op that the linker can't
+[00:26:26 -> 00:26:30] find and this is exactly what we expected we have transformed the call to call a function but
+[00:26:30 -> 00:26:34] we haven't actually written that function remember the whole point of this was we wanted
+[00:26:34 -> 00:26:39] to be able to write our runtime functions like log op in c instead of generating the lvm
+[00:26:39 -> 00:26:46] manually for it so let's do that now let's do uh i guess i'll just call it rtlib for the
+[00:26:46 -> 00:26:50] runtime library so you'll think of this as kind of like part of the past but it's
+[00:26:50 -> 00:26:54] being compiled separately and then linked in with the programs you want to instrument
+[00:26:56 -> 00:26:59] so remember that we we defined we were going to want to define the signature of this
+[00:26:59 -> 00:27:04] function to match the signature we used with the getter insert function from the pass
+[00:27:04 -> 00:27:09] so we made a function called a log op that had a void return type and had an argument that was
+[00:27:09 -> 00:27:13] just a single integer so we've got to do something like this and i'll just do the
+[00:27:13 -> 00:27:18] easiest possible thing i can think of which is to say that just tell it that we have now
+[00:27:18 -> 00:27:23] computed this binary operation and we'll pass in i and of course i will need to include
+[00:27:24 -> 00:27:29] the io header for for c and the nice thing about this is that you don't have to worry
+[00:27:29 -> 00:27:33] about how complex this program is because you'll never be processing it with your pass
+[00:27:33 -> 00:27:37] this is just something that you get to write on the side and then the interface between
+[00:27:37 -> 00:27:41] your pass and the runtime library are the signatures of these functions that you might
+[00:27:41 -> 00:27:46] call so now we need to put it all together that is that we need to compile our runtime
+[00:27:46 -> 00:27:51] library compile the the code to be instrumented smash it together with the linker and then run
+[00:27:51 -> 00:27:57] that so first things first we just need to compile the runtime library and the important
+[00:27:57 -> 00:28:00] thing about this is that you don't have to compile it with your instrumented version
+[00:28:00 -> 00:28:05] of k-clang you can use like whatever compiler you like i'll just use the default c compiler
+[00:28:05 -> 00:28:12] in my system referred to by cc so to get a an object file out of this i'll use dash c
+[00:28:12 -> 00:28:18] that should give me rtlib.o great cool just normal c compilation stuff no magic no lvm
+[00:28:18 -> 00:28:25] magic going on here at all now we can use k-clang with our magic options to compile c
+[00:28:25 -> 00:28:33] to compile a.c and i will use dash c again and we should get a.o awesome so all we
+[00:28:33 -> 00:28:39] have to do now is link this stuff together so we can use cc again to do that to compile
+[00:28:39 -> 00:28:45] rtlib.o and the instrumented a.o and say that we're going to do this to a executable called
+[00:28:45 -> 00:28:53] exe i have no idea what that message means i hope it's okay in any case it worked it told us that
+[00:28:53 -> 00:29:00] it did the addition remember that this is just taking the number of arguments one and adding
+[00:29:00 -> 00:29:05] five to it and then this is previously never print anything out but now it does print something
+[00:29:05 -> 00:29:13] out because it called our runtime library which does the call to printf if you make
+[00:29:13 -> 00:29:18] something interesting with lvm for your task i hope that you will find this technique useful
+[00:29:18 -> 00:29:22] to be able to write runtime behaviors that you want to instrument programs with
+[00:29:22 -> 00:29:27] but not have to write them in lvm instructions to write them in actual c code we have only
+[00:29:27 -> 00:29:32] really just scratched the surface lvm is an enormous library with a whole bunch of built-in
+[00:29:32 -> 00:29:38] optimizations and analyses that you can use to build amazing things that could process
+[00:29:38 -> 00:29:44] c-like programs but now you have the basic tools to begin exploring you have all you need to start
+[00:29:44 -> 00:29:49] building more and more interesting passes that operate on lvm programs for your task you just
+[00:29:49 -> 00:29:54] have to cook up some interesting idea that's completely open open-ended and implemented
+[00:29:54 -> 00:29:59] implement an lvm pass to do it please confine your ambitions to writing a pass of some sort
+[00:29:59 -> 00:30:03] there's many other things you could build with the lvm infrastructure but just to keep
+[00:30:03 -> 00:30:08] things scoped build something that can be phrased as an lvm pass have a great time
+[00:30:08 -> 00:30:12] and please ask lots of questions as you get familiar with the lvm infrastructure

@@ -1,0 +1,121 @@
+Title: CS 6120: Lesson 3: Local Value Numbering
+Video ID: 1_i2gnhw41
+Detected language: en
+------------------------------------------------------------
+
+[00:00:05 -> 00:00:09] In this video, we're going to kill three local optimization birds with a single stone.
+[00:00:09 -> 00:00:13] The idea is going to be to shift our perspective on how we look at basic blocks
+[00:00:13 -> 00:00:19] so that several different forms of redundancy all become apparent at once and become easy
+[00:00:19 -> 00:00:24] to eliminate in a single pass. This technique is going to be called local value numbering.
+[00:00:24 -> 00:00:28] As you might guess, there is an equivalent called global value numbering that extends
+[00:00:28 -> 00:00:32] the same reasoning to work on entire functions. We're going to focus on single basic blocks
+[00:00:32 -> 00:00:38] for now, and then later you'll see how to extend this to deal with control flow graphs.
+[00:00:38 -> 00:00:42] To start off, I want to look at three different forms of redundancy that exist in programs,
+[00:00:42 -> 00:00:46] and I want to emphasize that each of these three things can be subject to
+[00:00:47 -> 00:00:53] optimization passes that remove them as their only purpose. That is, in some
+[00:00:53 -> 00:00:58] compiler courses, in some textbooks, you'll see each of these three things discussed
+[00:00:58 -> 00:01:02] as completely separate optimizations, and there are cases where it makes sense to
+[00:01:02 -> 00:01:07] think of them as totally separate optimizations. What we're going to do in this video, however,
+[00:01:07 -> 00:01:13] is try to see the underlying phenomenon that underpins all of them and does a pretty good job
+[00:01:13 -> 00:01:17] at resolving all of these forms of redundancy, and that's what local value numbering does.
+[00:01:18 -> 00:01:23] So let's look at these three programs. The first one demonstrates dead code elimination.
+[00:01:23 -> 00:01:26] That is, cases where there is code that has no effect,
+[00:01:27 -> 00:01:30] can't possibly have any effect on the output, and the optimization just consists
+[00:01:30 -> 00:01:37] of deleting the redundant instructions. The second one exhibits an optimization that is
+[00:01:37 -> 00:01:42] sometimes called copy propagation, which just says that if you have several instructions,
+[00:01:42 -> 00:01:48] several computations that reuse the same original value, it is often easier to just
+[00:01:48 -> 00:01:55] use that value directly. So in this function, we might eliminate all of these instructions
+[00:01:56 -> 00:02:02] and instead of using all those IDs, just print x instead. That optimization is sometimes called
+[00:02:02 -> 00:02:08] copy propagation. The third one, the third program here, demonstrates a different form
+[00:02:08 -> 00:02:12] of redundancy. This one, if you squinted it for a second, this is the long instruction-y
+[00:02:12 -> 00:02:20] way of saying a plus b times a plus b, and this represents an opportunity for what's called common
+[00:02:20 -> 00:02:27] sub-expression elimination, where these things are the sub-expressions that are common. That
+[00:02:27 -> 00:02:32] is, it's the same computation being done twice, and a better thing to do is just to
+[00:02:32 -> 00:02:37] do that addition once and then return the multiplication of that thing by itself. So we
+[00:02:37 -> 00:02:42] shouldn't need to do this sum two, but of course that variable is still referenced here.
+[00:02:42 -> 00:02:47] But if we were to just replace it with sum one, then we'd get the same answer. That's common
+[00:02:49 -> 00:02:56] sub-expression elimination, sometimes just abbreviated to CSE. So my deep philosophical
+[00:02:56 -> 00:03:01] question for you is to ponder what these three examples, what these three different forms of
+[00:03:01 -> 00:03:07] redundancy all have in common. That is, what is the fundamental underlying phenomenon that is
+[00:03:07 -> 00:03:13] making these programs redundant? There is no right answer to this question. I, of course,
+[00:03:13 -> 00:03:17] have an answer in mind to this philosophical imponderable, but I'd like you to think for
+[00:03:17 -> 00:03:24] a little bit just by yourself about what is the common thread between these forms of redundancy.
+[00:03:24 -> 00:03:37] I'll tell you my answer in a second. The reason that these programs all have redundancy
+[00:03:37 -> 00:03:42] is because they say to compute things using the variables, whereas it is equivalent to just look
+[00:03:42 -> 00:03:47] at the underlying values being computed. And if you do that, then these forms of redundancy
+[00:03:47 -> 00:03:54] kind of automatically disappear. So let's look at these programs again. A value numbering
+[00:03:54 -> 00:04:00] approach to optimizing this program will realize that the same variable is being used for two
+[00:04:00 -> 00:04:05] different values and try to disambiguate those two things. And then we'll end up with a
+[00:04:05 -> 00:04:10] program where there's two separate values, one of which is clearly unused.
+[00:04:12 -> 00:04:17] This makes it easy to eliminate that unused variable and get us down to a program that
+[00:04:17 -> 00:04:26] just assigns to A once. Looking at this second example, the one with copy propagation,
+[00:04:27 -> 00:04:31] the philosophy of value numbering, that again is trying to disentangle the values from the
+[00:04:31 -> 00:04:35] variables, says that there's only a single value in this program. That is the constant
+[00:04:35 -> 00:04:41] for, and it's being reused multiple times for multiple variables. And that's what looks
+[00:04:41 -> 00:04:46] like waste from a value numbering perspective. If we disentangle that single value from all those
+[00:04:46 -> 00:04:51] different variables, those other variables that can hold that value simply fall away.
+[00:04:51 -> 00:04:55] And we can see that the print statement should just be referring to the underlying value.
+[00:04:55 -> 00:05:00] Finally, let's look at the common sub-expression elimination example. In this one,
+[00:05:00 -> 00:05:04] the value numbering philosophy says that there are two variables, some one and some two,
+[00:05:04 -> 00:05:09] that hold the same value, that is A plus B. And of course, here we're getting into the tricky
+[00:05:09 -> 00:05:13] notion of how you define what a value even is. It's not just a constant. There's something
+[00:05:13 -> 00:05:18] underlying going on here about reflecting what computation is being reflected by the variable.
+[00:05:18 -> 00:05:24] But if you accept some definition, some careful definition of what a value is, then the value
+[00:05:24 -> 00:05:28] numbering optimization is going to look at this program and realize that the same value
+[00:05:28 -> 00:05:34] is being stored in two different variables, and that's redundant. And so in the computations
+[00:05:34 -> 00:05:39] that consume those variables, it suffices to just use a single one, and that will reduce
+[00:05:39 -> 00:05:46] and eliminate the redundancy. So let's see how the value numbering approach actually works.
+[00:05:47 -> 00:05:50] I'll give this idea to you at a very high level, and then we're going to walk through
+[00:05:50 -> 00:05:53] an example to see how it plays out. Finally, I'm going to leave it to you
+[00:05:53 -> 00:05:58] to develop the actual pseudocode and implement the algorithm. But the idea behind the value
+[00:05:58 -> 00:06:03] numbering as an optimization really revolves around one big data structure that we'll see
+[00:06:03 -> 00:06:11] here. There is a table, and this is where the name comes from, that's going to assign a bunch
+[00:06:11 -> 00:06:17] of numbers in the left-hand column, and by this I mean literal actual natural numbers,
+[00:06:17 -> 00:06:21] assigned to the values being computed. Values you can think of as expressions.
+[00:06:23 -> 00:06:27] I'll talk about the representation of values in a moment, but we're also going to maintain
+[00:06:28 -> 00:06:33] for every value a canonical home for where that value is being stored.
+[00:06:33 -> 00:06:38] So the very high level idea is that we will try to disentangle a notion of values,
+[00:06:38 -> 00:06:43] that is sort of expressions that are being computed, and also keep track of one place
+[00:06:43 -> 00:06:47] and one place only where that value is being stored. So for example, if we end up using
+[00:06:47 -> 00:06:52] the same value in two different locations, even if they're stored superficially in
+[00:06:53 -> 00:06:57] two completely different variables, this approach will be able to look through it and say,
+[00:06:57 -> 00:07:01] no that's actually the same underlying value, and instead of computing it again,
+[00:07:01 -> 00:07:05] we can just look at the canonical variable that's storing that thing already and just
+[00:07:05 -> 00:07:10] use that variable. One of the important things here is how to represent the computations,
+[00:07:10 -> 00:07:15] that is the expressions, the values that are being numbered, and as this table that I'm
+[00:07:15 -> 00:07:20] showing you indicates, we won't represent that in this kind of like funky form
+[00:07:20 -> 00:07:25] that refers to other rows in the table. So here we have this like number one plus number
+[00:07:25 -> 00:07:31] one expression. What that actually means is that this is the addition of value number one,
+[00:07:32 -> 00:07:37] which is currently stored in variable X, to value number one. So we're not going to,
+[00:07:37 -> 00:07:43] when we build up these values, we're going to be storing them as using these actual
+[00:07:43 -> 00:07:48] numbers that refer to rows in the table. So every expression that shows up in this
+[00:07:48 -> 00:07:53] column of the table will be referring to values by their numbers, rather than by
+[00:07:53 -> 00:07:59] their variables, and this sort of completes the disentanglement from between variables and
+[00:07:59 -> 00:08:05] the values that they're stored in. By referring sort of, by having self-references back to
+[00:08:05 -> 00:08:08] this table to say like, well this is one big value that's computed out of several smaller
+[00:08:08 -> 00:08:17] values, then we can live fully in the abstract realm of computed values and maintain a mapping
+[00:08:17 -> 00:08:21] to where those values are stored in variables. This all sounds fairly abstract, and I swear
+[00:08:21 -> 00:08:23] this is going to get more concrete in a second when we go through an example.
+[00:08:25 -> 00:08:29] However, there's one more piece to the data structure here. This is sort of the main
+[00:08:29 -> 00:08:33] table data structure, but there's one other thing that the algorithm is going to need,
+[00:08:33 -> 00:08:38] which is we're going to step through the basic block, instruction by instruction,
+[00:08:38 -> 00:08:45] instruction, keeping track of kind of the imaginary environment that would be happening
+[00:08:45 -> 00:08:50] if we were actually executing the block. So it's going to be like executing the program.
+[00:08:50 -> 00:08:55] We'll step through and sort of keep track of whatever variable holds, but instead of like in
+[00:08:55 -> 00:08:59] a normal interpreter where every variable will hold like an actual concrete value, like five,
+[00:08:59 -> 00:09:05] they'll hold this notion of a value that is one of these expressions. So this cloud I'm
+[00:09:05 -> 00:09:08] showing off to the left-hand side here is going to say that we'll have an environment
+[00:09:08 -> 00:09:17] so after we execute a statement that assigns into the variable A, we'll have this environment
+[00:09:17 -> 00:09:23] that says that, okay, A now currently holds a value number two. So it's going to work
+[00:09:23 -> 00:09:29] exactly like an interpreter, but instead of holding actual concrete runtime values,
+[00:09:29 -> 00:09:33] values here will just be the numbers, that is like the indices into this table.
+[00:09:33 -> 00:09:38] And this way we'll be able to keep track of a model of what computations go on in a basic
+[00:09:38 -> 00:09:44] block, just like an interpreter does, but using, but statically, that is without actually
+[00:09:44 -> 00:09:55] knowing what the inputs are. I hope you've had a moment to ingest that very high-level description.
+[00:09:55 -> 00:09:59] We're now going to go through a concrete example that will hopefully make these things a little
+[00:09:59 -> 00:10:05] bit more clear. And this is a pretty tricky and abstract way of thinking. So if you have any
+[00:10:05 -> 00:10:09] questions at all, I encourage you to either bring them up on the next Zoom iteration of
+[00:10:09 -> 00:10:13] this class or to ask questions in Zoom Up. You really, really got to ask questions
+[00:10:13 -> 00:10:18] if you have them because I know this is not easy to understand. So we're going to start
+[00:10:18 -> 00:10:23] out with this program on the right-hand side. So this is the common sub-expression
+[00:10:23 -> 00:10:27] elimination example. And we're going to start executing this program.

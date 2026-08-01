@@ -1,0 +1,320 @@
+Title: CS 6120: Lesson 1
+Video ID: 0_bug89uok
+Detected language: en
+------------------------------------------------------------
+
+[00:00:00 -> 00:00:06] Hello, and welcome to the first lesson of CS6120 for fall of 2020. I am super excited for this
+[00:00:06 -> 00:00:10] semester and I'm excited to get our hands dirty with a bunch of gnarly compiler implementation
+[00:00:10 -> 00:00:16] stuff. To get things started, I wanted to have a brief conversation, an asynchronous discussion,
+[00:00:16 -> 00:00:21] about why we bother studying compilers. And I think that it's really easy to get the
+[00:00:21 -> 00:00:25] impression that the reason for studying compilers, for doing research on compilers,
+[00:00:25 -> 00:00:32] and for building compilers, is to make programs go faster. That's what your compiler does. That's
+[00:00:32 -> 00:00:37] what we can see most visibly in how compilers get better over time. That is that you take the same
+[00:00:37 -> 00:00:42] code, you compile it with a better compiler, and it generates faster code. And this is indeed
+[00:00:42 -> 00:00:48] one of the big classic areas within compilers. Compiler optimization is a big important topic
+[00:00:48 -> 00:00:51] that we're going to be spending lots of time on in this class. However, I wanted to emphasize
+[00:00:51 -> 00:00:55] that just making programs go faster is just one tiny thing that we do within research and
+[00:00:55 -> 00:01:00] compilers. And that this class is going to be about the much broader set of topics that you
+[00:01:00 -> 00:01:08] might call language implementation. That is, doing what it takes to take a program language
+[00:01:08 -> 00:01:13] out of the theoretical realm of the human's mind and turn it into code that can actually
+[00:01:13 -> 00:01:17] execute one way or the other. And yes, it's important that code goes fast. It's important
+[00:01:17 -> 00:01:22] that it be efficient. But there's many, many other things that go into making a compiler,
+[00:01:22 -> 00:01:29] a compiler that are parts of implementing programming languages. So if you can,
+[00:01:29 -> 00:01:37] right now I'd like you to pause this lecture and think a little bit more about what goes into
+[00:01:37 -> 00:01:42] the implementation of a programming language other than just compiler optimizations. And if
+[00:01:42 -> 00:01:46] you say parsing, you are immediately kicked out of this class. That's just a joke. But this
+[00:01:46 -> 00:01:51] class is not going to be about parsing programs. That is a part of lots of compiler courses out
+[00:01:51 -> 00:01:57] there. But this course is going to be about the deeper topics of the semantics of programs. So
+[00:01:57 -> 00:02:02] not just thinking about the syntax, but how we implement the meat of what programs actually
+[00:02:02 -> 00:02:11] mean. So you can pause this video here and answer this question in the discussion topic
+[00:02:11 -> 00:02:16] associated with this lesson. Did you know that lessons in 6120 this semester come with discussion
+[00:02:16 -> 00:02:21] topics? They do. Let me show you how to get there. The way you get there is you go to the
+[00:02:22 -> 00:02:26] 6120 website, and there's a tab over the top called Lessons. So far there's only one lesson,
+[00:02:26 -> 00:02:30] the one that you're watching right now. But for a given lesson, there's a discussion link,
+[00:02:30 -> 00:02:34] which takes you to a topic within our zoo of space. And this is where you can respond to
+[00:02:34 -> 00:02:38] things that are directly about this video or anything else within this lesson unit. I'd like
+[00:02:38 -> 00:02:43] you to respond now with just brainstorming what goes into the implementation of a programming
+[00:02:43 -> 00:03:07] language. To get things started, I have one idea, which is that some language implementations
+[00:03:07 -> 00:03:12] do a lot of checking at runtime to enforce invariance. That is to rule out common classes
+[00:03:12 -> 00:03:16] of errors by checking for them and throwing exceptions at runtime. Dealing with all those
+[00:03:16 -> 00:03:20] exceptions is part of the implementation of a language. And it's something that we will
+[00:03:20 -> 00:03:24] consider as part of the broad topic of language implementation in this class.
+[00:03:24 -> 00:03:28] So think of one of these things, and please post it in the associated discussion thread.
+[00:03:30 -> 00:03:33] Thanks for all the great ideas that you've just posted to the zoo of topic.
+[00:03:33 -> 00:03:38] I wanted to spend a little more time thinking about the optimization question.
+[00:03:40 -> 00:03:44] Associated with every lesson in 6120 is some optional reading that you can do ahead of time.
+[00:03:45 -> 00:03:48] You probably didn't do this reading because it's the first day of class, and I didn't even
+[00:03:48 -> 00:03:51] tell you to look for reading to do it associated with every lesson. But we can look
+[00:03:51 -> 00:03:55] over a little bit now. It's just a really small paper that I think you might get a kick out of.
+[00:03:55 -> 00:04:00] So on the page for a given lesson, there are some links at the top to optional reading,
+[00:04:00 -> 00:04:06] like indicated by this little book icon. So if you follow this link to probe strings law,
+[00:04:06 -> 00:04:12] you can find a short article written about a law of computing that is essentially a
+[00:04:12 -> 00:04:18] little bit of a joke. In particular, if you've heard of Moore's law, you've probably heard
+[00:04:18 -> 00:04:22] of Moore's law. It's a subject of great cliche and great renown at this moment.
+[00:04:24 -> 00:04:29] Moore's law says that, roughly speaking, every 18 months or so, the performance of computer
+[00:04:29 -> 00:04:34] hardware roughly doubles. And this, of course, was true during the heyday that ended around 2005
+[00:04:34 -> 00:04:38] or so when scaling and transistor density really did translate into performance.
+[00:04:40 -> 00:04:45] Probe strings law is a joke about the significance of compiler's research that says
+[00:04:45 -> 00:04:55] the resulting code performance of optimizing compilers doubles every 18 years. So it's kind
+[00:04:55 -> 00:05:06] of a joke to put in perspective, like the relative magnitude of the impacts of the people
+[00:05:06 -> 00:05:10] who work on making transistors small and smaller versus the people who work on making
+[00:05:10 -> 00:05:14] compilers better and better. I think that it was originally given that name by a guy named
+[00:05:14 -> 00:05:19] Probe String as a joke. He wasn't actually expecting this to be born out in reality.
+[00:05:19 -> 00:05:23] But I encourage you to give this paper a read. It's just a short read by someone who
+[00:05:23 -> 00:05:28] went back and said, well, it was kind of a joke, but is it actually true?
+[00:05:28 -> 00:05:34] And they went through some machines at the time and went back to earlier versions of
+[00:05:34 -> 00:05:39] compilers compiling C programs and observed that actually, yeah, it kind of is true. That
+[00:05:39 -> 00:05:45] is roughly speaking over time, the performance does kind of follow an exponential, but a really,
+[00:05:45 -> 00:05:53] really slow exponential compared to the performance that is yielded by more and
+[00:05:53 -> 00:05:57] more transistors turning into better and better CPUs. This is all just sort of a tool to
+[00:05:57 -> 00:06:04] emphasize the fact that language implementation should not be limited only to compiler
+[00:06:04 -> 00:06:08] optimizations. I believe that compiler optimizations are super important. Compiler
+[00:06:08 -> 00:06:13] optimizations are not just about optimizing ordinary C programs for ordinary CPUs. I think
+[00:06:13 -> 00:06:20] at this moment in particular, there's an explosion of need for new compilers.
+[00:06:20 -> 00:06:26] And the reason for this is that there is a rapid expansion in the number of programming
+[00:06:26 -> 00:06:30] languages that people want to write and the number of different kinds of hardware that people
+[00:06:30 -> 00:06:34] want to target to. That is about the expansion in programming languages. It's not just about
+[00:06:34 -> 00:06:40] general purpose languages. If you've ever used R, for example, or if you've ever used TensorFlow,
+[00:06:40 -> 00:06:45] these things all sort of count as domain specific languages for one purpose or another
+[00:06:45 -> 00:06:50] that people actually want to get good performance out of. And it's not just limited to one or
+[00:06:50 -> 00:06:55] two high profile examples. I believe that domain specific languages are really proliferating
+[00:06:55 -> 00:06:59] because they're found to be a better way to match the semantics of how people think when
+[00:06:59 -> 00:07:03] they want to express programs to computers. And at the same time, because of the end of
+[00:07:03 -> 00:07:09] Moore's Law, the diversity in hardware targets is also in the middle of expanding.
+[00:07:09 -> 00:07:13] You may know, for example, about Google's TPU being deployed in their data centers for
+[00:07:13 -> 00:07:17] running machine learning workloads. But there's also just in everyone's cell phone, dozens and
+[00:07:17 -> 00:07:21] dozens of specialized hardware units that just do one particular thing very well.
+[00:07:22 -> 00:07:28] We're kind of running into this M times M scaling problem where the number of programming
+[00:07:28 -> 00:07:33] languages people want to compile is expanding very rapidly. That's M. And the number of
+[00:07:33 -> 00:07:38] hardware targets that people want to compile to, that's M, is also expanding very rapidly.
+[00:07:40 -> 00:07:45] Either of those two things by itself would mean that we have a great need for new compilers
+[00:07:45 -> 00:07:50] to compile new languages to hardware. But the fact that they are both expanding at the same
+[00:07:50 -> 00:07:56] time means that that's a multiplicative effect. And there's a huge demand for new
+[00:07:56 -> 00:08:01] compilers that do new kinds of optimizations for new kinds of hardware and new kinds of domain
+[00:08:01 -> 00:08:07] specific semantics. Just as an anecdote, I think it's almost a cliché at this point when you go
+[00:08:07 -> 00:08:12] to computer architecture conferences, I spend half my time as a computer architect, that people
+[00:08:12 -> 00:08:16] are building lots of hardware that they find super interesting and can do one or two things
+[00:08:16 -> 00:08:22] extremely well. Novel hardware is super exciting for individual applications. But nobody
+[00:08:22 -> 00:08:27] knows how to write compilers that unlock the full potential of those domain specific hardware
+[00:08:27 -> 00:08:35] accelerators. Specialized hardware is not actually something that anyone wants if it's
+[00:08:35 -> 00:08:40] too narrowly targeted. And if people, as is the dominant trend in computer architecture
+[00:08:40 -> 00:08:45] conferences, if grad students have to manually write assembly code for every new accelerator
+[00:08:45 -> 00:08:51] they develop for every application they want to compile to it. The problem is that we don't
+[00:08:51 -> 00:08:56] know that the science of compilers is not advanced yet. The science of language implementation
+[00:08:56 -> 00:09:02] has not caught up with the massive explosion domain specific languages and novel hardware
+[00:09:02 -> 00:09:07] targets. All of this together means that it's an extremely important time to be focusing on
+[00:09:07 -> 00:09:13] compiler research and to focus beyond just the classic but very important notion of just
+[00:09:13 -> 00:09:19] optimizing programs for, of just optimizing programs, but to take into account all the
+[00:09:19 -> 00:09:23] other things that we want to get out of the language implementation, including correctness
+[00:09:24 -> 00:09:31] and security and debuggability. All of these things matter. All of these things matter. And
+[00:09:31 -> 00:09:34] all of them are surprisingly hard to do. And we're going to need to do them many times over
+[00:09:34 -> 00:09:38] if we're going to capitalize on this explosion of diversity in both languages and hardware
+[00:09:38 -> 00:09:43] targets. That concludes my excitable motivation about why we're studying compilers and language
+[00:09:43 -> 00:09:48] implementation more broadly in 6120. I want to now take you to the syllabus to talk about
+[00:09:48 -> 00:09:53] how this class is going to work. And I have to give the qualifier that in general, I have no
+[00:09:53 -> 00:09:57] idea how this class is going to work relative to other semesters. This is a time of incredible
+[00:09:57 -> 00:10:02] uncertainty and we will just have to see how this goes. I'm going to give you my best
+[00:10:02 -> 00:10:07] guess about how things are going to run for this fall. But I ask you for your patience
+[00:10:07 -> 00:10:13] to bear with me while we figure it out on the fly. On the 6120 website, there's a tab
+[00:10:13 -> 00:10:16] at the top of the syllabus and we're going to go through a few of the details right now.
+[00:10:16 -> 00:10:23] One thing we've already seen is that we're using this chat tool called Zulip, which is a kind of
+[00:10:23 -> 00:10:28] like weird open source Slack-like thing that has a cool, a few cool features that I think will
+[00:10:28 -> 00:10:32] make it exciting to try for the 6120. Again, thanks for bearing with me while we try this out.
+[00:10:32 -> 00:10:36] We're going to do all the communication through Zulip. So it's really important that you
+[00:10:36 -> 00:10:40] sign up for it and that you pay attention to it. We're going to do a lot of required
+[00:10:41 -> 00:10:47] discussion participation that happens on Zulip. So you need to familiarize yourself with it and
+[00:10:47 -> 00:10:55] to actually participate when it comes time. There's a bunch of links to Zulip. There's
+[00:10:55 -> 00:11:01] apps for all the platforms you can get and they are perfectly fine. The iOS one is actually
+[00:11:01 -> 00:11:06] sort of garbage, but that's neither here nor there. And there are also links throughout
+[00:11:06 -> 00:11:10] the webpage that go to individual threads of conversation called topics in Zulip
+[00:11:11 -> 00:11:17] that we will be using. And you can just use Zulip right from your browser as well.
+[00:11:18 -> 00:11:22] Okay, so let's talk about what is happening in the actual class section. So normally this class
+[00:11:22 -> 00:11:28] is 955 to 10 something, 955 to 11 something rather on Mondays and Wednesdays,
+[00:11:30 -> 00:11:33] but most of the actual stuff that we're doing will be asynchronous.
+[00:11:34 -> 00:11:41] In particular, I want to try out to deal with the complexity of hybrid in-person virtual
+[00:11:41 -> 00:11:46] scheduling. I'm interested in most of our class sessions being flipped in the sense that you'll
+[00:11:46 -> 00:11:51] be watching videos and reading materials offline like you're doing right now with this video.
+[00:11:51 -> 00:11:56] And then the actual class sessions, the majority of them, will be kind of quiet work
+[00:11:56 -> 00:12:01] times. And you can come and hang out in person, hopefully outside some of the time,
+[00:12:01 -> 00:12:08] and hack and ask questions, ask questions on Zulip. If you are in Ithaca and if you're remote,
+[00:12:08 -> 00:12:12] then you can join those things by hanging out on Zulip and silently hacking and asking questions
+[00:12:12 -> 00:12:17] and participate just as much as anybody else because everything will be sort of coordinated
+[00:12:17 -> 00:12:26] around our funky chat system. But in general, these classes will be divided slightly more
+[00:12:26 -> 00:12:33] granularly than that. If you look at the schedule, schedule is a tab at the top of the webpages
+[00:12:33 -> 00:12:41] well, you will see that there are sort of two types of classes. The first one, which is today,
+[00:12:41 -> 00:12:46] is that the class has lesson content in it. This has a link to a particular lesson that will
+[00:12:46 -> 00:12:49] here will have a video once it's done being recorded. And there's some notes
+[00:12:49 -> 00:12:55] and there's some tasks to complete. More on this in a second. But you can, before these
+[00:12:55 -> 00:12:59] classes, do the optional reading associated with them and watch the video. And then when we show
+[00:12:59 -> 00:13:06] up, we'll just be doing sort of silent work time in the flipped classroom style on the
+[00:13:06 -> 00:13:11] tasks associated with a given lesson. On some other days, there will be a discussion to be
+[00:13:11 -> 00:13:16] had. So there's some reading material that is not optional but is actually required to do
+[00:13:16 -> 00:13:22] ahead of time. The first one will be on Monday. And the difference with these is that we will
+[00:13:22 -> 00:13:26] not have any in-person content. And the reason for this is that we're going to have a discussion,
+[00:13:27 -> 00:13:34] a live discussion on Zoom. So I just cannot even fathom how it would work to have a productive
+[00:13:34 -> 00:13:39] discussion where some people are in person and some people are remote on Zoom. That just
+[00:13:39 -> 00:13:44] seems like totally unworkable to me. So for those days, for the discussion days, those things
+[00:13:44 -> 00:13:48] are going to be all virtual. They're going to be all on Zoom. So please join at the appointed
+[00:13:48 -> 00:13:56] time, synchronously, for a short discussion that the leader for a given paper will be conducting.
+[00:13:56 -> 00:14:00] It's not going to take the entire class time. The rest of it is going to go back to the
+[00:14:00 -> 00:14:05] sort of flipped classroom work time. But we will have a chance to sort of follow up
+[00:14:05 -> 00:14:11] on the discussion that happened asynchronously over Zoom in the days leading up to the class.
+[00:14:11 -> 00:14:16] So just to summarize, when you are participating in this class, it's important that you go to
+[00:14:16 -> 00:14:21] the schedule every so often and look at the upcoming days and see whether they are discussion
+[00:14:21 -> 00:14:24] days, in which case we're going to actually have a discussion, and you have homework to
+[00:14:24 -> 00:14:30] do beforehand. And the homework you have to do beforehand is reading and participating in
+[00:14:30 -> 00:14:35] discussion on Zoom. Or they are lesson days, in which case your homework is to watch the
+[00:14:35 -> 00:14:39] videos and to do the optional reading, but the actual work that we'll be doing will be
+[00:14:39 -> 00:14:43] starting in class so that everyone's working together can ask each other questions. I hope
+[00:14:43 -> 00:14:49] that makes sense. So the next thing to talk about from the syllabus is like the actual
+[00:14:49 -> 00:14:53] work that will go into the class. There are four things that you have to do of various
+[00:14:53 -> 00:14:59] shapes and sizes. The first one is smaller implementation tasks that are associated
+[00:14:59 -> 00:15:02] with the lessons. So they're meant to kind of follow up on the things that you'll
+[00:15:02 -> 00:15:08] learn in a video like this, and they're sort of smallish self-contained tasks that
+[00:15:08 -> 00:15:16] are still, nonetheless, like have some interpretation to them that you complete
+[00:15:16 -> 00:15:20] on a fairly short turnaround. So like most of the deadlines are about a week away
+[00:15:20 -> 00:15:25] for these things. There are tasks associated with this lesson, which I'll get to at the end.
+[00:15:26 -> 00:15:34] They are no big deal, but they are due in a week. The next thing that you have to do
+[00:15:34 -> 00:15:37] that you'll be graded on is reading the research papers and participating in discussion.
+[00:15:37 -> 00:15:43] So participate in the discussion asynchronously on Zulip, and then when it comes time for a
+[00:15:43 -> 00:15:48] synchronous discussion, if you're participating synchronously, participate by talking on Zoom.
+[00:15:49 -> 00:15:56] For one paper, I think, for the entire semester, you will be leading that discussion.
+[00:15:56 -> 00:16:01] So your job is to read the paper ahead of time and to lead the discussion by doing the
+[00:16:01 -> 00:16:06] following things. Writing a blog post, which can come with an optional video if you want,
+[00:16:07 -> 00:16:11] leading the online discussion on Zulip ahead of time. That means coming up with discussion
+[00:16:11 -> 00:16:15] questions and getting people to actually answer them and engage, and then finally leading the
+[00:16:15 -> 00:16:20] synchronous discussion that happens on Zoom. So you'll do this one time throughout the entire
+[00:16:20 -> 00:16:25] semester. The rest of the time, you're just a participant. Then finally, there is a course
+[00:16:25 -> 00:16:29] project. So at the end, and this is totally separate from the sort of smaller implementation
+[00:16:29 -> 00:16:34] tasks, the course project is a kind of entirely open-ended, kind of do whatever you
+[00:16:34 -> 00:16:39] want that's related to compilers thing, and there's details about that later. Okay. So
+[00:16:39 -> 00:16:43] everyone, let's talk a little bit more about these implementation tasks. The tasks for
+[00:16:43 -> 00:16:48] lesson one are fairly straightforward. There are four of them. They are not complicated.
+[00:16:48 -> 00:16:52] They're just meant to get you familiar with things and to get you to do a couple of
+[00:16:53 -> 00:16:56] class warm-up things. The first thing you need to do is actually read the syllabus. You're
+[00:16:56 -> 00:16:59] getting so many information now, but I would really appreciate it if you were to read all
+[00:16:59 -> 00:17:04] the actual details there. The second is to sign up for Zulip and to introduce yourself.
+[00:17:04 -> 00:17:09] This links to the introductions topic on Zulip that you can follow right there and just
+[00:17:09 -> 00:17:13] write a couple of sentences about yourself. You can see my prompt at the top. The next
+[00:17:13 -> 00:17:18] thing you need to do is pick a paper from the class schedule that you will lead the
+[00:17:18 -> 00:17:24] discussion of. So if you follow this to the schedule, you'll see that there are
+[00:17:24 -> 00:17:28] lots of papers that say TK next to them. So for a given day, someone is supposed
+[00:17:28 -> 00:17:35] to be leaving this, but we don't know who. If you go to this link, you'll be led to the
+[00:17:36 -> 00:17:41] GitHub repository for this course. I didn't mention before, but this course is entirely
+[00:17:41 -> 00:17:46] open source. Everything is on GitHub that you can possibly imagine. This is the repository
+[00:17:46 -> 00:17:51] on GitHub. This is by username, and this is the repository. Everything that runs the website,
+[00:17:51 -> 00:17:55] which is everything that runs the course, is open source in this repository. So that includes
+[00:17:55 -> 00:18:01] this funky file that lists everything we're going to be doing on every class day.
+[00:18:02 -> 00:18:08] So for example, this is a class day where we're reading a paper by Lopez et al about
+[00:18:08 -> 00:18:13] automatically verifying a domain-specific language for specifying people optimizations.
+[00:18:13 -> 00:18:17] It's a really sweet paper, so somebody needs to leave this. Your job is to open a pull
+[00:18:17 -> 00:18:21] request to put your name in right here. That is to claim one paper throughout the entire
+[00:18:21 -> 00:18:28] semester. You can fork this repository. You can use GitHub's in-browser editor thingy
+[00:18:28 -> 00:18:34] to add your name, but please do that as part of the tasks. The last task is to tell me
+[00:18:34 -> 00:18:38] that you did it, and this is true of all tasks associated with lessons. You'll log into CMS
+[00:18:38 -> 00:18:46] and find the appropriate task. This one is the L1 intro tasks, and you just need to basically
+[00:18:46 -> 00:18:49] input a marker to say that you did the thing. So for this thing, there's not really anything
+[00:18:49 -> 00:18:57] to turn in. CMS doesn't let me have nothing to turn in, so you can just submit like an empty
+[00:18:57 -> 00:19:00] text file. There's like a text file submission thing. You just need to submit something just
+[00:19:00 -> 00:19:05] to say that you've done it. For every other one, I encourage you, I don't require you,
+[00:19:05 -> 00:19:09] but I encourage you to do all your work as open source. So just like the rest of this course,
+[00:19:09 -> 00:19:13] you'll make like a GitHub repository or a Bitbucket repository if you're into that kind
+[00:19:13 -> 00:19:18] of thing, and you will do all your work there, and the thing that you'll submit is just the
+[00:19:18 -> 00:19:23] URL to that repository to say that I have done this thing. You don't need to submit any code
+[00:19:23 -> 00:19:29] there unless you strenuously object to having your work be open source, in which case you can
+[00:19:32 -> 00:19:35] upload your source code instead. But I really do strongly encourage you to do everything
+[00:19:35 -> 00:19:41] open source. This class is really meant to run on the honor system. That is, the tasks are
+[00:19:41 -> 00:19:46] meant to deepen your understanding by going through the motions of actually doing something,
+[00:19:46 -> 00:19:50] actually seeing it through all the way to the end, and struggling with the hard problems yourself
+[00:19:50 -> 00:19:55] as opposed to just looking up the solution that someone else had. So please do everything open
+[00:19:55 -> 00:19:59] source, and please use your own judgment, and don't look at other people's implementations
+[00:19:59 -> 00:20:05] unless you totally want to cheat yourself out of the opportunity to struggle with things and
+[00:20:05 -> 00:20:09] figure out yourself and therefore actually deepen your understanding of the topics in the course.
+[00:20:09 -> 00:20:12] So this is the implementation task. One thing I didn't mention is that you're allowed to
+[00:20:12 -> 00:20:15] work in groups if you want to. You can work in groups of two or three students if you like.
+[00:20:15 -> 00:20:19] You can also work individually. Totally up to you. CMS will let you form groups if you want.
+[00:20:20 -> 00:20:24] The next ingredient is this discussion stuff. So as I said many times before,
+[00:20:24 -> 00:20:27] for the discussion classes, ahead of time you need to read the paper,
+[00:20:27 -> 00:20:32] and you need to participate in the Zulip discussion. Where does the Zulip discussion
+[00:20:32 -> 00:20:37] come from? That comes from the discussion leader. For the first discussion that's going to be me,
+[00:20:37 -> 00:20:42] so you can see how this goes. The things that you need to do include writing a blog
+[00:20:42 -> 00:20:47] post. I have advice here about what exactly needs to go into a blog post that gives sort of your
+[00:20:47 -> 00:20:51] critical reaction to what's going on in the paper. This is not meant to be just a summary. This is
+[00:20:51 -> 00:20:56] meant to be your opinion about what's going on in the paper. You can, if you like, record a
+[00:20:56 -> 00:20:59] video to go along with your blog post. You don't have to do this, but just in case you
+[00:20:59 -> 00:21:06] want to participate in the 2020 style of education, go for it. You will use a pull
+[00:21:06 -> 00:21:11] request to publish your post to the GitHub repository. That will automatically make it
+[00:21:11 -> 00:21:17] live and go on the internet. I will review it and probably have feedback for you during the
+[00:21:17 -> 00:21:24] pull request process. All of that is, oh, yeah, sorry, you also need to, once your pull request
+[00:21:24 -> 00:21:27] is open, so even before I'm necessarily giving you feedback, you have to announce it on Zulip.
+[00:21:27 -> 00:21:34] That is, you have to give people a chance to read your work before it's even ready
+[00:21:34 -> 00:21:37] and to possibly give you feedback. I will definitely give you feedback,
+[00:21:37 -> 00:21:41] whether people are welcome to as well. All of that stuff is due one week before the class that
+[00:21:41 -> 00:21:48] actually has the discussion in it so that we can have a week of discussion. As part of your
+[00:21:54 -> 00:21:58] discussion, as part of your blog post, you will have some bulleted questions that you have
+[00:21:58 -> 00:22:04] discussion questions to get things started. You will post those into the Zulip thread where
+[00:22:04 -> 00:22:08] you announce your pull requests and your brand new blog post and you will get people to engage
+[00:22:08 -> 00:22:14] on those questions. Everybody else is required to participate in that discussion. That is,
+[00:22:14 -> 00:22:18] required to read the paper and say something, who cares, something in response to it,
+[00:22:18 -> 00:22:21] possibly in response to your discussion questions that you came up with.
+[00:22:21 -> 00:22:25] Then finally, on the actual day of the discussion on Zoom, and again, this is one
+[00:22:25 -> 00:22:28] that does not happen at all in person, it is only on Zoom, you will moderate the discussion
+[00:22:28 -> 00:22:33] on that thing. Don't prepare a presentation. That is, don't go through a bunch of slides.
+[00:22:33 -> 00:22:37] You can have a visual aid if you want, just to organize the discussion. But the point is,
+[00:22:37 -> 00:22:40] you don't need to summarize stuff for people that will already have read it.
+[00:22:40 -> 00:22:47] You just need to be doing the live version of what you did for your blog post. That is,
+[00:22:47 -> 00:22:53] giving your reaction to it, trying to bring a critical lens to the paper that you brought,
+[00:22:53 -> 00:22:57] and to get everyone to participate. It is your job to get everybody to speak up
+[00:22:57 -> 00:23:03] and to participate as equitably as possible. Those are discussions, both participating in
+[00:23:03 -> 00:23:07] and leaving. The final thing is a project. I am not going to go into a lot of details.
+[00:23:07 -> 00:23:10] You can learn about the project online. It is going to be a totally standard course project
+[00:23:10 -> 00:23:14] that is open ended. You can do whatever you want that is related to compilers. You can
+[00:23:14 -> 00:23:17] build on the implementation tasks you did during the semester, do something totally
+[00:23:17 -> 00:23:21] different, do something connected to your research, whatever. You can see the details
+[00:23:21 -> 00:23:29] here. Deadlines you can find on the schedule as well. There is going to be a blog post
+[00:23:29 -> 00:23:34] at the end of the project. So for all of this stuff, we are going to be using a
+[00:23:36 -> 00:23:41] grading system that we started using last year with the first offering of 6.1.20,
+[00:23:41 -> 00:23:46] which is the Michelin star system. That is, if you do a really excellent job
+[00:23:46 -> 00:23:50] that is astonishing in its breadth and depth, you get a Michelin star.
+[00:23:51 -> 00:23:58] It is meant to recall that even a single Michelin star in the Michelin guide is a remarkable
+[00:23:58 -> 00:24:03] achievement. So if you do a remarkable job and you turn in something that you are proud of,
+[00:24:03 -> 00:24:08] you get a Michelin star for that assignment. It is possible to earn multiple Michelin stars
+[00:24:08 -> 00:24:15] by being truly exceptional. It is possible to get not a star if your work is merely okay.
+[00:24:15 -> 00:24:18] And that is fine too. You can turn in really acceptable work from time to time. That is
+[00:24:18 -> 00:24:25] cool. Who really cares about grades? The Michelin stars will turn into the final course grades.
+[00:24:25 -> 00:24:32] If you consistently get a Michelin star, that means an A. If you consistently miss
+[00:24:32 -> 00:24:36] Michelin stars, then that will slowly reduce the grade that you get.
+[00:24:36 -> 00:24:40] The Michelin star system is meant to get us out of the business of grabbing about individual
+[00:24:40 -> 00:24:44] points and scores, which I think is wholly inappropriate for this open source hacking
+[00:24:44 -> 00:24:47] oriented class that we are going to do for 6.1.20. Instead it is meant to focus on what
+[00:24:47 -> 00:24:53] really matters, which is doing a great job and being proud yourself of what you turn in.
+[00:24:54 -> 00:25:00] I found a few notes on a few policies. The first thing is that this is a class for PhD
+[00:25:00 -> 00:25:05] students. If you are not a PhD student, it is still possible to take this course,
+[00:25:05 -> 00:25:11] but you need to have special permission to do it. I gave you the directions here.
+[00:25:11 -> 00:25:13] You just send me a short application that answers two questions.
+[00:25:14 -> 00:25:17] So undergrads who are studently motivated can still take this course.
+[00:25:18 -> 00:25:21] There are some policies here about academic integrity. I think that you will find them
+[00:25:21 -> 00:25:25] completely unsurprising. The things that you turn in, that is like the stuff that you represent
+[00:25:25 -> 00:25:32] as your work, has to be actually your work. In this class, it is meant to be open source
+[00:25:32 -> 00:25:36] and the world is open to you to figure out how to do the stuff. You just have to actually
+[00:25:36 -> 00:25:42] do the work yourself. If any of this enters a gray area, just contact me and we will resolve it.
+[00:25:44 -> 00:25:50] I care deeply about respect within the bounds of this classroom, even though it is for the
+[00:25:50 -> 00:25:55] most part not even really a classroom. It is super important that everyone participating in
+[00:25:55 -> 00:26:00] the class, because it is meant to be discussion oriented, be as respectful of each other as
+[00:26:00 -> 00:26:06] possible. This means being careful about your language, for example. One thing that you should
+[00:26:06 -> 00:26:10] absolutely not do is if you are participating in a discussion and you need to bring up
+[00:26:11 -> 00:26:17] a kind of example person, one thing you should not do is try to make up the gender for that person
+[00:26:17 -> 00:26:22] for no particular reason. That is like to assume that the program or the notional
+[00:26:22 -> 00:26:26] programmer for a compiler is male, for instance. Don't do that. Just don't use the gender
+[00:26:26 -> 00:26:33] for that person. Just use they or them. In general, be respectful of all identities
+[00:26:33 -> 00:26:39] within this class. If you ever notice a problem with respect within the class,
+[00:26:39 -> 00:26:43] please bring it to me. Or you can go over my head to the department chair
+[00:26:44 -> 00:26:49] if it doesn't seem like something that I can deal with. There is also a section about special needs
+[00:26:49 -> 00:26:55] and wellness. I want this class to be accessible to everyone. If there are any particular
+[00:26:58 -> 00:27:02] things that this class can do or that I can do to make this class accessible to you,
+[00:27:02 -> 00:27:06] please feel free to let me know. Please also feel free to go through the Student Disability
+[00:27:06 -> 00:27:11] Services office to get an official determination. I am also happy to chat about it. Just send me
+[00:27:11 -> 00:27:17] a message on Zulip. That is about it. This is the first video I have ever recorded for a class
+[00:27:17 -> 00:27:25] pre-recorded as part of the course materials. Thanks for bearing with me, I guess. Right now
+[00:27:25 -> 00:27:28] will be an excellent time, if you haven't done it already, to follow this link to the
+[00:27:28 -> 00:27:34] introductions topic on Zulip and to introduce yourself. See you next time. Thanks!

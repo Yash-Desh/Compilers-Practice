@@ -1,0 +1,768 @@
+Title: CS 6120: Lesson 11: Dynamic Compilers
+Video ID: 1_ltb1t94i
+Detected language: en
+------------------------------------------------------------
+
+[00:00:05 -> 00:00:07] Hello, and welcome back to 6120.
+[00:00:07 -> 00:00:10] Today we're going to see a very broad overview
+[00:00:10 -> 00:00:12] of the landscape of just-in-time,
+[00:00:12 -> 00:00:14] AKA dynamic compilation.
+[00:00:14 -> 00:00:17] This is in contrast to basically everything we've done
+[00:00:17 -> 00:00:19] in the class up to this point,
+[00:00:19 -> 00:00:20] which you can think of as being categorized
+[00:00:20 -> 00:00:23] as ahead-of-time or static compilation.
+[00:00:23 -> 00:00:26] In AOT compilation, static compilation,
+[00:00:26 -> 00:00:28] things are fairly separated in time.
+[00:00:28 -> 00:00:31] That is, the phase that we think of as compilation
+[00:00:31 -> 00:00:32] is a pretty different phase
+[00:00:32 -> 00:00:34] in the overall life cycle of a program
+[00:00:34 -> 00:00:36] from the phase we think of as execution.
+[00:00:36 -> 00:00:38] I have this little diagram on the screen
+[00:00:38 -> 00:00:41] showing the flow of time from left to right.
+[00:00:41 -> 00:00:43] The phase where we do the compiler stuff
+[00:00:43 -> 00:00:46] is separated in time and separated in context
+[00:00:46 -> 00:00:48] from the phase where we actually execute the program.
+[00:00:48 -> 00:00:49] When you compile something
+[00:00:49 -> 00:00:51] using an ahead-of-time or static compiler,
+[00:00:51 -> 00:00:53] you put the program that's actually going to execute
+[00:00:53 -> 00:00:55] onto like a floppy disk,
+[00:00:55 -> 00:00:56] and you put it in the U.S. Postal Service,
+[00:00:56 -> 00:00:58] and that arrives at the destination
+[00:00:58 -> 00:01:00] where you actually execute the program,
+[00:01:00 -> 00:01:01] or at least conceptually.
+[00:01:01 -> 00:01:05] Just-in-time or dynamic compilation looks very different,
+[00:01:05 -> 00:01:07] and the phases of compilation and execution
+[00:01:07 -> 00:01:10] are right next to each other or even conflated.
+[00:01:10 -> 00:01:12] By that I mean that the thing that you put
+[00:01:12 -> 00:01:16] on the floppy disk is not the fully compiled program.
+[00:01:16 -> 00:01:17] It's the source code
+[00:01:17 -> 00:01:19] or maybe some intermediate representation of the program
+[00:01:19 -> 00:01:21] that still has some compilation work to do.
+[00:01:21 -> 00:01:24] That is, there's still going to be some transformation,
+[00:01:24 -> 00:01:26] possibly an opportunity for optimization
+[00:01:26 -> 00:01:28] that happens right at the same time
+[00:01:28 -> 00:01:29] as when you execute the program.
+[00:01:29 -> 00:01:32] When you receive the floppy disk in the mail,
+[00:01:32 -> 00:01:34] the work of compilation is not yet done.
+[00:01:34 -> 00:01:36] In order to actually run the program,
+[00:01:36 -> 00:01:39] you have to compile it right quick before you execute it.
+[00:01:39 -> 00:01:42] That's why it gets the name just-in-time compilation.
+[00:01:44 -> 00:01:47] It's actually more complicated than that in general.
+[00:01:47 -> 00:01:50] That is, usually there's not like one compilation phase,
+[00:01:50 -> 00:01:51] and then we execute the program right after it.
+[00:01:51 -> 00:01:52] That's kind of the simplest form
+[00:01:52 -> 00:01:54] of just-in-time compilation.
+[00:01:54 -> 00:01:56] What is more common is that the compilation
+[00:01:56 -> 00:01:59] and execution are kind of all mixed up with each other.
+[00:01:59 -> 00:02:01] That is, we think of the compiler as running
+[00:02:01 -> 00:02:03] sort of concurrently with the execution of the program
+[00:02:03 -> 00:02:06] and has opportunities to redo compilation stuff.
+[00:02:06 -> 00:02:09] That is, to observe the execution of the program
+[00:02:09 -> 00:02:10] and to re-optimize things.
+[00:02:10 -> 00:02:14] So in the real world, just-in-time compilers
+[00:02:14 -> 00:02:16] really do conflate the notions
+[00:02:16 -> 00:02:20] of program execution with compilation.
+[00:02:20 -> 00:02:22] This sort of brings up the question,
+[00:02:22 -> 00:02:24] why bother doing this?
+[00:02:24 -> 00:02:25] What's wrong with ahead-of-time compilation,
+[00:02:25 -> 00:02:27] the nice, simple version where we just compile
+[00:02:27 -> 00:02:30] the program and then we have the actual executable
+[00:02:30 -> 00:02:33] that will run later with no compilation?
+[00:02:33 -> 00:02:35] Of course, that has benefits and simplicity,
+[00:02:35 -> 00:02:37] and it means that there's not a bunch
+[00:02:37 -> 00:02:39] of heavy compiler machinery that you need
+[00:02:39 -> 00:02:42] to go along with the program to actually execute it.
+[00:02:42 -> 00:02:44] So what are the benefits of just-in-time,
+[00:02:44 -> 00:02:47] AKA dynamic compilation?
+[00:02:47 -> 00:02:48] I think there are two main categories,
+[00:02:48 -> 00:02:50] and they are interrelated.
+[00:02:50 -> 00:02:53] The main one is that just-in-time compilation
+[00:02:53 -> 00:02:56] can exploit information that is not available
+[00:02:56 -> 00:02:57] ahead of time.
+[00:02:57 -> 00:03:00] That is, dynamic compilers can observe the execution
+[00:03:00 -> 00:03:02] of the program so they can see things
+[00:03:02 -> 00:03:05] like the actual inputs the program is running on.
+[00:03:05 -> 00:03:07] That kind of thing is absolutely not available
+[00:03:07 -> 00:03:09] to ahead-of-time compilers.
+[00:03:09 -> 00:03:11] The second main reason is kind of a corollary,
+[00:03:11 -> 00:03:13] which is that some programming languages
+[00:03:13 -> 00:03:16] super, super benefit from having runtime
+[00:03:16 -> 00:03:19] of information available to the compiler.
+[00:03:19 -> 00:03:20] By that, I mean languages with a lot
+[00:03:20 -> 00:03:24] of dynamic features in their semantics.
+[00:03:24 -> 00:03:26] Think, for example, of the category
+[00:03:26 -> 00:03:28] that is sometimes called dynamic languages.
+[00:03:28 -> 00:03:31] That is, ones with very dynamic type systems.
+[00:03:31 -> 00:03:34] I'm thinking, for instance, of JavaScript, Python,
+[00:03:34 -> 00:03:36] and Ruby, and the older languages
+[00:03:36 -> 00:03:39] that really kicked off this whole JIT thing,
+[00:03:39 -> 00:03:42] Smalltalk and Self, fall into the same category.
+[00:03:42 -> 00:03:44] In these languages, it's really hard
+[00:03:44 -> 00:03:46] to analyze these programs to tell exactly
+[00:03:46 -> 00:03:48] what they're going to do, and therefore
+[00:03:48 -> 00:03:50] to emit simple code that does
+[00:03:50 -> 00:03:52] what the program was intended to do.
+[00:03:52 -> 00:03:54] The reason for this is the semantics
+[00:03:54 -> 00:03:56] of the languages themselves build in a lot
+[00:03:56 -> 00:03:59] of dynamic checks that a straightforward
+[00:03:59 -> 00:04:01] ahead-of-time compiler would need
+[00:04:01 -> 00:04:02] to do every single time they do
+[00:04:02 -> 00:04:04] even the simplest operation.
+[00:04:04 -> 00:04:08] For example, consider the expression A plus B in Python.
+[00:04:08 -> 00:04:10] A plus P sounds simple, but in Python,
+[00:04:10 -> 00:04:13] it's a really complicated thing to explain
+[00:04:13 -> 00:04:15] in terms of the semantics of the language.
+[00:04:15 -> 00:04:17] You have to do lots of heavy machinery
+[00:04:17 -> 00:04:20] to figure out how to compute A plus B,
+[00:04:20 -> 00:04:22] because fundamentally, we don't know
+[00:04:22 -> 00:04:23] what the types of A and B are.
+[00:04:24 -> 00:04:26] For example, one thing that the Python semantics
+[00:04:26 -> 00:04:29] say you have to do is try to call a method
+[00:04:29 -> 00:04:32] called underscore underscore add underscore underscore
+[00:04:32 -> 00:04:34] on the object A and pass in B
+[00:04:34 -> 00:04:36] as an argument to that method.
+[00:04:37 -> 00:04:39] Of course, if we somehow knew
+[00:04:39 -> 00:04:41] that A and B were floating point numbers
+[00:04:41 -> 00:04:44] that fit in 32-bit floats,
+[00:04:44 -> 00:04:45] then we could compile this
+[00:04:45 -> 00:04:47] to just a single machine instruction,
+[00:04:47 -> 00:04:50] not looking up a method by the string name
+[00:04:50 -> 00:04:52] and then passing in a parameter,
+[00:04:52 -> 00:04:55] possibly looking for overloads in the class hierarchy,
+[00:04:55 -> 00:04:56] all of which is super expensive.
+[00:04:56 -> 00:04:59] If we knew something about the types of A and B,
+[00:04:59 -> 00:05:01] we could admit much, much simpler code.
+[00:05:01 -> 00:05:03] The problem is, in Python,
+[00:05:03 -> 00:05:05] there are very few situations
+[00:05:05 -> 00:05:07] where statically you can be certain
+[00:05:07 -> 00:05:08] that this is what we're going to do.
+[00:05:10 -> 00:05:12] It's possible, but extremely unlikely
+[00:05:12 -> 00:05:14] in real Python code.
+[00:05:14 -> 00:05:16] So instead, if we have dynamic information
+[00:05:16 -> 00:05:18] that is like during the execution of the program,
+[00:05:18 -> 00:05:22] we observe that the types of A and B are both floats,
+[00:05:22 -> 00:05:24] then we can compile a faster version of the code
+[00:05:24 -> 00:05:27] that works only under those circumstances.
+[00:05:27 -> 00:05:29] It is wrong by the definition
+[00:05:29 -> 00:05:31] of the program in a static environment,
+[00:05:31 -> 00:05:34] but knowing something about the dynamic execution
+[00:05:34 -> 00:05:37] gives us the ability to optimize it further.
+[00:05:37 -> 00:05:39] That's what I mean by saying that some languages,
+[00:05:39 -> 00:05:41] the semantics of those languages,
+[00:05:41 -> 00:05:44] just really cry out for dynamic compilation.
+[00:05:44 -> 00:05:45] There's not that much you can do
+[00:05:45 -> 00:05:47] to optimize ahead of time,
+[00:05:47 -> 00:05:50] and you really need dynamic information
+[00:05:50 -> 00:05:55] in order to optimize these much more dynamic languages.
+[00:05:55 -> 00:05:56] I want to make a couple
+[00:05:56 -> 00:05:59] of very nitpicky terminology points, however.
+[00:05:59 -> 00:06:00] It is a pet peeve of mine
+[00:06:00 -> 00:06:03] when people classify programming languages
+[00:06:03 -> 00:06:06] as interpreted languages or compiled languages,
+[00:06:06 -> 00:06:07] like they'll say that Python or JavaScript
+[00:06:07 -> 00:06:09] is an interpreted language,
+[00:06:09 -> 00:06:13] or that C or Rust is a compiled language.
+[00:06:13 -> 00:06:14] This seems to imply
+[00:06:14 -> 00:06:17] that it's a fundamental aspect of the language
+[00:06:17 -> 00:06:19] that says that it has to be compiled or interpreted.
+[00:06:19 -> 00:06:23] Of course, in 6120, you know this is not true.
+[00:06:23 -> 00:06:24] The concept of a programming language
+[00:06:24 -> 00:06:26] is separate from the concept
+[00:06:26 -> 00:06:28] of the implementation of that programming language.
+[00:06:28 -> 00:06:31] It is possible to write an interpreter for C or for Rust.
+[00:06:31 -> 00:06:33] It is possible to write a compiler
+[00:06:33 -> 00:06:35] for Python or JavaScript.
+[00:06:35 -> 00:06:38] In fact, plenty of compilers exist.
+[00:06:38 -> 00:06:41] So I think it's important not to confuse ourselves
+[00:06:41 -> 00:06:43] into thinking that there's fundamental properties
+[00:06:43 -> 00:06:44] of the language that make it so it's required
+[00:06:44 -> 00:06:46] that certain implementations exist.
+[00:06:46 -> 00:06:48] Of course, there are properties of a language
+[00:06:48 -> 00:06:51] that make it a better idea to do dynamic compilation
+[00:06:51 -> 00:06:52] versus static compilation.
+[00:06:52 -> 00:06:53] But that's very, very different
+[00:06:53 -> 00:06:55] from saying that something is an interpreted language.
+[00:06:55 -> 00:06:57] So I'd much prefer it
+[00:06:57 -> 00:07:01] if you were to never use the phrase interpreted language.
+[00:07:01 -> 00:07:04] The second very nitpicky terminology focus point
+[00:07:04 -> 00:07:08] I wanna make is that compilers versus interpreters
+[00:07:08 -> 00:07:11] is especially in modern era, that's a spectrum.
+[00:07:11 -> 00:07:13] There is often not a single bright line
+[00:07:13 -> 00:07:16] that separates a compiler from an interpreter.
+[00:07:16 -> 00:07:17] The biggest way that this manifests
+[00:07:17 -> 00:07:19] is that even language implementations
+[00:07:19 -> 00:07:23] that we think of accurately as being primarily interpreters
+[00:07:23 -> 00:07:26] often have compilers somewhere within them.
+[00:07:26 -> 00:07:28] For example, CPython is the main implementation
+[00:07:28 -> 00:07:30] of the Python programming language.
+[00:07:30 -> 00:07:34] CPython is quite accurately summarized
+[00:07:34 -> 00:07:36] as being an interpreter for Python.
+[00:07:36 -> 00:07:38] And yet it still has aspects of a compiler
+[00:07:38 -> 00:07:40] going on inside of it.
+[00:07:40 -> 00:07:44] It starts with a Python source program, just in text,
+[00:07:44 -> 00:07:46] that gets parsed into an AST,
+[00:07:46 -> 00:07:48] but the interpreter doesn't write on this AST directly.
+[00:07:48 -> 00:07:51] Instead, there is a compiler from the AST
+[00:07:51 -> 00:07:53] to a format called the bytecode,
+[00:07:53 -> 00:07:55] which is an instruction-based representation
+[00:07:55 -> 00:07:57] that looks sort of like Brill or LLVM.
+[00:07:57 -> 00:07:59] Next, the interpreter,
+[00:07:59 -> 00:08:00] which is kind of the main component
+[00:08:00 -> 00:08:02] of the CPython implementation,
+[00:08:02 -> 00:08:04] runs on that bytecode representation.
+[00:08:04 -> 00:08:06] This is both simpler to write
+[00:08:06 -> 00:08:08] because the bytecode format is more regular,
+[00:08:08 -> 00:08:10] and also it can often be a lot faster
+[00:08:10 -> 00:08:12] than doing a recursive traversal of an AST.
+[00:08:12 -> 00:08:16] So even CPython, which really is, at its soul,
+[00:08:16 -> 00:08:18] an interpreter, has a compiler within it.
+[00:08:18 -> 00:08:20] And this is not just CPython.
+[00:08:20 -> 00:08:22] A lot of the language implementations
+[00:08:22 -> 00:08:23] that get called interpreters,
+[00:08:23 -> 00:08:26] and I think that's a good summary of what they are,
+[00:08:26 -> 00:08:28] have compilers somewhere within them.
+[00:08:28 -> 00:08:30] And a lot of the dynamic compilers out there
+[00:08:30 -> 00:08:32] have interpreters within them.
+[00:08:32 -> 00:08:34] This is all just to say that while it's a useful summary
+[00:08:34 -> 00:08:37] to say that some implementation is an interpreter
+[00:08:37 -> 00:08:39] or a compiler, looking one level down
+[00:08:39 -> 00:08:40] in terms of abstraction,
+[00:08:40 -> 00:08:43] it's usually a little bit more complicated than that,
+[00:08:43 -> 00:08:44] although I won't get mad at you
+[00:08:44 -> 00:08:47] for calling CPython an interpreter, for example.
+[00:08:48 -> 00:08:51] So let's talk about how to do just-in-time compilation.
+[00:08:51 -> 00:08:52] I want to talk about kind of like
+[00:08:52 -> 00:08:53] the high level structure
+[00:08:53 -> 00:08:56] that most just-in-time compilers share.
+[00:08:56 -> 00:09:00] Most JITs work by coupling an interpreter mode
+[00:09:00 -> 00:09:02] and a mode in which they're executing compiled code.
+[00:09:03 -> 00:09:06] There are a few reasons why we need both modes.
+[00:09:06 -> 00:09:09] The first is that we need a way
+[00:09:09 -> 00:09:11] to observe the execution of programs,
+[00:09:11 -> 00:09:13] to get all that rich dynamic information
+[00:09:13 -> 00:09:15] that JITs are supposed to be able to observe
+[00:09:15 -> 00:09:16] about programs.
+[00:09:16 -> 00:09:19] Then we can feed that into the compiler
+[00:09:19 -> 00:09:21] that uses that information to do optimizations
+[00:09:21 -> 00:09:23] to produce the compiled code.
+[00:09:25 -> 00:09:28] So the interpreter exists in one sense
+[00:09:28 -> 00:09:30] to let us observe facts about the execution
+[00:09:30 -> 00:09:34] of the program before we're ready to compile the program.
+[00:09:34 -> 00:09:36] The second reason is that
+[00:09:36 -> 00:09:38] because we're doing compilation online,
+[00:09:38 -> 00:09:40] that is like during the execution of the program,
+[00:09:40 -> 00:09:43] the speed of compilation matters a lot.
+[00:09:43 -> 00:09:45] That is, programs can start up really slow
+[00:09:45 -> 00:09:47] if we have to do a bunch of compilation
+[00:09:47 -> 00:09:49] before we can execute the program.
+[00:09:49 -> 00:09:50] So the interpreter also exists
+[00:09:50 -> 00:09:53] as kind of like a fast startup mode.
+[00:09:53 -> 00:09:55] That is, we can start interpreting the program
+[00:09:55 -> 00:09:58] immediately before really doing any transformations at all.
+[00:09:58 -> 00:10:00] And then we can eventually,
+[00:10:00 -> 00:10:02] once we've observed enough about the program,
+[00:10:02 -> 00:10:04] we can switch into compiled code mode.
+[00:10:05 -> 00:10:08] You'll notice that I also have a back edge on this graph
+[00:10:08 -> 00:10:11] that is going from compiled code back to the interpreter.
+[00:10:11 -> 00:10:12] So why would it ever make sense
+[00:10:12 -> 00:10:15] to switch into compiled mode,
+[00:10:15 -> 00:10:18] executing this really fast optimized code,
+[00:10:18 -> 00:10:20] and then switch back to the interpreted mode?
+[00:10:21 -> 00:10:23] There are two reasons for this again.
+[00:10:23 -> 00:10:25] The first is that we don't want to compile
+[00:10:25 -> 00:10:26] all the code at once.
+[00:10:26 -> 00:10:29] That is, we might have a few hot routines
+[00:10:29 -> 00:10:30] that are executed a lot.
+[00:10:30 -> 00:10:32] We'll compile those because it's worth
+[00:10:32 -> 00:10:35] expending the extra time to do that compilation.
+[00:10:35 -> 00:10:39] But some of the code will be left in interpreted mode
+[00:10:39 -> 00:10:40] because it's just not all that important.
+[00:10:40 -> 00:10:45] If it only makes up 0.01% of the total execution time,
+[00:10:45 -> 00:10:48] it's not worth spending the time to compile that code.
+[00:10:48 -> 00:10:51] The second reason is that lots of the optimizations
+[00:10:51 -> 00:10:52] we do in the compiled code
+[00:10:52 -> 00:10:55] often rely on those dynamic assumptions.
+[00:10:55 -> 00:10:58] That is, information we got from executing the program.
+[00:10:58 -> 00:11:01] This means that those implementations,
+[00:11:01 -> 00:11:03] those optimized programs,
+[00:11:03 -> 00:11:06] are optimized for special cases.
+[00:11:06 -> 00:11:08] They're not a general implementation of the program.
+[00:11:08 -> 00:11:11] So just-in-time compilers often need to
+[00:11:11 -> 00:11:12] observe the execution
+[00:11:12 -> 00:11:14] even when they're executing the compiled code
+[00:11:14 -> 00:11:17] to make sure those assumptions are not violated.
+[00:11:17 -> 00:11:20] For example, if we knew that our expression a plus b
+[00:11:20 -> 00:11:22] in the Python example before
+[00:11:22 -> 00:11:24] was most of the time working on floats,
+[00:11:24 -> 00:11:25] but some of the time,
+[00:11:25 -> 00:11:29] that is, eventually we got an addition with a string,
+[00:11:29 -> 00:11:32] we would have to throw the appropriate exception
+[00:11:32 -> 00:11:35] in order for the program to handle it.
+[00:11:35 -> 00:11:37] And that wouldn't be implemented
+[00:11:37 -> 00:11:40] in the efficient specialized version of the code
+[00:11:40 -> 00:11:41] that's just for floats.
+[00:11:41 -> 00:11:45] So we'd need a way to switch back to interpreter mode
+[00:11:45 -> 00:11:47] to run the exceptional case,
+[00:11:47 -> 00:11:49] that is to handle the full semantics of the program
+[00:11:49 -> 00:11:51] in a slower mode.
+[00:11:51 -> 00:11:54] Here's a slightly more detailed state machine.
+[00:11:54 -> 00:11:55] We start out in the interpreted mode
+[00:11:55 -> 00:11:59] and we observe when some code
+[00:11:59 -> 00:11:59] becomes hot.
+[00:11:59 -> 00:12:02] Hot is the term that just means it's being executed a lot.
+[00:12:02 -> 00:12:05] So we expect that it's worthwhile to compile.
+[00:12:05 -> 00:12:07] Then we transition from the plain interpreter mode
+[00:12:07 -> 00:12:09] which is supposed to be fairly lightweight
+[00:12:09 -> 00:12:12] into an often much slower profiling mode.
+[00:12:12 -> 00:12:15] That is now that we've run this function 100 times,
+[00:12:15 -> 00:12:17] let's run it the 101th time
+[00:12:17 -> 00:12:19] as in the profiling mode
+[00:12:19 -> 00:12:21] so that we can observe its types
+[00:12:21 -> 00:12:22] and which directions the branches go
+[00:12:22 -> 00:12:24] in that kind of a thing.
+[00:12:24 -> 00:12:26] Then once we've profiled the code,
+[00:12:26 -> 00:12:28] we feed all that information and the code
+[00:12:28 -> 00:12:30] into our optimizing compiler.
+[00:12:30 -> 00:12:32] So this compiler looks very much like
+[00:12:32 -> 00:12:34] just an ordinary ahead of time compiler.
+[00:12:34 -> 00:12:36] It's just included in the runtime system
+[00:12:36 -> 00:12:40] and also it has access to profiling information.
+[00:12:40 -> 00:12:42] So in that sense, it's like a profile guided
+[00:12:42 -> 00:12:45] or feedback driven optimizing compiler.
+[00:12:45 -> 00:12:47] It produces compiled code
+[00:12:47 -> 00:12:49] that we can then execute for a while.
+[00:12:49 -> 00:12:51] Eventually, if we find that our assumptions
+[00:12:51 -> 00:12:53] that we made when producing this compiled code
+[00:12:53 -> 00:12:56] were invalidated, like the types are wrong for example,
+[00:12:56 -> 00:12:58] then we have to go through a process
+[00:12:58 -> 00:12:59] called deoptimization,
+[00:12:59 -> 00:13:01] in which case we return to interpreted mode.
+[00:13:01 -> 00:13:03] And then eventually we will go back
+[00:13:03 -> 00:13:05] to compiled modes through the top arc
+[00:13:05 -> 00:13:06] or maybe we will hit code
+[00:13:06 -> 00:13:08] that has been previously compiled
+[00:13:08 -> 00:13:11] and we'll transition to executing previously compiled code
+[00:13:11 -> 00:13:14] without going through the compiler again the second time.
+[00:13:14 -> 00:13:17] This means that the recipe for any JIT compiler
+[00:13:17 -> 00:13:20] typically consists of at least an interpreter,
+[00:13:20 -> 00:13:23] a profiling mode and an optimizing compiler
+[00:13:23 -> 00:13:25] that can use that profiling information.
+[00:13:25 -> 00:13:26] Together with other stuff
+[00:13:26 -> 00:13:30] like the heuristics to tell when code is hot
+[00:13:30 -> 00:13:32] and ways to transition, to fluidly transition
+[00:13:32 -> 00:13:35] between interpreted mode and compiled mode.
+[00:13:37 -> 00:13:38] Another quirk of most modern JITs
+[00:13:38 -> 00:13:43] is that it's insufficient to just have this distinction
+[00:13:43 -> 00:13:47] between fast startup and slow execution
+[00:13:47 -> 00:13:49] in the interpreter and slow startup
+[00:13:49 -> 00:13:51] and fast execution in the compiled code.
+[00:13:51 -> 00:13:52] It actually makes sense to have gradations
+[00:13:52 -> 00:13:54] in between them.
+[00:13:54 -> 00:13:57] So a lot of JITs today have multiple tiers.
+[00:13:57 -> 00:14:00] That is not just interpreter and compiler,
+[00:14:00 -> 00:14:03] but interpreter and like kind of slow bad compiler
+[00:14:03 -> 00:14:05] that at least it runs fast
+[00:14:05 -> 00:14:07] and then like an optimizing compiler
+[00:14:07 -> 00:14:09] and then like a super optimizing compiler beyond that.
+[00:14:09 -> 00:14:13] And the state machine, if you will, of the JIT
+[00:14:13 -> 00:14:16] is responsible for switching individual pieces of the code
+[00:14:16 -> 00:14:18] between all of those different pieces.
+[00:14:18 -> 00:14:20] And these are called the tiers of the JIT.
+[00:14:20 -> 00:14:22] The lowest tier being the interpreter
+[00:14:22 -> 00:14:24] and the highest tier being the fastest,
+[00:14:24 -> 00:14:28] slowest running compiler that the JIT has.
+[00:14:28 -> 00:14:31] For example, I sometimes refer to the JavaScript compiler
+[00:14:31 -> 00:14:32] from Apple JavaScript Core,
+[00:14:32 -> 00:14:34] which has a lot of these great blog posts
+[00:14:34 -> 00:14:36] describing the kind of architecture
+[00:14:36 -> 00:14:39] of what goes into their compiler.
+[00:14:39 -> 00:14:40] And this is taken from a blog post
+[00:14:40 -> 00:14:42] when they introduced the fourth tier.
+[00:14:42 -> 00:14:43] They previously had three tiers.
+[00:14:43 -> 00:14:46] This introduced the fourth tier of optimization
+[00:14:46 -> 00:14:49] into the JavaScript compiler.
+[00:14:49 -> 00:14:52] And you can see that there's an interpreter here
+[00:14:52 -> 00:14:54] all the way to the highest tier JIT
+[00:14:54 -> 00:14:58] that they have called the FTL layer.
+[00:14:58 -> 00:15:00] JavaScript, as far as the JavaScript Core compiler,
+[00:15:00 -> 00:15:02] as far as I know, still has four tiers,
+[00:15:02 -> 00:15:03] although it looks quite a bit different
+[00:15:03 -> 00:15:05] than it did in 2014.
+[00:15:05 -> 00:15:07] I really recommend reading this blog post
+[00:15:07 -> 00:15:10] if you wanna see some of the nitty gritty ins and outs
+[00:15:10 -> 00:15:12] of how you optimize compilers
+[00:15:12 -> 00:15:13] for different levels of aggressiveness
+[00:15:13 -> 00:15:15] and different levels of slowness
+[00:15:15 -> 00:15:17] in a multi-tiered JIT compiler.
+[00:15:18 -> 00:15:20] So we've now seen the basic ingredients
+[00:15:20 -> 00:15:22] that go into any JIT compiler.
+[00:15:22 -> 00:15:26] And I want to now show you a distinction
+[00:15:26 -> 00:15:28] between two very different philosophies
+[00:15:28 -> 00:15:30] for how to build a JIT.
+[00:15:30 -> 00:15:33] They are called method JITs and tracing JITs.
+[00:15:33 -> 00:15:36] Method JITs are kind of the normal thing
+[00:15:36 -> 00:15:38] that I think is what you would guess you would build
+[00:15:38 -> 00:15:41] based on the description I've given you so far.
+[00:15:41 -> 00:15:43] Method JITs compile one function at a time.
+[00:15:43 -> 00:15:45] That is, like, you have a function called F.
+[00:15:45 -> 00:15:49] If that function F gets called, say, 500 times,
+[00:15:49 -> 00:15:51] then you decide it's time to compile it,
+[00:15:51 -> 00:15:53] and then you transition the execution of F
+[00:15:53 -> 00:15:55] from interpreted mode to compiled mode.
+[00:15:55 -> 00:15:57] And maybe you create, like, different variants of F
+[00:15:57 -> 00:15:58] for different arguments.
+[00:15:58 -> 00:16:01] In any case, the unit of compilation that you do
+[00:16:01 -> 00:16:03] is a function or something like a function
+[00:16:03 -> 00:16:06] that exists in your source language.
+[00:16:06 -> 00:16:07] These have a somewhat funky name.
+[00:16:07 -> 00:16:09] I think that it would be more sensible
+[00:16:09 -> 00:16:11] if it was just called a function JIT.
+[00:16:11 -> 00:16:12] But I think that my best guess
+[00:16:12 -> 00:16:14] for why they're called method JITs
+[00:16:14 -> 00:16:18] is because JITs have so much intertwined
+[00:16:18 -> 00:16:21] with the Java programming language,
+[00:16:21 -> 00:16:23] and Java people insist that they don't have functions,
+[00:16:23 -> 00:16:25] they have methods, they're called methods in Java,
+[00:16:25 -> 00:16:27] and there's no such thing as a function.
+[00:16:27 -> 00:16:29] So I think that's why this is called a method JIT,
+[00:16:29 -> 00:16:30] even though it would be probably more sensible
+[00:16:30 -> 00:16:33] just to call it a function JIT.
+[00:16:33 -> 00:16:36] The other kind of JIT is quite a bit funkier.
+[00:16:36 -> 00:16:38] And instead of compiling, interpreting,
+[00:16:38 -> 00:16:41] and then profiling and compiling entire functions
+[00:16:41 -> 00:16:43] or function-like units of code at a time,
+[00:16:43 -> 00:16:47] instead extracts a path through the execution
+[00:16:47 -> 00:16:51] of a control flow graph, perhaps even interprocedurally.
+[00:16:51 -> 00:16:53] So this can go through a single function
+[00:16:53 -> 00:16:56] or perhaps jumping through multiple functions.
+[00:16:56 -> 00:16:59] A single hot path that traverses through the code
+[00:16:59 -> 00:17:01] will extract one of those out
+[00:17:01 -> 00:17:03] and compile it as straight line code.
+[00:17:03 -> 00:17:05] So I've drawn a little CFG here,
+[00:17:05 -> 00:17:08] and I've drawn one execution path
+[00:17:08 -> 00:17:10] that you might take through that CFG
+[00:17:10 -> 00:17:13] that is starting from A and then going down through G.
+[00:17:13 -> 00:17:15] That's one way that this code might run.
+[00:17:15 -> 00:17:17] The idea in a tracing JIT
+[00:17:17 -> 00:17:19] is to observe the execution.
+[00:17:19 -> 00:17:22] And instead of compiling this entire thing
+[00:17:22 -> 00:17:24] to code that has a branch at A
+[00:17:24 -> 00:17:26] and then a branch at C or whatever,
+[00:17:26 -> 00:17:29] we'll just leave out C and F altogether
+[00:17:29 -> 00:17:31] because they never executed.
+[00:17:31 -> 00:17:34] Instead, we'll only compile the actual parts of the code,
+[00:17:34 -> 00:17:36] the basic blocks that actually did execute
+[00:17:36 -> 00:17:39] in that one trace, that one path through the program.
+[00:17:39 -> 00:17:43] So we'll compile, we'll string together the code
+[00:17:43 -> 00:17:46] from A and then B and then D and then E and then G
+[00:17:46 -> 00:17:48] and create this straight line program
+[00:17:48 -> 00:17:50] that just consists of the instructions
+[00:17:50 -> 00:17:53] that actually executed with no branching whatsoever.
+[00:17:53 -> 00:17:54] Then we compile that code
+[00:17:54 -> 00:17:56] as just like ordinary straight line code
+[00:17:56 -> 00:17:58] with no branches whatsoever,
+[00:17:58 -> 00:18:00] which means that when in the future,
+[00:18:00 -> 00:18:02] when we like start this function we start at A
+[00:18:02 -> 00:18:04] under certain assumptions,
+[00:18:04 -> 00:18:08] we can just execute this blazing fast branch-free path
+[00:18:08 -> 00:18:10] that captures the behavior
+[00:18:10 -> 00:18:12] that we saw the last time this function was executed.
+[00:18:12 -> 00:18:14] Of course, we will need to be careful
+[00:18:14 -> 00:18:17] about when to fall back to the more complicated execution
+[00:18:17 -> 00:18:19] that like actually includes the code for C and F
+[00:18:19 -> 00:18:21] in case that needs to run.
+[00:18:21 -> 00:18:24] But in the common case, the hopefully common case
+[00:18:24 -> 00:18:27] where behavior in the future matches behavior in the past,
+[00:18:27 -> 00:18:30] we can emulate traversing this path through the CFG
+[00:18:30 -> 00:18:34] with this very simple branch-free straight line code.
+[00:18:35 -> 00:18:38] So this can often be a profitable way
+[00:18:38 -> 00:18:42] to simplify the code in a way that's not really possible
+[00:18:42 -> 00:18:44] when you don't have profiling information,
+[00:18:44 -> 00:18:47] when you're doing a straightforward ahead of time compiler.
+[00:18:47 -> 00:18:49] It's a pretty common question to ask at this point,
+[00:18:49 -> 00:18:53] whether method JITs or tracing JITs are better in general.
+[00:18:53 -> 00:18:56] I would love you to pause the video for a moment now
+[00:18:56 -> 00:18:59] and try to answer for yourself, which is better?
+[00:18:59 -> 00:19:00] And what ways are they better?
+[00:19:00 -> 00:19:02] The method JIT or a tracing JIT?
+[00:19:02 -> 00:19:05] Try to come up with pros and cons for both.
+[00:19:05 -> 00:19:11] Excellent thoughts.
+[00:19:11 -> 00:19:12] I'd really appreciate it
+[00:19:12 -> 00:19:13] if you were to post them in the Zulu thread
+[00:19:13 -> 00:19:15] associated with this lesson.
+[00:19:15 -> 00:19:18] Generally speaking, I've heard so much contradictory
+[00:19:18 -> 00:19:19] information about this.
+[00:19:19 -> 00:19:22] I've heard that tracing JITs are easier to implement,
+[00:19:22 -> 00:19:25] but give you worse performance in the limit.
+[00:19:25 -> 00:19:28] I've heard that method JITs do exactly the same thing.
+[00:19:28 -> 00:19:31] That is like maybe they're easier to implement,
+[00:19:31 -> 00:19:32] but are sort of limited in performance
+[00:19:32 -> 00:19:36] versus the amazing power of the tracing transformation
+[00:19:36 -> 00:19:37] you can apply to programs.
+[00:19:37 -> 00:19:39] I think the jury's still out on this.
+[00:19:39 -> 00:19:42] I don't think that there is a one true path
+[00:19:42 -> 00:19:44] for building JITs.
+[00:19:44 -> 00:19:47] I think that there are arguments to be made on both sides.
+[00:19:47 -> 00:19:50] Anecdotally, I believe that the dominant approach
+[00:19:50 -> 00:19:53] that most people build their JITs with are method JITs.
+[00:19:53 -> 00:19:54] That is, a lot of the JavaScript compilers
+[00:19:54 -> 00:19:55] you're familiar with,
+[00:19:55 -> 00:19:58] a lot of the mainstream Java compilers out there,
+[00:19:58 -> 00:20:01] those are all method JITs in the sort of simple style.
+[00:20:01 -> 00:20:04] There are a few really famous tracing JITs, however.
+[00:20:04 -> 00:20:07] For example, the PyPyJIT for Python,
+[00:20:07 -> 00:20:11] which is the main efficient implementation of Python
+[00:20:11 -> 00:20:13] outside of CPython, that's a tracing JIT.
+[00:20:13 -> 00:20:15] In fact, it does this amazing thing
+[00:20:15 -> 00:20:17] where it traces an interpreter for Python
+[00:20:17 -> 00:20:20] in order to generate machine code.
+[00:20:20 -> 00:20:22] So this is just evidence to say
+[00:20:22 -> 00:20:25] that there are successful examples of JITs
+[00:20:25 -> 00:20:26] in both categories.
+[00:20:26 -> 00:20:28] And I don't think that there is a foregone conclusion
+[00:20:28 -> 00:20:32] that one is obviously better than the other.
+[00:20:32 -> 00:20:34] I do, however, want to demonstrate to you
+[00:20:34 -> 00:20:35] in a little more detail
+[00:20:35 -> 00:20:37] what it feels like to build a tracing JIT.
+[00:20:37 -> 00:20:38] And I'm gonna do that
+[00:20:38 -> 00:20:40] just by going through the tracing process
+[00:20:40 -> 00:20:43] to build the code that we're going to optimize
+[00:20:43 -> 00:20:44] for a little toy program.
+[00:20:44 -> 00:20:46] This is a completely contrived, boring program
+[00:20:46 -> 00:20:49] that looks a little bit like a JavaScripty syntax,
+[00:20:49 -> 00:20:52] and we're going to trace this program.
+[00:20:52 -> 00:20:54] So this program will start at main.
+[00:20:54 -> 00:20:56] It does some arithmetic operations,
+[00:20:56 -> 00:20:59] defines a few new variables, and returns a value.
+[00:20:59 -> 00:21:01] There's an invocation of a function f here
+[00:21:01 -> 00:21:04] that just subtracts one from a variable.
+[00:21:04 -> 00:21:06] I told you this is a really dumb program.
+[00:21:06 -> 00:21:07] There's also an invocation of g.
+[00:21:07 -> 00:21:09] Don't worry about what g does
+[00:21:09 -> 00:21:10] because we're not actually going to execute it.
+[00:21:10 -> 00:21:12] The thing about tracing is that we only are going
+[00:21:13 -> 00:21:15] to compile a subset of the code in this program,
+[00:21:15 -> 00:21:18] the subset that corresponds to the trace
+[00:21:18 -> 00:21:20] that we actually executed.
+[00:21:20 -> 00:21:22] So let's imagine that we are tracing this program
+[00:21:22 -> 00:21:27] with, say, x equals 42.
+[00:21:27 -> 00:21:30] So we're starting out the program with the argument 42,
+[00:21:30 -> 00:21:32] and we're going to trace through the execution.
+[00:21:32 -> 00:21:34] So of course, the first thing that happens
+[00:21:34 -> 00:21:37] is that this statement runs,
+[00:21:37 -> 00:21:39] and then we need to do this comparison,
+[00:21:39 -> 00:21:41] and then that turns out to be true.
+[00:21:41 -> 00:21:43] So we'll do the true body,
+[00:21:43 -> 00:21:45] and then finally we'll return z.
+[00:21:45 -> 00:21:47] So that's the execution of this program.
+[00:21:47 -> 00:21:50] Say that you are a tracing JIT compiler,
+[00:21:50 -> 00:21:53] and you've decided it's time to compile the main function.
+[00:21:53 -> 00:21:55] This means that you will trace the execution
+[00:21:55 -> 00:21:57] during an interpretation of this function,
+[00:21:57 -> 00:21:59] writing down every statement that executes
+[00:21:59 -> 00:22:01] along the path through the program.
+[00:22:02 -> 00:22:04] So that means that the first thing we'll do
+[00:22:04 -> 00:22:06] is we'll say y equals x plus one.
+[00:22:06 -> 00:22:09] And here's the first funky thing about tracing.
+[00:22:09 -> 00:22:10] During this execution,
+[00:22:10 -> 00:22:12] we know that x is 42.
+[00:22:12 -> 00:22:14] So maybe the thing to do here is to say,
+[00:22:14 -> 00:22:17] well, we can on the fly simplify this
+[00:22:17 -> 00:22:19] to say y is 42 plus one,
+[00:22:19 -> 00:22:22] or maybe we can just conclude that y is 43 directly.
+[00:22:22 -> 00:22:24] Now we have much simpler code,
+[00:22:24 -> 00:22:26] but of course this would be a terrible idea
+[00:22:26 -> 00:22:28] because we don't actually expect to invoke main
+[00:22:28 -> 00:22:31] a million times with exactly the same arguments.
+[00:22:31 -> 00:22:35] We're going to assume that we execute similarly
+[00:22:35 -> 00:22:37] in the sense that we take the same path,
+[00:22:37 -> 00:22:40] but not that we have exactly the same value.
+[00:22:40 -> 00:22:43] So that means that we will preserve the computation
+[00:22:43 -> 00:22:45] y equals x plus one,
+[00:22:45 -> 00:22:47] saying that like in this execution,
+[00:22:47 -> 00:22:50] I know, I know x was 42 and therefore y was 43,
+[00:22:50 -> 00:22:51] but we'll say,
+[00:22:51 -> 00:22:53] we're just going to write down the code that executes
+[00:22:53 -> 00:22:57] without folding in the actual values from the arguments.
+[00:22:58 -> 00:23:01] The next step is to compute x is less than 100.
+[00:23:01 -> 00:23:02] So we'll definitely want to write that down
+[00:23:02 -> 00:23:04] as part of our trace.
+[00:23:04 -> 00:23:07] But when we do this divergence and control flow,
+[00:23:07 -> 00:23:09] that is when we have decided
+[00:23:09 -> 00:23:12] that we're going to take one path through the program
+[00:23:12 -> 00:23:15] going to here instead of going down here,
+[00:23:15 -> 00:23:17] then we need to sort of record in the trace
+[00:23:17 -> 00:23:20] that this trace went through a control divergence
+[00:23:20 -> 00:23:21] at this point.
+[00:23:21 -> 00:23:24] That is this trace only works for those paths
+[00:23:24 -> 00:23:28] that followed the same path that we're executing right now.
+[00:23:28 -> 00:23:30] So the typical thing that tracing jets do
+[00:23:30 -> 00:23:32] is introduce a special statement
+[00:23:32 -> 00:23:36] that you can put into the tracing code called a guard.
+[00:23:36 -> 00:23:38] So there'll be like an actual statement
+[00:23:38 -> 00:23:39] called guard or something
+[00:23:39 -> 00:23:42] that says in the emitted trace
+[00:23:42 -> 00:23:43] that we get out of this program,
+[00:23:43 -> 00:23:48] that says abort here if this condition is false.
+[00:23:48 -> 00:23:49] If it's true,
+[00:23:49 -> 00:23:51] then just keep on going through the straight line code.
+[00:23:51 -> 00:23:53] If it's false, then we have some work to do.
+[00:23:53 -> 00:23:55] We have to like recover and get out of the compiled code
+[00:23:55 -> 00:23:57] and transition back to the execution
+[00:23:57 -> 00:23:59] of the fully general interpreted code.
+[00:23:59 -> 00:24:01] So we'll insert that guard
+[00:24:01 -> 00:24:02] in order to capture the effect
+[00:24:02 -> 00:24:05] of the control flow divergence that happens at the if.
+[00:24:05 -> 00:24:07] Then we can keep on tracing like normal.
+[00:24:07 -> 00:24:09] That is, we'll just copy this code down
+[00:24:09 -> 00:24:11] and say Z equals F of Y.
+[00:24:11 -> 00:24:14] For the moment I'm doing this intra-procedurally
+[00:24:14 -> 00:24:17] that is not traversing into the function F.
+[00:24:17 -> 00:24:21] And then finally I can say return Z.
+[00:24:21 -> 00:24:24] So we end up with this code that I have pre-prepared.
+[00:24:24 -> 00:24:27] This straight line code with guards in it.
+[00:24:27 -> 00:24:29] So when I say straight line,
+[00:24:29 -> 00:24:32] I mean that it doesn't have any control flow divergence.
+[00:24:32 -> 00:24:34] However, that is a little bit of a lie
+[00:24:34 -> 00:24:37] because it does have guard instructions.
+[00:24:37 -> 00:24:40] Guard instruction don't do something funky
+[00:24:40 -> 00:24:41] that wouldn't be very straight line at all,
+[00:24:41 -> 00:24:43] like jumping somewhere later in the code,
+[00:24:43 -> 00:24:46] but they do sort of like jump out of here.
+[00:24:46 -> 00:24:48] That is like they sort of abort the execution
+[00:24:48 -> 00:24:50] of this straight line program.
+[00:24:50 -> 00:24:54] The idea with tracing is that we can preserve those
+[00:24:54 -> 00:24:56] guards and not really be concerned too much
+[00:24:56 -> 00:24:58] about the case when they fail.
+[00:24:58 -> 00:25:01] That is we're going to optimize ruthlessly
+[00:25:01 -> 00:25:02] for the case where all the guards
+[00:25:02 -> 00:25:04] in the program succeed.
+[00:25:04 -> 00:25:07] We will still be able to detect when that goes wrong,
+[00:25:07 -> 00:25:11] but we will say that it's okay if it takes us a long time.
+[00:25:11 -> 00:25:12] That is if it's a really expensive operation
+[00:25:12 -> 00:25:15] to recover from a guard being false
+[00:25:15 -> 00:25:20] to getting back to an execution of the interpreter.
+[00:25:20 -> 00:25:22] That can be really, really slow
+[00:25:22 -> 00:25:24] because we're going to optimize for the common case.
+[00:25:24 -> 00:25:27] What we hope is like 99% of the time the guard is true.
+[00:25:27 -> 00:25:29] So we'll make that case as fast as possible,
+[00:25:29 -> 00:25:33] possibly at the expense of making it very slow
+[00:25:33 -> 00:25:35] to recover when the guard is false.
+[00:25:35 -> 00:25:37] Okay, so to refine this trace a little bit farther,
+[00:25:37 -> 00:25:39] I'm going to imagine that we change the trace a little bit.
+[00:25:39 -> 00:25:42] So instead of being a intra-procedural trace,
+[00:25:42 -> 00:25:44] it will now be an inter-procedural trace.
+[00:25:44 -> 00:25:47] That is it will go when you call functions,
+[00:25:47 -> 00:25:48] it will continue tracing in code
+[00:25:48 -> 00:25:51] through the execution of that function and then come back.
+[00:25:51 -> 00:25:53] I hope this is fairly easy to see how to do.
+[00:25:53 -> 00:25:54] In fact, it might actually be easier
+[00:25:54 -> 00:25:56] than preserving the function calls.
+[00:25:56 -> 00:25:58] What we need to do is instead of just putting
+[00:25:58 -> 00:26:00] in this call z equals f of y,
+[00:26:00 -> 00:26:02] we just need to like insert all the computations
+[00:26:02 -> 00:26:05] as they execute from the invocation of f
+[00:26:05 -> 00:26:06] while we're tracing.
+[00:26:06 -> 00:26:08] So that produces code that looks something like this.
+[00:26:08 -> 00:26:11] That is, we'll just like assign the arguments to f
+[00:26:14 -> 00:26:15] to the parameter y,
+[00:26:15 -> 00:26:18] and then we'll just like put the only statement
+[00:26:18 -> 00:26:21] that existed in the body of that function f right here.
+[00:26:21 -> 00:26:23] And now we have an even simpler trace.
+[00:26:23 -> 00:26:25] So doing inter-procedural tracing
+[00:26:25 -> 00:26:27] can be super helpful in getting you down
+[00:26:27 -> 00:26:29] to like even simpler code
+[00:26:29 -> 00:26:30] where you can make even more assumptions
+[00:26:30 -> 00:26:33] and do even more awesome optimizations.
+[00:26:33 -> 00:26:35] Optimizations are what we're going to do next.
+[00:26:35 -> 00:26:36] I wanna show you how to take this trace
+[00:26:36 -> 00:26:39] and do some optimizations that are really easy to do
+[00:26:39 -> 00:26:41] because we're in straight line code.
+[00:26:41 -> 00:26:43] That is just a single basic block
+[00:26:43 -> 00:26:44] with these guard side exits.
+[00:26:45 -> 00:26:47] The first thing I wanna do to transform this code
+[00:26:47 -> 00:26:50] is I wanna take this guard expression
+[00:26:50 -> 00:26:52] and put it as early as possible.
+[00:26:52 -> 00:26:54] It behooves me in general to check guards
+[00:26:54 -> 00:26:56] as early as possible for multiple reasons.
+[00:26:56 -> 00:26:59] The first is just that it's good to fail fast
+[00:26:59 -> 00:27:01] to do as little computation before you find out
+[00:27:01 -> 00:27:03] that you're wrong and have to recover.
+[00:27:03 -> 00:27:06] The second reason is that if we move guards around,
+[00:27:06 -> 00:27:08] then we get larger contiguous regions of code
+[00:27:08 -> 00:27:11] that we can optimize under the same assumptions.
+[00:27:11 -> 00:27:13] So in this case,
+[00:27:13 -> 00:27:16] this code happens to be like basically in SSA form,
+[00:27:16 -> 00:27:17] which is probably a good idea honestly
+[00:27:17 -> 00:27:19] if we're optimizing traces.
+[00:27:19 -> 00:27:23] So it is perfectly valid to move this guard
+[00:27:23 -> 00:27:26] up to the top because there's no assignments to x
+[00:27:26 -> 00:27:27] before we execute it.
+[00:27:27 -> 00:27:29] So we get this nice, very simple code
+[00:27:29 -> 00:27:31] that just like assigns to variables
+[00:27:31 -> 00:27:33] without any guards in between.
+[00:27:33 -> 00:27:35] Now we can do something really simple
+[00:27:35 -> 00:27:39] like a local value numbering, for example,
+[00:27:39 -> 00:27:41] to reinterpret this code and say like
+[00:27:41 -> 00:27:42] under the assumption,
+[00:27:42 -> 00:27:45] now that we have that bad old complicated code
+[00:27:45 -> 00:27:47] with a bunch of control flow before,
+[00:27:47 -> 00:27:49] under the assumption that x is less than 100,
+[00:27:49 -> 00:27:51] all we need to do is this code
+[00:27:51 -> 00:27:53] or something equivalent to this code.
+[00:27:53 -> 00:27:54] And by staring at this for a little while,
+[00:27:54 -> 00:27:57] you can see that we can fold through some copies
+[00:27:57 -> 00:27:59] and we can do some canonicalization
+[00:27:59 -> 00:28:01] of arithmetic instructions.
+[00:28:01 -> 00:28:03] In the end, what we're doing is taking x
+[00:28:03 -> 00:28:03] and adding one to it
+[00:28:03 -> 00:28:05] and then subtracting one from that
+[00:28:05 -> 00:28:07] and then returning the result.
+[00:28:07 -> 00:28:10] And that is exactly the same as just returning x.
+[00:28:10 -> 00:28:14] So we end up by just optimizing all the code away
+[00:28:14 -> 00:28:16] under the assumption that x is less than 100.
+[00:28:16 -> 00:28:17] And this, I have to remark,
+[00:28:17 -> 00:28:20] is one of the coolest things about a tracing JIT.
+[00:28:20 -> 00:28:21] It can do optimizations
+[00:28:22 -> 00:28:24] that don't really seem appropriate
+[00:28:24 -> 00:28:26] in a normal representation of the program.
+[00:28:26 -> 00:28:29] That is, previously we had to add one to the variable
+[00:28:29 -> 00:28:31] and then go into the branch
+[00:28:31 -> 00:28:32] to see if we wanted to subtract one
+[00:28:32 -> 00:28:34] from that variable again.
+[00:28:35 -> 00:28:36] It's possible to do an optimization
+[00:28:36 -> 00:28:38] that cancels that out conditionally,
+[00:28:38 -> 00:28:41] but it's a lot easier to see how to do that optimization
+[00:28:41 -> 00:28:42] if we first trace the program.
+[00:28:42 -> 00:28:44] That is, if we first just extract
+[00:28:44 -> 00:28:46] the one path through the CFG,
+[00:28:46 -> 00:28:48] through the interprocedural CFG
+[00:28:48 -> 00:28:52] that we were ever going to care about,
+[00:28:52 -> 00:28:54] that is, we'll just extract this one path
+[00:28:54 -> 00:28:56] and say, as long as this is true,
+[00:28:56 -> 00:28:57] as long as this guard holds,
+[00:28:57 -> 00:28:59] then we know we don't have to worry about
+[00:28:59 -> 00:29:00] any of the rest of the code.
+[00:29:00 -> 00:29:01] So that means we don't have to worry
+[00:29:01 -> 00:29:03] about adding one or subtracting one,
+[00:29:03 -> 00:29:06] and those can sort of cancel each other out.
+[00:29:06 -> 00:29:08] And that's kind of the magic of tracing JITs.
+[00:29:08 -> 00:29:09] We get to take complicated programs
+[00:29:09 -> 00:29:13] and distill out very simple traces through them
+[00:29:13 -> 00:29:15] in order to do awesome optimizations
+[00:29:15 -> 00:29:17] that might not otherwise be possible.
+[00:29:18 -> 00:29:20] So that has been a whirlwind tour
+[00:29:20 -> 00:29:22] of how JIT compilers work.
+[00:29:23 -> 00:29:26] In the next video, I'm going to walk you through
+[00:29:26 -> 00:29:28] an extension that I made to the Brill language
+[00:29:28 -> 00:29:31] to make it possible to do some tracing yourself.
+[00:29:31 -> 00:29:34] The task for this lesson is going to be implementing
+[00:29:34 -> 00:29:36] a tracing mechanism for Brill.
+[00:29:36 -> 00:29:37] As you might've already guessed,
+[00:29:37 -> 00:29:38] you're going to have to do something
+[00:29:38 -> 00:29:41] very much like the example I just showed you.
+[00:29:41 -> 00:29:42] It won't be in the concept
+[00:29:42 -> 00:29:45] of a full-blown multi-tier JIT or anything,
+[00:29:45 -> 00:29:46] but it should give you a feel
+[00:29:46 -> 00:29:49] of what the potential is for building a tracing JIT
+[00:29:49 -> 00:29:52] beyond a standard ahead-of-time compiler.

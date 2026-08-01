@@ -1,0 +1,30 @@
+Title: CS 6120: Lesson 7: Interprocedural Analysis
+Video ID: 1_2shcxd1h
+Detected language: en
+------------------------------------------------------------
+
+[00:00:00 -> 00:00:08] Hi there. This lesson is going to be pretty straightforward. I just want to introduce
+[00:00:08 -> 00:00:13] you to a few different classic optimizations that apply to loops, which will inform the
+[00:00:13 -> 00:00:18] task that you have to do over the next couple of weeks, which is just to implement one
+[00:00:18 -> 00:00:22] of these optimizations. You can choose to do it either in Brill or LLVM, and you
+[00:00:22 -> 00:00:26] can pick from one of these, or if you're feeling creative, to find your own optimization
+[00:00:26 -> 00:00:30] you want to implement. I'm just going to give you a taste of how these optimizations
+[00:00:31 -> 00:00:37] This is a pretty open-ended task, so figuring out how to turn these rough skeletons into
+[00:00:37 -> 00:00:41] actual implementations is entirely up to you. You will recall from a couple of lessons
+[00:00:41 -> 00:00:49] ago that we described how to find natural loops in CFGs. Natural loops correspond
+[00:00:49 -> 00:00:55] to looping constructs like for, and while, and do-while in normal programming languages.
+[00:00:56 -> 00:01:01] They are strongly connected components of basic blocks in a CFG that have a single
+[00:01:01 -> 00:01:06] entry block, that is, a unique basic block that has edges coming in from the outside,
+[00:01:06 -> 00:01:12] like this one. All of the optimizations I'm going to describe in this lesson apply
+[00:01:12 -> 00:01:16] to natural loops, so probably the first thing that you're going to need to do in
+[00:01:16 -> 00:01:23] your implementation of your optimization is to find the natural loops in the CFG. Then
+[00:01:23 -> 00:01:28] you'll just be analyzing and manipulating the code within those loops. You will also
+[00:01:28 -> 00:01:31] recall from a couple of lessons ago that we saw loop invariant code motion as an
+[00:01:31 -> 00:01:35] example of an optimization that applies to natural loops. Loop invariant code
+[00:01:35 -> 00:01:40] motion identifies loop invariant code like this expression a times b here. It's
+[00:01:40 -> 00:01:44] loop invariant because it computes the exact same value on every iteration of the loop.
+[00:01:44 -> 00:01:54] Loop invariant code motion just assigns that computation like this outside of the loop,
+[00:01:54 -> 00:01:58] and then replaces it with references to that variable. So this way we don't have
+[00:01:58 -> 00:02:02] to do a multiplication on every iteration, and we get the same answer as the previous
+[00:02:02 -> 00:02:07] program. That's loop invariant code motion. You can return to a couple of lessons ago
+[00:02:07 -> 00:02:09] if you want to see more detail on how to carry it.

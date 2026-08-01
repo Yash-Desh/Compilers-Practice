@@ -1,0 +1,545 @@
+Title: CS 6120: Lesson 10: Memory Management
+Video ID: 1_21p8mjsw
+Detected language: en
+------------------------------------------------------------
+
+[00:00:05 -> 00:00:09] Hi! Today we're going to talk about memory management, that is, automatic memory management,
+[00:00:09 -> 00:00:13] aka garbage collection. The reason that we care about automatically managing memory
+[00:00:13 -> 00:00:17] is because manually managing your memory in programs is extremely hard and very, very,
+[00:00:17 -> 00:00:23] very error-prone. This example on the left-hand side comes from the Brill memory extension,
+[00:00:23 -> 00:00:30] for instance. In Brill, you can allocate memory and you can free memory, but nothing really
+[00:00:30 -> 00:00:36] stops you from freeing the same memory twice, which is definitely a problem at runtime. And
+[00:00:36 -> 00:00:42] in languages that make you manually manage memory, this is the sort of thing that's really
+[00:00:42 -> 00:00:47] easy to do. And of course, it's not just double freeze. There are all sorts of other kinds of
+[00:00:47 -> 00:00:52] bugs, really, really bad ones, that happen when you are forced to manually reason about
+[00:00:52 -> 00:00:58] memory. You can, for example, use memory after it has been freed and perhaps reused for some
+[00:00:58 -> 00:01:04] other purpose. You can read uninitialized memory. You can forget to free memory. You can
+[00:01:04 -> 00:01:09] extend over the end of some memory you are supposed to use and read someone else's memory
+[00:01:09 -> 00:01:15] next door, aka a buffer overflow. All these problems cause real serious issues for software
+[00:01:15 -> 00:01:19] engineering, which motivates the need for some sort of automatic support in getting
+[00:01:19 -> 00:01:25] memory management right. Just for example, last year there was this very highly publicized
+[00:01:25 -> 00:01:30] finding from Microsoft, the security people at Microsoft who found that enumerating all of
+[00:01:30 -> 00:01:38] their CVEs, which are these reports of security problems within Microsoft, fully 70% of them
+[00:01:38 -> 00:01:44] stem from memory management bugs in languages that are unsafe with respect to memory. That is
+[00:01:44 -> 00:01:48] that let you write the kinds of bugs that are possible to write in the Braille memory
+[00:01:48 -> 00:01:54] extension. I think it's useful to ask ourselves, just in general, what the current
+[00:01:54 -> 00:02:00] landscape is with respect to memory management. That is, all those bugs that have to do with
+[00:02:01 -> 00:02:05] incorrect management of memory, those come from languages that make the programmer
+[00:02:05 -> 00:02:09] manage memory themselves. There are lots of other languages that automatically do it. That's
+[00:02:09 -> 00:02:14] what this lesson is going to be about. I think it's instructive to try to brainstorm
+[00:02:14 -> 00:02:19] languages that fall into these categories. That is, ones with those problems, that is,
+[00:02:19 -> 00:02:24] ones in the manual category. Then there's two different subcategories of automatic
+[00:02:24 -> 00:02:30] memory management I want to think about. One is when memory is managed dynamically. That is,
+[00:02:30 -> 00:02:35] something happens at runtime to help automatically reclaim memory. Then there's something where all
+[00:02:35 -> 00:02:40] that reasoning is done completely at compile time. I'm not going to make you pause the
+[00:02:40 -> 00:02:44] video or anything. I just want you to think for a moment, as I write these things down,
+[00:02:44 -> 00:02:50] like pick your favorite languages, pick your top 10 favorite languages, and try to categorize them
+[00:02:50 -> 00:02:54] along these columns. The standard barriers for manual memory management are definitely
+[00:02:54 -> 00:02:59] C and C++. There are others, of course, but these are the famous ones and the ones where
+[00:02:59 -> 00:03:04] the vast majority of those 70% of those bugs we're talking about come from. Then there is
+[00:03:04 -> 00:03:10] dynamic and automatic memory management. This, I would argue, is where the vast majority of
+[00:03:10 -> 00:03:27] languages that you probably use fall. For example, okay, I'm getting tired of writing,
+[00:03:27 -> 00:03:32] but you kind of get the idea. Languages from Haskell to JavaScript all use automatic
+[00:03:32 -> 00:03:37] management of memory. The final category, static but automatic management of memory,
+[00:03:37 -> 00:03:42] where all the decisions can be made at compile time, contains approximately one standard
+[00:03:42 -> 00:03:47] barrier in a mainstream language, and that is Rust. You can find other examples. They're
+[00:03:47 -> 00:03:53] mostly research-y, however. The vast majority of languages that attempt to automatically
+[00:03:53 -> 00:03:58] manage your memory for you and therefore avoid those scary memory bugs are automatic
+[00:03:58 -> 00:04:03] and dynamically managed, and that's what this lesson is going to be about. In particular,
+[00:04:03 -> 00:04:07] we want to create a programming model that looks more like this, that is taking off on
+[00:04:07 -> 00:04:12] that Brill memory extension. What we really want is to be able to allocate memory and then use
+[00:04:12 -> 00:04:17] that memory and not worry about freeing it. That is, never write down a free call and allow
+[00:04:17 -> 00:04:23] a combination of the compiler and a dynamic runtime system to free it whenever it deems
+[00:04:23 -> 00:04:29] necessary, whenever it decides to free it. Crucially, it should never free it before we
+[00:04:29 -> 00:04:35] actually need to use it again. Just as a quick reality check for why I'm emphasizing
+[00:04:35 -> 00:04:40] this dynamic management of memory, you can consider a little bit what it might look like
+[00:04:40 -> 00:04:45] if we tried to introduce completely static management of memory. That is, if we tried to
+[00:04:45 -> 00:04:50] guess when to free memory just by analyzing the program, instead of doing some sort of
+[00:04:50 -> 00:04:54] accounting at runtime. It's not that hard for this little program. That is, we can
+[00:04:54 -> 00:04:58] definitely tell we're done with this memory right at the end, if this is truly the end of
+[00:04:58 -> 00:05:03] the program, but let's consider a slightly more complicated example. This is like kind of
+[00:05:03 -> 00:05:06] pseudo Java syntax. We'll make a hash map, we'll make an object, and we're going to put
+[00:05:06 -> 00:05:14] it into the hash map, depending on taking input from the keyboard, for example. Put the thing
+[00:05:14 -> 00:05:18] into the hash map, and then we'll take input from the keyboard again to decide whether to
+[00:05:18 -> 00:05:25] overwrite the same key to store null. That is, to throw away the object something before
+[00:05:25 -> 00:05:29] finally iterating over the entire map and using the stuff. The question is, how will
+[00:05:29 -> 00:05:35] the compiler know at any given point, somewhere in the middle here, whether the something object
+[00:05:35 -> 00:05:39] is going to be used again in the future? That is, whether it's going to be used in one of these
+[00:05:39 -> 00:05:46] calls to dot use. Is it going to be used in the future here? Of course, that decision depends on
+[00:05:46 -> 00:05:52] two things that make it hard to decide. First, there is taking input from the user. We can
+[00:05:52 -> 00:05:56] never really be sure what input the user is going to provide by typing on the keyboard,
+[00:05:56 -> 00:06:00] so the compiler can't possibly know the answer. And the second is, it needs to know
+[00:06:00 -> 00:06:04] something about the semantics of hash map. That is, it needs to know that overwriting
+[00:06:04 -> 00:06:09] with the same key, which again might come from some unknown place, that that is going to destroy
+[00:06:09 -> 00:06:13] the object and we're no longer going to need it in the future. So all of these reasons about
+[00:06:14 -> 00:06:18] analyzing a whole bunch of code that seems irrelevant to the task at hand,
+[00:06:18 -> 00:06:22] and also dealing with dynamic behavior, mean that it's really, really hard to decide
+[00:06:22 -> 00:06:26] where to free memory if we have to do it completely statically. And that's why this
+[00:06:26 -> 00:06:33] lesson is primarily about the dynamic automatic memory management techniques,
+[00:06:33 -> 00:06:38] which are collectively typically called garbage collection. In garbage collection, that is,
+[00:06:38 -> 00:06:45] in automatically managing memory, the idea is that instead of doing what we really want,
+[00:06:45 -> 00:06:50] which is to free memory the moment that it is certain we're never going to use it again
+[00:06:50 -> 00:06:55] in the future, which that's too hard, instead we'll do something a little bit easier using
+[00:06:55 -> 00:07:00] the evidence actually available to the compiler and the runtime system, which is that we will
+[00:07:00 -> 00:07:06] free memory after sometime after it becomes unreachable. So we need a definition of
+[00:07:06 -> 00:07:13] unreachable. That depends on sort of viewing the data structures that exist in a program
+[00:07:13 -> 00:07:18] as a graph. And what we mean is the graph theory notion of unreachable in that graph.
+[00:07:18 -> 00:07:22] More intuitively, it just means that it's impossible for a program to diverse any
+[00:07:22 -> 00:07:28] pointers through its data structures to arrive at the point where it can refer to a thing.
+[00:07:28 -> 00:07:32] And if that's not possible, that is, it's not possible through any path through the program to
+[00:07:32 -> 00:07:37] get there, then that thing is classified as unreachable, and therefore can be freed by
+[00:07:37 -> 00:07:42] a garbage collector. So here's a picture of how the data structures in a program might look
+[00:07:42 -> 00:07:47] and how to view them as a graph. So there are variables involved here. There's like,
+[00:07:47 -> 00:07:51] I'm thinking of these as local variables. They can be normal integers, in which case
+[00:07:51 -> 00:07:54] the garbage collector doesn't really care about them, or they can be pointers, in which case
+[00:07:54 -> 00:07:58] they point to other stuff. There can also be global variables, aside from just the
+[00:07:58 -> 00:08:05] stack local variables. And then the actual objects involved can be things like objects
+[00:08:05 -> 00:08:10] with multiple fields, like in object-oriented languages, or there might be arrays that also
+[00:08:10 -> 00:08:16] contain pointers. But in any case, the values inside those objects can themselves be primitives,
+[00:08:16 -> 00:08:19] like they could just get an int, for example, or they can point to other objects, like this
+[00:08:20 -> 00:08:26] field of object B points to array A, and this field of array A points to itself.
+[00:08:27 -> 00:08:32] This, I hope you can see, is how you form a graph. That is, the values that can contain data,
+[00:08:32 -> 00:08:38] those are the vertices in the graph, and then where the pointers within those values point to,
+[00:08:38 -> 00:08:43] those are the edges in the graph, and self-loops are allowed. Broadly speaking,
+[00:08:43 -> 00:08:51] it's really helpful to divide up this memory graph into two main things. There is the heap,
+[00:08:51 -> 00:08:57] that is like the stuff that is allocated off of the stack, that this is the stuff we will
+[00:08:57 -> 00:09:02] eventually want to free, and then there are the variables that can refer to that, that can
+[00:09:02 -> 00:09:06] refer somewhere into the heap. In particular, these are the local variables from the stack and
+[00:09:06 -> 00:09:11] the global variables. Those can contain pointers to stuff within the heap, but we're never going
+[00:09:11 -> 00:09:16] to free a global variable by itself. That exists forever, and we're not tasked with freeing local
+[00:09:16 -> 00:09:21] variables. Those are going to go away when the stack frame returns. We're only considering those
+[00:09:21 -> 00:09:25] things because they can point into the heap, and that's where all the challenge exists. That
+[00:09:25 -> 00:09:30] is, that's where we need to decide when to free values. Those things on the left-hand side
+[00:09:30 -> 00:09:35] here, that is the local variables and the global variables, are typically called the roots,
+[00:09:35 -> 00:09:40] because that's where we'll start looking for live stuff. That is, the question is, is your
+[00:09:40 -> 00:09:45] value reachable from the roots? And then, of course, the rest of the stuff that we may or
+[00:09:45 -> 00:09:50] may not free, that's the heap. Here's a little bit of fun garbage collector terminology for you.
+[00:09:50 -> 00:09:56] People will often refer to the algorithm that's looking for stuff to free. That's the collector.
+[00:09:56 -> 00:10:02] That's the runtime system that decides when to free stuff. I think it's hilarious that in the
+[00:10:02 -> 00:10:07] garbage collection literature, the other stuff, that is the actual program you're trying to
+[00:10:07 -> 00:10:11] write gets this kind of diminutive name, the mutator, that is your program you're actually
+[00:10:11 -> 00:10:15] trying to run the whole reason we're doing this. That's the mutator to distinguish it from the
+[00:10:15 -> 00:10:21] collector. Then the terms live and dead are pretty similar to the terms that we used for
+[00:10:21 -> 00:10:27] local variables when doing our data flow analyses, for example. Live just means it's
+[00:10:27 -> 00:10:31] going to be used again, a thing is going to be used again sometime in the future,
+[00:10:31 -> 00:10:36] and dead means the other thing. So I want to introduce you to a big distinction
+[00:10:36 -> 00:10:43] within the world of automatic memory management. There are two main lenses through which you can
+[00:10:43 -> 00:10:49] see the task of trying to find unreachable values and calling free on them. I'm going
+[00:10:49 -> 00:10:53] to distinguish these two things along several different axes and try to explain them both
+[00:10:53 -> 00:10:59] at once. The two main categories here that I'm talking about are called reference counting
+[00:10:59 -> 00:11:04] and mark sweep or tracing. And very briefly as an overview, reference counting says I'm
+[00:11:04 -> 00:11:08] going to keep a number associated with every value that indicates how many references there
+[00:11:08 -> 00:11:15] are to it, and when that drops to zero I know I can free it. And mark sweep says I'm going to
+[00:11:15 -> 00:11:19] start at the roots and do a kind of graph search from there and everything I can find
+[00:11:19 -> 00:11:24] from it I will keep and everything else I will free. I'm going to go through these step by
+[00:11:24 -> 00:11:30] step and hopefully you get an idea of how these are kind of related but different from each other.
+[00:11:31 -> 00:11:34] All right, my cat Lefty got really excited about this distinction between reference
+[00:11:34 -> 00:11:37] counting and garbage collection, so she's going to be with us for
+[00:11:37 -> 00:11:42] the next little bit of the lesson. Lefty, say hello to 6120. Say hello to Lefty.
+[00:11:42 -> 00:11:47] Okay, so as I said the first difference between reference counting and tracing is that with
+[00:11:47 -> 00:11:51] metadata they have to keep along with every object that they might want to free.
+[00:11:51 -> 00:11:57] So reference counting tries to keep a value associated with every node in the graph,
+[00:11:57 -> 00:12:02] that is every value we might collect, that represents its in degree, that is how many
+[00:12:02 -> 00:12:08] references, how many pointers are pointing into that node, who might have a reference to that
+[00:12:08 -> 00:12:14] thing. Mark sweep or tracing or sometimes it's just called garbage collection doesn't
+[00:12:14 -> 00:12:19] have any extra metadata instead it just instead it's just going to analyze the graph.
+[00:12:19 -> 00:12:24] The second difference is when these two things run. Reference counting runs every time you change
+[00:12:24 -> 00:12:29] a pointer, that is every time you take a pointer that pointed somewhere, that you create a new
+[00:12:29 -> 00:12:33] pointer or you modify a field of an object, for example, that contains a pointer to point
+[00:12:33 -> 00:12:39] somewhere else, the reference counting has something to do, that is it needs to change
+[00:12:39 -> 00:12:42] some of those reference counts in some of the values in the variables. It needs to
+[00:12:42 -> 00:12:47] decrement the value of the thing it used to point to and increment the reference count
+[00:12:47 -> 00:12:54] of the thing it now points to. When mark sweep or tracing gc runs, it runs just periodically,
+[00:12:54 -> 00:12:58] that is like it kind of doesn't really have any bookkeeping to do so it's just like
+[00:12:58 -> 00:13:02] whenever you get around to it just call me back and I will run and try to find the garbage
+[00:13:02 -> 00:13:08] and delete it for you. At that point, however, it has to do something quite a bit
+[00:13:08 -> 00:13:12] more complicated, it needs to do some sort of a graph search, that is it needs to actually
+[00:13:12 -> 00:13:17] search, that is it needs to actually view the heap as a graph that you can run just a normal
+[00:13:17 -> 00:13:23] graph algorithm on it, like DFS or BFS or something, and it needs to create a data
+[00:13:23 -> 00:13:28] structure at that point where it keeps track of whether it has reached every single object
+[00:13:28 -> 00:13:31] to the entire heap. So it needs to like say I have reached this thing and this thing and
+[00:13:31 -> 00:13:36] this thing, but during the course of this BFS that I'm doing or whatever, I haven't
+[00:13:36 -> 00:13:41] yet reached this other object over here. And then finally, when that whole thing is done,
+[00:13:41 -> 00:13:45] it locates all the values that it has not reached, that is like where that
+[00:13:45 -> 00:13:50] bookkeeping bit is zero and it calls free on them. The next thing in these two columns is
+[00:13:50 -> 00:13:54] a little animation of what's going on in the heap when these two different algorithms run,
+[00:13:54 -> 00:13:59] that is when reference counting runs on a reference update and when mark sweep tracing GC
+[00:13:59 -> 00:14:03] runs periodically whenever it's invoked. So let's look at reference counting first.
+[00:14:03 -> 00:14:06] This scenario that I'm setting up is a tiny little heap that has two different roots
+[00:14:06 -> 00:14:10] pointing to two different objects that currently have a reference count of one.
+[00:14:11 -> 00:14:15] Then what the mutator does, that is what the actual program does, is it changes the value
+[00:14:15 -> 00:14:18] of one of those roots to instead of pointing to the second object, it now points to the first
+[00:14:18 -> 00:14:25] object. What reference counting now needs to do is of course count those references,
+[00:14:25 -> 00:14:29] that is on every pointer update it has to do this thing. It has to look at where the
+[00:14:29 -> 00:14:35] value where the pointer was previously pointing and take that count and mark it down as
+[00:14:35 -> 00:14:39] and decremented and it needs to look at where the reference is currently pointing
+[00:14:39 -> 00:14:42] and just take that value and increment it. So now that's two.
+[00:14:43 -> 00:14:48] The next thing it needs to do is look at where it previously just moved the the pointer
+[00:14:48 -> 00:14:53] from where it just did the decrement and see if it hit zero and if it did then we need to
+[00:14:53 -> 00:15:00] call free. So we go from this picture to this picture where that value that just became a
+[00:15:00 -> 00:15:05] reference count zero that now freed and we have one more thing to do which is to recursively call
+[00:15:05 -> 00:15:12] ourselves and do that for the value we just freed. So if our heap in fact looks like this,
+[00:15:12 -> 00:15:16] that is like this now zero count object is pointing to somewhere else and then after
+[00:15:16 -> 00:15:21] we delete it we have to do the exact same procedure for the pointers we just got rid of
+[00:15:22 -> 00:15:27] as part of this object. So recursively notice that this used to point to this object
+[00:15:27 -> 00:15:31] it now points nowhere so all we need to do is decrement the value on that object
+[00:15:31 -> 00:15:37] it becomes reference count zero and now we will free it. That's quite a bit different from
+[00:15:37 -> 00:15:45] the picture that that that tracing GC uses. Typically people talk about during the process
+[00:15:45 -> 00:15:50] of the of doing a tracing GC of nodes having different colors that is just to indicate the
+[00:15:50 -> 00:15:56] different state that they are in. The colors that people typically use are gray white and black
+[00:15:56 -> 00:16:01] where gray means we are currently working on visiting the thing that is like this just sort
+[00:16:01 -> 00:16:04] of implicitly stores the work list of the algorithm stuff we still have work to do on.
+[00:16:05 -> 00:16:11] The white vertices are values on the heap that are unvisited that is that they might be
+[00:16:11 -> 00:16:16] deleted if we end and things are still in the white state. Black means we are done visiting
+[00:16:16 -> 00:16:19] and we have no more work to do and also because we visited it of course we're not
+[00:16:19 -> 00:16:23] going to free that thing because we encountered it during during visiting the entire heap.
+[00:16:24 -> 00:16:29] So the heap starts out the the graph of memory starts out looking like this where the entire
+[00:16:29 -> 00:16:33] heap is colored white meaning we haven't gotten there yet and all the roots are colored gray
+[00:16:33 -> 00:16:38] meaning that they yes they are alive because their roots and roots are always alive but
+[00:16:38 -> 00:16:43] we haven't finished visiting them yet that is we still have work to do in order to traverse
+[00:16:43 -> 00:16:53] the references coming from these roots. The first step then is to visit those roots
+[00:16:53 -> 00:16:58] and then everything you do like during the search is just take a given node that was gray
+[00:16:58 -> 00:17:03] color it black and then color everything that it points to gray that's kind of the whole thing
+[00:17:03 -> 00:17:07] so we will color the roots black and say the stuff that they point to now that's gray
+[00:17:08 -> 00:17:13] the next frame just has those things are now black this one didn't have anything to point to so
+[00:17:13 -> 00:17:18] we're kind of done with that one this one points to here so this one's now gray and if you
+[00:17:18 -> 00:17:22] recursively do this over and over again until you have no more gray nodes then you will
+[00:17:22 -> 00:17:26] have the black nodes that were reachable from the roots and the white nodes that are not
+[00:17:26 -> 00:17:31] reachable from there and the only step that you have to do after this is just look for
+[00:17:31 -> 00:17:35] all the white nodes so you need to have a way to do that and you call free on all of them
+[00:17:36 -> 00:17:40] so that is the big distinction that i want to leave you with today the rest of this lesson
+[00:17:40 -> 00:17:45] is going to be further distinctions on the side of mark sweep or tracing garbage collection
+[00:17:45 -> 00:17:50] but this is the big difference when you start out and to add automatic memory management to
+[00:17:50 -> 00:17:54] your language do are you going to count references and do that kind of like eagerly
+[00:17:54 -> 00:17:58] on every reference update or are you going to do it kind of lazily and try to find the
+[00:17:58 -> 00:18:04] garbage by doing a big heavy graph search periodically instead of on every reference update
+[00:18:07 -> 00:18:12] like you to think for a little bit about whether the one of these is better than the other
+[00:18:12 -> 00:18:17] that is i would like you to think of as many reasons as you can to prefer reference counting
+[00:18:17 -> 00:18:23] or to prefer mark sweep pause the video now and write down your reasons that is really try
+[00:18:23 -> 00:18:32] to be positive about both of them i would love to hear what you came up with by posting in
+[00:18:32 -> 00:18:38] zulip especially if it doesn't match the like very classic uh the conventional wisdom that
+[00:18:38 -> 00:18:42] i'm about to spout for the strengths the relative strengths of these two techniques
+[00:18:43 -> 00:18:53] one nice thing about reference counting is that it is deterministic in the sense that it doesn't
+[00:18:53 -> 00:18:59] depend on someone else deciding when to run the garbage collector it runs immediately when
+[00:18:59 -> 00:19:04] the mutator changes a pointer so it's really easy to see from looking at your program what's
+[00:19:04 -> 00:19:08] going to happen and that's not really true with mark sweep which can run at any time
+[00:19:08 -> 00:19:16] and spend as long as it wants and find as much garbage as it can the second big advantage that
+[00:19:16 -> 00:19:23] i think reference counting has is that it is pretty damn simple that is it's pretty easy
+[00:19:23 -> 00:19:26] to see how to implement it it's pretty easy to understand how it works and there's not like
+[00:19:26 -> 00:19:31] a bunch of complicated graph traversal algorithms going on behind the scenes mark sweep on the
+[00:19:31 -> 00:19:35] other hand is going to be the subject of the rest of this lesson for a reason it creates
+[00:19:35 -> 00:19:40] a huge design space of possible choices and there's many different ways to do it all of
+[00:19:40 -> 00:19:45] them more complex than the last one reference counting at the very least is quite simple
+[00:19:46 -> 00:19:52] mark sweep garbage collection however has one really really really huge advantage over reference
+[00:19:52 -> 00:19:58] counting which is dealing with cycles if for example you have a situation where your
+[00:19:59 -> 00:20:06] your roots don't actually point to a data structure but everything in that data structure
+[00:20:07 -> 00:20:12] points to itself if you just have a cycle in the heap graph then it is definitely the case
+[00:20:12 -> 00:20:16] that that entire day structure all three of these nodes in this little example are
+[00:20:16 -> 00:20:21] unreachable and you should free them however in the reference counting world
+[00:20:21 -> 00:20:27] all of these have reference count one because they have in degree one so a perfectly good
+[00:20:27 -> 00:20:32] reference counter can't find this garbage this is a huge fundamental limitation to the way the
+[00:20:32 -> 00:20:37] reference counting works and it means that lots of languages out there that primarily depend on
+[00:20:37 -> 00:20:44] a reference counter like the main implementation of python for example also have a backup
+[00:20:44 -> 00:20:49] garbage collector that is a backup mark sweep collector that just works that is only there
+[00:20:49 -> 00:20:55] to try to find cycles and free those for you another really big advantage that that mark
+[00:20:55 -> 00:21:02] sweep collectors have is they make the the mutator fast by taking off bookkeeping from
+[00:21:02 -> 00:21:10] the critical path a different way to put this is that a big downside of reference counting
+[00:21:10 -> 00:21:14] is it has to do something on every pointer update that is every change every time you
+[00:21:14 -> 00:21:19] change a field with a pointer type every time you like delete a pointer or create a
+[00:21:19 -> 00:21:24] new pointer you have extra bookkeeping work to do and it's not really true with at least the
+[00:21:24 -> 00:21:30] purest definitions of mark sweep collection you can defer all that work to a different phase
+[00:21:30 -> 00:21:37] where you traverse the entire heap so those are the two big headline differences there's of course
+[00:21:37 -> 00:21:42] a lot of smaller ones and i'm really interested in what you wrote so i again want to emphasize
+[00:21:42 -> 00:21:48] that i am curious to see what you you wrote down as advantages and disadvantages on zulip
+[00:21:48 -> 00:21:52] if you can as i hinted at before the rest of this lesson is going to be about distinctions
+[00:21:52 -> 00:21:57] in the research about the ways to build mark sweep garbage collectors the first subcategory
+[00:21:57 -> 00:22:04] we will examine is conservative garbage collectors whereas what we saw so far in the example of a
+[00:22:04 -> 00:22:11] mark sweep collector is guaranteed to free all garbage that is to identify as white all those
+[00:22:11 -> 00:22:17] nodes that are unreachable conservative gcs do not do that they do guarantee as you would really
+[00:22:17 -> 00:22:22] really want that they don't free things that are still reachable however they don't guarantee
+[00:22:22 -> 00:22:27] that they free all the garbage that is all the uh the unreachable stuff it's worth noting that
+[00:22:27 -> 00:22:33] conservative gcs were invented later so we had to go back and retroactively classify normal
+[00:22:33 -> 00:22:37] gcs that is ones that actually free all the garbage as precise so the distinction is between
+[00:22:37 -> 00:22:44] precise and conservative gcs conservative gcs on the face sound really bad why would you ever
+[00:22:44 -> 00:22:50] want something to leave something in memory after it's no longer reachable that is to like
+[00:22:50 -> 00:22:55] to lose some data and never free it and indeed of course it's not a good thing to do that
+[00:22:55 -> 00:23:00] but there are real advantages that conservative gcs have the big one is that they can work
+[00:23:00 -> 00:23:06] on memory unsafe languages namely things like c and c plus plus where you don't know which
+[00:23:06 -> 00:23:10] things are pointers and which things are integers that is where it's possible to kind
+[00:23:10 -> 00:23:15] of like squirrel away pointers in data structures that the compiler has no hope of knowing
+[00:23:16 -> 00:23:22] whether they are pointers or not so the trick behind conservative gcs is they look at every
+[00:23:22 -> 00:23:28] word in memory and they try to decide just by looking at the memory whether it can be a
+[00:23:28 -> 00:23:33] pointer or not so you can see how you can do this in c and c plus plus even though it
+[00:23:33 -> 00:23:37] seems antithetical to the design of c plus plus that you should be able to do garbage
+[00:23:37 -> 00:23:42] collection all you have to do is scan over the stack that is where the roots might live
+[00:23:42 -> 00:23:47] and say does this word does this like a series of four or eight bytes depending on the machine
+[00:23:47 -> 00:23:50] that you're running on does it look like a pointer does that look like a pointer
+[00:23:51 -> 00:23:57] and the way that you can answer that is does it point to memory that is like addresses in
+[00:23:57 -> 00:24:03] the in the virtual address space of the process that first of all are live pages so
+[00:24:03 -> 00:24:09] if you just have like five for example you probably don't have a page mapped into your
+[00:24:09 -> 00:24:14] process that contains the address five usually they're much larger addresses than that where
+[00:24:14 -> 00:24:20] you have your actual pages and then secondly do they contain a value that do those addresses
+[00:24:20 -> 00:24:26] point to somewhere that we have previously mallocked so if you if you look at this
+[00:24:26 -> 00:24:30] this pointer it doesn't point to anywhere in the heap that is in point to any particular
+[00:24:30 -> 00:24:36] object that has been previously allocated but this one doesn't either it goes out of the range
+[00:24:36 -> 00:24:44] but this one if we have a object allocated at these addresses for example this thing seems to
+[00:24:44 -> 00:24:49] point here so conservative garbage collector says well this number looks like a pointer
+[00:24:49 -> 00:24:54] i must because i'm conservative i don't want to to free values that might still be reachable
+[00:24:54 -> 00:24:59] i have to assume that it's a pointer so i'll just assume that this is a heap object that
+[00:24:59 -> 00:25:04] i need to keep around that is that i need to mark as black instead of white and not free it
+[00:25:05 -> 00:25:09] so it's kind of amazing that it's possible to write a garbage collector that doesn't know
+[00:25:09 -> 00:25:14] what a pointer even is and just by looking at numbers it's possible to decide well what are
+[00:25:14 -> 00:25:18] all the things that i must keep around just to be sure that i'm not freeing memory that's
+[00:25:18 -> 00:25:23] going to be used in the future it is possible to create these things and people do actually
+[00:25:23 -> 00:25:28] use them in the cnc++ land there are actually other reasons to make conservative
+[00:25:28 -> 00:25:33] garbage collectors too for instance this is a really cool blog post from the developers
+[00:25:33 -> 00:25:38] of the javascript compiler at apple that is the one that lives in safari on macs and iphones
+[00:25:39 -> 00:25:47] the garbage collector for the javascript runtime uses a conservative garbage collector
+[00:25:47 -> 00:25:51] so here's the little sentence from their blog post where they say precisely that they're
+[00:25:51 -> 00:25:56] doing exactly this technique that is being used for cc and c++ where they can scan over
+[00:25:56 -> 00:26:00] the stack and registers conservatively just looking at everyone and deciding like
+[00:26:00 -> 00:26:05] does this look like a pointer that is without using extra metadata from the
+[00:26:05 -> 00:26:10] language to tell it whether it's a pointer or not my question for you is why would they do
+[00:26:10 -> 00:26:16] this that is in a language like javascript where you absolutely know because the compiler
+[00:26:16 -> 00:26:20] made them which things are pointers and which things are not which things are just normal
+[00:26:20 -> 00:26:29] integers how can you possibly why would you ever use a conservative collector you are free to
+[00:26:29 -> 00:26:33] actually read this blog post to find out but you're also free to just pause this video and
+[00:26:33 -> 00:26:37] think about it for a second what are some reasons that you might you might use a
+[00:26:37 -> 00:26:42] conservative collector in a language where it's not strictly necessary that is where the
+[00:26:42 -> 00:26:51] compiler can tell you which values are pointers and which are not i'm not going to tell you
+[00:26:52 -> 00:26:57] i would love you to post on azulip if you have any ideas about why they might do this
+[00:26:57 -> 00:27:00] or just to read the whole blog post and see if you can glean any thoughts
+[00:27:00 -> 00:27:05] about why the these developers of a javascript compiler used a conservative collector the next
+[00:27:05 -> 00:27:09] question you might have about conservative collectors is whether they would waste a ton
+[00:27:09 -> 00:27:14] of memory that is like sure you can do this but won't you be erroneously keeping around
+[00:27:14 -> 00:27:18] a whole bunch of data that is never pointed to just because the program happens to use an
+[00:27:18 -> 00:27:23] integer that looks like a pointer to that memory the answer surprisingly is no i'm pointing you here
+[00:27:23 -> 00:27:28] to a really cool paper you can read by hans bohm who's done a lot of the foundational work in
+[00:27:28 -> 00:27:35] this space who shows how common data structures are actually by their very interconnectedness
+[00:27:35 -> 00:27:40] robust to the kinds of errors that conservative gcs can make he defines this gc robustness
+[00:27:40 -> 00:27:44] criterion that says something about the shape of your data structure that if you satisfy
+[00:27:44 -> 00:27:51] this criterion then the extra space by a that can be taken up by a confused conservative gc
+[00:27:51 -> 00:27:57] is bounded by a constant factor and surprisingly most data structures in use today satisfy this
+[00:27:57 -> 00:28:01] criterion and this goes for a long way to explain why conservative gcs are actually
+[00:28:01 -> 00:28:06] practical despite sounding initially like a really weird idea one other especially weird
+[00:28:06 -> 00:28:11] fact about conservative collectors is they tend to work better on 64 bit machines than 32 bit
+[00:28:11 -> 00:28:18] machines fortunately we live in an era where most computers are 64 bit these days that is most of
+[00:28:18 -> 00:28:22] our desktops and laptops and phones and servers they're all running some sort of 64 bit
+[00:28:22 -> 00:28:29] architecture that is where pointers are 64 bit wide 64 bits wide and this in general makes
+[00:28:29 -> 00:28:33] conservative collectors work a lot better in the sense that they are much more precise
+[00:28:33 -> 00:28:37] than when they are on 32 bit the 32 bit machines for example i found this discussion
+[00:28:37 -> 00:28:43] on the the list serve about the go language super fascinating because it it has to do with
+[00:28:43 -> 00:28:48] like bug reports that people have been getting about retaining about their go programs using
+[00:28:48 -> 00:28:53] a whole bunch of more memory on when they're running on a 32 bit machine and then then they
+[00:28:53 -> 00:28:58] switch to a 64 bit machine all those problems go away and the reason is that go uses a
+[00:28:58 -> 00:29:05] conservative collector so i'd like you to pause the video now and ask yourself why this is
+[00:29:05 -> 00:29:10] that is why in general and this is definitely true empirically conservative collectors tend to
+[00:29:10 -> 00:29:20] be a much better idea on 64 bit machines than 32 bit machines the answer to this question
+[00:29:20 -> 00:29:26] shows up later in the same thread that is someone says that go uses a conservative
+[00:29:26 -> 00:29:33] collector and this is the key more values look like pointers in a 32 bit world that
+[00:29:33 -> 00:29:38] is when you have 32 bit integers and you have a like a world of data you've allocated
+[00:29:38 -> 00:29:43] that's just denser in a 32 bit address space than it is in a 64 bit address space where it's very
+[00:29:43 -> 00:29:49] sparse and it's unlikely for values to be confused for pointers so that's why this
+[00:29:49 -> 00:29:55] problem exists in go and why in general conservative collectors are better on 64 bit
+[00:29:55 -> 00:30:00] machines and which fortunately is the era we live in today so let's explore a few more
+[00:30:00 -> 00:30:05] distinctions in mark sweep garbage collectors one category is parallel collectors parallel
+[00:30:05 -> 00:30:10] garbage collectors are exactly how they sound they basically just use multiple threads that
+[00:30:10 -> 00:30:15] execute in parallel to do the mark sweep process this is a really straightforward argument we have
+[00:30:15 -> 00:30:20] multi-core cpus today why just run your collector that is the graph search algorithm
+[00:30:20 -> 00:30:24] that like marks things as white or gray or black why run that in a single threaded way why
+[00:30:24 -> 00:30:29] not use multiple cores to do it this is important but not all that interesting not as
+[00:30:29 -> 00:30:36] interesting as the next distinction which is a pretty ambitious idea called concurrent collectors
+[00:30:37 -> 00:30:43] whereas parallel collectors run the collector in parallel concurrent collectors run the
+[00:30:43 -> 00:30:48] collector and the mutator in parallel that is that those two things are running concurrently
+[00:30:48 -> 00:30:54] in separate threads or even on different cores as with conservative collectors when
+[00:30:54 -> 00:30:59] concurrent collectors were introduced we had to go back in time and rename every collector that
+[00:30:59 -> 00:31:06] existed in the past as distinct from that concurrent collectors are the opposite of what
+[00:31:06 -> 00:31:11] are called stop the world collectors stop the world collectors work exactly how you would expect
+[00:31:11 -> 00:31:15] the mutator runs for a while and then eventually the gc decides that it's time to run the
+[00:31:15 -> 00:31:19] mutator stops the gc runs and frees some stuff then the mutator runs for a little while
+[00:31:19 -> 00:31:24] longer and then we go through this sort of alternating process concurrent collector runs
+[00:31:24 -> 00:31:30] both at the same time again in different threads possibly on different cores so the mutator just
+[00:31:30 -> 00:31:35] keeps on running and the gc runs separately and runs at the same time as the mutator
+[00:31:36 -> 00:31:41] i'd like you to pause the video now and write down as many as you can the positives
+[00:31:41 -> 00:31:52] and negatives of running the collector concurrently with the mutator i think the advantages of a
+[00:31:52 -> 00:31:57] concurrent collector are fairly clear so i hope you got the same answer as me first is that you
+[00:31:57 -> 00:32:02] don't have to pause that is a really annoying thing about stop the world collectors is that
+[00:32:02 -> 00:32:06] they have to pause the execution of their program to do your work so for example if
+[00:32:06 -> 00:32:11] you're doing something real time like rendering frames to the screen in a video game it can be
+[00:32:11 -> 00:32:16] extremely annoying and perhaps even unworkable that occasionally just kind of out of nowhere
+[00:32:16 -> 00:32:19] you don't get to do your work anymore and you have to wait for the garbage collector to
+[00:32:19 -> 00:32:25] that's called a gc pause and it it can be damaging to many different types of applications other
+[00:32:25 -> 00:32:29] applications don't really care but ones that have to do with real time they really really care
+[00:32:30 -> 00:32:34] the second is it maybe they make the entire process go faster that is maybe there's some
+[00:32:34 -> 00:32:40] sort of end-to-end speed up by being able to use one core to do the gc and one for the
+[00:32:40 -> 00:32:44] mutator that may or may not be true but in an ideal world it would be because we have so
+[00:32:44 -> 00:32:49] much work to do and we can parallelize it across different cores the downsides are
+[00:32:49 -> 00:32:55] considerably more subtle and they are however substantial enough to prevent concurrent collectors
+[00:32:55 -> 00:33:04] from being the norm the first is that they need to synchronize that is you have to synchronize
+[00:33:04 -> 00:33:07] if we're whenever you're running two different things on two different threads perhaps on two
+[00:33:07 -> 00:33:12] different cores you need to have synchronization between the two you need to do some sort of
+[00:33:12 -> 00:33:17] hardware operation to make sure that they can see each other's updates and that's true of any
+[00:33:17 -> 00:33:23] parallel program you write including the parallel composition of a mutator and a collector this
+[00:33:23 -> 00:33:28] means that this whole bit about getting an end-to-end speed up is not so easy because
+[00:33:28 -> 00:33:31] you constantly have to be synchronizing you have to be doing all these synchronization
+[00:33:31 -> 00:33:35] and synchronization operations both in the collector and in the mutator so you might
+[00:33:35 -> 00:33:40] actually make both slower because they constantly have to synchronize whereas to stop the thread
+[00:33:40 -> 00:33:45] stop the world garbage collector just never needs to synchronize because it's running in the same
+[00:33:45 -> 00:33:50] thread it just gets to see a consistent snapshot of the memory state without doing any of these
+[00:33:50 -> 00:33:56] costly like mutex operations between the two contexts and the second and this is even
+[00:33:56 -> 00:34:01] more subtle is these are just ridiculously complex to implement that it's a pretty well
+[00:34:01 -> 00:34:07] received wisdom that concurrent collectors are incredibly complex to get right all these little
+[00:34:07 -> 00:34:13] bits of interaction with synchronization between the concurrent the collector and the mutator and
+[00:34:13 -> 00:34:18] having to do that out of way that works with the memory model of the underlying hardware
+[00:34:18 -> 00:34:22] make these extremely error-prone to get right they're a major target for formal
+[00:34:22 -> 00:34:28] verification for this reason because they're just so incredibly nuanced because of their
+[00:34:28 -> 00:34:33] interaction with parallelism which we all know is hard and hardware which is also hard
+[00:34:33 -> 00:34:37] here's yet another distinction incremental collectors are a different kind of collector
+[00:34:37 -> 00:34:42] that is a stop the world collector but it's kind of a less bad stop the world collector
+[00:34:43 -> 00:34:49] it tries to do not the entire tracing work in a single gc pause and instead tries to like sort of
+[00:34:49 -> 00:34:54] save its progress along the way and get more work done later so here's my little cartoon
+[00:34:54 -> 00:34:58] of what that looks like instead of having like big chunks of the mutator and then perhaps
+[00:34:58 -> 00:35:04] arbitrarily large chunks of collector time incremental collectors run a little bit and then
+[00:35:04 -> 00:35:07] a little bit more and then a little bit more so they kind of like advance the process of
+[00:35:07 -> 00:35:13] doing the tracing just a little bit in each in each gc pause which means they need to sort of
+[00:35:13 -> 00:35:17] like save the intermediate state of the processing so they can pick it up during the
+[00:35:17 -> 00:35:22] next gc pause and have that not be ruined by the mutator in the process but of course this
+[00:35:22 -> 00:35:27] can make a garbage collector much more predictable because it interrupts you for a small amount of
+[00:35:27 -> 00:35:32] time frequently instead of for a perhaps giant amount of time at seemingly random intervals
+[00:35:32 -> 00:35:37] a final big distinction i want to make is whether they use a technique that has lots of names
+[00:35:37 -> 00:35:44] it can be called compacting or copying or moving collectors and the main reason that
+[00:35:44 -> 00:35:50] these collectors exist is to deal with the problem of fragmentation in ordinary executions
+[00:35:50 -> 00:35:54] of programs you sort of start out with a completely empty heap eventually you fill it up
+[00:35:54 -> 00:35:58] and then you're going to do some garbage collection but that leaves you with a fragmented
+[00:35:58 -> 00:36:03] heap that is like there are free areas that you can allocate into but they might not be big enough
+[00:36:03 -> 00:36:07] for the thing that you want to allocate you may have like thousands and thousands of two
+[00:36:07 -> 00:36:12] byte holes in your memory but you can't use any of those to allocate a whole like one
+[00:36:12 -> 00:36:17] kilobyte chunk of memory even though there's in aggregate one kilobyte of memory available
+[00:36:18 -> 00:36:23] this can be a really big problem both for performance and for the overall memory usage
+[00:36:23 -> 00:36:30] of a program so a moving or a copying or a compacting collector tries to mitigate this
+[00:36:30 -> 00:36:34] by move as the name applies by like moving stuff around to compact things into as small
+[00:36:34 -> 00:36:39] places possible leaving you with a big contiguous area of memory in which to allocate large
+[00:36:39 -> 00:36:45] objects a compacting collector sounds really great but it has to deal with one enormous
+[00:36:45 -> 00:36:51] practical issue which is that it has to do something with the old pointers that are
+[00:36:51 -> 00:36:56] pointing to moved memory so i'm going to draw a little heap here say we've got like a few
+[00:36:56 -> 00:37:01] objects that point to each other this is a perfectly happy heap points all over the place
+[00:37:01 -> 00:37:08] these point to here and a moving collector comes along and says uh none of these nodes are
+[00:37:08 -> 00:37:13] dead however there's fragmentation so i would love to take this node that used to be there
+[00:37:13 -> 00:37:18] and move it somewhere else these pointers that used to point to that node are now wrong they
+[00:37:18 -> 00:37:23] point to memory that we have freed up for the purpose of getting rid of fragmentation
+[00:37:23 -> 00:37:28] so the question i have written in the notes here is what should compacting collectors
+[00:37:28 -> 00:37:35] do about this that is if you were a compacting collector how would you deal the problem with
+[00:37:35 -> 00:37:39] the problem of out-of-date pointers that come as a result of your moving memory around
+[00:37:40 -> 00:37:44] this is a terribly open-ended question but i think it's instructive to just ponder for
+[00:37:44 -> 00:37:48] a while so please pause the video go for a walk around the block and just
+[00:37:49 -> 00:37:54] think for a moment about what you would do to deal with this problem of dangling pointers
+[00:38:00 -> 00:38:04] i'm again going to refrain from giving my answer because i'm really interested to see
+[00:38:04 -> 00:38:10] what people say so if you do have a idea just about your first copying collector how it might
+[00:38:10 -> 00:38:13] deal with updating pointers i would love for you to write that down in a few sentences on
+[00:38:13 -> 00:38:20] zulip i want to show you a few strategies now for how to implement compacting collectors
+[00:38:20 -> 00:38:25] starting with one that i really have to emphasize because it's so simple it seems like a joke and
+[00:38:25 -> 00:38:29] it's not a joke it's actually something you can use and it is actually practical for a few
+[00:38:29 -> 00:38:34] reasons this kind of collector is called a semi-space collector because what it does is it
+[00:38:34 -> 00:38:38] takes all the memory that's available to a process and it immediately at the very beginning
+[00:38:38 -> 00:38:43] of the program divides it into two chunks and those chunks are called the from space and
+[00:38:43 -> 00:38:49] the to space with a semi-space collector the first phase is that you just let the mutator
+[00:38:49 -> 00:38:54] allocate things willy-nilly into the from space so you don't do any garbage collection at first
+[00:38:54 -> 00:38:59] you just sort of like let it whenever it makes a new thing you put it into the from space
+[00:38:59 -> 00:39:02] allocate allocate allocate make some big objects make some small objects
+[00:39:02 -> 00:39:06] nothing's being freed because we're not running garbage collection and eventually you
+[00:39:06 -> 00:39:12] run out of space so the moment that you can't allocate anything new in the from space it's
+[00:39:12 -> 00:39:16] time for the garbage collector to run and so you do the whole mark sweep thing you find all
+[00:39:16 -> 00:39:22] the stuff that is that you want to keep let's like mark some of these nodes as to be kept
+[00:39:22 -> 00:39:26] and a bunch of this stuff is now garbage and you do the following thing you find all the
+[00:39:26 -> 00:39:31] reachable objects that is the black nodes from the graph and you just copy them over to the
+[00:39:31 -> 00:39:39] to space which is completely empty at the moment you copy this over copy that over copy
+[00:39:39 -> 00:39:43] that over but we can leave behind all the white nodes all the stuff that is garbage that we
+[00:39:43 -> 00:39:49] didn't reach during the during the graph traversal and then here is the trick and
+[00:39:49 -> 00:39:56] here's what makes it sound like a joke all you do is switch the from space into the two and
+[00:39:56 -> 00:40:01] the two space so now this becomes the from space and it's where we're going to start
+[00:40:01 -> 00:40:06] allocating new objects as the mutator continues to run and the two space yes it contains a
+[00:40:06 -> 00:40:10] bunch of data but we don't have to worry about it anymore we don't have to do anything with
+[00:40:10 -> 00:40:16] that stuff we can just consider it garbage memory that we don't need anymore and the
+[00:40:16 -> 00:40:21] next time the garbage collector runs we will flip back the other way by copying things
+[00:40:21 -> 00:40:26] from the from space from the from space to the two space which was the old from space
+[00:40:26 -> 00:40:29] and we can keep on doing this forever every time we fill up half of memory
+[00:40:30 -> 00:40:35] semi-space collector is nice and elegant but i think you can probably see the problem
+[00:40:35 -> 00:40:43] which is that it requires you to double the amount of memory that you want to use in practice
+[00:40:43 -> 00:40:48] this is not so bad because all garbage collectors tend to have a significant memory overhead
+[00:40:48 -> 00:40:55] but as you might expect we can do a lot better than semi-space in the real world most
+[00:40:55 -> 00:41:02] compacting collectors today are generational generational collectors exploit something called
+[00:41:02 -> 00:41:07] in a very highfalutin way the generational hypothesis the generational hypothesis has
+[00:41:07 -> 00:41:12] this like very pithy but almost useless statement that says that most objects die young
+[00:41:13 -> 00:41:18] what the statement actually means is that and this is a lot less pithy but in my opinion a
+[00:41:18 -> 00:41:24] lot more useful is that recently at any given time when your garbage collector runs it is
+[00:41:24 -> 00:41:29] much more likely that you need to free recently allocated objects than ones that were allocated
+[00:41:29 -> 00:41:35] a long time ago this means that if you spend all your time looking over the entire heap looking
+[00:41:35 -> 00:41:39] for things to free you're wasting a bunch of time because most of the garbage you're going
+[00:41:39 -> 00:41:44] to find is among objects that were recently allocated so here's a kind of pictorial way
+[00:41:44 -> 00:41:51] of putting it that is like the the uh if we along the x-axis if we plot the age at the
+[00:41:51 -> 00:41:55] death of the object that is like when it becomes unreachable and will be collected
+[00:41:56 -> 00:42:01] and on the y-axis we're just doing a histogram so this is like the frequency of objects dying at
+[00:42:01 -> 00:42:07] that age for the most part things die relatively young and this kind of a long tail as we go
+[00:42:07 -> 00:42:13] out to things being older and older so maybe you can try to imagine why this might be true
+[00:42:13 -> 00:42:18] empirically it is born out this is true of most programs but like there's a lot of things
+[00:42:18 -> 00:42:23] that programs allocate and then they use for a little while and then they're done but if things
+[00:42:23 -> 00:42:28] survive for a while if they get out here they're much less likely to die in the next garbage
+[00:42:28 -> 00:42:32] collection because they've been around for a while they sort of like proved they're worse
+[00:42:32 -> 00:42:35] for the program they're going to hang around for a while you can probably imagine a lot of
+[00:42:35 -> 00:42:40] programs like have big data structures like this that is stuff that gets allocated and
+[00:42:40 -> 00:42:43] hangs around for a really long time and therefore if it wasn't freed last time and
+[00:42:43 -> 00:42:48] it wasn't free the time before that it seems pretty unlikely although possible that it needs
+[00:42:48 -> 00:42:54] to be freed in the next garbage collection and that the generational generational hypothesis
+[00:42:54 -> 00:42:59] is what a lot of collectors exploit in order to make their collection more efficient
+[00:42:59 -> 00:43:04] and to find more garbage faster one way to think of this is kind of generalization of
+[00:43:04 -> 00:43:08] semi-space collectors where there were two different regions in the heap and just copying
+[00:43:08 -> 00:43:13] things from one place to another and then back again generational collectors are like that
+[00:43:13 -> 00:43:19] except that they have a sort of a telescoping range of different areas of memory of different
+[00:43:19 -> 00:43:25] sizes and crucially different ages so you can view the heap pictorially as something like this
+[00:43:25 -> 00:43:30] where you have one small area where you do all your allocations and then once that fills up
+[00:43:30 -> 00:43:37] you move things into this next area generation one from generation zero and then as that fills
+[00:43:37 -> 00:43:41] up you move it on down to the next generation and then from there onto the next generation
+[00:43:41 -> 00:43:46] and the critical thing that makes this work is that we run collector collections at different
+[00:43:46 -> 00:43:53] frequencies on these different regions of memory so in this smallest fastest youngest generation
+[00:43:53 -> 00:43:58] generation zero which is sometimes cruelly called the nursery we will run collections very often
+[00:43:58 -> 00:44:02] because it is often possible to find a lot of garbage that has recently been allocated
+[00:44:03 -> 00:44:07] and then anything that survives out of the nursery we put into generation one and we run
+[00:44:07 -> 00:44:12] collections on that pretty fast but not quite as fast and so on and so on through
+[00:44:12 -> 00:44:16] as many generations as you like by tuning the number of generations you can kind of like
+[00:44:16 -> 00:44:21] categorize things by the probability that they need to be collected and then therefore
+[00:44:21 -> 00:44:25] tune the aggressiveness of your garbage collector accordingly that is like try to find the most
+[00:44:25 -> 00:44:30] garbage without spending a lot of time analyzing stuff that is unlikely to be free because it
+[00:44:30 -> 00:44:36] survived for longer so that's generational garbage collectors i want to take a moment
+[00:44:36 -> 00:44:39] to acknowledge that i've just thrown a whole bunch of distinctions at you so i thought it
+[00:44:39 -> 00:44:43] would be useful to kind of like go through these like telescoping distinctions in the way
+[00:44:43 -> 00:44:49] that we build memory management systems all the way from the idea of like well do you manually
+[00:44:49 -> 00:44:53] manage your memory or do you do something automatic at all all the way down to this
+[00:44:53 -> 00:44:58] fairly sophisticated notion of a generational collector so to recap the first distinction
+[00:44:58 -> 00:45:03] that i gave you was between doing manual and automatic memory management the standard
+[00:45:03 -> 00:45:09] manual memory management are c and c++ automatic memory management is most modern languages that
+[00:45:09 -> 00:45:15] aren't c and c and plus plus the next distinction is within automatic memory management are you
+[00:45:15 -> 00:45:22] going to do it dynamically at runtime or statically at compile time doing a complete
+[00:45:22 -> 00:45:26] job of automatic static memory management is an incredibly difficult problem that has broad
+[00:45:26 -> 00:45:31] range of implications for the design of the language itself which is why pretty much the
+[00:45:31 -> 00:45:36] only language that's even attempting to do this in a mainstream way is rust which is why most of
+[00:45:36 -> 00:45:41] this lesson is about the the predominant technique for automatic memory management
+[00:45:41 -> 00:45:47] which is dynamic aka garbage collection within dynamic automatic memory management we
+[00:45:47 -> 00:45:52] made a distinction between reference counting and tracing or mark sweep gc and i asked you to
+[00:45:52 -> 00:45:57] think deeply about what the advantages and disadvantages are of both a paper we'll discuss
+[00:45:57 -> 00:46:02] coming up very soon has to do with that kind of duality between reference counting and
+[00:46:02 -> 00:46:08] tracing gc i kind of went off onto an aside here within tracing gc there's several questions
+[00:46:08 -> 00:46:12] about like how you can implement a tracing gc including are you going to do it in parallel
+[00:46:12 -> 00:46:16] that is a multi-threaded collection is it going to be concurrent that is will the
+[00:46:16 -> 00:46:20] mutator and the collector run at the same time and will it be incremental that is will
+[00:46:20 -> 00:46:25] you leave work for yourself to do in the future within tracing i.e. mark sweep collectors
+[00:46:25 -> 00:46:31] the main distinction that we have is between precise and conservative collectors precise
+[00:46:31 -> 00:46:35] collectors are the normal ones conservative collectors are the strange ones that might
+[00:46:35 -> 00:46:40] leave some garbage around they sound very strange but they can work surprisingly well for
+[00:46:40 -> 00:46:45] memory unsafe languages like c and c++ and can even be useful for as an implementation
+[00:46:45 -> 00:46:51] technique even in safe languages within precise collectors there is the the big
+[00:46:51 -> 00:46:56] distinction is is whether you do compacting that is like whether you try to do move or copy data
+[00:46:57 -> 00:47:03] to avoid fragmentation i don't have a good name for non-compacting collectors
+[00:47:04 -> 00:47:08] within compacting collectors then finally we got to to the idea of doing a generational
+[00:47:08 -> 00:47:12] compacting collector so that's a big kind of decision tree here and i hope this gives
+[00:47:12 -> 00:47:17] you an overview into the wild world of a very very very large topic in the research
+[00:47:17 -> 00:47:20] on the implementation of programming languages

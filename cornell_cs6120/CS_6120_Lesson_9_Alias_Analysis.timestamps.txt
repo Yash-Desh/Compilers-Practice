@@ -1,0 +1,266 @@
+Title: CS 6120: Lesson 9: Alias Analysis
+Video ID: 1_7ngps985
+Detected language: en
+------------------------------------------------------------
+
+[00:00:09 -> 00:00:14] In this video, we're going to talk about pointer analysis, aka alias analysis. As the name implies,
+[00:00:15 -> 00:00:20] this is going to be about analyzing programs that use pointers. To motivate why we care about
+[00:00:20 -> 00:00:25] pointers and about loads and stores to memory, I want to, at the risk of overstating a point,
+[00:00:25 -> 00:00:29] show that lots of languages, in fact almost every programming language you've ever used,
+[00:00:29 -> 00:00:34] has pointers. It's maybe really obvious in C because things are manifestly pointers all
+[00:00:34 -> 00:00:38] over the place. Every time you see a star, there's a pointer involved. Like, for example,
+[00:00:38 -> 00:00:44] in this innocent-looking implementation of a string copying-like function in C. Java also
+[00:00:44 -> 00:00:48] has pointers. You may not see stars quite as often in Java, but everything that's not a
+[00:00:48 -> 00:00:54] primitive type like int or bool is using a pointer under the hood. That is, everything
+[00:00:54 -> 00:00:58] that has a sort of ordinary object type or an array type, that's using an actual pointer.
+[00:00:58 -> 00:01:05] So when you do, for example, when we're writing this method that takes in an object
+[00:01:05 -> 00:01:08] and we're doing a comparison using equals, that's doing a pointer comparison.
+[00:01:09 -> 00:01:13] OCaml has pointers all over the place, used implicitly. There's a whole bunch of times
+[00:01:13 -> 00:01:17] that OCaml programs use pointers that you're not even aware of. You can also explicitly use
+[00:01:17 -> 00:01:23] pointers, aka references in OCaml, using the ref thing and then you do a exclamation point
+[00:01:23 -> 00:01:29] thing, which is a, which is the moral equivalent of a dereferencing star in C. In any case,
+[00:01:29 -> 00:01:34] there are definitely pointers that you can use and manage yourself in OCaml. So in general,
+[00:01:34 -> 00:01:38] pointers are really everywhere and it makes sense to try to analyze programs
+[00:01:38 -> 00:01:42] and to try to optimize them in the presence of using pointers.
+[00:01:42 -> 00:01:46] Braille also has pointers if you use the memory extension. You've probably encountered
+[00:01:46 -> 00:01:50] the memory extension before. Maybe you've even written programs that use the memory
+[00:01:50 -> 00:01:55] extension, the instructions from the memory extension. There are, there's an ALEC instruction
+[00:01:55 -> 00:02:00] that creates for you a new location memory. There are store instructions that you put
+[00:02:00 -> 00:02:07] values into memory and there are, there's a load that's not shown here, but there's also a pointer
+[00:02:07 -> 00:02:11] add that lets you sort of move around pointers in memory. There's also a free, also not shown
+[00:02:11 -> 00:02:16] here. But the important thing is that there are values of type pointer to something.
+[00:02:16 -> 00:02:24] So VALS is not an integer itself, but it's sort of like an int star in C. That is,
+[00:02:24 -> 00:02:29] it's a pointer that can refer to an int. I'm going to give you a second to just read
+[00:02:30 -> 00:02:36] this program and re-familiarize yourself with how the Braille memory extension works by thinking
+[00:02:36 -> 00:02:45] about what this program does. I have another program to show you and to have you ponder.
+[00:02:45 -> 00:02:51] This program is written in something like C and my question for you is what this program
+[00:02:51 -> 00:02:56] returns. Pause the video now and think about what this program does and what value it produces
+[00:02:56 -> 00:03:04] as a boolean. The simple answer to this question is that this function always returns
+[00:03:04 -> 00:03:10] true. That is, it's easy to see that we are putting the letter A into the location
+[00:03:10 -> 00:03:14] pointed to by A and then we're reading it back out of A without changing it again
+[00:03:14 -> 00:03:18] and therefore it must still equal the value A. Therefore this thing is going to, this
+[00:03:18 -> 00:03:22] expression is going to return true and the overall function is going to return true.
+[00:03:22 -> 00:03:27] That sounds great, unfortunately it is wrong. And the reason it's wrong is because like
+[00:03:27 -> 00:03:33] everything else involving pointers, this program is made more complex in the presence of aliasing.
+[00:03:33 -> 00:03:38] That is, the possibility that the two different pointers may point to the same location in memory.
+[00:03:38 -> 00:03:42] If we're just talking about normal variables like normal stacks locks and this were just
+[00:03:42 -> 00:03:46] a normal assignment to a variable A, this were just a normal read from a variable A,
+[00:03:46 -> 00:03:49] then it would definitely be true that we could optimize this program to just say
+[00:03:49 -> 00:03:54] return true without actually doing anything else. But because there's pointers, because the
+[00:03:54 -> 00:03:58] pointer to the A pointer and the B pointer might actually point to the same location in
+[00:03:58 -> 00:04:03] memory, then maybe the same memory address, when those two things point to the same location in
+[00:04:03 -> 00:04:09] memory, this function returns false because we're storing a different value into the same
+[00:04:09 -> 00:04:13] location before reading it back. So an optimization we might like to do, that is
+[00:04:13 -> 00:04:18] eliminating this like hypothetically dead code, won't work in the presence of pointers,
+[00:04:18 -> 00:04:22] in particular in the presence of aliasing. And that's what this lesson is about. It's
+[00:04:22 -> 00:04:26] about deciding when two pointers can point the same location in memory, that is when they
+[00:04:26 -> 00:04:31] can alias each other. The reason that we're studying this is because it is truly essential
+[00:04:31 -> 00:04:35] to do anything at all with programs that involve pointers. Anything you might like
+[00:04:35 -> 00:04:38] to do, anything that like seems easy or straightforward on like normal programs without
+[00:04:38 -> 00:04:42] pointers, that is like with normal sort of like local variables that don't have the
+[00:04:42 -> 00:04:48] problem of aliasing, all of that is made hard or impossible if there's the chance that
+[00:04:48 -> 00:04:51] things might alias, that is if we're dealing with pointers that are unrestricted.
+[00:04:52 -> 00:04:55] For example, we just saw an instance where we would like to eliminate a dead store,
+[00:04:55 -> 00:04:59] that is a store to a pointer that doesn't seem to be used again, but it's not actually
+[00:04:59 -> 00:05:04] dead because of the possibility of aliasing. Some later read may read from the same pointer,
+[00:05:04 -> 00:05:08] so we can't eliminate something that looks like it should otherwise be useless.
+[00:05:09 -> 00:05:16] Similarly, this example involved an opportunity to propagate a store to memory through to a
+[00:05:16 -> 00:05:20] load and therefore get rid of both the store and the load, and that is made impossible
+[00:05:20 -> 00:05:25] because there's an intervening store to a completely different pointer that if it aliases
+[00:05:25 -> 00:05:29] kind of ruins the the opportunities to do optimization. Similarly, you can imagine
+[00:05:29 -> 00:05:33] really pernicious cases where it seems obvious that you should be able to do loop invariant
+[00:05:33 -> 00:05:37] code motion, that is to decide that some code is loop invariant, but because it uses pointers,
+[00:05:37 -> 00:05:41] you can't actually be sure that none of those pointers are being modified through
+[00:05:41 -> 00:05:47] other pointers that also are being used in the loop body, so you actually lose out a lot
+[00:05:47 -> 00:05:53] by the by not knowing that two things, by having the possibility that the two pointers
+[00:05:53 -> 00:05:58] might alace each other. An example that is close to my heart is that alace analysis is a major
+[00:05:58 -> 00:06:03] bottleneck on being able to automatically paralyze programs. If you wanted to, for example, take
+[00:06:03 -> 00:06:08] some code that is written in a sequential way and make it run on a vector machine or on a
+[00:06:08 -> 00:06:14] multicore machine, you need to be sure that those code that you want to run in parallel
+[00:06:14 -> 00:06:18] with each other, that those pieces of code are independent, they can't interfere with each
+[00:06:18 -> 00:06:22] other, that is when one writes the other one doesn't need to subsequently read the value
+[00:06:22 -> 00:06:27] that that one wrote. And that is often true if you know that the pointers involved can't possibly
+[00:06:27 -> 00:06:32] alace each other, but when aliasing is involved you have to make conservative assumptions and
+[00:06:32 -> 00:06:37] all your attempts at automatically paralyzing code are immediately ruined. So alace analysis
+[00:06:37 -> 00:06:44] is a really important analysis to do for all of these optimizations, basically to do anything
+[00:06:44 -> 00:06:49] with a code that involves pointers. So let's pose exactly what the alace analysis problem is.
+[00:06:50 -> 00:06:55] An alace analysis asks this kind of question. For every program point, that is every instruction
+[00:06:55 -> 00:07:00] for example in a braille program, and for every pair of pointer-typed variables, that is anything
+[00:07:00 -> 00:07:06] that looks like pointer to something in braille, can those two pointers point to the same
+[00:07:06 -> 00:07:11] location in memory at that point in time, that is at that program point? There are several
+[00:07:11 -> 00:07:15] problems with this question, and the most fundamental one is that it's undecidable,
+[00:07:15 -> 00:07:22] that is we'll run into halting problem-like issues if we attempt to always answer perfectly
+[00:07:22 -> 00:07:26] in the affirmative or the negative whether two pointers might alace. It's pretty easy to see,
+[00:07:26 -> 00:07:32] for example, how to reduce a alace analysis query that must say yes or no to the halting
+[00:07:32 -> 00:07:35] problem, that is to have two pointers that alace if and only if another program
+[00:07:36 -> 00:07:43] halts. Therefore we're going to have to do with approximations, and in general even
+[00:07:43 -> 00:07:48] approximating this answer can be quite expensive. So the answer a lot of the time to the question
+[00:07:48 -> 00:07:53] might these two things alace each other will be sometimes, that is I don't know for sure, but
+[00:07:53 -> 00:07:57] sometimes on some executions of the program they might alace each other and other times they
+[00:07:57 -> 00:08:01] might not. Finally, it's inherently an interprocedural question, that is even
+[00:08:01 -> 00:08:05] simple functions like the string copying function I showed you earlier, the aliasing
+[00:08:05 -> 00:08:09] behavior depends on what our arguments are to the function, that is whether we're called
+[00:08:09 -> 00:08:15] with pointers that alace each other or not. So in general the way that alias analysis problems are
+[00:08:15 -> 00:08:22] set up is so that we can answer yes, no, or maybe, that is we want to classify pairs of
+[00:08:23 -> 00:08:28] variables as either yes these must alias, that is in every execution of this program these
+[00:08:28 -> 00:08:33] two pointers are exactly the same, they must not alias, that is they can be any value but
+[00:08:33 -> 00:08:38] they can never be identical to each other, or we don't know, that is that they might alace
+[00:08:38 -> 00:08:44] some of the time but we don't have a definitive answer either way. And unfortunately the awful
+[00:08:44 -> 00:08:49] reality of pointer analysis is that most answers to these questions are going to end up in this
+[00:08:49 -> 00:08:54] middle section, that is most of the time we won't be able to prove either that things never alias
+[00:08:54 -> 00:08:59] or that they always alias. The typical way that alias analyses are set up to benefit
+[00:08:59 -> 00:09:05] compiler optimizations is using may alias queries. May alias queries ask an analysis
+[00:09:05 -> 00:09:10] to say yes or no where yes says that the two things might alias but we don't know for sure
+[00:09:10 -> 00:09:15] and no if we know beyond a shadow of a doubt that they must not alias. Optimizations can then
+[00:09:15 -> 00:09:20] use that information when the alias analysis is answered in the negative to do interesting
+[00:09:20 -> 00:09:25] optimizations. However if the analysis answers yes then we don't really know anything,
+[00:09:25 -> 00:09:30] we don't know if they will alias or not and therefore optimizations are typically restrained.
+[00:09:30 -> 00:09:35] With that in mind let's set up to do a may alias analysis in a straightforward way
+[00:09:35 -> 00:09:40] using the data flow framework. We will try to design a data flow analysis that tries to answer
+[00:09:40 -> 00:09:47] when two pointer values might alias the same location. So again we will say no if we know
+[00:09:47 -> 00:09:52] for sure that they don't and we'll say yes if maybe that is they might alias or they might
+[00:09:52 -> 00:09:57] not. I'm going to set up the first few fields in the data flow framework and leave it up to
+[00:09:57 -> 00:10:02] you to fill in the rest. This will be a forward analysis that is a normal one that
+[00:10:02 -> 00:10:07] goes from the entry block forward through the data flow graph. For the domain I'm going to
+[00:10:07 -> 00:10:15] set it up so that we will have a mapping that goes from variables to memory locations of some
+[00:10:15 -> 00:10:22] kind. So the thing that we'll compute on the entry and exit of every basic block will be a
+[00:10:22 -> 00:10:26] mapping from variable names in the program to sets of locations that those variables might
+[00:10:26 -> 00:10:32] refer to. The idea is that then we can answer may alias queries by doing set intersection,
+[00:10:32 -> 00:10:38] that is if you ask me might x and y alias at this point in the program you'll look up this data
+[00:10:38 -> 00:10:43] structure for this point for that point in the program and then you'll get the associated sets
+[00:10:43 -> 00:10:49] for x and y you'll get the set of locations and if those sets intersect then we'll say yes they
+[00:10:49 -> 00:10:54] might alias and if that intersection is empty then we'll say no they must not alias and
+[00:10:54 -> 00:10:59] therefore you can do interesting optimizations. I'd like you to pause the video now and
+[00:10:59 -> 00:11:04] think about the rest of the aspects of the data flow framework that is what do we have to do
+[00:11:05 -> 00:11:08] what will be the initial value for this analysis what will be the merge function
+[00:11:08 -> 00:11:14] and what will be the transfer function for these three instructions you can think about
+[00:11:14 -> 00:11:18] how to extend these to all the rest of the instructions too but these I argue are the
+[00:11:18 -> 00:11:22] important representative ones think about this for a moment and convince yourself that you
+[00:11:22 -> 00:11:34] have a minimal working accurate alias analysis we'll start out with an initial value that maps
+[00:11:34 -> 00:11:40] every single variable to the empty set that is variables don't refer to any locations can't
+[00:11:40 -> 00:11:47] refer to any memory locations at all for the outset so I'll just say for all x the merge
+[00:11:47 -> 00:11:56] function would do a union at every variable what I mean by this is we're going to take
+[00:11:56 -> 00:12:00] the different mappings that we need to merge at least two of them we would take all of the
+[00:12:00 -> 00:12:05] sets associated with every variable and pairwise take those sets and union them
+[00:12:05 -> 00:12:10] that is now when we're merging control flow we now can say that the variable x can refer
+[00:12:10 -> 00:12:13] to any of the locations that came in from the left side or any of the locations that
+[00:12:13 -> 00:12:17] came from the right side so that means that we'll union together all of those possibilities
+[00:12:17 -> 00:12:22] for every variable for the transfer function I ask you to think about these three functions
+[00:12:22 -> 00:12:27] these three instructions rather a constant an id that is a copy and then an allocation
+[00:12:28 -> 00:12:32] and the constant you can think of this as being representative of other instructions also like
+[00:12:32 -> 00:12:38] add because all we really need to do is in that mapping that we're producing for the output
+[00:12:38 -> 00:12:46] we will just set that to the empty set if we have x if we were setting x to a constant
+[00:12:46 -> 00:12:49] then we know it can't possibly refer to any memory locations it's a constant like five or
+[00:12:49 -> 00:12:55] something like this so it's not a pointer and so we will set its associated set of memory
+[00:12:55 -> 00:13:01] locations to nothing then there's a copy if we say x equals id y all I want to do is set the output
+[00:13:02 -> 00:13:08] mapping for x to be all the same locations that we had for y and finally there's allocation
+[00:13:09 -> 00:13:14] we now need to come up with a new memory location that represents this allocation
+[00:13:14 -> 00:13:22] so we'll compute a fresh location a fresh memory location and say that the only thing
+[00:13:22 -> 00:13:28] that x can possibly refer to right now is that memory location and this is kind of the key
+[00:13:28 -> 00:13:32] this is where memory locations come from originally is allocation sites and then we'll be
+[00:13:32 -> 00:13:37] propagating them through the rest of the program using this data flow analysis let's now try to
+[00:13:37 -> 00:13:41] run this analysis on this tiny cfg I have on the slide this program only ever uses one
+[00:13:41 -> 00:13:47] variable two variables actually x and y so when we start out the program x will map to the
+[00:13:47 -> 00:13:53] empty set and y will map to the empty set then after we do the transfer function on this first
+[00:13:53 -> 00:13:58] block there's an allocation in there which means that we have a memory we need to associate a
+[00:13:58 -> 00:14:04] memory location with x so in between here we will have a mapping that still has sorry y
+[00:14:04 -> 00:14:16] go into the empty set but x now maps to let's just call this location one so x can only
+[00:14:16 -> 00:14:22] contain values from that location after this we'll have done our transfer that deals with
+[00:14:22 -> 00:14:30] copies with ids and now both x and y will map to the same location l1 to the set containing
+[00:14:30 -> 00:14:35] just one location l1 the next step is to analyze this block that just has a branch in it
+[00:14:35 -> 00:14:40] branches of course do not affect pointers so we'll have the same value that is a mapping
+[00:14:40 -> 00:14:45] from x and y both to the set containing l1 going out of this branch and therefore
+[00:14:45 -> 00:14:51] back into the top of the loop again we then need to do run our merge function that is our
+[00:14:51 -> 00:14:56] pointwise union across these things because we're merging control flow into the top of this basic
+[00:14:56 -> 00:15:02] block so we will end up again with this mapping that is x and y both mapping to l1
+[00:15:02 -> 00:15:07] after we merge l1 with the empty set and then l1 with the empty set now we have
+[00:15:07 -> 00:15:13] the same environment going into this basic block so now my question to you is what should
+[00:15:13 -> 00:15:17] we do with the transfer function that says that that we need to come up with a fresh location
+[00:15:18 -> 00:15:24] for x to run this allocation again how should this change the environment i realize this is
+[00:15:24 -> 00:15:28] a somewhat philosophical question but i would like you to pause the video and ponder for a second
+[00:15:28 -> 00:15:33] what we should we should do when we run the transfer function the second time for this block
+[00:15:33 -> 00:15:44] now that it has a different in value i think the most natural answer to this question is
+[00:15:44 -> 00:15:49] that we need to generate a new fresh location that is this is the second time conceptually
+[00:15:49 -> 00:15:53] around the loop and therefore it's definitely going to be a separate location in memory
+[00:15:53 -> 00:15:57] that we're allocating here of course the problem with this is that it doesn't converge
+[00:15:57 -> 00:16:02] we will keep going around and around the loop generating new memory locations and getting back
+[00:16:02 -> 00:16:05] to the top of the loop and ending up with a different input value so we'll need to rerun the
+[00:16:05 -> 00:16:10] analysis for the loop again coming up with a new memory location every single time and this
+[00:16:10 -> 00:16:16] will run forever and never converge by coming up with a new memory location on every analysis
+[00:16:16 -> 00:16:21] of this basic block we have painted ourselves into a corner where we're kind of like actually
+[00:16:21 -> 00:16:26] running the program and coming up with a new memory location every time that we run the loop
+[00:16:26 -> 00:16:31] and that simply won't do for an actual static analysis i contend that the only reasonable
+[00:16:31 -> 00:16:38] thing to do instead is to associate a single memory location with every static allocation
+[00:16:38 -> 00:16:43] site that is when we analyze this basic block again we won't come up with a new location l2
+[00:16:43 -> 00:16:50] we will put the same old memory location l1 and associate it with the variable x this seems a
+[00:16:50 -> 00:16:55] little bit odd because we know when we run the same loop twice and we allocate twice we're not
+[00:16:55 -> 00:17:00] getting the same memory location but what's going on here is we need to abstract away
+[00:17:00 -> 00:17:07] from that actual execution of programs with a model with a static over approximation of how
+[00:17:07 -> 00:17:13] memory actually works so this gets us into the very important topic of heap models heap models
+[00:17:13 -> 00:17:17] basically answer the question what is a memory location if we answer this question with a
+[00:17:17 -> 00:17:21] memory location is an actual concrete pointer that is an actual number that points to a
+[00:17:21 -> 00:17:27] location in memory then we're going to end up with a non-termination and over precision
+[00:17:27 -> 00:17:30] problems that we just saw when we tried to come up with new memory locations in every
+[00:17:30 -> 00:17:36] trip through the loop so we need kind of an abstraction of memory that lets us do alias
+[00:17:36 -> 00:17:41] analysis in a computable and tractable way the most straightforward heap model i can think of
+[00:17:41 -> 00:17:48] and also a really effective one is to associate every allocation instruction in your program
+[00:17:48 -> 00:17:53] with a single memory location so this will be associated forever and for all time before
+[00:17:53 -> 00:17:57] we even start doing our data flow analysis with the location l1 we'll just label that
+[00:17:57 -> 00:18:03] instruction with that location with that location in memory so this means that our
+[00:18:03 -> 00:18:07] abstraction of memory is that yes there's a whole bunch of actual pointers when the program runs
+[00:18:07 -> 00:18:11] but we're going to group together all those pointers that are allocated from this allocation
+[00:18:11 -> 00:18:17] site and call those all location one in our abstract domain of pointers this frees us
+[00:18:17 -> 00:18:22] from the need to track actual pointers and gives us the tractability we need to solve
+[00:18:22 -> 00:18:28] the alias analysis problem this of course has an impact on the precision of the analysis
+[00:18:28 -> 00:18:34] it means that when we have two different pointers that come from the same allocation site at runtime
+[00:18:34 -> 00:18:39] when we do our analysis we will consider those to be the same location in memory
+[00:18:39 -> 00:18:43] this seems obviously incorrect those are not the same location in memory but all it is for
+[00:18:43 -> 00:18:48] the purpose of our analysis is conservative because we're doing a may alias analysis all
+[00:18:48 -> 00:18:54] this can do is cause us to answer more of the time that that yes these two things might
+[00:18:54 -> 00:18:59] alias which remember is the disappointing and useless answer it's always safe to answer yes
+[00:18:59 -> 00:19:03] these two things might alias because we're not going to use that to do any interesting
+[00:19:03 -> 00:19:10] optimizations it is only unsafe potentially unsafe to answer no that is we can't answer
+[00:19:10 -> 00:19:15] the two things must not alias when there is some chance that they might so this abstraction
+[00:19:15 -> 00:19:21] of the memory domain makes us conservative in the sense that we will be giving less useful
+[00:19:21 -> 00:19:25] answers from our alias analysis on the other hand it makes it possible to do the analysis so
+[00:19:25 -> 00:19:30] that's a pretty good trade-off this simple heap model works for brill for realistic programming
+[00:19:30 -> 00:19:35] languages you inevitably want to make this slightly more precise at least for example
+[00:19:36 -> 00:19:40] in languages with arrays you really want to have a separate memory location for every offset in
+[00:19:40 -> 00:19:45] the array often and typically you want to have separate memory locations for different fields
+[00:19:45 -> 00:19:49] within an object if you're in an object oriented language the final aspect i want to
+[00:19:49 -> 00:19:54] talk to you about is bringing context sensitivity to alias analysis we talked about the general
+[00:19:54 -> 00:20:00] concept of context sensitivity in the previous lesson about interprocedural analysis alias
+[00:20:00 -> 00:20:06] analysis can be made very interprocedural that is it absolutely has to do with lots of
+[00:20:06 -> 00:20:10] interactions between functions so it often makes sense to bring in some kind of context
+[00:20:10 -> 00:20:15] sensitivity like calling context in order to make your alias analysis more precise
+[00:20:15 -> 00:20:21] to show what i mean let's bring back that little stir copy like function that i wrote for you at
+[00:20:21 -> 00:20:27] the very beginning that sort of works like the stir copy function for c now imagine that we
+[00:20:27 -> 00:20:33] have two different calls to stir copy and from a foo function and a bar function and in one
+[00:20:33 -> 00:20:36] case you're you're calling it with exactly the same pointer that is we're just doing
+[00:20:36 -> 00:20:41] stir copy of a and a and some cases we are allocating a new thing and passing into
+[00:20:41 -> 00:20:48] stir copy so these two things cannot possibly alias it's a straightforward alias analysis
+[00:20:48 -> 00:20:52] that is does not try to use interprocedural information does not try to use calling
+[00:20:52 -> 00:20:57] context we'll have to say that these two things may alias and therefore this function does
+[00:20:57 -> 00:21:05] something quite odd rather than doing a proper string copy on the other hand if we introduce
+[00:21:05 -> 00:21:11] just a little bit of calling context that is if we if we introduce awareness of just the one
+[00:21:11 -> 00:21:16] function that called the the string copy function we can conclude that it is definitely the case
+[00:21:16 -> 00:21:23] that these two things alias in the con in the context of foo and must not alias in the context
+[00:21:23 -> 00:21:29] of bar and this is much more useful of course as with any context sensitive interprocedural
+[00:21:29 -> 00:21:35] analysis there is a really sharp trade-off here between the precision and the cost by precision
+[00:21:36 -> 00:21:43] for alias analysis what i mean is it's the fraction it's like the the proportion of queries
+[00:21:43 -> 00:21:48] of alias analysis pair queries that you can answer as either must alias or must not alias
+[00:21:48 -> 00:21:53] and they don't have to go into that that uncertain middle of the diagram i showed you
+[00:21:53 -> 00:22:00] before adding context makes alias analysis more precise but of course it also makes it way more
+[00:22:00 -> 00:22:06] costly so at some point there are diminishing returns to the additional precision you get
+[00:22:06 -> 00:22:12] at the cost of spending a lot more time analyzing your program in general having a scalable that is
+[00:22:12 -> 00:22:18] efficient alias analysis that can analyze very large programs where at the same time it is very
+[00:22:18 -> 00:22:22] precise there's a huge open research problem i really can't emphasize this enough there's like
+[00:22:22 -> 00:22:26] a whole research community out there about making good alias analyses that are both fast
+[00:22:26 -> 00:22:31] and precise there's a huge body of research out there i've left a couple of links into
+[00:22:31 -> 00:22:35] especially a really great tutorial by some people that that have worked on alias analysis to give
+[00:22:35 -> 00:22:40] you an idea of the gigantic breadth of research that is there for just this one kind of analysis
+[00:22:41 -> 00:22:44] and it's so important because as we saw at the very beginning of the lesson
+[00:22:45 -> 00:22:49] doing a good job with alias analysis is key to getting anything done that transforms
+[00:22:49 -> 00:22:55] programs that manipulate pointers so any optimization you would like to do that has
+[00:22:55 -> 00:23:00] to do with memory has to rely on an alias analysis first before it can really do its work
+[00:23:00 -> 00:23:05] and that's why it's so central in compiler optimization research

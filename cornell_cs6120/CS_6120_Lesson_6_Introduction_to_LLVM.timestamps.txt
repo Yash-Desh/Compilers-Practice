@@ -1,0 +1,157 @@
+Title: CS 6120: Lesson 6: Introduction to LLVM
+Video ID: 1_f231lwkz
+Detected language: en
+------------------------------------------------------------
+
+[00:00:05 -> 00:00:10] In this lesson, we're going to get an introduction to using LLVM to transform and optimize programs.
+[00:00:10 -> 00:00:15] LLVM is an extremely popular compile infrastructure for C and other languages like Rust.
+[00:00:15 -> 00:00:18] Before you ask, LLVM no longer stands for anything.
+[00:00:18 -> 00:00:21] It has a really cool dragon logo that you can check out.
+[00:00:23 -> 00:00:27] The reason we're going to use LLVM is that it has a really nice SSA form IR
+[00:00:27 -> 00:00:31] and an amazing API for manipulating it that makes it possible to be very productive very
+[00:00:31 -> 00:00:35] quickly by designing your own modular paths that transforms programs.
+[00:00:35 -> 00:00:39] In one very abstract sense, it is like a supercharged version of Brill,
+[00:00:39 -> 00:00:42] which you've been using thus far in this class.
+[00:00:42 -> 00:00:46] That's not really coincidental because I modeled Brill after it.
+[00:00:46 -> 00:00:52] That is, the language that is the Brill IR is like a kind of idealized form of the LLVM
+[00:00:52 -> 00:00:53] intermediate representation.
+[00:00:54 -> 00:00:59] It is also, in a different way, kind of the opposite of Brill because LLVM is real
+[00:00:59 -> 00:01:02] infrastructure that the world really runs on.
+[00:01:02 -> 00:01:05] That is, there's a chance, there's actually a very high chance,
+[00:01:05 -> 00:01:08] that some software along the chain that you are using to watch this very video
+[00:01:08 -> 00:01:10] was compiled with LLVM.
+[00:01:10 -> 00:01:12] It's like serious infrastructure that people really use.
+[00:01:12 -> 00:01:15] Brill is not. Brill is an educational tool.
+[00:01:15 -> 00:01:18] So it is like 10 million times more realistic than Brill,
+[00:01:18 -> 00:01:23] which is amazing because it will let us compile and run real software
+[00:01:24 -> 00:01:28] and to transform programs to run on real architectures and to use
+[00:01:28 -> 00:01:32] an existing library of lots of amazing optimizations.
+[00:01:32 -> 00:01:36] However, on the other hand, there's a trade-off here.
+[00:01:36 -> 00:01:41] Because LLVM is so realistic, it also is less friendly to use than Brill.
+[00:01:41 -> 00:01:44] A lot of the ways in which Brill is kind of idealized
+[00:01:44 -> 00:01:46] are ruthlessly realistic in LLVM.
+[00:01:46 -> 00:01:49] So we'll have to deal with a lot of those kind of real,
+[00:01:50 -> 00:01:53] these aspects of realism that we didn't have to deal with in Brill
+[00:01:53 -> 00:01:56] by sort of ignoring stuff like opening files, for example,
+[00:01:57 -> 00:02:00] which we were conveniently able to do when using Brill.
+[00:02:01 -> 00:02:04] I also should mention that LLVM is written in C++,
+[00:02:04 -> 00:02:05] so we're going to write some code in C++,
+[00:02:05 -> 00:02:07] and that's just the way that it is.
+[00:02:07 -> 00:02:10] And this is a big contrast with Brill when you could use whatever language you like.
+[00:02:11 -> 00:02:15] In this lesson, we are going to use a tutorial that I wrote on my blog
+[00:02:15 -> 00:02:17] a very long time ago that is still relevant.
+[00:02:17 -> 00:02:19] It's called LLVM for Grad Students,
+[00:02:19 -> 00:02:22] and you will find a link to it in the notes associated with this lesson.
+[00:02:23 -> 00:02:26] This will walk you through the concepts behind LLVM
+[00:02:26 -> 00:02:29] and get you started by writing a pass that can manipulate code
+[00:02:29 -> 00:02:31] using the LLVM infrastructure.
+[00:02:31 -> 00:02:34] I'm not going to say every single word that's in the blog post,
+[00:02:34 -> 00:02:37] so I encourage you to read the blog post alongside the video.
+[00:02:38 -> 00:02:41] The first step that you're going to need to do is to install LLVM.
+[00:02:42 -> 00:02:44] I'm not going to cover this in detail either,
+[00:02:44 -> 00:02:48] except to say that it is probably in whatever package manager you use.
+[00:02:48 -> 00:02:51] For example, on macOS, I use the homebrew package manager,
+[00:02:51 -> 00:02:53] and I can just do brew install LLVM.
+[00:02:53 -> 00:02:57] This is a note for Mac users you will need for this tutorial
+[00:02:57 -> 00:03:01] to install LLVM separately, ideally from homebrew,
+[00:03:01 -> 00:03:03] instead of using the one that comes with Xcode.
+[00:03:03 -> 00:03:05] This makes it possible to write passes.
+[00:03:06 -> 00:03:09] You will also need CMake.
+[00:03:09 -> 00:03:13] So this is the full command that you need on homebrew on the Mac,
+[00:03:13 -> 00:03:16] but you can find some additional notes in the tutorial
+[00:03:16 -> 00:03:20] that might point you in the direction of how to install LLVM on your system.
+[00:03:20 -> 00:03:22] Please pause the video now
+[00:03:22 -> 00:03:24] and ensure that you can install LLVM
+[00:03:24 -> 00:03:27] to the point where you can write a clang version,
+[00:03:27 -> 00:03:28] and you get something like this,
+[00:03:28 -> 00:03:31] ideally clang version 10 point something or other.
+[00:03:32 -> 00:03:33] Do that now.
+[00:03:38 -> 00:03:40] Great, now you have LLVM installed.
+[00:03:40 -> 00:03:44] Now you can check out what its intermediate representation looks like,
+[00:03:44 -> 00:03:48] what the supercharged version of Brill looks like as a programming language.
+[00:03:49 -> 00:03:52] We're going to do this by writing a C program.
+[00:03:52 -> 00:03:56] So I'll just do this one very small C program.
+[00:03:56 -> 00:04:00] It's the smallest one I can reasonably write without being embarrassed.
+[00:04:00 -> 00:04:04] We'll just do int x is 42, and then I'll return 42 from this function.
+[00:04:04 -> 00:04:06] Don't go crazy at first.
+[00:04:07 -> 00:04:09] We're going to compile this program with clang.
+[00:04:09 -> 00:04:12] Clang is the C language front end for LLVM.
+[00:04:12 -> 00:04:17] It parses and compiles C programs to LLVM's internal representation,
+[00:04:17 -> 00:04:20] and then uses LLVM to compile the rest of the way to machine code.
+[00:04:20 -> 00:04:23] However, we just want to print the internal representation
+[00:04:23 -> 00:04:25] instead of compiling all the way to machine code
+[00:04:25 -> 00:04:26] so we can see what it looks like.
+[00:04:26 -> 00:04:29] To do that, you need a few magic flags.
+[00:04:29 -> 00:04:32] You'll do emit LLVM with a single dash and dash s,
+[00:04:32 -> 00:04:35] which tells it to do assembly instead of emitting binary.
+[00:04:36 -> 00:04:40] And then we can say dash o dash to have it just print to standard output
+[00:04:40 -> 00:04:41] instead of writing to a file.
+[00:04:41 -> 00:04:43] Of course, you can have this right to a file if you prefer.
+[00:04:44 -> 00:04:47] And then I'll just give it the name of the C program I'm compiling.
+[00:04:47 -> 00:04:48] So that was fast.
+[00:04:48 -> 00:04:50] It has compiled it to its intermediate representation.
+[00:04:50 -> 00:04:53] There's a whole bunch of stuff here that is somewhat hard to interpret,
+[00:04:53 -> 00:04:57] but the main thing that's going on is this definition of a function.
+[00:04:57 -> 00:05:01] And you can see maybe here what I mean by this sort of resembling Brill.
+[00:05:01 -> 00:05:03] That is, we have a definition of a function here,
+[00:05:03 -> 00:05:06] the name is main, which comes right from our source program,
+[00:05:06 -> 00:05:08] and then there's a list of instructions.
+[00:05:08 -> 00:05:11] Some of the instructions are even named exactly what they're named in Brill.
+[00:05:11 -> 00:05:15] For example, there's a ret instruction that returns a value from a function.
+[00:05:16 -> 00:05:18] The type system is quite a bit more complicated in LLVM.
+[00:05:18 -> 00:05:21] The first thing that you'll notice is that integer types have arbitrary width.
+[00:05:21 -> 00:05:27] So I32 is a type of a 32-bit integer, which LLVM has used to implement this C program for me.
+[00:05:28 -> 00:05:31] You'll notice that the body of the function is made up of these
+[00:05:31 -> 00:05:34] like allocate instructions that create space on the stack,
+[00:05:34 -> 00:05:37] and then some stores, and then loads, and then finally a return.
+[00:05:38 -> 00:05:40] And you'll see that there are variables being used,
+[00:05:40 -> 00:05:42] just like in Brill, to store the intermediates.
+[00:05:42 -> 00:05:47] So for example, 1, 2, and 3 are all variables that are sort of stack-local,
+[00:05:47 -> 00:05:48] that is, they're local to the function.
+[00:05:48 -> 00:05:52] You can think of them as roughly like the variables that we used in
+[00:05:54 -> 00:05:57] Brill programs that we assigned to and read from in Brill programs.
+[00:05:57 -> 00:05:59] However, LLVM is an SSA IR.
+[00:05:59 -> 00:06:02] So unlike Brill, which can either be an SSA form or not,
+[00:06:02 -> 00:06:05] every LLVM program is in SSA.
+[00:06:05 -> 00:06:09] So when we refer to like %3, for example,
+[00:06:09 -> 00:06:14] that's just a nice convenient name that makes it possible to read this program in text format.
+[00:06:14 -> 00:06:18] What's going on actually in LLVM internally is that this ret instruction
+[00:06:18 -> 00:06:21] has a pointer to this load instruction and says that it gets its value from there.
+[00:06:21 -> 00:06:27] So LLVM is really, at the most basic levels, kind of baked in this LLVM philosophy.
+[00:06:28 -> 00:06:30] To begin your journey as an LLVM hacker,
+[00:06:31 -> 00:06:34] a important thing to do is to get familiar with the documentation.
+[00:06:34 -> 00:06:36] You'll often be going to the documentation for
+[00:06:37 -> 00:06:40] to understand basically anything that's going on in LLVM.
+[00:06:40 -> 00:06:43] One big thing that you'll want to look up all the time is what instructions do.
+[00:06:43 -> 00:06:45] That is, what is this allocate instruction?
+[00:06:45 -> 00:06:45] What is store?
+[00:06:45 -> 00:06:46] What is load?
+[00:06:46 -> 00:06:47] What is ret?
+[00:06:47 -> 00:06:51] For answers to those questions and more, you'll want to use LLVM's language reference.
+[00:06:51 -> 00:06:54] You can google just like LLVM LingRef and you'll get this page.
+[00:06:54 -> 00:06:57] This is a very long document that includes a whole bunch about the structure
+[00:06:57 -> 00:07:01] and the type system of LLVM, but also descriptions of individual instructions.
+[00:07:01 -> 00:07:04] For example, we can look up that load instruction
+[00:07:05 -> 00:07:09] and we will get more detail than we could possibly have wanted about everything that can
+[00:07:09 -> 00:07:14] go into load instructions and exactly their semantics in the context of LLVM programs.
+[00:07:14 -> 00:07:17] You'll want to acquaint yourself with the LLVM language reference
+[00:07:17 -> 00:07:18] as you go through this lesson.
+[00:07:19 -> 00:07:21] Another big thing that you'll want to use,
+[00:07:21 -> 00:07:24] and you'll see this, we reference this a lot in the next video,
+[00:07:24 -> 00:07:30] is the internal Doxygen-based documentation that's generated for the LLVM API.
+[00:07:30 -> 00:07:33] For this, I'm constantly turning to Google to just search LLVM
+[00:07:33 -> 00:07:37] and the name of the C++ class or method that I'm looking for.
+[00:07:37 -> 00:07:40] For example, I can look for LLVM value
+[00:07:40 -> 00:07:46] and I've at least trained my Google bubble to take me to the LLVM Doxygen stuff.
+[00:07:46 -> 00:07:48] There's a whole bunch of information here,
+[00:07:48 -> 00:07:51] including the class hierarchy and everything that this class contains.
+[00:07:51 -> 00:07:52] I can't stress this enough.
+[00:07:52 -> 00:07:56] When you're using LLVM, you constantly have to be looking at the documentation.
+[00:07:56 -> 00:08:00] I don't really know a better way to navigate LLVM and to become an LLVM expert
+[00:08:00 -> 00:08:02] than constantly reading the documentation.
+[00:08:02 -> 00:08:06] You'll have a browser in one hand and you'll have a text editor in the other,
+[00:08:06 -> 00:08:09] and this is the way that you will make your way through the LLVM ecosystem.
+[00:08:10 -> 00:08:12] Please take a look around the documentation,
+[00:08:12 -> 00:08:16] try compiling some C programs and see if the IR looks interesting to you,
+[00:08:16 -> 00:08:17] and ask questions on Zulip.
+[00:08:17 -> 00:08:22] In the next video, we'll walk through writing a pass that can transform LLVM programs.
