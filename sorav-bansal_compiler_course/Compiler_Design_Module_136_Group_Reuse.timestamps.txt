@@ -1,0 +1,319 @@
+Title: Compiler Design Module 136 : Group Reuse
+Video ID: -5mUqO6S91A
+Detected language: en
+------------------------------------------------------------
+
+[00:00:00 -> 00:00:05] So we have looked at self-reuse both temporal and spatial and now we're going to discuss
+[00:00:05 -> 00:00:08] another type of reuse which is group reuse.
+[00:00:08 -> 00:00:13] So let's look at an example to understand what is group reuse.
+[00:00:13 -> 00:00:21] For i equals 0, i is less than n, i++, ai equals ai plus 1 plus a2 into i plus 1.
+[00:00:21 -> 00:00:26] Now group reuse basically means that the reuse is across different axes.
+[00:00:26 -> 00:00:36] So recall that self-reuse was when the same axis was having multiple reuse, in other sense
+[00:00:36 -> 00:00:40] the same memory location is being accessed multiple times by the same axis, let's say
+[00:00:40 -> 00:00:42] ai or maybe ai plus 1.
+[00:00:42 -> 00:00:48] Group reuse basically deals with the situation where there is the same location being accessed
+[00:00:48 -> 00:00:52] by dynamic instances of different static axes.
+[00:00:52 -> 00:00:58] So ai is one static axis, ai plus 1 is another static axis and so across these two static
+[00:00:58 -> 00:01:04] axes if dynamic instances access the same location, same memory location, then we call
+[00:01:04 -> 00:01:09] it group reuse and the group in this case is formed by the two static axes ai and
+[00:01:09 -> 00:01:10] ai plus 1.
+[00:01:10 -> 00:01:16] And similarly I can do a similar group between ai and a2 into i plus 1 or the
+[00:01:16 -> 00:01:21] third group could be between ai plus 1 and a2 into i plus 1.
+[00:01:21 -> 00:01:26] So just for simplicity, I am just going to consider two different groups.
+[00:01:26 -> 00:01:30] One is ai and ai plus 1 and the other is ai and a2 into i plus 1.
+[00:01:30 -> 00:01:36] We consider pair-wise groups usually and so there are three pairs here but we are
+[00:01:36 -> 00:01:41] just looking at two different pairs, ai versus ai plus 1 is one group and ai versus
+[00:01:41 -> 00:01:45] a2 into i plus 1 is the other group.
+[00:01:45 -> 00:01:50] Now if I look at the first group ai and ai plus 1, notice that i is ranging from
+[00:01:50 -> 00:01:51] 0 to n.
+[00:01:51 -> 00:01:59] So in the first iteration when i is 0, ai is going to access a0 and ai plus 1 is
+[00:01:59 -> 00:02:00] going to access a1.
+[00:02:00 -> 00:02:05] In the second iteration ai is going to access a1 and ai plus 1 is going to access a2
+[00:02:05 -> 00:02:06] and so on.
+[00:02:06 -> 00:02:14] And so whatever was accessed by the 0th iteration in ai plus 1 is being accessed
+[00:02:14 -> 00:02:17] by the first iteration in ai.
+[00:02:17 -> 00:02:24] And so in general, anything that is accessed in the nth iteration or let's say kth
+[00:02:24 -> 00:02:31] iteration by ai plus 1 is being accessed by ai in the k plus 1th iteration.
+[00:02:31 -> 00:02:37] And so there are going to be n minus 1 instances of reuse, n minus 1 dynamic instances
+[00:02:37 -> 00:02:41] of reuse across these two static accesses and those n minus 1 instances are going
+[00:02:41 -> 00:02:46] to be a1, a2, a3, a4, dot dot dot, an minus 1.
+[00:02:46 -> 00:02:49] So everything except the first instance.
+[00:02:49 -> 00:02:54] Let's look at the reuse between ai versus a2 into i plus 1.
+[00:02:54 -> 00:02:58] So in the first iteration ai is going to access a0 and a2 into i plus 1 is going
+[00:02:58 -> 00:03:01] to access a1.
+[00:03:01 -> 00:03:07] In the second iteration ai is going to access a1 and a2 into i plus 1 is going
+[00:03:07 -> 00:03:13] to access a3, 2 into i which is 1, 2 plus 1, 3.
+[00:03:13 -> 00:03:15] So it's going to access 3.
+[00:03:15 -> 00:03:20] In the second iteration ai is going to access a2 and a2 into i plus 1 is going
+[00:03:20 -> 00:03:25] to access a5 and so on.
+[00:03:25 -> 00:03:31] So there is some reuse but the reuse is less in this case because ai is basically
+[00:03:31 -> 00:03:35] incrementing by 1 on every iteration whereas a2 into i plus 1 is
+[00:03:35 -> 00:03:38] incrementing by 2 on every iteration.
+[00:03:38 -> 00:03:43] And so we can say that the amount of reuse in the first group which is ai and
+[00:03:43 -> 00:03:48] a i plus 1 is order is n minus 1 exactly speaking because it's n minus 1 different
+[00:03:48 -> 00:03:51] instances which are going to have dynamic instances which are going to
+[00:03:51 -> 00:03:53] have reuse.
+[00:03:53 -> 00:03:58] On the other hand, ai versus 2 into a2 into i plus 1 is going to have order n
+[00:03:58 -> 00:03:59] by 2 reuse.
+[00:03:59 -> 00:04:04] It's only the odd elements of a that are going to have reuse.
+[00:04:04 -> 00:04:07] The even elements are not going to have reuse.
+[00:04:07 -> 00:04:08] Let's look at another example.
+[00:04:08 -> 00:04:11] This time you're going to look at a two dimensional example.
+[00:04:11 -> 00:04:19] For i equals 0 to m, for j equals 0 to m, aij equals ai plus 1 j, a of i plus 1 j
+[00:04:19 -> 00:04:24] plus 2 plus a of 2 into i, 2 into j.
+[00:04:24 -> 00:04:27] Now once again we're using the same logic that we had in our previous
+[00:04:27 -> 00:04:28] example.
+[00:04:28 -> 00:04:32] What is the reuse between ai comma j and ai plus 1 j plus 2?
+[00:04:32 -> 00:04:38] Once again there is almost order m into n reuse because except for the
+[00:04:38 -> 00:04:43] boundary conditions which are the first one or two elements, because it's a two
+[00:04:43 -> 00:04:49] dimensional array, one row and two columns, so that's two elements, except
+[00:04:49 -> 00:04:54] for them everything else is going to have a reuse.
+[00:04:54 -> 00:04:58] On the other hand, in the second group which is aij versus a2 into i comma 2
+[00:04:58 -> 00:05:07] into j, the a2i comma 2j is only accessing even elements which have even
+[00:05:07 -> 00:05:11] rows and even columns, whereas ai comma j is accessing all rows and all
+[00:05:11 -> 00:05:11] columns.
+[00:05:11 -> 00:05:16] And once again, the amount of reuse in the first case is order mn, whereas
+[00:05:16 -> 00:05:19] the amount of reuse in the second case is order mn divided by 4.
+[00:05:19 -> 00:05:24] In general, the higher the multiple or something like that, the less the
+[00:05:24 -> 00:05:28] reuse becomes across the group.
+[00:05:28 -> 00:05:31] And so the most interesting reuse here that we want to focus on is the
+[00:05:31 -> 00:05:36] one which has the maximum possibility of reuse and that's the first case
+[00:05:36 -> 00:05:39] which is ai and ai plus 1, j plus 2.
+[00:05:39 -> 00:05:41] So what is the common thread between the two examples?
+[00:05:41 -> 00:05:46] Why do I use green for one group and red for the other?
+[00:05:46 -> 00:05:50] Because the red group basically has less reuse and what is the
+[00:05:50 -> 00:05:51] generalization?
+[00:05:51 -> 00:05:57] Well, the reuse is higher if the accesses, if those static accesses have
+[00:05:57 -> 00:06:00] the same coefficient matrix, because if they have the same coefficient
+[00:06:00 -> 00:06:04] matrix, it basically means that they're going to have reuse which is
+[00:06:04 -> 00:06:07] proportional to the number of accesses made by each of those static
+[00:06:07 -> 00:06:09] accesses.
+[00:06:09 -> 00:06:14] In the first example, the coefficient matrix of ai was just 1,
+[00:06:14 -> 00:06:17] whereas of a of 2 into i plus 1 was 2 and so the coefficient matrices
+[00:06:17 -> 00:06:18] were different.
+[00:06:18 -> 00:06:22] When the coefficient matrices are different, the reuse becomes less.
+[00:06:22 -> 00:06:25] Similarly, in the second case of two dimensional array, if the
+[00:06:25 -> 00:06:30] coefficients are 1, 1, 0, 0, 1, which is ai comma j or ai plus 1,
+[00:06:30 -> 00:06:33] j minus 2, then we have more reuse.
+[00:06:33 -> 00:06:37] Whereas if the coefficient matrix was different, for example, in case of
+[00:06:37 -> 00:06:43] a 2i comma 2j, then we have less reuse.
+[00:06:43 -> 00:06:48] So we basically want to focus on those kind of reuse which has the
+[00:06:48 -> 00:06:51] maximum bang for the buck, where there's maximum payoff.
+[00:06:51 -> 00:06:54] And so the maximum payoff is when the coefficient matrices are
+[00:06:54 -> 00:06:58] equal, in which case the two accesses are very aligned except
+[00:06:58 -> 00:07:01] for the constant offset, which means that there may be some boundary
+[00:07:01 -> 00:07:05] cases where we don't have reuse, but by and large across the array,
+[00:07:05 -> 00:07:07] we have a large amount of reuse.
+[00:07:07 -> 00:07:10] And so that's why we're going to focus our group reuse efforts on
+[00:07:10 -> 00:07:13] from a compiler standpoint.
+[00:07:13 -> 00:07:16] And once again, this is just a trade-off between how much kind of
+[00:07:16 -> 00:07:20] complexity and compile time you want to spend versus what is the
+[00:07:20 -> 00:07:21] payoff.
+[00:07:21 -> 00:07:24] The payoff is higher if the coefficient matrices are equal.
+[00:07:24 -> 00:07:28] So recall that every array access in a loop nest can be
+[00:07:28 -> 00:07:31] characterized by one of the parameters is capital F comma small f where
+[00:07:31 -> 00:07:35] capital F is the coefficient matrix and small f is the offset.
+[00:07:35 -> 00:07:40] And so let's say I have four different accesses, Fx comma F1, Fx comma F2,
+[00:07:40 -> 00:07:42] Fy comma F3, Fy comma F4.
+[00:07:42 -> 00:07:48] Then based on this rule, I'm going to group like this so that I
+[00:07:48 -> 00:07:52] basically look at group reuse only for those accesses which have the
+[00:07:52 -> 00:07:55] same coefficient matrix.
+[00:07:55 -> 00:07:58] In this case, the first and the second accesses have the same
+[00:07:58 -> 00:08:01] coefficient matrix and the third and the fourth accesses have the same
+[00:08:01 -> 00:08:02] coefficient matrix.
+[00:08:02 -> 00:08:06] And so these are the groups that we'll be interested in from a
+[00:08:06 -> 00:08:07] reuse standpoint.
+[00:08:07 -> 00:08:12] We'll not be interested in reuse across the first and the third
+[00:08:12 -> 00:08:16] static array accesses, for example.
+[00:08:16 -> 00:08:21] So now let's look at an example to see what is the group reuse and
+[00:08:21 -> 00:08:24] other types of reuse in this example to understand group reuse better.
+[00:08:24 -> 00:08:28] So once again, it's a two-depth loopness for i equals 1 to n, for j
+[00:08:28 -> 00:08:36] equals 0 to n, z i comma j equals z i minus 1 comma j, all right?
+[00:08:36 -> 00:08:42] And here is my coefficient matrix for both these accesses.
+[00:08:42 -> 00:08:45] So for the first accesses, the coefficient matrix is 1, 0, 0, 1.
+[00:08:45 -> 00:08:47] That represents i comma j.
+[00:08:47 -> 00:08:54] And recall that my iteration indices are i, j.
+[00:08:54 -> 00:08:59] And similarly, for the second access, once again, my coefficient matrix is
+[00:08:59 -> 00:09:01] again 1, 0, 0, 1.
+[00:09:01 -> 00:09:04] However, the small f's are different in both cases.
+[00:09:04 -> 00:09:07] In the first case, the small f, which I call f1, is 0, 0.
+[00:09:07 -> 00:09:10] There is no additive constant.
+[00:09:10 -> 00:09:13] And in the second case, it's minus 1, 0, because there's an
+[00:09:13 -> 00:09:16] additive constant of minus 1 for i.
+[00:09:16 -> 00:09:19] Now my first question is, what is the amount of reuse in this
+[00:09:19 -> 00:09:21] particular loop nest?
+[00:09:21 -> 00:09:25] And the first question is, what is the self-temporal reuse?
+[00:09:25 -> 00:09:29] Is there self-temporal reuse between z i, j with itself?
+[00:09:29 -> 00:09:34] Or is there self-temporal reuse with z i minus 1 comma j and
+[00:09:34 -> 00:09:35] with itself?
+[00:09:35 -> 00:09:38] Well, to answer that question, recall that we need to look at
+[00:09:38 -> 00:09:41] the coefficient matrix capital F and calculate the
+[00:09:41 -> 00:09:42] rank of that matrix.
+[00:09:42 -> 00:09:45] So in this case, the coefficient matrix for both these
+[00:09:45 -> 00:09:47] accesses is 1, 0, 0, 1.
+[00:09:47 -> 00:09:50] And so the rank of this matrix is 2.
+[00:09:50 -> 00:09:53] And because the rank of the matrix is a full-ranked
+[00:09:53 -> 00:09:57] matrix, there is no self-temporal reuse.
+[00:09:57 -> 00:09:59] Recall this is how we used to figure out whether there is
+[00:09:59 -> 00:10:02] self-temporal reuse or not.
+[00:10:02 -> 00:10:05] Our second question is, is there self-spatial reuse?
+[00:10:05 -> 00:10:09] And well, let's see.
+[00:10:09 -> 00:10:13] Recall that for self-spatial reuse, we basically get rid
+[00:10:13 -> 00:10:16] of the last row of the coefficient matrix, pretending
+[00:10:16 -> 00:10:19] as though the last row is basically fitting in the
+[00:10:19 -> 00:10:21] entire cache line.
+[00:10:21 -> 00:10:24] And so if we get rid of the last row, then we are left
+[00:10:24 -> 00:10:25] with a one-ranked matrix, which is
+[00:10:25 -> 00:10:27] just a single row, 1, 0.
+[00:10:27 -> 00:10:31] And yes, indeed, there is self-spatial reuse.
+[00:10:31 -> 00:10:33] And that can also be seen, because assuming that the
+[00:10:33 -> 00:10:37] last row of the matrix is completely fitting in my
+[00:10:37 -> 00:10:40] cache line, then when I access z i 0 and then I
+[00:10:40 -> 00:10:44] access z i 1, there is reuse between z i 0 and z i 1,
+[00:10:44 -> 00:10:46] because they are going to be accessing the
+[00:10:46 -> 00:10:47] same cache line.
+[00:10:47 -> 00:10:53] Under our assumption that the entire last-level row is
+[00:10:53 -> 00:10:55] basically fitting in the cache line.
+[00:10:55 -> 00:10:57] So yes, indeed, there is self-spatial reuse.
+[00:10:57 -> 00:11:02] But recall that self-spatial reuse has this very loose
+[00:11:02 -> 00:11:04] assumption that the entire row fits in the cache
+[00:11:04 -> 00:11:07] line, and so it has to be taken with a pinch of salt.
+[00:11:07 -> 00:11:10] Now finally, we will come to our topic in this
+[00:11:10 -> 00:11:13] module, which is, is there group reuse?
+[00:11:13 -> 00:11:16] And notice that when I say group reuse, the word
+[00:11:16 -> 00:11:17] temporal is implicit.
+[00:11:17 -> 00:11:20] I'm really talking about group temporal reuse here.
+[00:11:20 -> 00:11:24] And the answer is, well, the first thing I want to check
+[00:11:24 -> 00:11:26] is whether the coefficient matrices are equal.
+[00:11:26 -> 00:11:28] So there are only two axes, so there can be only one
+[00:11:28 -> 00:11:29] group in this example.
+[00:11:29 -> 00:11:31] I've used a simple example.
+[00:11:31 -> 00:11:33] And the coefficient matrices are equal.
+[00:11:33 -> 00:11:36] So if the coefficient matrices were not equal, we
+[00:11:36 -> 00:11:38] would have just said, no, there is no group reuse.
+[00:11:38 -> 00:11:41] Because we are only interested in that type of group
+[00:11:41 -> 00:11:43] reuse, where there's a large amount of reuse, and
+[00:11:43 -> 00:11:45] which can only happen if the coefficient matrices were
+[00:11:45 -> 00:11:47] equal.
+[00:11:47 -> 00:11:49] So there's no, we assume that there's no reuse.
+[00:11:49 -> 00:11:50] So in this case, there is reuse because the
+[00:11:50 -> 00:11:53] coefficient, there may be reuse if the coefficient
+[00:11:53 -> 00:11:54] matrices are equal.
+[00:11:54 -> 00:11:55] Indeed, they are equal.
+[00:11:55 -> 00:11:57] And so there is reuse.
+[00:11:57 -> 00:12:00] And so how do I figure out when there is reuse?
+[00:12:00 -> 00:12:03] So the reuse happens when, whenever, you know, we
+[00:12:03 -> 00:12:05] basically say that the array accesses access the
+[00:12:05 -> 00:12:07] same memory location.
+[00:12:07 -> 00:12:11] In other words, if the first access is accessing
+[00:12:11 -> 00:12:16] i1, j1, or, you know, in short, I say i1 vector
+[00:12:16 -> 00:12:18] form under the underline.
+[00:12:18 -> 00:12:21] And similarly, for the second access, it's i2 vector,
+[00:12:21 -> 00:12:24] which is representing the scalars i2, j2.
+[00:12:24 -> 00:12:29] Then when is f i1 plus f1 equal to f i2 plus small f2?
+[00:12:32 -> 00:12:35] And the answer to this is basically because the
+[00:12:35 -> 00:12:38] coefficient matrices are equal, I can just rewrite
+[00:12:38 -> 00:12:43] this equation as i1 minus i2 equals f1 into, you
+[00:12:43 -> 00:12:44] know, I just kind of rearrange the things and
+[00:12:44 -> 00:12:45] substitute the values.
+[00:12:45 -> 00:12:47] I get minus one and zero.
+[00:12:47 -> 00:12:50] So in other words, if i1 vector minus i2 vector
+[00:12:50 -> 00:12:53] equals minus one comma zero, the two iterations
+[00:12:53 -> 00:12:55] are going to access the same location.
+[00:12:55 -> 00:13:00] In other words, whenever i1 equals i2 plus one,
+[00:13:01 -> 00:13:04] whenever i1 equals i2 plus one and j1 equals j2,
+[00:13:04 -> 00:13:07] the scalars, then we're going to have reuse.
+[00:13:08 -> 00:13:12] Notice that there is reuse here, which is a good thing.
+[00:13:12 -> 00:13:14] But is there locality?
+[00:13:15 -> 00:13:17] Is there locality across this reuse?
+[00:13:17 -> 00:13:19] Well, if I want to answer, so first of all,
+[00:13:19 -> 00:13:20] there is reuse.
+[00:13:20 -> 00:13:21] The answer is yes, just because the
+[00:13:21 -> 00:13:23] coefficient matrices are equal.
+[00:13:23 -> 00:13:27] Now the second question is, I want to point out
+[00:13:27 -> 00:13:29] that we're just looking at the coefficient matrices.
+[00:13:29 -> 00:13:31] One question that you may have is, what if the offset
+[00:13:31 -> 00:13:33] is very large, in which case the corner cases
+[00:13:33 -> 00:13:36] become really large, and so the reuse
+[00:13:36 -> 00:13:37] becomes really small?
+[00:13:37 -> 00:13:39] Indeed, that's possible.
+[00:13:39 -> 00:13:41] But we're just using an approximation here,
+[00:13:41 -> 00:13:46] assuming that the boundary cases are going to be small,
+[00:13:46 -> 00:13:47] and so if the coefficient matrices are equal,
+[00:13:47 -> 00:13:49] we assume there is group reuse.
+[00:13:49 -> 00:13:51] Now the other question is, is there locality?
+[00:13:51 -> 00:13:53] And then we want to answer the question of locality.
+[00:13:53 -> 00:13:55] It's not enough to just have reuse.
+[00:13:55 -> 00:13:58] We also have to figure out what is the reuse distance.
+[00:13:58 -> 00:14:00] And in this case, the reuse distance
+[00:14:00 -> 00:14:02] can just be figured out by figuring out
+[00:14:02 -> 00:14:07] what is the distance between the iteration count
+[00:14:07 -> 00:14:09] of the first axis and the iteration count
+[00:14:09 -> 00:14:11] of the second axis when they access the same element.
+[00:14:11 -> 00:14:13] And that is already given by this particular equation,
+[00:14:13 -> 00:14:16] which is I1 minus I2 equals minus one comma zero.
+[00:14:16 -> 00:14:18] So what is the reuse distance?
+[00:14:18 -> 00:14:23] Well, notice that here, the I,
+[00:14:24 -> 00:14:26] which is different across the two iterations,
+[00:14:26 -> 00:14:29] is the second dimension.
+[00:14:29 -> 00:14:31] The innermost dimension is J,
+[00:14:31 -> 00:14:34] and the second innermost dimension is I,
+[00:14:34 -> 00:14:36] and that's where there is a distance,
+[00:14:36 -> 00:14:38] difference, there needs to be a distance
+[00:14:38 -> 00:14:41] between the two iterations for there to be reused.
+[00:14:41 -> 00:14:45] And so the distance, the reuse distance in this example
+[00:14:45 -> 00:14:48] is actually order N, because, for example,
+[00:14:48 -> 00:14:53] Z00 and Z10, so basically I'll have to go through
+[00:14:54 -> 00:14:57] N iterations of the inner loop to have reuse.
+[00:14:57 -> 00:15:00] For example, if I equals one and J equals zero,
+[00:15:00 -> 00:15:04] then ZI comma J is going to access one comma zero.
+[00:15:04 -> 00:15:08] And then when I equals two and J equals zero,
+[00:15:08 -> 00:15:11] then the second access, the second static access
+[00:15:11 -> 00:15:12] is going to access Z1 comma zero.
+[00:15:12 -> 00:15:15] So basically the distance, the two iterations
+[00:15:15 -> 00:15:17] that are going to have reuse are one comma zero
+[00:15:17 -> 00:15:18] and two comma zero.
+[00:15:18 -> 00:15:20] And what's the distance between one comma zero
+[00:15:20 -> 00:15:21] and two comma zero?
+[00:15:21 -> 00:15:24] Well, that's actually the entire length
+[00:15:24 -> 00:15:27] of the inner loop, which is order N,
+[00:15:27 -> 00:15:30] because we are basically going to traverse the loopness
+[00:15:30 -> 00:15:31] in the lexicographic order,
+[00:15:31 -> 00:15:33] ascending lexicographic order.
+[00:15:33 -> 00:15:35] So one comma zero, one comma one, one comma one,
+[00:15:35 -> 00:15:37] two, one comma three, all the way to one comma N.
+[00:15:37 -> 00:15:38] And then we come to two comma zero.
+[00:15:38 -> 00:15:41] So the reuse distance is pretty large.
+[00:15:41 -> 00:15:44] In general, if I want to calculate the reuse distance,
+[00:15:44 -> 00:15:46] once I have the distance vector,
+[00:15:46 -> 00:15:48] which is this minus one comma zero,
+[00:15:48 -> 00:15:50] I just need to scan bottom up in this reuse vector
+[00:15:50 -> 00:15:53] and find the last non-zero dimension
+[00:15:53 -> 00:15:55] that is not zero, all right?
+[00:15:55 -> 00:15:57] So I've written here equals one,
+[00:15:57 -> 00:16:00] but I should say not, which is not zero.
+[00:16:00 -> 00:16:02] And whatever is that dimension,
+[00:16:02 -> 00:16:04] let's say that dimension is K,
+[00:16:04 -> 00:16:07] then the reuse distance becomes order N to the power K
+[00:16:07 -> 00:16:10] where N is the length of iteration space
+[00:16:10 -> 00:16:12] of one dimension on average.
+[00:16:12 -> 00:16:16] So in this case, that particular index is one,
+[00:16:16 -> 00:16:18] K is one, and so the reuse distance
+[00:16:18 -> 00:16:21] is order N to the power one, or order N.
+[00:16:22 -> 00:16:25] If, for example, the loopness was in the other order,
+[00:16:25 -> 00:16:30] which means J was outermost iteration variable index,
+[00:16:30 -> 00:16:33] and I was the innermost iteration index,
+[00:16:33 -> 00:16:37] then the distance vector would have been zero comma minus one,
+[00:16:37 -> 00:16:39] in which case my reuse distance would have been
+[00:16:39 -> 00:16:41] order N to the power zero,
+[00:16:41 -> 00:16:46] because the last non-zero value in the distance vector
+[00:16:47 -> 00:16:49] would have been at index zero,
+[00:16:49 -> 00:16:50] so it would become order N to the power zero,
+[00:16:50 -> 00:16:51] which is order one,
+[00:16:51 -> 00:16:53] and reuse distance would have become really small,
+[00:16:53 -> 00:16:57] and then there would have been locality, all right?
+[00:16:57 -> 00:17:00] But here, there is no locality
+[00:17:00 -> 00:17:01] because order N is pretty large
+[00:17:01 -> 00:17:03] in terms of temporal locality,
+[00:17:04 -> 00:17:07] but there is reuse in this particular example
+[00:17:07 -> 00:17:08] as it stands right now.

@@ -1,0 +1,192 @@
+Title: Compiler Design Module 22 : Constructing First Sets
+Video ID: CLQ-Lv2o-Cg
+Detected language: en
+------------------------------------------------------------
+
+[00:00:00 -> 00:00:05] So last time we discussed how given an LL1 parsing table we could implement an LL1 parser.
+[00:00:06 -> 00:00:12] Now our next discussion is how to construct such an LL1 parsing table given a grammar.
+[00:00:14 -> 00:00:22] So to be able to construct an LL1 parsing table we basically need to identify two types
+[00:00:22 -> 00:00:29] of quantities for each non-terminal and terminal. One is first sets and the other is called follow
+[00:00:29 -> 00:00:39] sets. So what is first sets? First sets are what are the set of tokens that can be produced
+[00:00:40 -> 00:00:47] in the first position, in the leftmost position for any non-terminal or terminal or string of
+[00:00:47 -> 00:01:03] non-terminals and terminals. So for example first of so if I have E produces open parenthesis T
+[00:01:03 -> 00:01:13] close parenthesis then first of E equals the open parenthesis token because E when it produces
+[00:01:13 -> 00:01:18] something it may produce an open parenthesis as the first token and so open parenthesis would be
+[00:01:18 -> 00:01:25] a part of first E okay and there could be more rules so there could be maybe E also produces an
+[00:01:25 -> 00:01:32] integer in which case int would be a part of first E so if E produces int there's another
+[00:01:32 -> 00:01:41] production then first E would get expanded to open parenthesis and right so basically first
+[00:01:41 -> 00:01:46] is supposed to represent what are all the tokens that can appear in the first place in
+[00:01:46 -> 00:01:53] the leftmost place during any production of this non-terminal. This first is not defined not just
+[00:01:53 -> 00:01:59] for non-terminals but also for terminals and for terminals the definition is really simple
+[00:01:59 -> 00:02:08] for example a terminal may produce a terminal itself so for a terminal the set of tokens
+[00:02:08 -> 00:02:13] that may appear at the first position is that terminal itself so first T equals the set T
+[00:02:13 -> 00:02:19] and first is also defined for a string of terminals and non-terminals so for example
+[00:02:19 -> 00:02:28] I could say first of a1 a2 an maybe this is a string of terminals and non-terminals
+[00:02:28 -> 00:02:33] maybe a1 could be a terminal or a non-terminal a2 could be a terminal or a non-terminal and
+[00:02:33 -> 00:02:39] so on and this would be equal to you know whatever is the first character that a1 can
+[00:02:39 -> 00:02:48] produce would be the first character that a1 a2 a3 an can produce also if a1 could produce epsilon
+[00:02:48 -> 00:02:53] then whatever is the first character that a2 can produce is also the first character that
+[00:02:53 -> 00:03:00] this whole thing can produce so let me call a1 a2 a1 an and alpha alpha string which is of
+[00:03:00 -> 00:03:07] and a string of non-terminals and terminals then first of alpha is must be a superset of
+[00:03:07 -> 00:03:13] first of a1 also if a1 produces epsilon then first of alpha must be a superset of first of a2
+[00:03:14 -> 00:03:20] and so on so if a1 and a2 both produce epsilon then first of alpha is a superset of first of
+[00:03:20 -> 00:03:25] a3 and so on if you're going to see this in more detail but it's but for now I want you
+[00:03:25 -> 00:03:35] to find understand that first is defined for a non-terminal a terminal or a string of
+[00:03:35 -> 00:03:40] non-terminals and terminals which would be the rhs of a production for example or part of
+[00:03:42 -> 00:03:47] just like first we also define a follow set and I'm going to define it in the next module
+[00:03:47 -> 00:03:51] today we are only going to discuss first set but it's good to know that we're going to
+[00:03:51 -> 00:04:00] also later on define follow sets okay so to provide some intuition of why we care about
+[00:04:00 -> 00:04:08] first set and follow set consider any non-terminal a in your grammar also consider a production
+[00:04:08 -> 00:04:15] a produces alpha which is part of your grammar and consider any terminal t now
+[00:04:17 -> 00:04:22] we are interested in constructing the ll1 parsing table recall that the 11 passing table
+[00:04:22 -> 00:04:28] has cells of the form a comma t where a is a non-terminal and t is a terminal token
+[00:04:28 -> 00:04:32] and we want to know what should we put at that particular cell in this table
+[00:04:32 -> 00:04:39] 11 passing table should we put alpha should we put some other production or should we
+[00:04:39 -> 00:04:45] leave it blank and so we say that we will put alpha in this cell so ta comma t equals alpha
+[00:04:45 -> 00:04:56] if either alpha can produce in one or more productions the terminal t followed by any beta
+[00:04:56 -> 00:05:01] beta could be a string of terminals and non-terminals but t is a terminal token so if
+[00:05:01 -> 00:05:09] alpha can produce t as the first token in any production then any sequence of productions
+[00:05:09 -> 00:05:18] then t would belong to first alpha and also we would say that t at should be equal to alpha
+[00:05:19 -> 00:05:27] um in other words because we know that alpha can produce t and uh you know and a producing
+[00:05:27 -> 00:05:33] alpha is a possibility uh and if the next lookahead token is a t then we know that
+[00:05:33 -> 00:05:37] we should put alpha there hopefully there are there's only going to be a single alpha if the
+[00:05:37 -> 00:05:42] grammar is 11 parsing parsable single such alpha if the grammar is not 11 possible there
+[00:05:42 -> 00:05:47] could be multiple such alphas in which case we would just say that the grammar is not 11
+[00:05:47 -> 00:05:53] possible and so we will not be able to construct an 11 parsing table for such a grammar further
+[00:05:54 -> 00:06:04] if uh so in other words if alpha can produce t as the first character that is exactly like
+[00:06:04 -> 00:06:09] saying that t belongs to first of alpha as we have defined first and how to compute first
+[00:06:09 -> 00:06:14] we're going to discuss later but the definition of this first set for a string of terminal and
+[00:06:14 -> 00:06:23] non-terminal exactly this that alpha can produce t in the leftmost position of uh of a derivation
+[00:06:25 -> 00:06:32] also if alpha can produce epsilon which means alpha can produce an empty string in any sequence
+[00:06:32 -> 00:06:47] of productions or in any derivation and and a to a can produce alpha then if there exists
+[00:06:47 -> 00:06:53] a production such that it can produce s can produce some gamma which is a string of
+[00:06:53 -> 00:06:58] terminals and non-terminals some uh the non-terminal a which is the non-terminal
+[00:06:58 -> 00:07:04] that we're considering and then followed by a terminal t and then some delta which could be
+[00:07:04 -> 00:07:09] a string of terminals if there exists any such derivation notice that this is not a complete
+[00:07:09 -> 00:07:14] derivation there's some intermediate step of a derivation where there are some non-terminals
+[00:07:14 -> 00:07:20] and some terminals in the in the derived string but if we can have such a situation where
+[00:07:21 -> 00:07:30] there is an a that is followed by a t and it turns out that alpha can produce epsilon then
+[00:07:31 -> 00:07:40] we would set t a t to be alpha the idea the the the reasoning here is that if the next look
+[00:07:40 -> 00:07:49] ahead token is a t and capital a could have collapsed into the empty string through alpha
+[00:07:51 -> 00:07:57] and you know starting from the start symbol there was a derivation that could follow
+[00:07:58 -> 00:08:06] t with uh follow a with a t then if the next look ahead is a t then a can produce alpha
+[00:08:06 -> 00:08:13] is the right derivation to use in this case right because a can produce alpha alpha can
+[00:08:13 -> 00:08:21] produce epsilon and and there exists a derivation that can produce p after a so that this must
+[00:08:21 -> 00:08:27] be the option possibility and that in that case we would like to set t a t to alpha
+[00:08:27 -> 00:08:32] we're going to see more in more detail about how follow sets work and how to compute them
+[00:08:33 -> 00:08:37] but it's good to know why we are considering first and follow sets once again
+[00:08:37 -> 00:08:41] first sets are important because we want to know whether this terminal can be produced as the
+[00:08:41 -> 00:08:49] first leftmost token from by deriving a particular non-terminal or and follow is
+[00:08:49 -> 00:08:53] important because if that non-terminal can collapse into an epsilon we are interested
+[00:08:53 -> 00:08:59] in knowing whether a token can follow this particular non-terminal a in any derivation
+[00:08:59 -> 00:09:05] from the start symbol or not if so then we know that this is the right derivation for it because
+[00:09:05 -> 00:09:12] it collapses it into epsilon okay so that's the intuition behind computing first and follow sets
+[00:09:12 -> 00:09:21] so today we're going to discuss first sets and once again first is defined for some terminal
+[00:09:21 -> 00:09:29] or non-terminal so for let's just consider for simplicity x to be a non-terminal so
+[00:09:30 -> 00:09:40] first of x is the set of all tokens t such that t can be derived from x t alpha can be derived
+[00:09:40 -> 00:09:46] from x all right which means x can derive a string of terminal and non-terminal such that
+[00:09:46 -> 00:09:57] t is on the leftmost position in that string further if x can derive epsilon then we say that
+[00:09:57 -> 00:10:05] epsilon belongs to first of x all right so if x can derive the empty string then we say that
+[00:10:05 -> 00:10:11] epsilon is also part of first of x this is just by definition recall that when we defined
+[00:10:12 -> 00:10:18] first we were talking about all the tokens in possible tokens epsilon is not a token
+[00:10:18 -> 00:10:24] epsilon just represents an empty string and we say that epsilon belongs to first of f
+[00:10:24 -> 00:10:31] if and only if x can derive the empty string okay so this is just by definition
+[00:10:31 -> 00:10:38] so first of x is all tokens t such that x can produce t on the leftmost position union
+[00:10:38 -> 00:10:46] epsilon such that x can if x can produce epsilon or x can derive epsilon all right
+[00:10:47 -> 00:10:54] so how do i compute first of x for any given x well x could be a terminal or a non-terminal
+[00:10:54 -> 00:11:03] as we discussed so first of all we say that for any terminal t it's very easy first of t is just
+[00:11:03 -> 00:11:09] t because the terminal can only derive itself and that it would be present in the leftmost position
+[00:11:09 -> 00:11:16] for it is for any derivation for that particular terminal so first of t is just the set single
+[00:11:16 -> 00:11:26] ten set t further if x can derive epsilon or x can produce epsilon in a single production or
+[00:11:26 -> 00:11:35] x can produce a 1 a 2 a n such that epsilon belongs to the first of a 1 and a 2 and a 3
+[00:11:37 -> 00:11:45] right so if x produces epsilon then it's easy epsilon belongs to the first of x right this
+[00:11:45 -> 00:11:50] is just by definition okay but notice that here the production is a single production
+[00:11:50 -> 00:11:54] whereas here we said there could be a potential derivation which could involve multiple steps
+[00:11:55 -> 00:12:01] so to capture that we say if x can produce you know if there's a production in the grammar of
+[00:12:01 -> 00:12:06] the form x produces a 1 a 2 a n where a i's can be either terminals or non-terminals
+[00:12:08 -> 00:12:15] and it is true that epsilon belongs to the first set of each of these a i's all right so
+[00:12:15 -> 00:12:22] i'm defining first sets recursively so i'm trying to define first of x based on the first
+[00:12:22 -> 00:12:28] set of assuming i already know the first sets of a i and then i can kind of keep doing this
+[00:12:29 -> 00:12:36] inductively and so if epsilon belongs to first of a i for all i then epsilon belongs to first
+[00:12:36 -> 00:12:42] of x because if epsilon belongs to first of a i for all i it basically means that each of the
+[00:12:42 -> 00:12:48] a i's can produce epsilon right that's the definition the epsilon will belong to the first
+[00:12:48 -> 00:12:53] set of a non-terminal if that non-terminal can produce an epsilon and so it basically so if
+[00:12:53 -> 00:12:59] epsilon belongs to the first sets of each of a i's for all i's belonging to one comma n
+[00:13:00 -> 00:13:08] then x can produce epsilon and thus epsilon is part of first of x right so this is another
+[00:13:08 -> 00:13:14] rule that we are going to use and the third rule we are going to use is the following that
+[00:13:14 -> 00:13:25] if x can produce a 1 a 2 dot dot an alpha so if there is a production of the type a 1 dot dot an
+[00:13:25 -> 00:13:35] alpha and epsilon belongs to first of all the a i's a 1 dot dot an which means this entire
+[00:13:35 -> 00:13:43] thing can produce epsilon okay this entire thing can produce epsilon then whatever is
+[00:13:43 -> 00:13:51] the first of alpha is also the first of x and assuming that first of alpha is not epsilon
+[00:13:51 -> 00:13:56] because if the first of alpha is also epsilon then that would be case number two but first
+[00:13:56 -> 00:14:05] of alpha is not epsilon then whatever is the part of first of alpha will be part of first
+[00:14:05 -> 00:14:19] of x as well right so that's what this means first of alpha is a subset of first of x
+[00:14:19 -> 00:14:25] okay which means that whatever is in first of alpha should be put into first of x if you see
+[00:14:25 -> 00:14:33] such a situation okay so let's look at the algorithm once more in full concrete sense the
+[00:14:33 -> 00:14:39] three rules to the algorithm the first rule says that the first set of a terminal token t is just
+[00:14:39 -> 00:14:47] the terminal singleton set t the second rule says if x produces a 1 a 2 dot dot dot an this
+[00:14:47 -> 00:14:54] such a production exists in the grammar and epsilon belongs to the first sets of a i
+[00:14:55 -> 00:15:08] okay so epsilon belongs to the first sets of a i let me just correct this for all i in 1 to n
+[00:15:09 -> 00:15:14] then epsilon also belongs to the first of x because now x can also produce epsilon right
+[00:15:14 -> 00:15:19] because each of the a i's can produce epsilon which also means that x can produce epsilon
+[00:15:20 -> 00:15:26] finally if there's a production in the grammar of the form x produces a 1 a 2 dot dot dot an
+[00:15:26 -> 00:15:43] and then some string alpha such that epsilon belongs to first of a i for all i between 1 and
+[00:15:43 -> 00:15:50] n which means that each of these a i's can produce epsilon then first of alpha is a subset of first
+[00:15:50 -> 00:15:56] of x which means everything that is in the first of alpha is also in the first of x because
+[00:15:56 -> 00:16:01] anything that x can produce alpha can produce in the first position x will also produce x can
+[00:16:01 -> 00:16:06] also produce in the first position right so that's the definition of first how does the
+[00:16:06 -> 00:16:10] algorithm work well i just explained to you some rules that we are going to use how does the
+[00:16:10 -> 00:16:14] algorithm work well we're just going to keep applying these rules until we reach a fixed
+[00:16:14 -> 00:16:19] point right so we're going to keep looking at each of the production so initially initialize
+[00:16:19 -> 00:16:24] the first sets to empty except that we will initialize the first set for all the
+[00:16:24 -> 00:16:31] terminals as explained in the first step and then we're going to look at each production
+[00:16:32 -> 00:16:38] and anytime we see a production we're going to check whether this is true or not you know
+[00:16:38 -> 00:16:43] whether this rule fires and if so whether first alpha is a subset of first x or not
+[00:16:43 -> 00:16:48] if it is not then everything that is in the first step alpha we just add it to first of x
+[00:16:48 -> 00:16:53] and we keep doing this until we reach a fixed point notice that when we reach the fixed point
+[00:16:53 -> 00:16:59] all three rules will be satisfied by all the productions in the grammar and at that point
+[00:16:59 -> 00:17:06] we have our fixed point solution for the first sets for each of the non-terminals and terminals
+[00:17:07 -> 00:17:13] okay so let's work on an example and figure out what are the first sets for this grammar
+[00:17:13 -> 00:17:17] this is the same grammar that we have been using so far for the grammar of expressions
+[00:17:17 -> 00:17:24] and terms we have also left factored this grammar so that it becomes LL1 parsable and
+[00:17:24 -> 00:17:29] we want to find the first sets of each of the non-terminals and terminals so recall that the
+[00:17:29 -> 00:17:37] terminals are plus star open and close parentheses int and dollar and the non-terminals are e x
+[00:17:37 -> 00:17:42] t y and s so let's first figure out what are the first sets of each of the terminals
+[00:17:43 -> 00:17:48] well that's really easy first of int is just the singleton set int first of plus is the singleton
+[00:17:48 -> 00:17:52] set plus and so on so the set the first sets of terminals are really easy
+[00:17:53 -> 00:17:57] now we want to figure out what are the first sets of each of the non-terminals
+[00:17:57 -> 00:18:01] so using the rules so we're going to look at the first production here which is e produces
+[00:18:01 -> 00:18:07] t x and from here we are going to get that whatever is the first set of t
+[00:18:07 -> 00:18:13] that should also be the first set of e right so that would be our first rule which says first
+[00:18:13 -> 00:18:19] of e is a superset of first of t so anything that's in first of t should also be in first
+[00:18:19 -> 00:18:25] of e because e can produce t in the first position also we had a rule that if t could
+[00:18:25 -> 00:18:31] produce epsilon then anything that's in first of x should also be in first of e so we check
+[00:18:31 -> 00:18:36] whether can t produce epsilon well so far we don't think that t can produce epsilon in first
+[00:18:37 -> 00:18:43] t produces either an int or a open bracket in the first position so t cannot produce an
+[00:18:43 -> 00:18:49] epsilon actually and so we we don't we so this is enough then we look at what is first of t
+[00:18:50 -> 00:18:56] all right so first of t is what is what can t produce well we look at the first derivation
+[00:18:56 -> 00:19:02] of first production and says int y so what is for the first of int y that's just int so we
+[00:19:02 -> 00:19:07] add int and then what's the first of open parentheses e close parenthesis that's just
+[00:19:07 -> 00:19:14] open parenthesis as we put the open parentheses in the first of t and that's it then we look
+[00:19:14 -> 00:19:20] at first of y the first of y firstly y can produce epsilon and recall that if y can produce
+[00:19:20 -> 00:19:27] epsilon then epsilon must be in first of y so we first put epsilon into the first set of y
+[00:19:28 -> 00:19:35] and then y can produce star t so we put star in the first set of y okay then we look at x
+[00:19:35 -> 00:19:41] and so x can produce plus in the first in the first position or it can produce epsilon
+[00:19:41 -> 00:19:48] and so epsilon is in the first set of x we are not done yet you know the when we first
+[00:19:48 -> 00:19:54] said first e is a superset of first t at that point t was just an empty set right so we
+[00:19:54 -> 00:19:58] first e is just empty there but so we haven't reached a fixed point yet so we're going to try
+[00:19:58 -> 00:20:03] this again and now again you're going to apply this rule and say first e should be a superset
+[00:20:03 -> 00:20:07] of first t so anything that's in first it should be put in first e and right now first
+[00:20:07 -> 00:20:14] is empty but first t has two elements intent open bracket open parentheses and so we're
+[00:20:14 -> 00:20:20] going to say first e equals int and open brackets open parentheses and at this point
+[00:20:20 -> 00:20:27] actually similarly if we try to find what is first s we are going to find that first s is
+[00:20:27 -> 00:20:32] basically should be a superset of first e and so we also get this relation that first s equals
+[00:20:32 -> 00:20:38] first e equals int and open brackets so these are all the tokens that can appear in the first
+[00:20:38 -> 00:20:46] position in a derivation of s or e and at this point this set of first sets are actually
+[00:20:46 -> 00:20:50] a fixed point solution so you can you can check that all the equations all the three rules that
+[00:20:50 -> 00:20:58] we had in a previous slide are satisfied by this solution of first sets for each of the
+[00:20:58 -> 00:21:05] non-terminals and terminals okay so we have learned how to compute the first sets
+[00:21:05 -> 00:21:10] we also have some intuition of why this is important because if something is in the first
+[00:21:10 -> 00:21:17] set of a particular rhs of a derivation then we know that then we can use that to construct our
+[00:21:18 -> 00:21:25] llv and ll1 parsing table such that that derivation is used if the next token is
+[00:21:25 -> 00:21:38] one of the first sets of that particular rhs

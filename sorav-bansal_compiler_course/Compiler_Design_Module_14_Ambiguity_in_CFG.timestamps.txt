@@ -1,0 +1,233 @@
+Title: Compiler Design Module 14 : Ambiguity in CFG
+Video ID: 42zrWMQQHtM
+Detected language: en
+------------------------------------------------------------
+
+[00:00:00 -> 00:00:04] So today we are going to discuss ambiguity in context free grammars in a little bit more
+[00:00:04 -> 00:00:06] detail than what we did last time.
+[00:00:06 -> 00:00:12] So recall that if you have a grammar that accepts arithmetic expressions with plus and
+[00:00:12 -> 00:00:21] star and then if you have a string like id star id plus id then there are two associations
+[00:00:21 -> 00:00:22] that are possible.
+[00:00:22 -> 00:00:27] We could either consider it as the association on the left which is you associate the
+[00:00:27 -> 00:00:34] left two ids on a star and a star first or you associate the right two ids and the plus
+[00:00:34 -> 00:00:41] first and they result in different parse trees or derivation trees.
+[00:00:41 -> 00:00:49] A more formal definition, a grammar is ambiguous if it has more than one parse tree for some
+[00:00:49 -> 00:00:50] strings.
+[00:00:50 -> 00:00:54] Even if it has more than one parse tree for one string it would be an ambiguous
+[00:00:54 -> 00:00:55] grammar.
+[00:00:56 -> 00:01:03] So a grammar is unambiguous if it has a unique parse tree for every string.
+[00:01:03 -> 00:01:10] Alright, so let's consider the grammar that we were considering last time and from which
+[00:01:10 -> 00:01:14] that first string that we saw in the first slide was derived.
+[00:01:14 -> 00:01:22] So E can produce E plus E or E star E or E within parentheses or an identifier which
+[00:01:22 -> 00:01:25] is the leaf node or the terminal.
+[00:01:25 -> 00:01:31] Now one way to remove the ambiguity in this grammar, so this grammar is ambiguous right
+[00:01:31 -> 00:01:35] because there exists a string which is id star id plus id and there exist many more
+[00:01:35 -> 00:01:42] strings actually which have more than one parse tree.
+[00:01:42 -> 00:01:47] So id star id has more than one parse tree and hence this grammar is ambiguous.
+[00:01:47 -> 00:01:53] Now one solution to this situation is to rewrite the grammar so that it becomes unambiguous
+[00:01:53 -> 00:02:00] and this type of rewriting of the grammar is kind of also can be also thought of as
+[00:02:00 -> 00:02:02] stratification of the grammar.
+[00:02:02 -> 00:02:03] So what do we want?
+[00:02:03 -> 00:02:13] Maybe we want that whenever there is a choice the star should be grouped before
+[00:02:13 -> 00:02:14] the plus.
+[00:02:14 -> 00:02:18] So that's what the board mass rule for example says that the star should have higher priority
+[00:02:18 -> 00:02:23] which basically means that you should first associate all the stars and then associate
+[00:02:23 -> 00:02:24] all the pluses.
+[00:02:24 -> 00:02:29] We also in high school mathematics call these terms and expressions.
+[00:02:29 -> 00:02:37] So the multiplicative expression is called a term which doesn't have any plus in
+[00:02:37 -> 00:02:39] it, no addition in it.
+[00:02:39 -> 00:02:44] So just a star b star c this is called a single term and then you guys say a star
+[00:02:44 -> 00:02:49] b star c plus d so this whole thing would be an expression where plus would be at
+[00:02:49 -> 00:02:54] the highest level of the parse tree and the association would be first with the star
+[00:02:54 -> 00:02:56] and then with the plus.
+[00:02:56 -> 00:03:02] So to represent this in a grammar we could take the same intuition and define a new
+[00:03:02 -> 00:03:10] non-terminal t which stands for term and we say e can produce either e plus e or a
+[00:03:10 -> 00:03:19] term t and a term could be either a leaf node which is a terminal or t star t so
+[00:03:19 -> 00:03:25] you can multiply two terms and still get a term or if you put an e which could
+[00:03:25 -> 00:03:30] have a plus in it which may be a non-term but if you put it in a parenthesis then
+[00:03:30 -> 00:03:36] it becomes a term and this is exactly what we also do when we are talking about
+[00:03:36 -> 00:03:38] high school mathematics.
+[00:03:38 -> 00:03:44] So this becomes a term whereas that is an expression e.
+[00:03:44 -> 00:03:46] That's the intuitive way of doing it.
+[00:03:46 -> 00:03:49] So we call this stratifying the grammar because we have stratified it and we
+[00:03:49 -> 00:03:55] said that you can only notice that you can only go from e to t but you
+[00:03:55 -> 00:03:59] cannot go back from t to e unless you use a parenthesis.
+[00:03:59 -> 00:04:07] If you use a parenthesis then of course you can go back and it becomes a term but
+[00:04:07 -> 00:04:14] once you are in e so once it's an expression it's not so you can only go one
+[00:04:14 -> 00:04:15] way.
+[00:04:15 -> 00:04:19] So I mean depending on which side you are looking at you can convert a term to
+[00:04:19 -> 00:04:23] an expression but you cannot convert an expression to a term because expression is
+[00:04:23 -> 00:04:28] more general it can have addition in it without parenthesis.
+[00:04:28 -> 00:04:35] So to see why this grammar is unambiguous I claim that this grammar is unambiguous
+[00:04:35 -> 00:04:46] so let me just write it down and we are not going to prove that it is unambiguous
+[00:04:46 -> 00:04:51] that is beyond the scope of what we want to discuss but let's understand what
+[00:04:51 -> 00:05:00] happens when we try to parse the string id star id plus id in this in this
+[00:05:00 -> 00:05:01] grammar.
+[00:05:01 -> 00:05:07] So before I do that intuitively you know the start symbol is e so this is the
+[00:05:07 -> 00:05:15] start symbol and so I'm going to start with that and then notice that I
+[00:05:15 -> 00:05:20] could either you know use the first rule which is e plus e or I could use t.
+[00:05:20 -> 00:05:24] Now if I use e plus e that's exactly what we wanted and that's you know we're
+[00:05:24 -> 00:05:29] going to get one parse tree but if I use t then there's no way to derive this
+[00:05:29 -> 00:05:35] and this this string from t right because this string has plus whereas t
+[00:05:35 -> 00:05:40] cannot allow a plus until there is a parenthesis and so we'll be stuck so
+[00:05:40 -> 00:05:44] the only derivation has to go through the first derivation which is e plus e
+[00:05:44 -> 00:05:48] and so that kind of ensures that there is no ambiguity and the
+[00:05:48 -> 00:05:53] association is also clear from the derivation because the star will be
+[00:05:53 -> 00:05:59] associated first and then the plus. So let's look at this so this is our
+[00:05:59 -> 00:06:05] new grammar stratified grammar e produces e plus e or t, t produces
+[00:06:05 -> 00:06:11] either id or t star e or parenthesis e within parenthesis. So let's look
+[00:06:11 -> 00:06:15] at the first possible derivation so I say e gets so let's I'm trying to
+[00:06:16 -> 00:06:21] derive here id into id plus id. So let's see what are all the possible
+[00:06:21 -> 00:06:27] derivations. So one option is that I first derive e plus e and then and then
+[00:06:27 -> 00:06:41] I say okay this is e star e plus e and then I can say id star id plus id.
+[00:06:41 -> 00:06:46] So good I've been able to derive id star id plus id through this parse
+[00:06:46 -> 00:06:53] tree and notice that here we are basically you know basically the parse
+[00:06:53 -> 00:06:58] tree that gets constructed is basically akin to first associating id star
+[00:06:58 -> 00:07:05] id and then adding the third id to it. Now let's try the other one which
+[00:07:05 -> 00:07:12] is to first produce star and then produce plus which was the case with
+[00:07:12 -> 00:07:17] ambiguous grammar and I'm going to show that we're going to fail. So in this
+[00:07:17 -> 00:07:22] case I tried to produce t in the first go and now I'm going to try to
+[00:07:22 -> 00:07:27] produce maybe t star t because I want to the star operator that's only
+[00:07:27 -> 00:07:33] option and now I would like this particular t so and then maybe I want
+[00:07:33 -> 00:07:40] to say t star id but now this particular t I want to convert it into
+[00:07:41 -> 00:07:46] id plus id but can I convert this t to id plus id? Well there is no way
+[00:07:46 -> 00:07:50] actually because unless I use a parenthesis which I don't want to use
+[00:07:50 -> 00:07:54] because the string doesn't have a parenthesis so there is no way I can
+[00:07:54 -> 00:07:59] reach id plus id and so there is no way I can get to id into id plus id
+[00:07:59 -> 00:08:02] and so this grammar is actually removing the ambiguity in the original
+[00:08:02 -> 00:08:06] grammar. So stratifying the grammar is one way to remove the
+[00:08:06 -> 00:08:09] ambiguity of that grammar and we're going to see one more example.
+[00:08:16 -> 00:08:27] Now here's another example if e then e so let's say you know this is the
+[00:08:27 -> 00:08:32] if then else statement e can either produce if e then e or it can
+[00:08:32 -> 00:08:37] produce if e then e else e so either there could be an else clause or
+[00:08:37 -> 00:08:43] there may not be an else clause and this is a common type of language
+[00:08:43 -> 00:08:47] syntax in many languages including C so you could either have an
+[00:08:47 -> 00:08:50] else clause or you can not have an else clause and this would be the
+[00:08:50 -> 00:08:53] way to represent it in a context free grammar so you say e can
+[00:08:53 -> 00:08:58] either produce if e then e or it can produce if e then e else e but
+[00:08:58 -> 00:09:01] it turns out that this grammar is ambiguous. Why is this grammar
+[00:09:01 -> 00:09:08] ambiguous? Well let's look at an example if e1 then if e2 then e3 else
+[00:09:08 -> 00:09:14] e4 so in this case I you know nested if then else into an if then
+[00:09:14 -> 00:09:20] but now there are two ways I can interpret this right I so notice that
+[00:09:20 -> 00:09:26] there are there are two if thens but only one else the question is
+[00:09:26 -> 00:09:31] what does the else group with associated does it associate with the
+[00:09:31 -> 00:09:36] second if then or does it associate with the first if then so in other
+[00:09:36 -> 00:09:43] words there are two ways to interpret this one is if e1 then and then
+[00:09:43 -> 00:09:47] the whole thing is a then clause and then you say if e2 then e3 else e4 so
+[00:09:47 -> 00:09:51] that would be the then clause or the other way to interpret it is if
+[00:09:51 -> 00:09:57] e1 then if e2 then e3 else e4 in this case else e4 is associating with
+[00:09:57 -> 00:10:01] the first if then in the first case the else e4 is associating with the
+[00:10:01 -> 00:10:07] second if then and you know I am just using brackets to represent the
+[00:10:07 -> 00:10:10] different parse trees but you could also express the same thing using
+[00:10:10 -> 00:10:14] derivation trees or parse trees so this grammar is ambiguous and we
+[00:10:14 -> 00:10:17] would like to make it unambiguous and once again you would like to
+[00:10:17 -> 00:10:22] stratify it to make it unambiguous how do we stratify such a grammar so
+[00:10:22 -> 00:10:27] that it becomes unambiguous well the idea is the following first of all
+[00:10:27 -> 00:10:34] what is the what what is the correct derivation tree here alright so
+[00:10:34 -> 00:10:41] usually in languages the rule is that else binds to the closest if then
+[00:10:41 -> 00:10:45] the closest unmatched if then so in this case this would be the
+[00:10:45 -> 00:10:50] the correct interpretation and this would be the incorrect interpretation
+[00:10:50 -> 00:10:55] because in the absence of any brackets or braces we just assume that
+[00:10:55 -> 00:11:01] else binds to the closest if then closest unmatched if then alright so
+[00:11:01 -> 00:11:07] in this case it is this if then so so we need to write a grammar and
+[00:11:07 -> 00:11:10] unfortunately this particular grammar that we have in the slide accepts
+[00:11:10 -> 00:11:15] both these derivation trees but we want this unique derivation tree
+[00:11:15 -> 00:11:20] that only accepts the first one and rejects the second one so to do
+[00:11:20 -> 00:11:25] that basically we want to express this property that an else would
+[00:11:25 -> 00:11:31] always match the closest if then by the following which basically means
+[00:11:31 -> 00:11:39] that if there is an else then it must be true that in the then clause
+[00:11:39 -> 00:11:49] there is no you know so this this else here let me use a different pen
+[00:11:49 -> 00:11:57] so this else e4 can associate with the top level only if
+[00:11:57 -> 00:12:09] this thing is completely matched is matched what do I mean matched
+[00:12:09 -> 00:12:12] which means it does not have any unmatched if then so if there were
+[00:12:12 -> 00:12:23] for example if the sentence was if e1 then e2 then oh sorry if e1 then
+[00:12:23 -> 00:12:39] if e then e else e else e yes let me just write let me just write it here
+[00:12:39 -> 00:12:52] okay so take another sentence let's say if e then e else e oh sorry if e then
+[00:12:52 -> 00:13:06] if e then e else e else e looks a little bit difficult but it's actually
+[00:13:06 -> 00:13:11] pretty easy once you once I draw the brackets so notice that this is if e
+[00:13:11 -> 00:13:17] then e else e now this is very clear that there are two ifs two thens and
+[00:13:17 -> 00:13:21] two else's and so there is no there's no problem here and I could easily
+[00:13:21 -> 00:13:25] group this and then this particular else will get grouped with this
+[00:13:25 -> 00:13:30] particular if then now this is happening because the closest
+[00:13:30 -> 00:13:37] unmatched if then is basically the first one okay in other words the else
+[00:13:37 -> 00:13:42] e can match the top level if then the first if then only if the then
+[00:13:42 -> 00:13:49] clause has all its if thens matched with the corresponding else otherwise
+[00:13:49 -> 00:13:54] the else would match the then clause so that's what that's what no that's
+[00:13:54 -> 00:13:58] how we would capture this stratification and so this is the
+[00:13:58 -> 00:14:01] typical rule else matches the closest unmatched if and so this is
+[00:14:01 -> 00:14:05] correct and this is wrong all right and this is the stratified grammar
+[00:14:05 -> 00:14:13] this is a little bit complicated but I'll try to do this and let's see so e
+[00:14:13 -> 00:14:19] can go either to a matched if so matched if is an if which has all its
+[00:14:19 -> 00:14:24] else's matched or it can go to an unmatched if in which case there is
+[00:14:24 -> 00:14:29] some if that does not yet have an else all right okay so what is a
+[00:14:29 -> 00:14:36] matched if a matched if is if e now this e could be anything then mif so
+[00:14:36 -> 00:14:42] else mif so all the ifs here should be matched which means you know there
+[00:14:42 -> 00:14:46] should be else's for everything for all the if then else and similarly here
+[00:14:46 -> 00:14:49] should be matched and this is because if any of them is unmatched then we
+[00:14:49 -> 00:14:53] say that it's not part of the mif grammar or mif language so mif
+[00:14:53 -> 00:14:57] language basically is something that has else for every if right so it
+[00:14:57 -> 00:15:05] has an else for every if then whereas an unmatched if is basically has
+[00:15:05 -> 00:15:10] grammars where there is at least one if which does not have a corresponding
+[00:15:10 -> 00:15:19] else so here's an example if e then mif else uif so so here okay so this
+[00:15:19 -> 00:15:24] is you know here the then clause has a matched if but the
+[00:15:24 -> 00:15:29] else clause still has an unmatched if so this is kind of uif in terms of
+[00:15:29 -> 00:15:34] uif but let's see another example uif produces if e then mif notice that
+[00:15:34 -> 00:15:39] it does not have an else no else and thus it is part of a uif
+[00:15:39 -> 00:15:44] unmatched if because there is no else and then or it could have if e then
+[00:15:44 -> 00:15:50] uif so it's possible that the then clause itself is not a match does
+[00:15:50 -> 00:15:56] not have a matched if state now I claim that this stratified grammar
+[00:15:56 -> 00:16:01] resolves the ambiguity and the key observation here is that it has it
+[00:16:01 -> 00:16:09] allows mif in the it allows this sentence to match only if the then
+[00:16:09 -> 00:16:14] clause is an mif all right so this implicitly saying that the else will
+[00:16:14 -> 00:16:22] match with the if then only if this thing has all everything is matched
+[00:16:22 -> 00:16:26] right this is exactly what we said in the previous slide and this is being
+[00:16:26 -> 00:16:31] captured by this grammar because mif everything is matched and hence else
+[00:16:31 -> 00:16:36] uif can get matched with the top level now you can you can you can see
+[00:16:36 -> 00:16:41] why you know you would be able to see that in the previous sentence the
+[00:16:41 -> 00:16:45] correct grouping association would be accepted and the incorrect one would
+[00:16:45 -> 00:16:50] be rejected in the stratified grammar now it is clear that I mean while the
+[00:16:50 -> 00:16:53] original grammar of if then else was relatively simple the stratified grammar
+[00:16:53 -> 00:17:01] has become slightly complicated and and thus is prone to bugs so here is
+[00:17:01 -> 00:17:09] an here is working so if so if e1 then if e2 then e3 else e4 so e
+[00:17:09 -> 00:17:13] first of all this cannot be matched through mif because there is an
+[00:17:13 -> 00:17:18] unmatched if here you know there are there's only one else and two ifs so
+[00:17:18 -> 00:17:22] of course there's an unmatched if so I will you know I'll first produce
+[00:17:22 -> 00:17:29] uif and then the top level there is an else so I would say if e then
+[00:17:29 -> 00:17:35] mif else uif but will this work well it turns out that this will not
+[00:17:35 -> 00:17:40] work because if I use this rule then this thing should have been an
+[00:17:40 -> 00:17:45] mif but if I use this rule then what remains inside here because I use if
+[00:17:45 -> 00:17:50] then else so what remains here would be if e2 then e3 but which is not an
+[00:17:50 -> 00:17:54] mif because it doesn't have an else that matches the if so it's actually a
+[00:17:54 -> 00:17:57] uif and so this rule is not going to be able to produce this
+[00:17:57 -> 00:18:01] particular sentence and so this is the wrong thing to do and so I cross
+[00:18:01 -> 00:18:04] it out and the right thing to do here is I use this particular
+[00:18:04 -> 00:18:15] production if e then mif and then this mif expands to if e then e else e and
+[00:18:15 -> 00:18:19] this is exactly what we wanted because now the else is by associating with
+[00:18:19 -> 00:18:30] the closest if then and not the first top level if then okay in practice
+[00:18:30 -> 00:18:33] ambiguity is removed either through stratifying the grammar as the
+[00:18:33 -> 00:18:39] examples we just saw but often because stratifying the grammars can become
+[00:18:39 -> 00:18:44] complicated and especially for large grammars often in practice what people
+[00:18:44 -> 00:18:47] do is they allow ambiguity in grammar so they allow the grammar to remain
+[00:18:47 -> 00:18:52] ambiguous but then they allow the user to specify some disambiguation
+[00:18:52 -> 00:18:57] rules some particular rules and typical disambiguation rules say that
+[00:18:57 -> 00:19:00] this particular operator has more precedence over that particular
+[00:19:00 -> 00:19:05] operator just like for arithmetic expressions we could say that star has
+[00:19:05 -> 00:19:11] higher precedence over plus all right or we could say that else binds to the
+[00:19:11 -> 00:19:16] closest if then and things like that so some types of rules are allowed to
+[00:19:16 -> 00:19:20] be specified and here is an example for example you could write a
+[00:19:20 -> 00:19:25] grammar which accepts all arithmetic expressions e plus e e star e
+[00:19:26 -> 00:19:32] parenthesis e or id now this is an ambiguous grammar as we saw but bison
+[00:19:32 -> 00:19:37] for example allows you to represent have rules of this form which say what
+[00:19:37 -> 00:19:41] what is the precedence so it can you can say that star has a precedence or
+[00:19:41 -> 00:19:45] you can say that plus has a precedence also you can specify the
+[00:19:45 -> 00:19:48] associativity you can say that if there's a choice so for example if I
+[00:19:48 -> 00:19:52] have a plus b plus c or plus is an associative operator but let's say
+[00:19:52 -> 00:19:58] you have a divided by b divided by c so should I first divide b by c
+[00:19:58 -> 00:20:02] and then divide by a divide a by b by c or should I you know should I
+[00:20:02 -> 00:20:06] first divide a by b and then divide the result by c so this is called
+[00:20:06 -> 00:20:09] associativity and you can also specify associativity of the
+[00:20:09 -> 00:20:14] operator so in this case it says that star is left associative so in
+[00:20:14 -> 00:20:20] practice tools allow you to specify ambiguous grammars as long as all
+[00:20:20 -> 00:20:26] ambiguity is resolved through such custom rules which are of certain
+[00:20:26 -> 00:20:31] types for example you can specify precedence and you can specify left
+[00:20:31 -> 00:20:33] versus right associativity

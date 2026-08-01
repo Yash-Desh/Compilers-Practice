@@ -1,0 +1,577 @@
+Title: Compiler Design Module 15 : Error Handling
+Video ID: RWrpQH-ORms
+Detected language: en
+------------------------------------------------------------
+
+[00:00:00 -> 00:00:08] Okay, so our next topic is error handling. A compiler is supposed to detect invalid programs
+[00:00:08 -> 00:00:15] and for the valid programs, translate it to the machine code, right? And so, how does
+[00:00:15 -> 00:00:19] it detect the invalid programs and if it does, then what does it do is the subject
+[00:00:19 -> 00:00:24] of today's discussion. So, here are some examples of possible errors and I'm going
+[00:00:24 -> 00:00:30] to use the C programming language as an example. So, there could be, for example,
+[00:00:30 -> 00:00:34] lexing errors. So, the first thing to note here is that errors can occur at
+[00:00:34 -> 00:00:39] any stage of the compilation pipeline, lexing, parsing, semantic analysis and so
+[00:00:39 -> 00:00:47] on. And, you know, here's an example of a lexing error, foo, dollar, bar. Now,
+[00:00:47 -> 00:00:56] no token, I mean, so this string, I mean, you cannot divide the string into
+[00:00:56 -> 00:01:01] tokens because there is no valid tokenization of the string of characters
+[00:01:01 -> 00:01:06] in C and that's primarily because of this dollar sign here, which cannot be
+[00:01:06 -> 00:01:11] a part of the identifier and also it's not an operator. Alright, so
+[00:01:11 -> 00:01:16] something like this will be flagged by the lexer and as we know, a lexing
+[00:01:16 -> 00:01:22] tool will be implemented as maybe a finite automaton and the finite automaton
+[00:01:22 -> 00:01:27] is going to tell us that there is no possible token that can be emitted for
+[00:01:27 -> 00:01:32] this string and that would be an error, okay. Here is an example of a
+[00:01:32 -> 00:01:40] parsing error. So, in, you know, in this example, ABC star percentage 3, you
+[00:01:40 -> 00:01:43] have, you can, you will be successful in converting a stream of characters to
+[00:01:43 -> 00:01:48] a stream of tokens, but it would be hard, you know, you won't be able to
+[00:01:48 -> 00:01:53] construct a parse tree from the stream of tokens. So, in this case, there is
+[00:01:53 -> 00:01:57] no parse tree for such an expression because there is, I mean, an
+[00:01:57 -> 00:02:01] expression should have a single operator and two identifiers or
+[00:02:01 -> 00:02:04] constant or something like that, but in this case, we have two operators
+[00:02:04 -> 00:02:08] and that's a problem. So, this would be reported as a parsing error. Once
+[00:02:08 -> 00:02:12] again, what's a parsing error? Well, there is no derivation from the start
+[00:02:12 -> 00:02:16] symbol to this, this expression or from the expression symbol to this, this
+[00:02:16 -> 00:02:22] string and so the stream of tokens and so it's a parsing error. And
+[00:02:22 -> 00:02:29] then there are some errors that will escape both lexing and parsing and,
+[00:02:30 -> 00:02:34] but they will fail the semantic analysis phase, right. So, here's an
+[00:02:34 -> 00:02:37] example. So, here you have two statements. The first statement declares
+[00:02:37 -> 00:02:43] a variable x and the second statement applies x to argument three as though
+[00:02:43 -> 00:02:47] x was a function. Now, there is nothing wrong with it in terms of
+[00:02:47 -> 00:02:54] parsing because this is a valid, this is a valid program. It has two
+[00:02:54 -> 00:02:57] statements and the first statement is a declaration and the second
+[00:02:57 -> 00:03:01] statement is an assignment expression. Just so happens that the assignment
+[00:03:01 -> 00:03:06] expression involves a function call, but the parser is not actually
+[00:03:06 -> 00:03:10] checking whether x is actually a legal function or what's the type of x.
+[00:03:10 -> 00:03:16] That's a job of the semantic analysis phase and that's when the
+[00:03:16 -> 00:03:19] compiler will tell you that this is an error. And in this case,
+[00:03:19 -> 00:03:23] it would be a type error. Notice that all these three categories
+[00:03:23 -> 00:03:26] of error, whether they are lexing, parsing or semantic analysis errors,
+[00:03:27 -> 00:03:32] we commonly know them as syntax errors. And then there's a fourth
+[00:03:32 -> 00:03:36] category of errors that are correctness errors. That could be just
+[00:03:36 -> 00:03:38] that whether your program is actually behaving correctly on all the
+[00:03:38 -> 00:03:41] inputs or not. For example, if you write sorting function, is it
+[00:03:41 -> 00:03:45] behaving equivalent to a quick sort function or not? Now,
+[00:03:45 -> 00:03:48] something like that is beyond the scope of a compiler. And something
+[00:03:48 -> 00:03:53] like that is the subject of testing or verification. And so
+[00:03:53 -> 00:03:56] that's beyond scope of a compiler. Just for completeness,
+[00:03:56 -> 00:03:58] we should mention that there are other types of errors that the
+[00:03:58 -> 00:04:04] compiler will never be able to catch. All right, so first of
+[00:04:04 -> 00:04:07] all, the compiler needs to have some error handling logic, it
+[00:04:07 -> 00:04:09] needs to do something when it sees an error. What is it that
+[00:04:09 -> 00:04:12] it's supposed to do? Well, it's supposed to at least report
+[00:04:12 -> 00:04:14] the error to the programmer that there was an error in a
+[00:04:14 -> 00:04:18] program, here is where the error is. Secondly, it should
+[00:04:18 -> 00:04:23] try and recover from the error so that it can move on
+[00:04:23 -> 00:04:25] and parse the rest of the program and analyze the rest
+[00:04:25 -> 00:04:29] of the program from its semantics point of view. And
+[00:04:29 -> 00:04:31] the third important kind of requirement of an error
+[00:04:31 -> 00:04:33] handling subsystem is that it shouldn't slow down your
+[00:04:33 -> 00:04:37] compilation process, right? I mean, it shouldn't, it should,
+[00:04:37 -> 00:04:40] it should, the compilation should not become too slow
+[00:04:40 -> 00:04:43] because of your error handling mechanism. And we're going to
+[00:04:43 -> 00:04:46] see some examples where it may become slow, some, some
+[00:04:46 -> 00:04:49] modes of error handling where it may become slow. So
+[00:04:49 -> 00:04:52] here are some kind of common modes of error handling, one
+[00:04:52 -> 00:04:57] is panic. So in the panic mode, the compiler is
+[00:04:57 -> 00:05:01] supposed to A, report the error, B, try to move on from
+[00:05:01 -> 00:05:05] that report. So maybe try to parse the rest of the
+[00:05:05 -> 00:05:07] program. And that's it. That's, that's all the
+[00:05:07 -> 00:05:09] compiler is supposed to do. And this is largely the
+[00:05:09 -> 00:05:14] most common way of handling an error in compilers. The
+[00:05:14 -> 00:05:18] other approach is error productions and error
+[00:05:18 -> 00:05:22] recovery. So here the idea is that you try and guess
+[00:05:22 -> 00:05:27] what the error is and you try to firstly recover from
+[00:05:27 -> 00:05:30] that error and also tell the user that okay, this is
+[00:05:30 -> 00:05:33] what it looks like. And some compilers will actually go
+[00:05:33 -> 00:05:35] further and say, they will try to automatically
+[00:05:35 -> 00:05:41] correct, correct the error for you. And that would be
+[00:05:41 -> 00:05:44] error correction, automatic correction. There are some
+[00:05:44 -> 00:05:49] areas that can be easily skipped over. And you know,
+[00:05:49 -> 00:05:53] you can tell the programmer and it is at best a guess
+[00:05:53 -> 00:05:55] what the error is, right? Because the compiler cannot
+[00:05:55 -> 00:05:57] go into the head of the programmer to figure out what
+[00:05:57 -> 00:05:59] the error is. But at least the guess is given to the
+[00:05:59 -> 00:06:02] compiler programmer. And the third case, the compiler
+[00:06:02 -> 00:06:05] actually goes a step further. It says, okay, I'm going
+[00:06:05 -> 00:06:06] to try and correct the error for you. And now this
+[00:06:06 -> 00:06:11] is a much more expensive mode of error handling. It
+[00:06:11 -> 00:06:14] will typically slow down compilation, but and it's
+[00:06:14 -> 00:06:16] not even clear whether something like this is
+[00:06:16 -> 00:06:18] actually practical to use or not. We're going to
+[00:06:18 -> 00:06:21] see some examples. All right, so what is the
+[00:06:21 -> 00:06:23] panic mode? Well, on encountering an error, we
+[00:06:23 -> 00:06:27] discard the tokens until a clear role is found.
+[00:06:27 -> 00:06:31] All right, so if we see an error, which means that
+[00:06:31 -> 00:06:34] we couldn't parse a set of tokens, we couldn't
+[00:06:34 -> 00:06:37] construct a parse tree out of it. We try to
+[00:06:37 -> 00:06:39] discard a few tokens and see if we discard the
+[00:06:39 -> 00:06:42] tokens, does it start parsing again. Sometimes
+[00:06:42 -> 00:06:45] we discard the token until a next role is
+[00:06:45 -> 00:06:48] found, right? And then we try to continue from
+[00:06:48 -> 00:06:50] there. So what do I mean by a role? Well,
+[00:06:50 -> 00:06:54] imagine, for example, the semicolon operator in
+[00:06:54 -> 00:06:57] the C language or many other imperative languages
+[00:06:57 -> 00:07:00] like C++, Java, etc. So if I have an error, maybe
+[00:07:00 -> 00:07:02] I want to ignore all the tokens till the next
+[00:07:02 -> 00:07:05] semicolon token and then continue my parsing
+[00:07:05 -> 00:07:07] from there. That would be one way of handling
+[00:07:07 -> 00:07:11] a parsing error. Okay, so here's an example
+[00:07:11 -> 00:07:14] of a panic mode error. So you have one plus
+[00:07:14 -> 00:07:18] plus two plus three. Now here, the compiler
+[00:07:18 -> 00:07:19] is going to notice that there's an error
+[00:07:19 -> 00:07:25] because there are two operators plus that are
+[00:07:25 -> 00:07:26] occurring together and something like this is
+[00:07:26 -> 00:07:29] not allowed in our context free grammar. And
+[00:07:30 -> 00:07:33] so what the compiler could potentially do is
+[00:07:33 -> 00:07:35] it could skip one token. So for example, it
+[00:07:35 -> 00:07:38] could skip one of the plus signs, right?
+[00:07:38 -> 00:07:42] And if it skips the plus sign, then it's
+[00:07:42 -> 00:07:45] going to now start looking like one plus
+[00:07:45 -> 00:07:49] two plus three. And this would be a valid
+[00:07:49 -> 00:07:52] expression, right? Alternatively, it could
+[00:07:52 -> 00:07:54] have skipped two tokens. It could have
+[00:07:54 -> 00:07:57] skipped both plus and two and in fact,
+[00:07:57 -> 00:07:59] three tokens and then it could have
+[00:07:59 -> 00:08:01] interpreted as one plus three and this
+[00:08:01 -> 00:08:03] would have also have interpreted nicely
+[00:08:03 -> 00:08:07] for the compiler. Now, the compiler is
+[00:08:07 -> 00:08:09] kind of free to do whatever it likes
+[00:08:09 -> 00:08:12] in this example. It could either omit
+[00:08:12 -> 00:08:14] one plus token or it could omit three
+[00:08:14 -> 00:08:17] tokens and completely omit part of the
+[00:08:17 -> 00:08:22] sentence. It is, whatever it does, it
+[00:08:22 -> 00:08:24] is supposed to tell the programmer that
+[00:08:24 -> 00:08:28] there was an error. The job of omission
+[00:08:28 -> 00:08:30] is only so that it can continue and pass
+[00:08:30 -> 00:08:32] the rest of the program so that if there
+[00:08:32 -> 00:08:34] are more errors, then it can report all
+[00:08:34 -> 00:08:36] the errors in one go. Typical
+[00:08:36 -> 00:08:39] compilation times could vary between,
+[00:08:39 -> 00:08:41] you know, few seconds to few tens of
+[00:08:41 -> 00:08:45] seconds or even minutes. And so if you
+[00:08:45 -> 00:08:47] see an error, it is not such a great
+[00:08:47 -> 00:08:49] idea to just stop compilation right
+[00:08:49 -> 00:08:51] there. You want to continue from there
+[00:08:51 -> 00:08:53] so that you can report multiple errors
+[00:08:53 -> 00:08:55] to the user in one go. So then the user
+[00:08:55 -> 00:08:58] can then fix all those errors hopefully
+[00:08:58 -> 00:09:01] and then retry. And so that's
+[00:09:01 -> 00:09:04] what this idea of kind of skipping
+[00:09:04 -> 00:09:08] tokens so that the sentence starts
+[00:09:08 -> 00:09:12] parsing again is all about. But how
+[00:09:12 -> 00:09:14] many tokens to skip? Actually, it
+[00:09:14 -> 00:09:18] turns out that grammars, parsing
+[00:09:18 -> 00:09:22] tools allow users to specify context
+[00:09:22 -> 00:09:23] free grammars with a special error
+[00:09:23 -> 00:09:26] token, right? So you can have a special
+[00:09:26 -> 00:09:28] error token and say, if you see an
+[00:09:28 -> 00:09:31] error, you can match these set of
+[00:09:31 -> 00:09:33] tokens with the error identifier.
+[00:09:34 -> 00:09:36] Think of the error token or the
+[00:09:36 -> 00:09:37] error identifier is yet another
+[00:09:37 -> 00:09:40] non-terminal and it can match with
+[00:09:40 -> 00:09:42] some things. And then, but it is a
+[00:09:42 -> 00:09:44] special non-terminal. It's not your
+[00:09:44 -> 00:09:46] regular non-terminal in your context
+[00:09:46 -> 00:09:47] free grammar. It's a special
+[00:09:47 -> 00:09:48] non-terminal because it has special
+[00:09:48 -> 00:09:51] semantics associated with it. So here's
+[00:09:51 -> 00:09:52] an example. So let's say I have a
+[00:09:52 -> 00:09:56] grammar E can either produce an
+[00:09:56 -> 00:09:59] integer, int, maybe integer constant
+[00:09:59 -> 00:10:01] like three or four, or it could
+[00:10:01 -> 00:10:04] produce a sum, a plus operator with
+[00:10:04 -> 00:10:07] two E's on the left and right, or
+[00:10:07 -> 00:10:10] a parenthesis, a parenthesized E.
+[00:10:12 -> 00:10:13] Or if none of these, then it
+[00:10:13 -> 00:10:14] could, then I could say it's an
+[00:10:14 -> 00:10:16] error int, which basically means that
+[00:10:16 -> 00:10:19] if you hit an error, then skip
+[00:10:19 -> 00:10:22] till the next integer. Right? So this
+[00:10:22 -> 00:10:24] is a way of the programmer to
+[00:10:24 -> 00:10:26] specify what to do in an error. So
+[00:10:26 -> 00:10:29] in this case, it's saying that E can
+[00:10:29 -> 00:10:32] match with some error followed by an
+[00:10:32 -> 00:10:33] int, in which case it should skip
+[00:10:33 -> 00:10:36] the error, all the tokens until the
+[00:10:36 -> 00:10:37] next int. So this is what it
+[00:10:37 -> 00:10:38] means. If you say error int, it
+[00:10:38 -> 00:10:41] means if you hit an error, skip all
+[00:10:41 -> 00:10:43] tokens until you hit the next int.
+[00:10:45 -> 00:10:49] Right? The other production here
+[00:10:49 -> 00:10:52] is open parenthesis, error, close
+[00:10:52 -> 00:10:53] parenthesis. This means that if you
+[00:10:53 -> 00:10:56] see an error in the, while parsing
+[00:10:56 -> 00:10:57] any expression within the
+[00:10:57 -> 00:11:00] parenthesis, then you skip all the
+[00:11:00 -> 00:11:02] tokens within the parenthesis and
+[00:11:02 -> 00:11:04] then, you know, just kind of
+[00:11:04 -> 00:11:08] consider that as an, as an, as
+[00:11:08 -> 00:11:09] something that we have completely
+[00:11:09 -> 00:11:11] skipped and then use the
+[00:11:11 -> 00:11:13] surrounding parenthesis and go on
+[00:11:13 -> 00:11:14] and parse the rest of the
+[00:11:14 -> 00:11:15] expression as you would otherwise.
+[00:11:16 -> 00:11:19] Now, in this, in the, in the
+[00:11:19 -> 00:11:21] example that we just saw, if we
+[00:11:21 -> 00:11:27] have 1 plus plus 2 plus 3. Now
+[00:11:27 -> 00:11:28] what will happen here is that
+[00:11:28 -> 00:11:30] there will be an error when it
+[00:11:30 -> 00:11:33] parses plus plus and so it
+[00:11:33 -> 00:11:35] could say, okay, I'm going to
+[00:11:35 -> 00:11:37] skip, so it's going to find an
+[00:11:37 -> 00:11:39] error at this point and say,
+[00:11:39 -> 00:11:41] okay, I don't know how to
+[00:11:43 -> 00:11:45] interpret this plus because this
+[00:11:45 -> 00:11:47] cannot form a part of a parse
+[00:11:47 -> 00:11:49] tree and so I'm going to skip to
+[00:11:49 -> 00:11:52] the next integer and in this
+[00:11:52 -> 00:11:53] case, for using this grammar,
+[00:11:53 -> 00:11:54] what I'm going to get is 1
+[00:11:55 -> 00:11:59] plus 2 plus 3. Okay, so I, so
+[00:11:59 -> 00:12:00] error is going to match all
+[00:12:00 -> 00:12:02] the, the error keyword is going
+[00:12:02 -> 00:12:04] to match all the skip tokens.
+[00:12:04 -> 00:12:05] In this example, the skip
+[00:12:05 -> 00:12:08] token would be plus. Now let's
+[00:12:08 -> 00:12:10] take another example. Let's say
+[00:12:10 -> 00:12:11] the expression, the, the, the
+[00:12:11 -> 00:12:13] error expression was 1 plus
+[00:12:13 -> 00:12:22] plus 2 plus something like
+[00:12:22 -> 00:12:24] this. All right. And in this
+[00:12:24 -> 00:12:26] case, once again, there will be
+[00:12:26 -> 00:12:27] an error at this point because
+[00:12:27 -> 00:12:29] I don't know how to interpret
+[00:12:29 -> 00:12:30] it. So maybe I will match it
+[00:12:30 -> 00:12:31] with error and so I'm going
+[00:12:31 -> 00:12:34] to cross it out. Then I'm,
+[00:12:34 -> 00:12:35] and I'm going to cross out
+[00:12:35 -> 00:12:37] till the next integer. In
+[00:12:37 -> 00:12:38] this case, the next integer
+[00:12:38 -> 00:12:40] is 2. So, so, so this, this
+[00:12:40 -> 00:12:41] is fine. And now I'm going to
+[00:12:41 -> 00:12:44] try to interpret 1 plus 2
+[00:12:44 -> 00:12:46] plus, and once again, I'm going
+[00:12:46 -> 00:12:47] to hit an error because I
+[00:12:47 -> 00:12:48] don't know how to interpret
+[00:12:48 -> 00:12:50] this. Now, so again, I'm
+[00:12:50 -> 00:12:51] going to hit an error at this
+[00:12:51 -> 00:12:53] plus and this time I'm going
+[00:12:53 -> 00:12:55] to again see, you know, I
+[00:12:55 -> 00:12:56] want to skip some tokens.
+[00:12:56 -> 00:12:57] So what, how many tokens
+[00:12:57 -> 00:12:59] should I skip? Well, I
+[00:12:59 -> 00:13:00] could either skip until the
+[00:13:00 -> 00:13:02] next integer, but there is
+[00:13:02 -> 00:13:03] no next integer or I could
+[00:13:03 -> 00:13:05] skip until the next close
+[00:13:05 -> 00:13:07] parenthesis such that the
+[00:13:07 -> 00:13:08] whole expression is matched
+[00:13:08 -> 00:13:11] under the open parenthesis.
+[00:13:11 -> 00:13:13] And in which case this
+[00:13:13 -> 00:13:16] entire expression will get
+[00:13:16 -> 00:13:17] skipped because the whole
+[00:13:17 -> 00:13:19] entire expression will match
+[00:13:19 -> 00:13:20] error. And so this whole
+[00:13:20 -> 00:13:22] thing would be, would match
+[00:13:22 -> 00:13:24] with E. And so if this
+[00:13:24 -> 00:13:26] was, you know, going with
+[00:13:26 -> 00:13:27] another plus 2, so this
+[00:13:27 -> 00:13:28] will be, this will be
+[00:13:28 -> 00:13:30] passed as error plus 2,
+[00:13:30 -> 00:13:31] which means something was
+[00:13:31 -> 00:13:33] skipped and then plus 2.
+[00:13:33 -> 00:13:34] And, and so now the
+[00:13:34 -> 00:13:36] parse tree looks okay. If
+[00:13:36 -> 00:13:37] there was an error in the
+[00:13:37 -> 00:13:38] other, in the outer parse
+[00:13:38 -> 00:13:39] tree as well, then that
+[00:13:39 -> 00:13:39] would get reported.
+[00:13:39 -> 00:13:40] Otherwise we will, the
+[00:13:40 -> 00:13:41] compiler is not going to
+[00:13:41 -> 00:13:42] report any more errors
+[00:13:42 -> 00:13:44] after that. Okay. So this
+[00:13:44 -> 00:13:45] is, these, these, these
+[00:13:45 -> 00:13:48] type of productions that
+[00:13:48 -> 00:13:49] involve the error keyword
+[00:13:50 -> 00:13:51] are also called error
+[00:13:51 -> 00:14:00] productions. So what are
+[00:14:00 -> 00:14:02] error productions? You
+[00:14:02 -> 00:14:03] specify known common
+[00:14:03 -> 00:14:05] mistakes in grammar. Now
+[00:14:05 -> 00:14:07] there's one approach that
+[00:14:07 -> 00:14:09] is going even further and
+[00:14:09 -> 00:14:11] it can say that I'm going
+[00:14:11 -> 00:14:14] to actually not just use
+[00:14:14 -> 00:14:15] the error token, but I'm
+[00:14:15 -> 00:14:16] going to also have
+[00:14:16 -> 00:14:18] productions that are
+[00:14:18 -> 00:14:19] actually erroneous, but
+[00:14:19 -> 00:14:21] I'm going to accept them.
+[00:14:21 -> 00:14:22] And here's a common
+[00:14:22 -> 00:14:24] example. So let's say you
+[00:14:24 -> 00:14:26] have, you know, in your
+[00:14:26 -> 00:14:27] language, you want to have
+[00:14:27 -> 00:14:28] the star operator to
+[00:14:28 -> 00:14:29] specify multiplication.
+[00:14:29 -> 00:14:30] So if you want to say
+[00:14:30 -> 00:14:32] five into X, you want to
+[00:14:32 -> 00:14:33] say, you need to say
+[00:14:33 -> 00:14:35] five star X, but you
+[00:14:35 -> 00:14:36] know, maybe math, you
+[00:14:36 -> 00:14:37] know, mathematicians like
+[00:14:37 -> 00:14:38] to just write five X
+[00:14:38 -> 00:14:39] instead of five star X and
+[00:14:39 -> 00:14:40] that may be a common
+[00:14:40 -> 00:14:41] mistake in your
+[00:14:41 -> 00:14:43] programming language. If
+[00:14:43 -> 00:14:44] you are a programming
+[00:14:44 -> 00:14:45] language designer or a
+[00:14:45 -> 00:14:46] compiler designer, and
+[00:14:46 -> 00:14:47] you know that this is a
+[00:14:47 -> 00:14:48] common mistake that
+[00:14:48 -> 00:14:49] people tend to write,
+[00:14:50 -> 00:14:51] tend to omit the star
+[00:14:51 -> 00:14:52] operator and just write
+[00:14:52 -> 00:14:54] two expressions together,
+[00:14:55 -> 00:14:56] then they may choose to
+[00:14:56 -> 00:14:57] include a production that
+[00:14:57 -> 00:15:00] accepts such a production.
+[00:15:00 -> 00:15:01] So here's an example.
+[00:15:02 -> 00:15:03] The programmer, the
+[00:15:03 -> 00:15:04] compiler writer, could
+[00:15:04 -> 00:15:05] add a production saying
+[00:15:06 -> 00:15:09] E produces EE and in
+[00:15:09 -> 00:15:10] which case it should
+[00:15:10 -> 00:15:13] interpret as the first
+[00:15:13 -> 00:15:13] E multiplied by the
+[00:15:13 -> 00:15:15] second E. Now this is a
+[00:15:15 -> 00:15:16] bit controversial because
+[00:15:17 -> 00:15:18] you know, you are
+[00:15:18 -> 00:15:19] basically changing the
+[00:15:19 -> 00:15:20] syntax of the
+[00:15:20 -> 00:15:23] language itself. Second,
+[00:15:24 -> 00:15:25] you are encouraging
+[00:15:25 -> 00:15:25] programmers to make
+[00:15:25 -> 00:15:26] mistakes. If you kind of
+[00:15:26 -> 00:15:27] start accepting these
+[00:15:27 -> 00:15:29] such mistakes, you kind
+[00:15:29 -> 00:15:30] of, you know, not
+[00:15:30 -> 00:15:31] letting the programmers
+[00:15:31 -> 00:15:32] know that this is
+[00:15:32 -> 00:15:33] actually an error and
+[00:15:33 -> 00:15:34] so you kind of
+[00:15:34 -> 00:15:34] encouraging them to do
+[00:15:34 -> 00:15:36] this. Thirdly, maybe
+[00:15:36 -> 00:15:37] the programmer didn't
+[00:15:37 -> 00:15:40] intend this way of
+[00:15:40 -> 00:15:42] writing his over
+[00:15:42 -> 00:15:43] program as a
+[00:15:43 -> 00:15:44] multiplication, but
+[00:15:44 -> 00:15:45] something else, maybe a
+[00:15:45 -> 00:15:46] function application, in
+[00:15:46 -> 00:15:47] which case we are not
+[00:15:47 -> 00:15:48] going to interpret it
+[00:15:48 -> 00:15:49] like that. The common
+[00:15:49 -> 00:15:50] response to something
+[00:15:50 -> 00:15:51] like this by compiler
+[00:15:51 -> 00:15:54] developers is to accept
+[00:15:54 -> 00:15:55] something like this, but
+[00:15:55 -> 00:15:56] also warn the user that
+[00:15:56 -> 00:15:58] we accepted it like
+[00:15:58 -> 00:16:00] this, maybe still
+[00:16:00 -> 00:16:01] through a compilation
+[00:16:01 -> 00:16:02] error, but move on,
+[00:16:03 -> 00:16:05] right? So these are
+[00:16:05 -> 00:16:06] other type, another
+[00:16:06 -> 00:16:07] form of error
+[00:16:07 -> 00:16:12] productions. Here, these
+[00:16:12 -> 00:16:15] such productions, to
+[00:16:15 -> 00:16:16] kind of summarize, such
+[00:16:16 -> 00:16:17] productions may be
+[00:16:17 -> 00:16:18] acceptable. The
+[00:16:18 -> 00:16:20] compiler writer may want
+[00:16:20 -> 00:16:21] to accept such
+[00:16:21 -> 00:16:22] productions, may want to
+[00:16:22 -> 00:16:23] allow such productions,
+[00:16:24 -> 00:16:25] but whenever such a
+[00:16:25 -> 00:16:25] production gets
+[00:16:25 -> 00:16:27] triggered, the compiler
+[00:16:27 -> 00:16:28] writer may want to
+[00:16:28 -> 00:16:29] warn or throw an
+[00:16:29 -> 00:16:30] error to the user. So
+[00:16:30 -> 00:16:31] the user knows that
+[00:16:31 -> 00:16:33] this is a problem, but
+[00:16:33 -> 00:16:34] compiler may still
+[00:16:34 -> 00:16:36] compile the program with
+[00:16:36 -> 00:16:37] that error message or
+[00:16:37 -> 00:16:40] that warning. All right,
+[00:16:40 -> 00:16:41] so disadvantages of
+[00:16:41 -> 00:16:43] error productions, A,
+[00:16:43 -> 00:16:43] it complicates the
+[00:16:43 -> 00:16:45] grammar and B, it
+[00:16:45 -> 00:16:48] promotes mistakes. All
+[00:16:48 -> 00:16:49] right, this is the
+[00:16:49 -> 00:16:50] third mode or third
+[00:16:50 -> 00:16:52] idea on how to do
+[00:16:52 -> 00:16:53] error handling. And this
+[00:16:53 -> 00:16:54] actually used to be a
+[00:16:54 -> 00:16:56] very active research
+[00:16:56 -> 00:16:58] area, especially in the
+[00:16:58 -> 00:16:59] early days of
+[00:16:59 -> 00:17:03] computing, especially
+[00:17:03 -> 00:17:04] in maybe 1980s or
+[00:17:04 -> 00:17:05] something like that,
+[00:17:05 -> 00:17:08] where programming
+[00:17:08 -> 00:17:10] errors were common and
+[00:17:10 -> 00:17:11] people wanted to kind
+[00:17:11 -> 00:17:12] of find automatic
+[00:17:12 -> 00:17:13] ways to fix those
+[00:17:13 -> 00:17:14] errors. It's not such
+[00:17:14 -> 00:17:16] a popular area today
+[00:17:16 -> 00:17:17] because, primarily
+[00:17:17 -> 00:17:19] because perhaps automatic
+[00:17:19 -> 00:17:20] fixing of errors is not
+[00:17:20 -> 00:17:21] so practical and
+[00:17:21 -> 00:17:21] sometimes it actually
+[00:17:21 -> 00:17:24] leads the, it
+[00:17:24 -> 00:17:25] wastes programmer time
+[00:17:25 -> 00:17:26] rather than helping
+[00:17:26 -> 00:17:26] the programmer. And so
+[00:17:26 -> 00:17:28] it becomes controversial
+[00:17:28 -> 00:17:29] at that point. But
+[00:17:29 -> 00:17:30] here is the idea in
+[00:17:30 -> 00:17:32] error correction, you
+[00:17:32 -> 00:17:33] can either insert or
+[00:17:33 -> 00:17:35] delete tokens up to a
+[00:17:35 -> 00:17:36] given edit system. So
+[00:17:36 -> 00:17:36] you may say that, okay,
+[00:17:36 -> 00:17:38] I'm allowed to add
+[00:17:38 -> 00:17:40] or delete up to maybe
+[00:17:40 -> 00:17:42] two tokens such that
+[00:17:42 -> 00:17:43] the program starts
+[00:17:43 -> 00:17:43] compiling and making
+[00:17:43 -> 00:17:45] sense again. All
+[00:17:45 -> 00:17:47] right. And, and in
+[00:17:47 -> 00:17:49] this case, the idea is
+[00:17:49 -> 00:17:50] maybe the compiler is
+[00:17:50 -> 00:17:51] going to do a brute
+[00:17:51 -> 00:17:52] force search, right? So
+[00:17:52 -> 00:17:53] it's going to try and
+[00:17:53 -> 00:17:54] add all different
+[00:17:54 -> 00:17:56] tokens to figure out,
+[00:17:57 -> 00:17:58] does the program start
+[00:17:58 -> 00:17:59] compiling nicely after
+[00:17:59 -> 00:18:01] I add this token or
+[00:18:01 -> 00:18:02] does the program start
+[00:18:02 -> 00:18:03] compiling nicely after
+[00:18:03 -> 00:18:04] I remove this token or
+[00:18:04 -> 00:18:05] something like that.
+[00:18:05 -> 00:18:06] And that is actually
+[00:18:06 -> 00:18:07] a very expensive
+[00:18:07 -> 00:18:08] procedure because, you
+[00:18:08 -> 00:18:09] know, you have to try
+[00:18:09 -> 00:18:09] all different
+[00:18:09 -> 00:18:11] combinations of tokens
+[00:18:11 -> 00:18:12] and that could be
+[00:18:12 -> 00:18:13] worst case exponential
+[00:18:13 -> 00:18:13] time. And so it
+[00:18:14 -> 00:18:15] drastically also increases
+[00:18:15 -> 00:18:19] compilation time. So,
+[00:18:19 -> 00:18:20] so the problems with
+[00:18:20 -> 00:18:21] error, automatic error
+[00:18:21 -> 00:18:23] correction, it often
+[00:18:23 -> 00:18:24] requires exhaustive
+[00:18:24 -> 00:18:24] search, which is
+[00:18:24 -> 00:18:26] expensive. Secondly,
+[00:18:26 -> 00:18:26] it's hard to
+[00:18:26 -> 00:18:27] implement. So it's
+[00:18:27 -> 00:18:29] not just expensive in
+[00:18:29 -> 00:18:30] terms of the running
+[00:18:30 -> 00:18:31] time of the compiler,
+[00:18:31 -> 00:18:32] but it's also hard
+[00:18:32 -> 00:18:33] to engineer from a
+[00:18:33 -> 00:18:34] software engineering
+[00:18:34 -> 00:18:35] point of view of the
+[00:18:35 -> 00:18:36] compilation pipeline.
+[00:18:37 -> 00:18:38] And there's a slow
+[00:18:38 -> 00:18:38] down during
+[00:18:38 -> 00:18:43] compilation. I should
+[00:18:43 -> 00:18:44] point out what are,
+[00:18:44 -> 00:18:45] what are some practical
+[00:18:45 -> 00:18:46] things that are being
+[00:18:46 -> 00:18:48] adopted today. So for
+[00:18:48 -> 00:18:49] example, there are
+[00:18:49 -> 00:18:50] languages and
+[00:18:50 -> 00:18:51] compilation frameworks
+[00:18:51 -> 00:18:54] that do try to suggest,
+[00:18:54 -> 00:18:55] make suggestions to
+[00:18:55 -> 00:18:57] users. For example,
+[00:18:57 -> 00:18:58] I've noticed such
+[00:18:58 -> 00:18:59] suggestions in languages
+[00:18:59 -> 00:19:01] like C++ or OCaml,
+[00:19:02 -> 00:19:03] where if I have some
+[00:19:03 -> 00:19:04] typo in a variable name,
+[00:19:04 -> 00:19:06] the compiler comes back
+[00:19:06 -> 00:19:06] and say, did you
+[00:19:06 -> 00:19:08] mean this, right? And
+[00:19:08 -> 00:19:09] this is basically one
+[00:19:09 -> 00:19:10] form of error
+[00:19:10 -> 00:19:12] correction. Typically
+[00:19:12 -> 00:19:13] such mechanisms used
+[00:19:13 -> 00:19:14] by modern compilers
+[00:19:14 -> 00:19:16] are limited to an
+[00:19:16 -> 00:19:17] edit distance of one
+[00:19:17 -> 00:19:18] so that the exhaustive
+[00:19:18 -> 00:19:19] search is not overly
+[00:19:19 -> 00:19:21] expensive. It's very,
+[00:19:21 -> 00:19:22] very, it remains very
+[00:19:22 -> 00:19:26] tractable. Also to
+[00:19:26 -> 00:19:27] throw in some history,
+[00:19:27 -> 00:19:28] there were some old
+[00:19:28 -> 00:19:30] languages that were very
+[00:19:32 -> 00:19:34] finicky about error
+[00:19:34 -> 00:19:35] correction. For example,
+[00:19:35 -> 00:19:36] PLC was one such
+[00:19:36 -> 00:19:37] language. And the idea
+[00:19:37 -> 00:19:38] there was that
+[00:19:38 -> 00:19:39] compilation was
+[00:19:39 -> 00:19:39] something that used to
+[00:19:39 -> 00:19:40] be a very long drawn
+[00:19:40 -> 00:19:41] process that used to
+[00:19:41 -> 00:19:42] take a long time because
+[00:19:42 -> 00:19:43] computers were slow and
+[00:19:43 -> 00:19:45] compilers were slow at
+[00:19:45 -> 00:19:46] that time. So this is
+[00:19:46 -> 00:19:47] the PLC language. And
+[00:19:47 -> 00:19:48] so because the
+[00:19:48 -> 00:19:49] compilation itself was
+[00:19:49 -> 00:19:51] so slow, if there
+[00:19:51 -> 00:19:52] was a minor error, it
+[00:19:52 -> 00:19:53] would be very
+[00:19:53 -> 00:19:54] valuable if the
+[00:19:54 -> 00:19:55] computer or the
+[00:19:55 -> 00:19:55] compiler could
+[00:19:55 -> 00:19:56] automatically correct
+[00:19:56 -> 00:19:57] that error and move
+[00:19:57 -> 00:19:58] on. And in cases
+[00:19:58 -> 00:19:59] where it got it
+[00:19:59 -> 00:20:00] right, the
+[00:20:00 -> 00:20:01] programmer would have
+[00:20:01 -> 00:20:01] saved a lot of
+[00:20:01 -> 00:20:03] valuable time. Today
+[00:20:03 -> 00:20:04] that is not so much
+[00:20:04 -> 00:20:04] of a problem because
+[00:20:04 -> 00:20:06] compilation typically
+[00:20:06 -> 00:20:07] today is not such
+[00:20:07 -> 00:20:09] an expensive process,
+[00:20:09 -> 00:20:10] especially identifying
+[00:20:10 -> 00:20:11] errors is not such
+[00:20:11 -> 00:20:12] an expensive process. So
+[00:20:12 -> 00:20:13] on the order of
+[00:20:13 -> 00:20:14] seconds or maybe tens
+[00:20:14 -> 00:20:16] of seconds. And so the
+[00:20:16 -> 00:20:18] downside of doing
+[00:20:18 -> 00:20:19] automatic error
+[00:20:19 -> 00:20:21] collection often outweighs
+[00:20:21 -> 00:20:23] the advantages of doing
+[00:20:23 -> 00:20:24] automatic error
+[00:20:24 -> 00:20:24] collection.

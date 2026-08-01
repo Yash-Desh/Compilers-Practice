@@ -1,0 +1,76 @@
+Title: Compiler Design Module 16 : Abstract Syntax Tree
+Video ID: tdygrKkz28s
+Detected language: en
+------------------------------------------------------------
+
+[00:00:00 -> 00:00:06] Alright, in this module I am going to introduce the idea of an abstract syntax tree or AST
+[00:00:06 -> 00:00:08] for short.
+[00:00:08 -> 00:00:18] So recall that after legsync we get a stream of tokens and that stream of tokens is input
+[00:00:18 -> 00:00:28] to the parser and from the output of the parser is a derivation tree or a parse tree.
+[00:00:28 -> 00:00:31] Now what is a parse tree?
+[00:00:31 -> 00:00:35] That's actually the actual structure of the program, the way to interpret it.
+[00:00:35 -> 00:00:41] So just like in English if I write a sentence it's just a sequence of words but when I
+[00:00:41 -> 00:00:46] read the sentence then I actually form a mental model which is a parse tree which
+[00:00:46 -> 00:00:53] basically represents the meaning or the structure of the sentence.
+[00:00:53 -> 00:01:00] So the parse tree is the actual program representation, so to say, I mean the identified, the inferred
+[00:01:00 -> 00:01:06] structure of the program and a common way to represent this structure is the abstract
+[00:01:06 -> 00:01:12] syntax tree which is very similar to the parse tree but it just omits some details.
+[00:01:12 -> 00:01:16] So it omits some details that were kind of only relevant to the parsing step
+[00:01:16 -> 00:01:22] and once the parsing step is over we don't really care about those extra details,
+[00:01:22 -> 00:01:26] we just care about what was the structure of the sentence or the program.
+[00:01:27 -> 00:01:30] So we'll see examples to understand this.
+[00:01:30 -> 00:01:37] So let's say there was a grammar which says E can produce an integer, a constant integer
+[00:01:37 -> 00:01:41] maybe 5, 2, 3 whatever or a parenthesized E or E plus E.
+[00:01:42 -> 00:01:49] So this is the grammar and here is a sequence of characters 5 plus 2 plus 3.
+[00:01:49 -> 00:01:55] Now after lexing, this sequence of characters is turned into tokens, so for example the
+[00:01:55 -> 00:02:05] character 5 is converted into token int, 5, so the 5 integer plus then there is a
+[00:02:05 -> 00:02:10] plus token which I am representing with plus in the single quotes, open parenthesis
+[00:02:10 -> 00:02:13] integer 2 plus integer 3 closed parenthesis.
+[00:02:13 -> 00:02:20] So lexers converts a sequence of characters to a sequence of tokens.
+[00:02:20 -> 00:02:27] The next step is parsing and in the parser we convert the sequence of tokens into a parse tree.
+[00:02:27 -> 00:02:36] So for example the sequence of tokens should be producible from the top level start symbol
+[00:02:36 -> 00:02:43] which is E in this case and so the parse tree basically shows the derivation of this
+[00:02:43 -> 00:02:46] sequence from the top level symbol E.
+[00:02:46 -> 00:02:52] So for example you could say E produces E plus E, the first E produces the token
+[00:02:52 -> 00:03:02] int, in this case int 5, the second E produces parenthesized E which in turn produces
+[00:03:02 -> 00:03:07] another E plus E and finally they produce 2 plus 3.
+[00:03:07 -> 00:03:14] And so this entire parse tree represents the structure of the sentence 5 plus 2 plus 3.
+[00:03:15 -> 00:03:20] Notice that this parse tree encodes the association, for example you are supposed
+[00:03:20 -> 00:03:24] to first add 2 and 3 before adding 5 to it.
+[00:03:24 -> 00:03:33] So it indicates association and it's supposed to produce the same sequence of tokens that was
+[00:03:33 -> 00:03:34] a part of the program earlier.
+[00:03:34 -> 00:03:39] Now there are some external, this structure of the program is what the rest of the
+[00:03:39 -> 00:03:40] compilation phases care about.
+[00:03:40 -> 00:03:43] They really don't care about how this was arrived at.
+[00:03:43 -> 00:03:48] We only want to know whether it's the semantic analysis phase or the optimization
+[00:03:48 -> 00:03:52] phase and things like that, the code generation phase.
+[00:03:52 -> 00:03:56] The only thing we care about is what was the structure of the program and things like
+[00:03:56 -> 00:03:56] that.
+[00:03:56 -> 00:03:59] So we don't care about the linear sequence of tokens anymore.
+[00:03:59 -> 00:04:02] However, this structure of the program that's represented as a parse tree has
+[00:04:02 -> 00:04:03] some extra details.
+[00:04:03 -> 00:04:08] For example, I really don't need to know that there was a bracket or not.
+[00:04:09 -> 00:04:11] I really don't care whether there was a bracket or not.
+[00:04:11 -> 00:04:15] I also don't care about these non-terminals, capital E's.
+[00:04:15 -> 00:04:17] So why do I need the capital E's?
+[00:04:17 -> 00:04:19] I don't care how these were derived.
+[00:04:19 -> 00:04:24] What I really care about is what are the operations in the program or in this case
+[00:04:24 -> 00:04:27] in the expression and then how are they associated, right?
+[00:04:27 -> 00:04:30] And so that's what an abstract syntax tree is going to represent.
+[00:04:30 -> 00:04:34] So it's a stripped down version of the parse tree such that it is easier to
+[00:04:35 -> 00:04:36] interpret.
+[00:04:36 -> 00:04:40] It doesn't have all the extraneous details and that's exactly what an
+[00:04:40 -> 00:04:41] abstract syntax tree is.
+[00:04:41 -> 00:04:45] So in this example, for example, the abstract syntax tree would look something
+[00:04:45 -> 00:04:46] like the following.
+[00:04:46 -> 00:04:47] There are two operators, plus.
+[00:04:48 -> 00:04:50] The plus operator is a binary operator.
+[00:04:50 -> 00:04:53] So the first operand is in this case is int five.
+[00:04:53 -> 00:04:57] The second operator, the second operand of the top level plus is another
+[00:04:57 -> 00:05:05] expression that is represented by another subtree of the AST, which is
+[00:05:05 -> 00:05:07] plus int two and int three.
+[00:05:07 -> 00:05:12] Notice that the AST is isomorphic with the original parse tree just that
+[00:05:12 -> 00:05:16] we have gotten rid of some extraneous information like parentheses, non
+[00:05:16 -> 00:05:20] terminals and other syntactic sugar that is no longer needed.
+[00:05:20 -> 00:05:24] And for the rest of the compilation phases, we are only going to operate
+[00:05:24 -> 00:05:26] on the abstract syntax tree or AST.

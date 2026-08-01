@@ -1,0 +1,101 @@
+Title: Compiler Design Module 20 : Predictive Parsing
+Video ID: oebpjSLx1jo
+Detected language: en
+------------------------------------------------------------
+
+[00:00:00 -> 00:00:05] So far we have learned about the recursive descent passing algorithm and one of the features
+[00:00:05 -> 00:00:11] of the algorithm is that it involves backtracking and backtracking in the worst case can be
+[00:00:11 -> 00:00:16] exponential time. So apart from the fact that recursive descent passing suffers from
+[00:00:16 -> 00:00:21] the problem of left recursion, the other problem that passing algorithm suffers from
+[00:00:21 -> 00:00:28] is the potentially exponential running time of the algorithm.
+[00:00:28 -> 00:00:35] Now ideally we would like to have a passing algorithm that is not exponential but more
+[00:00:35 -> 00:00:43] like linear in the size of the input. So if the program is you know so the time taken
+[00:00:43 -> 00:00:47] by the passing algorithm should be linear in the size of the program and one way to
+[00:00:47 -> 00:00:53] achieve this would be if we could potentially eliminate backtracking in the algorithm.
+[00:00:53 -> 00:00:59] So recall that backtracking comes into play when we have to choose between multiple
+[00:00:59 -> 00:01:06] productions. For example if we are choosing between S1, S2, S3 dot dot dot SN we will try
+[00:01:06 -> 00:01:13] each of them. Now what if we could predict which one of these we should pick maybe we have to
+[00:01:13 -> 00:01:20] pick S10 out of all these n different productions and to be able to predict we are allowed to
+[00:01:20 -> 00:01:27] look ahead in the input. So far we basically do not look ahead in the input we just try
+[00:01:27 -> 00:01:34] different possibilities but what if we are able to kind of we start looking at the
+[00:01:34 -> 00:01:39] current token under the next pointer and based on that we are able to uniquely identify
+[00:01:40 -> 00:01:47] which production is going to be activated because of this rule. Now not all grammars
+[00:01:48 -> 00:01:57] are amenable to this but for the grammars that can be passed using such prediction based linear
+[00:01:57 -> 00:02:03] time parsing algorithms we should be able to do better than what we are doing right now.
+[00:02:03 -> 00:02:09] So the idea is to be able to predict based on some look ahead right and these class of
+[00:02:09 -> 00:02:14] algorithms for parsing are also called predictive parsing algorithms. These algorithms avoid
+[00:02:14 -> 00:02:19] backtracking and they do so by predicting the correct production whenever there is a choice
+[00:02:20 -> 00:02:26] and they can do this they can do this prediction potentially by looking at the next few input
+[00:02:26 -> 00:02:32] tokens. So you can you can say that your algorithm is predictive and it requires the look
+[00:02:32 -> 00:02:38] ahead of k tokens and so which means that the algorithm is allowed to look ahead for
+[00:02:38 -> 00:02:41] another k tokens and based on that it's able to predict which production to use.
+[00:02:44 -> 00:02:54] So before we talk about predictive parsing let's make some observations on recursive descent
+[00:02:54 -> 00:02:59] parsing. Recall that recursive descent parsing reads tokens left to right the next pointer is
+[00:02:59 -> 00:03:04] incrementing left to right and it attempts to create a leftmost derivation. Why do I say
+[00:03:04 -> 00:03:11] that it attempts to create a leftmost derivation? Well at any point of time for example we start
+[00:03:11 -> 00:03:21] with s and then we you know maybe we derive e dollar and then we derive t plus e dollar
+[00:03:21 -> 00:03:30] and so on and and then we derive int plus e dollar and so on. Notice that in this
+[00:03:30 -> 00:03:36] derivation we are at every point trying to first derive the leftmost non-terminal
+[00:03:36 -> 00:03:40] and once we are completely done with the leftmost non-terminal then we move forward to
+[00:03:40 -> 00:03:45] the next leftmost non-terminal and so on and thus we are trying to derive a leftmost
+[00:03:46 -> 00:03:49] we are attempting to create a leftmost derivation. This is also the nature of
+[00:03:49 -> 00:03:55] the algorithm if you recall we are basically moving left to right in trying to scan the
+[00:03:55 -> 00:04:02] input. Even though we can create function objects and chain them in the reverse order
+[00:04:02 -> 00:04:08] from right to left the actual execution proceeds left to right and so we first try to resolve
+[00:04:08 -> 00:04:13] the first leftmost token and after we have done that leftmost non-terminal and after we've done
+[00:04:13 -> 00:04:20] that we move to the next leftmost token and this is exactly what a leftmost derivation
+[00:04:20 -> 00:04:27] would look like. Now predictive parsing for recursive descent you know takes us a step
+[00:04:27 -> 00:04:33] further and it says we are going from left to right and we are trying to always identify
+[00:04:33 -> 00:04:38] what is the derivation for the leftmost non-terminal and if I have a choice for
+[00:04:38 -> 00:04:42] which derivation to use for the leftmost non-terminal I'm going to use the one
+[00:04:42 -> 00:04:46] that I'm going to predict which one to use for that all right and so
+[00:04:46 -> 00:04:53] and I'm going to predict based on the next k tokens and such an algorithm such a so such
+[00:04:53 -> 00:04:58] an algorithm that involves recursive descent parsing using a look ahead of k tokens
+[00:04:58 -> 00:05:09] without that tracking is called an llk parsing algorithm okay typically we are interested in
+[00:05:09 -> 00:05:16] k equals one one you know that is that is the more most interesting case and most useful case
+[00:05:16 -> 00:05:22] but you know it is easy to also extend and generalize this algorithm to k greater than one
+[00:05:22 -> 00:05:32] as well. So not all grammars can be parsed using an llk algorithm because it may be possible that
+[00:05:32 -> 00:05:41] using by just looking at the next k tokens it is not possible to decisively disambiguate between
+[00:05:41 -> 00:05:49] which production should be used to for the next derivation and in that case the grammar would
+[00:05:49 -> 00:05:57] not be parsable using an llk algorithm this is unlike the original recursive descent algorithm
+[00:05:57 -> 00:06:02] which would be able to parse any grammar which didn't have left recursion because it involved
+[00:06:02 -> 00:06:07] backtracking here we are using predictive parsing and we want to be able to save just
+[00:06:07 -> 00:06:13] by looking at the next k tokens which rule to use and this may be possible for some grammar
+[00:06:13 -> 00:06:21] and may not be possible for some other grammars so for example if i say what is the grammar
+[00:06:21 -> 00:06:26] requirement for an ll1 parser which means i'm k equals one which means i'm just looking at the
+[00:06:27 -> 00:06:33] token pointed to by the current next pointer and based on that i should be able to clearly
+[00:06:33 -> 00:06:38] make a decision which production to use so looking ahead at the next one token at each
+[00:06:38 -> 00:06:45] step there should be at most one choice for a possible production so let's say at any step
+[00:06:45 -> 00:06:52] of my derivation i've already derived some sequence of terminals and non-terminals in this
+[00:06:52 -> 00:07:03] case this is wab wabeta and w in this case because it's a leftmost derivation is only
+[00:07:03 -> 00:07:19] terminals and beta could be both non-terminals and terminals and thus a is the leftmost
+[00:07:19 -> 00:07:23] non-terminal and we are interested in figuring out which derivation to use
+[00:07:25 -> 00:07:32] if based on if the next input token is let's say t in the input stream this is the terminal
+[00:07:32 -> 00:07:39] t if the next input token is t then if i can clearly say that oh there's only one choice
+[00:07:39 -> 00:07:49] for a and that is a derives alpha and thus wabeta derives w alpha beta then or or maybe
+[00:07:49 -> 00:07:54] there is none so it's possible that you know if i am in this state and the next input
+[00:07:55 -> 00:08:01] token after w is t and but there is no possibility for a to derive anything for t
+[00:08:01 -> 00:08:06] in which case it basically means that the the input stream of tokens is not
+[00:08:06 -> 00:08:11] parsable using this grammar does not belong to the language represented by this grammar
+[00:08:11 -> 00:08:17] so in either of these cases if if if these are the only two choices either there's a unique
+[00:08:18 -> 00:08:24] production that can match based on the look ahead t a look ahead of one which shows t
+[00:08:24 -> 00:08:29] and or there's none that matches then the grammar for all possible strings then the grammar
+[00:08:29 -> 00:08:39] is ll1 parsable grammar or for short just short ll1 grammar okay there are some grammars which
+[00:08:39 -> 00:08:46] may have multiple choices so if if i'm in the state wabeta and my next token input token under
+[00:08:46 -> 00:08:54] the next pointer is t then there are multiple productions that may be used in which case the
+[00:08:54 -> 00:09:03] grammar is not ll1 okay so let's consider our example that we have been using to discuss
+[00:09:03 -> 00:09:09] parsing this is the grammar of expressions and let's try to understand if this is an ll1
+[00:09:09 -> 00:09:17] grammar or not so e produces either t plus e or t t produces int int star t or parenthesize
+[00:09:18 -> 00:09:28] now notice that t can produce either int or int star t and if i have to you know if i'm ever
+[00:09:28 -> 00:09:34] in the state where i have w t beta such that the next
+[00:09:38 -> 00:09:47] token is an integer then i don't know which production to use because i could have either
+[00:09:47 -> 00:10:00] used w t to int or t to int star t these are both possibilities okay and i don't know which one
+[00:10:00 -> 00:10:09] to use because both are possibilities and and so this grammar is actually not ll1 parsable
+[00:10:09 -> 00:10:17] all right or just this grammar is not ll1 so cannot choose between the first two productions
+[00:10:17 -> 00:10:24] of t based on one look ahead because they both have the same token in fact there's another problem
+[00:10:24 -> 00:10:31] with e because both productions of e start with the same non-terminal t and the same non-terminal
+[00:10:31 -> 00:10:40] t can produce the same first token and so it's not clear it can't be clear by if if i'm trying
+[00:10:40 -> 00:10:45] to produce from e which one i should use just by looking at one look ahead so not only is
+[00:10:45 -> 00:10:51] there a problem with productions of t there's also issues with the production of t so we
+[00:10:51 -> 00:10:56] won't be able to clearly disambiguate which production to use just by one look ahead
+[00:10:56 -> 00:11:06] in this example either

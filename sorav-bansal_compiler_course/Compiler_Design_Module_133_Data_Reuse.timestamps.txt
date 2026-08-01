@@ -1,0 +1,295 @@
+Title: Compiler Design Module 133 : Data Reuse
+Video ID: pEFqlL6If3E
+Detected language: en
+------------------------------------------------------------
+
+[00:00:00 -> 00:00:04] So last time we discussed how we can reason about memory accesses,
+[00:00:04 -> 00:00:09] in particular array accesses within a loopness which has a fine bounds.
+[00:00:09 -> 00:00:15] Basically, the motivation for being able to reason about memory accesses,
+[00:00:15 -> 00:00:18] is to be able to identify what is
+[00:00:18 -> 00:00:21] the memory footprint of each iteration and based on that identify
+[00:00:21 -> 00:00:23] what iterations are related in some way.
+[00:00:23 -> 00:00:27] For example, whether two iterations have a data dependency or not.
+[00:00:27 -> 00:00:30] One of the important properties here is data reuse.
+[00:00:30 -> 00:00:34] This is different from dependencies and data reuse basically identify
+[00:00:34 -> 00:00:39] sets of iterations that access the same data or the same memory location.
+[00:00:39 -> 00:00:42] We can also say the same cache line if we
+[00:00:42 -> 00:00:47] are really worried about locality at cache line reality.
+[00:00:47 -> 00:00:51] Basically, we want to identify iterations that access the same data,
+[00:00:51 -> 00:00:54] so that if we want to optimize for let's say locality,
+[00:00:54 -> 00:00:59] then we would want to bring those iterations close together in execution time.
+[00:00:59 -> 00:01:02] This is useful for locality optimizations.
+[00:01:02 -> 00:01:05] Then there is another type of property that we would be
+[00:01:05 -> 00:01:08] interested in based on that information which is data dependence.
+[00:01:08 -> 00:01:11] Here we want to identify accesses that refer to
+[00:01:11 -> 00:01:15] the same memory location or the same data similar to data reuse,
+[00:01:15 -> 00:01:18] and at least one of them is a write.
+[00:01:18 -> 00:01:23] That basically means that those two iterations are data dependent.
+[00:01:23 -> 00:01:28] In other words, there is a dependency from the second iteration to the first iteration,
+[00:01:28 -> 00:01:31] they cannot be reordered with respect to each other.
+[00:01:31 -> 00:01:35] So notice that there has to be at least one access that's a write.
+[00:01:35 -> 00:01:37] So if both accesses are a read,
+[00:01:37 -> 00:01:39] that still qualifies for data reuse,
+[00:01:39 -> 00:01:41] but it's not a data dependency.
+[00:01:41 -> 00:01:45] So when one access is a write and the other could be either a read or a write,
+[00:01:45 -> 00:01:48] there are three types of data dependencies that could emerge.
+[00:01:48 -> 00:01:50] One is called the read after write dependency,
+[00:01:50 -> 00:01:54] which is where the first access is a read and the second access is a write to the same location.
+[00:01:54 -> 00:01:56] The second is a write after read dependency,
+[00:01:56 -> 00:01:59] where the first access is a write and the second access is a read,
+[00:01:59 -> 00:02:02] and the third is a write after write dependency,
+[00:02:02 -> 00:02:04] which is where both accesses are writes.
+[00:02:04 -> 00:02:05] These are also called raw,
+[00:02:05 -> 00:02:09] war, and valve dependencies for short.
+[00:02:09 -> 00:02:12] You can imagine that in each of these cases,
+[00:02:12 -> 00:02:15] it is not okay to reorder the two iterations because that would
+[00:02:15 -> 00:02:19] produce a different result from the original program.
+[00:02:20 -> 00:02:24] Okay, I'm going to focus on data reuse in this particular lecture module,
+[00:02:24 -> 00:02:28] and reuse can be further categorized into two categories.
+[00:02:28 -> 00:02:30] One is called self-reuse,
+[00:02:30 -> 00:02:34] where multiple iterations of the same static statement,
+[00:02:34 -> 00:02:36] the same piece of code,
+[00:02:36 -> 00:02:44] same statically identifiable syntax,
+[00:02:44 -> 00:02:46] the same statement access the same data.
+[00:02:46 -> 00:02:49] It's the same statement statically speaking,
+[00:02:49 -> 00:02:51] but different iterations of that statement,
+[00:02:51 -> 00:02:53] that happen to access the same data,
+[00:02:53 -> 00:02:56] and that's called self-reuse because it's the same statement.
+[00:02:56 -> 00:02:59] So I'm just reusing data.
+[00:02:59 -> 00:03:01] I'm basically accessing the same data across
+[00:03:01 -> 00:03:03] different iterations and it's also the same statement,
+[00:03:03 -> 00:03:05] and that's why it's called self-reuse.
+[00:03:05 -> 00:03:10] The other type of reuse is where the statements are different.
+[00:03:10 -> 00:03:14] So two iterations of different statements access the same data,
+[00:03:14 -> 00:03:16] in which case it's called group reuse.
+[00:03:16 -> 00:03:19] It's like there are two different statements in my static code,
+[00:03:19 -> 00:03:23] and they share across different iterations the same data.
+[00:03:23 -> 00:03:24] Notice that in this case,
+[00:03:24 -> 00:03:27] they need not be necessarily different iterations,
+[00:03:27 -> 00:03:29] even if they access the same data in the same iteration,
+[00:03:29 -> 00:03:32] even that would be called group reuse.
+[00:03:32 -> 00:03:35] So once again, what is group reuse?
+[00:03:35 -> 00:03:40] Two potentially same iterations of different static statements,
+[00:03:40 -> 00:03:43] different code statements access the same data.
+[00:03:43 -> 00:03:48] Further, reuse is classified into two types of reuse.
+[00:03:48 -> 00:03:50] One is called temporal and others called spatial.
+[00:03:50 -> 00:03:53] A reuse is called temporal reuse,
+[00:03:53 -> 00:03:56] and sometimes we just omit the use of the word temporal,
+[00:03:56 -> 00:03:58] it's a data reuse.
+[00:03:58 -> 00:04:02] So a data reuse is temporal if exact same data is accessed.
+[00:04:02 -> 00:04:04] So same memory location,
+[00:04:04 -> 00:04:07] same sequence of bytes is accessed,
+[00:04:07 -> 00:04:10] multiple times across different iterations.
+[00:04:10 -> 00:04:14] It's called spatial if it's not the exact same data,
+[00:04:14 -> 00:04:16] it's two different pieces of data,
+[00:04:16 -> 00:04:19] but those two pieces of data happen to lie in the same cache line.
+[00:04:19 -> 00:04:23] And spatial reuse is more meaningful
+[00:04:23 -> 00:04:27] when we are basically talking about cache line level locality,
+[00:04:27 -> 00:04:30] whereas temporal reuse is meaningful in all situations,
+[00:04:30 -> 00:04:33] irrespective of whether we are doing cache line level locality
+[00:04:33 -> 00:04:36] or whether we are just interested in general locality.
+[00:04:39 -> 00:04:43] So here's an example to understand these different types of reuse
+[00:04:43 -> 00:04:45] and how they manifest with an example.
+[00:04:45 -> 00:04:47] So let's say I have an array,
+[00:04:47 -> 00:04:49] and let's say this array is an array of floats
+[00:04:49 -> 00:04:51] and it is of size n,
+[00:04:51 -> 00:04:54] where n is some loop invariant variable in my program.
+[00:04:54 -> 00:04:55] And then I have this loop nest,
+[00:04:55 -> 00:04:57] which says for i equals zero to n,
+[00:04:57 -> 00:04:59] for j equals zero to n,
+[00:04:59 -> 00:05:03] zj plus one equals zj plus zj plus one
+[00:05:03 -> 00:05:04] plus zj plus two,
+[00:05:04 -> 00:05:07] divide by let's say two or three or something like that.
+[00:05:08 -> 00:05:17] And here is each of zj, zj plus one, zj plus two,
+[00:05:17 -> 00:05:20] first of all have self-spatial reuse.
+[00:05:20 -> 00:05:22] Why do they have self-spatial reuse?
+[00:05:22 -> 00:05:23] Across different iterations.
+[00:05:23 -> 00:05:25] So firstly, what is the iteration space?
+[00:05:25 -> 00:05:29] Iteration space of i comma j goes from zero comma zero
+[00:05:29 -> 00:05:31] to n minus one comma n minus one.
+[00:05:31 -> 00:05:33] So that's the square-shaped iteration space
+[00:05:33 -> 00:05:35] in a two-dimensional space.
+[00:05:35 -> 00:05:38] And then if I look at, for example, zj,
+[00:05:38 -> 00:05:43] then in some iteration, it's going to be zj.
+[00:05:43 -> 00:05:45] In the next iteration, it's going to be zj plus one.
+[00:05:45 -> 00:05:48] And because float is just eight bytes long
+[00:05:48 -> 00:05:50] and maybe my cache line is going to be
+[00:05:50 -> 00:05:52] on the order of 64 bytes long,
+[00:05:52 -> 00:05:54] there's a lot of self-spatial reuse
+[00:05:54 -> 00:05:57] just if I look at zj in isolation.
+[00:05:57 -> 00:05:58] So first of all,
+[00:05:58 -> 00:06:00] when I use the word same statement
+[00:06:00 -> 00:06:01] or different statements,
+[00:06:01 -> 00:06:02] it doesn't necessarily mean
+[00:06:02 -> 00:06:05] that I'm talking about the entire C statement.
+[00:06:05 -> 00:06:07] Each of these accesses can be thought of
+[00:06:07 -> 00:06:08] as different statements,
+[00:06:08 -> 00:06:10] each of the memory accesses.
+[00:06:10 -> 00:06:12] So every memory access can be put
+[00:06:12 -> 00:06:13] in a statement of its own.
+[00:06:13 -> 00:06:16] So for example, in this particular C statement,
+[00:06:16 -> 00:06:18] there are one, two, three, four,
+[00:06:18 -> 00:06:19] four different memory accesses
+[00:06:19 -> 00:06:21] and we can treat each of these memory accesses
+[00:06:21 -> 00:06:25] as a separate statement for our polyhedral analysis
+[00:06:25 -> 00:06:26] that we're going to,
+[00:06:26 -> 00:06:29] that we're talking about from a reuse standpoint.
+[00:06:29 -> 00:06:31] And so zj is a different statement,
+[00:06:31 -> 00:06:34] zj plus one is a different statement, and so on.
+[00:06:34 -> 00:06:35] Now if I look at zj,
+[00:06:35 -> 00:06:37] zj across different iterations
+[00:06:37 -> 00:06:40] accesses the same cache line
+[00:06:40 -> 00:06:42] because zj and zj plus one,
+[00:06:42 -> 00:06:43] zj plus two, zj plus three
+[00:06:43 -> 00:06:45] likely to have this,
+[00:06:45 -> 00:06:47] likely to hit in the same cache line.
+[00:06:47 -> 00:06:51] And so zj has self-spatial reuse.
+[00:06:51 -> 00:06:52] Similarly, by the same argument,
+[00:06:52 -> 00:06:55] zj plus one has self-spatial reuse
+[00:06:55 -> 00:06:59] and zj plus two also has self-spatial reuse.
+[00:06:59 -> 00:07:01] And there's high spatial locality
+[00:07:01 -> 00:07:04] even when we consider each statement in isolation.
+[00:07:04 -> 00:07:07] Moreover, if I look at any of these,
+[00:07:07 -> 00:07:09] once again, let's say I look at zj plus one
+[00:07:09 -> 00:07:12] or if I look at zj,
+[00:07:12 -> 00:07:14] they also have high self-temporal reuse.
+[00:07:14 -> 00:07:16] In other words, different iterations
+[00:07:16 -> 00:07:19] in my iteration space accesses exact same data.
+[00:07:19 -> 00:07:21] It's not about the same cache line,
+[00:07:21 -> 00:07:22] but also exact same data.
+[00:07:22 -> 00:07:23] Can you see that?
+[00:07:23 -> 00:07:26] Well, it doesn't access the same data
+[00:07:26 -> 00:07:29] for different iterations of j,
+[00:07:29 -> 00:07:30] but notice the outer loop,
+[00:07:30 -> 00:07:32] which is for i equals zero to n.
+[00:07:32 -> 00:07:35] So for all the different iterations of the outer loop,
+[00:07:35 -> 00:07:38] it will access the same location zj, right?
+[00:07:38 -> 00:07:40] So for example, if j was 10,
+[00:07:40 -> 00:07:42] then it's going to access z10
+[00:07:42 -> 00:07:43] for all the different values of i.
+[00:07:43 -> 00:07:47] And so zj also exhibits self-temporal reuse
+[00:07:47 -> 00:07:49] apart from just self-spatial use.
+[00:07:49 -> 00:07:50] In fact, each of these,
+[00:07:50 -> 00:07:52] zj, zj plus one, zj plus two
+[00:07:52 -> 00:07:54] exhibit self-temporal reuse
+[00:07:54 -> 00:07:57] because exact same element is accessed repeatedly
+[00:07:57 -> 00:07:59] once for each iteration of the outer loop.
+[00:08:01 -> 00:08:03] Finally, they also have group spatial reuse
+[00:08:03 -> 00:08:05] and group temporal reuse
+[00:08:05 -> 00:08:07] because if I'm accessing zj
+[00:08:07 -> 00:08:10] and if I look at zj and zj plus one,
+[00:08:10 -> 00:08:12] these are two different statements
+[00:08:12 -> 00:08:14] that are going to likely access the same cache line
+[00:08:14 -> 00:08:16] because zj and zj plus one
+[00:08:16 -> 00:08:18] are very high with a very high probability
+[00:08:18 -> 00:08:20] would be lying in the same cache line.
+[00:08:20 -> 00:08:22] And so there's group spatial reuse there.
+[00:08:22 -> 00:08:25] Moreover, there is group temporal reuse
+[00:08:25 -> 00:08:27] because across different iterations,
+[00:08:27 -> 00:08:28] in the previous iteration,
+[00:08:28 -> 00:08:30] what was accessed by zj
+[00:08:30 -> 00:08:32] would be accessed by zj plus one
+[00:08:32 -> 00:08:34] in the iteration before that.
+[00:08:34 -> 00:08:37] Or similarly, in the previous iteration,
+[00:08:37 -> 00:08:39] what was accessed by zj plus one
+[00:08:39 -> 00:08:42] would be accessed in the current iteration by zj.
+[00:08:42 -> 00:08:44] And so there is also group temporal reuse.
+[00:08:44 -> 00:08:46] It's the exact same data
+[00:08:46 -> 00:08:48] that is being accessed by two different statements
+[00:08:48 -> 00:08:50] across two different iterations.
+[00:08:50 -> 00:08:51] So in this particular example,
+[00:08:51 -> 00:08:53] we see instances of self-spatial reuse,
+[00:08:53 -> 00:08:55] self-temporal reuse,
+[00:08:55 -> 00:09:00] group spatial reuse and group temporal reuse.
+[00:09:00 -> 00:09:03] Analyzing this example a little bit further,
+[00:09:03 -> 00:09:04] what is the total number of memory accesses
+[00:09:04 -> 00:09:06] in this particular program?
+[00:09:06 -> 00:09:08] Notice that there are n square iterations
+[00:09:08 -> 00:09:10] and for each iteration,
+[00:09:10 -> 00:09:12] there are four different memory accesses.
+[00:09:12 -> 00:09:15] Zj plus one, zj, zj plus one and zj plus two.
+[00:09:15 -> 00:09:19] Zj plus one is being read once and written once
+[00:09:19 -> 00:09:22] and so we count them as two different memory accesses.
+[00:09:22 -> 00:09:23] So the total number of memory accesses,
+[00:09:23 -> 00:09:25] is the number of iterations into four,
+[00:09:25 -> 00:09:27] four for every iteration.
+[00:09:27 -> 00:09:29] Now if I look at what is the memory footprint
+[00:09:29 -> 00:09:31] of this particular program,
+[00:09:31 -> 00:09:33] we will see that the memory footprint
+[00:09:33 -> 00:09:36] is only n by c cache lines
+[00:09:36 -> 00:09:38] because what is the total amount
+[00:09:38 -> 00:09:39] of distinct memory locations
+[00:09:39 -> 00:09:41] that this program accesses
+[00:09:41 -> 00:09:43] and that's just going from j to,
+[00:09:43 -> 00:09:44] j goes from zero to n
+[00:09:44 -> 00:09:47] and then I access zj, zj plus one, zj plus two.
+[00:09:47 -> 00:09:50] So it's only, you know, order of,
+[00:09:50 -> 00:09:52] so the total number of distinct memory locations
+[00:09:52 -> 00:09:54] that I'm accessing is at most n plus two
+[00:09:54 -> 00:09:55] or order n, all right?
+[00:09:55 -> 00:09:59] And then if I just divide it by the cache line size c,
+[00:09:59 -> 00:10:01] then I basically say that my memory footprint size
+[00:10:01 -> 00:10:03] is n by c cache lines.
+[00:10:03 -> 00:10:05] So if the number of accesses is four n square
+[00:10:05 -> 00:10:07] and the footprint is only n by c,
+[00:10:07 -> 00:10:09] clearly there is reuse
+[00:10:09 -> 00:10:10] because of the pigeonhole principle.
+[00:10:10 -> 00:10:12] There is more accesses,
+[00:10:12 -> 00:10:13] there are larger number of accesses
+[00:10:13 -> 00:10:15] to a smaller number of data
+[00:10:15 -> 00:10:16] so it must be true that some data
+[00:10:16 -> 00:10:18] is being accessed repeatedly.
+[00:10:18 -> 00:10:20] And if we analyze this further,
+[00:10:20 -> 00:10:23] factor of n in this difference between four n square
+[00:10:23 -> 00:10:26] and n by c is coming due to self-temporal reuse
+[00:10:26 -> 00:10:29] because the outer loop iteration
+[00:10:29 -> 00:10:30] doesn't really matter
+[00:10:30 -> 00:10:32] and, you know, from the,
+[00:10:32 -> 00:10:34] in terms of the address that is accessed.
+[00:10:34 -> 00:10:37] So the same address is accessed n times
+[00:10:37 -> 00:10:38] and that's the self-temporal reuse
+[00:10:38 -> 00:10:40] for each of these four statements.
+[00:10:40 -> 00:10:43] And so that just gives us a factor of n straight away.
+[00:10:43 -> 00:10:44] So four n square by n
+[00:10:44 -> 00:10:46] and that leaves us with four n.
+[00:10:47 -> 00:10:48] You know, four n,
+[00:10:49 -> 00:10:51] that leaves us with four n.
+[00:10:51 -> 00:10:53] Now let's figure out what's the other factors
+[00:10:53 -> 00:10:56] that can bring us all the way down to n by c.
+[00:10:56 -> 00:10:59] A factor of c due to self-spatial reuse
+[00:10:59 -> 00:11:03] because zj is going to be,
+[00:11:03 -> 00:11:05] you know, z, the same,
+[00:11:05 -> 00:11:06] cache line is going to be accessed
+[00:11:06 -> 00:11:08] by the same statement across different iterations
+[00:11:08 -> 00:11:10] because there's a high spatial locality,
+[00:11:10 -> 00:11:12] zj, zj plus one, zj plus two,
+[00:11:12 -> 00:11:13] zj plus three and so on
+[00:11:13 -> 00:11:15] by the same statement zj
+[00:11:15 -> 00:11:16] across different values of j.
+[00:11:17 -> 00:11:18] And so that's come, see,
+[00:11:18 -> 00:11:21] the factor of c is coming due to self-spatial reuse.
+[00:11:21 -> 00:11:24] And then the fact is that all each of these four statements
+[00:11:24 -> 00:11:26] are actually, you know,
+[00:11:26 -> 00:11:29] accessing the same data in different points on time.
+[00:11:29 -> 00:11:32] And so factor of four is coming due to group reuse,
+[00:11:32 -> 00:11:33] whether it is group spatial reuse
+[00:11:33 -> 00:11:36] or group temporal reuse and, or, you know,
+[00:11:36 -> 00:11:39] I could just say group temporal reuse in this case.
+[00:11:39 -> 00:11:42] You know, I could kind of credit this factor of four
+[00:11:42 -> 00:11:44] and factor of c in different,
+[00:11:44 -> 00:11:47] a portion of these contributions in different ways,
+[00:11:47 -> 00:11:48] but basically a factor of four
+[00:11:48 -> 00:11:50] is coming due to group reuse.
+[00:11:50 -> 00:11:53] And so that's how, from four n squared,
+[00:11:53 -> 00:11:55] divide by n, divide by c, divide by four,
+[00:11:55 -> 00:11:56] I get n by c.
+[00:11:56 -> 00:11:59] And that's how, and that explains my reuse.
+[00:11:59 -> 00:12:01] So once again, the number of memory accesses
+[00:12:01 -> 00:12:03] was four n squared.
+[00:12:03 -> 00:12:05] The memory footprint was n by c.
+[00:12:06 -> 00:12:07] So clearly there is reuse.
+[00:12:07 -> 00:12:09] How do I explain that reuse?
+[00:12:09 -> 00:12:11] Well, a factor of n is coming
+[00:12:11 -> 00:12:13] due to self-temporal reuse.
+[00:12:13 -> 00:12:15] A factor of c is coming due to self-spatial reuse.
+[00:12:15 -> 00:12:18] And a factor of four is coming due to group reuse.

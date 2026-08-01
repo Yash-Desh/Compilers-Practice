@@ -1,0 +1,143 @@
+Title: Compiler Design Module 137 : Comparing Different Types of Reuse
+Video ID: kU3wbAotAdA
+Detected language: en
+------------------------------------------------------------
+
+[00:00:00 -> 00:00:02] So we've been talking about different types of reuse,
+[00:00:02 -> 00:00:05] which includes self-temporal reuse,
+[00:00:05 -> 00:00:07] self-spatial reuse, and group reuse.
+[00:00:07 -> 00:00:10] The question is, which is more important?
+[00:00:10 -> 00:00:12] I mean, as a compiler developer,
+[00:00:12 -> 00:00:14] which one should I focus on more,
+[00:00:14 -> 00:00:15] which one has more payoff,
+[00:00:15 -> 00:00:17] and which one has less complexity?
+[00:00:17 -> 00:00:20] So we're going to answer that question
+[00:00:20 -> 00:00:23] a little bit qualitatively in this particular module.
+[00:00:23 -> 00:00:25] Significance of reuse, and in general,
+[00:00:25 -> 00:00:26] the more reuse there is,
+[00:00:27 -> 00:00:30] the more potential for caching there is.
+[00:00:30 -> 00:00:33] Notice that we have been talking about
+[00:00:33 -> 00:00:35] how reuse is different from locality.
+[00:00:35 -> 00:00:40] Locality involves reuse and small reuse distance,
+[00:00:40 -> 00:00:43] whereas reuse can have a large reuse distance.
+[00:00:43 -> 00:00:47] And so, locality is meaningful
+[00:00:47 -> 00:00:49] for certain types of caches,
+[00:00:49 -> 00:00:51] such as caches that obey the principle
+[00:00:51 -> 00:00:54] of temporal and spatial locality.
+[00:00:54 -> 00:00:55] On the other hand,
+[00:00:55 -> 00:00:57] reuse can be used for different types of caches.
+[00:00:57 -> 00:01:00] For example, you can influence,
+[00:01:00 -> 00:01:03] depending on what kind of reuse distance you see
+[00:01:03 -> 00:01:05] between different accesses,
+[00:01:05 -> 00:01:07] you can influence the cache replacement algorithm.
+[00:01:07 -> 00:01:08] For example,
+[00:01:08 -> 00:01:10] there are different cache replacement algorithms
+[00:01:10 -> 00:01:12] like least recently used,
+[00:01:12 -> 00:01:16] first-in, first-out, least frequently used,
+[00:01:16 -> 00:01:18] or other such algorithms
+[00:01:18 -> 00:01:20] that you may have been introduced to.
+[00:01:20 -> 00:01:22] And some of these algorithms
+[00:01:22 -> 00:01:25] are more meaningful for locality,
+[00:01:25 -> 00:01:26] workloads that exhibit locality.
+[00:01:26 -> 00:01:28] For example, least recently used
+[00:01:28 -> 00:01:31] basically gives more importance to recency,
+[00:01:31 -> 00:01:33] and so that makes more sense
+[00:01:33 -> 00:01:35] if there was locality in the workload.
+[00:01:35 -> 00:01:37] Whereas least frequently used
+[00:01:37 -> 00:01:39] does not really care so much about recency,
+[00:01:39 -> 00:01:42] it only cares about frequency.
+[00:01:42 -> 00:01:45] And so, depending on what the compiler inferred
+[00:01:45 -> 00:01:48] about the program,
+[00:01:48 -> 00:01:50] based on this analysis that we are doing,
+[00:01:50 -> 00:01:52] the reuse analysis and the reuse distance,
+[00:01:52 -> 00:01:54] it can influence the caching policy.
+[00:01:54 -> 00:01:56] Now, how can it influence the caching policy?
+[00:01:56 -> 00:01:58] First of all, caching is happening
+[00:01:58 -> 00:02:01] at multiple levels of the computer system stack.
+[00:02:01 -> 00:02:04] It is happening first at the compiler level itself
+[00:02:04 -> 00:02:06] because the compiler decides what to keep in registers,
+[00:02:06 -> 00:02:08] what to keep in a memory.
+[00:02:08 -> 00:02:09] There are some machines
+[00:02:09 -> 00:02:11] where the caches are software managed.
+[00:02:11 -> 00:02:13] These are also called scratchpad memories,
+[00:02:13 -> 00:02:17] in which case it's up to the compiler or the software
+[00:02:17 -> 00:02:19] to basically say what lives in the scratchpad
+[00:02:19 -> 00:02:22] and what lives in the main memory,
+[00:02:22 -> 00:02:24] which is more expensive or more,
+[00:02:24 -> 00:02:25] which has higher latency.
+[00:02:25 -> 00:02:27] And so, in all these cases,
+[00:02:27 -> 00:02:31] such analyses of the program and the reuse
+[00:02:31 -> 00:02:35] can help influence what policy the software should use
+[00:02:35 -> 00:02:37] to keep what stuff in the scratchpad.
+[00:02:38 -> 00:02:39] In general, hardware caches
+[00:02:39 -> 00:02:42] are the most common types of caching available,
+[00:02:42 -> 00:02:46] and hardware caches typically prefer recency
+[00:02:46 -> 00:02:48] over frequency because recency,
+[00:02:48 -> 00:02:51] locality is by far the biggest, most common pattern
+[00:02:51 -> 00:02:53] that gets exploited by caching,
+[00:02:53 -> 00:02:55] and that gives the best payoff
+[00:02:55 -> 00:02:57] across a large variety of applications.
+[00:02:57 -> 00:03:01] And so, it's possible that
+[00:03:03 -> 00:03:04] you already have low reuse distance,
+[00:03:04 -> 00:03:05] in which case you have locality,
+[00:03:05 -> 00:03:08] and the hardware caches are going to help you for that.
+[00:03:08 -> 00:03:11] There are some research proposals for hardware
+[00:03:11 -> 00:03:13] where they allow the software
+[00:03:13 -> 00:03:17] to basically change the caching policy of the cache.
+[00:03:17 -> 00:03:19] Maybe there are two or three different caching policies
+[00:03:19 -> 00:03:20] that the hardware supports,
+[00:03:20 -> 00:03:22] and you can switch between them.
+[00:03:22 -> 00:03:24] And depending on what you have inferred
+[00:03:24 -> 00:03:27] about the amount of reuse and the reuse distance,
+[00:03:27 -> 00:03:29] you can switch between different policies.
+[00:03:29 -> 00:03:31] So, these are all the different ways
+[00:03:31 -> 00:03:34] in which this analysis of reuse can help us
+[00:03:34 -> 00:03:36] in improving the performance of a program.
+[00:03:37 -> 00:03:40] So, the three main categories
+[00:03:40 -> 00:03:42] that we have learned so far,
+[00:03:42 -> 00:03:44] and if I was to compare the three categories
+[00:03:44 -> 00:03:46] in terms of their importance,
+[00:03:46 -> 00:03:49] then self-temporal reuse is the most consequential
+[00:03:49 -> 00:03:53] because it gives me the maximum amount of reuse, typically.
+[00:03:53 -> 00:03:55] For example, if there is a k-dimensional null space
+[00:03:55 -> 00:03:58] in my capital F coefficient matrix,
+[00:03:58 -> 00:04:02] then that immediately gives me order n to the power k reuse.
+[00:04:02 -> 00:04:06] So, recall that if the coefficient matrix
+[00:04:06 -> 00:04:07] was not a full-ranked matrix,
+[00:04:07 -> 00:04:12] then its null space would have some non-zero dimension.
+[00:04:12 -> 00:04:14] And so, whatever that dimension,
+[00:04:14 -> 00:04:15] you get that much amount of reuse,
+[00:04:15 -> 00:04:18] and that basically is the most consequential.
+[00:04:18 -> 00:04:22] Once again, if there are order n to the power k reuse,
+[00:04:22 -> 00:04:23] there are many ways you can exploit that.
+[00:04:23 -> 00:04:26] Number one, you can make compiler transformation
+[00:04:26 -> 00:04:30] so that the reuse becomes close together in time.
+[00:04:30 -> 00:04:32] In other words, the reuse distance reduces,
+[00:04:32 -> 00:04:34] or you can influence the caching policies
+[00:04:34 -> 00:04:38] for scratchpad or the hardware caches and stuff.
+[00:04:39 -> 00:04:41] Then self-spatial reuse is also important,
+[00:04:41 -> 00:04:45] but it is less usually limited by the cache line size.
+[00:04:45 -> 00:04:48] Recall that we are making a very major assumption
+[00:04:48 -> 00:04:51] when we are kind of doing analyses for self-spatial reuse,
+[00:04:51 -> 00:04:53] assuming that the entire last dimension
+[00:04:53 -> 00:04:56] is basically available in the cache.
+[00:04:56 -> 00:04:57] We just make that assumption,
+[00:04:57 -> 00:05:00] but in reality, we are limited by cache line size,
+[00:05:00 -> 00:05:03] and so in reality, the efficacy or the improvements
+[00:05:03 -> 00:05:05] that we get due to self-spatial reuse
+[00:05:05 -> 00:05:08] are limited by the cache line size,
+[00:05:08 -> 00:05:12] and so it's not as consequential
+[00:05:12 -> 00:05:13] as self-temporal reuse.
+[00:05:13 -> 00:05:14] And finally, group reuse.
+[00:05:14 -> 00:05:17] Group reuse, we are primarily focusing
+[00:05:17 -> 00:05:20] on group temporal reuse in our module,
+[00:05:20 -> 00:05:24] and so it is also limited because it's limited
+[00:05:24 -> 00:05:25] by the number of references
+[00:05:25 -> 00:05:27] with the same coefficient matrix.
+[00:05:27 -> 00:05:28] So what is the probability,
+[00:05:28 -> 00:05:33] how many accesses in your loop nest
+[00:05:33 -> 00:05:34] have the same coefficient matrix?
+[00:05:34 -> 00:05:37] Only those accesses will basically be participating
+[00:05:37 -> 00:05:39] in group temporal reuse,
+[00:05:39 -> 00:05:41] at least based on our limited analysis,
+[00:05:41 -> 00:05:45] and so that also limits the efficacy of group reuse.

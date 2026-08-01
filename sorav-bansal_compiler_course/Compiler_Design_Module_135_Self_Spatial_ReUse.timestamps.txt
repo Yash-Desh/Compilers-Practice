@@ -1,0 +1,302 @@
+Title: Compiler Design Module 135 : Self Spatial ReUse
+Video ID: T9aY9FOJ9hc
+Detected language: en
+------------------------------------------------------------
+
+[00:00:00 -> 00:00:07] In the previous module we discussed about self-reuse or more precisely self-temporal reuse.
+[00:00:07 -> 00:00:11] In this module we are going to talk about self-spatial reuse and to motivate the discussion
+[00:00:11 -> 00:00:14] let's look at this particular example.
+[00:00:14 -> 00:00:18] For i equals 0 to n, ai equals 0.
+[00:00:18 -> 00:00:20] Now does this have self-temporal reuse?
+[00:00:20 -> 00:00:27] Well the answer is, can we determine by figuring out what is the coefficient matrix?
+[00:00:27 -> 00:00:31] The coefficient matrix in this case is just 1.
+[00:00:31 -> 00:00:35] The rank of this coefficient matrix is 1 and the dimensionality of the coefficient matrix
+[00:00:35 -> 00:00:43] is also 1 and so the dimensionality of the loop iteration space is also 1.
+[00:00:43 -> 00:00:50] And so there is no reuse because the dimensionality of the loop iteration space is also the
+[00:00:50 -> 00:00:53] same as the dimensionality of the axis, both are 1.
+[00:00:53 -> 00:00:54] So there is no self-reuse.
+[00:00:55 -> 00:00:58] But if I ask the question, is there self-spatial reuse?
+[00:00:58 -> 00:01:06] The answer is yes because if I bring a0 into the cache then a1, a2, a3 up to whatever
+[00:01:06 -> 00:01:11] is the cache line size are also in the cache and so if I access a1 then it's going
+[00:01:11 -> 00:01:12] to hit the same cache line.
+[00:01:12 -> 00:01:17] So multiple accesses are hitting the same cache line even though they are not hitting
+[00:01:17 -> 00:01:20] the same memory location.
+[00:01:20 -> 00:01:23] And so we want to somehow characterize self-spatial reuse.
+[00:01:24 -> 00:01:30] So in this particular example, this example does not have self-reuse, self-temporal reuse
+[00:01:30 -> 00:01:34] but it does have self-spatial reuse and we want to identify whether a given piece
+[00:01:34 -> 00:01:37] of code has self-spatial reuse or not.
+[00:01:37 -> 00:01:41] How are we going to go about doing this?
+[00:01:41 -> 00:01:44] Here is another example to motivate the discussion further.
+[00:01:44 -> 00:01:51] So for i equals 0 to n, for j equals 0 to m, aj i equals 0.
+[00:01:51 -> 00:01:54] Does this have self-reuse, self-temporal reuse?
+[00:01:54 -> 00:01:59] The answer is again no because if I look at the coefficient matrix, it just comes
+[00:01:59 -> 00:02:11] out to be 0, it comes out to be 0, 1, 1, 0 for i, j because it's j, i and the
+[00:02:11 -> 00:02:18] rank of this matrix is 2 and the dimension of the loop iteration space is also 2.
+[00:02:18 -> 00:02:21] The rank is the same as the dimension of the loop iteration space.
+[00:02:21 -> 00:02:23] So there is no self-reuse.
+[00:02:23 -> 00:02:27] But if I ask the question is there self-spatial reuse?
+[00:02:27 -> 00:02:33] The answer depends on whether two cache lines can be, the same cache line can be accessed
+[00:02:33 -> 00:02:38] multiple times across different points in the iteration space.
+[00:02:38 -> 00:02:43] And so the answer is actually yes because if I look at iteration points, let's
+[00:02:43 -> 00:02:54] say 0, 1 and 0, 1 and 1, 1, okay?
+[00:02:54 -> 00:03:06] So 0, 1 and 1, 1 are going to access elements 1, 0 and 1, 1 in the array space because
+[00:03:06 -> 00:03:11] say i is 0 and so I'm using i, j notation.
+[00:03:11 -> 00:03:16] So in the first case i is 0, j is 1, in the second case i is 1 and j is also 1.
+[00:03:16 -> 00:03:21] So in the first case, the access is going to be to location j, i which is 1, 0.
+[00:03:21 -> 00:03:27] So this is access and in the second case, the access is going to be to j, i which
+[00:03:27 -> 00:03:28] is 1, 1.
+[00:03:28 -> 00:03:36] Now 1, 0 and 1, 1 are adjacent elements in my matrix assuming row major form and
+[00:03:36 -> 00:03:38] so 1, 0 and 1, 1 are adjacent.
+[00:03:38 -> 00:03:41] In other words, they are hitting the same cache line.
+[00:03:41 -> 00:03:46] Now and so there is the same cache line is being accessed across different iterations
+[00:03:46 -> 00:03:51] of this loop nest and so yes, there is self-spatial reuse.
+[00:03:51 -> 00:03:53] So the answer here is yes.
+[00:03:53 -> 00:04:00] Notice that self-spatial reuse or self-reuse is different from spatial locality or temporal
+[00:04:00 -> 00:04:01] locality, alright?
+[00:04:01 -> 00:04:06] So for example, the distance between accesses to the same cache line may be very large.
+[00:04:06 -> 00:04:11] For example, the distance between 0, 1 and 1, 1 is order n.
+[00:04:11 -> 00:04:17] So the iteration order, recall that the order of execution of the iteration space
+[00:04:17 -> 00:04:20] is basically the ascending lexicographic order.
+[00:04:20 -> 00:04:24] So I am going to first execute 0, 1 then I am going to execute 0, 2, 0, 3, 0,
+[00:04:24 -> 00:04:29] 4, 0, 5 all the way till 0, n minus 1 and then I am going to come to 1, 0,
+[00:04:29 -> 00:04:30] 1, 1, 1, 2, 1, 3.
+[00:04:30 -> 00:04:37] So the distance between accesses to the same cache line is pretty large, right?
+[00:04:37 -> 00:04:41] So the reuse distance is very high but that does not mean that there is no reuse.
+[00:04:41 -> 00:04:45] There is reuse just that the reuse distance is high.
+[00:04:45 -> 00:04:52] In other words, there is self-spatial reuse, there is no spatial locality, alright?
+[00:04:52 -> 00:04:56] So locality is a stronger requirement than reuse.
+[00:04:56 -> 00:05:00] Locality requires that there is reuse and the reuse distance is small.
+[00:05:00 -> 00:05:02] And we say there is spatial locality.
+[00:05:02 -> 00:05:06] Right now we are not really talking about locality, we are talking about only reuse,
+[00:05:06 -> 00:05:07] is there reuse?
+[00:05:07 -> 00:05:11] And so the answer in this particular example is yes, there is reuse because the same
+[00:05:11 -> 00:05:16] cache line is going to be accessed for different iteration, different points in the
+[00:05:16 -> 00:05:23] iteration space even if, even though the different points may be very far apart in
+[00:05:23 -> 00:05:28] execution order, okay?
+[00:05:28 -> 00:05:33] Now, to be able to reason about self-spatial reuse, we basically want to have some notion
+[00:05:33 -> 00:05:37] of capturing what is the size of a cache line.
+[00:05:37 -> 00:05:39] And so we are going to use an approximation, alright?
+[00:05:39 -> 00:05:42] Because we don't want to make our analysis too complex, we want to have some kind
+[00:05:42 -> 00:05:47] of first order approximation to be able to figure out whether there is reuse or not.
+[00:05:47 -> 00:05:52] And so we basically consider two arrays to share a cache line, if and only if
+[00:05:52 -> 00:05:56] they differ, only in the last dimension of a d-dimensional array.
+[00:05:56 -> 00:06:02] In other words, we assume that the entire last dimension fits in a single cache line.
+[00:06:02 -> 00:06:06] So all the n elements in the last dimension fit in a single cache line.
+[00:06:06 -> 00:06:11] And if we assume that, under that simplifying assumption, we are going to identify, try
+[00:06:11 -> 00:06:16] and identify whether there is self-spatial reuse in this program or not.
+[00:06:16 -> 00:06:22] So for example, here is for i equals 0 to i is less than n, i++.
+[00:06:22 -> 00:06:25] So I just assume what is the last dimension here because there is only one dimension,
+[00:06:25 -> 00:06:29] the last dimension is that single dimension, which is i.
+[00:06:29 -> 00:06:34] And so I can just assume that this entire dimension belongs to a single cache line.
+[00:06:34 -> 00:06:38] And so yes, there is self-reuse here because now I just basically assume that i has been
+[00:06:38 -> 00:06:43] just removed and so from one dimension it has become a zero-dimensional access.
+[00:06:43 -> 00:06:46] And now I can basically, because it's the same cache line that's getting accessed
+[00:06:46 -> 00:06:48] all over and over again across all the iterations.
+[00:06:48 -> 00:06:51] And now we can say yes, there is self-spatial reuse.
+[00:06:51 -> 00:06:55] Let's take the other example that we saw in one of the previous slides.
+[00:06:55 -> 00:06:58] For i equals 0 to n, for j equals 0 to m, aji equals 0.
+[00:06:58 -> 00:07:03] Now once again, I basically to identify whether there is self-spatial reuse or not, I'm going
+[00:07:03 -> 00:07:07] to strike off the last dimension of the access, it's kind of behaving as though
+[00:07:07 -> 00:07:10] the entire last dimension fits in a single cache line.
+[00:07:10 -> 00:07:14] And now I'm going to say, okay, so what is the remaining index?
+[00:07:14 -> 00:07:15] It's just j.
+[00:07:15 -> 00:07:19] What is the dimensionality of the access for the remaining indices?
+[00:07:19 -> 00:07:20] It's just 1.
+[00:07:20 -> 00:07:22] What is dimensionality of the loop nest?
+[00:07:22 -> 00:07:23] It's 2.
+[00:07:23 -> 00:07:30] So the dimensionality of the remaining truncated access matrix is 1, the dimensionality of
+[00:07:30 -> 00:07:34] the loop nest is 2, 1 is less than 2 and so there is self-spatial reuse.
+[00:07:34 -> 00:07:39] Notice that there is no self-reuse, no self-temporal reuse, but there is self-spatial
+[00:07:39 -> 00:07:45] reuse under the simplifying assumption that the entire last dimension of the array
+[00:07:45 -> 00:07:48] access fits in a single cache line.
+[00:07:48 -> 00:07:54] Now you may question this particular assumption that the entire last dimension fits in a cache
+[00:07:54 -> 00:07:59] line because previously I've said that the dimension size is very large, the n is typically
+[00:07:59 -> 00:08:03] very large and cache sizes are, cache line sizes are not that large, they are typically
+[00:08:03 -> 00:08:07] let's say 64 bytes or something like that.
+[00:08:07 -> 00:08:12] Now the, but even though the cache line sizes are much smaller than the typical
+[00:08:12 -> 00:08:16] dimension size, for the last dimension, accesses are anyway cheaper.
+[00:08:16 -> 00:08:19] For example, once every C accesses.
+[00:08:19 -> 00:08:24] So on the last dimension, if there is reuse, then with 1 over C probability, I'm going
+[00:08:24 -> 00:08:32] to have a cache miss because, you know, assuming it's completely randomly, I'm accessing
+[00:08:32 -> 00:08:37] the last dimension completely randomly, then in the last dimension with 1, with
+[00:08:37 -> 00:08:41] C minus 1 by C probability, I'm going to find it in the cache line in the cache
+[00:08:41 -> 00:08:44] and with 1 by C probability, it's going to be a cache miss.
+[00:08:44 -> 00:08:50] And so once every C accesses, we have a cache miss and so this is significantly cheaper
+[00:08:50 -> 00:08:56] than for all the other dimensions where, you know, if I'm accessing stuff, then they're
+[00:08:56 -> 00:09:01] almost, they're all very far apart and because they're far apart and if they're at that
+[00:09:01 -> 00:09:06] particular dimension is different, then with almost 1 probability, I'll have a cache
+[00:09:06 -> 00:09:07] miss.
+[00:09:07 -> 00:09:11] So I shouldn't say use the word cache miss, but because I'm not really talking
+[00:09:11 -> 00:09:16] about locality, but reuse, what I want to say is that two accesses would lie on the
+[00:09:16 -> 00:09:24] same cache line with a probability of C minus, with a high probability, with a higher
+[00:09:24 -> 00:09:29] probability in the last dimension than for the other dimensions where it's going
+[00:09:29 -> 00:09:33] to be all 0, right?
+[00:09:33 -> 00:09:36] And so this, for the last dimension, accesses are anyway cheaper because you're
+[00:09:36 -> 00:09:41] going to have to have a miss once for every C accesses on average and so this
+[00:09:41 -> 00:09:42] approximation is meaningful.
+[00:09:42 -> 00:09:47] Well, I mean, this is not a very convincing argument for why we can just
+[00:09:47 -> 00:09:53] assume that the last dimension is, you know, the entire cache line basically fits
+[00:09:53 -> 00:09:56] the last dimension entirely.
+[00:09:56 -> 00:10:02] It seems like a very crude approximation, but for the purposes of our analysis, we
+[00:10:02 -> 00:10:04] are going to work with this approximation.
+[00:10:04 -> 00:10:08] It does give us practical benefits in many scenarios.
+[00:10:08 -> 00:10:10] So here's the trick.
+[00:10:10 -> 00:10:18] We just drop the last dimension or the last row of the coefficient matrix F and now the
+[00:10:18 -> 00:10:22] resulting coefficient matrix capital F now becomes an effective coefficient matrix
+[00:10:22 -> 00:10:25] because the last dimension is just meaningless because the last dimension
+[00:10:25 -> 00:10:28] basically, you know, if you access any element in the last dimension, it's
+[00:10:28 -> 00:10:36] almost like the entire row has been loaded and so we just drop it
+[00:10:36 -> 00:10:42] altogether and if the rank of the resulting truncated matrix, capital F, is
+[00:10:42 -> 00:10:45] less than the depth of the loop nest, then there is self-spatial reuse.
+[00:10:45 -> 00:10:48] So the difference between self-spatial reuse and self-reuse is that for
+[00:10:48 -> 00:10:53] self-spatial reuse, we just truncate the capital F matrix by removing the
+[00:10:53 -> 00:10:58] last row, the last dimension of the array access and do exactly the same
+[00:10:58 -> 00:11:01] analysis to see what is the rank of the resulting truncated matrix.
+[00:11:01 -> 00:11:05] If that rank is less than the dimensionality of the loop nest, then
+[00:11:05 -> 00:11:10] we say there is reuse, in this case, self-spatial reuse, otherwise, we say
+[00:11:10 -> 00:11:18] there is no reuse. So, what is the significance of identifying whether
+[00:11:18 -> 00:11:22] there is self-spatial reuse or not? Basically, the significance is that
+[00:11:22 -> 00:11:27] there is a possibility to reorder the computation such that we basically
+[00:11:27 -> 00:11:32] exploit spatial locality. So, recall that I already said that reuse is
+[00:11:32 -> 00:11:36] different from locality. Locality is a stronger condition. Locality requires
+[00:11:36 -> 00:11:40] that there is reuse and the reuse distance is small. The first question
+[00:11:40 -> 00:11:42] you want to ask to identify whether there is a possibility of
+[00:11:42 -> 00:11:46] exploiting spatial locality is that, is there self-reuse? If there is no
+[00:11:46 -> 00:11:49] self-reuse, there can be no spatial locality, right? If there is no
+[00:11:49 -> 00:11:56] self-spatial reuse, there cannot be any self-spatial locality. So, but if
+[00:11:56 -> 00:11:59] there is self-spatial reuse, then second question you have to ask is, is it
+[00:11:59 -> 00:12:03] possible to reorder the computation such that the reuse distance between
+[00:12:03 -> 00:12:09] multiple accesses to the same cache line become closed in time, right?
+[00:12:09 -> 00:12:13] Closed in execution order. So, once we have determined that there is
+[00:12:13 -> 00:12:17] self-spatial reuse, we have determined that it may be possible, we
+[00:12:17 -> 00:12:20] are not guaranteed, it may be possible to reorder computation so that the
+[00:12:20 -> 00:12:25] innermost loop varies only in the last coordinate of the array, in which
+[00:12:25 -> 00:12:30] case, we, if we are able to do that, then we are able to exploit spatial
+[00:12:30 -> 00:12:35] locality. Here is an example. So, let's say I have a three-dimensional
+[00:12:35 -> 00:12:38] array access. So, let's assume that I have a two-dimensional loop nest
+[00:12:38 -> 00:12:43] with loop iteration indices i and j. And now, inside the loop body, I
+[00:12:43 -> 00:12:50] have a three-dimensional array access 3, a 3 comma 2 i comma 7 i plus j
+[00:12:50 -> 00:12:55] for iteration indices i j. Now, if I remove the last index, which is 7 i
+[00:12:55 -> 00:12:59] plus j, I basically get, if I remove the last dimension, then I get
+[00:12:59 -> 00:13:04] removing, then I get a 3 comma 2 i, which has rank 1 because there is
+[00:13:04 -> 00:13:08] only one free variable i in this, in this particular coefficient matrix.
+[00:13:08 -> 00:13:14] If I draw the coefficient matrix, it basically 0 0, 1 0, 2 0, right,
+[00:13:14 -> 00:13:19] for i comma j. And this one has, this basically means that the rank is 1
+[00:13:19 -> 00:13:23] because 0 comma 0 is just a 0 row and then 2 0 is the only
+[00:13:23 -> 00:13:27] linearly independent row. Now, which has rank 1 and because the
+[00:13:27 -> 00:13:30] rank is less than 2, which is the dimensionality of the loop
+[00:13:30 -> 00:13:34] iteration space, this access has self-spatial reuse.
+[00:13:34 -> 00:13:39] And it's also easy to see if the inner, you know, for different values of
+[00:13:39 -> 00:13:43] j, I'm basically accessing the same cache line, which is because
+[00:13:43 -> 00:13:45] assuming that the entire cache line, the last dimension fitting the same
+[00:13:45 -> 00:13:50] cache line, I'm basically accessing 3 comma 2 i
+[00:13:50 -> 00:13:53] and that cache line for different values of j, different values of
+[00:13:53 -> 00:13:56] j don't matter because all values of j are going to only change the last
+[00:13:56 -> 00:13:59] dimension and the last dimension resuming has, it
+[00:13:59 -> 00:14:06] belongs to the same cache line. Now, so moreover, if j is the innermost
+[00:14:06 -> 00:14:10] loop, right, so the outer loop is iterating on i
+[00:14:10 -> 00:14:14] and the inner loop is iterating on j, then this access will
+[00:14:14 -> 00:14:17] also exhibit spatial locality. So there's not only spatial reuse in
+[00:14:17 -> 00:14:20] that case, but also spatial locality because the
+[00:14:20 -> 00:14:24] innermost loop iterates only on the inner dimension, right. So
+[00:14:24 -> 00:14:27] if the innermost loop iterates only on the inner dimension and the inner
+[00:14:27 -> 00:14:31] dimension is assumed to be entirely fitting in the cache line, then
+[00:14:31 -> 00:14:34] that basically means that the inner loop has
+[00:14:34 -> 00:14:37] a lot of locality because it's accessing the same cache line
+[00:14:37 -> 00:14:40] over and over again and so that's why we say that the program has
+[00:14:40 -> 00:14:43] spatial locality, which is a stronger condition than
+[00:14:43 -> 00:14:48] spatial reuse. However, if it was the other way around, if i was the
+[00:14:48 -> 00:14:53] inner loop index and j was the outer loop index, then
+[00:14:53 -> 00:14:57] this program would have had, still had spatial
+[00:14:57 -> 00:15:00] reuse, but it wouldn't have had spatial locality
+[00:15:00 -> 00:15:03] because for different, the innermost loop
+[00:15:03 -> 00:15:06] would not iterate on the innermost dimension, the innermost loop would
+[00:15:06 -> 00:15:10] iterate on the second dimension in this array access
+[00:15:10 -> 00:15:18] also. As a general rule, for there to be spatial locality,
+[00:15:18 -> 00:15:22] the iteration vector 0 0 0 0 0 1, where 1,
+[00:15:22 -> 00:15:26] this is supposed to be the iteration vector and the last
+[00:15:26 -> 00:15:30] dimension of the iteration vector should be in the null space
+[00:15:30 -> 00:15:34] of the truncated F to obtain spatial locality.
+[00:15:34 -> 00:15:40] Okay, so what do I mean? Notice that first of all that the null
+[00:15:40 -> 00:15:44] space of capital F, the truncated F should be
+[00:15:44 -> 00:15:47] non-trivial for there to be spatial reuse. So first of all,
+[00:15:47 -> 00:15:50] you know there needs to be a null space which is non-trivial. By non-trivial,
+[00:15:50 -> 00:15:52] I mean apart from the zero comma zero point,
+[00:15:52 -> 00:15:56] there should be more points in the null space. Moreover,
+[00:15:56 -> 00:16:00] the vector 0 0 0 0 0 1 should be in the null space for spatial locality.
+[00:16:00 -> 00:16:04] So the first condition was for spatial reuse which was basically null space
+[00:16:04 -> 00:16:08] should be non-trivial, should be non-trivial and the
+[00:16:08 -> 00:16:11] second condition for spatial locality, the additional condition is
+[00:16:11 -> 00:16:15] that the iteration vector 0 0 0 0 1 should belong to
+[00:16:15 -> 00:16:20] the null space. What is the intuition behind this condition?
+[00:16:20 -> 00:16:23] Well, basically it's encoding the fact that
+[00:16:23 -> 00:16:27] the innermost loop is iterating on the last dimension.
+[00:16:27 -> 00:16:32] Okay, so the iteration of the innermost loop
+[00:16:32 -> 00:16:36] has no consequence on all the other dimensions. That's what it means, right?
+[00:16:36 -> 00:16:40] Because all the other dimensions, you know,
+[00:16:40 -> 00:16:44] they're going to remain constant irrespective of what I do
+[00:16:44 -> 00:16:49] in the last iteration. You know, that's one kind of informal way of specifying it
+[00:16:49 -> 00:16:52] but this is a more formal way of specifying it that
+[00:16:52 -> 00:16:56] the iteration vector 0 0 0 0 1 should belong to the null space of the
+[00:16:56 -> 00:17:00] truncated matrix F to obtain spatial locality. So for
+[00:17:00 -> 00:17:02] example, in the example that we have seen,
+[00:17:02 -> 00:17:05] if i is the innermost index, then 0 1
+[00:17:05 -> 00:17:09] does not satisfy this requirement. Okay, so 0 1
+[00:17:09 -> 00:17:13] does not satisfy this requirement. What is the null space
+[00:17:13 -> 00:17:17] of the iteration of the truncated matrix
+[00:17:17 -> 00:17:20] capital F? So firstly, what is the truncated matrix capital F?
+[00:17:20 -> 00:17:24] It is nothing but for the first element it's just 0 0
+[00:17:24 -> 00:17:28] for the first dimension because it's just 3 and for the second dimension
+[00:17:28 -> 00:17:31] here, so the first dimension is just 0 0 the coefficient matrix and for the
+[00:17:31 -> 00:17:36] second dimension the coefficient matrix is 2 0.
+[00:17:36 -> 00:17:39] Okay, that's if I basically use i comma j.
+[00:17:39 -> 00:17:43] On the other hand, if I use j comma i where
+[00:17:43 -> 00:17:47] so i was the inner loop index, then the coefficient matrix would be 0 0
+[00:17:47 -> 00:17:56] and 0 2. Now notice that in one case, in this case, 0 1
+[00:17:56 -> 00:17:59] is in the null space because if I multiply this by 0 1, I get
+[00:17:59 -> 00:18:03] a null vector. Whereas in this case,
+[00:18:03 -> 00:18:12] 0 1 is not in the null space whereas this is null.
+[00:18:12 -> 00:18:17] So in other words, if i is the inner loop index, so this is i is inner
+[00:18:17 -> 00:18:24] and here j is inner. So if j is inner, then this loop exhibits spatial locality.
+[00:18:24 -> 00:18:28] If i is inner, then this loop does not exhibit spatial locality.
+[00:18:28 -> 00:18:32] In either case, the loops exhibit spatial
+[00:18:32 -> 00:18:41] reuse. Here are some more examples a 3 comma 2 i comma i plus 7 j.
+[00:18:41 -> 00:18:44] Does this have spatial reuse? The answer is going to be found by first
+[00:18:44 -> 00:18:48] removing the last dimension completely. What do I get? Once again, I'm assuming
+[00:18:48 -> 00:18:54] a two-dimensional loop nest on i comma j. So notice that for reuse, I don't
+[00:18:54 -> 00:18:56] really care about the order of i comma j.
+[00:18:56 -> 00:18:59] Doesn't really matter which one is inner and which one is outer.
+[00:18:59 -> 00:19:04] It's only for locality that it matters. So for locality,
+[00:19:04 -> 00:19:07] the order of iteration space matters. For reuse, the order of iteration space
+[00:19:07 -> 00:19:10] does not matter. So in this case, I'm only talking
+[00:19:10 -> 00:19:13] about reuse. So I'm not really specified about the order of i and j
+[00:19:13 -> 00:19:17] with respect to each other. So now, the remaining truncated matrix
+[00:19:17 -> 00:19:22] is 3 comma 2 i. What is the rank of this remaining truncated matrix? It's 1
+[00:19:22 -> 00:19:26] and so the answer is yes. It has spatial reuse.
+[00:19:26 -> 00:19:30] Now, let's look at this. In this case, I removed the last dimension again.
+[00:19:30 -> 00:19:33] The remaining truncated matrix is 2 i comma i plus 7 j.
+[00:19:33 -> 00:19:36] What is the rank of the coefficient matrix in this case?
+[00:19:36 -> 00:19:40] Well, it is 2 because both these two dimensions are
+[00:19:40 -> 00:19:44] linearly independent. The dimensionality of the axis is 2.
+[00:19:44 -> 00:19:47] The dimensionality of the loop iteration space is also 2 i comma j
+[00:19:47 -> 00:19:52] and so the answer here is no. It does not have spatial reuse.
+[00:19:52 -> 00:19:55] Let's look at a third example. Here again, I removed the last dimension.
+[00:19:55 -> 00:19:58] I look at the other two dimensions. What is the rank of
+[00:19:58 -> 00:20:04] this truncated matrix? It's 1 because if I fix one of the
+[00:20:04 -> 00:20:07] dimensions, the other dimension is followed. It's just going to be equal.
+[00:20:07 -> 00:20:11] And so the rank of the dimension of the axis is 1,
+[00:20:11 -> 00:20:15] which is less than 2 and so it has self-spatial reuse.
+[00:20:15 -> 00:20:19] So, here's the summary. The first array axis has
+[00:20:19 -> 00:20:24] self-spatial reuse. The second array axis does not have self-spatial reuse.
+[00:20:24 -> 00:20:28] The third array axis also has self-spatial reuse
+[00:20:28 -> 00:20:31] and it would have had self-spatial locality
+[00:20:31 -> 00:20:35] if i was the innermost loop index because if the i was the innermost
+[00:20:35 -> 00:20:40] loop index, then 0 comma 1 would be part of the null space of this
+[00:20:40 -> 00:20:43] particular coefficient matrix and then there would be spatial locality.
+[00:20:43 -> 00:20:47] On the other hand, if i was not the inner loop index, if i was the outer
+[00:20:47 -> 00:20:50] loop index, then 0 1 would not be a part of the
+[00:20:50 -> 00:20:52] null space. In fact, 1 0 would be a part of the
+[00:20:52 -> 00:20:54] null space, but that's a different matter.
+[00:20:54 -> 00:20:58] 0 1 would not be a part of the null space and so this particular
+[00:20:58 -> 00:21:03] loop program while would have spatial reuse would not have spatial
+[00:21:03 -> 00:21:04] locality.

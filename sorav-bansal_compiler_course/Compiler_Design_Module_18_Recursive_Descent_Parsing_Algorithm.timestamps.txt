@@ -1,0 +1,241 @@
+Title: Compiler Design Module 18 : Recursive Descent Parsing Algorithm
+Video ID: kfGNwOYnYGc
+Detected language: en
+------------------------------------------------------------
+
+[00:00:00 -> 00:00:04] Today we are going to discuss the general algorithm of recursive descent parsing.
+[00:00:05 -> 00:00:11] So before I discuss the algorithm, I would like to introduce a couple of helper types and functions.
+[00:00:11 -> 00:00:15] So the first helper type is a token.
+[00:00:16 -> 00:00:18] Token is just a type
+[00:00:19 -> 00:00:27] that represents the class of all the tokens. For example int, plus, times, left parentheses, right parentheses and so on.
+[00:00:28 -> 00:00:36] Similarly, there is a global variable that we are going to maintain. That's the next variable.
+[00:00:36 -> 00:00:43] And this variable is a pointer to the next token in the input stream.
+[00:00:45 -> 00:00:52] So for example, at the start of the parsing algorithm, next is pointing to the first token in the input stream.
+[00:00:52 -> 00:01:02] And as the parsing algorithm works, it keeps moving to the right. Recall that the recursive descent parsing algorithm is a left to right parsing algorithm.
+[00:01:05 -> 00:01:15] Apart from that, I am also going to assume that we can create function objects and that we can execute those objects whenever we like.
+[00:01:15 -> 00:01:28] So what is a function object? Well, we are all familiar with the function. So consider this function foo that takes an argument, integer argument a, and maybe does something with a.
+[00:01:28 -> 00:01:39] Also notice that foo can potentially access any global variables. In our context, this function may access the next variable, for example. It may either read or write next.
+[00:01:40 -> 00:01:50] Alright, so I can create. So this is a function. Maybe this has type bool or maybe this has type void. So let's assume this has type void.
+[00:01:50 -> 00:01:58] Return type. And now I can create a function out of it. So if I create an object out of it.
+[00:01:58 -> 00:02:08] So to create an object, I am assuming that I have some kind of a keyword in my language. I am assuming here that this is the create keyword.
+[00:02:08 -> 00:02:24] And I can say object f1 equals create foo 3. What this does is it does not actually execute foo on argument 3, but it just creates an object which represents the execution of foo on 3.
+[00:02:24 -> 00:02:29] And later on, we can evaluate this object. So I can use this keyword called eval.
+[00:02:30 -> 00:02:40] Say eval obj f1. This is going to actually execute this function object. In other words, it's going to execute the body of foo on the input 3.
+[00:02:40 -> 00:02:53] Also notice that if foo was going to access any global variables, then the global variable state that foo will access will be the state that is at the time of evaluation, not at the time of creation.
+[00:02:53 -> 00:03:01] So at the time of creation, we're just storing pointers to the function body and the arguments.
+[00:03:01 -> 00:03:13] So for example, in C, you could implement a function object using function pointers and evaluation would just involve dereferencing the pointer and making a function dispatch.
+[00:03:14 -> 00:03:25] In C++, there are function objects that are provided in the standard library. And so you could use them to implement something like this.
+[00:03:25 -> 00:03:37] So once again, function objects are basically objects that contain pointers to the body of the function and the arguments on which it needs to be applied.
+[00:03:38 -> 00:03:47] Their application of evaluation of the function object involves applying that function to the arguments that it contains.
+[00:03:47 -> 00:03:56] All right. So with that, I'm going to define some helper functions to help our recursive descent parsing algorithm implementation.
+[00:03:56 -> 00:04:06] The first helper function is this function called term. It returns a Boolean value, true or false, depending on whether the next
+[00:04:06 -> 00:04:14] token, which is pointed to by the next pointer, is the token talk or not.
+[00:04:14 -> 00:04:22] So the term function takes two arguments. The first is a value of token type. So token talk.
+[00:04:22 -> 00:04:29] So we say token talk. So if we want to check whether the next token is talk or not, we're going to call this function.
+[00:04:30 -> 00:04:39] Further, it also checks whether the rest of the input satisfies this function object objf.
+[00:04:39 -> 00:04:47] So once again, objf is a function object and I can evaluate it.
+[00:04:47 -> 00:04:54] And the term function will evaluate it after checking and updating next.
+[00:04:54 -> 00:05:01] If star next was equal to talk, then it's going to evaluate objf on the rest of the input.
+[00:05:01 -> 00:05:08] Notice that I'm incrementing next after checking.
+[00:05:08 -> 00:05:18] Also notice that I'm using the logical ampersand operator, which means that if the first check fails, then I don't evaluate objf.
+[00:05:18 -> 00:05:26] So if the next token pointed to by the next pointer is not talk, then I will not evaluate objf.
+[00:05:26 -> 00:05:30] I will evaluate objf only if the first check succeeds.
+[00:05:30 -> 00:05:38] Also notice that irrespective of whether the first check succeeds or not, I'm always going to increment the next pointer.
+[00:05:38 -> 00:05:53] Alright, so just to be clear, incrementing the next pointer is just advancing the next token from the left to right order to the next token in the stream.
+[00:05:53 -> 00:05:58] Okay, so far so good.
+[00:05:58 -> 00:06:10] The intuition behind this is that if I call this function, objf will contain an object that's going to check some property about the rest of the input.
+[00:06:10 -> 00:06:16] And this function is going to check what is the first character in the input.
+[00:06:16 -> 00:06:20] And then objf is going to check what is the rest of this token stream.
+[00:06:20 -> 00:06:23] Does it satisfy the property that I want it to satisfy?
+[00:06:23 -> 00:06:30] And that property that we wanted to satisfy will be encoded in this object, function object, objf.
+[00:06:30 -> 00:06:39] Alright, so just like we have the term function, we will define some more functions that will represent non-terminal.
+[00:06:39 -> 00:06:50] So the term function represents a terminal token, talk, and checks whether the current next, current head of the input stream, does it contain the token talk or not.
+[00:06:50 -> 00:07:06] The non-terminal function, helper function, is going to check whether a prefix of the input spoken stream contains a sequence that can be produced using that non-terminal or not.
+[00:07:06 -> 00:07:10] So our first function here is sn.
+[00:07:10 -> 00:07:14] This is to try the nth production of non-terminal s.
+[00:07:14 -> 00:07:27] So we have some non-terminals in our grammar and each non-terminal has, can potentially have multiple productions where this non-terminal is on the LHS and then there is some string of terminals and non-terminals on the RHS of each production.
+[00:07:27 -> 00:07:38] So let's say I look at any nth production, I would like to know whether the input starting at the next pointer, does it match this production or not?
+[00:07:38 -> 00:07:42] Does it match sn, the nth production of s? Does it match sn or not?
+[00:07:42 -> 00:07:47] And if it does, then does the rest of the input match objf or not?
+[00:07:47 -> 00:07:59] So this function is going to return true if some prefix of the remaining input matches sn and the remaining input after sn has been matched matches objf.
+[00:08:00 -> 00:08:18] So the structure of this function is going to look something like the following, that it's going to check whether some prefix of the input stream matches sn, that's represented by this dot dot dot and we will see some examples of how we're going to implement this missing part.
+[00:08:18 -> 00:08:25] And then we are going to, and if that succeeds, then we're going to see whether the rest of the input matches objf or not.
+[00:08:25 -> 00:08:31] So we're also assuming that this dot dot dot is going to increment next appropriately after having matched it with sn.
+[00:08:31 -> 00:08:40] So sn succeeds if prefix of input matches sn and rest of input matches objf.
+[00:08:40 -> 00:08:49] Alright, similarly we'll define another function called s and s is nothing but it's going to try all possible productions of s.
+[00:08:49 -> 00:09:00] So in the previous slide we saw sn, which was one particular production of s, the function s is going to try all possible productions of the non-terminal s.
+[00:09:00 -> 00:09:10] And it is also going to have a similar structure, it's going to check something and if it matches, then it's also going to apply objf to the rest of the input.
+[00:09:10 -> 00:09:20] Alright, so s takes an input as argument and a function object objf and it checks whether some prefix of the input matches any production of s.
+[00:09:20 -> 00:09:27] So s1, s2 whatever and then with the rest of the input doesn't match objf or not.
+[00:09:27 -> 00:09:36] Okay, so succeeds if prefix of input matches some production of s and rest of input matches objf.
+[00:09:36 -> 00:09:46] Okay, so to see how these functions are going to get implemented, let's look at this example grammar of expressions and terms.
+[00:09:46 -> 00:10:01] So an expression could be a term or a term plus an expression and the term could be either an integer or an integer multiplied with another term or an expression enclosed in parentheses.
+[00:10:01 -> 00:10:09] Now there are two non-terminals e and t, e has two productions and t has three productions.
+[00:10:09 -> 00:10:16] So we are going to define these functions s1, s2, sn, so we are going to define functions e1, e2 and e.
+[00:10:16 -> 00:10:21] Similarly we are going to define functions t1, t2, t3 and t.
+[00:10:21 -> 00:10:25] So let's see how these functions are going to get defined based on this grammar.
+[00:10:25 -> 00:10:34] So let's look at the first production, e produces t and this is the first production of e, so we are going to call it e1 and so the function is called e1.
+[00:10:34 -> 00:10:40] It takes as argument a function object that needs to be called on the rest of the input and what does it check?
+[00:10:40 -> 00:10:48] Well because the body is basically derived from the RHS of this production, in this case the RHS is simply a t.
+[00:10:48 -> 00:10:58] So the input matches e1 if the input matches t and the rest of the input matches OBJF.
+[00:10:58 -> 00:11:08] So the body of e1 is just returned t OBJF because t OBJF is supposed to tell us whether the input matches t or not and the rest of the input matches OBJF or not.
+[00:11:08 -> 00:11:17] So e1 OBJF just simply returns t OBJF. So that's our first function, first helper function.
+[00:11:17 -> 00:11:23] Now let's look at our second production, e produces t plus e.
+[00:11:23 -> 00:11:35] Once again we define a function e2 that takes OBJF as an input and now we are going to create function objects and at the very end we are going to evaluate the function objects.
+[00:11:35 -> 00:11:45] And deliberately I am going to create function objects from the right to left and then chain them so that they get executed in order.
+[00:11:45 -> 00:11:50] And then when I evaluate the execution of these function objects is going to happen from left to right.
+[00:11:50 -> 00:11:57] So the rightmost check that I want to make is whether the rest of the input matches OBJF or not.
+[00:11:57 -> 00:12:06] And just before that basically I want to check whether some prefix matches e or not.
+[00:12:06 -> 00:12:13] So I create a function object OBJF1 equals create e OBJF.
+[00:12:13 -> 00:12:23] So I just check whether the suffix, the right side of the input stream doesn't match e and then doesn't match OBJF.
+[00:12:23 -> 00:12:31] So what is OBJF1 checking? Whether the suffix of the input stream first matches e and then matches OBJF.
+[00:12:31 -> 00:12:41] Similarly I create a function object OBJF2 that is formed by calling term on plus comma OBJF1.
+[00:12:41 -> 00:12:45] OBJF1 is something that we just defined on the previous line.
+[00:12:45 -> 00:13:01] So OBJF2 is supposed to check a suffix of the input by saying that the first token in that suffix should be a plus and the rest of the tokens should match OBJF1.
+[00:13:01 -> 00:13:10] And recall that OBJF1 first checks whether a prefix matches e and then whether the rest of the input matches OBJF or not.
+[00:13:10 -> 00:13:27] So if I was to draw a diagram, if this was my input stream, I expect some part of it to be matched by OBJF and some part of it to be matched by e.
+[00:13:27 -> 00:13:40] And this check is basically being encoded as OBJF1 and then plus and this part is being encoded as OBJF2.
+[00:13:41 -> 00:13:49] And then I want to check OBJF3. Let's look at the next one. OBJF3 is create t OBJF2.
+[00:13:49 -> 00:13:57] So this part should match t and the rest of the part, the remaining string should match OBJF2.
+[00:13:57 -> 00:14:00] So that's what create t OBJF2 means.
+[00:14:01 -> 00:14:07] And finally, I just evaluate OBJF3, which basically is going to apply t.
+[00:14:07 -> 00:14:19] It's going to first execute t on the input stream, then execute term plus, then execute e and finally execute OBJF, which was our input function object.
+[00:14:19 -> 00:14:28] Alright, so with that, we have both the productions of e, e1 and e2.
+[00:14:28 -> 00:14:36] And we can now talk about the production, the implementation for the non-terminal e in terms of both e1 and e2.
+[00:14:36 -> 00:14:40] And here we are just going to, so we don't know which production to use.
+[00:14:40 -> 00:14:47] So I want to match a prefix of the input to e and then the rest of the input to OBJF.
+[00:14:47 -> 00:14:52] But e has a choice. I could either try e1 or I could try e2 and I don't know which one to do.
+[00:14:52 -> 00:14:57] And this is where backtracking comes in. So we're going to use a backtracking implementation.
+[00:14:57 -> 00:15:06] And what I'm going to do is I'm going to first save the current next pointer so that I can come back if I fail.
+[00:15:06 -> 00:15:16] And then first call e1 on OBJF. So check whether it matches the first production, e1, followed by OBJF.
+[00:15:16 -> 00:15:20] If it does, then I'm done, right? So that's what the logical on operator will do.
+[00:15:20 -> 00:15:24] It doesn't even call the second part of the second production.
+[00:15:24 -> 00:15:28] Second part of this function, which calls the function corresponding to second production.
+[00:15:28 -> 00:15:41] However, if the first one fails, then it resets next to the saved pointer so that it brings back the pointer to where it should have been at the start of e.
+[00:15:41 -> 00:15:50] And then checks whether e2 OBJF returns true or not, which means it doesn't match e2, followed by matching OBJF.
+[00:15:50 -> 00:15:57] If none of these match, then this function returns false. If either of them matches, then this function returns true.
+[00:15:57 -> 00:16:12] Notice that this construct here of using a logical or coupled with the fact that we are resetting the next pointer is implementing our backtracking.
+[00:16:12 -> 00:16:19] We are moving the pointer not just in the forward direction, but also sometimes in the reverse direction by resetting it if there was a failure.
+[00:16:19 -> 00:16:22] And that's exactly what backtracking is.
+[00:16:22 -> 00:16:27] Okay, now let's complete the discussion. Let's look at the first production of t, t1.
+[00:16:27 -> 00:16:35] In this case, t produces an integer and so bool t1 OBJF simply returns term int OBJF.
+[00:16:35 -> 00:16:47] So basically checking it, so the input will match t1 followed by OBJF if it matches integer followed by OBJF because that's what this production is.
+[00:16:47 -> 00:16:49] It just produces an integer from t.
+[00:16:49 -> 00:16:52] Alright, and how do I check whether it produces an integer followed by OBJF?
+[00:16:52 -> 00:17:01] I just use the term function representing it, which checks whether the current token is a terminal or not.
+[00:17:01 -> 00:17:05] Okay, so that's the first production. Let's look at the second production of t.
+[00:17:05 -> 00:17:17] t produces int star t. So we are going to do the same thing of constructing function objects in the reverse order, chaining them and then evaluating them from left to right.
+[00:17:17 -> 00:17:28] Alright, so the first function object OBJF1 is created by looking at the last terminal or non-terminal here in the RHS, which is t.
+[00:17:28 -> 00:17:34] And so I say create t and I chain it with OBJF, which is my input function object.
+[00:17:34 -> 00:17:42] Similarly, OBJF2 is formed by chaining star, which is times with OBJF1.
+[00:17:42 -> 00:17:49] Alright, and OBJF3 is created by chaining int with OBJF2.
+[00:17:49 -> 00:18:01] Alright, and finally the final answer will be evaluation of OBJF3, which is going to first evaluate whether the first token is int,
+[00:18:01 -> 00:18:12] then evaluate whether the second token is times and then evaluate whether the rest of the input string first matches t and then matches OBJF or not.
+[00:18:13 -> 00:18:27] Okay, finally this is the third production, t produces parenthesized E and once again we are going to create, so there are three terminals or non-terminals in the RHS.
+[00:18:27 -> 00:18:31] And so we are going to create three function objects here.
+[00:18:31 -> 00:18:39] The first one checks whether the last token is rparam followed by OBJF.
+[00:18:39 -> 00:18:50] The second one checks whether it is prefixed by an E and the third one checks whether it is prefixed by a left parenthesis or an Lparam.
+[00:18:50 -> 00:18:59] And finally I just evaluate OBJF3 to return whether this input matches t3 followed by OBJF or not.
+[00:18:59 -> 00:19:17] Okay, finally we need to specify the function t which basically tries all the three different productions of t1, t2 and t3 and it uses backtracking just like we did for E.
+[00:19:17 -> 00:19:27] We save the next pointer and then first try t1, if that works we are done, otherwise we try t2 after resetting next.
+[00:19:27 -> 00:19:32] If that works we are done, otherwise we try t3 again after resetting next.
+[00:19:32 -> 00:19:39] Okay, so notice that all the functions that we are using in the bodies or the functions that we have defined so far have also been defined.
+[00:19:39 -> 00:19:45] That's t1, t2, t3, t, e1, e2, e, right?
+[00:19:45 -> 00:19:48] Okay, so that's our implementation of a parser.
+[00:19:48 -> 00:19:56] It includes some kind of a stack which is being emulated by the recursion stack that we have.
+[00:19:56 -> 00:20:07] It involves backtracking that is being implemented using the disjunction operator and the fact that we are saving and restoring the next pointer.
+[00:20:07 -> 00:20:19] Alright, so with that before I conclude this discussion there is another kind of subtlety.
+[00:20:19 -> 00:20:28] All these functions are basically checking whether some prefix of the input matches let's say e followed by OBJF or not.
+[00:20:28 -> 00:20:35] But at the very top level what we are interested in knowing is whether the entire input matches this grammar or not.
+[00:20:35 -> 00:20:42] So it shouldn't be the case that some prefix matches but there is some junk at the end of the input that does not match.
+[00:20:42 -> 00:20:57] So to cater to that we introduce an end of input marker called dollar and we add another production to our grammar and another non-terminal symbol S which is going to be our new start symbol.
+[00:20:57 -> 00:21:06] So this will be our new start symbol and it just says that S produces e followed by dollar.
+[00:21:06 -> 00:21:14] So basically this means that when you match e there should be nothing left at the end of e.
+[00:21:14 -> 00:21:18] So that's what dollar represents. It's an end of input marker.
+[00:21:18 -> 00:21:24] So how do I implement the function for S?
+[00:21:24 -> 00:21:31] Well it's very simple just like we have done before. There are two entities in the RHS, dollar and e.
+[00:21:31 -> 00:21:46] So I create two function objects. The OBJF1 checks whether there is a dollar that follows the input OBJF and then OBJF2 checks whether there is an e that follows OBJF1.
+[00:21:47 -> 00:21:56] And so it's going to check whether it's an e followed by a dollar and that would be an S.
+[00:21:56 -> 00:22:06] So how do I start the parcel? So that's my parcel implementation. So how do I execute it?
+[00:22:06 -> 00:22:13] Well the first step is I just initialize the next global next pointer to the start of the input which is the first token in the input stream.
+[00:22:13 -> 00:22:17] Then I create a dummy function object that is always going to return true.
+[00:22:17 -> 00:22:23] That's just for the top level function object that we're going to get to the S implementation because we don't expect anything after S.
+[00:22:23 -> 00:22:26] So it's just always going to return true.
+[00:22:26 -> 00:22:37] So we initialize a true function object and you can think of the object true function object as something that creates a function object out of a function that always returns true.
+[00:22:38 -> 00:22:42] And then finally I invoke S object F true.
+[00:22:42 -> 00:22:50] So basically this call is going to return whether some prefix of the input matches S or not.
+[00:22:50 -> 00:23:04] And recall that because of the dollar if the prefix matches S and because it includes the dollar sign then the entire string also matches S because dollar is supposed to represent the end of input.
+[00:23:04 -> 00:23:10] I'm also assuming here that dollar is not otherwise present as a legal token in the grammar.
+[00:23:10 -> 00:23:16] So that's why it's special and it represents the end of input marker.
+[00:23:16 -> 00:23:26] So we will quickly run through an example to see how this parcel is going to work on the string 5 plus 2 into 3 dollar.
+[00:23:26 -> 00:23:28] Dollar represents end of input.
+[00:23:28 -> 00:23:33] And I assume that the next pointer initially is pointing to the first token which in this case is 5.
+[00:23:33 -> 00:23:42] So recall that our algorithm basically is going to start by invoking S followed by nothing because that's the object F true.
+[00:23:42 -> 00:23:47] And that in turn is going to invoke E followed by dollar.
+[00:23:47 -> 00:23:54] Because it's going to first construct the dollar object and then dollar function object and then construct the SE function object.
+[00:23:54 -> 00:23:56] It's going to call in the reverse order.
+[00:23:56 -> 00:24:00] It's going to first call E and then call dollar.
+[00:24:01 -> 00:24:03] So what is E going to do?
+[00:24:03 -> 00:24:09] E is going to try all the different productions of E and there were two productions E1 and E2.
+[00:24:09 -> 00:24:11] So it's going to try them in order.
+[00:24:11 -> 00:24:14] So the first thing it's going to do is try E1 dollar.
+[00:24:14 -> 00:24:22] It's going to call E1 and then the OBJF is going to encode the fact that the remaining part should be a dollar.
+[00:24:22 -> 00:24:28] Now in E1 we recall that E1 is basically producing T.
+[00:24:28 -> 00:24:32] So that's going to call the T function.
+[00:24:32 -> 00:24:36] So now we need to check whether it is a T followed by a dollar.
+[00:24:36 -> 00:24:40] And for T we are going to first check T1.
+[00:24:40 -> 00:24:44] So we're going to see check whether it matches T1 followed by a dollar.
+[00:24:44 -> 00:24:48] And that's just T1 is just going to produce int.
+[00:24:48 -> 00:24:52] And we say does the string match int and dollar?
+[00:24:52 -> 00:24:58] Now so far notice that our string was kind of our candidate string was starting with a non-terminal.
+[00:24:58 -> 00:25:03] But this is the first time that our candidate string starts with the terminal and that's an int.
+[00:25:03 -> 00:25:07] And indeed the first token in our input stream is also an int.
+[00:25:07 -> 00:25:08] So that matches.
+[00:25:08 -> 00:25:11] But the second token in our input stream is a plus.
+[00:25:11 -> 00:25:18] Whereas the second token in the candidate parsing derivation is a dollar.
+[00:25:18 -> 00:25:19] And so that doesn't match.
+[00:25:19 -> 00:25:21] And so we cross it out and we now backtrack.
+[00:25:21 -> 00:25:24] So when we backtrack what's the next thing we're going to try?
+[00:25:24 -> 00:25:27] We're going to try T2 instead of T1.
+[00:25:27 -> 00:25:28] So let's do that.
+[00:25:28 -> 00:25:29] So we tried T2.
+[00:25:29 -> 00:25:35] We call T2 with OBJF that checks whether the remaining part is a dollar or not.
+[00:25:35 -> 00:25:41] And notice that T2 produces int star T dollar.
+[00:25:41 -> 00:25:44] And so we get int star T dollar.
+[00:25:44 -> 00:25:46] The first token matches because it's an int.
+[00:25:46 -> 00:25:50] But the second token doesn't match because the second token in our input stream is a plus.
+[00:25:50 -> 00:25:53] Whereas this is producing a times, a star.
+[00:25:53 -> 00:25:55] And so this is also not valid.
+[00:25:55 -> 00:25:59] Similarly, we try the third production, T3 dollar.
+[00:25:59 -> 00:26:03] And that produces open parenthesis, E close parenthesis.
+[00:26:03 -> 00:26:09] But we have a mismatch right here because the first token is supposed to be an integer.
+[00:26:09 -> 00:26:13] And this one is producing a left parenthesis, which is incorrect.
+[00:26:13 -> 00:26:15] And so this is wrong as well.
+[00:26:15 -> 00:26:17] And so we backtrack all the way.
+[00:26:17 -> 00:26:22] And now instead of picking E1, we pick E2.
+[00:26:22 -> 00:26:27] E2 is going to produce T plus E, which in turn is going to produce T1 plus E.
+[00:26:27 -> 00:26:29] This is again a backtracking search.
+[00:26:29 -> 00:26:31] First try T1, then T2.
+[00:26:31 -> 00:26:34] And now we're going to produce int plus E.
+[00:26:34 -> 00:26:38] And so far we have been able to match the first two tokens.
+[00:26:38 -> 00:26:45] And we want to match the remaining part of the stream to E followed by dollar.
+[00:26:45 -> 00:26:49] And let's see whether we can be successful in doing that or not.
+[00:26:49 -> 00:26:53] So I'm starting this afresh here.
+[00:26:53 -> 00:26:57] Int plus E dollar with my next pointer positioned at E.
+[00:26:57 -> 00:27:00] Now I'm going to first try int plus E1 dollar.
+[00:27:00 -> 00:27:06] That's my first production of E, which is going to produce int plus T dollar.
+[00:27:06 -> 00:27:11] And now I'm going to try the first possibility, which is int plus T1 dollar.
+[00:27:11 -> 00:27:14] And that's going to produce int plus int dollar.
+[00:27:14 -> 00:27:15] Is this correct?
+[00:27:15 -> 00:27:19] No, that's not correct because what we have is an int plus int star int.
+[00:27:19 -> 00:27:21] And this is int plus int dollar.
+[00:27:21 -> 00:27:24] And so this is where at the dollar sign we are going to have a mismatch.
+[00:27:24 -> 00:27:28] Because we expected a star, whereas the candidate derivation is producing a dollar.
+[00:27:28 -> 00:27:31] And so we are going to cross this out and we are going to backtrack.
+[00:27:31 -> 00:27:34] And this time instead of using T1, we are going to use T2.
+[00:27:34 -> 00:27:37] And so int plus T2 dollar.
+[00:27:37 -> 00:27:40] And that's going to produce int plus int star T dollar.
+[00:27:41 -> 00:27:45] And eventually it's going to produce int plus int star int dollar.
+[00:27:45 -> 00:27:49] And this is matching perfectly with our input stream.
+[00:27:49 -> 00:27:55] And so this is a correct derivation, which means that A, the input stream is accepted by our grammar.
+[00:27:55 -> 00:28:03] And B, we also have an exact derivation of how to produce this stream.

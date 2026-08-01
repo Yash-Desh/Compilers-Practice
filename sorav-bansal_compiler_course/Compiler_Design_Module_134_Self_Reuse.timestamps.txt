@@ -1,0 +1,213 @@
+Title: Compiler Design Module 134 : Self Reuse
+Video ID: 9KMZvgDdV5Y
+Detected language: en
+------------------------------------------------------------
+
+[00:00:00 -> 00:00:07] So last time we discussed how we characterize reuse, data reuse and we basically had different
+[00:00:07 -> 00:00:14] categorizations like self reuse, group reuse, temporal, spatial and so on and in this module
+[00:00:14 -> 00:00:19] we are going to focus on one particular category of reuse which is self reuse.
+[00:00:19 -> 00:00:22] So here is an example to motivate the discussion.
+[00:00:22 -> 00:00:28] For i equals 0, i is less than n, i plus plus, a 0 equals 0.
+[00:00:28 -> 00:00:34] Now it's clear that across all the n iterations of this loop, it's the same element that's
+[00:00:34 -> 00:00:39] getting accessed which is a 0 and so there is self reuse and you know you can say it's
+[00:00:39 -> 00:00:43] self temporal reuse but I'm not going to use the word temporal, that's the implied
+[00:00:43 -> 00:00:47] word, self reuse just means self temporal reuse, okay.
+[00:00:47 -> 00:00:48] So there's a lot of self reuse.
+[00:00:48 -> 00:00:57] Now if I look at the array access coefficient matrix, capital F, that's just 0 because
+[00:00:57 -> 00:01:05] it's a one dimensional array so that means that the number of rows of the coefficient
+[00:01:05 -> 00:01:11] matrix is 1, moreover the dimension is basically always constant 0 and so the coefficient
+[00:01:11 -> 00:01:18] of the loop iteration index i is just 0 and small f is also 0 because that's the
+[00:01:18 -> 00:01:23] constant term which in this case also happens to be 0, alright.
+[00:01:23 -> 00:01:29] So I want to establish some kind of relationship between capital F, small f and reuse, self
+[00:01:29 -> 00:01:33] reuse and we're going to do this by looking at some examples.
+[00:01:33 -> 00:01:39] So in this particular example we see that the coefficient matrix is 0, the constant
+[00:01:39 -> 00:01:43] matrix small f is also 0 and there is self reuse, okay.
+[00:01:43 -> 00:01:48] Let's move on to our another example and this time I just replace a 0 equals 0 with
+[00:01:48 -> 00:01:56] a i equals 0 and now my coefficient matrix is 1 because and this constant matrix is
+[00:01:56 -> 00:02:00] 0 because the array access is 1 into i plus 0 that's just i and that's exactly what
+[00:02:00 -> 00:02:07] my array access address can be specified as for a unidimensional memory access, okay.
+[00:02:07 -> 00:02:11] So a i equals 0, in this case there is no self reuse, alright, so there is no
+[00:02:11 -> 00:02:16] self temporal reuse because in every iteration it's a different element that's being accessed,
+[00:02:17 -> 00:02:18] alright.
+[00:02:18 -> 00:02:23] Now let's take another example, this time I have the same body a i equals 0 but I have
+[00:02:23 -> 00:02:29] a two dimensional loop nest, for i equals 0 to n, for j equals 0 to m and this time
+[00:02:29 -> 00:02:34] you know my loop iteration indices are i j, it's a two dimensional loop nest so
+[00:02:34 -> 00:02:42] it's a two dimensional set of indices that's going to specify my iteration space and
+[00:02:42 -> 00:02:46] consequently this is my coefficient matrix, it has only one row because the array access
+[00:02:46 -> 00:02:52] is unidimensional and so capital F has the coefficients 1 and 0 because the coefficient
+[00:02:52 -> 00:02:58] of i is 1 and the coefficient of j is 0 in i and the small f is also 0 and in this
+[00:02:58 -> 00:03:03] case we say that there is self reuse because for across all iterations of j it's the
+[00:03:03 -> 00:03:08] same location a i that's getting accessed, the location doesn't change across iterations
+[00:03:08 -> 00:03:12] of the inner loop, it does change with across iterations of the outer loop but
+[00:03:13 -> 00:03:17] there is significant reuse because same location is being accessed across multiple points
+[00:03:17 -> 00:03:24] in the iteration space for the same value of i, different values of j. Here's another
+[00:03:24 -> 00:03:31] example let's say it's a two dimensional array access and it's i, 2i so a i, 2i equals
+[00:03:31 -> 00:03:39] 0, once again my iteration space is represented using a two dimensional vector i j and this
+[00:03:39 -> 00:03:48] is my coefficient matrix 1, 0, 2, 0 because in both the dimensions of the array access
+[00:03:48 -> 00:03:54] i and 2i j is absent so the coefficient of j in both the dimensions is 0, the coefficient
+[00:03:54 -> 00:03:59] of i in the first dimension is i and is 1 and the coefficient of i in the second
+[00:03:59 -> 00:04:06] dimension is 2 and the constant term is 0 and in this case there is self reuse.
+[00:04:06 -> 00:04:12] Why is there self reuse because for example just consider the case just you know once
+[00:04:12 -> 00:04:18] again you know for different iterations of j for the inner loop it's the same locations
+[00:04:18 -> 00:04:23] for example if i equals 0 then it's a 0, 0 that's being accessed across all the
+[00:04:23 -> 00:04:28] iterations of the inner loop, if i equals 1 then it's a 1, 2 that's being accessed
+[00:04:28 -> 00:04:34] across all the iterations of the inner loop and so on and so there is self reuse.
+[00:04:34 -> 00:04:41] Now we want to develop a relationship between capital F and self reuse and I'm going to
+[00:04:41 -> 00:04:46] you know come to that very soon but I hope you are noticing some kind of a pattern
+[00:04:46 -> 00:04:47] here.
+[00:04:47 -> 00:04:52] Here is an example, here is another example, it's the same two dimensional loop nest
+[00:04:52 -> 00:04:59] but the array access, a two dimensional array access is given by i, 2i plus j.
+[00:04:59 -> 00:05:03] Now the coefficient matrix, now the loop iteration index vector is again i j, the
+[00:05:04 -> 00:05:08] coefficient matrix is 1 0 2 1 because in the first dimension the coefficients are 1 and
+[00:05:08 -> 00:05:14] 0 for i and j respectively and for the second dimension the coefficients are 2 and 1 for
+[00:05:14 -> 00:05:18] i and j respectively and the constant term is still 0 0.
+[00:05:18 -> 00:05:23] In this particular case there is no self reuse because across different iterations
+[00:05:23 -> 00:05:30] of j it's a different value or different address of the array that's being accessed
+[00:05:30 -> 00:05:40] for example 0, 0 is going to access 0, 0 plus 0 so 0, 0 i, j equals 0, 0 access 0, 0 of
+[00:05:40 -> 00:05:46] the array, 0, 1 access is 0, 1 in the array and so on right.
+[00:05:46 -> 00:05:51] So for different values of either i or j these are different values that are being
+[00:05:51 -> 00:05:53] accessed.
+[00:05:53 -> 00:05:59] Notice the coefficient vector, the coefficient matrix capital F 1 0 2 1 now let me change
+[00:05:59 -> 00:06:03] that a little bit and let's say I just change my coefficient matrix so that it becomes
+[00:06:03 -> 00:06:05] i plus j comma 2i plus 2j.
+[00:06:05 -> 00:06:10] Once again I have a two dimensional loop nest i j and I have an array access, first
+[00:06:10 -> 00:06:16] dimension is i plus j, the second dimension is 2i plus 2j and now this is my coefficient
+[00:06:16 -> 00:06:21] matrix 1 1 2 2 right for each of the dimensions.
+[00:06:21 -> 00:06:24] For the first dimension the coefficients of both i and j is 1, for the second
+[00:06:24 -> 00:06:28] dimension the coefficients of both i and j are 2 and that's exactly being represented
+[00:06:28 -> 00:06:30] with my coefficient matrix.
+[00:06:30 -> 00:06:34] Now I claim that in this particular example there is self reuse okay, why is there self
+[00:06:34 -> 00:06:40] reuse because well it's true that for a given value of i, for different values
+[00:06:40 -> 00:06:44] of j I will be accessing different array elements because let's say i equals 0 then
+[00:06:44 -> 00:06:50] j equals 1 is going to access a 1 comma 2, j equals 2 is going to access a 2 comma
+[00:06:50 -> 00:06:53] 4 and so on right.
+[00:06:53 -> 00:07:00] But let's look at for example point a 10 comma 20, now a 10 comma 20 will be
+[00:07:00 -> 00:07:08] accessed for what vectors i comma j, well I claim that whenever i plus j
+[00:07:08 -> 00:07:15] equals 10 then a 10 comma 20 is going to access because when i plus j is 10 then
+[00:07:15 -> 00:07:18] the first dimension is going to become 10 and the second dimension is going
+[00:07:18 -> 00:07:24] to become 20 okay and so what are some solutions to i plus j equals 10, well 1
+[00:07:24 -> 00:07:31] comma 9, 0 comma 10, 1 comma 9, 2 comma 8, 3 comma 7, 4 comma 6, 5 comma 5 and so
+[00:07:31 -> 00:07:38] on right. So there is there's order n number of different indices so things
+[00:07:38 -> 00:07:45] like 0 comma 10, 1 comma 9, dot dot dot, 5 comma 5 and so on right. So
+[00:07:45 -> 00:07:49] there are many different points in the iteration space for which the same
+[00:07:49 -> 00:07:54] location a 10 comma 20 will get accessed and so in this case also there is
+[00:07:54 -> 00:07:59] self-reuse right, recall what is the definition of self-reuse, if multiple
+[00:07:59 -> 00:08:04] points in the iteration space access the same array location for a given
+[00:08:04 -> 00:08:08] statement in this case the statement is a i plus j comma 2 i plus 2 j
+[00:08:08 -> 00:08:13] equals 0 then there is self-reuse and that is actually holding true here
+[00:08:13 -> 00:08:18] because for point 0 comma 10 and 5 comma 5 it's the same location 10 comma 20
+[00:08:18 -> 00:08:24] that would get accessed okay and so notice that this has something to do
+[00:08:24 -> 00:08:32] with a characteristic of the capital F matrix. So what how do I know whether
+[00:08:32 -> 00:08:37] they're self-reuse or not, well if the data referenced by a static access
+[00:08:37 -> 00:08:41] has k dimensions so in other words what's the dimensionality of the
+[00:08:41 -> 00:08:45] data that is being accessed now that doesn't really mean you know what the
+[00:08:45 -> 00:08:48] dimensionality of the array being accessed for example in the array that
+[00:08:48 -> 00:08:52] we discussed earlier we discussed both one dimensional and two dimensional
+[00:08:52 -> 00:08:56] arrays and in both cases there were cases for in one dimensional array
+[00:08:56 -> 00:08:59] where there was reuse and there were cases in a one dimensional array
+[00:08:59 -> 00:09:02] where there was no reuse similarly in there were cases in a two
+[00:09:02 -> 00:09:05] dimensional array where there was no reuse and there were cases in a two
+[00:09:05 -> 00:09:12] dimensional array where they were used. So the dimension of access is not the dimension
+[00:09:12 -> 00:09:18] of the array. The dimension of the access is basically the dimension of the, the kind
+[00:09:18 -> 00:09:23] of space, the dimension of the space of the array access. So if the array is accessing
+[00:09:23 -> 00:09:30] multiple points, if I draw the dimension of, if I draw, if I, if I basically characterize
+[00:09:30 -> 00:09:36] that as a vector space, then what is the dimension of that vector space? Okay? And so for example
+[00:09:36 -> 00:09:43] in the previous example, i plus j, 2i plus 2j is going to give me a one dimensional space
+[00:09:43 -> 00:09:47] because it's going to be always, if I know one dimension, the other dimension just follows
+[00:09:47 -> 00:09:54] from that dimension because the moment I know i plus j, 2i plus, the second dimension
+[00:09:54 -> 00:09:58] of the array access will always be double of the first dimension. So if it, if
+[00:09:58 -> 00:10:02] the first dimension is 10, the second dimension will be 20 irrespective of what is the value
+[00:10:02 -> 00:10:07] of i and j. Similarly, if the first dimension is 100, then the second dimension will be 200
+[00:10:07 -> 00:10:12] and so on. And so even though this array is a two dimensional array, the dimensionality
+[00:10:12 -> 00:10:17] of the access is one dimensional because one dimension, if you fix one dimension,
+[00:10:17 -> 00:10:23] the other dimension follows from the first dimension in this particular case. And so
+[00:10:23 -> 00:10:27] if the data referenced by a static access has k dimensions, in my previous example
+[00:10:27 -> 00:10:33] because it had one dimension and the access is nested in a D depth loop where D is greater
+[00:10:33 -> 00:10:38] than k and that was the case in my previous example, the loopness depth was 2 and the
+[00:10:38 -> 00:10:44] access, the dimension of the array access was 1 and so 2 was greater than 1, then
+[00:10:44 -> 00:10:50] the same data can be reused n to the power D minus k times, right? So in other
+[00:10:50 -> 00:10:55] words, in my previous example, the same data would be reused n to the power 2 minus
+[00:10:55 -> 00:11:01] 1 or order n times. So if each of the loop in iteration indices have order n elements in them,
+[00:11:01 -> 00:11:11] then the same location would have a reuse of order n by substituting 2 for D and 1 for k.
+[00:11:11 -> 00:11:17] N is the number of iterations of one loop, average number of iterations of one loop,
+[00:11:17 -> 00:11:22] we are of course approximating here, assuming that these values of the upper bounds and
+[00:11:22 -> 00:11:27] lower bounds are very large, which they typically are because we are basically dealing with large arrays and
+[00:11:27 -> 00:11:32] so and they are similar across dimensions, we are hoping. If they are not, we can just
+[00:11:32 -> 00:11:39] take the average but you know, under those approximations, the amount of reuse there
+[00:11:39 -> 00:11:44] will be, would be n to the power D minus k, where k is the dimensionality of the
+[00:11:44 -> 00:11:51] access and D is the dimensionality of the loop nest or the iteration space.
+[00:11:51 -> 00:11:57] So what do I mean by dimensionality of a reference? I have just explained it very informally using
+[00:11:57 -> 00:12:00] an example where I say, you know, if you fix these many number of dimensions, the
+[00:12:00 -> 00:12:05] other dimensions follow from that. What is the more formal way of saying that?
+[00:12:05 -> 00:12:11] And that is basically nothing but the rank of the coefficient matrix, okay? This
+[00:12:11 -> 00:12:14] is exactly what we, you know, this is very well studied in the linear algebra
+[00:12:15 -> 00:12:23] theory and the dimensionality of a reference can be given by the rank of the coefficient
+[00:12:23 -> 00:12:28] matrix capital F, okay? And we can go back to all the examples that we have seen before
+[00:12:29 -> 00:12:36] and see that in all the cases where there was reuse, the rank of the coefficient matrix,
+[00:12:36 -> 00:12:41] which represents the dimensionality of the access, was less than the dimensionality of
+[00:12:41 -> 00:12:47] the loop iteration space or the loop nest depth, okay? So if this is k and that was D,
+[00:12:47 -> 00:12:52] then k was less than D. If k is less than D, then there is reuse. If k is not less than D,
+[00:12:52 -> 00:12:58] then there is no reuse and so that's, by the way, k would be less than equal to D because
+[00:12:58 -> 00:13:04] after all, you cannot have an array access of dimensionality greater than the dimensionality
+[00:13:04 -> 00:13:08] of the loop nest depth itself because you are actually constrained by how many different points
+[00:13:09 -> 00:13:17] traverse in the loop nest in the first place, okay? So this, it is also easy to see this
+[00:13:17 -> 00:13:22] using some algebraic simplifications. So we want to find, to identify whether there is
+[00:13:22 -> 00:13:29] self-reuse or not, we want to identify two iterations i and i prime where fi plus f equals
+[00:13:29 -> 00:13:36] fi prime plus f, right? Because fi and capital F and small f basically represent the
+[00:13:37 -> 00:13:42] the mapping from loop iteration space to the array access space and we are interested in finding out
+[00:13:42 -> 00:13:48] what are the two iteration indices for which they access the same location. In other words,
+[00:13:48 -> 00:13:53] capital Fi plus small f should be equal to capital Fi prime plus small f, right? Notice that
+[00:13:53 -> 00:13:58] it's the same capital F's and small f's on both sides. The only difference is the
+[00:13:58 -> 00:14:07] iteration index vector i, okay? So this simplifies to capital F of in capital F multiplied with i
+[00:14:07 -> 00:14:13] minus i prime equals zero and we are interested in finding what is the number of points
+[00:14:14 -> 00:14:21] in i and i prime that basically satisfy this equation. Now it's, you know, from linear
+[00:14:21 -> 00:14:26] algebra we know that if capital F is a full rank matrix, then there is only one solution
+[00:14:26 -> 00:14:33] to this equation which is i equals i prime, right? Because if this multiplicand here is zero,
+[00:14:33 -> 00:14:38] then for any matrix capital F this would evaluate to zero but that basically means
+[00:14:38 -> 00:14:41] i equals i prime which means it's the same iteration and then there is reuse but we are
+[00:14:41 -> 00:14:46] really not interested in i equals i prime, right? So we are, so the trivial solution here
+[00:14:46 -> 00:14:50] is i equals i prime but that is not the interesting solution for us. So one of the
+[00:14:50 -> 00:14:56] constraints we want to add to this system of equations to identify whether there is
+[00:14:57 -> 00:15:02] self-reuse or not is that i should be not equal to i prime.
+[00:15:03 -> 00:15:12] Now if F is a full rank matrix, then there is no non-trivial solution to this equation. In
+[00:15:12 -> 00:15:17] other words, you know, for example in a one-dimensional case if capital F was just a
+[00:15:17 -> 00:15:22] multiplier, let's say two, so two into x equals zero, so the only solution to that is x equals
+[00:15:22 -> 00:15:28] zero, right? But and there is no other solution and so two can be thought of in the scalar world
+[00:15:28 -> 00:15:35] as a non-zero kind of multiplier. In a vector world, in a matrix world, we say that
+[00:15:35 -> 00:15:40] if F is full rank, then the only solution to F into x equals zero is when x equals zero
+[00:15:41 -> 00:15:45] but we are not interested in that solution but if F is not full rank, in other words,
+[00:15:46 -> 00:15:52] the rank of F is smaller than the total dimension of the matrix, then we have
+[00:15:53 -> 00:15:59] other non-zero solutions and this space of non-zero solutions is called the null space of F.
+[00:15:59 -> 00:16:06] Once again, I am just borrowing these terms from well-studied theory in linear algebra.
+[00:16:06 -> 00:16:10] If you are unaware, if you are not familiar with these terms, I will point you to
+[00:16:11 -> 00:16:14] some material on linear algebra in the comment section.
+[00:16:16 -> 00:16:22] Okay, so for example, we just try to characterize the null space of different matrices. So if my
+[00:16:22 -> 00:16:29] matrix is 1 0 0 1, firstly, what do I mean by rank of a matrix? The rank of a matrix is
+[00:16:29 -> 00:16:36] basically the number of linearly independent rows or columns in that matrix. So you know,
+[00:16:36 -> 00:16:39] just without loss of generality, let me talk about rows. So number of rows which are
+[00:16:39 -> 00:16:44] linearly independent which means none of these rows can be written as linear combination of
+[00:16:44 -> 00:16:50] all the other rows. In this case, when I say 1 0 0 1, this is also the identity matrix,
+[00:16:50 -> 00:16:54] the number of linearly independent rows for this capital F is 2 because the second
+[00:16:55 -> 00:17:00] row cannot be written as a linear combination of the first row and so the null space
+[00:17:01 -> 00:17:07] for this particular matrix F is actually just a single point 0 comma 0 or the 0 vector
+[00:17:07 -> 00:17:11] because it's a full rank matrix. The dimensions of the matrix are 2 cross 2
+[00:17:11 -> 00:17:17] and the rank of the matrix is also 2 and so it's a full rank matrix and so the only solution
+[00:17:17 -> 00:17:23] to the equation Fx equals 0 is x equals 0 and so that's the only null space.
+[00:17:23 -> 00:17:31] Let's take another example, F equals 1 minus 1 2 minus 2. Now in this case,
+[00:17:31 -> 00:17:35] the rank of the matrix is actually 1 because the second row can be written as a linear
+[00:17:35 -> 00:17:40] combination of the first row. If I just multiply the first row by 2, I get the second row.
+[00:17:40 -> 00:17:46] So the number of linearly independent rows in F is only 1 and so the rank of the matrix is 1
+[00:17:47 -> 00:17:53] and consequently and equivalently, the null space of this matrix is not just a trivial
+[00:17:53 -> 00:17:58] solution but it has actually order n solutions or where n is the dimension,
+[00:17:58 -> 00:18:02] the number of points in a single dimension. So in this case, the null space is actually
+[00:18:03 -> 00:18:10] 0. So whenever i equals j, this matrix would be, so whenever i equals j, then
+[00:18:13 -> 00:18:19] in other words, if I multiply this with i comma j, so whenever i equals j, then F into
+[00:18:19 -> 00:18:24] this ij vector is going to give me 0. So for example, if I multiply F with 1 1,
+[00:18:24 -> 00:18:28] it's going to give me 0. If I multiply by 2 2, it's going to give me 0 and so on.
+[00:18:28 -> 00:18:32] And so the null space is not just trivial but it has i minus j equals 0.
+[00:18:32 -> 00:18:38] So there are many points in the null space 1 1 2 2 3 3 4 4 and so on.
+[00:18:39 -> 00:18:43] For this two-dimensional space, the number of points in the null space is order n
+[00:18:43 -> 00:18:49] and so the amount of reuse that we have for such a coefficient matrix is also order n.
+[00:18:53 -> 00:18:57] So in the first example, it has no self-reuse because the null space
+[00:18:57 -> 00:19:01] minus the trivial solution is empty. But the second case,
+[00:19:02 -> 00:19:11] it has self-reuse because the null space minus the trivial solution is non-empty.

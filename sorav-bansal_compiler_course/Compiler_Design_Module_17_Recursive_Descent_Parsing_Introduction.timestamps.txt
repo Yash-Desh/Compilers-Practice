@@ -1,0 +1,193 @@
+Title: Compiler Design Module 17 : Recursive Descent Parsing Introduction
+Video ID: YioXoN9iO7w
+Detected language: en
+------------------------------------------------------------
+
+[00:00:00 -> 00:00:03] So today we're going to study our first parsing algorithm.
+[00:00:03 -> 00:00:07] So far we have discussed what is a context-free grammar and what does it mean
+[00:00:07 -> 00:00:13] for a sequence of tokens to be accepted by that context-free grammar or not.
+[00:00:13 -> 00:00:17] Today we're going to discuss an algorithm that is going to
+[00:00:17 -> 00:00:23] actually identify whether a string can be accepted by a context-free grammar or not.
+[00:00:23 -> 00:00:27] Recall that a string or a sequence of tokens is accepted by context-free grammar.
+[00:00:27 -> 00:00:33] If there exists a derivation from the start symbol to that sequence of tokens.
+[00:00:33 -> 00:00:38] So this algorithm is supposed to identify whether such a derivation exists or not.
+[00:00:38 -> 00:00:42] And if there exists such a derivation, then it's supposed to identify the parse tree
+[00:00:42 -> 00:00:46] or the derivation tree associated with that derivation.
+[00:00:46 -> 00:00:53] Okay, so this algorithm is called the recursive descent parsing algorithm,
+[00:00:53 -> 00:00:56] also known as the top-down parsing algorithm, all right?
+[00:00:56 -> 00:01:05] And it is called so because in this algorithm, the parse tree is constructed from the top.
+[00:01:05 -> 00:01:07] So let's say the start symbol is S.
+[00:01:07 -> 00:01:13] So initially the parse tree is formed only by the single node S.
+[00:01:13 -> 00:01:16] And then we try to identify what are all the productions of S,
+[00:01:16 -> 00:01:19] and then choose the appropriate production and so on.
+[00:01:19 -> 00:01:21] And we keep doing this recursively.
+[00:01:21 -> 00:01:23] So we construct the parse tree top-down.
+[00:01:23 -> 00:01:27] So we start from the top and then construct it top-down.
+[00:01:27 -> 00:01:34] Also, we observe the inputs left to right while identifying what to choose, right?
+[00:01:34 -> 00:01:41] So the stream of tokens can be either read right to left or left to right or middle outwards or whatever.
+[00:01:41 -> 00:01:44] But this algorithm reads tokens left to right.
+[00:01:44 -> 00:01:47] Typically, most parsing algorithms read tokens left to right
+[00:01:47 -> 00:01:53] because that is also the way humans typically read sentences in most languages, especially English.
+[00:01:53 -> 00:01:59] And so the parsing algorithm also reads tokens left to right.
+[00:01:59 -> 00:02:01] Okay.
+[00:02:01 -> 00:02:02] So here's an example.
+[00:02:02 -> 00:02:06] Let's say the tokens are T2, T5, T6, T8, T9.
+[00:02:06 -> 00:02:09] So this is just a linear sequence of tokens.
+[00:02:09 -> 00:02:14] And this is probably the parse tree that may come out of this linear sequence of tokens.
+[00:02:14 -> 00:02:19] T2 is associated with the subtree formed by all the other four tokens.
+[00:02:19 -> 00:02:22] And for the other four tokens, maybe, you know,
+[00:02:22 -> 00:02:26] there are two tokens on the left subtree and the two tokens on the right subtree.
+[00:02:26 -> 00:02:30] So in general, the parse tree could be formed by,
+[00:02:30 -> 00:02:33] there could be multiple parse trees for the same sequence of tokens.
+[00:02:33 -> 00:02:35] That would be an ambiguous grammar.
+[00:02:35 -> 00:02:38] But for a non-ambiguous grammar, there is probably,
+[00:02:38 -> 00:02:40] if the sentence is accepted by that grammar,
+[00:02:40 -> 00:02:42] then there should be a unique parse tree.
+[00:02:42 -> 00:02:46] And this algorithm is supposed to find that parse tree.
+[00:02:46 -> 00:02:48] In this example, I just show an example parse tree
+[00:02:48 -> 00:02:51] that may have been generated for a given grammar.
+[00:02:51 -> 00:02:54] So I'm not showing the grammar in this example.
+[00:02:54 -> 00:02:56] Now, let's take an example to see how,
+[00:02:56 -> 00:03:01] to informally see how recursive descent parsing works.
+[00:03:01 -> 00:03:06] So let's say that you have a grammar.
+[00:03:06 -> 00:03:08] This is a grammar that you've already seen,
+[00:03:08 -> 00:03:11] grammar of arithmetic expressions with plus and star,
+[00:03:11 -> 00:03:14] such that star has higher precedence than plus.
+[00:03:14 -> 00:03:17] So in this grammar, there are two non-terminals.
+[00:03:17 -> 00:03:21] The top level non-terminal is E, which is also the start symbol.
+[00:03:21 -> 00:03:24] So E could either produce a term, T,
+[00:03:24 -> 00:03:28] or it could be a term plus another expression, E.
+[00:03:28 -> 00:03:30] So E stands for an expression.
+[00:03:30 -> 00:03:33] And T, the term, could be either a leaf node,
+[00:03:33 -> 00:03:37] which is an integer, or it could be an int star T,
+[00:03:37 -> 00:03:40] so another integer multiplied by the rest of the term.
+[00:03:40 -> 00:03:43] So it could be int star, int star something.
+[00:03:43 -> 00:03:46] Or even E, which is parenthesized,
+[00:03:46 -> 00:03:49] would be considered a term, okay?
+[00:03:49 -> 00:03:52] All right, so this is a grammar that we've already seen.
+[00:03:52 -> 00:03:55] It is a grammar that constructs expressions
+[00:03:55 -> 00:03:57] consisting of plus and star,
+[00:03:57 -> 00:04:00] giving higher precedence to associating star
+[00:04:00 -> 00:04:02] before associating plus.
+[00:04:02 -> 00:04:04] However, if there are parentheses,
+[00:04:04 -> 00:04:07] then parentheses are giving the highest preference
+[00:04:07 -> 00:04:08] in this example.
+[00:04:09 -> 00:04:13] All right, so to take this example further,
+[00:04:13 -> 00:04:17] let's say that I have this sequence of tokens.
+[00:04:17 -> 00:04:19] In this case, just three tokens.
+[00:04:19 -> 00:04:22] Open parentheses, five, in the integer five,
+[00:04:22 -> 00:04:24] and then the close parentheses.
+[00:04:24 -> 00:04:28] Now, if I try to parse this,
+[00:04:28 -> 00:04:30] I'm just going to try and run the algorithm,
+[00:04:30 -> 00:04:31] the recursive descent algorithm,
+[00:04:31 -> 00:04:33] to give you a flavor of how it works
+[00:04:33 -> 00:04:35] before introducing it more formally.
+[00:04:35 -> 00:04:39] So first of all, the start symbol is E.
+[00:04:39 -> 00:04:41] So I'm going to start with E.
+[00:04:41 -> 00:04:43] So let's say I take another pen here.
+[00:04:43 -> 00:04:45] So let's say I start with E.
+[00:04:45 -> 00:04:47] And now I have two choices.
+[00:04:48 -> 00:04:51] So the way it works is that I will start with E
+[00:04:51 -> 00:04:52] and try rules in order.
+[00:04:52 -> 00:04:54] So I'm going, in this case, there are two rules.
+[00:04:54 -> 00:04:56] Either E could produce T
+[00:04:56 -> 00:04:58] or E could produce T plus E.
+[00:04:59 -> 00:05:01] So I try the rules in order.
+[00:05:01 -> 00:05:03] So I'm going to first try T
+[00:05:03 -> 00:05:06] and then I'm going to try T plus E, all right?
+[00:05:06 -> 00:05:09] And if I ever find some incompatible terminals,
+[00:05:09 -> 00:05:12] so as long as I have only non-terminals,
+[00:05:12 -> 00:05:13] it's not clear whether I'm going
+[00:05:13 -> 00:05:14] on the right path or not.
+[00:05:14 -> 00:05:17] So maybe I chose the wrong production to start with.
+[00:05:17 -> 00:05:20] So maybe the right production to start with was T plus E,
+[00:05:20 -> 00:05:22] but I initially chose T.
+[00:05:22 -> 00:05:24] And later on, I'm going to find
+[00:05:24 -> 00:05:26] that I'm not able to accept the sentence
+[00:05:26 -> 00:05:28] using the chosen production,
+[00:05:28 -> 00:05:30] in which case I should backtrack.
+[00:05:30 -> 00:05:31] So how am I going to find out
+[00:05:31 -> 00:05:33] whether I made the wrong choice?
+[00:05:33 -> 00:05:37] Well, whenever we find an incompatible terminal,
+[00:05:37 -> 00:05:39] we know that we are on the wrong path
+[00:05:39 -> 00:05:43] and we should backtrack and try something else, okay?
+[00:05:43 -> 00:05:45] We cannot backtrack just based on non-terminals
+[00:05:45 -> 00:05:48] because non-terminals still need to be expanded
+[00:05:48 -> 00:05:50] and we don't know what they may get expanded to.
+[00:05:50 -> 00:05:52] But if we ever hit a terminal
+[00:05:52 -> 00:05:54] and that terminal is incompatible
+[00:05:54 -> 00:05:56] with whatever is the next token
+[00:05:56 -> 00:05:58] in the sentence that we are parsing,
+[00:05:58 -> 00:06:00] then we can always say that we are on the wrong track
+[00:06:00 -> 00:06:03] and we go back and backtrack and try the other option.
+[00:06:03 -> 00:06:07] All right, so let's run this example on this input.
+[00:06:07 -> 00:06:10] So I'm going to start with, let's say E.
+[00:06:11 -> 00:06:16] And the first thing I'm going to try is E goes to T, okay?
+[00:06:17 -> 00:06:19] Now, because that's the first production,
+[00:06:19 -> 00:06:20] I could have also tried T plus E,
+[00:06:20 -> 00:06:21] but that's the second production,
+[00:06:21 -> 00:06:25] so I'm going to try that later, if needed.
+[00:06:25 -> 00:06:26] So if I am able to parse using T,
+[00:06:26 -> 00:06:28] then I'm already done.
+[00:06:28 -> 00:06:29] But if I'm not able to parse through this production,
+[00:06:29 -> 00:06:32] then I'm going to have to try the other production.
+[00:06:33 -> 00:06:36] Now, how does T behave?
+[00:06:36 -> 00:06:39] So T could either go to int,
+[00:06:40 -> 00:06:42] that's the first production in this case,
+[00:06:42 -> 00:06:44] but if it goes to int,
+[00:06:44 -> 00:06:49] the first terminal in my sentence is an open parenthesis,
+[00:06:51 -> 00:06:54] but the first terminal in this production is an int
+[00:06:54 -> 00:06:55] and these are incompatible.
+[00:06:55 -> 00:06:59] And so I'm going to say that this is incompatible
+[00:06:59 -> 00:07:01] and so I'm backtrack.
+[00:07:01 -> 00:07:02] So when I backtrack,
+[00:07:02 -> 00:07:04] I'm going to try the other option for T,
+[00:07:04 -> 00:07:11] which is int star T.
+[00:07:11 -> 00:07:14] Now, once again, in this production,
+[00:07:14 -> 00:07:17] the first terminal that is produced is an int,
+[00:07:17 -> 00:07:20] whereas the first terminal that was present
+[00:07:20 -> 00:07:24] in our sentence is an open parenthesis.
+[00:07:24 -> 00:07:27] And so once again, this is incompatible, right?
+[00:07:27 -> 00:07:31] So I'm going to cross this out as well.
+[00:07:31 -> 00:07:35] Finally, I'm going to say, try the third one,
+[00:07:35 -> 00:07:39] which is open parenthesis E, closed parenthesis.
+[00:07:40 -> 00:07:44] And in this case, the first token, the open parenthesis,
+[00:07:44 -> 00:07:46] matches with the first token of a sentence,
+[00:07:46 -> 00:07:48] so that's great.
+[00:07:48 -> 00:07:53] The second symbol here is a non-terminal,
+[00:07:54 -> 00:07:56] so we can't say anything about it
+[00:07:56 -> 00:07:58] and so we kind of are still okay, right?
+[00:07:58 -> 00:08:00] So we don't look beyond the non-terminal
+[00:08:00 -> 00:08:01] because we don't know how much
+[00:08:01 -> 00:08:03] the non-terminal is going to produce,
+[00:08:03 -> 00:08:05] but at least till the first non-terminal,
+[00:08:05 -> 00:08:08] things are consistent with the sentence.
+[00:08:08 -> 00:08:09] So we move on.
+[00:08:09 -> 00:08:12] And so we are going to say, okay, what does E produce?
+[00:08:12 -> 00:08:15] So once again, there are two options for E,
+[00:08:15 -> 00:08:19] either E could produce T or E could produce T plus E,
+[00:08:19 -> 00:08:20] right?
+[00:08:20 -> 00:08:22] And we're going to try them in order.
+[00:08:22 -> 00:08:28] So the first thing we're going to try is T.
+[00:08:28 -> 00:08:32] And for T, I'm going to try the same things in order.
+[00:08:32 -> 00:08:34] So what's the first production for T?
+[00:08:34 -> 00:08:37] That's an int.
+[00:08:37 -> 00:08:41] And at this point, I have three terminals
+[00:08:41 -> 00:08:42] and no non-terminal.
+[00:08:42 -> 00:08:44] And it turns out that the three terminals
+[00:08:44 -> 00:08:48] are completely consistent with the three terminals
+[00:08:48 -> 00:08:51] of the original sentence,
+[00:08:51 -> 00:08:55] which was also open parenthesis and closed parenthesis.
+[00:08:55 -> 00:09:00] And so this set of terminals is all right, okay?
+[00:09:00 -> 00:09:02] So this is good.
+[00:09:02 -> 00:09:04] And we are done with our parsing.
+[00:09:04 -> 00:09:06] We found two results.
+[00:09:06 -> 00:09:09] One, that this sentence is a valid sentence
+[00:09:09 -> 00:09:11] in this grammar,
+[00:09:11 -> 00:09:12] which means that there exists a derivation
+[00:09:12 -> 00:09:14] from E to the sentence.
+[00:09:14 -> 00:09:17] And second, we also know the parse tree.
+[00:09:17 -> 00:09:17] What is the parse tree?
+[00:09:17 -> 00:09:22] This is exactly the backtracking tree,
+[00:09:22 -> 00:09:24] the paths taken by the backtracking tree
+[00:09:24 -> 00:09:26] to arrive at this sentence.

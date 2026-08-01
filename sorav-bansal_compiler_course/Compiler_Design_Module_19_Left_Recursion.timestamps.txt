@@ -1,0 +1,129 @@
+Title: Compiler Design Module 19 : Left Recursion
+Video ID: vy4qe4n7Nfg
+Detected language: en
+------------------------------------------------------------
+
+[00:00:00 -> 00:00:05] Okay, so now we know about the recursive descent algorithm and it's a very popular algorithm
+[00:00:05 -> 00:00:09] used in many compilers primarily because of its simplicity.
+[00:00:09 -> 00:00:14] However, recursive descent parsing has a major drawback and that drawback is called
+[00:00:14 -> 00:00:16] left recursion.
+[00:00:16 -> 00:00:21] Some grammars exhibit left recursion and so if a grammar exhibits left recursion,
+[00:00:21 -> 00:00:24] recursive descent parsing cannot be used to parse that grammar.
+[00:00:24 -> 00:00:27] To see what is left recursion, consider this example grammar.
+[00:00:27 -> 00:00:32] In this grammar, there is one non-terminal S and there are two productions.
+[00:00:32 -> 00:00:37] In one production, it produces S A and in another production, it produces B.
+[00:00:37 -> 00:00:43] Notice that this grammar produces strings of the type, either it will produce the
+[00:00:43 -> 00:00:51] single character B or it will produce B A or B A A or so on and so on, right?
+[00:00:51 -> 00:00:55] So it could produce B followed by any number of As.
+[00:00:55 -> 00:00:59] Now if I was to implement recursive descent parsing for this grammar, my functions would
+[00:00:59 -> 00:01:01] look something like the following.
+[00:01:01 -> 00:01:06] For the first production, I would define a function called S1 and that is going to
+[00:01:06 -> 00:01:09] chain the function objects like we discussed last time.
+[00:01:09 -> 00:01:13] However, the first function it's going to call is going to be the function S,
+[00:01:13 -> 00:01:14] right?
+[00:01:14 -> 00:01:18] I'm writing it slightly differently in this slide, I'm kind of emitting some
+[00:01:18 -> 00:01:21] details related to function object chaining.
+[00:01:21 -> 00:01:27] But basically what happens is S1 first calls S and then it checks whether the remaining
+[00:01:27 -> 00:01:31] string matches A or not.
+[00:01:31 -> 00:01:35] And so S1 is calling S without consuming any token.
+[00:01:35 -> 00:01:43] And if you look at S, S is going to again call S1 without consuming any token.
+[00:01:43 -> 00:01:47] For example, if S1 was the first production to be tried, then S would immediately call
+[00:01:47 -> 00:01:48] S1.
+[00:01:48 -> 00:01:52] So even if S1 was the second production or the third production to be tried, before
+[00:01:52 -> 00:01:59] S1 is called, the next pointer would be reset to the beginning before calling S1.
+[00:01:59 -> 00:02:05] And so S1 calls S without consuming any token and S calls S1 without consuming any
+[00:02:05 -> 00:02:06] token.
+[00:02:06 -> 00:02:11] And so now we have an infinite loop that keeps recursing mutually without consuming
+[00:02:11 -> 00:02:12] any token.
+[00:02:12 -> 00:02:17] And this is basically going into an infinite loop.
+[00:02:18 -> 00:02:23] Another way to look at this problem is that the grammar, if you look at the grammar, the
+[00:02:23 -> 00:02:30] way if I try to derive any string of tokens from this grammar, I'm really deriving
+[00:02:30 -> 00:02:32] the string right to left.
+[00:02:32 -> 00:02:37] For example, I would say, you know, let's say I was to derive BAA, then I would
+[00:02:37 -> 00:02:39] first say, let me derive SA.
+[00:02:39 -> 00:02:47] So I first derive the rightmost character, then I derive the second rightmost character
+[00:02:47 -> 00:02:49] and finally I derive the first character.
+[00:02:49 -> 00:02:53] So in other words, the derivations are happening right to left.
+[00:02:53 -> 00:02:58] On the other hand, the parsing algorithm, recursive descent parsing algorithm is kind
+[00:02:58 -> 00:03:04] of trying to parse or reduce the string left to right.
+[00:03:04 -> 00:03:09] And so this is a conflict and that's why we are ending up with an infinite
+[00:03:09 -> 00:03:12] left recursion problem.
+[00:03:12 -> 00:03:16] So the grammar produces strings right to left and this is the problem with this
+[00:03:16 -> 00:03:21] grammar and that's why recursive descent parsing will not work on this grammar.
+[00:03:21 -> 00:03:25] However, it turns out that if there is a grammar that produces strings right to
+[00:03:25 -> 00:03:29] left, it is possible to convert it to a grammar such that it starts producing
+[00:03:29 -> 00:03:33] strings left to right and yet accepts exactly the same language as the
+[00:03:33 -> 00:03:35] original grammar.
+[00:03:35 -> 00:03:39] So to see that with an example, I could rewrite this grammar that S produces
+[00:03:39 -> 00:03:43] SA or B as follows.
+[00:03:43 -> 00:03:51] I introduce a new non-terminal S' and I say S produces BS' and then S' produces
+[00:03:51 -> 00:03:59] AS' or epsilon which basically indicates that S' produces a string of As and S
+[00:03:59 -> 00:04:04] produces B followed by S' which means B followed by a string of As and
+[00:04:04 -> 00:04:08] this is exactly the set of strings that the original grammar accepted.
+[00:04:08 -> 00:04:12] However, there is an important difference between the second grammar and the
+[00:04:12 -> 00:04:17] first grammar. While the first grammar would produce strings right to left or
+[00:04:17 -> 00:04:21] derives strings right to left, the second grammar derives strings left to
+[00:04:21 -> 00:04:25] right. For example, the first character that it derives is B and then it
+[00:04:25 -> 00:04:31] derives the next A and so on until it reaches the last A. Okay and this
+[00:04:31 -> 00:04:35] particular grammar does not have the left recursion problem and can be
+[00:04:35 -> 00:04:40] parsed using a recursive descent parser because S is going to consume
+[00:04:40 -> 00:04:45] a token before calling S' and S' is also going to consume a token
+[00:04:45 -> 00:04:53] before calling itself. So this problem avoids left recursion. Okay? More
+[00:04:53 -> 00:04:57] generally, if I have a grammar that looks like the following that is left
+[00:04:57 -> 00:05:03] recursive. For example, S produces SA1 where SA1 is some string of
+[00:05:03 -> 00:05:09] terminals and non-terminals. Similarly, it can produce SA2, SAn. The
+[00:05:09 -> 00:05:15] common thing among all these productions is that the first component of the
+[00:05:15 -> 00:05:22] RHS is the same non-terminal S and so it's a left recursive grammar and then
+[00:05:22 -> 00:05:27] maybe it has some other productions beta 1, beta 2, beta M which do not
+[00:05:27 -> 00:05:32] involve S as its first component and such a grammar can always be
+[00:05:32 -> 00:05:37] rewritten to the following and this is just a generalization of the
+[00:05:37 -> 00:05:42] example that we saw in the previous slide. We define another non-terminal S' and
+[00:05:42 -> 00:05:47] we say S produces beta 1 S' or beta 2 S' or beta M S' because
+[00:05:47 -> 00:05:53] that's what the first part of this grammar will produce and then S'
+[00:05:53 -> 00:06:00] produces one or more strings of either alpha 1, a string of one or more alpha 1,
+[00:06:00 -> 00:06:06] alpha 2, dot dot dot, alpha n and so that's what the second non-terminal
+[00:06:06 -> 00:06:11] produces here. So any grammar that has this form, the first form which
+[00:06:11 -> 00:06:15] is left recursive can be converted to the second form which is not left
+[00:06:15 -> 00:06:19] recursive. Notice that the second form is not left recursive because some
+[00:06:19 -> 00:06:25] tokens are being consumed before there is a loop in the
+[00:06:25 -> 00:06:31] recursive call stack. Alright, here's another example of left recursion. So
+[00:06:31 -> 00:06:37] left recursion need not necessarily be manifested as shown in the examples
+[00:06:37 -> 00:06:41] earlier which means that a production from S produces S as the first
+[00:06:41 -> 00:06:48] component in the RHS. It could also be because of transitive productions. For
+[00:06:48 -> 00:06:55] example, in this example S produces a small a or d and a produces Sb alright
+[00:06:55 -> 00:07:02] and so in this case you know S does not directly produce S but S produces
+[00:07:02 -> 00:07:07] a and a produces S and we have the same left recursion problem in this
+[00:07:07 -> 00:07:14] example as well because S after one or more derivations does produce S as
+[00:07:14 -> 00:07:22] the first as the leftmost non-terminal in the derivation tree and a string in
+[00:07:22 -> 00:07:30] the derivation in the derivation and so if I was to implement this using
+[00:07:30 -> 00:07:34] recursive descent passing, the function that implements S would end up
+[00:07:34 -> 00:07:38] calling itself without consuming any token and we will end up in a an
+[00:07:38 -> 00:07:45] infinite loop. While there exists a general algorithm to tackle this type
+[00:07:45 -> 00:07:49] of left recursion also, we already saw an example of how to tackle left
+[00:07:49 -> 00:07:54] recursion for certain patterns of grammar in previous slide. Even for
+[00:07:54 -> 00:08:01] more kind of subtle forms of left recursion as shown in this
+[00:08:01 -> 00:08:06] slide, there exists algorithms to convert those grammars into non-left
+[00:08:06 -> 00:08:12] recursive grammars automatically and we are not going to go through those
+[00:08:12 -> 00:08:17] such algorithms in this course. Also I should point out that even though
+[00:08:17 -> 00:08:20] there exists automatic ways to convert left recursive grammars to
+[00:08:20 -> 00:08:24] non-left recursive grammars, the actions associated with every
+[00:08:24 -> 00:08:28] reduction. So while we have been talking about mainly whether a
+[00:08:28 -> 00:08:31] string is accepted by context free grammar or not, typically
+[00:08:31 -> 00:08:36] whenever there is a, at every step of the derivation, we need to do
+[00:08:36 -> 00:08:40] some kind of actions as we are going to see later when we discuss
+[00:08:40 -> 00:08:44] code generation and so when we transform the grammar automatically,
+[00:08:44 -> 00:08:48] it becomes difficult to figure out which action should go and
+[00:08:48 -> 00:08:54] where and so such things become slightly more difficult. Instead
+[00:08:54 -> 00:08:57] of trying to solve the problem of left recursion using
+[00:08:57 -> 00:09:00] automatic algorithms to transform the grammar, we are going to discuss
+[00:09:00 -> 00:09:04] some other parsing algorithms that do not have this left recursive
+[00:09:04 -> 00:09:08] recursion problem. To summarize, recursive descent parsing is
+[00:09:08 -> 00:09:13] a simple and general parsing strategy. However, it is important
+[00:09:13 -> 00:09:17] that left recursion is eliminated. It can either be eliminated
+[00:09:17 -> 00:09:20] automatically or it can be eliminated manually and in
+[00:09:20 -> 00:09:24] fact, in spite of this problem of left recursion, recursive
+[00:09:24 -> 00:09:27] descent parsing is pretty popular. It is used in many
+[00:09:27 -> 00:09:32] compilers including GCC because of its speed. In your
+[00:09:32 -> 00:09:35] assignments, we ask you to look at the TinyCC compiler and
+[00:09:35 -> 00:09:39] even that is using a hand coded implementation of a
+[00:09:39 -> 00:09:40] recursive descent parsing.

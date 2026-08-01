@@ -1,0 +1,256 @@
+Title: Compiler Design Module 23 : Constructing Follow Sets
+Video ID: Qgn3DBCAVHM
+Detected language: en
+------------------------------------------------------------
+
+[00:00:00 -> 00:00:02] So today we are going to discuss follow sets.
+[00:00:02 -> 00:00:06] Recall that last time we talked about constructing LLVMPAL,
+[00:00:06 -> 00:00:11] LL1 parsing tables, and we discussed first sets.
+[00:00:11 -> 00:00:14] Also recall that we discussed how first sets and follow
+[00:00:14 -> 00:00:18] sets can help in deciding which production to use
+[00:00:18 -> 00:00:20] based on one look ahead.
+[00:00:20 -> 00:00:22] So follow sets.
+[00:00:22 -> 00:00:26] We define the follow set of a non-terminal X,
+[00:00:26 -> 00:00:31] follow X as the set of all tokens t such that the start
+[00:00:31 -> 00:00:36] symbol can derive using one or more productions,
+[00:00:36 -> 00:00:41] beta, capital X, small t, delta.
+[00:00:41 -> 00:00:43] So this basically means that it can derive some string
+[00:00:43 -> 00:00:47] of terminals and non-terminals such that small t
+[00:00:47 -> 00:00:48] follows capital X.
+[00:00:48 -> 00:00:51] And if that happens, then we would say that small t
+[00:00:51 -> 00:00:54] belongs to follow of X.
+[00:00:54 -> 00:00:57] Now, this is the definition of follow X.
+[00:00:57 -> 00:01:02] And here is some intuition on how to compute follow X.
+[00:01:02 -> 00:01:07] Now consider a production X produces A, B in your grammar.
+[00:01:07 -> 00:01:14] Then notice that if something belongs to first of B,
+[00:01:14 -> 00:01:16] then it would also belong to follow of A
+[00:01:16 -> 00:01:22] because I can always, from X producing A, B,
+[00:01:22 -> 00:01:27] I can start producing, I can start deriving from B.
+[00:01:27 -> 00:01:32] And if small t appears in first of capital B,
+[00:01:32 -> 00:01:36] then small t would be following A.
+[00:01:36 -> 00:01:37] There's one exception to this.
+[00:01:37 -> 00:01:41] If capital B derives epsilon, which is the empty string,
+[00:01:41 -> 00:01:46] then we won't consider epsilon to belong to follow of X
+[00:01:46 -> 00:01:49] or follow of A because unlike first sets
+[00:01:50 -> 00:01:54] where either a token or up the epsilon symbol
+[00:01:54 -> 00:01:56] could belong to first of X.
+[00:01:56 -> 00:01:59] And we define what does it mean for epsilon
+[00:01:59 -> 00:02:02] to belong to first of some non-terminal.
+[00:02:02 -> 00:02:06] Follow of X cannot contain the epsilon symbol.
+[00:02:06 -> 00:02:09] Follow of X must be some token.
+[00:02:09 -> 00:02:14] So if there is a production like X produces A, B,
+[00:02:14 -> 00:02:19] then first of B minus epsilon, so discarding epsilon,
+[00:02:19 -> 00:02:20] is a subset of follow of A.
+[00:02:20 -> 00:02:24] So anything that is in first of B, except epsilon,
+[00:02:24 -> 00:02:27] can be safely added to follow of A
+[00:02:27 -> 00:02:29] because anything that can be produced
+[00:02:29 -> 00:02:32] as the first character of B can follow A
+[00:02:32 -> 00:02:35] in some production, in some derivation of X.
+[00:02:37 -> 00:02:41] Also notice that if something can follow capital X,
+[00:02:41 -> 00:02:45] so let's say something can follow capital X here,
+[00:02:45 -> 00:02:49] then it can also follow capital B, right?
+[00:02:50 -> 00:02:53] Because if something can follow capital X starting from S,
+[00:02:53 -> 00:02:56] then I can always derive A, B from X
+[00:02:56 -> 00:03:00] and then small t would start following B, right?
+[00:03:00 -> 00:03:05] So in other words, follow of X should be a subset
+[00:03:05 -> 00:03:06] of follow of B.
+[00:03:06 -> 00:03:08] So just to see this more clearly,
+[00:03:10 -> 00:03:13] if something follows X, then basically means
+[00:03:13 -> 00:03:17] that there is a derivation of this form.
+[00:03:17 -> 00:03:22] S derives alpha capital X small t beta
+[00:03:24 -> 00:03:29] and I can always now derive from this alpha A, B,
+[00:03:30 -> 00:03:35] t beta and so you can see that there exists
+[00:03:35 -> 00:03:37] a derivation from S, capital S,
+[00:03:37 -> 00:03:40] such that small t follows capital B, right?
+[00:03:40 -> 00:03:41] In fact, that's true.
+[00:03:41 -> 00:03:44] So anything that follows capital X
+[00:03:44 -> 00:03:46] will also follow capital B.
+[00:03:47 -> 00:03:48] So that's what this rule says,
+[00:03:48 -> 00:03:53] follow X is a subset of follow B, right?
+[00:03:53 -> 00:03:56] So anything that's in follow X can also be safely added
+[00:03:56 -> 00:03:59] to follow B if there exists a production
+[00:03:59 -> 00:04:04] of the form X produces, A, B.
+[00:04:04 -> 00:04:08] Now, also there is another interesting case.
+[00:04:08 -> 00:04:11] What if capital B could produce epsilon?
+[00:04:11 -> 00:04:13] If capital B could produce epsilon,
+[00:04:13 -> 00:04:16] then anything that is in follow X
+[00:04:16 -> 00:04:18] is also in follow A, right?
+[00:04:18 -> 00:04:21] So notice that if capital B can produce epsilon,
+[00:04:21 -> 00:04:25] then this can produce alpha A.
+[00:04:25 -> 00:04:29] Now capital B will collapse into epsilon
+[00:04:29 -> 00:04:33] and t beta and now t is following A.
+[00:04:33 -> 00:04:35] So here's our third rule.
+[00:04:35 -> 00:04:38] If capital B can derive epsilon,
+[00:04:38 -> 00:04:39] which is the empty string,
+[00:04:39 -> 00:04:42] then follow X is a subset of follow A.
+[00:04:42 -> 00:04:44] So anything that's in follow X
+[00:04:44 -> 00:04:45] can be added to follow A.
+[00:04:45 -> 00:04:48] And how do we know whether capital B
+[00:04:48 -> 00:04:50] can produce epsilon or not?
+[00:04:50 -> 00:04:52] Recall that capital B can produce epsilon
+[00:04:52 -> 00:04:56] if and only if epsilon belongs to first of capital B.
+[00:04:56 -> 00:04:59] This is by definition of the first set.
+[00:04:59 -> 00:05:01] Epsilon belongs to first of B
+[00:05:01 -> 00:05:04] if and only if B can produce epsilon
+[00:05:04 -> 00:05:05] or B can derive epsilon.
+[00:05:06 -> 00:05:09] So intuitively, these are the rules
+[00:05:09 -> 00:05:14] that we will use inductively to compute follow of X.
+[00:05:15 -> 00:05:16] Here is the algorithm.
+[00:05:16 -> 00:05:19] Once again, just like we did for the first set,
+[00:05:19 -> 00:05:21] we're going to define a set of rules
+[00:05:21 -> 00:05:24] and we are going to keep applying these rules
+[00:05:24 -> 00:05:28] until all these rules are satisfied.
+[00:05:28 -> 00:05:30] So when I say keep applying the rules,
+[00:05:30 -> 00:05:32] we're going to keep increasing the size
+[00:05:32 -> 00:05:34] of the follow sets
+[00:05:34 -> 00:05:37] until all these rules become satisfied.
+[00:05:37 -> 00:05:40] And when all these rules are satisfied,
+[00:05:40 -> 00:05:42] we have reached our solution
+[00:05:42 -> 00:05:44] and that's the solution of the follow sets
+[00:05:44 -> 00:05:46] for all the non-terminals.
+[00:05:46 -> 00:05:48] So here's the first rule.
+[00:05:48 -> 00:05:53] For each production of the form A produces alpha X beta,
+[00:05:53 -> 00:05:54] which basically means any production
+[00:05:54 -> 00:05:58] in which capital X appears in the RHS
+[00:05:58 -> 00:06:00] and capital X being a non-terminal,
+[00:06:00 -> 00:06:05] then first of beta minus epsilon is a subset of follow X.
+[00:06:07 -> 00:06:12] So anything that can appear as the first token of beta
+[00:06:14 -> 00:06:18] would be considered to follow capital X.
+[00:06:18 -> 00:06:19] And this is something that we've already seen
+[00:06:19 -> 00:06:22] using an example in the previous slide.
+[00:06:23 -> 00:06:28] Similarly, for each production A producing
+[00:06:28 -> 00:06:31] alpha capital X beta,
+[00:06:31 -> 00:06:34] if epsilon belongs to first of beta,
+[00:06:34 -> 00:06:37] so if epsilon belongs to first of beta,
+[00:06:37 -> 00:06:40] which basically means beta can reduce to the empty string
+[00:06:41 -> 00:06:42] or beta is empty,
+[00:06:42 -> 00:06:45] which means that this production was really just
+[00:06:45 -> 00:06:48] A produces alpha X,
+[00:06:48 -> 00:06:51] then follow A is a subset of follow X.
+[00:06:51 -> 00:06:53] Now this is also easy to see.
+[00:06:54 -> 00:06:57] Either there was no beta or beta can reduce to epsilon,
+[00:06:57 -> 00:07:00] in which case anything that follows A
+[00:07:00 -> 00:07:01] can also follow X
+[00:07:01 -> 00:07:04] because I can always derive alpha X from A.
+[00:07:04 -> 00:07:06] And once I do that,
+[00:07:06 -> 00:07:08] then anything that was following A
+[00:07:08 -> 00:07:11] is now also following X, all right?
+[00:07:11 -> 00:07:15] So these are the two rules for any first of beta
+[00:07:15 -> 00:07:20] minus epsilon is a subset of follow X
+[00:07:20 -> 00:07:23] and follow A is a subset of follow X
+[00:07:23 -> 00:07:26] if beta can produce epsilon,
+[00:07:26 -> 00:07:28] can derive epsilon, all right?
+[00:07:28 -> 00:07:30] So let's look at an example
+[00:07:30 -> 00:07:33] to see how follow sets may be constructed thus.
+[00:07:33 -> 00:07:34] So once again,
+[00:07:34 -> 00:07:36] we're going to keep applying these rules
+[00:07:36 -> 00:07:37] and adding to the follow set
+[00:07:37 -> 00:07:39] until we reach a fixed point.
+[00:07:39 -> 00:07:42] Initially all the follow sets are initialized to empty.
+[00:07:42 -> 00:07:45] So our first rule is follow,
+[00:07:45 -> 00:07:47] we want to construct follow E
+[00:07:47 -> 00:07:52] and the production that I'm looking at is this one,
+[00:07:52 -> 00:07:54] S produces E dollar
+[00:07:54 -> 00:07:55] and using the first rule,
+[00:07:55 -> 00:08:00] I can see that the first character in dollar is dollar
+[00:08:01 -> 00:08:06] and that should be a part of follow E
+[00:08:06 -> 00:08:07] because it can follow E
+[00:08:07 -> 00:08:09] and so follow E is just the dollar,
+[00:08:09 -> 00:08:12] singleton set dollar character at this point.
+[00:08:13 -> 00:08:16] Now I can also look at other occurrences of E
+[00:08:16 -> 00:08:17] in this grammar
+[00:08:17 -> 00:08:19] and I find another occurrence of E here
+[00:08:19 -> 00:08:23] where T is producing a parenthesized version of E
+[00:08:23 -> 00:08:25] and notice that in this case,
+[00:08:25 -> 00:08:28] the terminal that is following E,
+[00:08:28 -> 00:08:30] the token that is following E
+[00:08:30 -> 00:08:32] is the close parenthesis or the right parenthesis
+[00:08:32 -> 00:08:34] and so now I can also include
+[00:08:34 -> 00:08:36] the right parenthesis in follow E
+[00:08:36 -> 00:08:40] and I update my follow E set
+[00:08:40 -> 00:08:42] to include both the dollar symbol,
+[00:08:42 -> 00:08:44] the dollar token and the right parenthesis token.
+[00:08:44 -> 00:08:48] So, so far I've applied rule number one
+[00:08:48 -> 00:08:49] to populate follow E.
+[00:08:51 -> 00:08:52] Now let's look at X.
+[00:08:53 -> 00:08:57] X can, what can follow X?
+[00:08:57 -> 00:08:58] So notice the first rule,
+[00:08:58 -> 00:09:00] E produces TX.
+[00:09:01 -> 00:09:03] So using rule number two,
+[00:09:03 -> 00:09:08] anything that follows E will also follow X, right?
+[00:09:09 -> 00:09:11] So anything that is in follow E
+[00:09:11 -> 00:09:13] will also be in follow X
+[00:09:13 -> 00:09:16] and that is, that straight away gives us follow X
+[00:09:16 -> 00:09:19] and so follow X is also,
+[00:09:19 -> 00:09:22] must also contain at least everything that follows E
+[00:09:22 -> 00:09:25] and that's dollar and right parenthesis.
+[00:09:25 -> 00:09:27] Can we say something else about X?
+[00:09:27 -> 00:09:29] Well, we don't see X appearing anywhere else
+[00:09:29 -> 00:09:31] in the right hand side of the grammar
+[00:09:31 -> 00:09:33] so let's stop here for X
+[00:09:33 -> 00:09:37] and we'll revisit it again in the next iteration.
+[00:09:37 -> 00:09:38] Now let's look at follow T.
+[00:09:38 -> 00:09:41] So where all does T occur?
+[00:09:41 -> 00:09:45] So T occurs in production of E from,
+[00:09:46 -> 00:09:48] so E can produce TX.
+[00:09:48 -> 00:09:51] So anything that is in first of X
+[00:09:51 -> 00:09:53] must, will be, except epsilon,
+[00:09:53 -> 00:09:56] would be a part of follow of T.
+[00:09:56 -> 00:09:58] So one thing that's in the first of X
+[00:09:58 -> 00:09:59] is the plus token.
+[00:09:59 -> 00:10:01] So that's one thing.
+[00:10:01 -> 00:10:04] So follow of T is plus
+[00:10:04 -> 00:10:07] but also notice that T is occurring
+[00:10:07 -> 00:10:11] on the, in another production, Y can produce star T
+[00:10:11 -> 00:10:12] and using the second rule,
+[00:10:12 -> 00:10:15] we can say that anything that follows Y
+[00:10:15 -> 00:10:17] also follows T.
+[00:10:17 -> 00:10:19] So far we don't know what follows Y.
+[00:10:19 -> 00:10:22] So far the follow side of Y is just empty
+[00:10:22 -> 00:10:23] so we can't do much here
+[00:10:23 -> 00:10:25] so we'll just leave follow T at plus
+[00:10:26 -> 00:10:30] and then there's another application
+[00:10:30 -> 00:10:31] of the second rule that I can do.
+[00:10:31 -> 00:10:33] E produces TX
+[00:10:33 -> 00:10:38] and notice that X can derive epsilon.
+[00:10:38 -> 00:10:40] In other words, epsilon belongs to first of X.
+[00:10:40 -> 00:10:42] I'm not showing the first sets here
+[00:10:42 -> 00:10:44] but if we, you know, if we go back to our slides
+[00:10:44 -> 00:10:46] we will be saying that first,
+[00:10:46 -> 00:10:48] epsilon belongs to first of X for this grammar
+[00:10:48 -> 00:10:51] and so X can derive epsilon
+[00:10:51 -> 00:10:54] which means that anything that is in follow of E
+[00:10:54 -> 00:10:56] is also in follow of T
+[00:10:56 -> 00:10:57] and what is in follow of E?
+[00:10:57 -> 00:11:00] Dollar and right parenthesis
+[00:11:00 -> 00:11:03] and so we should add these two tokens
+[00:11:03 -> 00:11:05] to follow of T and that's our next step.
+[00:11:05 -> 00:11:07] So we can increase,
+[00:11:07 -> 00:11:09] we can expand follow of T
+[00:11:09 -> 00:11:11] to plus dollar and right parenthesis.
+[00:11:12 -> 00:11:13] All right.
+[00:11:13 -> 00:11:15] Now let's look at follow of Y.
+[00:11:15 -> 00:11:17] So where all does Y occur?
+[00:11:17 -> 00:11:18] Y occurs in this production of T
+[00:11:18 -> 00:11:20] so T can produce into Y
+[00:11:20 -> 00:11:22] and straight away applying the second rule
+[00:11:22 -> 00:11:26] we can say that anything that is in follow of T
+[00:11:26 -> 00:11:28] is also in follow of Y
+[00:11:28 -> 00:11:31] and so we get our follow set
+[00:11:31 -> 00:11:32] just from follow of T.
+[00:11:32 -> 00:11:34] We say follow of Y,
+[00:11:34 -> 00:11:35] anything that is in follow of T
+[00:11:35 -> 00:11:37] should also be in follow of Y
+[00:11:37 -> 00:11:40] so plus dollar and right parenthesis
+[00:11:40 -> 00:11:42] just come from follow of T.
+[00:11:43 -> 00:11:44] Okay.
+[00:11:45 -> 00:11:46] And that's it.
+[00:11:46 -> 00:11:47] All right.
+[00:11:47 -> 00:11:49] So at this point we can check again
+[00:11:49 -> 00:11:51] that all the rules are being satisfied.
+[00:11:52 -> 00:11:53] You know, once again,
+[00:11:53 -> 00:11:56] if we iterate over all the rules in the grammar,
+[00:11:56 -> 00:11:57] we'll be able to check
+[00:11:57 -> 00:11:59] that all the rules are being satisfied at this point
+[00:11:59 -> 00:12:00] and because of this,
+[00:12:00 -> 00:12:05] this is our solution of follow sets.

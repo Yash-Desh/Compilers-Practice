@@ -1,0 +1,103 @@
+Title: Compiler Design Module 25 : Introduction to Bottom up Parsing
+Video ID: UuhxSihoeC8
+Detected language: en
+------------------------------------------------------------
+
+[00:00:00 -> 00:00:05] So today we're going to look at bottom-up parsing, which is another parsing algorithm
+[00:00:05 -> 00:00:09] stands in stark contrast to recursive descent parsing, also called top-down parsing.
+[00:00:10 -> 00:00:15] Unlike top-down parsing or recursive descent parsing, which tries to derive the string
+[00:00:15 -> 00:00:20] from the start symbol, bottom-up parsing is going to do the exact opposite. It's going to
+[00:00:20 -> 00:00:24] try to develop the derivation in reverse, which means it's going to
+[00:00:24 -> 00:00:30] reduce the string back to the start symbol. So we're going to see how that can be done.
+[00:00:31 -> 00:00:35] The reason we are studying bottom-up parsing is because bottom-up parsing is usually
+[00:00:35 -> 00:00:42] more general than top-down parsing in the sense that the predictive version of bottom-up parsing,
+[00:00:42 -> 00:00:49] which is typically what is used, can accept more grammars typically than the grammars that
+[00:00:49 -> 00:00:55] are accepted by top-down parsing. Recall that when we looked at LL1 parsing, we said that certain
+[00:00:55 -> 00:01:02] grammars that can be parsed using this algorithm are LL1 grammars. Similarly, LL1 was the
+[00:01:02 -> 00:01:05] predictive version of recursive descent parsing. Similarly, we'll have predictive versions of
+[00:01:05 -> 00:01:13] bottom-up parsing. And it turns out that the set of grammars that is accepted by bottom-up
+[00:01:13 -> 00:01:18] parsing is typically bigger than the set of grammars that is accepted by top-down parsing.
+[00:01:18 -> 00:01:24] And thus, it is an interesting algorithm to study. And in fact, it is the preferred method
+[00:01:24 -> 00:01:30] in parser-generator tools like Bison. So recall that we discussed that top-down parsing
+[00:01:30 -> 00:01:36] is simple, and for this reason, it is often used in compilers, for example, GCC. But
+[00:01:36 -> 00:01:41] there are parser-generator tools like Bison which accept any arbitrary grammar from the
+[00:01:41 -> 00:01:49] user and then generate a parser implementation for that grammar. Now, because these parser-generator
+[00:01:49 -> 00:01:54] tools need to accept any grammar from the user, they would like to use an algorithm
+[00:01:54 -> 00:01:58] to generate the parser that is as general as possible. And because bottom-up parsing
+[00:01:58 -> 00:02:03] is more general than top-down parsing, it is usually the algorithm of choice for such parser-generator
+[00:02:03 -> 00:02:10] tools like Bison. Okay, so let's get introduced to bottom-up parsing. Bottom-up parsing reduces
+[00:02:10 -> 00:02:14] a string to the start symbol. Unlike top-down parsing which derives the string from the start
+[00:02:14 -> 00:02:20] symbol, bottom-up parsing reduces the string back to the start symbol. That's how it works.
+[00:02:21 -> 00:02:28] And it does this by tracing the rightmost derivation in reverse. So recall that we talked
+[00:02:28 -> 00:02:36] about rightmost derivations. So rightmost derivations are derivations which derive the
+[00:02:36 -> 00:02:41] rightmost non-terminal at every step. So we start with the start symbol and the rightmost
+[00:02:41 -> 00:02:46] non-terminal is the start symbol itself and then we go to the first production and then we
+[00:02:46 -> 00:02:51] derive the rightmost non-terminal and so on. Recall that there could be multiple derivations
+[00:02:51 -> 00:02:57] to arrive at the same parse tree. For example, we could have a leftmost derivation
+[00:02:57 -> 00:03:02] or we could have a rightmost derivation and for bottom-up parsing we're going to trace
+[00:03:02 -> 00:03:10] back the rightmost derivation. Just to recall top-down passing or recursive descent passing was
+[00:03:10 -> 00:03:17] tracing the leftmost derivation in the forward direction. Bottom-up parsing is tracing the
+[00:03:18 -> 00:03:24] rightmost derivation in the reverse direction. All right, so let's look at an example. So let's
+[00:03:24 -> 00:03:29] use the same grammar that we have been using all through. The grammar of expressions,
+[00:03:30 -> 00:03:36] the unambiguous grammar of expressions, E can be either a term plus expression or a single term
+[00:03:36 -> 00:03:45] and a term t can be int star t or int or E in parentheses. Now let's look at this
+[00:03:45 -> 00:03:53] input string int star int plus int. To parse this string, basically we want to construct
+[00:03:53 -> 00:03:58] the parse tree and we're going to see how a bottom-up parser may proceed to parse this
+[00:03:58 -> 00:04:05] string. So first of all, we're going to assume that there is a marker. So this red arrow is the
+[00:04:06 -> 00:04:11] the current cursor position and it indicates how much of the input we have already read.
+[00:04:12 -> 00:04:16] So everything on the left of the cursor is stuff that we have already read and potentially
+[00:04:16 -> 00:04:21] reduced and everything on the right of the cursor is something that we haven't yet seen.
+[00:04:21 -> 00:04:27] All right, and so everything on the right of this cursor is the unmodified part of
+[00:04:27 -> 00:04:33] the string. Everything on the left of the cursor is potentially modified part of the string.
+[00:04:34 -> 00:04:40] So we initialize the cursor at the first position which is the leftmost point in the string and then
+[00:04:40 -> 00:04:46] we gradually keep advancing the cursor to the right. So when we advance, maybe at some point
+[00:04:46 -> 00:04:54] we are going to advance the cursor till at this position that's shown in the figure. And at
+[00:04:54 -> 00:04:59] this point we can say we may want to apply the derivation. So we know that there is a derivation
+[00:04:59 -> 00:05:07] called t can derive int and so we apply that derivation and at this point we say decide that
+[00:05:07 -> 00:05:11] you know we somehow decide. So right now I'm not talking about how we decide that and so on
+[00:05:11 -> 00:05:16] that's going to be the topic of the next few modules. But we somehow basically figured out
+[00:05:16 -> 00:05:22] that you know we want to convert this int to a t. Now this conversion is also called a
+[00:05:22 -> 00:05:26] reduction. So what is the reduction? It's just the derivation in the opposite direction. So
+[00:05:27 -> 00:05:36] t can derive int, int can reduce to t. In this case int is reducing to t and and the derivation
+[00:05:36 -> 00:05:42] that we have used to make this reduction is t derives int. So that's what I'm writing with
+[00:05:42 -> 00:05:49] in the green pen on the right. Then I can decide to do maybe another reduction and say
+[00:05:49 -> 00:05:57] that you know I want to reduce int star t to t. So I'm going to I'm kind of applying this
+[00:05:57 -> 00:06:02] derivation in the reverse direction or in other words I'm applying this reduction from
+[00:06:02 -> 00:06:08] int star t to t and I'm using this production t produces int star t. And so now this is the
+[00:06:08 -> 00:06:15] state of my this is the state of my parser at this point including where the cursor is
+[00:06:15 -> 00:06:21] placed. And then I may decide to let's say advance the cursor further and maybe I advance
+[00:06:21 -> 00:06:29] it all the way to the right and at this point I may decide to reduce the int on the right
+[00:06:30 -> 00:06:38] to t again. And so I'm again applying this production t derives int and after that maybe
+[00:06:38 -> 00:06:51] I want to reduce t to e and finally I reduce t plus e to e. Now I just showed you how a bottom
+[00:06:51 -> 00:06:55] up parser will operate on the string but I haven't really talked about you know how it is
+[00:06:55 -> 00:07:01] making these decisions and so on. So we're going to do that all that later. But notice that
+[00:07:01 -> 00:07:08] while I was doing this there is a pattern to how I decided to do this. In particular
+[00:07:08 -> 00:07:14] if I look at the string in reverse so I've basically reduced the original string int star
+[00:07:14 -> 00:07:20] int plus int to the start symbol e in this case and but if I look at it in the reverse direction
+[00:07:20 -> 00:07:26] then I would find that I am basically doing a rightmost derivation of the string. So notice
+[00:07:26 -> 00:07:30] that e produces t plus e. So what is the rightmost non-terminal? It's capital E.
+[00:07:31 -> 00:07:38] So now I derive t from that. Again the rightmost non-terminal is the the second t. Now I derive
+[00:07:38 -> 00:07:43] int from that and now this rightmost non-terminal is the first t it's the only t and now I do int
+[00:07:43 -> 00:07:50] star t and finally I get int star int plus int. So if I trace this sequence of steps in
+[00:07:50 -> 00:07:55] the reverse direction I'm basically getting a rightmost derivation and so a bottom up parser
+[00:07:55 -> 00:07:59] parsing algorithm is nothing but a rightmost derivation in reverse.
+[00:08:01 -> 00:08:09] So also when I read these steps bottom to top they look like productions or derivations
+[00:08:10 -> 00:08:16] and when I read these steps from top to bottom then they look like reductions.
+[00:08:20 -> 00:08:24] Also when we are reading from bottom to top we are producing the rightmost non-terminal
+[00:08:24 -> 00:08:29] at every step. So we just went through this example. This is an important fact of the
+[00:08:29 -> 00:08:37] algorithm as a central property of the algorithm that makes it work as we're going to see later.
+[00:08:38 -> 00:08:43] Alright if I look at the parse tree generated and the sequence of how the sequence of steps is
+[00:08:43 -> 00:08:50] able to generate the parse tree the first thing it does is it converts the second int to
+[00:08:50 -> 00:08:55] a t. So it reduces the second int to a t. Notice that it doesn't reduce the first int
+[00:08:55 -> 00:09:00] to a t and why does it decide to do that? Well we're going to look at all that later on but
+[00:09:01 -> 00:09:05] if I had reduced the first int to a t then it wouldn't have been a rightmost derivation.
+[00:09:06 -> 00:09:09] That could be one answer. The other answer could be if I reduce the first into a t
+[00:09:09 -> 00:09:14] they could they maybe they wouldn't have been a derivation at all. So how is the bottom up
+[00:09:14 -> 00:09:18] parser making these predictions or these choices is something we're going to look at
+[00:09:18 -> 00:09:25] later but in this case it just decided to reduce the second int if you recall in the derivation
+[00:09:25 -> 00:09:32] steps that I showed earlier. Then it decided to reduce the first three symbols int start t into
+[00:09:32 -> 00:09:39] a single t. Then it decided to reduce the last int to a t. Then it decided to reduce the last
+[00:09:39 -> 00:09:47] t to an e and finally it decided to reduce the entire expression t plus e to a single
+[00:09:47 -> 00:09:53] e which is the start symbol for us. So this is I mean I just showed you I just introduced what
+[00:09:53 -> 00:09:58] is a bottom up parser and how it would work for a string like this. We're going to look
+[00:09:58 -> 00:10:08] at how it works in more detail in the subsequent modules.
