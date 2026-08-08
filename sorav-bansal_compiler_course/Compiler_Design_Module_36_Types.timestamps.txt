@@ -1,0 +1,647 @@
+Title: Compiler Design Module 36 : Types
+Video ID: FvGGwKut0pA
+Detected language: en
+------------------------------------------------------------
+
+[00:00:00 -> 00:00:06] So another very important type of semantic analysis is the type analysis.
+[00:00:06 -> 00:00:10] So before we talk about type analysis, what is a type?
+[00:00:10 -> 00:00:12] This is a very interesting question,
+[00:00:12 -> 00:00:16] and there is actually no one answer to what is a type,
+[00:00:16 -> 00:00:20] but different programming languages have used types in different ways.
+[00:00:20 -> 00:00:25] Here are some common things among all these different usages of types.
+[00:00:25 -> 00:00:32] Firstly, a type is intended to specify properties of an object or something else,
+[00:00:32 -> 00:00:35] and for example,
+[00:00:35 -> 00:00:40] the property could be what are all the set of permissible values for this particular object.
+[00:00:40 -> 00:00:44] So that would define the type of that particular object.
+[00:00:44 -> 00:00:46] So for example, if something is of type bool,
+[00:00:46 -> 00:00:49] then the permissible values are true or false,
+[00:00:49 -> 00:00:52] or zero or one, or something like that.
+[00:00:52 -> 00:00:59] Or a type could basically encode what are all the operations that are permissible on a value.
+[00:00:59 -> 00:01:02] So in other words, how should a value be interpreted?
+[00:01:02 -> 00:01:07] One way to represent how a value could be interpreted is to
+[00:01:07 -> 00:01:13] restrict the operations that can be used on that particular value.
+[00:01:13 -> 00:01:16] So for example, if it's a string value,
+[00:01:16 -> 00:01:18] then it shouldn't be, for example,
+[00:01:18 -> 00:01:25] multiplied with any number because why would anybody want to multiply a string value with something else?
+[00:01:25 -> 00:01:28] So that's common sense,
+[00:01:28 -> 00:01:33] common wisdom that we want to capture using our type system.
+[00:01:33 -> 00:01:38] These types could be either inbuilt in the language,
+[00:01:38 -> 00:01:41] so they're actually defined by the user.
+[00:01:41 -> 00:01:45] For example, the int, float, bool, etc.,
+[00:01:45 -> 00:01:48] in C or C++, or they could be user-defined.
+[00:01:48 -> 00:01:55] And so examples of user-defined types are structs in C or classes in C++,
+[00:01:55 -> 00:01:57] in which case you could say that this is a new type,
+[00:01:57 -> 00:01:59] you can create your own new type,
+[00:01:59 -> 00:02:03] and then you can put some restrictions on those types too.
+[00:02:03 -> 00:02:06] For example, these are all the things that can be accessed,
+[00:02:06 -> 00:02:09] these are the state that it maintains,
+[00:02:09 -> 00:02:11] but these are the state that can be accessed,
+[00:02:11 -> 00:02:13] these are the methods that can be called on it,
+[00:02:13 -> 00:02:15] whether it can be copied or not,
+[00:02:15 -> 00:02:17] what operations are permissible,
+[00:02:17 -> 00:02:20] using operators, for example, etc.
+[00:02:20 -> 00:02:21] So those kind of things,
+[00:02:21 -> 00:02:27] you're just really creating user-defined types in that case, okay?
+[00:02:27 -> 00:02:31] So in general, types restrict the set of legal programs.
+[00:02:31 -> 00:02:32] So if I look at the universe,
+[00:02:32 -> 00:02:34] so I use a Venn diagram here,
+[00:02:34 -> 00:02:41] it's a funnily created Venn diagram because it has these strange shapes of sets,
+[00:02:41 -> 00:02:45] but I guess I'm going to explain why I use these strange shapes.
+[00:02:45 -> 00:02:48] But let's say this universe,
+[00:02:48 -> 00:02:51] denoted by this black lines,
+[00:02:51 -> 00:02:53] black rectangular line,
+[00:02:53 -> 00:02:55] is the set of all possible programs.
+[00:02:55 -> 00:02:57] Among these are some programs,
+[00:02:57 -> 00:02:59] which is a subset of this,
+[00:02:59 -> 00:03:01] is all the well-scoped programs.
+[00:03:01 -> 00:03:04] So the programs that obey all the scoping rules.
+[00:03:04 -> 00:03:10] And the idea here is that if I ever make a mistake,
+[00:03:10 -> 00:03:13] I'm likely to basically be in the neighborhood.
+[00:03:13 -> 00:03:17] So let's say this particular program here is a well-scoped program.
+[00:03:17 -> 00:03:19] But let's say I made a small mistake in my program,
+[00:03:19 -> 00:03:22] then most likely, with a very high probability,
+[00:03:22 -> 00:03:24] I'm going to end up in this space,
+[00:03:24 -> 00:03:27] and that would be a non-well-scoped program.
+[00:03:27 -> 00:03:30] And so these rules are basically developed
+[00:03:30 -> 00:03:33] so that small errors can be caught early,
+[00:03:33 -> 00:03:37] because it is very common to make programming errors,
+[00:03:37 -> 00:03:39] especially when you're developing large software.
+[00:03:39 -> 00:03:42] And so these kind of semantic analysis checks
+[00:03:42 -> 00:03:45] prevent these errors by flagging these errors very early.
+[00:03:45 -> 00:03:48] So just as you are writing the code
+[00:03:48 -> 00:03:49] for just-in-time compiler,
+[00:03:49 -> 00:03:52] for in-built-in-editor compilers,
+[00:03:52 -> 00:03:55] or as soon as you compile it, you find the error.
+[00:03:55 -> 00:03:59] You don't have to wait until that code actually executed.
+[00:03:59 -> 00:04:04] So the rationale for actually using these weird shapes
+[00:04:04 -> 00:04:07] is basically to show that if you make any small error,
+[00:04:07 -> 00:04:10] then you're going to likely go out of this particular set.
+[00:04:10 -> 00:04:13] Similarly, a subset of all the well-scoped programs
+[00:04:13 -> 00:04:16] is all the well-typed programs.
+[00:04:16 -> 00:04:19] And once again, I use this funny amoeba-like shape
+[00:04:19 -> 00:04:22] just to represent that if you make a small error,
+[00:04:22 -> 00:04:24] which is an inadvertent error,
+[00:04:24 -> 00:04:27] then you would, if you were actually trying
+[00:04:27 -> 00:04:29] to write a well-typed program
+[00:04:29 -> 00:04:31] and you made a small random error,
+[00:04:31 -> 00:04:34] inadvertent error, then you're going to very likely
+[00:04:34 -> 00:04:37] end up with a program that is not well-typed.
+[00:04:37 -> 00:04:38] And that's a good thing,
+[00:04:38 -> 00:04:41] because then the compiler will immediately be able to tell you.
+[00:04:41 -> 00:04:43] As opposed to, let's say you made a small error
+[00:04:43 -> 00:04:45] and it was still a well-typed program,
+[00:04:45 -> 00:04:48] and then the compiler would say it's all okay.
+[00:04:48 -> 00:04:50] And it's only when you actually run the program
+[00:04:50 -> 00:04:52] that you find out that something's wrong, right?
+[00:04:52 -> 00:04:54] And that's not a good scenario.
+[00:04:54 -> 00:04:57] It's a much better scenario if you make some small errors
+[00:04:57 -> 00:05:00] and the type system semantic analysis
+[00:05:00 -> 00:05:02] is able to catch that error.
+[00:05:02 -> 00:05:03] And that's the purpose
+[00:05:03 -> 00:05:05] of having these kinds of semantic analysis rules,
+[00:05:05 -> 00:05:08] so that we can kind of catch errors early.
+[00:05:09 -> 00:05:13] So higher level languages typically have stronger,
+[00:05:13 -> 00:05:16] by stronger I mean stricter type systems, right?
+[00:05:16 -> 00:05:18] So what do I mean by that?
+[00:05:18 -> 00:05:20] Now let's take an example to understand that
+[00:05:20 -> 00:05:21] in a bit more detail.
+[00:05:21 -> 00:05:23] So consider this particular assembly statement,
+[00:05:23 -> 00:05:27] add register R1, register R2,
+[00:05:27 -> 00:05:29] and put the result in register R3.
+[00:05:29 -> 00:05:33] Now, what are the types of these registers?
+[00:05:33 -> 00:05:36] Assembly language is one of the most low-level languages
+[00:05:36 -> 00:05:37] that you can imagine.
+[00:05:37 -> 00:05:40] And so it has the most permissible type system
+[00:05:40 -> 00:05:42] in the sense we don't care
+[00:05:42 -> 00:05:47] whether R1 is representing an integer or a Boolean value.
+[00:05:47 -> 00:05:49] In fact, it's also possible
+[00:05:49 -> 00:05:52] that R1 is actually representing a string
+[00:05:52 -> 00:05:56] which is less than or equal to four bytes in length.
+[00:05:56 -> 00:05:58] So let's assume that R1 is 32 bits long
+[00:05:58 -> 00:06:00] and let's say a character is eight bits long,
+[00:06:00 -> 00:06:03] then R1 would actually represent a string,
+[00:06:03 -> 00:06:04] a null terminated string,
+[00:06:04 -> 00:06:06] which could be either one, zero, one, two, three,
+[00:06:06 -> 00:06:08] or four characters long, right?
+[00:06:08 -> 00:06:09] Maybe not four,
+[00:06:09 -> 00:06:12] but at least zero, one, two, or three characters long.
+[00:06:12 -> 00:06:14] And so, and that's perfectly okay.
+[00:06:14 -> 00:06:17] So R1 could be a string and R2 could be an integer.
+[00:06:17 -> 00:06:20] And still this particular statement is a legal statement
+[00:06:20 -> 00:06:22] because I'm just adding a string to an integer
+[00:06:22 -> 00:06:23] to get something else.
+[00:06:23 -> 00:06:24] Maybe that's going,
+[00:06:24 -> 00:06:27] I want to interpret it as something else.
+[00:06:27 -> 00:06:29] So really, I mean, at the assembly level,
+[00:06:29 -> 00:06:31] I don't really care what is present in this,
+[00:06:31 -> 00:06:34] what is the interpretation of these particular registers.
+[00:06:34 -> 00:06:36] And in other words, the types are basically very generic.
+[00:06:36 -> 00:06:39] In fact, the only types that we can think of here
+[00:06:39 -> 00:06:41] are that it's a sequence of bits
+[00:06:41 -> 00:06:43] or it's a vector of bits or also called a bit vector.
+[00:06:43 -> 00:06:46] So each of these registers is a bit vector,
+[00:06:46 -> 00:06:48] a 32-bit bit vector, let's say.
+[00:06:48 -> 00:06:50] And I don't really care
+[00:06:50 -> 00:06:52] what is the higher level interpretation
+[00:06:52 -> 00:06:53] of these bit vectors.
+[00:06:53 -> 00:06:55] For example, whether it's an integer, a Boolean,
+[00:06:55 -> 00:06:57] a string, or whatever it is, or a float, right?
+[00:06:57 -> 00:06:59] I don't really care.
+[00:06:59 -> 00:07:01] And so this is a very low-level language
+[00:07:01 -> 00:07:03] and it is a very permissible type system
+[00:07:03 -> 00:07:05] because I could, I mean, I'm just looking at
+[00:07:05 -> 00:07:07] using bit vectors and I can do anything
+[00:07:07 -> 00:07:08] with those bit vectors.
+[00:07:08 -> 00:07:12] I can add them, I can have logical operations on them,
+[00:07:12 -> 00:07:14] et cetera, whatever I like.
+[00:07:14 -> 00:07:15] Okay.
+[00:07:15 -> 00:07:17] So, however, let's say,
+[00:07:17 -> 00:07:20] let's look at a higher-level type system.
+[00:07:20 -> 00:07:23] For example, if I look at, let's say,
+[00:07:23 -> 00:07:25] a language like C++ or something like that,
+[00:07:25 -> 00:07:28] in that case, I would have types.
+[00:07:28 -> 00:07:30] For example, I could have a type called string.
+[00:07:30 -> 00:07:32] Could be a user-defined type, for example.
+[00:07:32 -> 00:07:33] And I could say that, okay,
+[00:07:33 -> 00:07:35] addition to a string is illegal.
+[00:07:36 -> 00:07:39] Now, once again, I mean, it's possible
+[00:07:39 -> 00:07:42] that internally the string is still being represented,
+[00:07:42 -> 00:07:43] and let's say it's a small string,
+[00:07:43 -> 00:07:45] then maybe it's still being represented
+[00:07:45 -> 00:07:49] as a sequence of four bytes,
+[00:07:49 -> 00:07:52] and it's where it can actually fit in a register.
+[00:07:52 -> 00:07:55] But now, if I cannot ever use the plus operator
+[00:07:55 -> 00:07:57] on that particular object,
+[00:07:57 -> 00:07:58] so anything that is a string
+[00:07:58 -> 00:08:01] should not be operated upon using the plus operator
+[00:08:01 -> 00:08:02] or the multiplier operator,
+[00:08:02 -> 00:08:04] because it seems like that's not
+[00:08:04 -> 00:08:06] the right interpretation of a string.
+[00:08:06 -> 00:08:07] And that's also because that's, I mean,
+[00:08:07 -> 00:08:10] why will anybody want to interpret a string
+[00:08:10 -> 00:08:13] as something that can be added to?
+[00:08:14 -> 00:08:17] And so the idea of using types here
+[00:08:17 -> 00:08:18] and to use a type called string
+[00:08:18 -> 00:08:23] and then disable some operations like plus on that string
+[00:08:23 -> 00:08:25] is to basically catch common mistakes.
+[00:08:25 -> 00:08:28] So this is, I mean, there could be a typo,
+[00:08:28 -> 00:08:31] there could be some misunderstanding of variable names
+[00:08:31 -> 00:08:33] or something like that,
+[00:08:33 -> 00:08:35] and that is causing this particular mistake,
+[00:08:35 -> 00:08:38] and such common mistakes should be immediately caught
+[00:08:38 -> 00:08:41] because such programming patterns are very, very rare.
+[00:08:41 -> 00:08:44] So that's basically the idea.
+[00:08:44 -> 00:08:45] So anything that's very rare,
+[00:08:45 -> 00:08:47] why do I, let's build a type system
+[00:08:47 -> 00:08:50] to basically rule out those rare scenarios
+[00:08:50 -> 00:08:52] so that if the programmer actually makes an error
+[00:08:52 -> 00:08:55] that actually looks like that rare scenario,
+[00:08:55 -> 00:08:56] then we basically say, no, no, no,
+[00:08:56 -> 00:08:58] that's not even allowed, okay?
+[00:09:00 -> 00:09:03] So that's a good thing about using a types checker
+[00:09:03 -> 00:09:04] and semantic analysis phase
+[00:09:04 -> 00:09:08] to rule out programs that are not well-typed.
+[00:09:08 -> 00:09:10] The big problem with doing this
+[00:09:10 -> 00:09:13] is that you actually eliminate some programs.
+[00:09:13 -> 00:09:14] So for example, I eliminate the program
+[00:09:14 -> 00:09:16] that was actually adding to the string.
+[00:09:16 -> 00:09:17] And why is that a problem?
+[00:09:17 -> 00:09:20] Well, it's possible that that particular program
+[00:09:20 -> 00:09:23] was actually computing something useful,
+[00:09:23 -> 00:09:26] and maybe I can still compute that something useful
+[00:09:26 -> 00:09:27] through some other mechanism.
+[00:09:27 -> 00:09:30] Let's say I wanted to find the length of the string,
+[00:09:30 -> 00:09:32] and there was a way to find the length of the string
+[00:09:32 -> 00:09:35] by, let's say, adding some number to that string,
+[00:09:35 -> 00:09:37] if that string is less than or equal to four bytes.
+[00:09:37 -> 00:09:39] And now that's not possible anymore.
+[00:09:39 -> 00:09:41] I can't write a program that's going to add,
+[00:09:41 -> 00:09:44] add, and somehow figure out the length of the string.
+[00:09:44 -> 00:09:47] The only way I can do it is by maybe calling a function
+[00:09:47 -> 00:09:51] or maybe looking at each of the characters separately
+[00:09:51 -> 00:09:52] or something like that.
+[00:09:52 -> 00:09:57] Now, it is possible that if I was allowed to add
+[00:09:57 -> 00:09:59] to the string, then the implementation
+[00:09:59 -> 00:10:00] could have been faster.
+[00:10:00 -> 00:10:02] But because I've been stopped from doing that,
+[00:10:02 -> 00:10:05] I have to go with a slower implementation.
+[00:10:05 -> 00:10:08] And so that is a con of using a type system.
+[00:10:09 -> 00:10:13] So you eliminate potentially better optimized programs.
+[00:10:13 -> 00:10:16] I'm not saying that you eliminate programs altogether.
+[00:10:16 -> 00:10:19] So typically type systems are built
+[00:10:19 -> 00:10:21] so that you can write any program,
+[00:10:22 -> 00:10:23] any program you want to write
+[00:10:23 -> 00:10:27] is still possible to write as a well-typed program.
+[00:10:27 -> 00:10:29] But you are still eliminating some programs
+[00:10:29 -> 00:10:32] which are catching the rare scenarios,
+[00:10:32 -> 00:10:35] and maybe those rare programs were actually optimized.
+[00:10:35 -> 00:10:36] Some of those rare programs
+[00:10:36 -> 00:10:39] were actually computing something useful
+[00:10:39 -> 00:10:41] and in a more optimized way
+[00:10:41 -> 00:10:43] than any well-typed program could compute.
+[00:10:44 -> 00:10:46] Okay, so that's the con.
+[00:10:46 -> 00:10:49] And you may imagine that you don't really care
+[00:10:49 -> 00:10:50] about this con, and that's why typing
+[00:10:50 -> 00:10:52] is such a popular idea.
+[00:10:53 -> 00:10:54] Most people won't really bother
+[00:10:54 -> 00:10:58] about this super optimized version of a program.
+[00:10:58 -> 00:11:00] And so they would just say, okay,
+[00:11:00 -> 00:11:02] it's much better to catch common mistakes
+[00:11:02 -> 00:11:05] than to actually do the best possible optimization.
+[00:11:07 -> 00:11:08] Okay, so here's some examples.
+[00:11:08 -> 00:11:10] And so different programming languages
+[00:11:10 -> 00:11:12] actually take different trade-off points.
+[00:11:12 -> 00:11:15] I've been using the example of a string representation,
+[00:11:15 -> 00:11:17] but here's a much more realistic example.
+[00:11:17 -> 00:11:19] And so different programming languages
+[00:11:19 -> 00:11:21] will take different trade-off points
+[00:11:21 -> 00:11:24] between correctness or checking of errors
+[00:11:24 -> 00:11:29] and ease of programming and optimization.
+[00:11:29 -> 00:11:31] So for example, a functional programming language
+[00:11:31 -> 00:11:34] like OCaml, it supports immutable objects.
+[00:11:34 -> 00:11:36] So the idea is that you create an object
+[00:11:36 -> 00:11:40] using let's say the let construct
+[00:11:40 -> 00:11:42] or the var construct or something like that.
+[00:11:42 -> 00:11:44] And then using that construct,
+[00:11:44 -> 00:11:45] you can define a variable.
+[00:11:45 -> 00:11:46] But once you had find a variable,
+[00:11:46 -> 00:11:48] you'd find an object, you cannot change it.
+[00:11:48 -> 00:11:50] And these are immutable objects.
+[00:11:50 -> 00:11:51] You can use it any number of times,
+[00:11:51 -> 00:11:53] but you cannot actually change it.
+[00:11:53 -> 00:11:55] And that means if I want to make a change,
+[00:11:55 -> 00:11:56] so let's say I define the list,
+[00:11:56 -> 00:12:00] then if I want to change the second element of that list,
+[00:12:00 -> 00:12:03] then I have to create a new list, right?
+[00:12:03 -> 00:12:06] And in that list, I will basically copy
+[00:12:06 -> 00:12:08] all the remaining elements except the second element.
+[00:12:08 -> 00:12:10] And then that I'm going to change.
+[00:12:10 -> 00:12:12] And so to be able to change anything
+[00:12:12 -> 00:12:15] in a language that supports immutable objects
+[00:12:15 -> 00:12:17] and using only immutable operations,
+[00:12:17 -> 00:12:19] then I'll have to kind of do a lot of copying
+[00:12:19 -> 00:12:21] and that would be much more expensive.
+[00:12:21 -> 00:12:23] That's a design choice that OCaml took.
+[00:12:23 -> 00:12:26] On the other hand, the language like C or C++ or Java,
+[00:12:26 -> 00:12:29] they support mutable objects, in which case,
+[00:12:29 -> 00:12:30] you can actually, I mean,
+[00:12:30 -> 00:12:32] the objects are typically mutable,
+[00:12:32 -> 00:12:35] which means I can go and change some object
+[00:12:35 -> 00:12:36] anywhere I like.
+[00:12:36 -> 00:12:41] Now, arguably, mutability gives you more power
+[00:12:41 -> 00:12:42] and so it gives you better optimization
+[00:12:42 -> 00:12:45] because the set of legal programs is now bigger.
+[00:12:45 -> 00:12:49] I can now change values, whereas immutable,
+[00:12:49 -> 00:12:51] if the language only supports immutable objects,
+[00:12:51 -> 00:12:53] then I won't be able to do that.
+[00:12:53 -> 00:12:58] So in that sense, you know, the language,
+[00:12:58 -> 00:13:00] so the weaker type system,
+[00:13:00 -> 00:13:01] which is supporting mutability,
+[00:13:01 -> 00:13:03] is giving you better optimization.
+[00:13:03 -> 00:13:07] On the other hand, if you support mutability,
+[00:13:07 -> 00:13:09] the type of programs that you can write
+[00:13:09 -> 00:13:12] that contain errors increases, right?
+[00:13:12 -> 00:13:15] So there can be many types of errors
+[00:13:15 -> 00:13:18] that you can have, huge classes of errors
+[00:13:18 -> 00:13:20] that get introduced because of mutability
+[00:13:20 -> 00:13:23] that are just not present if everything was immutable.
+[00:13:24 -> 00:13:25] Okay, just another example.
+[00:13:25 -> 00:13:28] And just to say that different programming languages
+[00:13:28 -> 00:13:30] are taking different trade-off points
+[00:13:30 -> 00:13:32] in the trade-off between correctness and optimization.
+[00:13:34 -> 00:13:37] Okay, the other question when we're talking
+[00:13:37 -> 00:13:39] about typing is when to check types.
+[00:13:39 -> 00:13:41] And one answer is never.
+[00:13:41 -> 00:13:41] So there are some languages
+[00:13:41 -> 00:13:43] that don't have any types whatsoever.
+[00:13:43 -> 00:13:45] And the assembly language, for example,
+[00:13:45 -> 00:13:47] can be thought of one such language.
+[00:13:47 -> 00:13:48] Because, you know, even if it has types,
+[00:13:48 -> 00:13:51] it's a very, very minimal and rudimentary form of type.
+[00:13:51 -> 00:13:53] Mostly it has no typing works by words.
+[00:13:53 -> 00:13:54] We're not going to check any types
+[00:13:54 -> 00:13:58] as long as other things are matching, we are fine.
+[00:13:59 -> 00:14:02] For example, parsing and scoping and things like that.
+[00:14:02 -> 00:14:05] The other type of languages are check types
+[00:14:05 -> 00:14:06] at compile time.
+[00:14:06 -> 00:14:09] And these are called statically typed languages.
+[00:14:10 -> 00:14:13] In contrast to dynamically typed languages,
+[00:14:13 -> 00:14:14] which check types at runtime.
+[00:14:16 -> 00:14:20] Okay, so some languages check types at compile time
+[00:14:20 -> 00:14:22] and some languages check types at runtime.
+[00:14:23 -> 00:14:27] For example, C, C++, Java, et cetera,
+[00:14:27 -> 00:14:28] are examples of languages
+[00:14:28 -> 00:14:31] that check types at compile time.
+[00:14:31 -> 00:14:33] And what are some examples of languages
+[00:14:33 -> 00:14:35] that check types at runtime?
+[00:14:35 -> 00:14:39] Actually, Java is also an example of language
+[00:14:39 -> 00:14:40] that checks types at runtime.
+[00:14:41 -> 00:14:44] Some of the types, it's able to check at compile time.
+[00:14:44 -> 00:14:47] Other types, it's able to check only at runtime.
+[00:14:47 -> 00:14:50] For example, Java has a type called array.
+[00:14:50 -> 00:14:53] And you can say that something is an array of length,
+[00:14:53 -> 00:14:55] you know, some defined length.
+[00:14:55 -> 00:14:57] So let's say an array of 100 elements.
+[00:14:57 -> 00:15:02] Now, it is usually not possible to check.
+[00:15:02 -> 00:15:03] So let's say I index into that array.
+[00:15:03 -> 00:15:05] So I say, let's say the array was A,
+[00:15:05 -> 00:15:06] and say, I say AI.
+[00:15:06 -> 00:15:09] So I want to index into the ith element
+[00:15:09 -> 00:15:11] of that particular array.
+[00:15:11 -> 00:15:14] Now, it's usually not possible to statically say
+[00:15:14 -> 00:15:17] that I is between zero and 100, for sure.
+[00:15:17 -> 00:15:22] And so, this operation would only be legal,
+[00:15:23 -> 00:15:24] would be well-typed,
+[00:15:24 -> 00:15:26] only if I is between zero and 100.
+[00:15:26 -> 00:15:28] Because if it's outside of zero and 100,
+[00:15:28 -> 00:15:31] then it would be an ill-typed expression.
+[00:15:31 -> 00:15:34] And so something like this cannot be checked
+[00:15:34 -> 00:15:35] at compile time,
+[00:15:35 -> 00:15:37] and so it will check that at runtime.
+[00:15:37 -> 00:15:38] On the other hand,
+[00:15:38 -> 00:15:40] simple things like something is an integer,
+[00:15:40 -> 00:15:45] or a string, or a Boolean, or a floating point number,
+[00:15:45 -> 00:15:46] these things can be checked at compile time.
+[00:15:46 -> 00:15:51] So some languages take a pure compile time approach.
+[00:15:51 -> 00:15:53] Some languages take a pure runtime approach.
+[00:15:53 -> 00:15:56] Some languages take a hybrid approach,
+[00:15:56 -> 00:15:58] which is check some fragment of the language
+[00:15:58 -> 00:15:59] at compile time,
+[00:15:59 -> 00:16:02] and other fragment of the language at runtime.
+[00:16:03 -> 00:16:07] So once again, the languages that check types
+[00:16:07 -> 00:16:09] at runtime are called dynamically typed languages.
+[00:16:09 -> 00:16:12] The languages that check types at compile time
+[00:16:12 -> 00:16:14] are called statically typed languages.
+[00:16:14 -> 00:16:15] And I would like to point out
+[00:16:15 -> 00:16:18] that when I use the example of an array of 100 elements,
+[00:16:18 -> 00:16:19] that's indeed a type, right?
+[00:16:19 -> 00:16:22] So I'm saying that this array is of length 100,
+[00:16:22 -> 00:16:24] and so any index that should go into it
+[00:16:24 -> 00:16:26] should be between zero and 100,
+[00:16:26 -> 00:16:28] and that is also a part of the type system.
+[00:16:29 -> 00:16:31] Okay, also I would like to say that,
+[00:16:31 -> 00:16:34] for example, in C, do we have such a type system?
+[00:16:34 -> 00:16:35] So for example,
+[00:16:35 -> 00:16:38] C also has the concept of arrays.
+[00:16:38 -> 00:16:40] So C has a static type system,
+[00:16:40 -> 00:16:43] for example, int versus float versus other things.
+[00:16:43 -> 00:16:47] And then it also has things like,
+[00:16:47 -> 00:16:50] you shouldn't be indexing outside of an array.
+[00:16:50 -> 00:16:51] But it never checks that.
+[00:16:51 -> 00:16:56] So C takes another point in the trade-off space
+[00:16:56 -> 00:16:59] because it checks some things at static compile time,
+[00:16:59 -> 00:17:01] which is exactly what Java also checks.
+[00:17:01 -> 00:17:03] Maybe something's there or there.
+[00:17:03 -> 00:17:06] But then Java also includes dynamic runtime type checks,
+[00:17:06 -> 00:17:08] whereas C does not include
+[00:17:08 -> 00:17:10] dynamic runtime type checks at all.
+[00:17:10 -> 00:17:12] So for things like array out of bounds,
+[00:17:12 -> 00:17:16] so whether AI is pointing within the bounds of A or not,
+[00:17:16 -> 00:17:19] it actually never checks that at all,
+[00:17:19 -> 00:17:21] and it just calls it undefined behavior, all right?
+[00:17:21 -> 00:17:23] So which basically means that
+[00:17:23 -> 00:17:25] if it's the programmer's responsibility
+[00:17:25 -> 00:17:27] to ensure that typing is not happening,
+[00:17:27 -> 00:17:28] but the C programming language
+[00:17:28 -> 00:17:31] will not give you any runtime mechanism
+[00:17:31 -> 00:17:34] or compile time mechanism to check these things for you.
+[00:17:37 -> 00:17:40] So that's also a difference between C and Java.
+[00:17:40 -> 00:17:43] Java gives you runtime type checking,
+[00:17:43 -> 00:17:46] even for array out of bounds and many other things,
+[00:17:46 -> 00:17:48] whereas C does not do any runtime type checking
+[00:17:48 -> 00:17:49] whatsoever.
+[00:17:49 -> 00:17:51] It's a purely statically typed language.
+[00:17:53 -> 00:17:56] It doesn't mean that it doesn't have runtime type errors,
+[00:17:56 -> 00:17:59] but it just kind of calls them undefined behavior,
+[00:17:59 -> 00:18:02] which means that it puts the onus on the programmer
+[00:18:02 -> 00:18:04] to not have any runtime type errors.
+[00:18:05 -> 00:18:06] Okay.
+[00:18:13 -> 00:18:16] So often a combination is used, as we just discussed.
+[00:18:16 -> 00:18:18] Some properties are checked at compile time,
+[00:18:18 -> 00:18:19] for example, int versus float.
+[00:18:19 -> 00:18:21] Some properties are checked at runtime,
+[00:18:21 -> 00:18:24] for example, array out of bounds,
+[00:18:24 -> 00:18:25] and some properties are never checked,
+[00:18:25 -> 00:18:28] for example, array out of bounds in C, all right?
+[00:18:28 -> 00:18:30] And even in Java, you could argue
+[00:18:30 -> 00:18:31] that some properties are never checked, right?
+[00:18:31 -> 00:18:33] For example, maybe you wanted to check,
+[00:18:33 -> 00:18:35] maybe you wanted a property
+[00:18:35 -> 00:18:38] that this function is sorting the array,
+[00:18:38 -> 00:18:41] and that's not a property that Java can check for you.
+[00:18:41 -> 00:18:43] That's something that is a programmer's responsibility.
+[00:18:43 -> 00:18:46] So the question is how much of the correctness logic
+[00:18:46 -> 00:18:48] is basically the programmer's responsibility
+[00:18:48 -> 00:18:51] and how much of it is being taken care of
+[00:18:51 -> 00:18:52] by dynamic runtime checks
+[00:18:52 -> 00:18:54] and how much of it is being taken care of
+[00:18:54 -> 00:18:56] by static runtime checks.
+[00:18:56 -> 00:18:58] And the C's approach is that some things
+[00:18:58 -> 00:19:01] are being taken care of by the static runtime checks.
+[00:19:01 -> 00:19:03] Other things are programmer's responsibility,
+[00:19:03 -> 00:19:05] but C doesn't do any dynamic runtime checks
+[00:19:05 -> 00:19:08] because it wants to have best performance.
+[00:19:08 -> 00:19:10] Java is doing all three, right?
+[00:19:10 -> 00:19:14] Some languages will only do dynamic runtime checks
+[00:19:14 -> 00:19:16] and programmer's responsibility.
+[00:19:16 -> 00:19:19] They'll do no static checks whatsoever.
+[00:19:20 -> 00:19:23] Different languages, different design decisions.
+[00:19:23 -> 00:19:26] So how does a programming language make these decisions?
+[00:19:26 -> 00:19:30] Why will I decide to use static versus dynamic typing?
+[00:19:30 -> 00:19:33] So here are some important advantages
+[00:19:34 -> 00:19:36] in green of static type checking.
+[00:19:36 -> 00:19:38] It catches errors early, right?
+[00:19:38 -> 00:19:40] So the error is caught at compile time,
+[00:19:40 -> 00:19:42] not at runtime, because at runtime,
+[00:19:42 -> 00:19:44] you need to also supply the right input
+[00:19:44 -> 00:19:46] to be able to trigger that particular type error,
+[00:19:46 -> 00:19:49] whereas this static type checker
+[00:19:49 -> 00:19:51] will basically catch error right at compile time.
+[00:19:51 -> 00:19:53] So that's a very early stage.
+[00:19:53 -> 00:19:55] In fact, it can also catch errors at edit time
+[00:19:55 -> 00:19:59] if the compiler is built into the editor
+[00:19:59 -> 00:20:00] as part of your IDE.
+[00:20:01 -> 00:20:04] Most importantly, it has no runtime overhead whatsoever,
+[00:20:04 -> 00:20:07] and that's a very important thing.
+[00:20:07 -> 00:20:09] The biggest con of static type checking
+[00:20:09 -> 00:20:11] is that sometimes it is too restrictive.
+[00:20:11 -> 00:20:15] So for example, if I have something like,
+[00:20:17 -> 00:20:18] let's say,
+[00:20:20 -> 00:20:25] if some condition and I say x equals null, okay?
+[00:20:25 -> 00:20:28] And then I say, or let's say,
+[00:20:28 -> 00:20:31] I say that x is an integer, okay?
+[00:20:31 -> 00:20:36] So star x is some integer i.
+[00:20:36 -> 00:20:40] So I say int i, right?
+[00:20:40 -> 00:20:45] And else I can say star x equals string s.
+[00:20:47 -> 00:20:52] Now something like this is kind of permissible
+[00:20:52 -> 00:20:54] in a dynamically typed language,
+[00:20:54 -> 00:20:55] where we're basically saying,
+[00:20:55 -> 00:20:58] look, x can be either integer or integer,
+[00:20:58 -> 00:21:00] look, x can be either int or string.
+[00:21:00 -> 00:21:01] I don't really care.
+[00:21:01 -> 00:21:03] If it takes this particular path, then it's an int.
+[00:21:03 -> 00:21:06] If it takes that particular path, it's a string,
+[00:21:06 -> 00:21:08] and hopefully my program can deal with it.
+[00:21:08 -> 00:21:12] And anytime it's going to try to use x,
+[00:21:12 -> 00:21:14] it's going to first check whether it's a string
+[00:21:14 -> 00:21:15] or an int, and depending on that,
+[00:21:15 -> 00:21:17] it's going to do whatever it wants to do.
+[00:21:17 -> 00:21:19] That would be the dynamic type checking approach.
+[00:21:19 -> 00:21:21] However, a static type checking approach would say,
+[00:21:21 -> 00:21:23] oh, no, no, no.
+[00:21:23 -> 00:21:27] I see that on one path it's being given an int type
+[00:21:27 -> 00:21:30] on the other path it's being given a string type
+[00:21:30 -> 00:21:34] that's not permissible, and it will throw a type error.
+[00:21:34 -> 00:21:36] So typically static type systems
+[00:21:36 -> 00:21:40] intend to be more restrictive than dynamic type systems
+[00:21:40 -> 00:21:43] because they have to deal with all possibilities,
+[00:21:43 -> 00:21:45] whereas dynamic type system is only dealing with
+[00:21:45 -> 00:21:46] one of the possibilities,
+[00:21:46 -> 00:21:49] which is the possibility of the execution path.
+[00:21:50 -> 00:21:50] Okay.
+[00:21:52 -> 00:21:53] Let's look at the dynamic type checking
+[00:21:53 -> 00:21:57] and its pros, which are written in green.
+[00:21:57 -> 00:21:59] So the biggest pro of dynamic type checking
+[00:21:59 -> 00:22:02] is that you can do more sophisticated checks at runtime.
+[00:22:02 -> 00:22:04] So there are some checks that are so difficult
+[00:22:04 -> 00:22:06] to do at compile time,
+[00:22:06 -> 00:22:08] and they're much easier to do at runtime,
+[00:22:08 -> 00:22:10] and array out of bounds is one such check.
+[00:22:10 -> 00:22:13] So if there's an array and you want to check
+[00:22:13 -> 00:22:16] whether ai is a well-typed expression or not,
+[00:22:16 -> 00:22:18] you know, most of the time you can only do it
+[00:22:18 -> 00:22:21] at runtime, it would be very hard to do something
+[00:22:21 -> 00:22:23] like that at compile time.
+[00:22:23 -> 00:22:25] And sometimes it's even impossible
+[00:22:25 -> 00:22:27] to do something like at compile time.
+[00:22:28 -> 00:22:31] Moreover, it is much less restrictive, right?
+[00:22:31 -> 00:22:33] So yeah, we just took this example
+[00:22:33 -> 00:22:35] where we saw that, you know,
+[00:22:35 -> 00:22:36] static type system would not allow it,
+[00:22:36 -> 00:22:39] but dynamic type system or dynamic type language
+[00:22:39 -> 00:22:44] would allow this kind of a thing.
+[00:22:44 -> 00:22:47] Dynamic typing, for this reason,
+[00:22:47 -> 00:22:48] because it is much less restrictive,
+[00:22:48 -> 00:22:51] dynamically typed languages actually are very popular
+[00:22:51 -> 00:22:53] for rapid prototyping.
+[00:22:53 -> 00:22:55] So there are many languages
+[00:22:55 -> 00:22:58] which are also really called scripting languages
+[00:22:58 -> 00:23:01] that would allow this kind of dynamic,
+[00:23:02 -> 00:23:04] so languages like Perl, for example,
+[00:23:06 -> 00:23:09] it's really easy to write programs there.
+[00:23:09 -> 00:23:11] You don't have to worry too much about typing rules
+[00:23:11 -> 00:23:14] because as long as the program is dynamically well-typed,
+[00:23:14 -> 00:23:15] which typically they are,
+[00:23:15 -> 00:23:17] assuming you're writing correct logic,
+[00:23:17 -> 00:23:19] then it's fine.
+[00:23:19 -> 00:23:22] And so it's very amenable to rapid prototyping.
+[00:23:22 -> 00:23:24] As opposed to statically typed languages
+[00:23:24 -> 00:23:25] where it's much, you know,
+[00:23:25 -> 00:23:28] it's writing the same logic is more work.
+[00:23:28 -> 00:23:29] The biggest con,
+[00:23:29 -> 00:23:31] the biggest problem with dynamic type checking
+[00:23:31 -> 00:23:35] is the run-time cost that is a part
+[00:23:35 -> 00:23:38] of this kind of mechanism
+[00:23:38 -> 00:23:40] because at run-time you have to keep checking types
+[00:23:40 -> 00:23:44] and that definitely gives you a slowdown at run-time.
+[00:23:46 -> 00:23:51] Okay, there are some interesting ways or work-arounds
+[00:23:52 -> 00:23:54] to avoid these trade-offs
+[00:23:54 -> 00:23:55] and one of these,
+[00:23:55 -> 00:23:57] so I'm just using a couple of examples,
+[00:23:57 -> 00:23:58] interesting examples.
+[00:23:58 -> 00:24:00] One is escape mechanisms.
+[00:24:00 -> 00:24:02] So languages will give you type systems
+[00:24:02 -> 00:24:04] and type checking through semantic analysis,
+[00:24:04 -> 00:24:07] but sometimes it may happen
+[00:24:07 -> 00:24:11] that you want to deliberately subvert the type system
+[00:24:11 -> 00:24:14] because you want to have a more optimized program maybe
+[00:24:14 -> 00:24:16] or it's easier to write the program
+[00:24:16 -> 00:24:19] if you're able to subvert the type system.
+[00:24:19 -> 00:24:22] So to support something like that,
+[00:24:22 -> 00:24:25] languages would sometimes also support unsafe typecasts.
+[00:24:25 -> 00:24:28] So for example, C would allow you to cast a pointer
+[00:24:28 -> 00:24:29] of one type to a pointer of another type
+[00:24:29 -> 00:24:32] and use it as such.
+[00:24:32 -> 00:24:34] And if you're doing something like that,
+[00:24:34 -> 00:24:36] then it's really the programmer's responsibility
+[00:24:36 -> 00:24:38] from there on to maintain
+[00:24:38 -> 00:24:41] and ensure correctness of his or her program.
+[00:24:41 -> 00:24:42] So escape mechanisms,
+[00:24:42 -> 00:24:45] I mean, this is an interesting and strange fact
+[00:24:45 -> 00:24:46] about programming languages
+[00:24:46 -> 00:24:48] that while they provide typing,
+[00:24:48 -> 00:24:50] they typically also provide escape mechanisms
+[00:24:50 -> 00:24:52] because if the programmer is 100% sure
+[00:24:52 -> 00:24:54] of what he or she is doing,
+[00:24:54 -> 00:24:56] then he can use the escape mechanism.
+[00:24:56 -> 00:24:58] Recall that typing is meant to catch errors
+[00:24:58 -> 00:24:59] and if the programmer is sure
+[00:24:59 -> 00:25:01] that he's not making any error,
+[00:25:01 -> 00:25:03] then he can use the escape mechanism.
+[00:25:04 -> 00:25:06] The other interesting kind of fact
+[00:25:06 -> 00:25:08] about dynamically typed languages
+[00:25:08 -> 00:25:11] is that people often try to retrofit
+[00:25:11 -> 00:25:14] static type checking to dynamically typed languages.
+[00:25:14 -> 00:25:18] So for example, let's say I have an array A.
+[00:25:18 -> 00:25:21] So let me just say that there's an array A
+[00:25:21 -> 00:25:24] of size 100, right?
+[00:25:24 -> 00:25:29] And then I have a loop as I for I equals zero to 50.
+[00:25:32 -> 00:25:34] And then I say, I access AI.
+[00:25:35 -> 00:25:39] Now, in a dynamically typed language,
+[00:25:39 -> 00:25:41] every time I access AI,
+[00:25:42 -> 00:25:45] I would basically check whether I is between zero
+[00:25:45 -> 00:25:46] and 100 or not.
+[00:25:46 -> 00:25:49] But it may be possible in this particular program
+[00:25:49 -> 00:25:52] that the compiler is able to see
+[00:25:52 -> 00:25:56] that I is actually coming from this for loop
+[00:25:56 -> 00:25:57] and inside this for loop,
+[00:25:57 -> 00:25:59] it's actually iterating from zero to 50.
+[00:25:59 -> 00:26:01] And so if the compiler can reason about these things,
+[00:26:01 -> 00:26:04] then it can say, oh, I'm 100% sure
+[00:26:04 -> 00:26:06] that AI here is well-typed
+[00:26:06 -> 00:26:08] because I will be between zero and 50
+[00:26:08 -> 00:26:11] and that is always less than 100.
+[00:26:11 -> 00:26:14] And so this is a well-typed expression always.
+[00:26:14 -> 00:26:16] And so it can get rid
+[00:26:16 -> 00:26:18] of the runtime dynamic type checks.
+[00:26:19 -> 00:26:21] And so this is one way
+[00:26:21 -> 00:26:24] that people try to optimize dynamically typed languages
+[00:26:24 -> 00:26:26] by kind of identifying,
+[00:26:26 -> 00:26:29] by trying to retrofit static type systems.
+[00:26:29 -> 00:26:30] This is almost like a static type system
+[00:26:30 -> 00:26:32] because I'm basically being able to say
+[00:26:32 -> 00:26:34] that I is between zero and 50.
+[00:26:34 -> 00:26:37] So that's like a type of I, statically determined.
+[00:26:37 -> 00:26:40] And then I say AI is a well-typed expression hence.
+[00:26:40 -> 00:26:43] And so I don't need a dynamic type check.
+[00:26:43 -> 00:26:44] And so using this,
+[00:26:44 -> 00:26:46] you can recover runtime performance
+[00:26:46 -> 00:26:49] by doing these static checks.
+[00:26:49 -> 00:26:52] And this also gives early feedback to the programmer.
+[00:26:52 -> 00:26:53] So just in case,
+[00:26:53 -> 00:26:55] the programmer wants to make the entire program
+[00:26:55 -> 00:26:58] statically type checked in a dynamically typed language,
+[00:26:58 -> 00:27:00] then it can say, okay, please check,
+[00:27:00 -> 00:27:03] please try to prove that everything is type checked,
+[00:27:03 -> 00:27:04] type correct at compile time.
+[00:27:04 -> 00:27:06] Now it may not be always possible,
+[00:27:06 -> 00:27:07] but if it is possible,
+[00:27:07 -> 00:27:11] then it would be able to flag errors
+[00:27:11 -> 00:27:12] to the user at compile time.
+[00:27:12 -> 00:27:14] So it gives you early feedback.
+[00:27:14 -> 00:27:15] But the most important thing is
+[00:27:15 -> 00:27:17] something like this is only best effort.
+[00:27:17 -> 00:27:20] I just said it is not always possible,
+[00:27:20 -> 00:27:22] but it may be possible in some cases.
+[00:27:22 -> 00:27:25] For example, it is possible in this particular example.
+[00:27:25 -> 00:27:27] Things like these usually require
+[00:27:27 -> 00:27:30] deep program analysis techniques,
+[00:27:30 -> 00:27:32] which are usually outside the purview
+[00:27:32 -> 00:27:35] of a typical compiler that needs to run very fast.
+[00:27:35 -> 00:27:37] But modern techniques to do this
+[00:27:37 -> 00:27:39] are fast becoming popular as well.
+[00:27:39 -> 00:27:41] And they can use static type systems.
+[00:27:41 -> 00:27:43] These modern techniques can enable
+[00:27:43 -> 00:27:46] expensive static compile time checks
+[00:27:46 -> 00:27:47] to check deep properties,
+[00:27:47 -> 00:27:50] including things like array out of bounds at compile time.

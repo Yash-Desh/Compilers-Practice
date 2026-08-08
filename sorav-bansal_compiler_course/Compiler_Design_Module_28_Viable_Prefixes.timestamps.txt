@@ -1,0 +1,721 @@
+Title: Compiler Design Module 28 : Viable Prefixes
+Video ID: cSWnOP_4q4k
+Detected language: en
+------------------------------------------------------------
+
+[00:00:00 -> 00:00:06] So, we have talked about what is a handle, we defined a handle and it was really just
+[00:00:06 -> 00:00:12] a concept where we said that while we are parsing a string, any point where we need
+[00:00:12 -> 00:00:16] to make a reduction in our shift-reduce parser is a handle.
+[00:00:16 -> 00:00:20] And we don't really know how to recognize these handles, but we know that if it
+[00:00:20 -> 00:00:22] is a handle then we should reduce.
+[00:00:22 -> 00:00:27] So, the question is how do we recognize handles and without answering that question
+[00:00:27 -> 00:00:30] the whole concept of a handle is meaningless.
+[00:00:30 -> 00:00:36] So, the first result here is that it is not possible to recognize handles, all the
+[00:00:36 -> 00:00:39] handles for an arbitrary grammar.
+[00:00:39 -> 00:00:43] So, it's not possible to definitively say that I should reduce or I should not
+[00:00:43 -> 00:00:47] reduce definitively for any arbitrary grammar.
+[00:00:47 -> 00:00:54] So, any algorithm that's going to try to do this is going to be a best
+[00:00:54 -> 00:00:57] referred algorithm, it is just going to try to figure out whether something is a
+[00:00:57 -> 00:00:59] handle or not.
+[00:00:59 -> 00:01:02] If it succeeds, great.
+[00:01:02 -> 00:01:06] In other words, if it's able to uniquely say whether something is a handle or
+[00:01:06 -> 00:01:10] not wherever there was a choice, then that's great, we'll be able to build a
+[00:01:10 -> 00:01:12] predictive LR parser.
+[00:01:12 -> 00:01:16] However, if the algorithm is not able to say that, then we are not able to
+[00:01:16 -> 00:01:21] kind of predictively parse using LR parsing in that case, all right.
+[00:01:21 -> 00:01:26] So, recall that a predictive parser needs to be efficient, it needs to be real
+[00:01:26 -> 00:01:30] time, so it can't be a backtracking based strategy to recognize handles.
+[00:01:30 -> 00:01:34] So, we're really interested in figuring out strategies to recognize handles
+[00:01:34 -> 00:01:35] efficiently.
+[00:01:35 -> 00:01:39] Now, the strategy that algorithms would typically use is to try and rule out
+[00:01:39 -> 00:01:41] things that are definitely not handles, right.
+[00:01:41 -> 00:01:46] So, maybe there's a class of grammars for which we can say that, okay, this
+[00:01:46 -> 00:01:49] is definitely, this cannot be a handle.
+[00:01:49 -> 00:01:53] And if we can say that, then whenever we have a choice, we can consult this
+[00:01:53 -> 00:01:56] database of non-handles and see, is this a non-handle?
+[00:01:56 -> 00:02:00] If it's a non-handle, then we can say, okay, then we need to just shift,
+[00:02:00 -> 00:02:04] all right, or reduce depending on what is a non-handle and what is a
+[00:02:04 -> 00:02:06] handle.
+[00:02:06 -> 00:02:08] So, that's the idea, we're just going to try and rule things out.
+[00:02:08 -> 00:02:11] So, sometimes you'll be able to say that this is definitely not a handle
+[00:02:11 -> 00:02:15] and sometimes you'll be able to say, we'll not be able to say anything,
+[00:02:15 -> 00:02:18] we don't know whether something is a handle or not, in which case
+[00:02:18 -> 00:02:23] we have to kind of do whatever we can in the best case scenario.
+[00:02:25 -> 00:02:28] So, we're going to see some algorithms and grammars where some
+[00:02:29 -> 00:02:31] this strategy may or may not work, all right.
+[00:02:32 -> 00:02:38] Okay, so even better, algorithms try to rule out prefixes that can
+[00:02:38 -> 00:02:39] never result in handles.
+[00:02:39 -> 00:02:42] So, recall that in a shift-reduce parser, we are always moving the
+[00:02:42 -> 00:02:46] cursor one step at a time and sometimes we are reducing.
+[00:02:46 -> 00:02:50] And everything that is on the left of the cursor is called the stack.
+[00:02:50 -> 00:02:54] Now, as we are moving the cursor to the left, we are basically
+[00:02:54 -> 00:02:58] building a prefix of potential handles because at some point we are
+[00:02:58 -> 00:03:01] going to reduce based on what the prefix is.
+[00:03:02 -> 00:03:10] And if we ever try to shift and we are sure that this particular
+[00:03:10 -> 00:03:13] prefix can never result in a handle, which means it can never
+[00:03:13 -> 00:03:17] leap back, reduce back to the start symbol, then we know that
+[00:03:17 -> 00:03:22] we shouldn't be shifting or alternatively, if by reducing
+[00:03:22 -> 00:03:25] the string that we get on the stack is a prefix that can never
+[00:03:25 -> 00:03:28] result in a handle, then we know that that string can never
+[00:03:28 -> 00:03:32] result in a valid parse and so we don't do that, right.
+[00:03:32 -> 00:03:35] So, based on this information, whether something could be a
+[00:03:35 -> 00:03:39] prefix of a handle or not, in a best effort way, we could
+[00:03:39 -> 00:03:41] make choices of whether to shift or whether to reduce.
+[00:03:42 -> 00:03:43] So, let's look at an example.
+[00:03:44 -> 00:03:48] Let's use our running example of a grammar, the grammar of
+[00:03:48 -> 00:03:49] expressions.
+[00:03:50 -> 00:03:54] E produces T plus E or T and T produces int star T or int or
+[00:03:54 -> 00:03:55] parenthesized E.
+[00:03:56 -> 00:03:59] And let's consider this input string int star int plus int.
+[00:04:01 -> 00:04:03] Now, let's assume that the cursor is placed right after
+[00:04:03 -> 00:04:07] the first int and the question here is whether I
+[00:04:07 -> 00:04:08] should shift or whether I should reduce.
+[00:04:09 -> 00:04:13] Now, if I reduce, then I'm going to be
+[00:04:17 -> 00:04:21] I'm going to get T in the stack and my next token is
+[00:04:21 -> 00:04:21] going to be a star.
+[00:04:22 -> 00:04:26] If I shift, then I'm going to get int star on my stack
+[00:04:26 -> 00:04:27] and my next token is going to be an int.
+[00:04:28 -> 00:04:31] Now, I can, you know, so depending on what is my
+[00:04:31 -> 00:04:34] look ahead, so let's assume that my look ahead is one.
+[00:04:34 -> 00:04:38] I can see what will happen to my stack and the one
+[00:04:38 -> 00:04:40] character that I'm looking ahead.
+[00:04:40 -> 00:04:47] In one case, I'm going to get a T star where T would be
+[00:04:47 -> 00:04:50] inside the stack and star would be just outside the
+[00:04:50 -> 00:04:53] stack, just on the right of the stack and we know star
+[00:04:53 -> 00:04:55] because of the one look ahead.
+[00:04:55 -> 00:04:58] And in the other case, we are going to get int star
+[00:05:00 -> 00:05:03] both to the left of the stack, right?
+[00:05:03 -> 00:05:07] So, the first case where we get a T cursor star is
+[00:05:07 -> 00:05:11] the case of a reduce and the second case where we get
+[00:05:11 -> 00:05:14] an int star and then a cursor is the case of a shift.
+[00:05:15 -> 00:05:21] Now, from these two potential prefixes, we can figure out
+[00:05:21 -> 00:05:24] whether which one to do in this case, for example,
+[00:05:25 -> 00:05:29] if we are able to say that, oh, T star can never
+[00:05:29 -> 00:05:31] be a prefix of a valid handle.
+[00:05:31 -> 00:05:34] If, you know, for some reason we are able to say that,
+[00:05:34 -> 00:05:37] then we know that this is not a good choice at all
+[00:05:37 -> 00:05:38] and we should go for the shift.
+[00:05:38 -> 00:05:40] All right, so that's basically the idea.
+[00:05:41 -> 00:05:45] All right, so if it reduces int to T, it will be left
+[00:05:45 -> 00:05:47] with a prefix of T star.
+[00:05:48 -> 00:05:52] And how do we know whether T star is a good prefix or not?
+[00:05:52 -> 00:05:54] Maybe we have some mechanism to figure that out.
+[00:05:54 -> 00:05:55] We're going to talk about that very soon.
+[00:05:57 -> 00:05:59] And so, if the string begins with T star,
+[00:06:00 -> 00:06:03] in this particular case, it has actually no hope of
+[00:06:03 -> 00:06:06] being reduced to E, all right?
+[00:06:06 -> 00:06:09] So, it is actually, if we look at this grammar,
+[00:06:09 -> 00:06:10] we will be able to see this.
+[00:06:11 -> 00:06:14] Notice that there is no production that begins
+[00:06:14 -> 00:06:15] with a T star.
+[00:06:16 -> 00:06:20] The only option is here with a T star is to either reduce
+[00:06:20 -> 00:06:25] T to an E and then try, but then there is no production
+[00:06:25 -> 00:06:27] that begins with an E star either.
+[00:06:28 -> 00:06:31] So, neither T star can be reduced to anything
+[00:06:31 -> 00:06:33] because there is no production that has a prefix of T star.
+[00:06:34 -> 00:06:38] And even if I reduce the singular T to E using
+[00:06:38 -> 00:06:43] this production E produces T, even then E star cannot
+[00:06:43 -> 00:06:45] be reduced to anything because there is no production
+[00:06:45 -> 00:06:49] that produces E star as the first two characters,
+[00:06:49 -> 00:06:50] first two symbols or first two tokens.
+[00:06:52 -> 00:06:53] And so, if the string begins with T star,
+[00:06:53 -> 00:06:56] it has no hope of being reduced to E.
+[00:06:57 -> 00:07:00] And we want to kind of capture this intuition
+[00:07:00 -> 00:07:01] for a general grammar.
+[00:07:01 -> 00:07:03] In this grammar, we can see that if something begins
+[00:07:03 -> 00:07:06] with T star, then it has no hope of being reduced
+[00:07:06 -> 00:07:07] all the way back to E.
+[00:07:08 -> 00:07:10] And we're going to give this a name and we're going
+[00:07:10 -> 00:07:14] to say that T star is not a viable prefix of the grammar.
+[00:07:16 -> 00:07:18] So, what do I mean by T star is not a viable prefix
+[00:07:18 -> 00:07:19] of the grammar?
+[00:07:20 -> 00:07:22] As I said, anything that begins with T star
+[00:07:22 -> 00:07:24] cannot be reduced back to E.
+[00:07:26 -> 00:07:29] More formally, what is a viable prefix?
+[00:07:29 -> 00:07:31] It's for any rightmost derivation,
+[00:07:32 -> 00:07:35] S to something, something, where S is a start symbol.
+[00:07:35 -> 00:07:38] If you take any step where there is some string
+[00:07:38 -> 00:07:41] of terminals and non-terminals,
+[00:07:42 -> 00:07:43] X is the rightmost non-terminal,
+[00:07:43 -> 00:07:47] which means omega here is all terminals.
+[00:07:47 -> 00:07:49] And in this rightmost derivation, because X
+[00:07:49 -> 00:07:50] is the rightmost non-terminal,
+[00:07:50 -> 00:07:54] you basically produce beta from X.
+[00:07:54 -> 00:07:57] So, you use the production X goes to beta
+[00:07:57 -> 00:08:00] to go from alpha X omega to alpha beta omega,
+[00:08:00 -> 00:08:02] where alpha is some string of terminals
+[00:08:02 -> 00:08:05] and non-terminals, X is a single non-terminal
+[00:08:05 -> 00:08:07] and omega is some string of terminals.
+[00:08:07 -> 00:08:10] And similarly, beta is some string of terminals
+[00:08:10 -> 00:08:10] and non-terminals.
+[00:08:12 -> 00:08:14] Now, if there is any such right derivation
+[00:08:14 -> 00:08:19] for any string, then alpha beta recall
+[00:08:19 -> 00:08:20] is something that we call a handle.
+[00:08:21 -> 00:08:24] But we also call alpha beta and all its
+[00:08:24 -> 00:08:26] prefixes viable prefixes.
+[00:08:26 -> 00:08:28] So, there are two differences here
+[00:08:28 -> 00:08:29] between how we define handle
+[00:08:29 -> 00:08:31] and how we are defining viable prefixes.
+[00:08:32 -> 00:08:34] In handles, we were basically interested
+[00:08:34 -> 00:08:36] in the rightmost derivation for a particular string.
+[00:08:37 -> 00:08:38] Here, we are not really interested
+[00:08:38 -> 00:08:40] in the derivation of a particular string.
+[00:08:40 -> 00:08:41] We are saying for any possible string.
+[00:08:42 -> 00:08:44] The second important difference is that
+[00:08:44 -> 00:08:46] not only are we interested in the handle,
+[00:08:46 -> 00:08:49] which is alpha beta, but also all its prefixes.
+[00:08:49 -> 00:08:51] And those are also going to be called viable prefixes.
+[00:08:52 -> 00:08:56] So, viable prefixes are prefixes of handles
+[00:08:57 -> 00:09:00] seen during the rightmost derivation of any string.
+[00:09:02 -> 00:09:03] And that's why this is a very good
+[00:09:03 -> 00:09:04] pruning out mechanism.
+[00:09:04 -> 00:09:07] So, if you want to figure out that
+[00:09:07 -> 00:09:09] if something is possibly a handle
+[00:09:09 -> 00:09:10] for a given string,
+[00:09:12 -> 00:09:13] if it is not a viable prefix,
+[00:09:13 -> 00:09:15] that means it's not a handle for any string.
+[00:09:15 -> 00:09:17] And so, if it's not a handle for any string,
+[00:09:17 -> 00:09:19] it's definitely not a handle for this given string
+[00:09:19 -> 00:09:21] and thus you can reject it.
+[00:09:22 -> 00:09:25] I mean, that's how viable prefixes are useful
+[00:09:25 -> 00:09:27] in shift-reduce parsing.
+[00:09:29 -> 00:09:32] Now, I want to emphasize an important subtle point here,
+[00:09:32 -> 00:09:36] which is that only alpha beta is a viable prefix,
+[00:09:36 -> 00:09:41] but alpha beta omega or any kind of prefix of omega
+[00:09:41 -> 00:09:42] is not a viable prefix.
+[00:09:42 -> 00:09:45] So, for example, if omega was, let's say, ABC,
+[00:09:45 -> 00:09:49] then alpha beta A is not necessarily a viable prefix.
+[00:09:49 -> 00:09:51] And this can be seen through this example.
+[00:09:51 -> 00:09:53] So, let's take this very simple grammar.
+[00:09:53 -> 00:09:55] S produces E dollar,
+[00:09:55 -> 00:09:58] where dollar is the end of input character.
+[00:09:58 -> 00:10:02] E produces a single non-terminal T
+[00:10:02 -> 00:10:04] and T produces a single terminal int.
+[00:10:04 -> 00:10:07] So, actually, this grammar,
+[00:10:07 -> 00:10:08] this very simple grammar actually has,
+[00:10:09 -> 00:10:11] you know, defines a language
+[00:10:11 -> 00:10:15] which only consists of a single string int dollar.
+[00:10:15 -> 00:10:18] So, S and the rightmost derivation is shown here.
+[00:10:18 -> 00:10:19] S produces E dollar.
+[00:10:20 -> 00:10:21] The rightmost non-terminal is E.
+[00:10:21 -> 00:10:23] So, that produces T dollar.
+[00:10:23 -> 00:10:25] The rightmost non-terminal is T
+[00:10:25 -> 00:10:26] and that produces int dollar.
+[00:10:26 -> 00:10:27] And that's, you know,
+[00:10:27 -> 00:10:29] that's the only non-rightmost derivation
+[00:10:29 -> 00:10:31] in this particular grammar.
+[00:10:31 -> 00:10:33] Now, the interesting thing to note here is
+[00:10:33 -> 00:10:34] that if I want to figure out
+[00:10:34 -> 00:10:35] what are the viable prefixes,
+[00:10:37 -> 00:10:39] E dollar is a viable prefix
+[00:10:39 -> 00:10:42] because, you know, it actually fits our definition.
+[00:10:42 -> 00:10:45] Here, you know, we're going from S to E dollar.
+[00:10:45 -> 00:10:48] So, here X is represented by S,
+[00:10:49 -> 00:10:51] alpha is represented by epsilon
+[00:10:52 -> 00:10:57] and omega is also represented by epsilon, right?
+[00:10:57 -> 00:11:00] And now beta here is E dollar.
+[00:11:00 -> 00:11:03] So, because of this,
+[00:11:03 -> 00:11:05] alpha beta is basically E dollar
+[00:11:05 -> 00:11:07] and so E dollar is a viable prefix.
+[00:11:08 -> 00:11:09] Now, let's go one step further
+[00:11:10 -> 00:11:11] and now let's look at this production
+[00:11:11 -> 00:11:13] from E dollar to T dollar.
+[00:11:13 -> 00:11:14] Now, once again,
+[00:11:15 -> 00:11:17] I basically pattern match with this
+[00:11:17 -> 00:11:20] alpha X omega to alpha beta omega
+[00:11:20 -> 00:11:22] and once again, alpha is epsilon,
+[00:11:24 -> 00:11:26] E is X which is the rightmost non-terminal
+[00:11:26 -> 00:11:29] and dollar is kind of pattern matching with omega
+[00:11:29 -> 00:11:30] which is a string of terminals.
+[00:11:31 -> 00:11:34] And this is going to produce T dollar.
+[00:11:34 -> 00:11:37] So, beta is kind of pattern matching with T
+[00:11:38 -> 00:11:42] and alpha once again is just epsilon, isn't it?
+[00:11:43 -> 00:11:46] So, once again, by our definition,
+[00:11:46 -> 00:11:48] alpha beta is a viable prefix
+[00:11:48 -> 00:11:50] and by that reasoning,
+[00:11:50 -> 00:11:52] T is a viable prefix.
+[00:11:52 -> 00:11:54] But notice that T dollar
+[00:11:54 -> 00:11:57] is not a viable prefix of this grammar
+[00:11:57 -> 00:11:59] because, you know, dollar is a part of omega
+[00:11:59 -> 00:12:02] and, you know, we are not really counting that
+[00:12:02 -> 00:12:03] as a part of the viable prefix
+[00:12:03 -> 00:12:06] because viable prefixes are prefixes of possible handles
+[00:12:06 -> 00:12:10] and T dollar is not a possible handle
+[00:12:10 -> 00:12:11] in this particular grammar.
+[00:12:11 -> 00:12:13] So, I mean, this restriction
+[00:12:13 -> 00:12:14] that you shouldn't be moving past,
+[00:12:16 -> 00:12:18] you know, past the last derivation,
+[00:12:18 -> 00:12:19] wherever the cursor is.
+[00:12:19 -> 00:12:20] The one way to think about it is
+[00:12:20 -> 00:12:24] that if you look at any rightmost derivation,
+[00:12:24 -> 00:12:26] if the last, you know,
+[00:12:26 -> 00:12:27] if you look at any one step
+[00:12:27 -> 00:12:31] which basically produced beta from omega,
+[00:12:31 -> 00:12:33] there has to be some such X
+[00:12:33 -> 00:12:35] and some such beta after all,
+[00:12:35 -> 00:12:36] something has to get produced,
+[00:12:36 -> 00:12:39] then you place a cursor right after beta
+[00:12:39 -> 00:12:42] and the string before this cursor
+[00:12:42 -> 00:12:43] is basically a viable prefix
+[00:12:43 -> 00:12:47] and any substring of that string
+[00:12:47 -> 00:12:48] on the left of the cursor
+[00:12:48 -> 00:12:49] is also a viable prefix.
+[00:12:50 -> 00:12:53] Okay, so this is an important point
+[00:12:53 -> 00:12:55] and by that reasoning,
+[00:12:55 -> 00:12:56] you know, we may be able to infer
+[00:12:56 -> 00:12:59] that alpha X may be a viable prefix as well
+[00:12:59 -> 00:13:01] and so on but, I mean, you know,
+[00:13:01 -> 00:13:02] but you have to reason about it
+[00:13:02 -> 00:13:03] by saying that, hey,
+[00:13:03 -> 00:13:07] alpha X is a prefix of some potential handle
+[00:13:07 -> 00:13:08] for some possible string
+[00:13:09 -> 00:13:10] and you will find that
+[00:13:10 -> 00:13:11] it will turn out to be this
+[00:13:11 -> 00:13:13] and in this particular example,
+[00:13:13 -> 00:13:15] this means that while T is a viable prefix,
+[00:13:15 -> 00:13:18] T dollar is not a viable prefix.
+[00:13:19 -> 00:13:21] Similarly, you know,
+[00:13:21 -> 00:13:22] I can use this,
+[00:13:22 -> 00:13:23] I can do the same thing in this step
+[00:13:23 -> 00:13:26] and, you know, pattern match X with T
+[00:13:26 -> 00:13:27] and beta with int
+[00:13:27 -> 00:13:28] and by that reasoning,
+[00:13:28 -> 00:13:29] int is a viable prefix
+[00:13:29 -> 00:13:32] but int dollar is not a viable prefix.
+[00:13:34 -> 00:13:35] So let's look at this example.
+[00:13:36 -> 00:13:38] The same example grammar
+[00:13:38 -> 00:13:38] that we have been using,
+[00:13:38 -> 00:13:40] the grammar of expressions,
+[00:13:40 -> 00:13:41] E produces T plus E or T,
+[00:13:41 -> 00:13:45] T produces int star T or int or parenthesis T.
+[00:13:45 -> 00:13:47] Now, which of these are viable prefixes?
+[00:13:47 -> 00:13:49] So the first question is T.
+[00:13:50 -> 00:13:52] Is T a viable prefix?
+[00:13:52 -> 00:13:55] Well, can I construct,
+[00:13:55 -> 00:13:57] can T appear on the left side
+[00:13:57 -> 00:13:59] of a rightmost derivation of E,
+[00:13:59 -> 00:14:00] which is the start symbol.
+[00:14:00 -> 00:14:01] Let's see.
+[00:14:01 -> 00:14:02] Well, indeed,
+[00:14:02 -> 00:14:05] I can produce E produces T plus E
+[00:14:05 -> 00:14:06] and in which case,
+[00:14:06 -> 00:14:08] here is T and it is a viable prefix.
+[00:14:08 -> 00:14:10] In fact, there are multiple ways
+[00:14:10 -> 00:14:13] of producing E, T as a viable prefix.
+[00:14:13 -> 00:14:15] I could also have just produced E produces T
+[00:14:15 -> 00:14:18] and that would also have produced T
+[00:14:18 -> 00:14:19] as a viable prefix.
+[00:14:19 -> 00:14:21] And so the answer to this question is yes.
+[00:14:22 -> 00:14:24] Okay, now let's look at another question.
+[00:14:24 -> 00:14:26] Example, Epsilon.
+[00:14:26 -> 00:14:28] Is Epsilon a viable prefix?
+[00:14:28 -> 00:14:30] Indeed, Epsilon is definitely a viable prefix.
+[00:14:30 -> 00:14:32] In fact, Epsilon is a viable prefix
+[00:14:32 -> 00:14:33] of every grammar
+[00:14:33 -> 00:14:34] because even this,
+[00:14:35 -> 00:14:38] even the start symbol E
+[00:14:38 -> 00:14:41] as an Epsilon has its prefix, isn't it?
+[00:14:42 -> 00:14:44] Or even if I just expand it,
+[00:14:44 -> 00:14:46] maybe I expand it to T plus E,
+[00:14:46 -> 00:14:49] even then it begins with an empty string.
+[00:14:49 -> 00:14:51] So empty string is always present
+[00:14:51 -> 00:14:52] at the beginning of any string.
+[00:14:52 -> 00:14:54] So the answer to Epsilon is yes.
+[00:14:55 -> 00:14:57] In fact, Epsilon is a viable prefix
+[00:14:57 -> 00:14:58] of any grammar.
+[00:14:59 -> 00:14:59] All right.
+[00:15:00 -> 00:15:02] Then let's look at another example.
+[00:15:02 -> 00:15:04] Is int start a viable prefix?
+[00:15:04 -> 00:15:08] So does there exist a rightmost derivation of E
+[00:15:08 -> 00:15:10] where int star appears as a prefix?
+[00:15:10 -> 00:15:11] Let's look at that.
+[00:15:11 -> 00:15:14] So E produces, let's say,
+[00:15:14 -> 00:15:15] so I want to produce int star.
+[00:15:15 -> 00:15:16] So maybe I can just produce T
+[00:15:17 -> 00:15:19] and then I produce int star T.
+[00:15:21 -> 00:15:23] I could have also produced T plus E
+[00:15:23 -> 00:15:24] and then again int star
+[00:15:24 -> 00:15:26] would have appeared on the left.
+[00:15:26 -> 00:15:29] And so here int star is appearing
+[00:15:29 -> 00:15:31] as a prefix at some step
+[00:15:31 -> 00:15:33] of the rightmost derivation.
+[00:15:33 -> 00:15:37] And indeed int star is a viable prefix also.
+[00:15:37 -> 00:15:37] All right.
+[00:15:37 -> 00:15:38] So the answer is yes.
+[00:15:39 -> 00:15:40] All right.
+[00:15:40 -> 00:15:41] Next question.
+[00:15:41 -> 00:15:41] T star.
+[00:15:42 -> 00:15:44] Is T star a viable prefix of E?
+[00:15:45 -> 00:15:46] Now, let's see.
+[00:15:47 -> 00:15:49] I have two options starting from E.
+[00:15:49 -> 00:15:51] Either I could produce T plus E
+[00:15:52 -> 00:15:53] or I could just produce T.
+[00:15:54 -> 00:15:55] If I produce T,
+[00:15:56 -> 00:15:59] then I have no hope of producing T star, right?
+[00:15:59 -> 00:16:01] Because T is going to produce int star T,
+[00:16:01 -> 00:16:05] in which case int star would be the first two tokens
+[00:16:05 -> 00:16:07] and that doesn't match with T star.
+[00:16:07 -> 00:16:08] Or it's going to just produce int
+[00:16:08 -> 00:16:11] which does not match with T star either.
+[00:16:11 -> 00:16:13] Or it's going to produce a left parenthesis
+[00:16:13 -> 00:16:14] which does not match with T star either.
+[00:16:14 -> 00:16:16] So this is not a brutal path.
+[00:16:16 -> 00:16:18] Now let's look at T plus E.
+[00:16:18 -> 00:16:21] Once again, if I do a rightmost derivation,
+[00:16:22 -> 00:16:24] then I'm going to first derive E.
+[00:16:24 -> 00:16:26] So I'm going to have some sequence of steps
+[00:16:26 -> 00:16:29] and maybe I'm going to get T plus something, something.
+[00:16:29 -> 00:16:35] And then eventually I'll have to get, expand T.
+[00:16:35 -> 00:16:38] So so far at least we haven't been able to get T star.
+[00:16:38 -> 00:16:40] We got T plus on the left
+[00:16:40 -> 00:16:42] but we haven't been able to get T star.
+[00:16:42 -> 00:16:44] And now if I try to expand T,
+[00:16:44 -> 00:16:47] I can only get either int star or int or left parenthesis.
+[00:16:47 -> 00:16:49] And so even here I'm not being able to get a T star
+[00:16:49 -> 00:16:52] as the left prefix of some step
+[00:16:52 -> 00:16:54] or the rightmost derivation of E.
+[00:16:54 -> 00:16:55] And so the answer is no.
+[00:16:56 -> 00:16:59] T star is not a viable prefix of this ground.
+[00:17:00 -> 00:17:02] All right, let's look at another example.
+[00:17:03 -> 00:17:04] Int star T plus T.
+[00:17:05 -> 00:17:08] Is int star T plus T a viable prefix of this grammar?
+[00:17:08 -> 00:17:10] So once again, let's start with E.
+[00:17:10 -> 00:17:13] And we want to produce int star T plus T
+[00:17:13 -> 00:17:16] as a prefix of some step of a rightmost derivation.
+[00:17:16 -> 00:17:19] So maybe I want to start with E produces T plus E
+[00:17:21 -> 00:17:24] and then I produce T plus T.
+[00:17:24 -> 00:17:27] Recall that this is a rightmost derivation.
+[00:17:27 -> 00:17:29] So my next step would have to be
+[00:17:29 -> 00:17:31] that I derive T.
+[00:17:31 -> 00:17:33] And so maybe it will become T plus int
+[00:17:33 -> 00:17:36] or maybe I want to do T plus something else.
+[00:17:36 -> 00:17:39] Maybe I want to do T plus int star T or whatever.
+[00:17:39 -> 00:17:41] But the problem here is that
+[00:17:41 -> 00:17:44] I cannot just retain this plus T and then expand.
+[00:17:45 -> 00:17:51] So doing something like this is not legal
+[00:17:51 -> 00:17:53] because then it would be a rightmost derivation.
+[00:17:53 -> 00:17:56] Because in this step, in this particular step,
+[00:17:58 -> 00:18:01] I'm deriving the left non-terminal
+[00:18:01 -> 00:18:03] before the right non-terminal.
+[00:18:03 -> 00:18:05] And so that's not a rightmost derivation.
+[00:18:05 -> 00:18:07] And although this looks like
+[00:18:07 -> 00:18:10] it's producing the desired viable prefix,
+[00:18:10 -> 00:18:11] this won't count.
+[00:18:11 -> 00:18:13] And so we won't consider this.
+[00:18:14 -> 00:18:17] And you'll see that no matter what I do,
+[00:18:17 -> 00:18:19] I won't be able to produce int star T plus T
+[00:18:19 -> 00:18:22] as a prefix of a rightmost derivation.
+[00:18:22 -> 00:18:28] And the basic reason is this T would need to get derived
+[00:18:29 -> 00:18:34] before the left T can be derived into int star T.
+[00:18:34 -> 00:18:36] And so this kind of a thing cannot happen
+[00:18:36 -> 00:18:37] in a rightmost derivation.
+[00:18:38 -> 00:18:40] And so the answer is no.
+[00:18:40 -> 00:18:42] This is not a viable prefix.
+[00:18:43 -> 00:18:43] All right.
+[00:18:43 -> 00:18:48] Finally, is E a viable prefix of this grammar?
+[00:18:48 -> 00:18:49] The answer is yes.
+[00:18:49 -> 00:18:53] Because the first step itself is just E
+[00:18:53 -> 00:18:56] and it has E as its own prefix, right?
+[00:18:57 -> 00:18:59] So E is a viable prefix of scrap.
+[00:19:00 -> 00:19:00] Okay.
+[00:19:00 -> 00:19:02] So we have some idea of what is a viable prefix
+[00:19:02 -> 00:19:04] by looking at just an example.
+[00:19:06 -> 00:19:07] If I look at viable prefixes
+[00:19:07 -> 00:19:09] in relation with shift-reduced parsing,
+[00:19:09 -> 00:19:11] so far I have defined viable prefixes
+[00:19:11 -> 00:19:14] as how it appears in a rightmost derivation.
+[00:19:14 -> 00:19:16] But recall that a shift-reduced parsing
+[00:19:18 -> 00:19:20] sequence of steps
+[00:19:20 -> 00:19:22] is nothing but a rightmost derivation in reverse.
+[00:19:22 -> 00:19:24] So I can even define viable prefixes
+[00:19:25 -> 00:19:27] in relation to shift-reduced parsing as follows.
+[00:19:28 -> 00:19:30] Alpha is a viable prefix if and only if
+[00:19:31 -> 00:19:33] alpha cursor omega
+[00:19:35 -> 00:19:37] is an intermediate state
+[00:19:37 -> 00:19:40] in a valid parse of any string, right?
+[00:19:40 -> 00:19:42] So you take any string.
+[00:19:43 -> 00:19:45] If that string can be reduced
+[00:19:45 -> 00:19:47] all the way back to the start symbol
+[00:19:48 -> 00:19:51] such that at some point I get alpha
+[00:19:51 -> 00:19:54] cursor omega.
+[00:19:56 -> 00:19:59] Then alpha is a viable prefix, right?
+[00:19:59 -> 00:20:01] This is just coming from the definition
+[00:20:01 -> 00:20:02] of a viable prefix.
+[00:20:03 -> 00:20:04] What is the definition of a viable prefix?
+[00:20:04 -> 00:20:05] Anything that can appear on the left
+[00:20:05 -> 00:20:07] of a rightmost derivation
+[00:20:07 -> 00:20:09] of any step of the rightmost derivation.
+[00:20:09 -> 00:20:10] So if I just reverse that
+[00:20:11 -> 00:20:13] anything that can appear as the stack
+[00:20:14 -> 00:20:16] of a shift-reduced parsing
+[00:20:17 -> 00:20:19] successful shift-reduced parse
+[00:20:19 -> 00:20:21] of any string, all right?
+[00:20:21 -> 00:20:22] So that's what a viable prefix is.
+[00:20:25 -> 00:20:27] So this is an important insight, isn't it?
+[00:20:27 -> 00:20:29] Because it basically means that
+[00:20:30 -> 00:20:31] while I'm parsing,
+[00:20:31 -> 00:20:33] so let's say I've been able to define
+[00:20:33 -> 00:20:34] a language of viable prefixes
+[00:20:34 -> 00:20:36] and I have some machine that's able to tell
+[00:20:36 -> 00:20:38] whether something could be a viable prefix
+[00:20:38 -> 00:20:40] or whether something is a viable prefix or not.
+[00:20:41 -> 00:20:43] And now I'm parsing some string
+[00:20:43 -> 00:20:45] and I have some choice
+[00:20:45 -> 00:20:47] between a shift and a reduce, let's say.
+[00:20:47 -> 00:20:49] So now I can see if I shift
+[00:20:49 -> 00:20:50] do I get a viable prefix?
+[00:20:51 -> 00:20:54] If not, then that option gets ruled out.
+[00:20:54 -> 00:20:55] Similarly, I can check if I reduce
+[00:20:55 -> 00:20:56] do I get a viable prefix?
+[00:20:57 -> 00:20:59] If not, then that option gets ruled out.
+[00:20:59 -> 00:21:02] Now it is possible that both shift
+[00:21:02 -> 00:21:03] and reduce produce viable prefixes
+[00:21:03 -> 00:21:05] in which case I still have a problem.
+[00:21:05 -> 00:21:06] So that's why I say that
+[00:21:06 -> 00:21:07] it's the best effort algorithm.
+[00:21:08 -> 00:21:10] There's no algorithm that can do this
+[00:21:10 -> 00:21:12] for all possible grammars.
+[00:21:12 -> 00:21:13] But for many grammars,
+[00:21:13 -> 00:21:16] this kind of filtering
+[00:21:16 -> 00:21:18] of what is a viable prefix
+[00:21:18 -> 00:21:20] and what is not helps us resolve,
+[00:21:20 -> 00:21:21] shift, reduce, and reduce conflicts.
+[00:21:22 -> 00:21:26] Okay, so let's look at viable prefixes
+[00:21:26 -> 00:21:27] and handles.
+[00:21:27 -> 00:21:29] So any prefix of a handle
+[00:21:29 -> 00:21:31] must be a viable prefix.
+[00:21:31 -> 00:21:33] So that is just by definition
+[00:21:33 -> 00:21:35] because a handle is supposed to be
+[00:21:35 -> 00:21:38] something that appears as a derivation
+[00:21:38 -> 00:21:40] during the rightmost derivation.
+[00:21:40 -> 00:21:41] It is a derivation step.
+[00:21:44 -> 00:21:46] And similarly in the reverse path
+[00:21:46 -> 00:21:47] it's a reduction step.
+[00:21:47 -> 00:21:49] So whenever we reach a handle
+[00:21:49 -> 00:21:50] in a shift reduce parser,
+[00:21:50 -> 00:21:51] we should reduce.
+[00:21:51 -> 00:21:53] And in both cases it must be true
+[00:21:53 -> 00:21:55] that any prefix of that
+[00:21:55 -> 00:21:57] should be a viable prefix.
+[00:21:57 -> 00:21:58] That's just by definition.
+[00:21:58 -> 00:22:02] Because if I can derive the handle,
+[00:22:02 -> 00:22:04] then the prefix of that handle
+[00:22:04 -> 00:22:06] is also something that is appearing
+[00:22:06 -> 00:22:07] in that particular step
+[00:22:07 -> 00:22:08] in the rightmost derivation.
+[00:22:08 -> 00:22:10] So any prefix of a handle
+[00:22:10 -> 00:22:11] must be a viable prefix.
+[00:22:11 -> 00:22:12] Just by definition.
+[00:22:14 -> 00:22:17] And hopefully whenever we face a choice,
+[00:22:17 -> 00:22:19] hopefully only one of the options
+[00:22:19 -> 00:22:20] produce a viable prefix.
+[00:22:20 -> 00:22:22] So the reason we are studying
+[00:22:22 -> 00:22:23] viable prefixes is
+[00:22:23 -> 00:22:26] because hopefully for many grammars
+[00:22:26 -> 00:22:28] it may be the case that
+[00:22:28 -> 00:22:29] whenever we have a choice
+[00:22:29 -> 00:22:30] between a shift and a reduce
+[00:22:30 -> 00:22:32] or between one reduce
+[00:22:32 -> 00:22:33] and another reduce,
+[00:22:33 -> 00:22:34] we can check whether
+[00:22:34 -> 00:22:35] which one is a viable prefix
+[00:22:35 -> 00:22:36] and based on that
+[00:22:36 -> 00:22:37] we can prune our choices.
+[00:22:38 -> 00:22:43] Alright, so for example
+[00:22:43 -> 00:22:44] let's say at any step
+[00:22:44 -> 00:22:45] in my parsing algorithm
+[00:22:45 -> 00:22:47] I have alpha, beta, gamma,
+[00:22:47 -> 00:22:51] cursor and then A, omega.
+[00:22:51 -> 00:22:52] Here alpha, beta, gamma
+[00:22:52 -> 00:22:54] are strings of terminals
+[00:22:54 -> 00:22:55] and non-terminals.
+[00:22:55 -> 00:22:57] A is a single terminal character
+[00:22:57 -> 00:22:58] or token and omega is also
+[00:22:58 -> 00:23:01] a string of terminals and non-terminals.
+[00:23:01 -> 00:23:03] Now first option is I can shift
+[00:23:03 -> 00:23:05] and so if I shift what do I get?
+[00:23:05 -> 00:23:08] I get alpha, beta, gamma, A
+[00:23:08 -> 00:23:09] on my stack.
+[00:23:09 -> 00:23:11] And now I can ask this machine
+[00:23:11 -> 00:23:15] that is alpha, beta, gamma, A
+[00:23:15 -> 00:23:16] does it belong to the language
+[00:23:16 -> 00:23:18] of viable prefixes or not?
+[00:23:18 -> 00:23:19] If the answer is no
+[00:23:19 -> 00:23:21] then we can rule this out, right?
+[00:23:21 -> 00:23:22] And if the answer is yes
+[00:23:22 -> 00:23:24] then this is a possibility
+[00:23:24 -> 00:23:26] we have to keep this possibility.
+[00:23:27 -> 00:23:28] Option two is let's say
+[00:23:28 -> 00:23:31] I reduce by this particular reduction
+[00:23:31 -> 00:23:32] x produces gamma.
+[00:23:33 -> 00:23:35] Now if I produce x produces gamma
+[00:23:35 -> 00:23:36] then what do I get on this stack?
+[00:23:36 -> 00:23:38] I get alpha, beta, x
+[00:23:39 -> 00:23:40] but then I also have a lookahead
+[00:23:40 -> 00:23:42] and let's say the lookahead is one
+[00:23:42 -> 00:23:43] in which case I know
+[00:23:43 -> 00:23:44] that the next character is A
+[00:23:44 -> 00:23:46] and now I can ask the machine
+[00:23:46 -> 00:23:49] is alpha, beta, x, A a viable prefix?
+[00:23:49 -> 00:23:51] If the answer is no
+[00:23:51 -> 00:23:52] then we know that this reduction
+[00:23:52 -> 00:23:54] is not going to be fruitful
+[00:23:54 -> 00:23:55] and it's not going to lead us
+[00:23:55 -> 00:23:56] to a valid parts.
+[00:23:57 -> 00:23:59] Similarly, maybe there's a third option
+[00:23:59 -> 00:24:01] and that option is yet another reduce
+[00:24:01 -> 00:24:03] but through a different production.
+[00:24:03 -> 00:24:04] So let's say this reduces
+[00:24:04 -> 00:24:07] y produces beta, gamma
+[00:24:07 -> 00:24:08] and now in this case
+[00:24:08 -> 00:24:09] I want to reduce beta, gamma
+[00:24:09 -> 00:24:11] to a single non-terminal y
+[00:24:11 -> 00:24:13] and so I'm going to get alpha, y
+[00:24:13 -> 00:24:14] on my stack
+[00:24:14 -> 00:24:16] and A is the lookahead terminal
+[00:24:16 -> 00:24:18] and so I want to ask the machine
+[00:24:18 -> 00:24:20] is alpha, y, A a viable prefix?
+[00:24:20 -> 00:24:21] If the answer is no
+[00:24:21 -> 00:24:22] then this option can be ruled out.
+[00:24:27 -> 00:24:28] So different grammars
+[00:24:28 -> 00:24:30] will have different ways
+[00:24:30 -> 00:24:33] of ruling out certain possibilities.
+[00:24:33 -> 00:24:35] So for example, we discussed how
+[00:24:35 -> 00:24:36] if I have a lookahead of one
+[00:24:36 -> 00:24:38] then I can consider A
+[00:24:38 -> 00:24:40] and figure out whether it
+[00:24:40 -> 00:24:43] and use that as part of the string
+[00:24:43 -> 00:24:44] and then ask the question
+[00:24:44 -> 00:24:45] whether something is a viable prefix or not.
+[00:24:46 -> 00:24:47] If I don't have a lookahead
+[00:24:47 -> 00:24:49] then I won't have been able to use
+[00:24:49 -> 00:24:52] A in my questions to the machine.
+[00:24:53 -> 00:24:57] So based on what type of disambiguation
+[00:24:57 -> 00:24:58] or what type of information
+[00:24:58 -> 00:25:00] the algorithm is using
+[00:25:00 -> 00:25:02] to figure out whether
+[00:25:02 -> 00:25:04] I'm on the right path or not
+[00:25:04 -> 00:25:05] there are different algorithms
+[00:25:05 -> 00:25:07] and then depending on whether
+[00:25:07 -> 00:25:09] a grammar is possible
+[00:25:09 -> 00:25:10] through that algorithm
+[00:25:10 -> 00:25:12] we basically categorize the grammars
+[00:25:12 -> 00:25:14] based on which algorithm
+[00:25:14 -> 00:25:15] can parse those grammars.
+[00:25:15 -> 00:25:17] For example, we said
+[00:25:17 -> 00:25:19] an LL1 grammar is parsable
+[00:25:19 -> 00:25:22] through an LL1 algorithm.
+[00:25:22 -> 00:25:23] Similarly, we're going to say
+[00:25:23 -> 00:25:24] an LR1 grammar is something
+[00:25:24 -> 00:25:27] that is parsable by an LR1 algorithm.
+[00:25:27 -> 00:25:28] What is the LR1 algorithm?
+[00:25:28 -> 00:25:31] It's a shift-reduce parsing algorithm
+[00:25:31 -> 00:25:33] that requires only a lookahead of one.
+[00:25:33 -> 00:25:34] What is an LR0 algorithm?
+[00:25:34 -> 00:25:37] LR0 algorithm is a shift-reduce parsing algorithm
+[00:25:37 -> 00:25:39] that requires no lookahead whatsoever.
+[00:25:39 -> 00:25:41] So even without doing any lookahead
+[00:25:41 -> 00:25:44] I can conclusively say at every step
+[00:25:44 -> 00:25:45] whether I need to shift or I need to reduce.
+[00:25:45 -> 00:25:47] That would be an LR0 grammar.
+[00:25:47 -> 00:25:48] So for that grammar
+[00:25:48 -> 00:25:50] it is true that for any string
+[00:25:50 -> 00:25:52] I can implement the shift-reduce pars
+[00:25:52 -> 00:25:54] without having to do any lookahead
+[00:25:54 -> 00:25:56] and conclusively predictively say
+[00:25:56 -> 00:25:58] which is whether I need to shift or reduce
+[00:25:58 -> 00:25:59] that would be an LR0.
+[00:25:59 -> 00:26:01] LR1 would require one lookahead and so on.
+[00:26:02 -> 00:26:05] So let's say this is the universe of all grammars
+[00:26:05 -> 00:26:08] which is represented by this square
+[00:26:08 -> 00:26:09] and I'm going to draw Venn diagrams
+[00:26:09 -> 00:26:13] to say how are these grammars related to each other.
+[00:26:13 -> 00:26:15] So let's say these are all the grammars
+[00:26:15 -> 00:26:17] then the unambiguous grammars
+[00:26:18 -> 00:26:20] are a subset of all grammars obviously
+[00:26:20 -> 00:26:22] and we are only interested in parsing
+[00:26:22 -> 00:26:23] unambiguous grammars
+[00:26:23 -> 00:26:25] because any grammar that is ambiguous
+[00:26:25 -> 00:26:28] will always have a shift-reduce pars conflict
+[00:26:28 -> 00:26:30] or a reduce-reduce conflict
+[00:26:30 -> 00:26:30] because we don't even know
+[00:26:31 -> 00:26:33] because there are two possible parse trees
+[00:26:33 -> 00:26:34] for the same string
+[00:26:34 -> 00:26:36] and now when we are parsing
+[00:26:36 -> 00:26:37] we don't know which paths to take
+[00:26:37 -> 00:26:40] and so obviously there will be a problem.
+[00:26:40 -> 00:26:42] So when we are talking about these algorithms
+[00:26:42 -> 00:26:44] we are only looking at unambiguous grammars
+[00:26:44 -> 00:26:46] so there exists only one parse tree
+[00:26:46 -> 00:26:50] but now are we able to find that parse tree or not
+[00:26:50 -> 00:26:52] that depends on the capability
+[00:26:52 -> 00:26:53] or the precision of the algorithm
+[00:26:54 -> 00:26:55] and so we are only interested
+[00:26:55 -> 00:26:56] in unambiguous algorithms.
+[00:26:56 -> 00:26:59] For example LR1 may be more precise
+[00:26:59 -> 00:27:01] than LR0 and so on.
+[00:27:01 -> 00:27:02] So that's what we want to see.
+[00:27:03 -> 00:27:09] Okay so some subset of all the unambiguous grammars
+[00:27:10 -> 00:27:11] are the LR1 grammars
+[00:27:11 -> 00:27:12] so these are the grammars
+[00:27:12 -> 00:27:13] that are parsable through the LR1 algorithm.
+[00:27:15 -> 00:27:16] So the bigger the set of grammars
+[00:27:16 -> 00:27:17] for a given algorithm
+[00:27:17 -> 00:27:19] the more powerful that algorithm is
+[00:27:19 -> 00:27:20] that means it can handle more grammars.
+[00:27:21 -> 00:27:23] A subset of that is LALR
+[00:27:23 -> 00:27:26] LALR is a simplification over LR1
+[00:27:26 -> 00:27:28] so LALR1 is also one look ahead
+[00:27:28 -> 00:27:30] but it's simplification of LR1
+[00:27:30 -> 00:27:31] we haven't discussed it yet
+[00:27:31 -> 00:27:33] but we're going to discuss it
+[00:27:33 -> 00:27:34] in the subsequent modules.
+[00:27:36 -> 00:27:40] Further the LR0 grammar is actually
+[00:27:40 -> 00:27:44] a subset of both LR1 and LALR1.
+[00:27:44 -> 00:27:50] So the green oval here represents the set LR0
+[00:27:50 -> 00:27:51] and this is expected
+[00:27:51 -> 00:27:53] anything that you can parse at LR1
+[00:27:53 -> 00:27:56] LR0 can always be you can always parse at LR1
+[00:27:56 -> 00:27:59] because we just have one extra look ahead
+[00:27:59 -> 00:28:00] but the interesting thing is
+[00:28:00 -> 00:28:02] LR0 is also a subset of LALR1
+[00:28:04 -> 00:28:06] and there is yet another algorithm
+[00:28:06 -> 00:28:08] called simple LR or SLR
+[00:28:08 -> 00:28:12] and simple LR is weaker than LALR
+[00:28:12 -> 00:28:14] but strictly stronger than LR0.
+[00:28:16 -> 00:28:19] Most grammars in practice are LALR1
+[00:28:19 -> 00:28:21] and that is what is actually implemented
+[00:28:21 -> 00:28:23] in tools like Bison by default.
+[00:28:24 -> 00:28:26] Now you may ask at this point
+[00:28:26 -> 00:28:31] how does LL1 fair with respect to these grammars?
+[00:28:31 -> 00:28:33] So is it true that LL1 is strictly
+[00:28:35 -> 00:28:37] less powerful than LR1?
+[00:28:37 -> 00:28:40] Is it true that LL1 is strictly
+[00:28:40 -> 00:28:42] less more powerful than LALR1
+[00:28:42 -> 00:28:44] or what is it?
+[00:28:44 -> 00:28:46] So once again what am I asking?
+[00:28:46 -> 00:28:49] I'm asking whether there exists a grammar
+[00:28:49 -> 00:28:51] that is parsable using LL1
+[00:28:52 -> 00:28:54] but is not parsable using LR1.
+[00:28:55 -> 00:28:57] So these kind of questions we want to answer
+[00:28:57 -> 00:28:58] and that's very nicely representable
+[00:28:58 -> 00:29:00] using this Venn diagram.
+[00:29:00 -> 00:29:02] So this purple line here
+[00:29:02 -> 00:29:05] represents the set of LL1 grammars
+[00:29:06 -> 00:29:08] of course this is not to scale
+[00:29:08 -> 00:29:12] but basically what it means to indicate
+[00:29:12 -> 00:29:15] is that LL1 is a subset of LR1
+[00:29:15 -> 00:29:18] so any grammar that is parsable using LL1
+[00:29:18 -> 00:29:20] is also parsable using LR1
+[00:29:20 -> 00:29:23] and that's why we say that LR is more general
+[00:29:23 -> 00:29:24] than LL.
+[00:29:26 -> 00:29:29] However it's not true that LL1 is
+[00:29:32 -> 00:29:34] more restrictive than LALR necessarily
+[00:29:34 -> 00:29:36] there exists some grammars
+[00:29:36 -> 00:29:38] that are parsable using LL1
+[00:29:38 -> 00:29:41] but are not parsable using LALR1
+[00:29:41 -> 00:29:42] and similarly the other ones.
+[00:29:44 -> 00:29:45] Similarly there are some grammars
+[00:29:45 -> 00:29:48] that are parsable using LALR1
+[00:29:48 -> 00:29:49] and not parsable using LL1.
+[00:29:49 -> 00:29:52] So that's what this Venn diagram indicates.

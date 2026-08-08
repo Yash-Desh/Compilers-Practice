@@ -1,0 +1,296 @@
+Title: Compiler Design Module 30 : NFA for recognizing viable prefixes
+Video ID: 1VBvPFeqb-g
+Detected language: en
+------------------------------------------------------------
+
+[00:00:00 -> 00:00:05] So, last time we discussed the structure of a viable prefix, today we are going to discuss
+[00:00:05 -> 00:00:09] how to recognize a viable prefix using an automaton.
+[00:00:09 -> 00:00:13] Recall that last time we said that a viable prefix, the language of viable prefixes
+[00:00:13 -> 00:00:18] is a regular language and so it should be possible to develop a finite automaton to
+[00:00:18 -> 00:00:22] recognize whether something could be a viable prefix or not.
+[00:00:22 -> 00:00:31] And so, to do that, we are going to today construct an NFA that is going to say yes
+[00:00:31 -> 00:00:36] if alpha is a viable prefix and the way it's going to work, it's going to read alpha
+[00:00:36 -> 00:00:40] left to right or bottom to top in this time.
+[00:00:40 -> 00:00:45] And if it says yes, then it is a viable prefix and if it says no, then it is not
+[00:00:45 -> 00:00:46] a viable prefix.
+[00:00:46 -> 00:00:50] Recall that if it is a viable prefix, then we have O in our shift reduce parser
+[00:00:50 -> 00:00:54] to be able to reduce to the start symbol eventually, but if it's not a viable prefix,
+[00:00:54 -> 00:00:55] then we have no hope.
+[00:00:55 -> 00:01:01] And so this can be a good test on whether we should shift or reduce in any state
+[00:01:01 -> 00:01:04] of our shift reduce parser.
+[00:01:04 -> 00:01:10] So alright, so we are going to discuss an algorithm given a context free grammar,
+[00:01:10 -> 00:01:15] an algorithm that constructs an NFA for that context free grammar to identify the
+[00:01:15 -> 00:01:19] set of viable prefixes.
+[00:01:19 -> 00:01:22] So here's the algorithm for the NFA construction.
+[00:01:22 -> 00:01:26] The first thing I'm going to do is I'm going to add a dummy production S prime
+[00:01:26 -> 00:01:27] produces S to G.
+[00:01:27 -> 00:01:34] So if the start symbol, if the grammar G is S, then I'm going to introduce
+[00:01:34 -> 00:01:39] another symbol called S prime and make S prime the new start symbol of G.
+[00:01:39 -> 00:01:44] The only intention of doing this is so that we are sure that S prime doesn't
+[00:01:44 -> 00:01:48] occur anywhere inside the RHS of any of the productions of G,
+[00:01:48 -> 00:01:52] whereas S may be allowed to appear in the RHS of the productions of G.
+[00:01:52 -> 00:01:57] And that's just a matter of convenience so that we can uniquely identify
+[00:01:57 -> 00:01:59] the start state.
+[00:01:59 -> 00:02:04] Alright, then the NFA states are the items of G.
+[00:02:04 -> 00:02:07] So we already discussed what are the items of G.
+[00:02:07 -> 00:02:12] Items of G are any production of G with a dot place somewhere in the
+[00:02:12 -> 00:02:15] RHS of that production.
+[00:02:15 -> 00:02:18] The NFA states are the items of G.
+[00:02:18 -> 00:02:26] And for example, one of the states could be E produces alpha dot x beta.
+[00:02:26 -> 00:02:31] Where E is a non-terminal, alpha is some string of terminals and
+[00:02:31 -> 00:02:36] non-terminals, dot is the pointer which represents the item,
+[00:02:36 -> 00:02:41] capital X is a non-terminal and beta is again some strings of terminals
+[00:02:41 -> 00:02:42] and non-terminals.
+[00:02:42 -> 00:02:47] So for such an item, we add a transition from the state of that item,
+[00:02:47 -> 00:02:54] which is just that item state with an oval over it to represent that it's a state.
+[00:02:54 -> 00:02:57] And then we add a transition of this type.
+[00:02:57 -> 00:03:03] So if you see X as the next input in your alpha,
+[00:03:03 -> 00:03:06] which is the string that you want to check for whether it's a viable
+[00:03:06 -> 00:03:07] prefix or not.
+[00:03:07 -> 00:03:10] So if you see the symbol X, then you transition to this state,
+[00:03:10 -> 00:03:15] which is representing the item E producing alpha x beta,
+[00:03:15 -> 00:03:20] which is the same production except the dot has been moved after X,
+[00:03:20 -> 00:03:22] which means I have already seen X.
+[00:03:22 -> 00:03:29] Okay, all right, so that's one type of transitions that you add.
+[00:03:29 -> 00:03:33] Further you add another type of transition, which is if you are in this
+[00:03:33 -> 00:03:38] state E produces alpha dot x beta and there's a production which produces
+[00:03:38 -> 00:03:39] gamma from X.
+[00:03:39 -> 00:03:45] So X produces gamma, then you add an epsilon transition from this item,
+[00:03:45 -> 00:03:53] which is E produces alpha dot x beta to this item X produces dot gamma.
+[00:03:53 -> 00:03:58] Okay, so there are two types of productions.
+[00:03:58 -> 00:04:01] I should point out that in the first type of production,
+[00:04:01 -> 00:04:06] which is just step two, X could be either a terminal or a non-terminal.
+[00:04:06 -> 00:04:15] All right, so this can be either a terminal or a non-terminal.
+[00:04:15 -> 00:04:21] Whereas in this step, step three, X should be a non-terminal.
+[00:04:21 -> 00:04:24] Only then it makes sense, right?
+[00:04:24 -> 00:04:26] So we're going to add an epsilon production.
+[00:04:26 -> 00:04:30] So what this means is that if I'm in the state where I've already seen alpha and
+[00:04:30 -> 00:04:36] my next non-terminal is capital X, then I could non-deterministically go to this
+[00:04:36 -> 00:04:41] state where I expect to see gamma as my next prefix, right?
+[00:04:42 -> 00:04:47] So this is basically saying that I have decided to terminate the prefix here of
+[00:04:47 -> 00:04:51] this production and then continue from the prefix of the next production.
+[00:04:51 -> 00:04:55] And so this intuitively, you can see that this is going to start
+[00:04:55 -> 00:05:00] recognizing language that is formed by concatenating zero or
+[00:05:00 -> 00:05:04] more prefixes of the productions of the drama.
+[00:05:05 -> 00:05:10] Okay, such that also recall that we had this rule that the LHS of any
+[00:05:10 -> 00:05:16] n plus 1n production just follows the dot in the RHS of the nx production.
+[00:05:16 -> 00:05:19] And that's kind of what's happening here.
+[00:05:19 -> 00:05:24] So we are adding epsilon only if X followed the dot.
+[00:05:24 -> 00:05:29] And the transition is happening to a state where it
+[00:05:29 -> 00:05:31] represents the production of capital X.
+[00:05:31 -> 00:05:36] And the item is the one that basically has not consumed any symbol yet.
+[00:05:36 -> 00:05:39] So dot is on the leftmost side of the RHS.
+[00:05:39 -> 00:05:44] Okay, with that construction, we need to basically figure out what are all
+[00:05:44 -> 00:05:45] the accepting states.
+[00:05:45 -> 00:05:50] So when are we going to say that indeed this is a viable prefix or not?
+[00:05:50 -> 00:05:53] And so in this case, every state is actually an accepting state.
+[00:05:53 -> 00:05:58] Because any state here is going to represent some prefix of,
+[00:05:58 -> 00:06:01] some concatenation of prefixes of production.
+[00:06:01 -> 00:06:04] And so every state is an accepting state.
+[00:06:04 -> 00:06:08] So which means that if I end up in any state in this after having finished
+[00:06:08 -> 00:06:10] the input, then it is a viable prefix.
+[00:06:10 -> 00:06:15] On the other hand, if I ever get stuck while executing the automaton on some
+[00:06:15 -> 00:06:20] input, which means that there is no transition, then basically I have
+[00:06:21 -> 00:06:25] a situation of it being not a viable prefix.
+[00:06:28 -> 00:06:34] The start state is represented by this particular item.
+[00:06:34 -> 00:06:38] S prime produces S with the dot to the leftmost.
+[00:06:38 -> 00:06:43] So we start with this, start in this state, and then we see whether
+[00:06:44 -> 00:06:49] the automaton accepts the viable prefix, the candidate viable prefix or not,
+[00:06:49 -> 00:06:51] by checking whether it is formed by a concatenation of zero or
+[00:06:51 -> 00:06:53] more prefixes of the productions.
+[00:06:54 -> 00:06:59] Okay, so let's look at an example to make this discussion more concrete.
+[00:06:59 -> 00:07:03] I'm using the same example grammar that we have been using so far,
+[00:07:03 -> 00:07:07] which is a grammar of expressions.
+[00:07:07 -> 00:07:12] T produces T plus E, or T produces int star T, or int or parenthesized E.
+[00:07:12 -> 00:07:18] Now, as I discussed, we are adding one extra production here,
+[00:07:18 -> 00:07:23] which is S produces E, and this is just an extra production.
+[00:07:23 -> 00:07:28] And now my new start symbol is S, and hence my
+[00:07:28 -> 00:07:32] initial state is just S produces dot capital E, all right?
+[00:07:32 -> 00:07:34] So this is my initial state.
+[00:07:34 -> 00:07:38] And now I'm going to develop the NFA based on this grammar.
+[00:07:38 -> 00:07:41] I'm not going to show you the entire NFA because it's too big to fit in
+[00:07:41 -> 00:07:44] the slide, but I'm going to show you some part of the NFA and
+[00:07:44 -> 00:07:46] how I'm constructing it.
+[00:07:46 -> 00:07:50] And it should become clear how the rest of the NFA would be constructed from this.
+[00:07:50 -> 00:07:53] So I start with S produces dot E, and
+[00:07:53 -> 00:07:56] now I can add two types of transitions.
+[00:07:56 -> 00:08:02] One is I can add a transition to which consumes E, and
+[00:08:02 -> 00:08:07] I can add epsilon transitions to items that involve productions of E, right?
+[00:08:07 -> 00:08:09] So that's what I'm going to do next.
+[00:08:09 -> 00:08:11] So here are two types of productions.
+[00:08:11 -> 00:08:18] One is consuming E and ending up in this state,
+[00:08:18 -> 00:08:23] S produces E with dot on the right of E.
+[00:08:23 -> 00:08:27] And the other transitions are epsilon transitions to the productions of E.
+[00:08:27 -> 00:08:31] So the two productions of E are E produces T plus E, and E produces T.
+[00:08:31 -> 00:08:34] And here the dot is on the leftmost side.
+[00:08:34 -> 00:08:38] Okay, now let's look at the first production here, right?
+[00:08:38 -> 00:08:44] Which is E produces T plus E, and with the dot on the leftmost side.
+[00:08:44 -> 00:08:45] Let's look at this item.
+[00:08:45 -> 00:08:51] And now, once again, either I could consume T to transition to another item,
+[00:08:51 -> 00:08:59] or I could transition using epsilon moves to the productions of T.
+[00:08:59 -> 00:09:01] So here it is.
+[00:09:01 -> 00:09:07] I could either consume T and transition to this particular item,
+[00:09:07 -> 00:09:09] where the dot has been moved.
+[00:09:09 -> 00:09:14] Or I could perform epsilon transitions to, for example,
+[00:09:14 -> 00:09:19] other productions of T, such T produces E, or T produces end, or
+[00:09:19 -> 00:09:21] T produces end star T.
+[00:09:21 -> 00:09:23] Okay, I can keep doing this.
+[00:09:23 -> 00:09:26] So for example, I could look at any one of these states here.
+[00:09:26 -> 00:09:30] So for example, I could look at E produces T dot plus E.
+[00:09:30 -> 00:09:36] And once again, I could consume plus and move my pointer one step to the right.
+[00:09:36 -> 00:09:38] Or I could make transitions.
+[00:09:38 -> 00:09:41] So notice that there are no epsilon transitions from this particular item,
+[00:09:41 -> 00:09:46] because the next symbol isn't terminal, not non-terminal.
+[00:09:46 -> 00:09:52] But if I look at this particular production,
+[00:09:53 -> 00:09:59] E produces T, and this particular item where dot is to the leftmost.
+[00:09:59 -> 00:10:02] Then it has epsilon transitions to all the other productions of T.
+[00:10:02 -> 00:10:09] So this has an epsilon to T produces dot end star T, T dot end, and so on.
+[00:10:09 -> 00:10:14] Also similarly, I have a production from T produces dot end,
+[00:10:14 -> 00:10:19] to T produces int dot after consuming an integer token, okay?
+[00:10:19 -> 00:10:24] Similarly, here I could consume, I'm kind of using a shorthand,
+[00:10:24 -> 00:10:25] I'm consuming two tokens in one go,
+[00:10:25 -> 00:10:27] because they both happen to be non-terminals.
+[00:10:27 -> 00:10:31] So they both happen to be terminals, sorry.
+[00:10:31 -> 00:10:33] And so it's going to consume int and then consume star, and
+[00:10:33 -> 00:10:36] eventually it's going to land up in a state.
+[00:10:36 -> 00:10:38] Just T produces int star dot T.
+[00:10:39 -> 00:10:44] And I can do more transitions here, I can add more transitions.
+[00:10:44 -> 00:10:49] So for example, I can transition from T plus dot E to T plus E dot after
+[00:10:49 -> 00:10:55] consuming an E, or I could transition from int star dot T to
+[00:10:55 -> 00:10:59] int star T dot after consuming a T, and so on.
+[00:10:59 -> 00:11:02] Here, even here, I could, for example, so
+[00:11:03 -> 00:11:09] consumer left parentheses and go to more items.
+[00:11:09 -> 00:11:13] I'm using a star to say that I'm not drawing this part of the NFA for you.
+[00:11:14 -> 00:11:19] Okay, and now here, notice that because the dot is just before a capital T,
+[00:11:19 -> 00:11:24] I will add transitions, epsilon transitions from this item
+[00:11:24 -> 00:11:31] to the items representing productions of T.
+[00:11:31 -> 00:11:38] So T produces int star T, and T produces int, and T produces parenthesis D, okay?
+[00:11:38 -> 00:11:41] Notice that in this automaton, I now have a cycle.
+[00:11:41 -> 00:11:45] So I could have int star, int star, int star, int star, int star,
+[00:11:45 -> 00:11:50] lots of int stars, and they would still be a viable prefix, okay?
+[00:11:50 -> 00:11:53] All right, okay.
+[00:11:53 -> 00:11:58] Similarly, anywhere where there's a dot just before the capital E,
+[00:11:58 -> 00:12:05] I can add epsilon transitions from that item to all the productions of E.
+[00:12:05 -> 00:12:09] So here's an epsilon transition.
+[00:12:09 -> 00:12:14] Here are the two epsilon transitions that are relevant in this case.
+[00:12:16 -> 00:12:19] All right, so here is the NFA that I have constructed, and
+[00:12:19 -> 00:12:22] I can keep doing this, this is not complete.
+[00:12:22 -> 00:12:26] But once I've constructed this NFA, I'm interested in knowing whether a
+[00:12:26 -> 00:12:30] string, a stack alpha, which represents a string,
+[00:12:30 -> 00:12:35] red bottom to top or left to right, is it a viable prefix or not?
+[00:12:35 -> 00:12:36] So what am I going to do?
+[00:12:36 -> 00:12:39] I'm going to execute this automaton on that string.
+[00:12:39 -> 00:12:42] Notice that this is a non-deterministic finite automaton.
+[00:12:42 -> 00:12:47] So this accepts the string if any of the parts accept the string,
+[00:12:47 -> 00:12:49] any of the non-deterministic parts accept the string.
+[00:12:51 -> 00:12:53] And so let's look at some examples.
+[00:12:53 -> 00:12:58] So let's say my input string is t plus int star t, all right?
+[00:12:58 -> 00:13:02] And my question is, is there a path starting from the start state,
+[00:13:02 -> 00:13:06] so this is my start state, is there a path starting from the start state
+[00:13:07 -> 00:13:13] to an accepting state such that this string is consumed, all right?
+[00:13:13 -> 00:13:15] And note, recall that all states are accepting states.
+[00:13:15 -> 00:13:20] So basically, we are basically saying that does the automaton ever get stuck?
+[00:13:20 -> 00:13:25] Or does it keep moving until the string is completely consumed?
+[00:13:25 -> 00:13:26] So let's see.
+[00:13:26 -> 00:13:30] I'm going to try to find a path that consumes t plus int star t.
+[00:13:30 -> 00:13:33] So, all right, so I start in the start state.
+[00:13:33 -> 00:13:35] Can I go on this direction?
+[00:13:35 -> 00:13:38] No, because this requires e, so that's not possible.
+[00:13:39 -> 00:13:43] But I can go on any of the epsilon transitions.
+[00:13:43 -> 00:13:46] So maybe I go to e produces dot t plus e.
+[00:13:47 -> 00:13:51] And from there, I could take some other path.
+[00:13:51 -> 00:13:53] And so this is dot t plus e.
+[00:13:53 -> 00:13:56] And maybe I can consume t after that, right?
+[00:13:56 -> 00:13:57] Because my first character is a t.
+[00:13:58 -> 00:13:59] So I can consume t.
+[00:14:00 -> 00:14:01] So far, I've taken this path.
+[00:14:01 -> 00:14:06] And then I can consume plus.
+[00:14:08 -> 00:14:09] So I've come here.
+[00:14:10 -> 00:14:12] Use a red pen to make it clearer.
+[00:14:12 -> 00:14:17] So right now, I'm at this state.
+[00:14:17 -> 00:14:19] And then I want to consume an int.
+[00:14:19 -> 00:14:21] So here, I'm just consuming an e.
+[00:14:21 -> 00:14:23] So that's not good enough.
+[00:14:23 -> 00:14:25] But I can make epsilon moves.
+[00:14:25 -> 00:14:28] And I can make epsilon moves to any of the places.
+[00:14:28 -> 00:14:32] But basically, I want to get to this particular state
+[00:14:32 -> 00:14:34] which is going to consume int star t.
+[00:14:34 -> 00:14:38] So I'm going to make an epsilon move to e produces t.
+[00:14:41 -> 00:14:43] And then I'm going to make an epsilon move
+[00:14:43 -> 00:14:46] to t produces int star t.
+[00:14:47 -> 00:14:49] And then I'm going to consume int star.
+[00:14:50 -> 00:14:51] And then I'm going to consume t.
+[00:14:52 -> 00:14:54] And I'm going to end up in this state
+[00:14:54 -> 00:14:59] at the end of consuming the entire input, right?
+[00:14:59 -> 00:15:01] So this is the state that I reach
+[00:15:01 -> 00:15:05] at the end of consuming the entire input.
+[00:15:05 -> 00:15:08] And because every state is an accepting state,
+[00:15:08 -> 00:15:10] this is actually a viable prefix
+[00:15:10 -> 00:15:15] because there is a path that reaches the accepting state
+[00:15:15 -> 00:15:16] in the NFA.
+[00:15:16 -> 00:15:18] So the answer is yes.
+[00:15:18 -> 00:15:20] This is a viable prefix.
+[00:15:21 -> 00:15:23] Let's look at another example.
+[00:15:23 -> 00:15:25] So let's look at this example, int plus int star t.
+[00:15:25 -> 00:15:27] Is this a viable prefix?
+[00:15:27 -> 00:15:30] So once again, I'm going to start at my start state.
+[00:15:30 -> 00:15:34] At my start state, s produces e.
+[00:15:35 -> 00:15:36] And the dot is on the leftmost side.
+[00:15:37 -> 00:15:42] And I'm going to see whether I can find a path
+[00:15:42 -> 00:15:44] such that the entire input is consumed.
+[00:15:44 -> 00:15:46] So first of all, this path doesn't make sense
+[00:15:46 -> 00:15:50] because the first token here is an int, all right?
+[00:15:50 -> 00:15:51] So I'm going to make some epsilon moves.
+[00:15:51 -> 00:15:53] So I have two options of making an epsilon move.
+[00:15:53 -> 00:15:56] I could either make an epsilon move to dot t plus e
+[00:15:56 -> 00:15:58] or I could make an epsilon move to dot t.
+[00:16:00 -> 00:16:02] e produces dot t.
+[00:16:02 -> 00:16:05] Now dot t doesn't make sense because there's a plus, right?
+[00:16:05 -> 00:16:08] So I don't think that's going to lead me to anywhere.
+[00:16:08 -> 00:16:11] But if I look at dot t plus e
+[00:16:11 -> 00:16:13] because this is the one that has a plus,
+[00:16:13 -> 00:16:16] then I'm going to come here.
+[00:16:16 -> 00:16:19] And now from here, I want to consume an int.
+[00:16:20 -> 00:16:23] Now the option here is to consume a t,
+[00:16:23 -> 00:16:26] but that's not possible for us
+[00:16:26 -> 00:16:28] because our first token is an int.
+[00:16:28 -> 00:16:30] Maybe I want to make an epsilon move.
+[00:16:30 -> 00:16:33] If I make this epsilon move, that's not any good
+[00:16:33 -> 00:16:36] because the first token here is going to be an open parenthesis.
+[00:16:36 -> 00:16:38] So maybe I make this epsilon move,
+[00:16:38 -> 00:16:40] but that's not too good either
+[00:16:40 -> 00:16:43] because from here I consume an int
+[00:16:43 -> 00:16:46] and I end up in this state called t produces int dot.
+[00:16:47 -> 00:16:50] But then there is no outgoing edge from this state
+[00:16:50 -> 00:16:53] because I'm not expecting anything after this.
+[00:16:53 -> 00:16:55] And so there's nothing here
+[00:16:55 -> 00:16:56] and the input is not consumed.
+[00:16:57 -> 00:16:59] I'm going to get stuck on this path.
+[00:16:59 -> 00:17:00] So maybe I try something else.
+[00:17:00 -> 00:17:02] And so maybe the third thing I could try here
+[00:17:03 -> 00:17:10] is this one t produces dot int star t, right?
+[00:17:10 -> 00:17:12] And if I do that, so if I come here,
+[00:17:13 -> 00:17:16] then the first token is int, that's good.
+[00:17:16 -> 00:17:17] But the second token is star
+[00:17:18 -> 00:17:21] and that doesn't match our second token plus.
+[00:17:21 -> 00:17:23] And so even here I'm going to get stuck.
+[00:17:23 -> 00:17:25] So in fact, for this particular string,
+[00:17:25 -> 00:17:27] there is no path in the NFA
+[00:17:28 -> 00:17:30] that's going to consume the entire string.
+[00:17:30 -> 00:17:36] And so this is actually not a viable prefix, okay?
+[00:17:37 -> 00:17:40] Intuitively, this is not a viable prefix
+[00:17:40 -> 00:17:41] because it cannot be formed
+[00:17:41 -> 00:17:45] by concatenating the prefixes of productions, right?
+[00:17:48 -> 00:17:50] So int is a prefix of some production,
+[00:17:51 -> 00:17:52] but what production is it?
+[00:17:52 -> 00:17:56] So recall that if there's a plus, then it was t plus e.
+[00:17:56 -> 00:17:59] And so this int could be just,
+[00:18:02 -> 00:18:03] so maybe that's a t.
+[00:18:07 -> 00:18:10] But then I don't have anything after that to continue, right?
+[00:18:10 -> 00:18:14] So recall that it needs to be a stack of items
+[00:18:14 -> 00:18:17] such that the LHS of the n plus 1th item
+[00:18:17 -> 00:18:20] is the symbol following the dot in the nth item.
+[00:18:20 -> 00:18:22] But something like that is not possible
+[00:18:22 -> 00:18:23] for this particular viable prefix.
+[00:18:23 -> 00:18:27] And this NFA is correctly identifying that
+[00:18:27 -> 00:18:29] and giving you no as an answer.

@@ -1,0 +1,175 @@
+Title: How to Inspect Compiled Binaries (binutils, objdump)
+Video ID: bWMIpHVRFUo
+Detected language: en
+------------------------------------------------------------
+
+[00:00:00 -> 00:00:07] Hey, today we're going to inspect binaries.
+[00:00:07 -> 00:00:12] When you program in C, your compiler takes your .c file and it produces a binary executable.
+[00:00:12 -> 00:00:17] Sometimes as programmers we treat these binary executables as black boxes, as mythical magical
+[00:00:17 -> 00:00:21] things and we just don't want to look inside.
+[00:00:21 -> 00:00:22] But today we're going to.
+[00:00:22 -> 00:00:26] Because executables are not magic, they are just binary files that have a particular
+[00:00:26 -> 00:00:27] format.
+[00:00:27 -> 00:00:31] And sometimes it's super useful to be able to actually look and see what's inside
+[00:00:31 -> 00:00:32] a binary.
+[00:00:32 -> 00:00:34] Maybe you have a binary but no source.
+[00:00:34 -> 00:00:38] Maybe you want to verify that your compiler really is doing what you think it's doing.
+[00:00:38 -> 00:00:41] Maybe you want to see where the compiler is putting your variables that you declared.
+[00:00:41 -> 00:00:44] And maybe you want to see how much memory you're taking up with your globals and
+[00:00:44 -> 00:00:45] your code.
+[00:00:45 -> 00:00:48] Whatever the reason, today I want to show you a few different ways that you can mess
+[00:00:48 -> 00:00:52] with binaries to get information and to actually change program behaviors.
+[00:00:52 -> 00:00:54] So let's start with a simple example.
+[00:00:54 -> 00:00:57] This is basically just Hello World with a few modifications.
+[00:00:57 -> 00:01:01] I added a global variable, I changed what it prints out, and I added this if statement,
+[00:01:01 -> 00:01:05] it's going to check the program's first argument, and it's going to tell us if it matches a
+[00:01:05 -> 00:01:06] preset password.
+[00:01:06 -> 00:01:10] So we're going to compile it with debug symbols and now we have the executable that
+[00:01:10 -> 00:01:11] we want to inspect.
+[00:01:11 -> 00:01:12] Let's take a look.
+[00:01:12 -> 00:01:15] Again, this file is just a binary file with a known format.
+[00:01:15 -> 00:01:17] You're not going to want to open it in a text file because you've got unprintable
+[00:01:17 -> 00:01:18] characters in there.
+[00:01:18 -> 00:01:21] So that's not going to be helpful, but we can open it in a hex editor.
+[00:01:21 -> 00:01:25] If you've never seen hex editors, they're super useful for looking at binary files.
+[00:01:25 -> 00:01:29] I made a previous video about hex editors, I'll link to that in the description.
+[00:01:29 -> 00:01:31] And now you can see what the contents are.
+[00:01:31 -> 00:01:34] Now what you're going to see here is going to depend on the hardware platform you're
+[00:01:34 -> 00:01:37] compiling for, what compiler you're using, and what compiler flags you use.
+[00:01:37 -> 00:01:41] I'm using Linux, I'm using Clang, while you saw what flags I just have the one
+[00:01:41 -> 00:01:42] I just have dash G.
+[00:01:42 -> 00:01:45] The format that Linux uses is called ELF.
+[00:01:45 -> 00:01:48] And now this file still isn't super human readable.
+[00:01:48 -> 00:01:52] If you had the ELF format documentation in front of you, you could easily figure
+[00:01:52 -> 00:01:53] out what each of these bytes means.
+[00:01:53 -> 00:01:56] I don't have time to make a 60 minute video today, so we're not going to do
+[00:01:56 -> 00:01:57] that.
+[00:01:57 -> 00:01:59] So there are a few quick things we can do.
+[00:01:59 -> 00:02:02] First of all, you're going to notice by looking in here that there are some
+[00:02:02 -> 00:02:04] readable text strings.
+[00:02:04 -> 00:02:05] And so let's see what we can do with those.
+[00:02:05 -> 00:02:09] So if you come down here, yeah, so you can see down here there's the strings
+[00:02:09 -> 00:02:13] I used in my program, specifically right here is the password that I stored.
+[00:02:13 -> 00:02:16] You know, it also is stored right next to the other static strings that I used
+[00:02:16 -> 00:02:17] in the program.
+[00:02:17 -> 00:02:20] Now, if we want, we can, of course, get that password.
+[00:02:20 -> 00:02:22] It's just sitting right there.
+[00:02:22 -> 00:02:25] And we can also change that password to something of our own choosing.
+[00:02:25 -> 00:02:29] So for simplicity, I'm going to pick one that's the same size as the original.
+[00:02:29 -> 00:02:32] So I don't have to worry about updating the section headers.
+[00:02:32 -> 00:02:35] And now I can save the file and I can run it without recompiling.
+[00:02:35 -> 00:02:37] So I didn't rerun my compiler.
+[00:02:37 -> 00:02:40] And now look, it responds to my new password.
+[00:02:40 -> 00:02:41] Now it's kind of fun.
+[00:02:41 -> 00:02:44] A secondary purpose of this video is I hope that now you will never
+[00:02:44 -> 00:02:47] hard code passwords in your programs, especially in plain text, unless you
+[00:02:47 -> 00:02:50] don't mind somebody grabbing those passwords.
+[00:02:50 -> 00:02:52] And this is the most basic method to mess with binaries.
+[00:02:52 -> 00:02:55] You just open them just like any other file and read information out of them.
+[00:02:55 -> 00:02:56] But of course, this is a little complicated.
+[00:02:56 -> 00:02:59] This isn't the most simple or straightforward.
+[00:02:59 -> 00:03:01] So let me show you a couple other things that you can use.
+[00:03:01 -> 00:03:05] Now the tools I'm going to show you today are all part of the GNU Bin Utils collection.
+[00:03:05 -> 00:03:08] They're pretty much available anywhere where you have GCC and Clang.
+[00:03:08 -> 00:03:11] You should also have these utilities.
+[00:03:11 -> 00:03:12] So the first is strings.
+[00:03:12 -> 00:03:16] Now strings is going to go through and basically do what we just did manually with the
+[00:03:16 -> 00:03:17] hex editor.
+[00:03:17 -> 00:03:20] And it goes through a binary and extracts all of the printable strings.
+[00:03:20 -> 00:03:22] And so if all you want to do is grab strings from an executable or really any
+[00:03:22 -> 00:03:25] binary format, then this is an easy way to get them.
+[00:03:25 -> 00:03:27] It just basically goes in and pulls out the strings.
+[00:03:27 -> 00:03:31] So if we want a bit more structured information, we can use readelf to actually look at the
+[00:03:31 -> 00:03:33] symbol table.
+[00:03:33 -> 00:03:36] So these are all the different symbols that are defined inside this file.
+[00:03:36 -> 00:03:39] So these are like the different names that are used, different identifiers.
+[00:03:39 -> 00:03:41] And there's a lot of information here that you can see.
+[00:03:41 -> 00:03:44] So this symbol table is going to give you things like it's going to tell you what
+[00:03:44 -> 00:03:48] type of symbol it is, is it a function, is it an object, is it a section, basically
+[00:03:48 -> 00:03:50] a logical section within the program.
+[00:03:50 -> 00:03:52] It's going to tell you what its address is.
+[00:03:52 -> 00:03:54] It's going to tell you how big it is if it has a size.
+[00:03:54 -> 00:03:57] So this is for functions and objects, they're going to have a particular size.
+[00:03:57 -> 00:04:00] And it's also going to give you some information about how it's scoped.
+[00:04:00 -> 00:04:04] So if you look in here, you can see some of the identifiers that were from our program.
+[00:04:04 -> 00:04:06] So you can see main, for example.
+[00:04:06 -> 00:04:08] You can see the global variable I set.
+[00:04:08 -> 00:04:11] You can also see there's this function is really important called start.
+[00:04:11 -> 00:04:14] You might think main is where your program starts running, but it's not.
+[00:04:14 -> 00:04:15] It actually starts running in start.
+[00:04:15 -> 00:04:19] Start does a bunch of setup and then it actually calls main.
+[00:04:19 -> 00:04:22] Okay, so we can get the same kind of information using object dump.
+[00:04:22 -> 00:04:25] So we can use object dump dash T that gets the symbol table.
+[00:04:25 -> 00:04:28] And this is basically giving us the same information, slightly different, it still
+[00:04:28 -> 00:04:31] gives addresses, it still gives sizes.
+[00:04:31 -> 00:04:35] It now gives us the section name, so like dot text, that's where code goes.
+[00:04:35 -> 00:04:38] So you know, this may be helpful, but basically these are just two different ways
+[00:04:38 -> 00:04:40] to get the same information.
+[00:04:40 -> 00:04:42] Okay, so we've seen sections in here a little bit.
+[00:04:42 -> 00:04:44] Let's take a look at what this actually looks like.
+[00:04:44 -> 00:04:48] If I use object dump dash S instead of dash T, now I'm going to see the different
+[00:04:48 -> 00:04:49] sections that are involved.
+[00:04:49 -> 00:04:53] And here you can actually see, this is actually the binary executable code.
+[00:04:53 -> 00:04:55] This is the binary data for each section.
+[00:04:55 -> 00:04:57] Each of these sections has a different purpose.
+[00:04:57 -> 00:05:00] The ones that are usually most relevant are the text segment.
+[00:05:00 -> 00:05:02] That's where most of your code goes.
+[00:05:02 -> 00:05:05] You're also going to find the RO data segment, which has all of your static
+[00:05:05 -> 00:05:07] strings, basically it's read only data.
+[00:05:07 -> 00:05:10] This is data that's never going to be updated or changed.
+[00:05:10 -> 00:05:12] Also down here at the bottom, you're going to see a bunch of debug
+[00:05:12 -> 00:05:15] information, and this is basically just so that when you use GDB or
+[00:05:15 -> 00:05:19] something, it knows what the names of functions are and it can actually help
+[00:05:19 -> 00:05:22] you keep track of line numbers and things like that.
+[00:05:22 -> 00:05:25] So that's all just for debugging, not actually necessarily part of the
+[00:05:25 -> 00:05:28] execution of the program and looking at binary data might not be all that
+[00:05:28 -> 00:05:32] helpful, so we can actually disassemble it using dash D and now we can
+[00:05:32 -> 00:05:34] actually see the assembly code for each of these sections.
+[00:05:34 -> 00:05:38] And now it's actually starting to look like something we might be able to use.
+[00:05:38 -> 00:05:41] So if you look down here, you can see start sure enough, it does call,
+[00:05:41 -> 00:05:45] well, it calls lib C main, which in the end, lib C will then call main.
+[00:05:45 -> 00:05:49] If we scroll down further, then you can see main down here and all the great
+[00:05:49 -> 00:05:52] things that it does, and so this is another way that you can look at your
+[00:05:52 -> 00:05:54] code and actually see what it's doing.
+[00:05:54 -> 00:05:57] And this is where, if you think you found a compiler bug, you think the
+[00:05:57 -> 00:06:00] compiler is doing something weird, or you think there's an optimization
+[00:06:00 -> 00:06:03] that's behaving in a way that you didn't expect, you can always
+[00:06:03 -> 00:06:07] disassemble and actually see what's going on in the generated code.
+[00:06:07 -> 00:06:08] Super handy.
+[00:06:08 -> 00:06:10] We can also look at individual segments.
+[00:06:10 -> 00:06:13] Now you've seen in here, you'll see segments and you'll see sections.
+[00:06:14 -> 00:06:17] Now, one way to think about it is that segments are segments of memory.
+[00:06:17 -> 00:06:19] These are actually blocks of memory that are going to be loaded at the
+[00:06:19 -> 00:06:21] time that the program runs.
+[00:06:21 -> 00:06:23] Sections are logical sub-pieces.
+[00:06:23 -> 00:06:26] And so you can see down here that multiple sections get mapped
+[00:06:26 -> 00:06:27] to a particular segment.
+[00:06:28 -> 00:06:30] Now, a final tool I want to tell you about is strip.
+[00:06:30 -> 00:06:33] The strip function actually removes symbols from your binaries.
+[00:06:33 -> 00:06:35] This is really common for two reasons.
+[00:06:35 -> 00:06:38] One, you may want to make your binary smaller.
+[00:06:38 -> 00:06:41] So when people ship binaries, often you want to make your binaries small.
+[00:06:41 -> 00:06:44] Smaller binaries means smaller downloads.
+[00:06:44 -> 00:06:47] The other reason is that you may want to make it a little bit more
+[00:06:47 -> 00:06:49] difficult for people to reverse engineer your code.
+[00:06:49 -> 00:06:52] You may not want people to be able to open up your code in
+[00:06:52 -> 00:06:56] GDB and actually track through all the details of how it executes.
+[00:06:56 -> 00:06:58] I mean, they can still get at the assembly.
+[00:06:58 -> 00:06:59] They can still disassemble it.
+[00:06:59 -> 00:07:02] But strip makes smaller executables by removing the debug information.
+[00:07:02 -> 00:07:05] If we look at the symbol table now, you're going to notice there's
+[00:07:05 -> 00:07:06] not very many symbols in there.
+[00:07:06 -> 00:07:09] So now if you look at the different sections and you look at the code
+[00:07:09 -> 00:07:11] that's in there, you're going to notice that the debug ones are now
+[00:07:11 -> 00:07:12] missing from the bottom.
+[00:07:12 -> 00:07:12] They were just removed.
+[00:07:13 -> 00:07:17] So even though I compiled with dash G strip basically reverse that process,
+[00:07:17 -> 00:07:18] removed all those debug symbols.
+[00:07:19 -> 00:07:21] So that's something that can come in handy when you're trying to
+[00:07:21 -> 00:07:23] release code or trying to shrink the size of a binary.
+[00:07:23 -> 00:07:26] Now these aren't the only binary utilities that you have available.
+[00:07:26 -> 00:07:29] These are just a few that I think are particularly useful.
+[00:07:29 -> 00:07:32] These aren't tools that you're going to use every day as a programmer.
+[00:07:32 -> 00:07:35] But when they come in handy, it's really nice to know that they're there.
+[00:07:35 -> 00:07:38] I may be able to cover some of the other binary utilities in a future video,
+[00:07:38 -> 00:07:41] but for now I wish you a very good day.

@@ -1,0 +1,173 @@
+Title: Compiler Design Module 33 : SLR Examples
+Video ID: oeiJSAFbGIs
+Detected language: en
+------------------------------------------------------------
+
+[00:00:00 -> 00:00:07] So now we're going to look at a couple of examples to see how the SLR algorithm works and see it in action.
+[00:00:07 -> 00:00:09] So let's consider this particular grammar.
+[00:00:09 -> 00:00:16] We are familiar with this grammar because we looked at this grammar when we were discussing left recursion in the context of recursive descent parsing.
+[00:00:16 -> 00:00:19] So this grammar basically has two productions.
+[00:00:19 -> 00:00:24] S produces S A and S produces B.
+[00:00:24 -> 00:00:31] And basically this grammar produces strings of the type B followed by any number of As.
+[00:00:31 -> 00:00:42] And the SLR algorithm or in general any LR algorithm should be able to parse it, assuming that it doesn't have conflicts of the type shift reduce or reduce reduce.
+[00:00:42 -> 00:00:52] And in other words, the LR algorithm, bottom up parsing algorithms, shift reduce parsing algorithms do not have any problem with left recursion.
+[00:00:52 -> 00:00:57] And they can easily handle it because they are dealing with the rightmost derivation.
+[00:00:57 -> 00:01:04] So the first step in being able to parse this using the SLR algorithm is to add another production.
+[00:01:04 -> 00:01:11] S prime produces S and our new start non terminal is going to be S prime instead of S.
+[00:01:11 -> 00:01:19] Now I'm going to show you how this works, how this algorithm is going to work by just constructing the DFA of viable prefixes.
+[00:01:19 -> 00:01:22] The DFA that's meant to recognize the viable prefixes.
+[00:01:22 -> 00:01:33] Now the first state of the DFA is going to be formed by the epsilon closure of the first item S prime produces dot S.
+[00:01:33 -> 00:01:36] So what's the epsilon closure of S prime produces dot S?
+[00:01:36 -> 00:01:41] Well, it's all the productions, all the items that have S in the LHS.
+[00:01:41 -> 00:01:47] So S produces dot SA and S produces dot B.
+[00:01:47 -> 00:01:55] And this epsilon closure of S prime producing dot S forms our first initial DFA state.
+[00:01:55 -> 00:01:58] So this forms our initial DFA state.
+[00:01:59 -> 00:02:15] Now if I consume, if I see a terminal B when I'm in this state, then I'm going to transition and I'm going to transition such that I'm going to move the dot after B.
+[00:02:15 -> 00:02:20] And so the only production that can actually consume a B is the third one.
+[00:02:20 -> 00:02:26] And so I end up in a state which has only one item S produces B dot.
+[00:02:26 -> 00:02:39] Similarly, if I'm in the initial state and I consume capital S in the non-terminal S, then the DFA transitions to a state that has two items.
+[00:02:39 -> 00:02:43] S prime produces S dot and S produces S dot A.
+[00:02:43 -> 00:02:47] They're just formed by moving the dot across the S in the first two productions.
+[00:02:47 -> 00:02:51] The third production cannot consume an S.
+[00:02:51 -> 00:02:57] So that's the three states of my DFA.
+[00:02:57 -> 00:03:00] Now let's continue the same procedure.
+[00:03:00 -> 00:03:08] So maybe in this particular state, I can consume an A to get S produces SA dot.
+[00:03:08 -> 00:03:15] And at this point, I have pretty much completed the DFA construction.
+[00:03:15 -> 00:03:17] So this represents the DFA.
+[00:03:17 -> 00:03:19] And once again, this is my start state.
+[00:03:19 -> 00:03:27] And I can run any prefix tag on this DFA to figure out whether it is a viable prefix or not.
+[00:03:27 -> 00:03:35] Also, by running the stack on this DFA to figure out whether I can also look at what is the state that I arrive at.
+[00:03:35 -> 00:03:38] And depending on the state, I can decide whether to shift or reduce.
+[00:03:38 -> 00:03:42] Now in most of these states, it's very clear what to do.
+[00:03:42 -> 00:03:47] For example, if I'm in this state, the initial state, then the only option is to shift.
+[00:03:47 -> 00:03:50] Because dot is not appearing at the end of any production.
+[00:03:50 -> 00:03:57] Similarly, if I'm here, S producing B dot, then I must reduce.
+[00:03:57 -> 00:04:01] That's the only option. There's no ambiguity. There's no conflict.
+[00:04:01 -> 00:04:05] Similarly, if I'm in this state, then the only option is to reduce.
+[00:04:05 -> 00:04:10] However, if I'm in this particular state, then I have two options.
+[00:04:11 -> 00:04:20] Either I could reduce S to an S' or I could shift the next terminal and I expect it to be an A.
+[00:04:20 -> 00:04:28] So this particular state represents a shift-reduce conflict in my automaton of items.
+[00:04:28 -> 00:04:36] More precisely, this is the automaton of LR0 items because these items are called LR0 items.
+[00:04:36 -> 00:04:39] They don't have any look ahead as opposed to LR1 items.
+[00:04:39 -> 00:04:44] And so this particular state, if I end up in this particular state, I have a shift-reduce conflict.
+[00:04:44 -> 00:04:46] I don't know whether to shift or reduce.
+[00:04:46 -> 00:04:52] I could either reduce to S' or I could shift the next terminal token A.
+[00:04:52 -> 00:05:00] Now, an LR0 algorithm would not be able to parse this particular grammar because of exactly this reason.
+[00:05:00 -> 00:05:03] Because it doesn't know whether to shift or reduce.
+[00:05:03 -> 00:05:08] But an SLR algorithm is an improvement over LR0. And what is the improvement?
+[00:05:08 -> 00:05:15] I have one look ahead and I'm going to look at that look ahead token and decide whether to shift or reduce.
+[00:05:15 -> 00:05:17] What is the heuristic that I'm going to use?
+[00:05:17 -> 00:05:26] Well, if my next look ahead token is the token that matches one of the items, one of the next characters in the items.
+[00:05:26 -> 00:05:29] For example, if it's an A, then I should shift.
+[00:05:29 -> 00:05:37] And also if I'm reducing, then if the next item is in the follow set of the LHS.
+[00:05:37 -> 00:05:42] So whatever is in the follow set of S', I should consider.
+[00:05:42 -> 00:05:49] And if the next token in my input stream is in the follow set of S', then I should reduce.
+[00:05:49 -> 00:05:52] Now, let's look at what is the follow set of S'.
+[00:05:52 -> 00:06:00] Well, if I look at the grammar, then I can easily see that the follow set of S' is only the end of input marker, which is the dollar.
+[00:06:00 -> 00:06:02] Because nothing can follow S'.
+[00:06:02 -> 00:06:09] S' is the top high level non-terminal that is not appearing in the RHS of any other production.
+[00:06:09 -> 00:06:12] So the only thing that follows S' is dollar.
+[00:06:12 -> 00:06:17] On the other hand, this particular shift requires an A. And so we have a resolution.
+[00:06:17 -> 00:06:21] So if the next look ahead token is an A, then I should shift.
+[00:06:21 -> 00:06:28] If the next look ahead token is a dollar, which is the only terminal in the follow set of S', then I should reduce.
+[00:06:28 -> 00:06:31] So if the look ahead is dollar, then I should reduce.
+[00:06:31 -> 00:06:36] And if it's an A, then I should shift.
+[00:06:36 -> 00:06:44] And so I've been able to resolve this conflict in my SLR algorithm, although this conflict was not resolvable in the LR0 algorithm.
+[00:06:44 -> 00:06:49] And for this reason, I'm going to say that this is not an LR0 grammar.
+[00:06:49 -> 00:06:55] But I'm going to say that this is an SLR grammar because it can be passed using SLR.
+[00:06:55 -> 00:07:03] Recall that any SLR grammar is also an LALR1 grammar and is also an LR1 grammar.
+[00:07:03 -> 00:07:06] OK, let's take another example.
+[00:07:06 -> 00:07:16] In this case, it's a similar grammar, except that I have replaced this production S producing SA with S producing SAS.
+[00:07:16 -> 00:07:23] So it's slightly more complicated, but it's going to serve our purpose of exposition.
+[00:07:23 -> 00:07:27] And it's not really clear what kind of strings it accepts.
+[00:07:27 -> 00:07:33] Unlike the previous grammar where it was very clear that it's B followed by some number of As, it's a little bit more complicated.
+[00:07:33 -> 00:07:35] And we are not interested in that.
+[00:07:35 -> 00:07:42] But we are interested in whether this is passable and how do we figure this out and whether it's passable using SLR.
+[00:07:42 -> 00:07:51] So once again, we're going to construct the automaton, the DFA, to try and identify viable prefixes of this grammar.
+[00:07:51 -> 00:07:58] Once again, the first step here is to just add this production S prime produces S and make S prime as our new start symbol.
+[00:07:58 -> 00:08:05] And so because S prime is our new start symbol, the first state of my DFA is going to be S prime produces dot S.
+[00:08:05 -> 00:08:07] That's the LR0 item.
+[00:08:07 -> 00:08:08] And then it's epsilon closure.
+[00:08:08 -> 00:08:16] So any production that starts with S that has S on the LHS and then dot is on the leftmost position in the LHS.
+[00:08:16 -> 00:08:18] The epsilon closure.
+[00:08:18 -> 00:08:24] Alright, so this is the DFA state and this is the initial state of the DFA.
+[00:08:24 -> 00:08:32] Now, with this DFA state, I could either consume capital S or I could consume small b.
+[00:08:32 -> 00:08:40] And so let's see, if I consume small b, then I transition to this state, which has only one item S produces B dot.
+[00:08:40 -> 00:08:43] It is similar to what we had in my previous grammar.
+[00:08:43 -> 00:08:50] But let's say I consume capital S, then I get to this state, which has S prime produces capital S dot.
+[00:08:50 -> 00:08:57] And S prime S produces capital S dot small a capital S.
+[00:08:57 -> 00:09:05] So based on the first two productions here, first two items here, I could consume an S and move the dot in both those items.
+[00:09:06 -> 00:09:14] Now continuing this, I could consume an a and I could reach S produces S a dot S.
+[00:09:14 -> 00:09:21] And because now the dot is positioned right before a non-terminal, I need to also include its epsilon closure.
+[00:09:21 -> 00:09:31] So the epsilon closure is going to be capital S in all productions with S in the LHS and dot in the leftmost position of the LHS.
+[00:09:31 -> 00:09:35] So S produces dot S a S and S produces dot b.
+[00:09:35 -> 00:09:39] These two form the epsilon closure of the first one.
+[00:09:39 -> 00:09:47] So similarly, if I get a b here, then I'm going to transition back to this state,
+[00:09:47 -> 00:09:54] because the first two items are not going to be meaningful for b, but the last one is.
+[00:09:54 -> 00:09:57] And I'm going to end up in this state.
+[00:09:57 -> 00:10:02] And if I get an S, then I'm going to transition to this particular state.
+[00:10:02 -> 00:10:06] So I can move the dot one step to the right to obtain this one.
+[00:10:06 -> 00:10:10] And I can move the dot one step to the right to obtain this one.
+[00:10:10 -> 00:10:12] This is my state.
+[00:10:12 -> 00:10:17] And once again, if I'm in this state, I could potentially consume an a.
+[00:10:17 -> 00:10:23] And I would be back in this particular state, because if I consume an a, I would be at S a dot S.
+[00:10:23 -> 00:10:25] And that's the first production here.
+[00:10:25 -> 00:10:28] And then it's epsilon closure, which is these two.
+[00:10:28 -> 00:10:34] And at this point, I think we have completed our DFA to recognize the viable prefixes.
+[00:10:34 -> 00:10:38] And this represents our start state of the DFA.
+[00:10:38 -> 00:10:45] Now the question is, is this DFA, from this DFA, can we say whether this grammar is SLR or not?
+[00:10:45 -> 00:10:48] Now let's look at each of the states of the DFA.
+[00:10:48 -> 00:10:51] So in this particular state, there is no problem.
+[00:10:51 -> 00:10:52] We can only shift.
+[00:10:52 -> 00:10:54] There is no reduction possible.
+[00:10:54 -> 00:10:58] In this particular state, there is only a reduction possible.
+[00:10:58 -> 00:11:00] And we know what reduction to use.
+[00:11:00 -> 00:11:03] It's just S producing B.
+[00:11:03 -> 00:11:14] In this particular state, I have a problem, because it's both a reduction possible because of the first item and a shift possible because of the second item.
+[00:11:14 -> 00:11:16] So I have a problem in this one.
+[00:11:16 -> 00:11:17] Let's look at this one.
+[00:11:17 -> 00:11:21] In this particular state, I only have a shift possible.
+[00:11:21 -> 00:11:24] I could either shift in all the three items.
+[00:11:24 -> 00:11:25] So there's only shift.
+[00:11:25 -> 00:11:28] And in this particular state, once again, I have a problem.
+[00:11:28 -> 00:11:38] I could either reduce or shift because I have one item which has dot to the rightmost side at the rightmost position and one in which it is not at the rightmost position.
+[00:11:38 -> 00:11:44] So basically, I have shift reduce conflicts in two of the states.
+[00:11:44 -> 00:11:49] And I don't really have any reduce reduce conflicts in this grammar.
+[00:11:49 -> 00:11:52] So clearly, it has shift reduce conflicts.
+[00:11:52 -> 00:12:02] So it is not an LR0 grammar because an LR0 grammar shouldn't have had any shift reduce conflicts or reduce reduce conflicts in this particular automaton.
+[00:12:02 -> 00:12:07] However, SLR is an improvement over LR0 and uses the lookahead.
+[00:12:07 -> 00:12:10] So let's see whether the lookahead is going to help us.
+[00:12:10 -> 00:12:17] So in this particular state, I need to decide whether to shift or to reduce.
+[00:12:17 -> 00:12:24] And it's very clear that if the next token is an A, then I should shift.
+[00:12:24 -> 00:12:34] And if the next token is in the follow of S prime, then I should reduce.
+[00:12:34 -> 00:12:36] And once again, what is the follow of S prime?
+[00:12:36 -> 00:12:38] Follow of S prime is just dollar.
+[00:12:38 -> 00:12:50] So follow of S prime is just dollar because that's the only terminal that can follow S prime.
+[00:12:50 -> 00:12:52] Let's also look at what's follow of S.
+[00:12:52 -> 00:12:58] Well, follow of S is actually what can follow S?
+[00:12:58 -> 00:13:00] A can follow S.
+[00:13:00 -> 00:13:08] And in fact, dollar can follow S because anything that can follow S prime can also follow S.
+[00:13:08 -> 00:13:11] So A and dollar can follow S.
+[00:13:12 -> 00:13:16] So now, once again, if I look at this particular state,
+[00:13:16 -> 00:13:22] then if the next lookahead is in follow of S prime,
+[00:13:22 -> 00:13:26] which means if the next lookahead is a dollar, then I'm going to reduce.
+[00:13:26 -> 00:13:29] If the next lookahead is A, then I'm going to shift.
+[00:13:29 -> 00:13:33] So once again, I've been able to resolve this particular shift reduce conflict.
+[00:13:33 -> 00:13:39] It's easy. If the next lookahead is a dollar, then I'm going to reduce.
+[00:13:39 -> 00:13:42] If the next lookahead is an A, then I'm going to shift.
+[00:13:42 -> 00:13:44] Now let's look at this state.
+[00:13:44 -> 00:13:50] In this state, I'm reducing SAS to S.
+[00:13:50 -> 00:13:56] And I'm shifting A in S.AS.
+[00:13:56 -> 00:14:02] Now here, I would reduce if the next lookahead is in the follow of S.
+[00:14:02 -> 00:14:06] And I would shift if the next lookahead is in A.
+[00:14:06 -> 00:14:07] Now let's look at the follow of S.
+[00:14:07 -> 00:14:10] The follow of S has both A and a dollar.
+[00:14:10 -> 00:14:14] And now I don't have a resolution because if my next lookahead is in A,
+[00:14:14 -> 00:14:17] I don't know whether to shift or reduce.
+[00:14:17 -> 00:14:21] Because if the next lookahead is in A, then I could have either reduced
+[00:14:21 -> 00:14:26] because A is in the follow of S or shifted because of this second item.
+[00:14:26 -> 00:14:28] And so I don't have a resolution.
+[00:14:28 -> 00:14:31] And even in an SLR grammar, I have a conflict.
+[00:14:31 -> 00:14:33] I don't know whether to shift or reduce.
+[00:14:33 -> 00:14:37] And so there's a lookahead A for both shift and reduce.
+[00:14:37 -> 00:14:41] And this grammar is hence not an SLR grammar.

@@ -1,0 +1,346 @@
+Title: CS 6120: Lesson 13: Concurrency & Parallelism
+Video ID: 1_8cpusna2
+Detected language: en
+------------------------------------------------------------
+
+[00:00:05 -> 00:00:16] Let's talk about parallel programming. Parallel computers and the need for programming languages and compilers to target them are, of course, about as old as computers themselves.
+[00:00:16 -> 00:00:26] However, the importance of parallel programming and the necessity for ordinary programmers to do parallel programming has really exploded in recent memory.
+[00:00:26 -> 00:00:32] That has to do with trends in the way that hardware has evolved over time.
+[00:00:32 -> 00:00:43] For a very long time, we were able to scale the performance of individual CPUs, of sort of single thread performance on CPUs, according to Moore's law.
+[00:00:43 -> 00:00:53] So since time immemorial, you can sort of plot, say, the CPU frequency or the single threaded performance on the sort of log scale.
+[00:00:53 -> 00:01:01] And it really was sort of a relentless trend that drove the advancement of computing until around 2005.
+[00:01:01 -> 00:01:07] For a variety of reasons, it became harder and harder to make individual CPUs faster.
+[00:01:07 -> 00:01:17] So really, if you plot this, you see that frequencies and single threaded performance really did slow down a lot around 2005.
+[00:01:17 -> 00:01:22] At the same time, it became necessary to get performance in other ways.
+[00:01:22 -> 00:01:33] And this is why if you plot, let's do it in a different color, say, the number of cores since the beginning in, like, most computers that people actually buy,
+[00:01:33 -> 00:01:41] that stayed at one. That is, like, people were buying single core machines for a really long time.
+[00:01:41 -> 00:01:50] Almost every computer was like, well, it's just one CPU up until around this time when things really underwent a shift.
+[00:01:50 -> 00:01:55] And we didn't get to a new exponential, but we did really go under a shift where, like,
+[00:01:55 -> 00:02:07] people are building more and more cores into their CPUs as a way to make up for the lack of performance advances in single threaded CPUs.
+[00:02:07 -> 00:02:15] This means that multi cores are everywhere. They are, of course, in your phone and in your desktop and in your laptop and in every server everywhere.
+[00:02:15 -> 00:02:25] They're even in lots of embedded devices. Parallel programming as multi threaded programming is necessary to get the full potential out of this kind of device.
+[00:02:25 -> 00:02:31] There are many different models for how you can think of to program a parallel computer.
+[00:02:31 -> 00:02:34] I put a few of them in here. This is really not meant to be an exhaustive list.
+[00:02:34 -> 00:02:44] They're just like different concepts, different ways to look at parallel processing and ways to conceive of how we will build programming languages and compilers to target parallel machines.
+[00:02:44 -> 00:02:51] To go through a few of them, message passing is just in some ways the most straightforward model you can imagine.
+[00:02:51 -> 00:02:57] You just have like different threads of execution doing different things and they can exchange messages with each other.
+[00:02:57 -> 00:03:05] So you usually need to build in something like a send or receive into your programming model so you can send information from one thread of execution to another.
+[00:03:05 -> 00:03:11] So this describes, for example, like how a lot of supercomputers worked and still do.
+[00:03:11 -> 00:03:16] And it's also described by, for example, Tony Hoare's communicating sequential processes model.
+[00:03:16 -> 00:03:21] Shared memory multiprocessing is kind of the flip side of the coin of message passing.
+[00:03:21 -> 00:03:24] That means that you have, again, lots of separate threads of execution.
+[00:03:24 -> 00:03:31] But instead of sending receiving messages to each other, they all have access to a big pool of memory that they all share.
+[00:03:31 -> 00:03:36] So instead of sending a message from thread one to thread two, you just like write a value into the memory.
+[00:03:36 -> 00:03:39] And then later thread two comes along and reads that value.
+[00:03:39 -> 00:03:42] Like message passing, this is a really simple concept.
+[00:03:42 -> 00:03:50] It's like single threaded programming with a memory, except that memory exists in multiple places, in multiple threads, conceptually.
+[00:03:50 -> 00:03:56] Other models of parallelism include things like data parallelism that shows up on GPUs a lot.
+[00:03:56 -> 00:04:00] You can sort of think of GPUs as like an engine for doing data parallel processing.
+[00:04:00 -> 00:04:02] They also have shared memory.
+[00:04:02 -> 00:04:07] So there's not really like hard lines between these different programming models,
+[00:04:07 -> 00:04:11] and certainly not between data parallel programming models and shared memory programming models.
+[00:04:11 -> 00:04:14] Task parallelism is a slightly more exotic one.
+[00:04:14 -> 00:04:21] If you've ever used a framework like Cilk, for example, that works on this kind of like fork join task spawning style
+[00:04:21 -> 00:04:27] that's pretty different from data parallelism, shared memory, or message passing.
+[00:04:27 -> 00:04:34] And actors are yet a different model that is sort of like the message passing CSP style, but sort of not.
+[00:04:34 -> 00:04:42] Anyway, the point is that there's lots of different models for how you can imagine doing parallel programming in the multi-core era.
+[00:04:42 -> 00:04:51] One of them, however, is far and away the most common place, both in how we build machines and in how we program those machines.
+[00:04:51 -> 00:04:55] And that, for better or for worse, is shared memory multi-threading.
+[00:04:55 -> 00:04:58] Shared memory multi-threading is truly everywhere.
+[00:04:58 -> 00:05:07] It is the basis for how multi-core machines are built with like several cores on one chip connected to one giant pool of memory.
+[00:05:07 -> 00:05:15] It's also the basis for the simplest underlying parallelism models in most mainstream languages.
+[00:05:15 -> 00:05:20] Pthreads, for example, is like the kind of parallelism that's built into the C and C++ standards.
+[00:05:20 -> 00:05:24] And lots of other programming languages have emulated exactly that.
+[00:05:24 -> 00:05:30] That is just having a normal sequential program, but like lots of those that share a single pool of memory.
+[00:05:30 -> 00:05:43] So the rest of this lesson is going to be exploring the implications of shared memory multi-threading as a parallel programming model on programming language design and implementation.
+[00:05:43 -> 00:05:54] That is how we build compilers for a model that embraces this very straightforward reflection of how machines execute code in parallel and share memory.
+[00:05:54 -> 00:05:58] I want to emphasize, however, that it did not have to be this way.
+[00:05:58 -> 00:06:00] This is an artificial choice.
+[00:06:00 -> 00:06:12] Somewhere along the line, we, humanity, decided that shared memory multi-threading was going to be the prime way that we build computers and we build programming languages to target those computers.
+[00:06:12 -> 00:06:20] There are plenty of other models that we could be building machines around, that we could make the primary form of parallel programming that people do.
+[00:06:20 -> 00:06:33] And for better or for worse, shared memory has really won out as kind of like the underlying model that operating systems expose and that hardware is built on and that programming languages convey to programmers.
+[00:06:33 -> 00:06:37] So the shared memory programming model really bears further exploration.
+[00:06:37 -> 00:06:41] Let's examine what it would look like if we were to add shared memory to Brill.
+[00:06:41 -> 00:06:43] I'm showing an example on the screen here.
+[00:06:43 -> 00:06:51] What I'm trying to convey is that you can imagine having a setup phase that runs before any of the other two threads.
+[00:06:51 -> 00:07:00] I'm not going to show how to like fork these threads, but imagine that this code runs in two separate threads sometime after the setup code does.
+[00:07:00 -> 00:07:04] The setup code is longer than the two threads, but it's doing something super simple.
+[00:07:04 -> 00:07:08] It's just allocating two different locations and putting zero into both of them.
+[00:07:09 -> 00:07:18] So originally, before these two threads run, we have a memory that consists of two separate memory locations, A and B, and they both hold zero.
+[00:07:18 -> 00:07:22] Then we want to run these two threads, and this is what really matters.
+[00:07:22 -> 00:07:28] Thread one does a store and a load, and thread two does a store and a load, but they're kind of flip-flopped.
+[00:07:28 -> 00:07:35] That is, thread one stores to A and then reads from B, and thread two stores to B and then reads from A.
+[00:07:35 -> 00:07:43] Of course, the most important question to ask about this implicit extension to Brill with shared memory and multithreading is, what does this program mean?
+[00:07:43 -> 00:07:48] That is, what is the semantics of shared memory accesses in Brill?
+[00:07:48 -> 00:07:52] So what I want you to do is try to make up these semantics.
+[00:07:52 -> 00:07:58] That is, imagine what is possible for the end state of this program.
+[00:07:58 -> 00:08:00] What is this program allowed to do?
+[00:08:01 -> 00:08:08] Because we're in a parallel universe, it seems reasonable that instead of just having one possible outcome, multiple outcomes are possible.
+[00:08:08 -> 00:08:12] Everyone really knows that parallel programming has some amount of non-determinism in it.
+[00:08:12 -> 00:08:15] So let's try to ask which states are possible.
+[00:08:15 -> 00:08:25] So look at this program, and my question for you is, what can, this should say, AV and BV, what should these things hold at the end?
+[00:08:25 -> 00:08:35] That is, when we read from B into this local variable BV and we read from A into this local variable AV, what are the possible values of those things?
+[00:08:35 -> 00:08:39] I've made a table for you here saying that both A and B can be either 0 or 1.
+[00:08:39 -> 00:08:42] And my question for you is, which combinations should be allowed?
+[00:08:42 -> 00:08:50] That is, according to a straightforward extension of Brill, is it possible for A and B to be both 0, all the way up to being both 1?
+[00:08:50 -> 00:09:03] Pause the video now and fill in this table with what you think should be allowed according to a reasonable semantics for parallel programming in Brill.
+[00:09:03 -> 00:09:10] Let's try thinking through this question by exploring the possibilities of which instructions run when.
+[00:09:10 -> 00:09:20] We know that these two threads might be running at the same time, but let's just imagine, like, what happens when a given instruction wins and executes first before the other ones?
+[00:09:20 -> 00:09:31] So for example, maybe it's possible that all of thread 1 completes, so it stores into A and then loads from B, and then all of thread 2 executes, so it stores into B and then loads from A.
+[00:09:31 -> 00:09:32] So what's going to happen then?
+[00:09:32 -> 00:09:36] So we're going to store 1 into A and then read 0 here.
+[00:09:36 -> 00:09:39] So we're going to be in a world where B is 0, either this or this.
+[00:09:39 -> 00:09:47] And then we will store into B, no one's ever going to read that, read from A, and then we'll get the 1 that we just stored.
+[00:09:47 -> 00:09:53] So it seems to me that it should be possible to get this execution by running thread 1 and then thread 2.
+[00:09:53 -> 00:10:01] By doing the opposite, I think it's possible to do the other thing, that is to read 0 for A and thread 2, and then come along and read thread 1.
+[00:10:01 -> 00:10:04] OK, so that's kind of the coarse-grained interleavings.
+[00:10:04 -> 00:10:07] Let's now try doing finer-grained interleavings.
+[00:10:07 -> 00:10:16] That is, what happens if we do both of the stores, that is thread 1's store and then thread 2's store, and then we do both of the loads after that?
+[00:10:16 -> 00:10:20] That means that both loads see 1, so it should be possible to do this.
+[00:10:20 -> 00:10:22] So we've gotten three out of the four cases.
+[00:10:22 -> 00:10:28] Is it ever possible to get a case where both things read 0?
+[00:10:28 -> 00:10:39] It seems to be like no matter which way you interleave the instructions, it should be impossible for both of these variables to see the value 0.
+[00:10:39 -> 00:10:42] That is, for both of these things to sort of miss the original store.
+[00:10:42 -> 00:10:47] There's not really a way to fit together the interleavings of instructions to make that happen.
+[00:10:47 -> 00:10:53] So this seems like a satisfying answer, and it is a perfectly reasonable answer for the semantics that a language should have.
+[00:10:53 -> 00:11:04] The unfortunate reality, however, is that almost no programming languages, and certainly no realistic processors out there, support this assumption.
+[00:11:04 -> 00:11:16] That is, in most programming languages that you use, and basically every ISA, this outcome is also possible, which in some ways is very disturbing.
+[00:11:16 -> 00:11:24] It reveals that implicit in our reasoning about this was an assumption about what the semantics of a multithreaded execution can be.
+[00:11:24 -> 00:11:32] So when we were talking about interleavings, that is saying like maybe this instruction goes first and then this one comes after, or possibly the other way around,
+[00:11:32 -> 00:11:43] we were thinking about parallel executions as being kind of interleavings of multiple sequential executions within threads, sort of like this picture shows.
+[00:11:43 -> 00:11:49] If we have four instructions, then you can sort of interleave them this way, or you can interleave them in some shifted way.
+[00:11:49 -> 00:11:54] But the semantics of the program are dictated by interleavings under this assumption.
+[00:11:54 -> 00:11:58] That style of reasoning has a name. It's called sequential consistency.
+[00:11:59 -> 00:12:09] A short summary of what sequential consistency means is that the semantics of every execution of the program must correspond to some sequential execution of a program
+[00:12:09 -> 00:12:13] that interleaves the instructions from all of the threads.
+[00:12:13 -> 00:12:22] That is, if you want to know what a program can do, you can just take all the possible interleavings of the threads, and those are all the possibilities.
+[00:12:22 -> 00:12:27] In this, in some ways, even though it creates lots of complications because of non-determinism stuff,
+[00:12:27 -> 00:12:39] it is convenient because it means that every parallel execution has an equivalent imaginary sequential execution that just looks like an interleaving of the instructions.
+[00:12:39 -> 00:12:46] A more formal way of looking at it in sequential consistency is to use a relation called the happens before relation.
+[00:12:46 -> 00:12:52] This is a partial order that just says which instructions appear to happen before other ones.
+[00:12:52 -> 00:12:56] In the classic definition of happens before, there's two different kinds of edges.
+[00:12:56 -> 00:13:04] There are program order edges that are within threads that say that, like, the order of execution within a thread is kind of the order that it appeared in the code.
+[00:13:04 -> 00:13:07] That is, of course, the sequential execution within a thread.
+[00:13:07 -> 00:13:15] So this edge here, this ordering edge between the two instructions in thread one, that's a program order edge.
+[00:13:15 -> 00:13:18] And same with the two instructions in thread two in our example.
+[00:13:18 -> 00:13:24] Happens before also has a second type of edge that reflect message sends and receives.
+[00:13:24 -> 00:13:27] And this is a fuzzier concept that kind of depends on the programming model,
+[00:13:27 -> 00:13:33] but basically it means if you can observe effects from another thread, then think of that as an edge in your happens before graph.
+[00:13:34 -> 00:13:38] So, for example, if this load observes events from this store in B,
+[00:13:38 -> 00:13:47] that is, if it can see the value stored by this store, then that counts as a edge in the happens before graph.
+[00:13:47 -> 00:13:55] One way of defining sequential consistency is that every execution corresponds to one of these happens before graphs.
+[00:13:55 -> 00:14:06] And the value for every load is sort of dictated by looking at them at a proceeding store in the partial order defined by the happens before relation.
+[00:14:06 -> 00:14:12] This, again, is a convenient way to think about parallel programming.
+[00:14:12 -> 00:14:16] And I can't emphasize enough. It is not what happens in the real world.
+[00:14:16 -> 00:14:21] There are many reasons why we are stuck in a world without sequentially consistent semantics.
+[00:14:21 -> 00:14:25] But a big one is efficiency, especially in hardware.
+[00:14:25 -> 00:14:35] The ways that we like to build CPUs make it extremely expensive to provide sequentially consistent semantics at the level of the ISA.
+[00:14:35 -> 00:14:43] I'm going to show you an example here. It's just going to show you a very simplified version of what a modern CPU multi-core looks like.
+[00:14:43 -> 00:14:48] And we're going to think about how it makes it hard to enforce sequential consistency.
+[00:14:48 -> 00:14:53] Of course, the way that we build CPUs today is that cores have their own caches associated with them.
+[00:14:53 -> 00:14:59] They want to have their own very fast private memories that they can access, but those are hooked up to the global memory.
+[00:14:59 -> 00:15:06] So caches can create copies of things in the global memory here within their local memories for fast access.
+[00:15:06 -> 00:15:13] So remember that the way that the program works is that it first writes to A from CPU one.
+[00:15:13 -> 00:15:18] So imagine that goes into the cache and then it writes to B from CPU two in parallel.
+[00:15:18 -> 00:15:21] And that maybe goes into its cache.
+[00:15:21 -> 00:15:31] The important thing about caches, however, is that it takes some time to propagate the information from the cached data in CPU one to get it out into main memory.
+[00:15:31 -> 00:15:38] So it's possible, at least momentarily, for A to contain the value one in CPU one's cache.
+[00:15:38 -> 00:15:46] But in main memory, when CPU two comes along and reads A, to see zero when it reads.
+[00:15:46 -> 00:15:55] And similarly for CPU one to come along and access memory before the modification to B has been published from CPU two and to get zero here.
+[00:15:55 -> 00:16:04] This means that both CPU one and CPU two read zero and we got that value that is impossible to get under sequential consistency, that outcome rather.
+[00:16:04 -> 00:16:11] That is, we got an outcome where VA is zero and VB is zero, which is impossible in any sequentially consistent execution.
+[00:16:11 -> 00:16:17] If you know something about cache coherence in computer architecture, you may be complaining quite rightly that I'm oversimplifying things here.
+[00:16:17 -> 00:16:22] And indeed, it is true. I'm oversimplifying in that the caches are not actually the problem here.
+[00:16:22 -> 00:16:30] That is, caches typically have a lot of complicated support for coherence that try to get rid of this type of problem.
+[00:16:30 -> 00:16:38] However, this issue does persist. In modern processors, the actual problem here typically has to do with store queues.
+[00:16:38 -> 00:16:45] That is, behind the cache that enters the coherence domain that is sort of made to synchronize with other processors,
+[00:16:45 -> 00:16:51] there's typically other temporary storage that CPUs can use even before it gets into the cache.
+[00:16:51 -> 00:16:56] And this is kind of the root of all evil for enforcing strong consistency.
+[00:16:56 -> 00:17:02] Instead, modern multiprocessors are stuck with weaker memory models than sequential consistency.
+[00:17:02 -> 00:17:07] Memory models or memory consistency models are just the set of rules,
+[00:17:07 -> 00:17:14] the semantics for what a given load instruction is allowed to return in the context of a given execution.
+[00:17:14 -> 00:17:21] You can think of sequential consistency as the strongest possible memory model or the strongest reasonable memory model
+[00:17:21 -> 00:17:25] in the sense that it provides the most guarantees to you as the programmer.
+[00:17:25 -> 00:17:29] Most real hardware implements weaker memory models than that.
+[00:17:29 -> 00:17:32] That is, memory models that provide fewer guarantees.
+[00:17:32 -> 00:17:38] If you happen to observe a sequentially consistent execution, then that agrees with a weaker memory model,
+[00:17:38 -> 00:17:44] but not the other way around. That is, it's not necessarily the truth that executions satisfying weaker memory models
+[00:17:44 -> 00:17:47] appear to be sequentially consistent.
+[00:17:47 -> 00:17:52] To convince you that this effect is real, I wrote a small example program that I will compile and run in my machine.
+[00:17:52 -> 00:17:55] And you can run it too, just to make sure that I'm not lying.
+[00:17:55 -> 00:17:59] This program is exactly the same thing that you just saw on the screen in Brill,
+[00:17:59 -> 00:18:02] but now transposed into C so I can actually run it.
+[00:18:02 -> 00:18:08] So this has two different threads. We're going to run these in threads.
+[00:18:08 -> 00:18:13] And just like we saw before, this is going to write to X, then read from Y.
+[00:18:13 -> 00:18:16] And the other thread will write to Y and read from X.
+[00:18:16 -> 00:18:19] And we can put those into these temporaries that we will use.
+[00:18:19 -> 00:18:25] Lest you think I'm cheating, those are all marked as volatile, so they should be re-read every time.
+[00:18:25 -> 00:18:31] In any case, what the main function will do is first set everything to 0, that is, X and Y are both 0 to begin with.
+[00:18:31 -> 00:18:36] Then we will launch those two threads, pthread create is C's way of setting, like, start a thread
+[00:18:36 -> 00:18:39] that calls this function thread 0 and then thread 1 a separate thread.
+[00:18:39 -> 00:18:42] pthread join waits for those things to finish.
+[00:18:42 -> 00:18:45] And then finally, we'll print out the results of temp1 and temp2.
+[00:18:45 -> 00:18:48] That is the thing that we got back from the read in both of the threads.
+[00:18:48 -> 00:18:54] That is, we will read temp1, read temp2, and we'll print out temp1, temp2 here.
+[00:18:54 -> 00:18:59] So the thing that, naively, should be impossible is that both of those things are 0.
+[00:18:59 -> 00:19:02] When they are both 0, we will break out of this loop.
+[00:19:02 -> 00:19:04] I forgot to tell you about the loop.
+[00:19:04 -> 00:19:08] We're going to put this entire thing in a while1 thing, so we will keep doing that.
+[00:19:08 -> 00:19:10] We'll see what outputs we get.
+[00:19:10 -> 00:19:15] We'll sometimes, I imagine, get 1, 1, sometimes 1, 0, sometimes 0, 1, like you would expect.
+[00:19:15 -> 00:19:22] And then if something goes weird, that is, if we get this strange circumstance where both are 0, then we'll stop the program.
+[00:19:22 -> 00:19:25] Otherwise, things will just keep on trying forever.
+[00:19:25 -> 00:19:27] OK, so let's see what happens.
+[00:19:27 -> 00:19:30] Let's compile this and just run our program.
+[00:19:30 -> 00:19:36] Not doing anything terribly fancy here, just using the compiler that came with my computer.
+[00:19:36 -> 00:19:38] That was actually really fast.
+[00:19:38 -> 00:19:42] We got plenty of 0 1s, plenty of 1 0s.
+[00:19:42 -> 00:19:44] See if there's any 1 1s in here.
+[00:19:44 -> 00:19:46] There are, in fact, 1 1s.
+[00:19:46 -> 00:19:49] And then finally, we got to 0 0, and the program ended.
+[00:19:49 -> 00:19:55] In fact, it really takes far less than a second for my computer to demonstrate this.
+[00:19:55 -> 00:20:07] Just to go to show that our intuition, when we try to use interleavings to reason about the semantics of parallel programs as they execute in real languages, real compilers, and real computers, that is wrong.
+[00:20:07 -> 00:20:10] So what guarantees do real processors actually give you?
+[00:20:10 -> 00:20:15] That is, what are those more realistic, weaker memory models actually doing?
+[00:20:15 -> 00:20:19] To answer that question, we have to talk about synchronization operations.
+[00:20:19 -> 00:20:29] That is, most weaker memory models have to say something special about operations like locks and unlocks in a threading library.
+[00:20:29 -> 00:20:39] Synchronization is a blanket term that includes locks, aka mutexes, and all those other concepts that you're used to using in parallel programming to synchronize between threads.
+[00:20:39 -> 00:20:47] So, for example, barriers or atomic compare and swap operations, those are all considered synchronization operations.
+[00:20:47 -> 00:20:54] And most realistic memory models have to say something about what your program does with those synchronization operations.
+[00:20:54 -> 00:21:06] For example, if we wrote a braille program that acquired a lock, locks that lock and unlocks it around a store and then a load, the way you would expect this to work, of course, is that these appear to be mutually exclusive.
+[00:21:06 -> 00:21:11] So we get sort of atomic access to these variables.
+[00:21:11 -> 00:21:22] The way this shows up in the definition of realistic memory models is that synchronization edges are a special kind of edge in the happens before graph.
+[00:21:22 -> 00:21:34] If this lock of L is ordered after this unlock of L from a different thread, then this load that happens in program order after that lock operation gets to see the value that was stored by this instruction,
+[00:21:34 -> 00:21:38] which is ordered by program order before this unlock of L.
+[00:21:38 -> 00:21:42] And by using these synchronization operations, you can tell that happens before graph.
+[00:21:42 -> 00:21:52] You can sort of construct that happens before graph that gives you guarantees about what your loads and stores are supposed to do when they communicate with each other through shared memory.
+[00:21:52 -> 00:22:02] In contrast, a data race is the name for what happens when you try to use a variable without synchronizing.
+[00:22:02 -> 00:22:12] According to most memory models, data races are problematic to one degree or another and have more complicated semantics than it happens before relation can describe.
+[00:22:12 -> 00:22:15] Technically speaking, here's the definition of a data race.
+[00:22:15 -> 00:22:25] A data race occurs whenever you have two different accesses to the same memory location that is the same place in the shared memory between two threads.
+[00:22:26 -> 00:22:36] Those two accesses, when they come from different threads and at least one of them is a write, that is when you have a write and a write or a write and a read or vice versa, a read and a write,
+[00:22:36 -> 00:22:42] but not a double read as two different people reading the same location without modifying it.
+[00:22:42 -> 00:22:48] And those two accesses are unordered by synchronization.
+[00:22:48 -> 00:23:00] That is, it's like in this example, if we were to cross out all the locks, if these two instructions are a write and a read to the same memory location A,
+[00:23:00 -> 00:23:10] and they're unordered by synchronization, that is, they may happen in real time, one before the other, but they're not ordered by some synchronization operation that puts an edge into the happens before graph.
+[00:23:10 -> 00:23:15] When that happens, you have a data race, and in general, you have problems.
+[00:23:15 -> 00:23:25] The way that most weak memory models, that is realistic memory models, work for both programming languages and for hardware is they obey this really pithy slogan.
+[00:23:25 -> 00:23:32] DRF implies SC. DRF means data race free and SC means sequential consistency.
+[00:23:32 -> 00:23:40] So what this implication means is that data race free programs, if you write a program that has no data races, that it is properly synchronized,
+[00:23:40 -> 00:23:46] every possible access is mediated by some synchronization operation that orders them.
+[00:23:46 -> 00:23:52] Then your program gets to have sequentially consistent semantics.
+[00:23:52 -> 00:24:03] That means that you can imagine the semantics of your program as being some interleaving that obeys the synchronization operations, obeys program order.
+[00:24:03 -> 00:24:07] And then you have a sequential semantics of that interleave program.
+[00:24:07 -> 00:24:11] So your properly synchronized programs get to have that very nice property.
+[00:24:11 -> 00:24:21] On the other hand, of course, programs that are not data race free programs containing data races have a much harder life in realistic programming models.
+[00:24:21 -> 00:24:26] The perhaps scariest one is in C and C++.
+[00:24:26 -> 00:24:31] Before 2011, C and C++ didn't really have a reasonable semantics for concurrency.
+[00:24:31 -> 00:24:34] And now they do, but it is still pretty scary.
+[00:24:34 -> 00:24:38] The standards now say that data races are undefined behavior.
+[00:24:38 -> 00:24:45] You get DRF implies SC, that is race free programs, are still sequentially consistent.
+[00:24:45 -> 00:24:50] But otherwise, it's undefined behavior, meaning that your program can literally do anything.
+[00:24:50 -> 00:24:57] It is allowed to catch your computer on fire or to do RM-RF slash and delete all the files on your computer.
+[00:24:57 -> 00:25:03] All these things are allowed if your program executes even a single data race in C and C++.
+[00:25:03 -> 00:25:09] In Java, it's a bit better in that there are semantics for racy programs.
+[00:25:09 -> 00:25:20] They are supposed to do something and the standard tells you what values is possible to read from a racy access given a program that executes a data race.
+[00:25:20 -> 00:25:28] Unfortunately, those semantics are extremely complicated because of variability in the hardware targets and the complexity of compilers in the presence of concurrency.
+[00:25:29 -> 00:25:37] The Java standard has a hugely complicated set of rules to tell you what the value that you will get in a racy execution will be.
+[00:25:37 -> 00:25:41] It's not any possible value. It is more constrained than that.
+[00:25:41 -> 00:25:47] But I guarantee you that you would be better off in life if you never had to read that section of the standard.
+[00:25:47 -> 00:25:53] That is, if you never had to worry about the semantics of a racy program because you just don't write racy programs.
+[00:25:53 -> 00:26:05] It's much easier that way, even if unlike C and C++ in Java, it won't erase all the files on your hard drive when you run a race, when your program executes a data race.
+[00:26:07 -> 00:26:13] In Rust, this problem is kind of defined away because their type system guarantees that multi-threaded programs cannot have data races.
+[00:26:13 -> 00:26:15] So I guess that's nice.
+[00:26:15 -> 00:26:21] In hardware, that is in ISAs for CPUs, there's a whole range of different relaxed memory models.
+[00:26:21 -> 00:26:27] Generally speaking, they satisfy DRFS implies SC, but they vary beyond that wildly.
+[00:26:27 -> 00:26:33] x86 has a notion called total store order or TSO that gives you fairly strong guarantees on what races can do.
+[00:26:33 -> 00:26:41] But as with the Java memory model, you are usually better off ignoring that and just relying on this very simple rule.
+[00:26:41 -> 00:26:47] That is, don't do data races and then you don't have to worry about the differences between the hardware targets that you're running on.
+[00:26:47 -> 00:26:58] Designing and implementing a compiler for a language that supports shared memory multi-threading and enforces semantics in the form of a memory consistency model can be surprisingly tricky.
+[00:26:58 -> 00:27:10] Even if that memory model is something super basic, like C11's DRF implies SC, but otherwise who knows, even that kind of memory model can be incredibly hard to uphold.
+[00:27:10 -> 00:27:16] I'm going to show you a couple of failed attempts and to show you what can possibly go wrong.
+[00:27:16 -> 00:27:29] In my first attempt, I'm going to try doing essentially nothing in the compiler, like just saying we're going to just compile these different threads as if they were single threaded programs and basically don't worry about it.
+[00:27:29 -> 00:27:40] So what that would look like is that all your threading operations have to be kind of like normal functions implemented in the normal programming language with no special privilege that the compiler is aware of.
+[00:27:41 -> 00:27:50] In this example, we are using a lock, call it L, and that has to be implemented as just a normal function that does some sort of mutual exclusion protocol.
+[00:27:50 -> 00:27:53] Decker's algorithm, for example, is a perfectly good choice.
+[00:27:53 -> 00:27:59] It just sort of manipulates variables to make sure that no two threads can enter the critical section at the same time.
+[00:27:59 -> 00:28:01] There are two problems with this approach.
+[00:28:01 -> 00:28:13] The first is if you just compile this code, that is, compile the code for the mutex to like ordinary memory operations, the hardware doesn't have a way to enforce the synchronization edges in the happens before graph.
+[00:28:13 -> 00:28:18] That is, it doesn't get to know just because you're manipulating ordinary variables in memory.
+[00:28:18 -> 00:28:26] It has no way of knowing that what you are trying to do there is synchronization, and therefore it should give you stronger guarantees and avoid data races.
+[00:28:26 -> 00:28:39] But that's easily solved. Like, what if we had inline assembly, for example, that let us use those privilege instructions in the ISA, those special synchronization operations that all ISAs these days have inside the function?
+[00:28:39 -> 00:28:46] Then we still have a problem in the compiler that may not be aware of what those assembly instructions do.
+[00:28:46 -> 00:29:00] For example, this program, if it just sees this as an ordinary function call that updates a few variables, whether they are using synchronization instructions or not, then it seems like the compiler should be able to reorder stuff.
+[00:29:00 -> 00:29:11] That is, using interprocedural analysis, we can see that like the call to lock and unlock doesn't actually modify or read from A, the pointer A.
+[00:29:11 -> 00:29:22] So of course it should be possible to do to like move the store A1 above the lock and similarly to move the load A instruction above that lock.
+[00:29:22 -> 00:29:31] And then, unfortunately, we have taken a race-free program, a properly synchronized program, and the compiler has broken it. It's introduced a data race.
+[00:29:31 -> 00:29:47] The problem, of course, is that it was overthinking it. That is, it was looking into the lock function and saying, well, you're not modifying anything that overlaps with like this memory, so those things should totally be able to reorder with each other.
+[00:29:47 -> 00:29:58] We can fix this in our second attempt by pulling back a little bit on the whole interprocedural analysis thing and saying, well, lock and unlock instructions.
+[00:29:58 -> 00:30:08] I'm not going to look inside their bodies. That is, I'm just going to assume that those are black boxes that can modify all of memory and therefore it's not allowed to like move things across them.
+[00:30:08 -> 00:30:21] That is, I have to assume that this can touch anything and therefore, like any other black box function I don't have access to, I'd better not reorder things around it because it might mess up the semantics of my program that calls that black box function.
+[00:30:21 -> 00:30:36] So let's try that. That is, let's try a world where we have avoided this problem with reordering things around synchronization operations by just treating them as black boxes like any other opaque library function.
+[00:30:36 -> 00:30:48] There is a problem here, however, and this problem is even subtler than the previous one, and it has to do with programs that do no synchronization at all and yet still are race-free.
+[00:30:48 -> 00:30:57] So let's look at this program, which is just kind of a variation on the previous SC violation example we saw at the very beginning of this lesson.
+[00:30:57 -> 00:31:05] So again, at the beginning, X is zero and Y is zero. And instead of doing a read and a write, we'll do a read and a conditional write.
+[00:31:05 -> 00:31:17] So this will read from X and only if X is one, it will write to Y and this will read from Y and only if Y is one, it will write to X.
+[00:31:17 -> 00:31:25] So you can see how this is sort of similar to the previous example, but it's different in a really big, crucial way, which is this does not have a data race.
+[00:31:25 -> 00:31:33] This program cannot execute a data race. I know it sort of looks like it because there's a read over here to X and a write over here and a different thread to X.
+[00:31:33 -> 00:31:42] But the thing is there is no possible execution of this program that actually runs those two instructions, that is the read from X and the write to X, concurrently.
+[00:31:43 -> 00:31:52] That is, these conditions are always guaranteed to fail because X and Y are both initially zero. So Y++ and X++ will never execute.
+[00:31:52 -> 00:31:57] So all we have here are reads to different variables that aren't conflicting.
+[00:31:57 -> 00:32:02] We have no pair of accesses that meets that formal definition of a data race.
+[00:32:02 -> 00:32:10] So this program is totally fine by, for example, those C11 rules that say DRF implies SC. There's no undefined behavior here.
+[00:32:10 -> 00:32:18] However, imagine that your compiler that comes along and looks at these programs through a single threaded lens, that is from a time before 2005,
+[00:32:18 -> 00:32:24] it would see these programs as being perfectly optimizable in isolation.
+[00:32:24 -> 00:32:33] That is, if a program, if a compiler comes along and looks at this, we should be able to transform it in a way that does this somewhat fancy speculative optimization
+[00:32:33 -> 00:32:38] that is totally legal under a sequential semantics that is like under a single thread semantics.
+[00:32:38 -> 00:32:45] We can totally take this if X equals 1 and Y++. Instead, for some reason, we decide it's profitable to say Y++.
+[00:32:45 -> 00:32:49] And if X is not equal to 1, then decrement Y.
+[00:32:49 -> 00:32:56] Again, completely equivalent to the program above under a single threaded semantics.
+[00:32:56 -> 00:33:02] And similarly, the compiler can come along to the other thread, see this, and transform it into analogous code that does an increment.
+[00:33:02 -> 00:33:06] And then if the condition fails, then it undoes that increment.
+[00:33:06 -> 00:33:11] These two programs taken in isolation, those are totally equivalent, and these two, those are totally equivalent.
+[00:33:11 -> 00:33:18] The only problem is when we put them back into context in the multi-threaded execution, we've introduced a data race.
+[00:33:18 -> 00:33:27] We have a read from X and a write to X that are unsynchronized, that is to the same location and different threads that are not ordered by synchronization,
+[00:33:27 -> 00:33:29] and the same thing for Y.
+[00:33:29 -> 00:33:36] So we've taken a totally benign program and turned it into an evil program that runs a data race,
+[00:33:36 -> 00:33:42] and therefore, according to C11, has undefined behavior and can do literally anything, including set your computer on fire.
+[00:33:42 -> 00:33:50] This is terrible. This optimization that used to be legal in a single threaded world is suddenly must be made illegal,
+[00:33:50 -> 00:33:53] even though there are no synchronization operations in sight.
+[00:33:53 -> 00:33:57] There's not a single lock, not a single thread spawn anywhere near any of this code.
+[00:33:57 -> 00:34:04] And yet the compiler's hands are tied because of the potential that we might run in a multi-threaded environment.
+[00:34:04 -> 00:34:07] There's another example that's like this, too.
+[00:34:07 -> 00:34:17] Say that you have a struct in C, that is one of these things that packs, say, like four 8-bit values into a single value X.
+[00:34:17 -> 00:34:19] Say you want to write into those three values.
+[00:34:19 -> 00:34:26] That is, this struct, we can write the letter A into the field A, B, and C, but we don't overwrite the whole thing.
+[00:34:26 -> 00:34:34] It seems like a reasonable optimization on, say, a 32-bit machine to say we're going to write to all four of these fields using a 32-bit store.
+[00:34:34 -> 00:34:40] So one thing we could do is optimize this instead of sending a one-byte store, one-byte store, one-byte store.
+[00:34:40 -> 00:34:50] We could just read the value of the D field, combine that with the values of A, B, and C, and send that entire 32-bit word off to memory.
+[00:34:50 -> 00:34:57] And we save one access by doing one read and one write instead of doing three writes.
+[00:34:57 -> 00:35:01] Again, this optimization seems completely reasonable from a single-threaded perspective.
+[00:35:01 -> 00:35:07] But again, it's completely broken in a multi-threaded context that is in a post-2005 world.
+[00:35:07 -> 00:35:09] Can you see what the problem is?
+[00:35:09 -> 00:35:14] I haven't written the other thread that can interfere with this one, but we have created the potential for a data race.
+[00:35:14 -> 00:35:22] You can pause the video now and think about what has to happen in some other thread to reveal that this optimization is incorrect.
+[00:35:22 -> 00:35:32] The problem is that the original program never did anything to the field D.
+[00:35:32 -> 00:35:34] It never read it and never wrote it.
+[00:35:34 -> 00:35:37] And we have now transformed this program into one that reads from D.
+[00:35:37 -> 00:35:40] The programmer never asked for that.
+[00:35:40 -> 00:35:46] So if some other thread was writing to D concurrently, then we have taken their perfectly race-free program.
+[00:35:46 -> 00:35:52] That is nothing about D, no overlapping accesses whatsoever, and we've introduced a race.
+[00:35:52 -> 00:36:03] There's many other examples like this that all imply that the job of writing a compiler for a multi-threaded language is intrinsically harder than writing a compiler for a single-threaded language.
+[00:36:03 -> 00:36:12] You suddenly have to think about a lot more stuff if you want to enforce any kind of memory consistency model for your shared memory multi-threaded language.
+[00:36:12 -> 00:36:21] These examples, and kind of the recipe for solving them in compilers, comes from this amazing paper from Hans Bohm.
+[00:36:21 -> 00:36:24] I really strongly recommend this paper to anyone.
+[00:36:24 -> 00:36:34] It has many more mind-bending examples like the ones I just showed you, and it makes a really convincing case, like the title says, that it's impossible to implement threads just as a library.
+[00:36:34 -> 00:36:45] That is just treating functions like lock and unlock and thread spawn and stuff as black box calls, and then using your ordinary tactics you would always use to compile the rest of the code.
+[00:36:45 -> 00:36:51] You really have to bake the semantics of shared memory multi-threading into the compiler that you build.
+[00:36:51 -> 00:36:55] Perhaps at this point, you're wondering why we're stuck with this at all.
+[00:36:55 -> 00:37:00] That is, why is the dominant paradigm for parallelism shared memory multi-threading of all things?
+[00:37:01 -> 00:37:10] Much earlier in this, I showed you so many other alternatives for how we could be writing parallel programs, and it seems like we're kind of stuck with a really bad one.
+[00:37:10 -> 00:37:18] That is, one, with all these problems of data races, data races can't possibly exist if you don't have shared memory to store that conflicting variable in.
+[00:37:18 -> 00:37:25] So why don't we have one of these other totally reasonable models of shared memory processing?
+[00:37:25 -> 00:37:33] I don't have an answer for you. This is the world that we live in, and therefore we have to deal with shared memory multi-threading, but I urge the world not to give up the fight.
+[00:37:33 -> 00:37:41] There are other alternatives that define these problems away that make semantics clear and free up opportunities in the hardware and the compiler.
+[00:37:41 -> 00:37:52] So shared memory multi-threading, like so many things in the computing world, is something that we just have to deal with, but we shouldn't get complacent and think that the world always has to be this way.
+[00:37:52 -> 00:37:55] There are other models, and the world can do better.

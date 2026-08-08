@@ -1,0 +1,389 @@
+Title: Compiler Design Module 27 : Handles
+Video ID: dPByD1TpQ5Y
+Detected language: en
+------------------------------------------------------------
+
+[00:00:00 -> 00:00:04] So now we're going to discuss when to shift
+[00:00:04 -> 00:00:05] and when to reduce.
+[00:00:06 -> 00:00:08] So we discussed about how a shift reduce parser works
+[00:00:08 -> 00:00:12] but we have left some open questions.
+[00:00:12 -> 00:00:15] And one of the questions is when to shift
+[00:00:15 -> 00:00:16] and when to reduce.
+[00:00:16 -> 00:00:19] So let's look at this example again.
+[00:00:19 -> 00:00:21] So we have our usual grammar
+[00:00:21 -> 00:00:22] which is the grammar of expressions.
+[00:00:22 -> 00:00:26] And we have the string int star int plus int.
+[00:00:26 -> 00:00:31] Now, the red line separator represents our cursor
+[00:00:32 -> 00:00:35] and I could either shift this separator to the right
+[00:00:35 -> 00:00:39] or I could reduce at the top of the stack on the left.
+[00:00:39 -> 00:00:41] So we also said that the left substring
+[00:00:41 -> 00:00:42] can be represented as a stack.
+[00:00:42 -> 00:00:45] And so I could either reduce at the top of the stack
+[00:00:45 -> 00:00:47] or I could push to the stack by shifting.
+[00:00:48 -> 00:00:50] Now, at this point, there was a choice.
+[00:00:50 -> 00:00:53] So this location here, there's a choice.
+[00:00:53 -> 00:00:55] I could either reduce or shift.
+[00:00:56 -> 00:00:59] And if you recall in the successful derivation
+[00:00:59 -> 00:01:03] in the successful reduction, we actually shifted.
+[00:01:03 -> 00:01:06] Let's look at what would happen if we reduced.
+[00:01:06 -> 00:01:08] So we could have reduced int to a T
+[00:01:08 -> 00:01:12] using this production T produces int.
+[00:01:12 -> 00:01:14] So if I do that,
+[00:01:14 -> 00:01:16] then this would be actually a fatal mistake
+[00:01:16 -> 00:01:20] because once I do that,
+[00:01:20 -> 00:01:24] then I would have to eventually shift to the right
+[00:01:24 -> 00:01:26] and there is nothing,
+[00:01:27 -> 00:01:29] there's no production in our grammar
+[00:01:29 -> 00:01:32] that starts with either T star
+[00:01:32 -> 00:01:35] or I could even reduce T to E
+[00:01:35 -> 00:01:36] and there's no production here
+[00:01:36 -> 00:01:38] that starts with an E star.
+[00:01:38 -> 00:01:42] So if I do a reduction at this point,
+[00:01:42 -> 00:01:45] I have actually no hope of being able to reduce
+[00:01:45 -> 00:01:46] all the way to the start symbol E.
+[00:01:48 -> 00:01:51] And so it was important that I don't reduce
+[00:01:51 -> 00:01:54] and I shift at this step.
+[00:01:55 -> 00:01:59] So in other words, we want to reduce
+[00:01:59 -> 00:02:01] only if the result can be further reduced
+[00:02:01 -> 00:02:02] to the start symbol.
+[00:02:02 -> 00:02:05] I mean, that's the informal intuition
+[00:02:05 -> 00:02:07] of when you want to reduce.
+[00:02:07 -> 00:02:09] So we just saw with an example
+[00:02:09 -> 00:02:12] that some reductions will not eventually
+[00:02:12 -> 00:02:14] lead to the start symbol while others would.
+[00:02:14 -> 00:02:17] And so we want to identify which reductions
+[00:02:17 -> 00:02:19] would lead us to the start symbol
+[00:02:19 -> 00:02:21] and which won't.
+[00:02:21 -> 00:02:22] And we also said that
+[00:02:23 -> 00:02:25] we could always implement a backtracking based strategy
+[00:02:25 -> 00:02:28] but now we are interested not in a backtracking strategy
+[00:02:28 -> 00:02:30] but a predictive strategy.
+[00:02:31 -> 00:02:34] So we want to predict whether to shift or reduce.
+[00:02:34 -> 00:02:37] So consider, so to be able to predict,
+[00:02:37 -> 00:02:40] we're going to develop a series of concepts
+[00:02:40 -> 00:02:42] before we actually represent the final algorithm.
+[00:02:42 -> 00:02:45] And one of the concepts is the concept of a handle
+[00:02:45 -> 00:02:47] or a definite, and this is just a definition.
+[00:02:47 -> 00:02:50] So consider a step in a rightmost derivation
+[00:02:50 -> 00:02:52] of the start symbol S
+[00:02:53 -> 00:02:54] and let's say I'm making multiple steps.
+[00:02:54 -> 00:02:57] So that's represented by the star here.
+[00:02:57 -> 00:02:59] And at some point I end up with this string
+[00:02:59 -> 00:03:02] alpha X omega.
+[00:03:02 -> 00:03:04] Alpha represents a string of symbols
+[00:03:04 -> 00:03:07] which could be in terminals and non-terminals.
+[00:03:07 -> 00:03:10] Omega also represents a string of symbols
+[00:03:10 -> 00:03:12] which could be terminals or non-terminals.
+[00:03:12 -> 00:03:15] And capital S X represents a single non-terminals.
+[00:03:17 -> 00:03:19] And in the rightmost derivation,
+[00:03:19 -> 00:03:24] this would let's say produce alpha beta omega
+[00:03:25 -> 00:03:29] using the production X produces beta.
+[00:03:30 -> 00:03:31] All right.
+[00:03:31 -> 00:03:33] So if this is a rightmost derivation
+[00:03:33 -> 00:03:38] and this was indeed a step in the rightmost derivation,
+[00:03:38 -> 00:03:41] then I'm going to call alpha beta
+[00:03:41 -> 00:03:45] which is the prefix of this entire string alpha beta omega
+[00:03:46 -> 00:03:50] as a handle of alpha beta omega.
+[00:03:50 -> 00:03:50] All right.
+[00:03:50 -> 00:03:53] So a handle identifies a reduction step
+[00:03:53 -> 00:03:56] that can further reduce to the start symbol.
+[00:03:56 -> 00:03:58] Notice that in this step,
+[00:03:58 -> 00:04:00] I'm reducing or actually in this
+[00:04:00 -> 00:04:02] because I'm doing a derivation,
+[00:04:02 -> 00:04:06] I'm deriving beta from X.
+[00:04:06 -> 00:04:07] In the reverse direction,
+[00:04:07 -> 00:04:12] I would have reduced beta to X.
+[00:04:12 -> 00:04:15] Now, should I have reduced
+[00:04:15 -> 00:04:17] or should I have not have reduced?
+[00:04:17 -> 00:04:19] Well, that is exactly same as answering
+[00:04:19 -> 00:04:21] whether alpha beta is a handle
+[00:04:21 -> 00:04:23] or alpha beta is not a handle.
+[00:04:23 -> 00:04:24] If alpha beta is a handle,
+[00:04:24 -> 00:04:26] then I should have reduced
+[00:04:26 -> 00:04:30] because I know that there is a path
+[00:04:30 -> 00:04:32] all the way back to capital S.
+[00:04:32 -> 00:04:35] On the other hand, if alpha beta is not a handle,
+[00:04:35 -> 00:04:37] then I shouldn't have reduced
+[00:04:37 -> 00:04:39] because then there won't have been a path
+[00:04:39 -> 00:04:40] all the way to capital S.
+[00:04:40 -> 00:04:42] And this is just the definition of a handle, right?
+[00:04:42 -> 00:04:44] Because if there exists a path like this,
+[00:04:44 -> 00:04:46] if there exists a step like this,
+[00:04:46 -> 00:04:50] then we say that alpha beta is a handle, okay?
+[00:04:50 -> 00:04:51] So let's look at some,
+[00:04:51 -> 00:04:54] an example to understand more about handles.
+[00:04:54 -> 00:04:56] So first of all, we only want to reduce at handles.
+[00:04:56 -> 00:05:00] We don't want to reduce if it's a non-handle.
+[00:05:00 -> 00:05:02] So if it's a non-handle, then you want to shift.
+[00:05:02 -> 00:05:04] If it's a handle, then you want to reduce
+[00:05:04 -> 00:05:06] because we have hope to getting all the way
+[00:05:06 -> 00:05:08] up to the start symbol.
+[00:05:09 -> 00:05:14] Okay, so let's look at this grammar
+[00:05:14 -> 00:05:16] that we have been quite familiar with.
+[00:05:16 -> 00:05:18] And then let's try to understand
+[00:05:18 -> 00:05:21] whether something is a handle of this grammar or not.
+[00:05:21 -> 00:05:23] So once again, this grammar basically
+[00:05:23 -> 00:05:24] is the grammar of expressions.
+[00:05:24 -> 00:05:27] E produces T plus E or T.
+[00:05:27 -> 00:05:31] T produces int star T or int or parenthesized E.
+[00:05:31 -> 00:05:36] Now, is int a handle of int star int plus int?
+[00:05:36 -> 00:05:40] In other words, should I be able to reduce int
+[00:05:40 -> 00:05:44] to some non-terminal when I see it
+[00:05:44 -> 00:05:46] on the leftmost side, all right?
+[00:05:46 -> 00:05:51] So let's try to derive int star int plus int using E.
+[00:05:51 -> 00:05:53] So because it's an unambiguous grammar,
+[00:05:53 -> 00:05:56] actually there's going to be only a single derivation,
+[00:05:56 -> 00:05:57] but I want the rightmost derivation.
+[00:05:57 -> 00:06:00] So they're going to be a single rightmost derivation.
+[00:06:00 -> 00:06:05] So I say E produces T plus E, produces T plus T,
+[00:06:07 -> 00:06:10] produces T plus int.
+[00:06:10 -> 00:06:13] Notice that I am deliberately doing
+[00:06:13 -> 00:06:14] only a rightmost derivation.
+[00:06:14 -> 00:06:16] That's a property of the shift reduce parser.
+[00:06:16 -> 00:06:21] So I can't just decide to derive the left T
+[00:06:21 -> 00:06:22] before the right T.
+[00:06:22 -> 00:06:25] That's not, that won't be a rightmost derivation.
+[00:06:25 -> 00:06:34] And then I produce int star T plus T.
+[00:06:37 -> 00:06:40] Okay, so now if I look at this,
+[00:06:40 -> 00:06:42] notice that in this step,
+[00:06:42 -> 00:06:47] I derived int star T from T.
+[00:06:50 -> 00:06:53] So which basically means that int star T
+[00:06:53 -> 00:06:57] is a handle of int star int plus int
+[00:06:57 -> 00:06:58] because on the way back,
+[00:06:58 -> 00:07:03] I could always reduce int star T to T,
+[00:07:03 -> 00:07:06] and I would still be able to get all the way back to E.
+[00:07:06 -> 00:07:10] But I've already, it's an int star.
+[00:07:10 -> 00:07:14] So I didn't really reduce T to an int,
+[00:07:14 -> 00:07:16] or I didn't derive int from a T.
+[00:07:16 -> 00:07:19] So I shouldn't be able to reduce int to a T.
+[00:07:19 -> 00:07:21] And so in fact, from this,
+[00:07:21 -> 00:07:25] we can say that while int star T is a handle,
+[00:07:25 -> 00:07:27] I couldn't find any step here
+[00:07:27 -> 00:07:30] that was just deriving int, all right?
+[00:07:30 -> 00:07:32] And so int is not a handle.
+[00:07:32 -> 00:07:35] So the answer here would be no.
+[00:07:36 -> 00:07:39] Okay, so recall what is a handle once again.
+[00:07:40 -> 00:07:43] It represents, so there should be a reduction step
+[00:07:43 -> 00:07:46] such that the prefix of the string
+[00:07:46 -> 00:07:50] is, was obtained by reducing,
+[00:07:53 -> 00:07:54] you know, so alpha X.
+[00:07:54 -> 00:07:59] So if alpha X omega produces alpha X,
+[00:07:59 -> 00:08:01] alpha beta omega in a rightmost derivation,
+[00:08:01 -> 00:08:04] then alpha beta is called the handle.
+[00:08:04 -> 00:08:07] So in this case, int star T would be called the handle.
+[00:08:07 -> 00:08:10] So in this case, alpha would be just epsilon,
+[00:08:10 -> 00:08:13] and beta would be int star T,
+[00:08:13 -> 00:08:16] and X would be capital T.
+[00:08:16 -> 00:08:19] And nowhere in here did we have a step
+[00:08:19 -> 00:08:22] which actually derived just the single int.
+[00:08:22 -> 00:08:25] And so int is not really a handle
+[00:08:25 -> 00:08:27] because we don't really have a step here
+[00:08:28 -> 00:08:31] in the derivation, in the rightmost derivation,
+[00:08:31 -> 00:08:35] which derives int on the leftmost prefix of the string.
+[00:08:35 -> 00:08:36] So the answer is no.
+[00:08:36 -> 00:08:39] Okay, let's look at some more examples.
+[00:08:39 -> 00:08:43] So is int star T a handle of int star int plus int?
+[00:08:43 -> 00:08:46] Well, we just saw that int star T is actually a handle.
+[00:08:46 -> 00:08:50] So once again, to see that E derives T plus E,
+[00:08:50 -> 00:08:55] it derives int star, derives T plus T,
+[00:08:56 -> 00:08:57] derives T plus int,
+[00:08:58 -> 00:09:03] derives int star T plus int.
+[00:09:03 -> 00:09:07] Now this point, this, you know,
+[00:09:08 -> 00:09:13] this represents omega, this represents X,
+[00:09:14 -> 00:09:17] and alpha is represented by the empty string.
+[00:09:17 -> 00:09:22] This represents beta, okay?
+[00:09:23 -> 00:09:25] And this represents omega.
+[00:09:26 -> 00:09:28] So there is a step,
+[00:09:28 -> 00:09:30] and alpha is still the empty string, right?
+[00:09:32 -> 00:09:33] So alpha is the empty string.
+[00:09:34 -> 00:09:37] Okay, so indeed there is a step
+[00:09:37 -> 00:09:41] that derives T plus int to int star T plus int.
+[00:09:41 -> 00:09:45] And so int star T is a handle of int star int plus int.
+[00:09:45 -> 00:09:50] So the answer is yes.
+[00:09:50 -> 00:09:52] Okay, all right.
+[00:09:52 -> 00:09:54] Now let's look at another example.
+[00:09:54 -> 00:09:59] Is int star T plus E a handle of int star int plus int?
+[00:09:59 -> 00:10:01] So let's again try to derive this.
+[00:10:01 -> 00:10:04] So I say S derives,
+[00:10:05 -> 00:10:09] sorry, E derives, E is our start symbol.
+[00:10:09 -> 00:10:14] So E derives T plus E,
+[00:10:14 -> 00:10:16] and it's a rightmost derivation.
+[00:10:16 -> 00:10:21] So I'm going to say T plus T, okay?
+[00:10:21 -> 00:10:25] But here I'm asking whether it's int star T plus E.
+[00:10:25 -> 00:10:27] But I've already, you know,
+[00:10:27 -> 00:10:31] had to derive T from E
+[00:10:31 -> 00:10:34] because it's supposed to be rightmost derivation.
+[00:10:34 -> 00:10:38] And so I will never be in a state
+[00:10:38 -> 00:10:40] where I have the string int star T plus E
+[00:10:40 -> 00:10:44] because, you know, the symbol at the right of plus
+[00:10:44 -> 00:10:46] is already a T and I, you know,
+[00:10:46 -> 00:10:49] without a parenthesis I won't be able to get back to an E
+[00:10:49 -> 00:10:52] and I don't have a parenthesis in int star int plus int.
+[00:10:52 -> 00:10:54] So I won't be able to have a situation
+[00:10:54 -> 00:10:56] where I have int star T plus E ever
+[00:10:56 -> 00:10:59] in this state of the derivation.
+[00:10:59 -> 00:11:01] And that is, you know,
+[00:11:01 -> 00:11:03] I would like to point out that that's purely
+[00:11:03 -> 00:11:06] because it's supposed to be a rightmost derivation.
+[00:11:06 -> 00:11:08] Notice that if it was not a rightmost derivation,
+[00:11:08 -> 00:11:13] then I could have, for example, derived from here
+[00:11:13 -> 00:11:15] int star T plus E.
+[00:11:15 -> 00:11:20] So I could have derived T first into int star T
+[00:11:20 -> 00:11:21] and then later done other things.
+[00:11:21 -> 00:11:24] And in which case this would have looked like
+[00:11:24 -> 00:11:26] it is a handle because now I can, you know,
+[00:11:26 -> 00:11:30] in future steps go all the way to int star int plus int.
+[00:11:30 -> 00:11:35] But this is not, you know, this is not acceptable.
+[00:11:35 -> 00:11:37] You're only looking at rightmost derivations.
+[00:11:37 -> 00:11:38] And in a rightmost derivation,
+[00:11:38 -> 00:11:42] such a prefix string can never appear.
+[00:11:42 -> 00:11:44] And so this is not a handle, all right?
+[00:11:44 -> 00:11:47] So int star T plus E is not a handle
+[00:11:47 -> 00:11:50] of int star int plus int.
+[00:11:50 -> 00:11:52] So notice that there are two conditions
+[00:11:52 -> 00:11:53] for it to be a handle.
+[00:11:53 -> 00:11:55] Firstly, it should appear as a prefix
+[00:11:55 -> 00:11:57] of the string in some step.
+[00:11:57 -> 00:12:01] And second, that appearance should be formed
+[00:12:01 -> 00:12:05] by an immediate derivation, right?
+[00:12:05 -> 00:12:06] So in the reverse direction,
+[00:12:06 -> 00:12:08] I should be able to reduce it, okay?
+[00:12:08 -> 00:12:10] So in this case, it just doesn't appear.
+[00:12:10 -> 00:12:12] In the previous case, which was this case of int,
+[00:12:12 -> 00:12:15] it did appear as a prefix of the string,
+[00:12:15 -> 00:12:20] but there was no derivation that was producing only int.
+[00:12:20 -> 00:12:22] The derivation was producing int star T.
+[00:12:22 -> 00:12:24] So that's not, so we won't consider
+[00:12:24 -> 00:12:27] the single prefix int as a handle.
+[00:12:27 -> 00:12:29] In this case, it doesn't even appear.
+[00:12:29 -> 00:12:31] So it's a very easy answer that no,
+[00:12:31 -> 00:12:32] this is not a handle.
+[00:12:32 -> 00:12:36] Okay, now finally, one more example is epsilon,
+[00:12:36 -> 00:12:39] a handle of int star int plus int.
+[00:12:39 -> 00:12:42] Now indeed, epsilon appears as a prefix.
+[00:12:42 -> 00:12:43] Epsilon represents an empty string.
+[00:12:43 -> 00:12:46] So indeed, epsilon appears as the prefix
+[00:12:46 -> 00:12:48] in actually a lot of steps or all steps
+[00:12:48 -> 00:12:52] of the derivation, the rightmost derivation.
+[00:12:52 -> 00:12:56] However, there is no step that actually derives epsilon
+[00:12:56 -> 00:12:57] from a non-terminal, right?
+[00:12:57 -> 00:13:01] So for example, I just say E, E goes to T plus E.
+[00:13:01 -> 00:13:03] There's no step here.
+[00:13:03 -> 00:13:07] I mean, so I can go all the way to int star int plus int,
+[00:13:07 -> 00:13:11] but there is no step here which is going to derive
+[00:13:11 -> 00:13:14] epsilon on the leftmost side of the string
+[00:13:14 -> 00:13:17] from a non-terminal, because there is actually
+[00:13:17 -> 00:13:22] no production that produces only epsilon in the grammar.
+[00:13:23 -> 00:13:25] And so the answer here is no.
+[00:13:27 -> 00:13:29] Okay, all right.
+[00:13:29 -> 00:13:32] So far, we have only said what a handle is,
+[00:13:32 -> 00:13:34] and so we have tried to understand what a handle is,
+[00:13:34 -> 00:13:37] and we are saying that we should only reduce at handles,
+[00:13:37 -> 00:13:39] all right, so we're gonna see that more in a bit.
+[00:13:39 -> 00:13:40] But we haven't really talked about
+[00:13:40 -> 00:13:42] how do we efficiently find them.
+[00:13:42 -> 00:13:44] So how do we determine whether something is a handle
+[00:13:44 -> 00:13:45] or not?
+[00:13:45 -> 00:13:47] For example, we said int is not a handle
+[00:13:47 -> 00:13:48] for int star int plus int,
+[00:13:48 -> 00:13:51] but int star T is a handle, all right?
+[00:13:51 -> 00:13:53] So how do we decide that?
+[00:13:53 -> 00:13:56] Or even int star int is a handle.
+[00:13:56 -> 00:13:57] So how do we decide that?
+[00:13:57 -> 00:13:59] So that's something that we are going
+[00:13:59 -> 00:14:02] to learn in the subsequent modules.
+[00:14:02 -> 00:14:04] But let's look at another important fact
+[00:14:04 -> 00:14:05] that's related to handles.
+[00:14:05 -> 00:14:08] So in a shift-reduce parser,
+[00:14:08 -> 00:14:11] handles appear only at the top of the stack,
+[00:14:11 -> 00:14:13] never inside.
+[00:14:13 -> 00:14:15] So assuming that wherever there was a possibility
+[00:14:15 -> 00:14:18] of reduction, I'm reducing by identifying
+[00:14:18 -> 00:14:19] whether it's a handle or not,
+[00:14:19 -> 00:14:21] and I'm only shifting if there was no possibility,
+[00:14:21 -> 00:14:25] I mean, if there was no kind of handle reduction
+[00:14:25 -> 00:14:28] that could have led me to the start symbol,
+[00:14:28 -> 00:14:30] then I will always be reducing only
+[00:14:30 -> 00:14:33] at the top of the stack, never inside, all right?
+[00:14:33 -> 00:14:34] So handles will be appearing only
+[00:14:34 -> 00:14:37] at the top of the stack and never inside.
+[00:14:38 -> 00:14:39] So why is that?
+[00:14:39 -> 00:14:42] Well, first of all, it's true for the empty stack.
+[00:14:45 -> 00:14:47] For the empty stack, there is no inside.
+[00:14:47 -> 00:14:51] So if the cursor is to the leftmost
+[00:14:51 -> 00:14:54] of the input string, then there is no inside.
+[00:14:54 -> 00:14:56] So I could either reduce the epsilon character
+[00:14:57 -> 00:14:59] to something which is the top of the stack anyway,
+[00:14:59 -> 00:15:03] or I could not do anything and shift.
+[00:15:03 -> 00:15:06] So any reduction that's happening in the empty stack
+[00:15:06 -> 00:15:07] is on the top of the stack,
+[00:15:07 -> 00:15:07] because the stack is empty.
+[00:15:07 -> 00:15:09] So there's nothing, no reduction that can
+[00:15:09 -> 00:15:12] anyway happen in the middle of the stack.
+[00:15:12 -> 00:15:15] But in general, consider the rightmost
+[00:15:15 -> 00:15:18] non-terminal on the stack, all right?
+[00:15:18 -> 00:15:23] And so the claim here is that the next handle
+[00:15:24 -> 00:15:27] can only be to the right of this rightmost non-terminal.
+[00:15:27 -> 00:15:30] And this is coming from the property
+[00:15:30 -> 00:15:31] of the rightmost derivation, all right?
+[00:15:31 -> 00:15:34] So let's look at it in a little bit more detail.
+[00:15:34 -> 00:15:38] So let's say I have this string at any point
+[00:15:38 -> 00:15:41] in my stack, alpha, looking bottom to top,
+[00:15:41 -> 00:15:44] alpha, capital X, beta, Y, A, B, C,
+[00:15:44 -> 00:15:47] where X and Y represent non-terminals.
+[00:15:48 -> 00:15:50] Now I'm saying that the next reduction,
+[00:15:50 -> 00:15:51] so what is the rightmost non-terminal
+[00:15:51 -> 00:15:53] in the stack right now?
+[00:15:53 -> 00:15:54] And then there is this omega,
+[00:15:54 -> 00:15:57] and omega is basically just a string of terminals,
+[00:15:59 -> 00:16:04] because you haven't even seen it, all right?
+[00:16:04 -> 00:16:06] So what is the next handle that will appear,
+[00:16:06 -> 00:16:08] or what's the next reduction that will appear?
+[00:16:08 -> 00:16:11] Well, the next reduction can only appear
+[00:16:11 -> 00:16:13] to the right of the rightmost non-terminal.
+[00:16:13 -> 00:16:15] So it can only be to the right of Y.
+[00:16:15 -> 00:16:17] It cannot be to the left of Y.
+[00:16:17 -> 00:16:19] So I can't say that, oh, the next reduction
+[00:16:19 -> 00:16:22] is actually X beta goes to Z, or something like that,
+[00:16:22 -> 00:16:24] or beta goes to Z.
+[00:16:24 -> 00:16:26] That won't happen,
+[00:16:26 -> 00:16:30] because if the next reduction is at to the left of Y,
+[00:16:30 -> 00:16:32] then this sequence of reductions
+[00:16:32 -> 00:16:35] would not trace a rightmost derivation, right?
+[00:16:35 -> 00:16:38] So the next reduction has to be to the right of Y.
+[00:16:38 -> 00:16:39] Why?
+[00:16:39 -> 00:16:42] Because only then would the reverse of this
+[00:16:42 -> 00:16:43] would be a rightmost derivation,
+[00:16:43 -> 00:16:46] because if the next reduction is to the left of Y,
+[00:16:46 -> 00:16:49] then that basically means in the reverse direction,
+[00:16:49 -> 00:16:52] I'm deriving something on the left,
+[00:16:52 -> 00:16:54] and then something on the right.
+[00:16:54 -> 00:16:57] So let's say, the next reduction is reducing beta,
+[00:16:57 -> 00:16:59] then in the reverse direction,
+[00:16:59 -> 00:17:02] I have first produced beta,
+[00:17:02 -> 00:17:04] and then I'm going to produce from Y,
+[00:17:04 -> 00:17:08] and that won't be a rightmost derivation, okay?
+[00:17:08 -> 00:17:10] So for it to be a rightmost derivation,
+[00:17:10 -> 00:17:12] it must be true that the next reduction
+[00:17:12 -> 00:17:15] is to the right of Y, not never to the left of Y.
+[00:17:15 -> 00:17:18] And that's just a property of the rightmost derivation.
+[00:17:20 -> 00:17:20] Okay?
+[00:17:21 -> 00:17:23] So with that, to summarize,
+[00:17:23 -> 00:17:26] handles are never to the left of the rightmost non-terminal,
+[00:17:28 -> 00:17:31] handles are never to the left of the rightmost non-terminal,
+[00:17:31 -> 00:17:33] and are thus always on the top of the stack.
+[00:17:33 -> 00:17:36] So if I have some kind of a stack,
+[00:17:36 -> 00:17:38] then the handle is always on the top of the stack,
+[00:17:38 -> 00:17:41] because I can't ever say that,
+[00:17:41 -> 00:17:42] okay, handle is somewhere in the middle,
+[00:17:42 -> 00:17:43] because if I have to reduce,
+[00:17:43 -> 00:17:45] I will be reducing on the top of the stack,
+[00:17:45 -> 00:17:46] or I will be moving right,
+[00:17:46 -> 00:17:49] because the next handle will only be to the right,
+[00:17:49 -> 00:17:50] never to the left.
+[00:17:51 -> 00:17:52] And hence, a shift-reduce parser
+[00:17:52 -> 00:17:56] can only either shift or reduce at the top of the stack.
+[00:17:56 -> 00:17:58] And this is something that we have been assuming so far,
+[00:17:58 -> 00:18:01] and the idea of handles and the claim,
+[00:18:01 -> 00:18:02] the important fact number two,
+[00:18:02 -> 00:18:05] formalizes that assumption for us.

@@ -11,111 +11,460 @@ Detected language: en
 [00:00:28 -> 00:00:32] the same reasoning to work on entire functions. We're going to focus on single basic blocks
 [00:00:32 -> 00:00:38] for now, and then later you'll see how to extend this to deal with control flow graphs.
 [00:00:38 -> 00:00:42] To start off, I want to look at three different forms of redundancy that exist in programs,
-[00:00:42 -> 00:00:46] and I want to emphasize that each of these three things can be subject to
-[00:00:47 -> 00:00:53] optimization passes that remove them as their only purpose. That is, in some
-[00:00:53 -> 00:00:58] compiler courses, in some textbooks, you'll see each of these three things discussed
-[00:00:58 -> 00:01:02] as completely separate optimizations, and there are cases where it makes sense to
-[00:01:02 -> 00:01:07] think of them as totally separate optimizations. What we're going to do in this video, however,
-[00:01:07 -> 00:01:13] is try to see the underlying phenomenon that underpins all of them and does a pretty good job
-[00:01:13 -> 00:01:17] at resolving all of these forms of redundancy, and that's what local value numbering does.
+[00:00:42 -> 00:00:49] and I want to emphasize that each of these three things can be subject to optimization passes
+[00:00:49 -> 00:00:54] that remove them as their only purpose. That is, in some compiler's courses,
+[00:00:54 -> 00:00:58] in some textbooks, you'll see each of these three things discussed as completely
+[00:00:58 -> 00:01:03] separate optimizations, and there are cases where it makes sense to think of them as totally
+[00:01:03 -> 00:01:09] separate optimizations. What we're going to do in this video, however, is try to see the
+[00:01:09 -> 00:01:14] underlying phenomenon that underpins all of them and does a pretty good job at resolving
+[00:01:14 -> 00:01:17] all of these forms of redundancy, and that's what local value numbering does.
 [00:01:18 -> 00:01:23] So let's look at these three programs. The first one demonstrates dead code elimination.
 [00:01:23 -> 00:01:26] That is, cases where there is code that has no effect,
-[00:01:27 -> 00:01:30] can't possibly have any effect on the output, and the optimization just consists
-[00:01:30 -> 00:01:37] of deleting the redundant instructions. The second one exhibits an optimization that is
-[00:01:37 -> 00:01:42] sometimes called copy propagation, which just says that if you have several instructions,
+[00:01:26 -> 00:01:30] can't possibly have any effect on the output, and the optimization just consists
+[00:01:30 -> 00:01:37] of deleting the redundant instructions. The second one exhibits an optimization that
+[00:01:37 -> 00:01:42] is sometimes called copy propagation, which just says that if you have several instructions,
 [00:01:42 -> 00:01:48] several computations that reuse the same original value, it is often easier to just
 [00:01:48 -> 00:01:55] use that value directly. So in this function, we might eliminate all of these instructions
 [00:01:56 -> 00:02:02] and instead of using all those IDs, just print x instead. That optimization is sometimes called
-[00:02:02 -> 00:02:08] copy propagation. The third one, the third program here, demonstrates a different form
-[00:02:08 -> 00:02:12] of redundancy. This one, if you squinted it for a second, this is the long instruction-y
-[00:02:12 -> 00:02:20] way of saying a plus b times a plus b, and this represents an opportunity for what's called common
-[00:02:20 -> 00:02:27] sub-expression elimination, where these things are the sub-expressions that are common. That
-[00:02:27 -> 00:02:32] is, it's the same computation being done twice, and a better thing to do is just to
-[00:02:32 -> 00:02:37] do that addition once and then return the multiplication of that thing by itself. So we
-[00:02:37 -> 00:02:42] shouldn't need to do this sum two, but of course that variable is still referenced here.
-[00:02:42 -> 00:02:47] But if we were to just replace it with sum one, then we'd get the same answer. That's common
-[00:02:49 -> 00:02:56] sub-expression elimination, sometimes just abbreviated to CSE. So my deep philosophical
-[00:02:56 -> 00:03:01] question for you is to ponder what these three examples, what these three different forms of
-[00:03:01 -> 00:03:07] redundancy all have in common. That is, what is the fundamental underlying phenomenon that is
-[00:03:07 -> 00:03:13] making these programs redundant? There is no right answer to this question. I, of course,
-[00:03:13 -> 00:03:17] have an answer in mind to this philosophical imponderable, but I'd like you to think for
-[00:03:17 -> 00:03:24] a little bit just by yourself about what is the common thread between these forms of redundancy.
-[00:03:24 -> 00:03:37] I'll tell you my answer in a second. The reason that these programs all have redundancy
-[00:03:37 -> 00:03:42] is because they say to compute things using the variables, whereas it is equivalent to just look
-[00:03:42 -> 00:03:47] at the underlying values being computed. And if you do that, then these forms of redundancy
-[00:03:47 -> 00:03:54] kind of automatically disappear. So let's look at these programs again. A value numbering
-[00:03:54 -> 00:04:00] approach to optimizing this program will realize that the same variable is being used for two
-[00:04:00 -> 00:04:05] different values and try to disambiguate those two things. And then we'll end up with a
-[00:04:05 -> 00:04:10] program where there's two separate values, one of which is clearly unused.
+[00:02:02 -> 00:02:08] copy propagation. The third program here demonstrates a different form of redundancy.
+[00:02:08 -> 00:02:13] This one, if you squinted it for a second, this is the long instruction-y way of saying
+[00:02:14 -> 00:02:20] a plus b times a plus b, and this represents an opportunity for what's called common
+[00:02:20 -> 00:02:27] sub-expression elimination, where these things are the sub-expressions that are common. That is,
+[00:02:27 -> 00:02:32] it's the same computation being done twice, and a better thing to do is just to do that addition
+[00:02:32 -> 00:02:38] once and then return the multiplication of that thing by itself. So we shouldn't need to do
+[00:02:38 -> 00:02:43] this sum2, but of course that variable is still referenced here, but if we were to just
+[00:02:43 -> 00:02:50] replace it with sum1, then we'd get the same answer. That's common sub-expression
+[00:02:50 -> 00:02:57] elimination, sometimes just abbreviated to CSE. So my deep philosophical question for you is to
+[00:02:57 -> 00:03:02] ponder what these three examples, what these three different forms of redundancy all have
+[00:03:02 -> 00:03:08] in common. That is, what is the fundamental underlying phenomenon that is making these
+[00:03:08 -> 00:03:14] programs redundant? There is no right answer to this question. I, of course, have an answer in
+[00:03:14 -> 00:03:18] mind to this philosophical imponderable, but I'd like you to think for a little bit just by
+[00:03:18 -> 00:03:25] yourself about what is the common thread between these forms of redundancy. I'll tell you my answer
+[00:03:25 -> 00:03:39] in a second. The reason that these programs all have redundancy is because they say to compute
+[00:03:39 -> 00:03:43] things using the variables, whereas it is equivalent to just look at the underlying
+[00:03:43 -> 00:03:48] values being computed, and if you do that then these forms of redundancy kind of
+[00:03:48 -> 00:03:55] automatically disappear. So let's look at these programs again. A value numbering approach to
+[00:03:55 -> 00:04:00] optimizing this program will realize that the same variable is being used for two different
+[00:04:00 -> 00:04:05] values and try to disambiguate those two things, and then we'll end up with a program
+[00:04:05 -> 00:04:10] where there's two separate values, one of which is clearly unused.
 [00:04:12 -> 00:04:17] This makes it easy to eliminate that unused variable and get us down to a program that
 [00:04:17 -> 00:04:26] just assigns to A once. Looking at this second example, the one with copy propagation,
-[00:04:27 -> 00:04:31] the philosophy of value numbering, that again is trying to disentangle the values from the
-[00:04:31 -> 00:04:35] variables, says that there's only a single value in this program. That is the constant
-[00:04:35 -> 00:04:41] for, and it's being reused multiple times for multiple variables. And that's what looks
-[00:04:41 -> 00:04:46] like waste from a value numbering perspective. If we disentangle that single value from all those
-[00:04:46 -> 00:04:51] different variables, those other variables that can hold that value simply fall away.
-[00:04:51 -> 00:04:55] And we can see that the print statement should just be referring to the underlying value.
-[00:04:55 -> 00:05:00] Finally, let's look at the common sub-expression elimination example. In this one,
-[00:05:00 -> 00:05:04] the value numbering philosophy says that there are two variables, some one and some two,
-[00:05:04 -> 00:05:09] that hold the same value, that is A plus B. And of course, here we're getting into the tricky
-[00:05:09 -> 00:05:13] notion of how you define what a value even is. It's not just a constant. There's something
-[00:05:13 -> 00:05:18] underlying going on here about reflecting what computation is being reflected by the variable.
-[00:05:18 -> 00:05:24] But if you accept some definition, some careful definition of what a value is, then the value
-[00:05:24 -> 00:05:28] numbering optimization is going to look at this program and realize that the same value
-[00:05:28 -> 00:05:34] is being stored in two different variables, and that's redundant. And so in the computations
-[00:05:34 -> 00:05:39] that consume those variables, it suffices to just use a single one, and that will reduce
-[00:05:39 -> 00:05:46] and eliminate the redundancy. So let's see how the value numbering approach actually works.
-[00:05:47 -> 00:05:50] I'll give this idea to you at a very high level, and then we're going to walk through
-[00:05:50 -> 00:05:53] an example to see how it plays out. Finally, I'm going to leave it to you
-[00:05:53 -> 00:05:58] to develop the actual pseudocode and implement the algorithm. But the idea behind the value
-[00:05:58 -> 00:06:03] numbering as an optimization really revolves around one big data structure that we'll see
-[00:06:03 -> 00:06:11] here. There is a table, and this is where the name comes from, that's going to assign a bunch
-[00:06:11 -> 00:06:17] of numbers in the left-hand column, and by this I mean literal actual natural numbers,
+[00:04:27 -> 00:04:32] the philosophy of value numbering that again is trying to disentangle the values from the variables
+[00:04:32 -> 00:04:37] says that there's only a single value in this program, that is the constant 4, and it's being
+[00:04:37 -> 00:04:42] reused multiple times for multiple variables, and that's what looks like waste from a value
+[00:04:42 -> 00:04:47] numbering perspective. If we disentangle that single value from all those different variables,
+[00:04:47 -> 00:04:51] those other variables that can hold that value simply fall away, and we can see that
+[00:04:51 -> 00:04:55] the print statement should just be referring to the underlying value.
+[00:04:55 -> 00:05:00] Finally, let's look at the common sub-expression elimination example. In this one, the value
+[00:05:00 -> 00:05:05] numbering philosophy says that there are two variables, some 1 and some 2, that hold the
+[00:05:05 -> 00:05:09] same value, that is A plus B. And of course, here we're getting into the tricky notion of how
+[00:05:09 -> 00:05:14] you define what a value even is. It's not just a constant, there's something underlying
+[00:05:14 -> 00:05:19] going on here about reflecting what computation is being reflected by the variable. But if you
+[00:05:19 -> 00:05:25] accept some definition, some careful definition of what a value is, then the value numbering
+[00:05:25 -> 00:05:29] optimization is going to look at this program and realize that the same value is being stored
+[00:05:29 -> 00:05:34] in two different variables, and that's redundant. And so in the computations that consume those
+[00:05:34 -> 00:05:39] variables, it suffices to just use a single one, and that will reduce and eliminate the
+[00:05:39 -> 00:05:47] redundancy. So let's see how the value numbering approach actually works. I'm going
+[00:05:47 -> 00:05:50] to give this idea to you at a very high level, and then we're going to walk through
+[00:05:50 -> 00:05:53] an example to see how it plays out. Finally, I'm going to leave it to you to develop the
+[00:05:53 -> 00:05:59] actual pseudocode and implement the algorithm. But the idea behind the value numbering as an
+[00:05:59 -> 00:06:03] optimization really revolves around one big data structure that we'll see here.
+[00:06:05 -> 00:06:11] There is a table, and this is where the name comes from, that's going to assign a bunch
+[00:06:11 -> 00:06:17] of numbers in the left-hand column. And by this, I mean literal, actual, natural numbers
 [00:06:17 -> 00:06:21] assigned to the values being computed. Values you can think of as expressions.
 [00:06:23 -> 00:06:27] I'll talk about the representation of values in a moment, but we're also going to maintain
 [00:06:28 -> 00:06:33] for every value a canonical home for where that value is being stored.
 [00:06:33 -> 00:06:38] So the very high level idea is that we will try to disentangle a notion of values,
 [00:06:38 -> 00:06:43] that is sort of expressions that are being computed, and also keep track of one place
-[00:06:43 -> 00:06:47] and one place only where that value is being stored. So for example, if we end up using
-[00:06:47 -> 00:06:52] the same value in two different locations, even if they're stored superficially in
-[00:06:53 -> 00:06:57] two completely different variables, this approach will be able to look through it and say,
-[00:06:57 -> 00:07:01] no that's actually the same underlying value, and instead of computing it again,
+[00:06:43 -> 00:06:47] and one place only where that value is being stored. So for example, if we end up using the
+[00:06:47 -> 00:06:54] same value in two different locations, even if they're stored superficially in two completely
+[00:06:54 -> 00:06:57] different variables, this approach will be able to look through it and say,
+[00:06:57 -> 00:07:01] no, that's actually the same underlying value. And instead of computing it again,
 [00:07:01 -> 00:07:05] we can just look at the canonical variable that's storing that thing already and just
 [00:07:05 -> 00:07:10] use that variable. One of the important things here is how to represent the computations,
-[00:07:10 -> 00:07:15] that is the expressions, the values that are being numbered, and as this table that I'm
-[00:07:15 -> 00:07:20] showing you indicates, we won't represent that in this kind of like funky form
-[00:07:20 -> 00:07:25] that refers to other rows in the table. So here we have this like number one plus number
-[00:07:25 -> 00:07:31] one expression. What that actually means is that this is the addition of value number one,
-[00:07:32 -> 00:07:37] which is currently stored in variable X, to value number one. So we're not going to,
-[00:07:37 -> 00:07:43] when we build up these values, we're going to be storing them as using these actual
-[00:07:43 -> 00:07:48] numbers that refer to rows in the table. So every expression that shows up in this
-[00:07:48 -> 00:07:53] column of the table will be referring to values by their numbers, rather than by
-[00:07:53 -> 00:07:59] their variables, and this sort of completes the disentanglement from between variables and
-[00:07:59 -> 00:08:05] the values that they're stored in. By referring sort of, by having self-references back to
-[00:08:05 -> 00:08:08] this table to say like, well this is one big value that's computed out of several smaller
-[00:08:08 -> 00:08:17] values, then we can live fully in the abstract realm of computed values and maintain a mapping
-[00:08:17 -> 00:08:21] to where those values are stored in variables. This all sounds fairly abstract, and I swear
-[00:08:21 -> 00:08:23] this is going to get more concrete in a second when we go through an example.
-[00:08:25 -> 00:08:29] However, there's one more piece to the data structure here. This is sort of the main
-[00:08:29 -> 00:08:33] table data structure, but there's one other thing that the algorithm is going to need,
-[00:08:33 -> 00:08:38] which is we're going to step through the basic block, instruction by instruction,
-[00:08:38 -> 00:08:45] instruction, keeping track of kind of the imaginary environment that would be happening
-[00:08:45 -> 00:08:50] if we were actually executing the block. So it's going to be like executing the program.
-[00:08:50 -> 00:08:55] We'll step through and sort of keep track of whatever variable holds, but instead of like in
-[00:08:55 -> 00:08:59] a normal interpreter where every variable will hold like an actual concrete value, like five,
-[00:08:59 -> 00:09:05] they'll hold this notion of a value that is one of these expressions. So this cloud I'm
-[00:09:05 -> 00:09:08] showing off to the left-hand side here is going to say that we'll have an environment
-[00:09:08 -> 00:09:17] so after we execute a statement that assigns into the variable A, we'll have this environment
-[00:09:17 -> 00:09:23] that says that, okay, A now currently holds a value number two. So it's going to work
-[00:09:23 -> 00:09:29] exactly like an interpreter, but instead of holding actual concrete runtime values,
-[00:09:29 -> 00:09:33] values here will just be the numbers, that is like the indices into this table.
-[00:09:33 -> 00:09:38] And this way we'll be able to keep track of a model of what computations go on in a basic
-[00:09:38 -> 00:09:44] block, just like an interpreter does, but using, but statically, that is without actually
-[00:09:44 -> 00:09:55] knowing what the inputs are. I hope you've had a moment to ingest that very high-level description.
-[00:09:55 -> 00:09:59] We're now going to go through a concrete example that will hopefully make these things a little
-[00:09:59 -> 00:10:05] bit more clear. And this is a pretty tricky and abstract way of thinking. So if you have any
-[00:10:05 -> 00:10:09] questions at all, I encourage you to either bring them up on the next Zoom iteration of
-[00:10:09 -> 00:10:13] this class or to ask questions in Zoom Up. You really, really got to ask questions
-[00:10:13 -> 00:10:18] if you have them because I know this is not easy to understand. So we're going to start
-[00:10:18 -> 00:10:23] out with this program on the right-hand side. So this is the common sub-expression
-[00:10:23 -> 00:10:27] elimination example. And we're going to start executing this program.
+[00:07:10 -> 00:07:15] that is the expressions, the values that are being numbered. And as this table that I'm
+[00:07:15 -> 00:07:22] showing you indicates, we represent that in this kind of funky form that refers to other rows
+[00:07:22 -> 00:07:26] in the table. So here we have this number one plus number one expression. What that actually
+[00:07:26 -> 00:07:34] means is that this is the addition of value number one, which is currently stored in variable
+[00:07:34 -> 00:07:41] x, to value number one. So when we build up these values, we're going to be storing them
+[00:07:41 -> 00:07:48] as using these actual numbers that refer to rows in the table. So every expression that shows
+[00:07:48 -> 00:07:54] up in this column of the table will be referring to values by their numbers rather than by their
+[00:07:54 -> 00:07:59] variables. And this sort of completes the disentanglement between variables and the values
+[00:07:59 -> 00:08:05] that they're stored in. By referring, sort of by having self-references back to this table
+[00:08:05 -> 00:08:10] to say like, well, this is one big value that's computed out of several smaller values, then we
+[00:08:10 -> 00:08:17] can live fully in the abstract realm of computed values and maintain a mapping to where
+[00:08:17 -> 00:08:21] those values are stored in variables. This all sounds fairly abstract, and I swear this is
+[00:08:21 -> 00:08:26] going to get more concrete in a second when we go through an example. However, there's one
+[00:08:26 -> 00:08:30] more piece to the data structure here. This is sort of the main table data structure, but there's
+[00:08:30 -> 00:08:36] one other thing that the algorithm is going to need, which is we're going to step through
+[00:08:36 -> 00:08:42] the basic block, instruction by instruction, keeping track of kind of the imaginary environment
+[00:08:44 -> 00:08:49] that would be happening if we were actually executing the block. So it's going to be like
+[00:08:49 -> 00:08:53] executing the program. We'll step through and sort of keep track of whatever variable holds.
+[00:08:53 -> 00:08:57] But instead of like in a normal interpreter, where every variable will hold like an actual
+[00:08:57 -> 00:09:03] concrete value, like five, they'll hold this notion of a value that is one of these expressions.
+[00:09:03 -> 00:09:08] So this cloud I'm showing off to the left-hand side here is going to say that we'll have an
+[00:09:08 -> 00:09:16] environment. So after we execute a statement that assigns into the variable A,
+[00:09:16 -> 00:09:22] we'll have this environment that says that, okay, A now currently holds a value number two.
+[00:09:22 -> 00:09:26] So it's going to work exactly like an interpreter, but instead of holding
+[00:09:26 -> 00:09:32] actual concrete runtime values, values here will just be the numbers, that is like the indices
+[00:09:32 -> 00:09:37] into this table. And this way we'll be able to keep track of a model of what computations
+[00:09:37 -> 00:09:44] go on in a basic block, just like an interpreter does, but statically, that is, without
+[00:09:44 -> 00:09:54] actually knowing what the inputs are. I hope you've had a moment to ingest that very
+[00:09:54 -> 00:09:58] high-level description. We're now going to go through a concrete example that will hopefully
+[00:09:58 -> 00:10:03] make these things a little bit more clear. And this is a pretty tricky and abstract
+[00:10:03 -> 00:10:07] way of thinking. So if you have any questions at all, I encourage you to either bring them up
+[00:10:07 -> 00:10:12] on the next Zoom iteration of this class, or to ask questions in Zoom Up. You really,
+[00:10:12 -> 00:10:16] really got to ask questions if you have them, because I know this is not easy to understand.
+[00:10:18 -> 00:10:22] So we're going to start out with this program on the right-hand side. So this is the
+[00:10:22 -> 00:10:29] common sub-expression elimination example. And we're going to start executing this program
+[00:10:29 -> 00:10:34] in a LVM style. That is, instead of actually interpreting it, we're going to maintain one
+[00:10:34 -> 00:10:39] of these tables. So I'm going to start by drawing the main data structure we have,
+[00:10:39 -> 00:10:44] which is this numbered table. It's going to keep track of all the values computed in the
+[00:10:44 -> 00:10:48] program. So there's the value table. That's where we're going to put these funky expressions
+[00:10:48 -> 00:10:53] that refer to other rows in the table. And then we'll also keep track of the current
+[00:10:53 -> 00:10:58] canonical home for that value in this variable column. And then off to the side, we'll have
+[00:10:58 -> 00:11:02] this fuzzy cloud, which is the current environment, which reflects the current state of
+[00:11:03 -> 00:11:09] all of the variables in the program. Everything starts out empty. Of course,
+[00:11:09 -> 00:11:12] we're at the very beginning of the program, and there's nothing in the environment,
+[00:11:12 -> 00:11:15] and there's nothing in the table because nothing's been computed yet.
+[00:11:15 -> 00:11:19] In the next frame of this animation, we're going to advance past the first two instructions,
+[00:11:19 -> 00:11:24] these constant assignments to A and B, and see how that affects the environment and the main
+[00:11:24 -> 00:11:28] data structure for the LVM paths. So at this point, that is right after the A and B
+[00:11:28 -> 00:11:39] assignments, we need the same table with number, value, and variable. What this algorithm
+[00:11:39 -> 00:11:44] is going to do is insert values for A and B that are going to be pointed to by this
+[00:11:44 -> 00:11:47] cloud off to the left. Remember, that's the environment. It keeps track of the
+[00:11:47 -> 00:11:53] current values of all of the variables. Every time you manufacture a new value that hasn't ever
+[00:11:53 -> 00:11:56] existed before, you need to insert a new role in the table. So these are going to get the
+[00:11:56 -> 00:12:02] first two numbers. We'll call them one and two. The value here, you can imagine that you have
+[00:12:02 -> 00:12:07] a way of expressing what constants are. Let's just say that, yeah, the value here is going to
+[00:12:07 -> 00:12:14] be const four, and this one's const two. Those have never shown up anywhere else in
+[00:12:14 -> 00:12:21] the program. The canonical home for this computation is A. That is, we will associate,
+[00:12:21 -> 00:12:25] whenever we compute something, we'll say, if it's never been computed before, we'll say that the
+[00:12:25 -> 00:12:29] canonical home for that, the variable associated with it, is the one where you've already stored
+[00:12:29 -> 00:12:33] it. Great, so that's the first step. That's not so hard. Okay, so the next step is to
+[00:12:33 -> 00:12:38] interpret this add instruction that stores in some one. To make this kind of animate,
+[00:12:38 -> 00:12:47] I'm going to copy and paste our data structures and just extend them. Now, at this point,
+[00:12:47 -> 00:12:53] that is between the sum one, sum two expressions, both adds. To execute this instruction,
+[00:12:54 -> 00:12:58] we are computing something that has never been computed before, and the way that you confirm
+[00:12:58 -> 00:13:04] that is by looking through the value table, just scanning over everything in the value table,
+[00:13:04 -> 00:13:09] and seeing whether we have computed anything that looks like this. To do that, we're going
+[00:13:09 -> 00:13:15] to have to come up with a representation for what the new computation is that we'll insert
+[00:13:15 -> 00:13:19] into the table. We have const four and const two for the actual constants. What are we going to
+[00:13:19 -> 00:13:24] do for adds? The way to do this is you need a representation that you can easily compare for
+[00:13:24 -> 00:13:30] uniqueness. The way we will do that is by building up tuples. The representation,
+[00:13:30 -> 00:13:35] concretely and computationally, when you're implementing LVN, is to use some sort of a
+[00:13:35 -> 00:13:39] tuple. This is sort of like hash-conzing if you've ever done that in functional programming.
+[00:13:39 -> 00:13:45] This tuple is going to include a symbol to say that what this is is an add,
+[00:13:45 -> 00:13:51] and it has two arguments. Those arguments are going to refer to other rows in the LVN table.
+[00:13:51 -> 00:13:54] That is, they're just going to be the numbers indicating other values.
+[00:13:55 -> 00:13:59] The way this works is we're going to fill up these arguments by saying,
+[00:14:00 -> 00:14:06] what is the current number associated with the variable a? We need to look at the cloud
+[00:14:06 -> 00:14:17] to see the current value of a refers to the row one. We'll insert the value number for this
+[00:14:17 -> 00:14:22] argument is one. We'll do the same thing for b. Look it up in the current cloud,
+[00:14:22 -> 00:14:27] the current environment. Its number is two. The new value being computed can be represented by
+[00:14:27 -> 00:14:35] this tuple, add one two. LVN looks through the value column of the table and sees,
+[00:14:35 -> 00:14:40] is there anyone else who has ever computed add one two ever before? If the answer is no,
+[00:14:40 -> 00:14:44] we are going to insert it into the table to say that we have now computed it,
+[00:14:44 -> 00:14:48] and anyone who computes it in the future can just reuse this. I'll just write that value
+[00:14:48 -> 00:14:54] here in the table. Add number one, number two, which is the tuple representation of
+[00:14:54 -> 00:15:00] the value we have just computed. We will now need to sort of clean up the rest of our bookkeeping,
+[00:15:00 -> 00:15:05] which is to say that this gets its own value number. It's three. It gets a canonical home,
+[00:15:05 -> 00:15:09] which is sum one. Then we need to update the cloud, that is the current environment,
+[00:15:09 -> 00:15:18] to say that sum one points to row three. The next step is we need to do something
+[00:15:18 -> 00:15:24] very similar for sum two. I'm going to again copy and paste these data structures
+[00:15:25 -> 00:15:31] that we have just finished computing for this step, and we'll see how they animate
+[00:15:31 -> 00:15:39] when we apply them to the sum two instruction. The way LVN works is it's going to look at the
+[00:15:39 -> 00:15:45] expression being computed here. It's going to construct one of these value tuples to indicate
+[00:15:45 -> 00:15:49] what this new instruction does. Again, this is going to say, well, that's an add,
+[00:15:50 -> 00:15:54] and it's got two arguments. Again, it's going to look at A, look in the cloud,
+[00:15:54 -> 00:16:00] find out that's number one, still. It's going to look at B, look in the cloud,
+[00:16:00 -> 00:16:08] find out that's number two, still. Now we have the value tuple that is being computed by this
+[00:16:08 -> 00:16:13] new instruction. LVN likes reducing redundancy, so it's going to look at this tuple and look
+[00:16:13 -> 00:16:18] through the value column to see has this ever been computed before. The answer this time,
+[00:16:18 -> 00:16:23] for the first time, is yes. There is already something in the value table that looks exactly
+[00:16:23 -> 00:16:30] like this, and so there's an opportunity to reduce redundancy. Instead of adding a new value to the
+[00:16:30 -> 00:16:33] value table like we've done every single time before, we will do nothing. We'll put nothing
+[00:16:33 -> 00:16:41] new in there, and we'll just say, great, we now have sum two in the cloud. That is the
+[00:16:41 -> 00:16:47] current state of what all the variables currently point to. That now points to the same thing.
+[00:16:47 -> 00:16:52] That is, we don't need a new row in the table. This row suffices perfectly fine to
+[00:16:52 -> 00:16:58] represent the value of sum two as well. Crucially, we don't need to update anything about this
+[00:16:58 -> 00:17:03] variable associated with the value. That is, the canonical home, the original place from which
+[00:17:03 -> 00:17:10] you can get this value, is still here in sum one. Indirectly, if you kind of read
+[00:17:10 -> 00:17:17] the arrows going here, this is now saying that sum two holds the value number three,
+[00:17:17 -> 00:17:20] which is this thing, but that doesn't really matter. What really matters is that it's
+[00:17:20 -> 00:17:26] the same thing as sum one, so that later on, computations, in fact, in the very next
+[00:17:26 -> 00:17:31] instruction, computations that use sum two don't need to literally use sum two. In fact,
+[00:17:31 -> 00:17:36] they can look somewhere else for the same value. Great. Let's now do the next instruction.
+[00:17:36 -> 00:17:40] That is, the multiply of sum one and sum two. I will copy and paste these data structures
+[00:17:40 -> 00:17:47] again and move them right after prod to see what happens there. The algorithm for constructing
+[00:17:47 -> 00:17:53] the value is, again, just as it was before. That is, this time we will use mole as the opcode,
+[00:17:53 -> 00:17:59] and we're going to need the values associated with its arguments. So here, the argument,
+[00:17:59 -> 00:18:04] the first argument is sum one. LVN goes to the cloud, the current environment. It says that sum
+[00:18:04 -> 00:18:15] one is value number three, and then it goes back to the second argument. It sees that sum
+[00:18:15 -> 00:18:20] two goes to the cloud. It sees that that is associated also with number three. So it
+[00:18:20 -> 00:18:26] reconstructs this as multiply of three and three. Finally, it can put into the table
+[00:18:27 -> 00:18:34] a new thing that has never been computed before, this mole, number three, number three.
+[00:18:35 -> 00:18:48] That gets value number four, and that gets put into the prod. The variable that is the
+[00:18:48 -> 00:18:55] canonical home for this multiplication is still prod. By virtue of having already figured out that
+[00:18:55 -> 00:19:01] sum two holds the same value as sum one, we have now adjusted the value double that we
+[00:19:01 -> 00:19:08] have computed for prod. There's one last step here, which is to go through with the print
+[00:19:08 -> 00:19:12] instruction, but it's not all that interesting because it doesn't actually compute anything.
+[00:19:12 -> 00:19:17] It's only going to look up the value that's being used for print, find its canonical
+[00:19:18 -> 00:19:23] home, and use that variable. That's the entire process for scanning through a basic block and
+[00:19:23 -> 00:19:29] instruction by instruction, building up this LVN data structure, associating values with
+[00:19:29 -> 00:19:38] variables and disentangling. That's the entire process for scanning through a basic block,
+[00:19:38 -> 00:19:44] instruction by instruction, and building up this LVN data structure, disentangling the
+[00:19:44 -> 00:19:49] values from the variables and assigning numbers to all of the values in order to do that.
+[00:19:50 -> 00:19:53] There's one thing that we haven't done, though, which is to actually optimize the program. I've
+[00:19:53 -> 00:19:57] only shown you building up the data structure. I'm going to rewind a bit and go back to the
+[00:19:57 -> 00:20:02] first frame and show you what happens kind of alongside as we transform the program.
+[00:20:02 -> 00:20:06] So you shouldn't think of this as a second pass, really. This is something you can do
+[00:20:06 -> 00:20:11] on the fly while building up the data structure to automatically reduce the
+[00:20:11 -> 00:20:19] the redundancy in the program. The basic idea is that every time you finish maintaining the data
+[00:20:19 -> 00:20:26] structure, you reconstruct the instruction we just processed according to the value tuple
+[00:20:26 -> 00:20:32] in the table. This means that we eliminate the old instruction, which is based on the way that
+[00:20:32 -> 00:20:38] the original programmer happened to associate the values with variable names, and reconstruct
+[00:20:38 -> 00:20:42] the same computation based on the values themselves, kind of ignoring the variable names.
+[00:20:44 -> 00:20:51] The way this will look is that, for example, when we have finished processing this sum1
+[00:20:51 -> 00:20:56] instruction, we will cross it out and reconstruct it from scratch based on the
+[00:20:56 -> 00:21:01] table and the value tuple we have just created. So this works by saying, okay,
+[00:21:01 -> 00:21:08] well, this needs to store into sum1. We'll leave that the same, sum1 colon int. We're going to
+[00:21:08 -> 00:21:12] store something in there, and then we will look at the value tuple we have just constructed
+[00:21:12 -> 00:21:16] for this. So that's this tuple, add number one, number two, and we'll say, great,
+[00:21:16 -> 00:21:22] I know how to do that. I will create an add instruction to reflect the operation being
+[00:21:22 -> 00:21:28] performed, and I'm going to come up with the two arguments to add to put in here. To do that,
+[00:21:28 -> 00:21:34] I will look at entry number one in the table, and its canonical home, which is a.
+[00:21:35 -> 00:21:40] So this is going to be add a. I'm going to do it again. I'm going to look at entry number two
+[00:21:40 -> 00:21:45] and its canonical home, which is variable b. Surprising absolutely nobody, we have
+[00:21:45 -> 00:21:49] reconstructed an instruction that looks exactly the same as the old instruction,
+[00:21:49 -> 00:21:53] and that's what this algorithm must do, is reconstruct instructions from scratch,
+[00:21:53 -> 00:21:59] even if they look identical to the old one. It's not any surprise here, because this is the
+[00:21:59 -> 00:22:03] first time this value has ever been computed, so we need it to be computed somewhere. It just
+[00:22:03 -> 00:22:08] so happens that it will be computed right here, and then used to eliminate redundancy later
+[00:22:08 -> 00:22:12] on. Let's look at what happens when we follow this reconstruction algorithm for sum2
+[00:22:12 -> 00:22:17] instead of sum1. So we'll cross out the old instruction, and we'll again say, okay,
+[00:22:17 -> 00:22:21] we need to assign to the same variable. It's going to be sum1 colon int. But this time,
+[00:22:24 -> 00:22:31] when we look up the value associated with add a, b, we found it in the table. That is,
+[00:22:31 -> 00:22:36] we didn't need to insert a new value in the table. So that computation already had a canonical
+[00:22:36 -> 00:22:44] home, which is sum1. When that happens, instead of reconstructing the add operation
+[00:22:44 -> 00:22:51] from scratch, we can just say, now you are an identity operation that now contains exactly
+[00:22:51 -> 00:22:57] the same thing as the canonical home for this computation. So this will just be id sum1.
+[00:22:57 -> 00:23:02] So in reconstructing this instruction, we get rid of the add altogether and replace it with
+[00:23:02 -> 00:23:09] just a copy. Next, let's look at the prod instruction. We'll follow a similar algorithm,
+[00:23:09 -> 00:23:15] which involves crossing out this thing and saying, okay, great, I will replace you with
+[00:23:16 -> 00:23:20] a new prod colon int equals something, and we'll figure out what that is.
+[00:23:20 -> 00:23:26] This value was inserted into the table. That is, it got its own new row, which means we
+[00:23:26 -> 00:23:33] don't get to play the id trick to reuse an existing variable. But instead, we will have to
+[00:23:33 -> 00:23:39] do a mole thing, and we will insert the arguments. To do that, we will look at the
+[00:23:39 -> 00:23:43] value tuple, and we'll see that it uses number 3 and then number 3 again. So looking
+[00:23:43 -> 00:23:49] at the number 3 row, we see that the canonical home is sum1. So we'll multiply sum1 by sum1.
+[00:23:50 -> 00:23:54] So that's not quite the same as the original instruction. We've reconstructed a new instruction
+[00:23:54 -> 00:23:59] that means exactly the same thing, but instead of using sum2 as a second argument, we get to
+[00:23:59 -> 00:24:04] use sum1, which is fantastic. We have now eliminated the need for sum1 altogether.
+[00:24:07 -> 00:24:11] If we follow this thing through to its logical conclusion, we will also have to
+[00:24:11 -> 00:24:15] reconstruct this print to see where its value should actually come from,
+[00:24:15 -> 00:24:20] but it will just be reconstructed as print prod because the canonical home of value
+[00:24:20 -> 00:24:26] number 4 is in the variable prod. We'll end up with a basic block that has been transformed
+[00:24:27 -> 00:24:34] to replace prod with two different references to sum1. Sum2 is now just a copy of sum1,
+[00:24:34 -> 00:24:39] and that instruction is now dead. So we've optimized a couple of different things at once,
+[00:24:39 -> 00:24:44] and all that needs to be done now is to run a trivial dead code elimination pass like the
+[00:24:44 -> 00:24:49] one from the previous video to just remove the assignment to sum2, which is now completely
+[00:24:49 -> 00:24:53] dead and never used anywhere in the entire function. That simple cleanup pass will remove
+[00:24:53 -> 00:24:58] this instruction and let us reassociate with sum1. So in combination with that very, very
+[00:24:58 -> 00:25:02] simple dead code elimination pass, we've gotten the full effect of a common sub-expression
+[00:25:02 -> 00:25:08] elimination pass as well through this shift in perspective from thinking about variables
+[00:25:08 -> 00:25:13] exclusively to thinking about the values that underpin the computation. By reconstructing these
+[00:25:13 -> 00:25:18] instructions, we got rid of the redundancy and made it really easy to remove dead code.
+[00:25:18 -> 00:25:23] That's the basic algorithm for doing local value numbering. I promised you before that
+[00:25:23 -> 00:25:26] local value numbering is kind of this all-encompassing way of looking at the
+[00:25:26 -> 00:25:31] world that makes a lot of optimizations happen automatically. Really it's a sort of
+[00:25:31 -> 00:25:36] a framework for implementing different optimizations as little tweaks to the basic LVN algorithm.
+[00:25:36 -> 00:25:40] Next, we're going to walk through a few of the extensions you can make on top of the basic
+[00:25:40 -> 00:25:47] algorithm in order to make other forms of redundancy go away. In each case, I'm going
+[00:25:47 -> 00:25:51] to show you a original code on the left-hand side and new code on the right-hand side that
+[00:25:51 -> 00:25:59] we can hope to produce. So here is the first optimization that we kind of get for free out
+[00:25:59 -> 00:26:03] of the basic LVN algorithm, and that's common sub-expression elimination, a behavior like
+[00:26:03 -> 00:26:10] a traditional CSE optimization, which says that you can delete this sum two instruction
+[00:26:10 -> 00:26:14] and you can replace this reference to sum two with a new reference to sum one,
+[00:26:14 -> 00:26:18] which is a canonical home. And I'm kind of alighting the fact that we need to do a really,
+[00:26:18 -> 00:26:24] really simple dead code elimination that we saw in the previous video in order to just
+[00:26:24 -> 00:26:28] clean up the dead instruction we've just created. But in any case, the optimization
+[00:26:28 -> 00:26:34] as we implemented it so far can perform this type of optimization and get rid of the redundancy.
+[00:26:36 -> 00:26:41] Here's a different form of optimization. Copy propagation, that is, getting rid of these
+[00:26:41 -> 00:26:49] chains of IDs that should all result in the same value. Let's get rid of all those
+[00:26:49 -> 00:26:54] instructions and in fact just replace them with IDs. Now I'm not doing the
+[00:26:54 -> 00:26:58] the automatic dead code elimination, the trivial dead code elimination here,
+[00:26:58 -> 00:27:04] but we can still just use X directly. The algorithms I showed you so far doesn't actually
+[00:27:04 -> 00:27:09] accomplish this. The key to making it work is understanding something about the underlying
+[00:27:09 -> 00:27:14] semantics of the language. The basic framework I've shown you so far doesn't say anything
+[00:27:14 -> 00:27:18] about what actual instructions do, what the meaning of add is, what the meaning of multiply
+[00:27:18 -> 00:27:25] is. None of that matters for the basic LVN framework. This tweak to it, however, does.
+[00:27:25 -> 00:27:28] The instruction it needs to know about, the semantics it needs to understand,
+[00:27:30 -> 00:27:38] is the ID instruction. It needs to know that ID takes a value and produces exactly the same
+[00:27:38 -> 00:27:42] value. By adding that understanding, that level of semantic awareness of the underlying
+[00:27:42 -> 00:27:47] language to LVN, we get this optimization. The tweak to the algorithm is that when you
+[00:27:47 -> 00:27:52] construct a value that looks like this, that is, whenever you see a value that says ID and then
+[00:27:52 -> 00:27:57] has an argument, you just consider that to be exactly equal to number one. When you look in
+[00:27:57 -> 00:28:04] that value table of the column, for instances of this value, you consider this to be identical
+[00:28:04 -> 00:28:09] to value number one. This means that we get to replace all of these instructions with copies
+[00:28:09 -> 00:28:13] not of the previous variable. Without this awareness, we need to just assume that ID can
+[00:28:13 -> 00:28:22] do anything and we just get to refer to the underlying value. This is just a small local tweak
+[00:28:22 -> 00:28:26] that you can make to the LVN algorithm that introduces some awareness of the semantics of
+[00:28:26 -> 00:28:30] the Brill language that makes a totally different kind of optimization happen more or less
+[00:28:30 -> 00:28:38] automatically. Next, let's look at a different form of optimization. This is going to be an
+[00:28:38 -> 00:28:41] enhancement of the common sub-expression elimination behavior.
+[00:28:42 -> 00:28:50] As you know, add a b should be, in any reasonable language, the same as add ba, of course,
+[00:28:50 -> 00:28:54] if we're talking about integers. So this instruction should do the same thing as
+[00:28:54 -> 00:28:58] this instruction. That's not, of course, automatically true. The basic LVN framework
+[00:28:58 -> 00:29:03] has no idea that this is true of the add instruction. So just like in the ID case,
+[00:29:03 -> 00:29:09] if we just teach it a tiny bit about the semantics of Brill, about individual instructions in Brill,
+[00:29:09 -> 00:29:13] we can make this different optimizations happen. In particular, what will happen here is that we
+[00:29:13 -> 00:29:21] will get to apply the same CSE logic as we did when we add a b twice, and we'll get to
+[00:29:21 -> 00:29:31] replace sum two with sum one and then finally DCE away the dead store to sum two. I would
+[00:29:31 -> 00:29:36] now like you to think about exactly where you would need to change the LVN algorithm
+[00:29:36 -> 00:29:41] in order to get this behavior. That is, in order to transform this program into this program
+[00:29:42 -> 00:29:46] by just running the LVN algorithm. Where is that one small change where we need to
+[00:29:46 -> 00:29:51] introduce awareness of what the add instruction actually means? Think about it and come up with
+[00:29:51 -> 00:30:01] your answer before you unpause the video. Here's how I think you should do it. There
+[00:30:01 -> 00:30:04] are many ways to do it, but I think that you should implement a canonicalization pass
+[00:30:04 -> 00:30:09] on values. That is, as soon as you construct a tuple like add a b, that is, it will actually
+[00:30:09 -> 00:30:14] look like add number one, number two, for example, you check for commutative operators
+[00:30:14 -> 00:30:18] and whenever you do that you canonicalize them so that the value numbers are always
+[00:30:19 -> 00:30:24] non-decreasing. So if you have add number two, number one, you canonicalize that to add
+[00:30:24 -> 00:30:27] number one, number two, and then when you're scanning through your table you'll find an
+[00:30:27 -> 00:30:30] exact match on the canonicalized form of the value. That would work for this
+[00:30:30 -> 00:30:38] commutativity optimization. Here's yet another one, constant propagation. In this version it's
+[00:30:38 -> 00:30:42] just like the copy propagation except we want to replace ids with something even simpler,
+[00:30:42 -> 00:30:50] the constant instruction. This means that if you id through a bunch of times the same
+[00:30:51 -> 00:30:57] underlying constant for, we can replace that not just with ids, but we can replace those things
+[00:30:57 -> 00:31:02] with const instructions. You can think now about where you would need to change
+[00:31:02 -> 00:31:14] the LVN algorithm to teach it the semantics of const to make this work. I'm not going to reveal
+[00:31:14 -> 00:31:20] the full answer this time, but I think this has to do with where you reconstruct instructions
+[00:31:20 -> 00:31:26] in the algorithm. Okay, so here's one final one that sort of demonstrates the full unbridled
+[00:31:26 -> 00:31:31] power of LVN. It should be possible to take this entire program, because it starts out
+[00:31:31 -> 00:31:38] with constants, four and two, that does like a bunch of sums, does some products and stuff,
+[00:31:38 -> 00:31:42] and finally prints things. I think we should be able to turn this into something that just
+[00:31:42 -> 00:31:48] computes an actual number. This optimization is outside of the LVN context called constant
+[00:31:48 -> 00:31:53] folding, because it's not just propagating constants, it's folding them through operations
+[00:31:53 -> 00:31:57] that act on constants. So if you know you have a constant and a constant and you do an operation
+[00:31:57 -> 00:32:02] to them, you can compute at compile time that constant. And that's pretty cool because it lets
+[00:32:02 -> 00:32:06] you get rid of a whole bunch of computation that would otherwise be done at runtime and
+[00:32:06 -> 00:32:11] basically simulate the same effects at compile time, replacing the whole thing with a constant
+[00:32:11 -> 00:32:17] expression. My implementation of LVN with all its power combined is able to, in fact,
+[00:32:17 -> 00:32:23] reduce this entire big program to this tiny one that just constructs, that just uses a single
+[00:32:23 -> 00:32:28] constant, simulating the effects of the program at runtime. I'll let you think offline about
+[00:32:28 -> 00:32:33] where exactly you would need to make tweaks to the LVN algorithm in order to make this whole
+[00:32:33 -> 00:32:39] thing work. I also want to emphasize that we're talking, again, the L in LVN is for local value
+[00:32:39 -> 00:32:42] numbering, which means that this thing only works because we're doing all this computation
+[00:32:42 -> 00:32:49] within a single basic block. In my implementation, for example, if you were to like jump to a label
+[00:32:51 -> 00:32:56] that's right here, it would totally break because it would be able to optimize some things
+[00:32:56 -> 00:33:00] around in here, but it wouldn't get to know that the inputs A and B are constants. It
+[00:33:00 -> 00:33:05] only looks at a single basic block at a time. So those are the myriad ways that it's possible
+[00:33:05 -> 00:33:11] to customize the basic LVN framework with little tweaks, introducing the semantics of
+[00:33:11 -> 00:33:16] the underlying language to make more optimizations fall out. There are many others. We won't discuss
+[00:33:16 -> 00:33:24] them here. Where we're heading is to do an actual implementation of LVN for Brill. That's your main
+[00:33:24 -> 00:33:31] task for this week. I have to emphasize that this may seem easier than it actually is. There's
+[00:33:31 -> 00:33:34] a lot of fiddly details you're going to have to get right in order to get an implementation
+[00:33:34 -> 00:33:39] that is both correct and actually optimizes the programs. All of these extensions to LVN
+[00:33:39 -> 00:33:43] are bonus for this week's task. You don't actually have to do them. Just getting the
+[00:33:43 -> 00:33:48] basic framework is the task that you have to do. The next step that we're going to do here,
+[00:33:48 -> 00:33:53] however, is go over the pseudocode for taking these vague ideas and these pictures scrolling
+[00:33:53 -> 00:33:57] around on an iPad screen and turning them slightly closer to an actual algorithm.
+[00:33:58 -> 00:34:02] I would really like you now to pause this video and take some time, not just like a
+[00:34:02 -> 00:34:06] couple of minutes to think about it, but try actually sketching out the entire pseudocode
+[00:34:06 -> 00:34:11] for how to run this LVN algorithm. Think carefully about what the data structures are
+[00:34:11 -> 00:34:14] going to have to look like. Again, it's pseudocode, so you don't have to think about
+[00:34:14 -> 00:34:18] how to implement those data structures, but think about what has to map to what and write
+[00:34:18 -> 00:34:23] the for loops and the assignments and stuff, indicating exactly where you're going to replace
+[00:34:23 -> 00:34:26] instructions and where you're going to insert things into the data structures,
+[00:34:26 -> 00:34:30] thinking through the entire pseudocode for this. I'll show you my pseudocode and talk through
+[00:34:30 -> 00:34:41] it, and then it's going to be on you to implement that. Okay, here's my pseudocode.
+[00:34:41 -> 00:34:46] It starts out with the initialization of the data structures, which you'll recognize
+[00:34:46 -> 00:34:51] from the terribly drawn cartoons above. The first one is the table, which that's the thing that
+[00:34:51 -> 00:34:56] looked like the table above. I phrase it slightly differently here as being a numbered mapping
+[00:34:56 -> 00:35:02] from values to canonical variables, but really it's a sort of three-way relation
+[00:35:02 -> 00:35:10] that includes the number, the value, and the canonical variable, the canonical home of that
+[00:35:10 -> 00:35:18] value. I'll be sort of using it as a map that's keyed by the values. Then there's the veritanum
+[00:35:18 -> 00:35:26] map, which you can think of as the cloud we were using before. That's the environment
+[00:35:26 -> 00:35:31] that keeps track of the current values associated with every variable that has been assigned to
+[00:35:31 -> 00:35:37] so far during our scan. And here's the scan. We're going to just iterate through
+[00:35:37 -> 00:35:43] every step in the, every instruction in the block. The first thing to note about actual
+[00:35:43 -> 00:35:48] concrete implementation of this is that you're going to need some representation for values.
+[00:35:48 -> 00:35:54] That is, the value thing here that I've been sort of referring to as a tuple,
+[00:35:54 -> 00:35:58] the main reason I keep on calling it a tuple is because we need to be able to do equality
+[00:35:58 -> 00:36:06] comparisons. We need to be able to look things up in the table here, indexed by this value,
+[00:36:06 -> 00:36:09] which means we need to be able to compare things. We need to construct one of these tuples and check
+[00:36:09 -> 00:36:12] whether there's an existing tuple that's the same thing. Whatever language you're using
+[00:36:12 -> 00:36:17] to implement LVN, it must have equality defined for the type that you're using to represent
+[00:36:17 -> 00:36:23] values. That is, you have to be able to do in kind of Java terms, like dot equals instead
+[00:36:23 -> 00:36:29] of double equals. That is to say that we need to compare them for equality and not for
+[00:36:29 -> 00:36:36] identity. I'm going to skip over the big if in the middle of this loop and go to the very
+[00:36:36 -> 00:36:42] end to show what happens regardless of whether something is in the table or not. When we do this
+[00:36:42 -> 00:36:47] in table, that's where we're going to use that equality on values to look things up to decide
+[00:36:47 -> 00:36:51] whether this already exists or not. We're going to do some stuff, but eventually we're going to
+[00:36:51 -> 00:36:57] maintain the cloud. That is, we will add whatever the destination of this new instruction is,
+[00:36:57 -> 00:37:03] that new variable x is now going to point to some row in the table. That table entry
+[00:37:03 -> 00:37:07] num is going to be decided differently for the two branches. Regardless, at the very end,
+[00:37:07 -> 00:37:13] we're going to need to update the cloud to have the variable be tracked in the current
+[00:37:13 -> 00:37:20] environment. Let's now look at the two possibilities. The first possibility is that the value already
+[00:37:20 -> 00:37:24] exists, in which case we have found some redundancy. What we're going to need to do
+[00:37:24 -> 00:37:31] is replace the instruction with something that eliminates that redundancy. What I mean by
+[00:37:31 -> 00:37:38] with a copy of the variable is that you should say the destination is id of var,
+[00:37:38 -> 00:37:43] where var is the canonical home that we got out of the table. This case is fairly straightforward.
+[00:37:43 -> 00:37:47] The other one is slightly more complicated, not that much more complicated. This is a case where
+[00:37:47 -> 00:37:54] we have a newly computed value that has never existed before, and we just need to do some
+[00:37:54 -> 00:38:00] bookkeeping. With this work, we will get a new number that is the next row in the table,
+[00:38:00 -> 00:38:05] if you will. I'm going to skip over this nastiness in the middle, which is a complicated,
+[00:38:05 -> 00:38:10] unfortunate thing we will deal with in a moment, and just talk about the bookkeeping we do with
+[00:38:10 -> 00:38:18] that number. We need to update the table with that new number to track the canonical home
+[00:38:18 -> 00:38:24] of the value. That means add a new entry to the bottom of the table that has the new number,
+[00:38:25 -> 00:38:30] the newly computed value, and the new destination that is now the canonical home of that value in
+[00:38:30 -> 00:38:35] case it's ever being used again in the future. We will then update the actual instruction.
+[00:38:37 -> 00:38:45] This is that reconstruction step that says that we will use values from the table instead of
+[00:38:45 -> 00:38:49] the original variables. That's actually fairly straightforward. It's just that you have to go
+[00:38:49 -> 00:38:53] through all of the arguments and replace their old variable names with the canonical
+[00:38:53 -> 00:38:58] variable names for those values. Okay, finally, I promised we'd come back to this nasty bit in
+[00:38:58 -> 00:39:03] the middle, which deals with kind of an unfortunate circumstance of the LVN situation.
+[00:39:04 -> 00:39:08] In LVN, remember the philosophy is we're trying to disentangle the notion of values,
+[00:39:08 -> 00:39:12] that is things being computed, from variables, that is where they're being stored.
+[00:39:12 -> 00:39:16] And there is one situation where that's particularly inconvenient when it comes to
+[00:39:16 -> 00:39:21] the realization in actual variable names. So far, we have conveniently been able to just
+[00:39:21 -> 00:39:25] leave all the destination variables named the same thing that they were before. Here's the
+[00:39:25 -> 00:39:29] circumstance where that, that is leaving all the variable names the same, becomes a problem.
+[00:39:30 -> 00:39:35] Say that you do x equals some computation, like let's say x equals a plus b, I don't know,
+[00:39:35 -> 00:39:40] use x for a while, and eventually you reassign x to something else, and then use some more
+[00:39:40 -> 00:39:45] computation, and then eventually you do another copy of the same computation. That is, you
+[00:39:45 -> 00:39:50] compute the same value a plus b, and a and b have not changed so far. If that's the case,
+[00:39:51 -> 00:39:59] then LVN will want to, and in fact it should be able to, eliminate the redundancy in y,
+[00:40:00 -> 00:40:04] and just reuse the computation we already have. However, this is obviously a problem,
+[00:40:04 -> 00:40:09] because x doesn't hold that value anymore. Through the unfortunate conflation of values
+[00:40:09 -> 00:40:14] and variables, we don't have the original value that we thought we had. So doing this
+[00:40:14 -> 00:40:19] replacement would be unsafe. What we actually need to do is to, let's call it x prime or
+[00:40:19 -> 00:40:24] something, to rename this to a different variable, so we still have it around, in case it gets used
+[00:40:24 -> 00:40:30] in the future. One way to do this, which would be very ugly, but also very easy, would be every
+[00:40:30 -> 00:40:34] time you reconstruct an instruction, you make a completely new variable name for it. That is,
+[00:40:34 -> 00:40:39] just call it, like, variable one, variable two, variable three. And this would totally
+[00:40:39 -> 00:40:44] work, because it would sort of, it would complete the disassociation between the old
+[00:40:45 -> 00:40:49] crappy variable names of the past, and replace them all with variable names that just
+[00:40:50 -> 00:40:55] represent the nice clean world of value numbers of the future. However, that's not really all
+[00:40:55 -> 00:41:01] that friendly. It is a little bit nicer to sort of be lazy about it, and reuse the old variable
+[00:41:01 -> 00:41:05] names when possible, and only do renaming when necessary. So we're going to take that approach.
+[00:41:05 -> 00:41:11] That is, we will use, we'll like rename things as x prime, only opportunistically,
+[00:41:11 -> 00:41:15] only when we have to, instead of renaming all the variables eagerly. So that's what this
+[00:41:15 -> 00:41:21] pseudocode does. It does a slightly tricky thing to say, if the instruction will ever be overwritten
+[00:41:21 -> 00:41:29] later, that is, if the, I guess that should probably actually say, if the instore.dest
+[00:41:29 -> 00:41:32] will ever be overwritten. That is, if there's any other instruction later in the basic block
+[00:41:32 -> 00:41:36] that will ever write to the same variable, then let's do some renaming. Otherwise, just keep
+[00:41:36 -> 00:41:41] the same old name for sanity's sake, so you don't lose track of what variables
+[00:41:41 -> 00:41:47] came from and went to where. So in that case, we will just, you can just construct a new
+[00:41:47 -> 00:41:52] fresh variable name and say, that's the destination for this instruction. And when you reconstruct
+[00:41:53 -> 00:41:56] the instruction and insert it back into the program, we'll use that new variable name.
+[00:41:56 -> 00:42:00] And also, when we set the canonical home for the newly computed value,
+[00:42:00 -> 00:42:06] we will say that this is now x prime instead of x, so that future uses of that value will
+[00:42:06 -> 00:42:12] go to the right variable. So that's the entire pseudocode for LVM. It's got some
+[00:42:12 -> 00:42:15] intricacies to it. That variable name thing is just kind of an unfortunate,
+[00:42:15 -> 00:42:22] weird consequence of the fact that variables can be reused, whereas values are kind of forever.
+[00:42:23 -> 00:42:28] However, the overall idea is fairly straightforward. Making it work,
+[00:42:28 -> 00:42:33] and making it work without bugs, is another story, and that is your task for this week.
+[00:42:33 -> 00:42:37] Good luck translating the pseudocode that you now understand in depth
+[00:42:37 -> 00:42:41] into real code and making it work on real programs.

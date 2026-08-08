@@ -1,0 +1,397 @@
+Title: Compiler Design Module 29 : Structure of Viable Prefixes
+Video ID: kPuxx5ESSCk
+Detected language: en
+------------------------------------------------------------
+
+[00:00:00 -> 00:00:04] So far, we have learned about what is bottom-up passing.
+[00:00:04 -> 00:00:08] It's about tracing the rightmost derivation in reverse.
+[00:00:08 -> 00:00:12] We have also talked about what a shift-reduce parser is.
+[00:00:12 -> 00:00:17] It involves two types of moves, shift and reduce.
+[00:00:17 -> 00:00:18] We looked at what are handles.
+[00:00:18 -> 00:00:22] We said a handle is a state of the stack
+[00:00:22 -> 00:00:24] where we should reduce.
+[00:00:24 -> 00:00:26] In other words, in a rightmost derivation,
+[00:00:26 -> 00:00:30] it is exactly the place where there was a derivation
+[00:00:30 -> 00:00:31] that was done, where there was a production
+[00:00:31 -> 00:00:32] that was applied.
+[00:00:34 -> 00:00:35] And then we said, what is a viable prefix?
+[00:00:35 -> 00:00:39] Viable prefix is any potential state of the stack
+[00:00:39 -> 00:00:44] in a valid parse of a string if one exists.
+[00:00:45 -> 00:00:46] Actually, if you think about it,
+[00:00:46 -> 00:00:50] we haven't said much about how we're going to parse yet.
+[00:00:50 -> 00:00:53] We've talked about shift-reduce parsing, which is nice,
+[00:00:53 -> 00:00:56] but we haven't really said how to decide
+[00:00:56 -> 00:00:57] whether to shift or reduce.
+[00:00:57 -> 00:00:59] We've just been defining a couple of terms.
+[00:00:59 -> 00:01:02] For example, we defined what's a handle,
+[00:01:02 -> 00:01:04] and then we defined what's a viable prefix.
+[00:01:04 -> 00:01:06] Neither of these things are actually,
+[00:01:06 -> 00:01:08] we haven't really said how to find
+[00:01:08 -> 00:01:10] whether something is a handle,
+[00:01:10 -> 00:01:12] or how to find whether something is a viable prefix.
+[00:01:12 -> 00:01:14] We just said, if it is a handle, we should reduce.
+[00:01:14 -> 00:01:17] Or we said, if it produces a viable prefix,
+[00:01:17 -> 00:01:19] then we should perform that action.
+[00:01:20 -> 00:01:23] And for an unambiguous grammar,
+[00:01:23 -> 00:01:24] there's a unique parse tree.
+[00:01:25 -> 00:01:28] And further, there is a unique right-most derivation
+[00:01:28 -> 00:01:32] for any given string, if one exists.
+[00:01:32 -> 00:01:35] And so, it's easy to figure out,
+[00:01:35 -> 00:01:38] if I'm able to identify the derivation,
+[00:01:38 -> 00:01:40] then identifying the handles from the derivation
+[00:01:40 -> 00:01:41] is pretty easy.
+[00:01:41 -> 00:01:43] But if I don't know the derivation,
+[00:01:43 -> 00:01:45] then figuring out what is the handle
+[00:01:45 -> 00:01:47] or what is the viable prefix,
+[00:01:47 -> 00:01:50] that is still, we haven't thought about it yet.
+[00:01:50 -> 00:01:52] We also said that actually it is not possible,
+[00:01:52 -> 00:01:54] in general, to identify what is a handle
+[00:01:54 -> 00:01:55] or what is not,
+[00:01:55 -> 00:01:57] unless you basically know the derivation already.
+[00:01:57 -> 00:01:59] And if you know the derivation already,
+[00:01:59 -> 00:02:02] you already have been able to parse it anyway.
+[00:02:02 -> 00:02:05] So the question is, how do we identify what is a handle
+[00:02:05 -> 00:02:06] or what is a viable prefix?
+[00:02:06 -> 00:02:08] And we also said that, okay,
+[00:02:08 -> 00:02:12] let's categorize grammar and say that
+[00:02:12 -> 00:02:13] there's some grammars where we will be able
+[00:02:13 -> 00:02:17] to identify the handles using this algorithm.
+[00:02:17 -> 00:02:20] Some other grammars for which we will not be able
+[00:02:20 -> 00:02:24] to identify the handles or the viable prefix
+[00:02:24 -> 00:02:25] using this algorithm,
+[00:02:25 -> 00:02:27] but maybe some other algorithm.
+[00:02:27 -> 00:02:31] For example, we said LR0, SLR, LALR, and so on.
+[00:02:31 -> 00:02:33] Okay, we haven't yet studied these algorithms,
+[00:02:33 -> 00:02:35] we just said that, okay,
+[00:02:35 -> 00:02:36] this is how we can categorize grammar
+[00:02:36 -> 00:02:39] and some grammars will be possible
+[00:02:39 -> 00:02:42] using some algorithm
+[00:02:42 -> 00:02:45] because you will be able to identify precisely
+[00:02:45 -> 00:02:46] what is a handle and what is not.
+[00:02:46 -> 00:02:48] So today we're going to try to attempt
+[00:02:49 -> 00:02:53] to identify what is a viable prefix, okay, efficiently,
+[00:02:53 -> 00:02:55] without actually knowing the derivation itself.
+[00:02:55 -> 00:02:58] And to do that, we're going to make some observations
+[00:02:58 -> 00:03:01] on the structure of viable prefixes.
+[00:03:01 -> 00:03:03] So recall that if there is a step
+[00:03:03 -> 00:03:07] in a rightmost derivation or a shift-reduced parse
+[00:03:07 -> 00:03:09] where we have alpha, omega,
+[00:03:09 -> 00:03:13] such that the cursor is placed between alpha and omega,
+[00:03:13 -> 00:03:17] then alpha is known as the viable prefix.
+[00:03:17 -> 00:03:19] Now the observation that I'm making now
+[00:03:19 -> 00:03:21] is that alpha, which is the viable prefix,
+[00:03:21 -> 00:03:26] is made of prefixes of the RHS of the productions.
+[00:03:26 -> 00:03:29] Okay, so if I look at this grammar,
+[00:03:29 -> 00:03:31] which is a canonical grammar of expressions,
+[00:03:31 -> 00:03:36] then any viable prefix should look like the following.
+[00:03:36 -> 00:03:38] It should have bits and pieces
+[00:03:38 -> 00:03:40] of the RHS of the production
+[00:03:40 -> 00:03:42] because after all it is just a prefix
+[00:03:42 -> 00:03:44] of some rightmost derivation.
+[00:03:44 -> 00:03:46] So any rightmost derivation
+[00:03:46 -> 00:03:47] would look like the following.
+[00:03:47 -> 00:03:50] It would have some prefix of some production,
+[00:03:50 -> 00:03:52] and then for the next non-terminal,
+[00:03:52 -> 00:03:55] it would have the prefix of its production and so on,
+[00:03:55 -> 00:03:56] and this would keep going on.
+[00:03:56 -> 00:04:00] So for example, if you look at this particular string,
+[00:04:00 -> 00:04:01] t plus int star t,
+[00:04:03 -> 00:04:08] then here I could think of this
+[00:04:08 -> 00:04:12] as a combination of a couple of prefixes of productions.
+[00:04:12 -> 00:04:14] For example, t plus is coming
+[00:04:14 -> 00:04:17] from the first production t plus,
+[00:04:17 -> 00:04:21] and then int star t is probably coming
+[00:04:21 -> 00:04:25] from this production t produces int star t.
+[00:04:25 -> 00:04:30] So it's a combination of prefixes of some productions.
+[00:04:31 -> 00:04:34] Okay, so to see it more concretely,
+[00:04:35 -> 00:04:38] possibly t plus int star t,
+[00:04:38 -> 00:04:40] the first part of this prefix
+[00:04:40 -> 00:04:44] is coming from this production e produces t plus e,
+[00:04:44 -> 00:04:48] and so the first part of it is available,
+[00:04:48 -> 00:04:51] but capital E has been expanded further,
+[00:04:51 -> 00:04:55] and so the other part of it is probably coming from,
+[00:04:55 -> 00:04:56] the first thing I want to do probably
+[00:04:56 -> 00:04:58] is to produce t from e,
+[00:04:58 -> 00:05:02] and then produce int star t from t,
+[00:05:02 -> 00:05:03] and so if I look at it,
+[00:05:03 -> 00:05:06] it becomes t plus int star t.
+[00:05:08 -> 00:05:12] So in general, a viable prefix would be formed
+[00:05:12 -> 00:05:16] by a combination or by concatenation
+[00:05:16 -> 00:05:21] of prefixes of zero or more productions of the grammar.
+[00:05:23 -> 00:05:24] And we saw this in this example.
+[00:05:24 -> 00:05:27] So in general, this would always be
+[00:05:27 -> 00:05:28] the structure of a viable prefix,
+[00:05:28 -> 00:05:30] and once again, this property is coming
+[00:05:30 -> 00:05:33] from the fact that it's a rightmost derivation.
+[00:05:33 -> 00:05:35] So it would have some prefix one,
+[00:05:35 -> 00:05:38] prefix two, prefix three, dot, dot, dot,
+[00:05:38 -> 00:05:41] such that each prefix i is a prefix
+[00:05:41 -> 00:05:43] of the RHS of a production,
+[00:05:45 -> 00:05:47] and here I'm showing n prefixes.
+[00:05:50 -> 00:05:54] Moreover, when prefix n becomes complete,
+[00:05:54 -> 00:05:55] we will reduce it.
+[00:05:55 -> 00:05:56] So let's say the prefix n
+[00:05:56 -> 00:05:59] is some incomplete prefix of some production,
+[00:05:59 -> 00:06:01] but the moment it becomes complete,
+[00:06:01 -> 00:06:04] which means the entire RHS starts showing up there,
+[00:06:04 -> 00:06:08] then we replace it by the LHS of that production,
+[00:06:08 -> 00:06:11] and now prefix n minus one gets modified
+[00:06:11 -> 00:06:14] because another symbol, another non-terminal symbol
+[00:06:14 -> 00:06:17] gets appended to prefix n minus one
+[00:06:17 -> 00:06:19] to give you prefix prime n minus one.
+[00:06:19 -> 00:06:21] So prefix n minus one gets changed
+[00:06:21 -> 00:06:23] to prefix prime n minus one,
+[00:06:23 -> 00:06:25] and this keeps happening, right?
+[00:06:25 -> 00:06:32] Okay, so that's what the structure
+[00:06:32 -> 00:06:35] of a viable prefix looks like.
+[00:06:35 -> 00:06:37] So here is an example.
+[00:06:37 -> 00:06:40] So we already looked at this idea
+[00:06:40 -> 00:06:43] that t plus int star t is a viable prefix,
+[00:06:43 -> 00:06:46] and that it is formed by two parts.
+[00:06:46 -> 00:06:49] One is a prefix of the production t plus c,
+[00:06:49 -> 00:06:51] and the other is the prefix of the production
+[00:06:51 -> 00:06:53] t produces int star t.
+[00:06:53 -> 00:06:57] And now it can reduce to another viable prefix,
+[00:06:57 -> 00:06:59] which is t plus t.
+[00:06:59 -> 00:07:01] And once again, I can kind of,
+[00:07:01 -> 00:07:05] what I've done is this was a prefix n
+[00:07:05 -> 00:07:07] in my previous slide,
+[00:07:07 -> 00:07:12] and now this has reduced to a single non-terminal t.
+[00:07:12 -> 00:07:14] And still, I mean, this still represents
+[00:07:14 -> 00:07:16] a prefix of some RHS.
+[00:07:16 -> 00:07:18] And in this case, the RHS is of the production,
+[00:07:18 -> 00:07:20] e produces t, which is just producing
+[00:07:20 -> 00:07:24] a single symbol t in the RHS.
+[00:07:24 -> 00:07:26] And finally, this can actually further reduce
+[00:07:26 -> 00:07:27] to t plus e.
+[00:07:27 -> 00:07:29] So in this case, what's happening is
+[00:07:29 -> 00:07:31] t is reducing to e,
+[00:07:31 -> 00:07:33] and now prefix n minus one,
+[00:07:33 -> 00:07:36] which in this case is the first prefix,
+[00:07:36 -> 00:07:37] now becomes t plus e.
+[00:07:37 -> 00:07:38] So instead of two different prefixes,
+[00:07:38 -> 00:07:41] now I'm left with a single prefix.
+[00:07:41 -> 00:07:44] And eventually, this is going to reduce to e.
+[00:07:44 -> 00:07:45] So this is what a structure
+[00:07:45 -> 00:07:49] of a viable prefix will look like.
+[00:07:49 -> 00:07:51] So important fact number three,
+[00:07:51 -> 00:07:52] and this comes from some of the discussion
+[00:07:52 -> 00:07:54] that we already had,
+[00:07:54 -> 00:07:55] is that for any grammar,
+[00:07:55 -> 00:07:59] the set of viable prefixes is a regular language, okay?
+[00:07:59 -> 00:08:02] So this may sound a little surprising
+[00:08:02 -> 00:08:07] because we are kind of introducing the idea
+[00:08:07 -> 00:08:09] of how can the prefix, viable prefix
+[00:08:09 -> 00:08:13] of a context-free grammar represent a regular language.
+[00:08:13 -> 00:08:17] Well, it's easy to see because a viable prefix,
+[00:08:17 -> 00:08:18] as we just discussed,
+[00:08:18 -> 00:08:21] is formed by concatenating zero or more prefixes
+[00:08:21 -> 00:08:24] of the RHS of the productions, right?
+[00:08:24 -> 00:08:27] So any viable prefix is basically formed
+[00:08:27 -> 00:08:31] by concatenating zero or more prefixes of productions.
+[00:08:31 -> 00:08:33] And because there's a finite number of productions,
+[00:08:33 -> 00:08:37] we can kind of construct a regular language
+[00:08:37 -> 00:08:40] to represent the set of viable prefixes.
+[00:08:41 -> 00:08:44] So for example, the set of viable prefixes
+[00:08:44 -> 00:08:45] for this grammar,
+[00:08:45 -> 00:08:50] S produces epsilon or left open brackets,
+[00:08:50 -> 00:08:51] capital S, right broken open brackets,
+[00:08:51 -> 00:08:55] which is basically the grammar of all palance parentheses.
+[00:08:57 -> 00:09:00] Then we have the set of viable prefixes for this
+[00:09:00 -> 00:09:05] is either epsilon or some zero or more sequences
+[00:09:06 -> 00:09:10] of the open bracket,
+[00:09:10 -> 00:09:13] or zero or more sequences of the open bracket
+[00:09:13 -> 00:09:14] followed by capital S,
+[00:09:16 -> 00:09:20] or zero or more occurrences of the open bracket
+[00:09:20 -> 00:09:25] followed by one occurrence of open bracket,
+[00:09:25 -> 00:09:27] capital S, closed bracket.
+[00:09:27 -> 00:09:28] So notice that I'm just constructing
+[00:09:28 -> 00:09:30] the set of viable prefixes
+[00:09:30 -> 00:09:32] by just looking at the grammar and saying,
+[00:09:32 -> 00:09:34] what are all the possible combinations
+[00:09:34 -> 00:09:35] that are possible here, right?
+[00:09:35 -> 00:09:39] So I could either just use epsilon,
+[00:09:39 -> 00:09:40] or I could use epsilon,
+[00:09:40 -> 00:09:43] and epsilon we have before, anything doesn't make sense.
+[00:09:43 -> 00:09:45] So I'm going to look at the second production.
+[00:09:45 -> 00:09:49] So either I could use some number of the open brackets
+[00:09:49 -> 00:09:51] or some number of open brackets,
+[00:09:51 -> 00:09:53] because I could use the first open bracket,
+[00:09:53 -> 00:09:55] which is the first prefix, and then another one.
+[00:09:55 -> 00:10:00] So open bracket star is going to look like this,
+[00:10:01 -> 00:10:05] and each of them is going to be a separate prefix,
+[00:10:05 -> 00:10:06] isn't it?
+[00:10:06 -> 00:10:08] Each of a separate production,
+[00:10:08 -> 00:10:11] and eventually it may get reduced
+[00:10:11 -> 00:10:13] to fewer number of prefixes and so on.
+[00:10:13 -> 00:10:16] Or it could be open bracket star S
+[00:10:16 -> 00:10:19] or open bracket star, open bracket capital S,
+[00:10:19 -> 00:10:20] closed bracket.
+[00:10:20 -> 00:10:22] Or if I want to represent it as a regular expression,
+[00:10:22 -> 00:10:24] it's going to look something like this.
+[00:10:24 -> 00:10:27] Open bracket star, the cleanie star plus,
+[00:10:27 -> 00:10:29] which is the union operator,
+[00:10:29 -> 00:10:33] or open bracket star capital S or open bracket plus,
+[00:10:33 -> 00:10:34] which represents one or more occurrences
+[00:10:34 -> 00:10:37] of the open bracket, capital S, closed bracket.
+[00:10:38 -> 00:10:40] So this regular expression represents the language
+[00:10:40 -> 00:10:50] of all viable prefixes for this context-free grammar.
+[00:10:50 -> 00:10:54] Okay, an item.
+[00:10:54 -> 00:10:56] So now I'm going to define another concept,
+[00:10:56 -> 00:11:00] which is basically based on this notion
+[00:11:00 -> 00:11:01] that a viable prefix is formed
+[00:11:01 -> 00:11:05] by concatenating prefixes of productions,
+[00:11:05 -> 00:11:08] one or more, zero or more productions.
+[00:11:08 -> 00:11:11] And to basically represent that,
+[00:11:11 -> 00:11:13] to represent the fact that,
+[00:11:13 -> 00:11:15] to represent a prefix of a production,
+[00:11:15 -> 00:11:18] I'm going to define the notion of an item.
+[00:11:18 -> 00:11:20] An item is a production
+[00:11:20 -> 00:11:23] with a dot somewhere in the RHS, right?
+[00:11:23 -> 00:11:25] So for example, these are the items
+[00:11:25 -> 00:11:29] for this production T produces parenthesized E.
+[00:11:29 -> 00:11:33] So the first item is dot is on the leftmost point.
+[00:11:33 -> 00:11:36] The second item involves the dot,
+[00:11:37 -> 00:11:39] just after the left parenthesis.
+[00:11:39 -> 00:11:42] The third item is after E,
+[00:11:42 -> 00:11:44] and the fourth item is on the very right.
+[00:11:45 -> 00:11:47] And these different items are basically
+[00:11:47 -> 00:11:48] kind of representing what is the point,
+[00:11:48 -> 00:11:51] how much of the prefix is present
+[00:11:51 -> 00:11:52] in the viable prefix, for example.
+[00:11:52 -> 00:11:54] That's what we want to really represent.
+[00:11:54 -> 00:11:56] I want to say, okay, maybe,
+[00:11:56 -> 00:11:58] if this is the item that we are using,
+[00:11:58 -> 00:12:01] then the first open parenthesis is in the viable prefix,
+[00:12:01 -> 00:12:02] and then there is some other thing.
+[00:12:02 -> 00:12:05] So what part of the production
+[00:12:05 -> 00:12:07] is in the viable prefix and what part is not?
+[00:12:08 -> 00:12:11] Okay, so we're going to represent
+[00:12:11 -> 00:12:13] a viable prefix as a stack of items.
+[00:12:13 -> 00:12:15] So recall that we used this example
+[00:12:15 -> 00:12:17] of T plus int star T,
+[00:12:17 -> 00:12:19] and we're going to kind of represent this
+[00:12:19 -> 00:12:20] as a stack of items.
+[00:12:20 -> 00:12:22] We already said that it is a concatenation
+[00:12:22 -> 00:12:24] of prefixes of productions.
+[00:12:24 -> 00:12:25] So what are the productions
+[00:12:25 -> 00:12:27] and what are the prefixes?
+[00:12:27 -> 00:12:30] Those are going to get represented by our items.
+[00:12:30 -> 00:12:33] So in this case, the three items
+[00:12:33 -> 00:12:34] that are going to represent
+[00:12:34 -> 00:12:36] this particular viable prefix is,
+[00:12:36 -> 00:12:40] are E produces T plus dot.
+[00:12:40 -> 00:12:45] So that basically means that the T plus part of it
+[00:12:45 -> 00:12:47] goes into the viable prefix.
+[00:12:47 -> 00:12:50] The second production is E produces dot T,
+[00:12:50 -> 00:12:52] which means that the epsilon here
+[00:12:52 -> 00:12:54] goes into the prefix,
+[00:12:54 -> 00:12:55] which means nothing goes into the prefix.
+[00:12:55 -> 00:12:57] It's an empty string.
+[00:12:57 -> 00:12:58] And then the third production
+[00:12:58 -> 00:13:01] is T produces int star T dot,
+[00:13:01 -> 00:13:04] which means this entire thing goes into the prefix.
+[00:13:04 -> 00:13:08] So the viable prefix is formed by T plus epsilon
+[00:13:08 -> 00:13:11] int star T, which basically means T plus int star T.
+[00:13:12 -> 00:13:15] Okay, so viable prefix can be represented
+[00:13:15 -> 00:13:19] as a stack of items.
+[00:13:19 -> 00:13:21] And reading backwards,
+[00:13:21 -> 00:13:23] the LHS of, so reading backwards,
+[00:13:23 -> 00:13:28] which means if I read this stack bottom to top,
+[00:13:28 -> 00:13:30] then the LHS of every item
+[00:13:30 -> 00:13:33] is the next symbol in the RHS of the previous item.
+[00:13:33 -> 00:13:37] So it's not just true that the viable prefixes,
+[00:13:37 -> 00:13:39] a viable prefix is formed by concatenating
+[00:13:39 -> 00:13:41] the prefixes of productions.
+[00:13:41 -> 00:13:44] There's also a pattern to which prefixes are used
+[00:13:44 -> 00:13:45] or which productions are used.
+[00:13:45 -> 00:13:47] And the pattern is the following,
+[00:13:47 -> 00:13:48] that if I look, read backwards,
+[00:13:48 -> 00:13:51] then if I look at the LHS of this,
+[00:13:51 -> 00:13:54] then this is what is following dot in the previous one.
+[00:13:54 -> 00:13:55] And that makes sense,
+[00:13:55 -> 00:13:58] because that's what we are expanding.
+[00:13:59 -> 00:14:01] So these two match, okay?
+[00:14:01 -> 00:14:06] Similarly, this is the LHS of the second production,
+[00:14:08 -> 00:14:10] and this is what follows the dot
+[00:14:10 -> 00:14:12] in the first production, okay?
+[00:14:12 -> 00:14:15] So that's another property of this stack of items,
+[00:14:15 -> 00:14:19] that the LHS of every item is the next symbol.
+[00:14:19 -> 00:14:21] By next symbol, I mean the symbol
+[00:14:21 -> 00:14:23] that just follows the dot pointer
+[00:14:23 -> 00:14:28] in the RHS of the previous item, okay?
+[00:14:28 -> 00:14:31] So in other words, this stack of items
+[00:14:31 -> 00:14:33] basically says that we have seen
+[00:14:34 -> 00:14:37] T plus of E produces T plus E,
+[00:14:37 -> 00:14:40] we have seen epsilon of E produces dot T,
+[00:14:40 -> 00:14:45] and we have seen int star T of T produces int star T,
+[00:14:46 -> 00:14:47] okay?
+[00:14:48 -> 00:14:52] All right, so every viable prefix
+[00:14:52 -> 00:14:54] can be represented as a stack of items
+[00:14:54 -> 00:14:56] where the N plus 1th item is a production
+[00:14:56 -> 00:14:59] for a non-terminal that follows the dot
+[00:14:59 -> 00:15:00] in the Nth item,
+[00:15:00 -> 00:15:04] and we already seen this with an example.
+[00:15:04 -> 00:15:07] So the algorithm idea is the following.
+[00:15:07 -> 00:15:08] To recognize viable prefix,
+[00:15:08 -> 00:15:10] we will try to recognize a sequence
+[00:15:10 -> 00:15:13] of partial RHSs of productions,
+[00:15:15 -> 00:15:17] and each partial RHS can eventually reduce
+[00:15:17 -> 00:15:21] to part of the missing suffix of its predecessor, okay?
+[00:15:21 -> 00:15:24] So we are going to try to develop an algorithm
+[00:15:24 -> 00:15:26] to recognize these viable prefixes.
+[00:15:26 -> 00:15:30] So in any step of our shift-reduce parsing,
+[00:15:30 -> 00:15:33] we are going to consult this automaton
+[00:15:33 -> 00:15:35] that will implement the regular language
+[00:15:35 -> 00:15:36] of viable prefixes,
+[00:15:36 -> 00:15:40] and we will check whether this is a viable prefix
+[00:15:40 -> 00:15:41] or not based on this automaton,
+[00:15:41 -> 00:15:43] whether this could be a viable prefix
+[00:15:43 -> 00:15:46] for any string for this particular automaton.
+[00:15:46 -> 00:15:47] What does that mean?
+[00:15:47 -> 00:15:49] Well, if it is a viable prefix,
+[00:15:49 -> 00:15:51] then it has hope of getting reduced
+[00:15:51 -> 00:15:53] all the way to the start symbol.
+[00:15:53 -> 00:15:54] If it is not a viable prefix,
+[00:15:54 -> 00:15:56] then it has no hope
+[00:15:56 -> 00:15:58] of getting reduced to the start symbol.
+[00:15:58 -> 00:16:00] So at every step,
+[00:16:00 -> 00:16:01] we can check whether there is any hope
+[00:16:01 -> 00:16:04] of getting reduced to the start symbol or not.
+[00:16:04 -> 00:16:05] If there is hope,
+[00:16:05 -> 00:16:07] we can continue on that path.
+[00:16:07 -> 00:16:10] Hopefully, there are not multiple paths
+[00:16:10 -> 00:16:13] on which there is hope.
+[00:16:13 -> 00:16:14] If there are, then we'll have to deal with it,
+[00:16:14 -> 00:16:17] and we'll see how we deal with it.
+[00:16:17 -> 00:16:18] On the other hand,
+[00:16:18 -> 00:16:20] if there is no hope for a viable,
+[00:16:20 -> 00:16:21] which means that if I do this,
+[00:16:21 -> 00:16:24] then I don't end up with a viable prefix.
+[00:16:24 -> 00:16:25] In other words,
+[00:16:25 -> 00:16:27] this cannot be a viable prefix for any string,
+[00:16:27 -> 00:16:28] then we can just say that,
+[00:16:29 -> 00:16:31] okay, this is not a valid answer.
+[00:16:31 -> 00:16:32] In other words, in a shift-reduce parser,
+[00:16:32 -> 00:16:33] we can see,
+[00:16:33 -> 00:16:34] now we have to make a distinction,
+[00:16:34 -> 00:16:36] a choice between shift or reduce.
+[00:16:36 -> 00:16:37] We can say, if I shift,
+[00:16:39 -> 00:16:40] the stuff that I get,
+[00:16:40 -> 00:16:41] is it going to be a,
+[00:16:41 -> 00:16:44] does it have hope to be a viable prefix or not?
+[00:16:44 -> 00:16:46] And we can conserve this automaton
+[00:16:46 -> 00:16:49] to figure out whether it can be a viable prefix or not.
+[00:16:49 -> 00:16:50] What is that?
+[00:16:50 -> 00:16:52] I'm saying that I can use an automaton
+[00:16:52 -> 00:16:55] to figure out whether it could be a viable prefix or not
+[00:16:55 -> 00:16:57] because I have already established
+[00:16:57 -> 00:17:00] that the language of viable prefixes is a regular language.
+[00:17:01 -> 00:17:04] Okay, so to recognize viable prefixes,
+[00:17:04 -> 00:17:06] I'll recognize a sequence of partial RHSs
+[00:17:06 -> 00:17:08] of the productions, okay?
+[00:17:08 -> 00:17:10] And that's a regular language.
+[00:17:10 -> 00:17:12] Each partial RHS can eventually reduce
+[00:17:12 -> 00:17:14] to part of the missing suffix of its predecessor.
+[00:17:14 -> 00:17:16] So hoping that each of them
+[00:17:16 -> 00:17:20] can eventually reduce all the way to the start symbol.

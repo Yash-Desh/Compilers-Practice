@@ -13,18 +13,205 @@ Detected language: en
 [00:00:37 -> 00:00:41] actual implementations is entirely up to you. You will recall from a couple of lessons
 [00:00:41 -> 00:00:49] ago that we described how to find natural loops in CFGs. Natural loops correspond
 [00:00:49 -> 00:00:55] to looping constructs like for, and while, and do-while in normal programming languages.
-[00:00:56 -> 00:01:01] They are strongly connected components of basic blocks in a CFG that have a single
-[00:01:01 -> 00:01:06] entry block, that is, a unique basic block that has edges coming in from the outside,
-[00:01:06 -> 00:01:12] like this one. All of the optimizations I'm going to describe in this lesson apply
-[00:01:12 -> 00:01:16] to natural loops, so probably the first thing that you're going to need to do in
-[00:01:16 -> 00:01:23] your implementation of your optimization is to find the natural loops in the CFG. Then
-[00:01:23 -> 00:01:28] you'll just be analyzing and manipulating the code within those loops. You will also
-[00:01:28 -> 00:01:31] recall from a couple of lessons ago that we saw loop invariant code motion as an
-[00:01:31 -> 00:01:35] example of an optimization that applies to natural loops. Loop invariant code
-[00:01:35 -> 00:01:40] motion identifies loop invariant code like this expression a times b here. It's
-[00:01:40 -> 00:01:44] loop invariant because it computes the exact same value on every iteration of the loop.
-[00:01:44 -> 00:01:54] Loop invariant code motion just assigns that computation like this outside of the loop,
-[00:01:54 -> 00:01:58] and then replaces it with references to that variable. So this way we don't have
-[00:01:58 -> 00:02:02] to do a multiplication on every iteration, and we get the same answer as the previous
-[00:02:02 -> 00:02:07] program. That's loop invariant code motion. You can return to a couple of lessons ago
-[00:02:07 -> 00:02:09] if you want to see more detail on how to carry it.
+[00:00:55 -> 00:01:01] They are strongly connected components of basic blocks in a CFG that have a single
+[00:01:01 -> 00:01:07] entry block that is a unique basic block that has edges coming in from the outside,
+[00:01:07 -> 00:01:11] like this one. All of the optimizations I'm going to describe in this lesson
+[00:01:11 -> 00:01:16] apply to natural loops, so probably the first thing that you're going to need to do
+[00:01:16 -> 00:01:21] in your implementation of your optimization is to find the natural loops in the CFG.
+[00:01:22 -> 00:01:26] Then you'll just be analyzing and manipulating the code within those loops.
+[00:01:27 -> 00:01:30] You will also recall from a couple of lessons ago that we saw loop-invariant
+[00:01:30 -> 00:01:34] code motion as an example of an optimization that applies to natural loops.
+[00:01:34 -> 00:01:39] Loop-invariant code motion identifies loop-invariant code like this expression
+[00:01:39 -> 00:01:43] a times b here. It's loop-invariant because it computes the exact same value on every
+[00:01:43 -> 00:01:49] iteration of the loop. Loop-invariant code motion just assigns that computation
+[00:01:52 -> 00:01:58] like this outside of the loop and then replaces it with references to that variable. So this way,
+[00:01:58 -> 00:02:01] we don't have to do a multiplication on every iteration, and we get the same answer as the
+[00:02:01 -> 00:02:07] previous program. That's loop-invariant code motion. You can return to a couple of lessons
+[00:02:07 -> 00:02:11] ago if you want to see more detail on how to carry out that optimization. The rest of the
+[00:02:11 -> 00:02:17] optimizations in this lesson are going to have a similar flavor. Let's look first at
+[00:02:17 -> 00:02:23] induction variable elimination. This optimization is most useful when it's paired with accesses to
+[00:02:23 -> 00:02:29] memory, that is accesses to arrays, like in the Brill memory extension. For example,
+[00:02:29 -> 00:02:35] this program has an access to an array a inside of the loop. If we think about how that has to
+[00:02:35 -> 00:02:41] be implemented in a C-like language, the way that this gets turned into actual computations
+[00:02:41 -> 00:02:45] is that we have a, which is sort of the base point here to the first element in the array,
+[00:02:45 -> 00:02:53] and then we have to add to that some offset, which will be like i, the index we're using into
+[00:02:53 -> 00:02:59] the array, multiplied by the stride that is the size of the elements in the array.
+[00:02:59 -> 00:03:03] And if we do this in a straightforward way, we'll have to do that multiplication and addition
+[00:03:03 -> 00:03:08] in every iteration of the loop, which in a way is kind of wasteful. There's another way to
+[00:03:08 -> 00:03:13] do this indexing too, which is instead of calculating the address every time, it's just
+[00:03:13 -> 00:03:19] to bump a pointer. That is, we will keep a variable, let's call it a underscore i,
+[00:03:19 -> 00:03:23] that points to the ith element of the a array, and then on every trip around the loop,
+[00:03:23 -> 00:03:29] instead of recomputing that from scratch, we can just say ai plus equals stride to move it
+[00:03:30 -> 00:03:35] by one element in the array. This is nicer because all we have to do now is an addition,
+[00:03:35 -> 00:03:39] instead of both an addition and a multiplication, to get the address we want to dereference.
+[00:03:39 -> 00:03:44] To finish this off, in the loop we're going to have to start out with ai
+[00:03:45 -> 00:03:53] pointing to a at the very beginning of the loop, and then on every iteration we'll be bumping the
+[00:03:53 -> 00:03:58] pointer by this much, and then finally we need a way to tell when we're done, which is instead
+[00:03:58 -> 00:04:07] of comparing i to 100, we will now have to compare ai to something like a plus 100
+[00:04:08 -> 00:04:16] times stride, which of course is a loop invariant expression. That is, this computation can be
+[00:04:16 -> 00:04:21] calculated once outside of the loop, and then we don't have to redo the multiplication every
+[00:04:21 -> 00:04:27] trip around the loop. Induction variable elimination seeks to turn loops written in
+[00:04:27 -> 00:04:32] a much more natural way with subscripting, like a bracket i, and turn it into the faster way
+[00:04:32 -> 00:04:37] of implementing it, that is with all this pointer bumping stuff, automatically. I'm going
+[00:04:37 -> 00:04:43] to give you the recipe for doing that next. The three basic steps. The first step is to find
+[00:04:43 -> 00:04:50] the original induction variables, that is, given a CFG we need to recover what looks like i in
+[00:04:50 -> 00:04:55] the original program. If your representation of the program has fancy iteration constructs that
+[00:04:55 -> 00:04:59] tell you exactly what the loop iteration variables are, then you're already done with
+[00:04:59 -> 00:05:04] this step. But in most programming languages you don't have that luxury, and we just have
+[00:05:04 -> 00:05:08] an integer that's being incremented, and we have to recover what that iteration is doing.
+[00:05:08 -> 00:05:12] So this first step is just to find those iteration variables, those
+[00:05:12 -> 00:05:17] induction variables as they're called. Basically the idea is to look for statements that look
+[00:05:17 -> 00:05:23] like this. That is, to look for a variable that is defined exactly once during the course
+[00:05:23 -> 00:05:31] of a loop, and that definition looks like the variable equals the variable plus some loop
+[00:05:31 -> 00:05:35] invariant expression. So this is assuming that you've already done an analysis
+[00:05:35 -> 00:05:41] to find the loop invariant code, and as long as you can find an i plus equals one of those things,
+[00:05:41 -> 00:05:47] then this is what's called a basic induction variable. We'll see more complex ones in the
+[00:05:47 -> 00:05:53] next step. One note about this, however, is that of course statements like this
+[00:05:53 -> 00:05:59] don't exist in SSA form. So if you decide to do this optimization on an SSA program,
+[00:05:59 -> 00:06:03] you actually have a little bit more work to do than you would in non-SSA form. That is,
+[00:06:03 -> 00:06:09] you need to traverse find nodes to find out cases where we're incrementing a single variable
+[00:06:09 -> 00:06:15] across iterations of the loop. In non-SSA form, we can look for definitions that look
+[00:06:15 -> 00:06:20] more literally like this. That is, just redefining the variable with an increment
+[00:06:20 -> 00:06:26] based on the same variable on every loop iteration. The next step is to find what I'm
+[00:06:26 -> 00:06:34] calling derived loop induction variables. Derived loop induction variables are based on those
+[00:06:34 -> 00:06:40] basic loop induction variables, but they can multiply and add to them on every iteration.
+[00:06:40 -> 00:06:47] So this is like that AI pointer that we saw in the original example. What we're looking
+[00:06:47 -> 00:06:55] for here to find these derived induction variables is to look for uses of our basic
+[00:06:55 -> 00:06:59] loop induction variables that we've already found. They're used in kind of an affine equation
+[00:06:59 -> 00:07:05] here. That is, they have a multiplication times the basic loop induction variable,
+[00:07:05 -> 00:07:10] and then they have an offset. In both of those things, that is the multiplicative factor
+[00:07:10 -> 00:07:15] and the additive factor, both of those things must be loop invariant. In the simplest case,
+[00:07:15 -> 00:07:20] those are actually constants. So this is like 4, the size of integers, for example,
+[00:07:20 -> 00:07:28] on 32-bit machines. And this is a constant that is the base pointer for the array.
+[00:07:28 -> 00:07:32] But in general, they don't just have to be constants. They can be loop invariant. That
+[00:07:32 -> 00:07:37] is, they can be non-constants that are defined just before the loop executes and then not
+[00:07:37 -> 00:07:42] changed on every iteration of the loop. So if we find one of these affine expressions,
+[00:07:42 -> 00:07:47] like c times i plus d, where i is a basic loop induction variable and c and d are loop
+[00:07:47 -> 00:07:56] invariant values, then we can call j a derived loop induction variable. And this is the
+[00:07:56 -> 00:08:02] computation that we want to eliminate. Once we have this, and once we've written down
+[00:08:02 -> 00:08:06] all the bookkeeping we need for both the basic and the derived loop induction variables,
+[00:08:06 -> 00:08:12] the final step is to do the replacement. That is to end up with an optimized program that
+[00:08:12 -> 00:08:18] doesn't need to do the multiplication on every trip around the loop. The first thing we need to
+[00:08:18 -> 00:08:24] replace is the original initial definition of the derived loop induction variable j.
+[00:08:24 -> 00:08:29] And that happens in the pre-header of the loop. So we're going to give j an initial value,
+[00:08:29 -> 00:08:34] and that initial value will be d, its additive offset. You can think of this as being
+[00:08:34 -> 00:08:40] the equation that defines j on every iteration of the loop, but where i is zero, that is,
+[00:08:40 -> 00:08:46] where i is its initial value before we start bumping in. Then we need to replace the
+[00:08:46 -> 00:08:51] update to j that happens inside the loop. And this we will replace instead of having c
+[00:08:51 -> 00:08:56] plus i plus d and redefining j from scratch every time, it will just be bumping j
+[00:08:56 -> 00:09:02] by an appropriate offset. That offset that we want to compute is c times e, by which I mean
+[00:09:02 -> 00:09:09] the amount that j moves per every increment in i and times the amount that i moves by itself
+[00:09:09 -> 00:09:13] every single time. You can see, I hope, how that works out algebraically. And the critical
+[00:09:13 -> 00:09:19] thing is we want to multiply these two things together, but we're multiplying together two loop
+[00:09:19 -> 00:09:25] invariant quantities. So we know by construction that this multiplication itself is also loop
+[00:09:25 -> 00:09:29] invariant. So we don't just want to put the c times e expression right here in the loop body,
+[00:09:29 -> 00:09:35] it's better to bind it in the loop pre-header to a variable whose name I'm not showing here,
+[00:09:35 -> 00:09:39] and then use that variable to increment j on every iteration of the loop.
+[00:09:41 -> 00:09:46] So once you've done this, once you've replaced the definition of j, both its initial definition
+[00:09:46 -> 00:09:51] and its update, you can get rid of the old definition of j. There are again some things to
+[00:09:51 -> 00:09:56] take care of here, depending on whether you're in SSA form. In SSA form, of course, again,
+[00:09:56 -> 00:10:01] you can't actually do plus equals, so you'll need to do some manipulation of phi nodes
+[00:10:01 -> 00:10:07] to make this work, so it works like a j plus equals on every iteration. If you're not in SSA
+[00:10:07 -> 00:10:12] form, you need to be careful about where you insert this, and to make sure that you don't
+[00:10:12 -> 00:10:19] clobber other uses of j that don't want to see that update before it's ready. In either case,
+[00:10:19 -> 00:10:24] you are now done replacing the definitions of j, both in the initial condition and in the
+[00:10:24 -> 00:10:29] inductive case in every iteration of the loop, so that j works exactly the same way as
+[00:10:29 -> 00:10:34] it did before, but now doesn't require the multiplication from scratch that it did
+[00:10:34 -> 00:10:40] before. So you can replace all uses of the old j with the new j, and you're done with the
+[00:10:40 -> 00:10:45] optimization, except that it's always a great idea to clean up the results of this optimization
+[00:10:45 -> 00:10:50] with copy propagation, and especially some dead code elimination, because if you remember
+[00:10:50 -> 00:10:55] that example I showed you before, it only used i to index into a, and it's pretty common
+[00:10:55 -> 00:11:01] that we therefore don't need i anymore now that we have computed that, like, pointer bumping
+[00:11:01 -> 00:11:06] of the ai index. So doing some dead code elimination after this pass is super critical
+[00:11:06 -> 00:11:12] to make sure that we actually eliminate the old induction variable in favor of the new faster
+[00:11:12 -> 00:11:22] iteration style. So that's induction variable elimination. Let's move on to a few other
+[00:11:22 -> 00:11:30] fun loop optimizations. Loop unswitching also unsurprisingly has to do with loop invariant
+[00:11:30 -> 00:11:35] code, but it just tries to look for this common pattern that can show up in loops.
+[00:11:35 -> 00:11:41] That is, when you have an if nested inside of a loop, you can imagine how this looks
+[00:11:41 -> 00:11:45] in a control flow graph. You've got a natural loop and you've got its header,
+[00:11:45 -> 00:11:56] and then that branches off into two conditions. If you find this and you also find that the
+[00:11:56 -> 00:12:01] branch that decides which case you go into doesn't depend on the iteration of the loop,
+[00:12:01 -> 00:12:07] well, maybe the optimization kind of writes itself. That is, we can flip the order of the if and
+[00:12:07 -> 00:12:23] the for, so we end up with something like this. That is, we can have two simpler loops that no
+[00:12:23 -> 00:12:29] longer have ifs in them that do either the f thing or the g thing, depending on the condition.
+[00:12:29 -> 00:12:34] This way, we don't have to execute the branch on every iteration of the loop. We can just
+[00:12:34 -> 00:12:41] do it once to decide which loop to run. This analysis depends on the loop
+[00:12:41 -> 00:12:45] invariance analysis to figure this out, and then it's actually pretty straightforward.
+[00:12:45 -> 00:12:48] All you need to do is identify the branch that you want to eliminate and do some
+[00:12:48 -> 00:12:53] rearrangement at the CFG level. This is less about moving around instructions
+[00:12:53 -> 00:12:57] and more about rearranging the graph that makes up the control flow of the program.
+[00:12:58 -> 00:13:01] Alright, one more loop optimization before I leave you to it.
+[00:13:02 -> 00:13:07] Loop fusion is an optimization that tries to smash together two loops that happen right next to
+[00:13:07 -> 00:13:12] each other. Again, this optimization really shines when you have to access arrays inside
+[00:13:12 -> 00:13:17] those loops. This optimization applies when the two next-door loops have the same looping
+[00:13:17 -> 00:13:22] structure. That is, they use their loop induction variables in the same way. This means that
+[00:13:22 -> 00:13:27] discovering the opportunity to apply this optimization requires the loop induction
+[00:13:27 -> 00:13:33] variable analysis that we just saw a few minutes ago. The idea is that what we want to do is
+[00:13:33 -> 00:13:37] rewrite this to a single loop that, of course, has the same looping structure. So it'll still
+[00:13:37 -> 00:13:42] look like this, it'll still use the loop induction variables in exactly the same way,
+[00:13:46 -> 00:13:50] and we will just copy and paste the two loop bodies right next to each other.
+[00:13:54 -> 00:13:59] Maybe you can think about what makes it legal to do this. Aside from having the same looping
+[00:13:59 -> 00:14:04] structure, when is it allowed to copy and paste these two loop bodies and run them
+[00:14:04 -> 00:14:08] as a single loop body instead of running them sequentially as two separate loops?
+[00:14:08 -> 00:14:13] Pause the video now and think about the appropriate criterion to use to decide
+[00:14:13 -> 00:14:22] when it's appropriate to apply loop fusion. Here's the way I think about it. The way we're
+[00:14:22 -> 00:14:27] changing the behavior of this program is we're taking a program that used to do a bunch of
+[00:14:27 -> 00:14:32] x's and then a bunch of y's, and we're transforming it to do x and then y and then
+[00:14:32 -> 00:14:38] x and then y and so on. So the thing that must be true is that it must be safe to reorder
+[00:14:38 -> 00:14:44] y's past x's. That is, for every iteration of the second loop, it must be equivalent to execute
+[00:14:44 -> 00:14:51] it in either order, either before or after iterations of the first loop. So this means
+[00:14:51 -> 00:14:57] that you need to do some independence analysis to make sure that writes from the second loop
+[00:14:57 -> 00:15:03] aren't going to impact reads from in the first loop. So if, for example, this wrote,
+[00:15:03 -> 00:15:09] if the second loop body here wrote to the array A, that seems like it would be a problem,
+[00:15:09 -> 00:15:13] because this loop is trying to read from array A, and if that's constantly changing, then this
+[00:15:14 -> 00:15:19] reordering of the loop iterations will no longer be equivalent to the original program.
+[00:15:19 -> 00:15:23] And that's, I hope you can agree, a really important criterion for optimizations.
+[00:15:23 -> 00:15:31] In any case, the idea with loop fusion is not merely that we get to get rid of some of the
+[00:15:31 -> 00:15:36] branches in a program. The optimization potential is actually much bigger than that, especially
+[00:15:36 -> 00:15:44] for certain computational domains. So instead of doing the write into BI and the read again
+[00:15:44 -> 00:15:49] from BI here, under certain assumptions again, we can rewrite this to something that looks
+[00:15:50 -> 00:15:57] a lot more efficient, especially in its use of memory. That is, we can just directly go to CI
+[00:16:00 -> 00:16:09] by computing G of F of AI. I think the most important criterion for this is that the
+[00:16:09 -> 00:16:16] B array must be dead after this loop execution. That is, nobody else in the program needs to
+[00:16:16 -> 00:16:22] use the B array. If this is true, we can basically, what's happening here is we can take
+[00:16:22 -> 00:16:26] one loop that used to have to write to a whole bunch of memory and a second loop that used to
+[00:16:26 -> 00:16:30] have to read from all that memory and glue them together so now they don't need that
+[00:16:30 -> 00:16:35] intermediate memory at all. This kind of optimization is really, really critical,
+[00:16:35 -> 00:16:39] for example, in machine learning compilers, where, for example, it's super useful to be
+[00:16:39 -> 00:16:45] able to feed a fully connected layer, that is a matrix multiplication, into a ReLU or non-linear
+[00:16:46 -> 00:16:50] operation that operates on every element on the output of that matrix multiplication.
+[00:16:50 -> 00:16:54] Instead of buffering up the entire matrix multiplication, putting the result into memory,
+[00:16:54 -> 00:16:59] and then reading it back from memory in order to do the ReLU operation, if you just do the
+[00:16:59 -> 00:17:05] ReLU operation on the fly while you're computing the matrix multiplication, you save a lot of
+[00:17:05 -> 00:17:09] traffic to and from memory. This kind of optimization that saves memory and memory
+[00:17:09 -> 00:17:14] accesses is incredibly critical for deep learning applications, where the bottleneck
+[00:17:14 -> 00:17:17] is not really even so much the computation and the branches you're executing, but the
+[00:17:17 -> 00:17:21] amount of memory you're using and how frequently you're accessing it, because of their extreme
+[00:17:21 -> 00:17:26] memory bandwidth demands and the limited amount of memory that's available on chip and off chip
+[00:17:26 -> 00:17:33] in, for example, GPUs. So those are the loop optimizations I wanted to introduce you to today.
+[00:17:33 -> 00:17:37] There are so many more. I'm not trying to give you, in any sense, an exhaustive enumeration
+[00:17:37 -> 00:17:41] of all the loop optimizations in existence. I just wanted to give you a flavor of what's
+[00:17:41 -> 00:17:45] available and to encourage you to explore if you want to get creative with the optimization
+[00:17:45 -> 00:17:51] that you implement. Other loop optimizations that exist include unrolling, that is, making copies
+[00:17:51 -> 00:17:55] of the loop body to avoid the loop control overhead, interchange, that is, flipping the
+[00:17:55 -> 00:18:00] order of inner and outer loops, splitting or peeling, which typically takes the first few
+[00:18:00 -> 00:18:03] iterations of the loop and takes them out of the loop and executes them by themselves
+[00:18:03 -> 00:18:09] so that the main loop can be simpler, and locality transformations that are sensitive
+[00:18:09 -> 00:18:14] directly to the reuse of values across iterations of the loop so that you don't
+[00:18:14 -> 00:18:18] constantly have to be going to main memory, so it's friendlier to the cache. And so many more.
+[00:18:18 -> 00:18:23] Loops, of course, are super important because most of the time that our program spends
+[00:18:23 -> 00:18:27] is in executing loops. A program without loops doesn't run for very long.
+[00:18:28 -> 00:18:31] So there's lots of optimizations out there and I encourage you to explore.
+[00:18:32 -> 00:18:36] As kind of signposting for 6120 overall, this is also kind of where we're going to
+[00:18:36 -> 00:18:40] leave it for these classic optimizations, these global optimizations that have to do with
+[00:18:40 -> 00:18:45] moving code around and finding redundancies and simplifications and this type of a thing.
+[00:18:45 -> 00:18:50] The rest of the class is going to move on to other aspects of analyzing programs and other
+[00:18:50 -> 00:18:55] parts of the puzzle for language implementation beyond just this kind of optimization.
+[00:18:57 -> 00:19:02] If you're curious, this category of optimization, this classic optimization at the
+[00:19:02 -> 00:19:07] function level, is what you'll find in a lot of grad-level compilers courses out there.
+[00:19:07 -> 00:19:11] So if you really love this kind of thing, I'm going to leave some links to other papers and
+[00:19:11 -> 00:19:16] other courses where you can read a lot more about classic compiler optimization.
+[00:19:16 -> 00:19:20] And if you're interested, I encourage you to do one of these optimizations
+[00:19:20 -> 00:19:24] for your end-of-semester course project. Meanwhile, however, we're going to be moving
+[00:19:24 -> 00:19:30] on to other topics while enjoying the warm afterglow of all this great time that we spent
+[00:19:30 -> 00:19:33] optimizing programs, rearranging CFGs, and deleting instructions.

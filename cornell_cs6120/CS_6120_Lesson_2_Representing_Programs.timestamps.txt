@@ -330,4 +330,25 @@ Detected language: en
 [00:28:43 -> 00:28:48] actually, let's do jump first. So if it's a jump instruction, the jump instructions only
 [00:28:48 -> 00:28:53] have one destination. There's only one successor of this block. So the thing we'll
 [00:28:53 -> 00:29:05] need to do is just add an edge to the graph that goes from the current block that we're processing
-[00:29:05 -> 00:29:15] to the destination of that.
+[00:29:09 -> 00:29:20] to the destination of that jump. I'm glossing over a little bit here because I'm not managing
+[00:29:20 -> 00:29:25] the distinction between blocks and the labels they're associated with, but I hope you can
+[00:29:25 -> 00:29:29] forgive me that we can just sort of merge those two things together in a real implementation.
+[00:29:29 -> 00:29:35] The next case that we will need to worry about, other than jumps, is that it is
+[00:29:37 -> 00:29:41] a branch instruction. And branch instructions, of course, are just like jumps, except they have
+[00:29:41 -> 00:29:46] two different destinations. So we're going to need to add two edges to our graph. I used
+[00:29:46 -> 00:30:11] last.true and last.false here to mean the two different destination labels of the instruction.
+[00:30:12 -> 00:30:16] That's just sort of like made up syntax for how you might traverse the actual
+[00:30:17 -> 00:30:23] AST for these programs. But I hope you are assured that it's not going to be that hard,
+[00:30:23 -> 00:30:26] regardless of whatever data structure you choose to represent instructions.
+[00:30:26 -> 00:30:32] There's one final case. That's an else-if. This is the else case. We're going to have
+[00:30:32 -> 00:30:37] to deal with cases where the block doesn't have a terminator, that it doesn't end in
+[00:30:37 -> 00:30:41] a branch. So it's going to fall through to the next block. We're going to need to add an
+[00:30:41 -> 00:30:51] edge to the graph for that as well. I'll just say add edge to block plus one. That's, again,
+[00:30:51 -> 00:30:56] a total abuse of notation just to say the next block in the list. In real Python, of course,
+[00:30:56 -> 00:30:59] you need to sort of keep track of where you are in the list and look at the next thing.
+[00:30:59 -> 00:31:07] And also add a qualifier on here to say if it exists. That is, if this is the last block
+[00:31:07 -> 00:31:11] and the next thing is just the closing curly brace for the entire function,
+[00:31:11 -> 00:31:14] then we are done. And this is the exit node. And we don't add an edge to the graph.
+[00:31:16 -> 00:31:21] So that's the algorithm for forming a control flow graph. And this sort of shift in
+[00:31:21 -> 00:31:27] representation is the first of many that we'll do in this class to look at programs differently
+[00:31:27 -> 00:31:40] so that different properties become obvious when we're doing analyses.
