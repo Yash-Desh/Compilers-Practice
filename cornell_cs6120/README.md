@@ -3,7 +3,10 @@
 Transcripts of Adrian Sampson's **CS 6120: Advanced Compilers** lecture videos,
 hosted on [Cornell Video on Demand](https://vod.video.cornell.edu/).
 
-**18 videos across 13 lessons · ~9 h 13 m total watch time · ~99,500 words transcribed**
+**19 videos across 13 lessons · ~9 h 17 m total watch time · ~100,400 words transcribed**
+
+This is the complete set: it matches all 19 videos listed on the
+[official self-guided course page](https://www.cs.cornell.edu/courses/cs6120/2020fa/self-guided/).
 
 Each video has two files:
 
@@ -21,6 +24,7 @@ Each video has two files:
 | 3 | [Local Optimization & Dead Code Elimination](https://vod.video.cornell.edu/media/1_6k52flbg) | 24:11 | `CS_6120_Lesson_3_Local_Optimization_Dead_Code_Elimination` |
 | 3 | [Local Value Numbering](https://vod.video.cornell.edu/media/1_i2gnhw41) | 42:41 | `CS_6120_Lesson_3_Local_Value_Numbering` |
 | 4 | [Data Flow](https://vod.video.cornell.edu/media/1_72tqupsb) | 40:38 | `CS_6120_Lesson_4_Data_Flow` |
+| 4 | [Implementation Task](https://vod.video.cornell.edu/media/1_mjy6lamo) | 4:26 | `CS_6120_Lesson_4_Implementation_Task` |
 | 5 | [Global Analysis & Optimization](https://vod.video.cornell.edu/media/1_i5apfx6t) | 42:03 | `CS_6120_Lesson_5_Global_Analysis_Optimization` |
 | 5 | [Static Single Assignment](https://vod.video.cornell.edu/media/1_130pq2fh) | 28:21 | `CS_6120_Lesson_5_Static_Single_Assignment` |
 | 6 | [Introduction to LLVM](https://vod.video.cornell.edu/media/1_f231lwkz) | 8:24 | `CS_6120_Lesson_6_Introduction_to_LLVM` |
@@ -43,12 +47,13 @@ lecture is Lesson 8. The filename still follows Cornell's title.
 
 ## Lessons with two videos
 
-Five lessons (2, 3, 5, 6, 11) are split across two videos. The split is by
+Six lessons (2, 3, 4, 5, 6, 11) are split across two videos. The split is by
 sub-topic rather than a fixed theory/exercise structure, though when a lesson has
 an assignment or tooling component it usually gets its own video:
 
 - **Lesson 2** — concepts (Representing Programs), then hands-on tooling (Bril)
 - **Lesson 3** — two techniques: dead code elimination, then local value numbering
+- **Lesson 4** — the data flow lecture, then a short video stating the task
 - **Lesson 5** — two conceptual topics: global analysis, then SSA
 - **Lesson 6** — LLVM overview, then a hands-on pass-writing walkthrough
 - **Lesson 11** — JIT landscape overview, then the trace-optimizer task
