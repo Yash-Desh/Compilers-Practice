@@ -1,0 +1,547 @@
+Title: Compiler Design Module 65 : Operational Semantics for Control flow and Declarations
+Video ID: VPY0dA2PVAI
+Detected language: en
+------------------------------------------------------------
+
+[00:00:00 -> 00:00:02] Now we're going to look at more evaluation rules
+[00:00:02 -> 00:00:05] for our CC++ light language.
+[00:00:05 -> 00:00:08] And we're going to first look at these rules
+[00:00:08 -> 00:00:09] that involve control flow.
+[00:00:09 -> 00:00:13] So far we have looked at straight line pieces of syntax,
+[00:00:13 -> 00:00:16] but now if my syntax or my abstract syntax tree
+[00:00:16 -> 00:00:21] has an if-then-is, so if E1, then E2, else E3,
+[00:00:21 -> 00:00:23] evaluated under a context which is formed
+[00:00:23 -> 00:00:25] by the current object, the variable environment,
+[00:00:25 -> 00:00:26] and the store.
+[00:00:27 -> 00:00:31] Now what do you expect such an expression to evaluate to?
+[00:00:31 -> 00:00:34] So recall that in our language we say that the value
+[00:00:34 -> 00:00:37] that this expression if-then-is evaluates to is void.
+[00:00:37 -> 00:00:39] All right, so the value is easy,
+[00:00:39 -> 00:00:41] but what about the side effects, right?
+[00:00:41 -> 00:00:44] And so to understand what side effects
+[00:00:44 -> 00:00:48] should be visible at the end of the evaluation
+[00:00:48 -> 00:00:51] of this if-then-is expression,
+[00:00:51 -> 00:00:54] basically what we need to do is first evaluate E1,
+[00:00:54 -> 00:00:55] and maybe the evaluation of E1
+[00:00:55 -> 00:00:57] is going to have its own side effects,
+[00:00:57 -> 00:01:01] and then under the new context,
+[00:01:01 -> 00:01:03] which includes the side effects induced by E1,
+[00:01:03 -> 00:01:06] evaluate either E2 or E3,
+[00:01:06 -> 00:01:08] depending on whether E1 evaluated to true
+[00:01:08 -> 00:01:10] or false, respectively, okay?
+[00:01:10 -> 00:01:13] So that's what our rules are going to reflect.
+[00:01:13 -> 00:01:14] And so this is the first rule
+[00:01:14 -> 00:01:16] which is called if-then-is true,
+[00:01:16 -> 00:01:19] and it basically says that you first evaluate
+[00:01:19 -> 00:01:23] in the same context S0, E, S, E1,
+[00:01:23 -> 00:01:28] and if it evaluates to boolean value true
+[00:01:28 -> 00:01:32] and side effects captured in the store S1,
+[00:01:32 -> 00:01:34] then you evaluate E2 in S1.
+[00:01:34 -> 00:01:37] Because the value returned by E1 is true,
+[00:01:37 -> 00:01:40] we evaluate E2, and also notice that E2 is evaluated
+[00:01:40 -> 00:01:43] in the updated store S1.
+[00:01:43 -> 00:01:45] And so if E2 returns V, S2,
+[00:01:45 -> 00:01:47] we just ignore the value V
+[00:01:47 -> 00:01:50] because the semantics of a language are that
+[00:01:50 -> 00:01:52] this expression is going to return a void value.
+[00:01:52 -> 00:01:54] This was also discussed when we were discussing
+[00:01:54 -> 00:01:56] typing rules for our language.
+[00:01:56 -> 00:01:57] And so the value is void,
+[00:01:57 -> 00:01:59] we just ignore the value V,
+[00:01:59 -> 00:02:03] but the side effects are captured in the store S2,
+[00:02:03 -> 00:02:06] which are obtained after evaluating E2.
+[00:02:06 -> 00:02:10] And notice again that E2 is evaluated in S1.
+[00:02:10 -> 00:02:12] Okay, now this was for the case
+[00:02:12 -> 00:02:14] when E1 evaluated to true,
+[00:02:14 -> 00:02:18] we need a similar rule for when E1 evaluates to false,
+[00:02:18 -> 00:02:20] and that's not very different.
+[00:02:20 -> 00:02:22] We just change true with false here,
+[00:02:22 -> 00:02:23] and E2 with E3 here,
+[00:02:23 -> 00:02:25] and everything else remains the same.
+[00:02:25 -> 00:02:28] So if E1 evaluates to false
+[00:02:28 -> 00:02:31] and its side effects are captured in store S1,
+[00:02:31 -> 00:02:34] then we evaluate E3 instead of E2
+[00:02:34 -> 00:02:36] under the updated store S1.
+[00:02:36 -> 00:02:38] And if that returns S2,
+[00:02:38 -> 00:02:40] then that's the final store
+[00:02:40 -> 00:02:41] at the end of this evaluation.
+[00:02:41 -> 00:02:44] In both cases, the value is still void.
+[00:02:45 -> 00:02:48] All right, so that's if then else.
+[00:02:48 -> 00:02:50] Now, just to contrast if then else
+[00:02:50 -> 00:02:51] with the ternary operator,
+[00:02:51 -> 00:02:53] recall that unlike if then else,
+[00:02:53 -> 00:02:56] the ternary operator actually returns a non-void value.
+[00:02:56 -> 00:02:59] So can return a non-void value.
+[00:02:59 -> 00:03:01] So let's say this is my syntax,
+[00:03:01 -> 00:03:04] E1 question mark E2 colon E3,
+[00:03:04 -> 00:03:05] where this question mark and colon
+[00:03:05 -> 00:03:08] represent the ternary operator.
+[00:03:08 -> 00:03:11] The meaning is very similar to if then else,
+[00:03:11 -> 00:03:13] except that this returns a non-void,
+[00:03:13 -> 00:03:15] this may return a non-void value,
+[00:03:15 -> 00:03:17] and it will return a value
+[00:03:17 -> 00:03:19] that is either E2 or E3's value.
+[00:03:19 -> 00:03:21] Recall that when we were discussing the typing rules,
+[00:03:21 -> 00:03:24] we used this operator called least upper bound.
+[00:03:24 -> 00:03:26] But here we are not going to use the least upper bound.
+[00:03:26 -> 00:03:28] We'll add the exact runtime value
+[00:03:28 -> 00:03:30] because this is not a static analysis.
+[00:03:30 -> 00:03:31] It's not a semantic analysis.
+[00:03:31 -> 00:03:33] This is actually the runtime evaluation
+[00:03:33 -> 00:03:34] of these expressions.
+[00:03:34 -> 00:03:36] And so what we're going to do again
+[00:03:36 -> 00:03:38] is that we're going to evaluate E1 first
+[00:03:38 -> 00:03:41] under the same context S0, E, S.
+[00:03:41 -> 00:03:44] And then if it evaluates it true
+[00:03:44 -> 00:03:45] and side effects are captured in S1,
+[00:03:45 -> 00:03:49] then we evaluate E2 under S1.
+[00:03:49 -> 00:03:52] And let's say it gives us V, S2,
+[00:03:52 -> 00:03:55] then the final value is just going to be V, S2.
+[00:03:55 -> 00:03:57] So notice that the value is no longer ignored.
+[00:03:57 -> 00:04:02] So the return value of this expression is V,
+[00:04:02 -> 00:04:04] which is evaluated through E2.
+[00:04:04 -> 00:04:07] And recall that E2 and E3 may be of different types,
+[00:04:07 -> 00:04:09] and that's perfectly okay.
+[00:04:09 -> 00:04:11] We don't really care.
+[00:04:11 -> 00:04:13] Now during evaluation,
+[00:04:13 -> 00:04:15] the dynamic type of this expression
+[00:04:15 -> 00:04:17] would be whatever is the type of E2,
+[00:04:17 -> 00:04:19] without any regard to what is the type of E3.
+[00:04:19 -> 00:04:22] Unlike a static semantic analysis rule,
+[00:04:22 -> 00:04:24] which had to take the least upper bound
+[00:04:24 -> 00:04:26] because it had to conservatively
+[00:04:28 -> 00:04:30] cater to both the possibilities
+[00:04:30 -> 00:04:32] of E1 returning true or false.
+[00:04:33 -> 00:04:35] Here we just, we don't need to be conservative.
+[00:04:35 -> 00:04:37] We just take the value,
+[00:04:37 -> 00:04:40] whichever depending on which branch is taken.
+[00:04:40 -> 00:04:43] So the other kind of dual rule to this is,
+[00:04:43 -> 00:04:46] instead of true, you have false returned by E1.
+[00:04:46 -> 00:04:47] And so instead of E2,
+[00:04:47 -> 00:04:50] you now evaluate E3 under the updated store S1.
+[00:04:50 -> 00:04:51] And now whatever is the value returned
+[00:04:51 -> 00:04:53] by the evaluation of E3
+[00:04:53 -> 00:04:55] is the value returned by the whole expression.
+[00:04:55 -> 00:04:58] And the store is also updated accordingly
+[00:04:58 -> 00:04:59] by first evaluating E1
+[00:04:59 -> 00:05:02] and then evaluating E3 on the updated store.
+[00:05:02 -> 00:05:03] So the final store is S2.
+[00:05:04 -> 00:05:06] Okay, so that's ternary false.
+[00:05:08 -> 00:05:10] Now let's look at a more interesting rule,
+[00:05:10 -> 00:05:13] which is the while construct in our language.
+[00:05:13 -> 00:05:16] So recall that the while construct in our language
+[00:05:16 -> 00:05:19] looks like while, some Boolean expression E1,
+[00:05:19 -> 00:05:21] and then some body expression E2.
+[00:05:21 -> 00:05:25] And the question is what should be the rule for this?
+[00:05:25 -> 00:05:28] First of all, just like if then else,
+[00:05:28 -> 00:05:30] a while expression also returns a void value,
+[00:05:30 -> 00:05:33] but it may update the store through side effects.
+[00:05:33 -> 00:05:35] And so there are two cases again,
+[00:05:35 -> 00:05:36] just like if then else.
+[00:05:36 -> 00:05:39] One case is when E1 evaluates to false
+[00:05:39 -> 00:05:41] and the other case is when E1 evaluates to true.
+[00:05:41 -> 00:05:43] So let's take the first case,
+[00:05:43 -> 00:05:44] which is E1 evaluates to false
+[00:05:44 -> 00:05:46] and we're gonna call it while false.
+[00:05:46 -> 00:05:50] So if E1 evaluates to Boolean value false
+[00:05:50 -> 00:05:55] and the evaluation of E1 updates the store S to S1,
+[00:05:55 -> 00:05:58] then the evaluation of the whole expression
+[00:05:58 -> 00:06:00] also evaluates to void, S1.
+[00:06:00 -> 00:06:02] So we just ignore the false value
+[00:06:02 -> 00:06:04] and we just replace that with the void value
+[00:06:04 -> 00:06:07] and just return the updated store
+[00:06:07 -> 00:06:08] due to evaluation of E1.
+[00:06:08 -> 00:06:10] This is basically saying that,
+[00:06:10 -> 00:06:12] when you evaluate this expression,
+[00:06:12 -> 00:06:13] you first evaluate E1
+[00:06:13 -> 00:06:16] and if E1 evaluated to false,
+[00:06:16 -> 00:06:18] then you just ignore E2 altogether, right?
+[00:06:18 -> 00:06:19] And that's the whole idea.
+[00:06:19 -> 00:06:23] And the result of evaluating this expression
+[00:06:23 -> 00:06:25] would be just void in terms of value
+[00:06:25 -> 00:06:30] and S1, which is in terms of the side effects did store.
+[00:06:30 -> 00:06:33] And S1 is basically capturing the side effects
+[00:06:33 -> 00:06:36] that are induced by evaluating the condition E1 itself.
+[00:06:38 -> 00:06:39] Now, what about the other case?
+[00:06:39 -> 00:06:41] The other case is when E1 returns true
+[00:06:41 -> 00:06:44] and that is slightly more complex case.
+[00:06:44 -> 00:06:47] So let's say E1 returns true.
+[00:06:47 -> 00:06:49] And so under the same context S0, E, S,
+[00:06:49 -> 00:06:51] we evaluate E1 and it returns true
+[00:06:51 -> 00:06:54] and returns the store S1 that capture the side effects.
+[00:06:54 -> 00:06:57] Now we need to evaluate E2
+[00:06:57 -> 00:07:01] and then we need to again evaluate E1, all right?
+[00:07:01 -> 00:07:03] And in fact, the other way to think about it
+[00:07:03 -> 00:07:05] is that after we evaluate E1,
+[00:07:05 -> 00:07:07] if it evaluates to true,
+[00:07:07 -> 00:07:08] then we are going to evaluate E2,
+[00:07:08 -> 00:07:10] that's one iteration of the loop
+[00:07:10 -> 00:07:11] and then we are going to evaluate
+[00:07:11 -> 00:07:14] the whole loop again, but in the updated store, all right?
+[00:07:14 -> 00:07:16] And so that's what the rule is going to be
+[00:07:16 -> 00:07:18] in our big step operational semantics.
+[00:07:18 -> 00:07:21] And so the rule is that you first evaluate E2
+[00:07:21 -> 00:07:22] under the updated store S1,
+[00:07:22 -> 00:07:25] which was updated due to evaluation of E1.
+[00:07:25 -> 00:07:27] So you evaluate E2
+[00:07:27 -> 00:07:30] and let's say E2 gives you a value V, S2.
+[00:07:30 -> 00:07:32] Now the value is not so meaningful
+[00:07:32 -> 00:07:35] because the value written by a while expression
+[00:07:35 -> 00:07:36] is just void.
+[00:07:36 -> 00:07:38] So we'll just ignore the value,
+[00:07:38 -> 00:07:39] but we're going to use S2
+[00:07:39 -> 00:07:42] and in the new updated store S2,
+[00:07:42 -> 00:07:47] recompute the whole expression while E1, E2 again.
+[00:07:47 -> 00:07:52] And so I'm going to say S0, E, S2 under this context,
+[00:07:53 -> 00:07:58] if while E1, E2 returns void, S3,
+[00:07:58 -> 00:08:00] then under the original context also,
+[00:08:00 -> 00:08:05] the while E1, E2 returns the same values void and S3.
+[00:08:05 -> 00:08:07] So what am I doing here?
+[00:08:07 -> 00:08:10] I'm just unrolling one iteration of the loop.
+[00:08:10 -> 00:08:14] So I evaluate the condition for the first iteration.
+[00:08:14 -> 00:08:16] I evaluate the body for that iteration.
+[00:08:16 -> 00:08:19] And then for the rest of the iterations,
+[00:08:19 -> 00:08:24] I basically just use this updated context with S2.
+[00:08:25 -> 00:08:28] And notice that the difference between this,
+[00:08:28 -> 00:08:31] the rule before the line, before the inference line
+[00:08:31 -> 00:08:34] and the one after the inference line
+[00:08:34 -> 00:08:38] is only in the side effects produced by the body
+[00:08:38 -> 00:08:39] and the evaluation of the condition.
+[00:08:39 -> 00:08:44] Here the store is S2 and here is the store is S.
+[00:08:44 -> 00:08:46] And so typically, we write loops
+[00:08:46 -> 00:08:49] where we are updating a variable in the body
+[00:08:49 -> 00:08:51] and let's say checking that variable in the condition.
+[00:08:51 -> 00:08:55] And so those updates are getting reflected in S2.
+[00:08:55 -> 00:08:59] And so we can expect this application of rules
+[00:08:59 -> 00:09:01] to eventually terminate.
+[00:09:01 -> 00:09:03] Once again, recall that when we defined
+[00:09:03 -> 00:09:06] this evaluation judgment,
+[00:09:06 -> 00:09:10] we said that you should read it as if it terminates.
+[00:09:10 -> 00:09:12] So if it does not terminate,
+[00:09:12 -> 00:09:14] so for example, if I were to read this again,
+[00:09:14 -> 00:09:18] I'll say if the evaluation of this while loop terminates
+[00:09:18 -> 00:09:21] then it evaluates to under this context,
+[00:09:21 -> 00:09:24] it evaluates to void, S3.
+[00:09:24 -> 00:09:26] And now if you read this whole rule,
+[00:09:26 -> 00:09:29] it makes sense only if you basically use
+[00:09:29 -> 00:09:30] the termination condition.
+[00:09:30 -> 00:09:34] This termination precondition, let's say, or antecedent.
+[00:09:34 -> 00:09:37] And so that becomes relevant in this case.
+[00:09:37 -> 00:09:40] Because if the loop was not terminating,
+[00:09:40 -> 00:09:43] then we cannot talk about such big-step semantics
+[00:09:43 -> 00:09:48] and we won't be able to give a value to while E1, E2
+[00:09:48 -> 00:09:50] because it actually never terminates.
+[00:09:51 -> 00:09:54] Not even the void value, all right?
+[00:09:54 -> 00:09:58] Okay, let's move forward.
+[00:09:58 -> 00:09:59] Declarations.
+[00:09:59 -> 00:10:03] So, so far our E hasn't changed at all.
+[00:10:03 -> 00:10:05] Recall that E is a variable environment
+[00:10:05 -> 00:10:09] that maps variable names to locations in the store.
+[00:10:09 -> 00:10:12] And what is the way for a language,
+[00:10:12 -> 00:10:17] a statically scoped language like CC++ to update E?
+[00:10:18 -> 00:10:19] I would like to point out here
+[00:10:19 -> 00:10:22] that for dynamically scoped languages,
+[00:10:22 -> 00:10:26] E is updated even by just, you know, at runtime.
+[00:10:27 -> 00:10:30] It's basically updated as and when, you know,
+[00:10:30 -> 00:10:32] you make new declarations and those declarations
+[00:10:32 -> 00:10:35] can kind of travel in other functions and stuff like that.
+[00:10:35 -> 00:10:37] But we also, when we discussed scoping,
+[00:10:37 -> 00:10:39] we said static scoping is more popular
+[00:10:39 -> 00:10:41] and so our language also supports static scoping
+[00:10:41 -> 00:10:43] and not dynamic scoping.
+[00:10:43 -> 00:10:45] And in static scoping, a new variable is declared
+[00:10:45 -> 00:10:50] by a declaration of this form in a new scope,
+[00:10:50 -> 00:10:52] which looks like T, which is a type,
+[00:10:52 -> 00:10:54] ID, which is the variable identifier
+[00:10:54 -> 00:10:57] that's been newly declared and equals E1.
+[00:10:57 -> 00:11:00] And so just assuming that it's an initialized declaration.
+[00:11:01 -> 00:11:05] And so if I said TID equals E1
+[00:11:05 -> 00:11:06] and then I say semicolon E2,
+[00:11:06 -> 00:11:10] this basically means that I've declared a new variable
+[00:11:10 -> 00:11:12] and then I have the rest of the body
+[00:11:12 -> 00:11:17] for the, to be evaluated under the new environment
+[00:11:17 -> 00:11:19] which has this new declaration in it.
+[00:11:19 -> 00:11:20] And so what do you imagine?
+[00:11:20 -> 00:11:22] Basically what needs to be done here is
+[00:11:23 -> 00:11:26] this particular declaration should update E, right?
+[00:11:26 -> 00:11:29] So there should be an updation on E
+[00:11:29 -> 00:11:31] and we should get a new E prime
+[00:11:31 -> 00:11:36] and then E2 should be evaluated under E prime, okay?
+[00:11:38 -> 00:11:42] And whatever E2 returns under the evaluation,
+[00:11:42 -> 00:11:44] under E prime, the updated environment,
+[00:11:44 -> 00:11:47] that should be the value that is returned,
+[00:11:47 -> 00:11:48] including the store, all right?
+[00:11:48 -> 00:11:51] So that's what our rules are going to capture.
+[00:11:52 -> 00:11:56] So first of all, we are going to evaluate E1
+[00:11:57 -> 00:11:59] under the same context as zero ES.
+[00:11:59 -> 00:12:02] So, you know, E1 is, during the evaluation of E1,
+[00:12:02 -> 00:12:06] we have not changed either the environment or the store.
+[00:12:07 -> 00:12:10] Let's say E1 evaluates to V1 comma S1.
+[00:12:12 -> 00:12:13] Then what do we need to do?
+[00:12:13 -> 00:12:16] We need to update the environment.
+[00:12:16 -> 00:12:18] So we need to say, we need to update the environment
+[00:12:18 -> 00:12:21] before we start computing E2.
+[00:12:22 -> 00:12:24] And we don't know how to update the environment,
+[00:12:24 -> 00:12:25] so we're going to discuss that next.
+[00:12:25 -> 00:12:27] But let's say under the updated environment,
+[00:12:27 -> 00:12:30] E2 returns V2 comma S2,
+[00:12:30 -> 00:12:33] then that's the same value comma store
+[00:12:33 -> 00:12:35] that's going to be returned by this entire expression
+[00:12:35 -> 00:12:37] that includes the declaration.
+[00:12:37 -> 00:12:38] So now the only question that remains is
+[00:12:38 -> 00:12:40] that what should be the updated environment
+[00:12:40 -> 00:12:43] and what should be the updated store
+[00:12:43 -> 00:12:47] under which E2 should be evaluated, okay?
+[00:12:47 -> 00:12:49] So informally speaking,
+[00:12:49 -> 00:12:52] basically environment should have all the mappings
+[00:12:52 -> 00:12:54] that E already has,
+[00:12:54 -> 00:12:57] plus it should have a mapping for ID to E1.
+[00:12:57 -> 00:12:59] If E already has a mapping for ID,
+[00:12:59 -> 00:13:02] maybe because ID was declared in outer scope as well,
+[00:13:02 -> 00:13:04] then that mapping should be overridden
+[00:13:04 -> 00:13:09] by this particular mapping from ID to its new location,
+[00:13:09 -> 00:13:11] not E1, but to new location.
+[00:13:11 -> 00:13:14] We call that environment E maps an ID to a location.
+[00:13:14 -> 00:13:16] And then the store should also reflect this fact.
+[00:13:16 -> 00:13:20] So not only should store have all the side effects
+[00:13:20 -> 00:13:21] that are present in S1,
+[00:13:21 -> 00:13:26] but the store should also have written the value V1
+[00:13:26 -> 00:13:28] at the location that ID represents,
+[00:13:28 -> 00:13:31] because that's what ID equals E1 is supposed to do.
+[00:13:31 -> 00:13:34] It's supposed to write the value evaluated by E1
+[00:13:34 -> 00:13:37] into the location that ID represents, okay?
+[00:13:37 -> 00:13:40] So to do this, we are going to...
+[00:13:40 -> 00:13:41] So these are the questions,
+[00:13:41 -> 00:13:43] in what context should E2 be evaluated?
+[00:13:43 -> 00:13:45] We need an environment like E,
+[00:13:45 -> 00:13:47] but with ID mapping to Lnew,
+[00:13:47 -> 00:13:50] where Lnew is a new location that will be created,
+[00:13:50 -> 00:13:54] and a store like S1 with Lnew mapping to V1,
+[00:13:54 -> 00:13:57] where V1 is the value computed for E1.
+[00:13:57 -> 00:13:59] Notice that when we are saying
+[00:13:59 -> 00:14:01] that we need to update the environment with a new mapping
+[00:14:01 -> 00:14:02] or when we are saying that we need to update the store
+[00:14:02 -> 00:14:04] with a new mapping,
+[00:14:04 -> 00:14:05] no way are we talking about
+[00:14:05 -> 00:14:08] whether this mapping is on the stack, on the heap,
+[00:14:08 -> 00:14:09] nothing of that sort.
+[00:14:09 -> 00:14:11] In fact, there's no notion of stack or heap.
+[00:14:11 -> 00:14:13] It's just a map notion of there are some maps.
+[00:14:13 -> 00:14:15] A store is a map and an environment is a map.
+[00:14:15 -> 00:14:18] And this is keeping things as abstract as possible
+[00:14:18 -> 00:14:20] so that implementations are free to choose
+[00:14:20 -> 00:14:22] whatever implementation they like
+[00:14:22 -> 00:14:24] for store and environment, right?
+[00:14:24 -> 00:14:27] For example, typically they would use the stack
+[00:14:27 -> 00:14:31] as they would allocate local variables in the stack,
+[00:14:31 -> 00:14:36] or they would allocate non-local variables
+[00:14:36 -> 00:14:38] or global variables not in the stack,
+[00:14:38 -> 00:14:40] in the global data region and things like that.
+[00:14:40 -> 00:14:41] Something that we've already discussed
+[00:14:41 -> 00:14:44] when we were discussing runtime environments.
+[00:14:44 -> 00:14:47] Okay, so how do we represent L new?
+[00:14:47 -> 00:14:50] Well, we want the only requirement that we have on L new
+[00:14:50 -> 00:14:54] is that, so we don't want to say anything
+[00:14:54 -> 00:14:55] about stack or heap or anything like that.
+[00:14:55 -> 00:14:57] The only requirement that we want to put
+[00:14:57 -> 00:14:58] is that L new should be a location
+[00:14:58 -> 00:15:01] that has not already been used in S.
+[00:15:01 -> 00:15:03] And so the way to say that is just say,
+[00:15:03 -> 00:15:05] there's an operator called new lock
+[00:15:05 -> 00:15:09] and takes an argument S and it returns a location
+[00:15:09 -> 00:15:11] that has not already been mapped in S.
+[00:15:11 -> 00:15:14] So if S is a list of mappings,
+[00:15:14 -> 00:15:15] then L new is basically a location
+[00:15:15 -> 00:15:19] that does not already exist in S.
+[00:15:19 -> 00:15:19] And that's important, right?
+[00:15:19 -> 00:15:22] We don't want to clobber some existing location.
+[00:15:22 -> 00:15:23] And that's the whole idea,
+[00:15:23 -> 00:15:25] that's the whole notion of declaring a variable.
+[00:15:25 -> 00:15:28] You are declaring an extra region of memory.
+[00:15:28 -> 00:15:30] You don't want to clobber any existing region of memory.
+[00:15:30 -> 00:15:32] And so this is used,
+[00:15:32 -> 00:15:34] L new is equal to new lock S is used to say
+[00:15:34 -> 00:15:38] that L new is a location not already mapped in S.
+[00:15:38 -> 00:15:39] And new lock is somewhat like
+[00:15:39 -> 00:15:41] the memory allocation function.
+[00:15:41 -> 00:15:43] You can think of it as the malloc function
+[00:15:43 -> 00:15:44] or the new function,
+[00:15:44 -> 00:15:46] or just a variable declaration
+[00:15:46 -> 00:15:48] is also a way of allocating memory.
+[00:15:48 -> 00:15:50] And new lock is just our way
+[00:15:50 -> 00:15:54] of representing memory allocation, all right?
+[00:15:54 -> 00:15:55] And notice that we don't have any notion
+[00:15:55 -> 00:15:57] of stack, et cetera, and things like that.
+[00:15:57 -> 00:16:00] Now we are ready to discuss
+[00:16:00 -> 00:16:05] our updated rule for a declaration.
+[00:16:05 -> 00:16:10] So for a given context,
+[00:16:10 -> 00:16:13] S zero, the current object, environment E,
+[00:16:13 -> 00:16:15] and store capital S,
+[00:16:15 -> 00:16:16] this expression here,
+[00:16:16 -> 00:16:17] which includes a declaration,
+[00:16:18 -> 00:16:22] evaluates to V two comma S two if,
+[00:16:22 -> 00:16:24] under the original context,
+[00:16:24 -> 00:16:25] you first evaluate E one
+[00:16:27 -> 00:16:30] to get V one comma S one.
+[00:16:30 -> 00:16:33] Then you allocate a new location in S one.
+[00:16:33 -> 00:16:36] So if, notice that I'm using S one here,
+[00:16:36 -> 00:16:38] which is the result of executing E ones.
+[00:16:38 -> 00:16:42] All the side effects or allocations caused
+[00:16:42 -> 00:16:44] due to E one are reflected in S one.
+[00:16:44 -> 00:16:47] And so the L new is supposed to be a new location
+[00:16:49 -> 00:16:52] disjoined from the locations that were allocated
+[00:16:53 -> 00:16:55] either previously or due to E one.
+[00:16:56 -> 00:16:59] And then you update the environment
+[00:16:59 -> 00:17:01] such that you map ID to this new location
+[00:17:01 -> 00:17:04] because that's the name of the identifier
+[00:17:04 -> 00:17:06] of the new variable.
+[00:17:06 -> 00:17:07] And you map it to the new location.
+[00:17:07 -> 00:17:09] You map the new location to V one
+[00:17:09 -> 00:17:11] and you update S one using that.
+[00:17:11 -> 00:17:14] So environment E is updated using ID to L new.
+[00:17:14 -> 00:17:19] And S one is updated with L new to V one.
+[00:17:20 -> 00:17:23] And if under this new context,
+[00:17:23 -> 00:17:26] E two evaluates to V two comma S two,
+[00:17:26 -> 00:17:29] then the whole expression evaluates to V two comma S two.
+[00:17:29 -> 00:17:32] Now I point out here that this rule,
+[00:17:32 -> 00:17:35] this rule for the semantics of a declaration
+[00:17:35 -> 00:17:37] are almost correct.
+[00:17:37 -> 00:17:39] They're not completely correct.
+[00:17:39 -> 00:17:40] What is the problem?
+[00:17:40 -> 00:17:44] Well, the problem is that at the end of the scope,
+[00:17:44 -> 00:17:49] we just use S two and recall that S two contains,
+[00:17:49 -> 00:17:51] is just the result of the application
+[00:17:51 -> 00:17:53] of side effects due to E two.
+[00:17:53 -> 00:17:55] But the context in which S two was evaluated
+[00:17:55 -> 00:18:00] is S one where L new has a mapping to V one.
+[00:18:01 -> 00:18:05] So L new would still continue to have a mapping in S two
+[00:18:05 -> 00:18:08] because it had a mapping in this part,
+[00:18:08 -> 00:18:10] in the context in which it was evaluated,
+[00:18:10 -> 00:18:12] it had a mapping, L new had a mapping.
+[00:18:12 -> 00:18:14] So it also has a mapping in S two.
+[00:18:14 -> 00:18:16] And we continue to maintain that mapping
+[00:18:16 -> 00:18:19] even after the scope has ended.
+[00:18:19 -> 00:18:21] So at the end of the scope,
+[00:18:21 -> 00:18:23] S two still contains a mapping
+[00:18:23 -> 00:18:26] from the newly allocated location L new.
+[00:18:26 -> 00:18:30] And this is similar to the condition of a memory leak.
+[00:18:32 -> 00:18:33] Ideally, we would have wanted
+[00:18:33 -> 00:18:35] that after the scope has finished,
+[00:18:35 -> 00:18:39] the new location is no longer active
+[00:18:39 -> 00:18:40] and it can be returned.
+[00:18:40 -> 00:18:43] And so, but that's not kind of reflected in this rule.
+[00:18:43 -> 00:18:47] And so this is a situation of a memory leak in our rule.
+[00:18:47 -> 00:18:48] The question is,
+[00:18:48 -> 00:18:51] what are the consequences of a memory leak?
+[00:18:51 -> 00:18:54] Well, it depends on what side you wanna look at it.
+[00:18:54 -> 00:18:56] For example, one consequence of a memory leak
+[00:18:56 -> 00:18:59] is that let us say that my store supported
+[00:18:59 -> 00:19:01] only a finite number of locations.
+[00:19:01 -> 00:19:03] For example, if it was a 32-bit memory,
+[00:19:03 -> 00:19:04] then the total number of locations
+[00:19:04 -> 00:19:08] have to be less than or equal to two to the power 32.
+[00:19:08 -> 00:19:11] And so if you have a long running program,
+[00:19:11 -> 00:19:14] then these semantics basically at some point
+[00:19:14 -> 00:19:15] will run out of locations
+[00:19:15 -> 00:19:18] because we are not destroying the locations.
+[00:19:18 -> 00:19:21] And so if, for example, I'm executing a for loop,
+[00:19:22 -> 00:19:26] that has this block in its body,
+[00:19:26 -> 00:19:28] then we are basically creating new locations,
+[00:19:28 -> 00:19:30] but we are never deleting them.
+[00:19:30 -> 00:19:32] And so if a store supports only,
+[00:19:32 -> 00:19:35] if a store S supports only a finite number of locations,
+[00:19:35 -> 00:19:36] we may run out of memory.
+[00:19:36 -> 00:19:39] And that's how we typically think about
+[00:19:39 -> 00:19:43] the adverse effects of memory leaks,
+[00:19:43 -> 00:19:47] which basically means that the new lock operation will fail.
+[00:19:47 -> 00:19:52] And so this rule, this execution operational semantic rule
+[00:19:53 -> 00:19:58] will fail to trigger and the program will get stuck.
+[00:19:58 -> 00:20:00] Recall that if a program gets stuck,
+[00:20:00 -> 00:20:03] we basically say that the program is incorrect
+[00:20:03 -> 00:20:06] or does not have a well-defined behavior.
+[00:20:06 -> 00:20:09] And so because of that, because of this memory leak,
+[00:20:09 -> 00:20:11] even correct programs that actually
+[00:20:11 -> 00:20:12] didn't have a memory leak,
+[00:20:12 -> 00:20:15] if that's what the programmer intended
+[00:20:15 -> 00:20:17] for the semantics of a scope,
+[00:20:18 -> 00:20:20] even correct programs will get rejected
+[00:20:20 -> 00:20:23] because of this buggy rule that we have.
+[00:20:23 -> 00:20:25] So if this rule is actually buggy
+[00:20:25 -> 00:20:27] in the sense that it has a memory leak
+[00:20:27 -> 00:20:28] where it shouldn't have had,
+[00:20:28 -> 00:20:29] then there's a clear consequence.
+[00:20:29 -> 00:20:31] It's a memory leak and what'll happen
+[00:20:31 -> 00:20:33] is it will eventually run out of memory
+[00:20:33 -> 00:20:36] and even correct programs will start getting rejected.
+[00:20:36 -> 00:20:38] But let's look at it from another perspective.
+[00:20:38 -> 00:20:41] Let's say that this is not an incorrect rule.
+[00:20:41 -> 00:20:43] Let's say this is the intended rule.
+[00:20:43 -> 00:20:45] If this is an intended rule,
+[00:20:45 -> 00:20:48] then incorrect programs may be accepted.
+[00:20:48 -> 00:20:50] So how can that happen?
+[00:20:50 -> 00:20:55] Well, notice that even if you retain L new in S2,
+[00:20:56 -> 00:20:59] then you are basically allowing any expression E3,
+[00:20:59 -> 00:21:01] let's say, after the end of the scope
+[00:21:01 -> 00:21:03] to potentially cause side effects
+[00:21:03 -> 00:21:08] that potentially mutate the values at location L new.
+[00:21:09 -> 00:21:11] Now, because L new is mapped on S2,
+[00:21:12 -> 00:21:16] it should ideally be correctly mutating that location
+[00:21:16 -> 00:21:18] and both reading and writing.
+[00:21:18 -> 00:21:20] And so this formulation of a rule
+[00:21:21 -> 00:21:24] kind of allows future expressions
+[00:21:24 -> 00:21:25] that are outside the scope
+[00:21:25 -> 00:21:28] to potentially read and write to the values at L new
+[00:21:28 -> 00:21:32] because L new still appears to be a valid location.
+[00:21:32 -> 00:21:37] And so if that was not intended
+[00:21:37 -> 00:21:38] by the programming language designer
+[00:21:38 -> 00:21:40] and if the programming language designer
+[00:21:40 -> 00:21:42] actually wanted that to be a bug,
+[00:21:42 -> 00:21:45] then that's not being reflected in this rule.
+[00:21:45 -> 00:21:48] In fact, from that perspective,
+[00:21:48 -> 00:21:50] incorrect programs may get accepted
+[00:21:50 -> 00:21:53] because what you really wanted was
+[00:21:53 -> 00:21:56] that if an outside expression E3 accesses L new,
+[00:21:56 -> 00:21:58] then the program should immediately trigger an error
+[00:21:58 -> 00:22:01] or get stuck to indicate that the program was incorrect.
+[00:22:01 -> 00:22:04] But because L new is now getting leaked,
+[00:22:04 -> 00:22:07] we will basically incorrectly accept such a program
+[00:22:07 -> 00:22:12] as correct, and this is another consequence
+[00:22:12 -> 00:22:14] of this buggy rule.
+[00:22:14 -> 00:22:18] And what that means is that it puts an unnecessary burden
+[00:22:18 -> 00:22:19] on the code generator.
+[00:22:19 -> 00:22:21] So typically a code generator
+[00:22:21 -> 00:22:24] would implement such scopes on the stack
+[00:22:24 -> 00:22:27] such that it will allocate memory for this identifier,
+[00:22:27 -> 00:22:30] for example, by decrementing the stack pointer
+[00:22:30 -> 00:22:33] and then deallocate the memory for this identifier
+[00:22:33 -> 00:22:36] by incrementing the stack pointer back
+[00:22:36 -> 00:22:37] to reclaim the space.
+[00:22:38 -> 00:22:39] But if now the code generator does that,
+[00:22:39 -> 00:22:42] that would not satisfy the rule
+[00:22:42 -> 00:22:44] because the rule kind of expects
+[00:22:44 -> 00:22:48] that the location L new and its value is preserved.
+[00:22:48 -> 00:22:50] And the code generator is now burdened
+[00:22:50 -> 00:22:52] with having to preserve this L new location,
+[00:22:52 -> 00:22:54] either on the stack or on the heap.
+[00:22:54 -> 00:22:55] Now it depends on the code generator
+[00:22:55 -> 00:22:56] what it wants to do,
+[00:22:56 -> 00:22:58] but it puts unnecessary burden on the code generator
+[00:22:58 -> 00:23:02] and which has also efficiency considerations.
+[00:23:02 -> 00:23:03] So as you can see,
+[00:23:04 -> 00:23:07] mistakes in the execution semantics
+[00:23:07 -> 00:23:12] have consequences both on the soundness
+[00:23:12 -> 00:23:15] and on the soundness of what these rules represent
+[00:23:15 -> 00:23:18] in terms of whether correct programs are being accepted
+[00:23:18 -> 00:23:22] and incorrect programs are getting rejected or not.
+[00:23:22 -> 00:23:23] So both of those can get violated
+[00:23:23 -> 00:23:26] and also it puts unnecessary burden on the code generator
+[00:23:26 -> 00:23:29] because of this oversight.
+[00:23:29 -> 00:23:32] So here's the correct rule.
+[00:23:32 -> 00:23:33] Here's the final rule that's correct.
+[00:23:33 -> 00:23:38] The only change here is that the final store includes S2
+[00:23:38 -> 00:23:43] but is S2 minus any mapping for the location L new.
+[00:23:43 -> 00:23:46] So whatever the mapping was for L new
+[00:23:46 -> 00:23:49] should be deleted and this set minus operator
+[00:23:49 -> 00:23:52] is representing that from S2.
+[00:23:52 -> 00:23:54] And so this represents our final rule
+[00:23:54 -> 00:23:57] for a variable declaration in our programming language.

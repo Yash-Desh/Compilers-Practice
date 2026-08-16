@@ -1,0 +1,292 @@
+Title: Compiler Design Module 47 : Activations
+Video ID: XYHevw2EGlQ
+Detected language: en
+------------------------------------------------------------
+
+[00:00:00 -> 00:00:05] So now we're going to start talking about code generation and the goals of code generation.
+[00:00:05 -> 00:00:12] And the two kind of obvious goals of code generation are correctness, which means that
+[00:00:12 -> 00:00:16] the generated code actually is faithful to the semantics of the program, to the meaning
+[00:00:16 -> 00:00:17] of the program.
+[00:00:17 -> 00:00:19] And the second goal is speed.
+[00:00:19 -> 00:00:24] So I want to make the implementation as fast as possible.
+[00:00:24 -> 00:00:30] Now I would like to point out here that it's easy to basically have a correct implementation
+[00:00:30 -> 00:00:34] but that's an implementation that's not very efficient.
+[00:00:34 -> 00:00:38] On the other hand, it's also very easy to have a very efficient implementation that's
+[00:00:38 -> 00:00:39] not correct.
+[00:00:39 -> 00:00:43] But getting both of these together is actually a tough problem.
+[00:00:43 -> 00:00:44] It's a hard problem.
+[00:00:44 -> 00:00:51] And that's why optimization is a very big compiler design problem.
+[00:00:51 -> 00:00:59] The optimizer is by far the largest fraction of the complexity of a compiler.
+[00:00:59 -> 00:01:04] So before we talk about how it could potentially generate code and what are the constructs
+[00:01:04 -> 00:01:11] that allow such code generation to happen, we need to basically clarify the assumptions
+[00:01:11 -> 00:01:13] we are making on the programming model.
+[00:01:13 -> 00:01:17] So one of the big assumptions that we're making here is that the programming model
+[00:01:17 -> 00:01:19] has sequential execution.
+[00:01:19 -> 00:01:21] So what do I mean by when I say a programming model?
+[00:01:21 -> 00:01:26] A programming model is associated with the language in which the program has been written.
+[00:01:26 -> 00:01:32] So for example, the C programming language has a sequential execution model.
+[00:01:32 -> 00:01:35] So things are just moving one after another.
+[00:01:35 -> 00:01:39] On the other hand, there may be programming languages that allow two or more things
+[00:01:39 -> 00:01:42] to happen in parallel.
+[00:01:42 -> 00:01:48] In a language like C, this can be achieved using libraries like thread libraries and
+[00:01:48 -> 00:01:49] things like that.
+[00:01:49 -> 00:01:53] But then there are some other languages, for example, Java is an example of a language
+[00:01:53 -> 00:01:58] where threads are maybe a part of the language.
+[00:01:58 -> 00:02:06] And so for example, the synchronized keyword in Java is sensitive to the fact that there
+[00:02:06 -> 00:02:11] could be multiple threads that are executing and accessing the same code or same data
+[00:02:11 -> 00:02:12] simultaneously.
+[00:02:12 -> 00:02:17] In fact, even C has notions of concurrency built into it.
+[00:02:17 -> 00:02:21] But we are only going to restrict ourselves to the sequential execution model, which
+[00:02:21 -> 00:02:24] is by far the most common programming model.
+[00:02:24 -> 00:02:30] Even languages that support non-sequential models like concurrent models and things like
+[00:02:30 -> 00:02:37] that, a large part of their language is actually sequential and only a small part is concurrent.
+[00:02:37 -> 00:02:43] And it needs to be explicitly specified in those cases.
+[00:02:43 -> 00:02:48] We're going to talk about only sequential execution because it simplifies our discussion.
+[00:02:48 -> 00:02:55] Later on, we will talk about a little bit of how concurrency may be dealt with in such
+[00:02:55 -> 00:02:56] a scenario.
+[00:02:56 -> 00:03:02] Further, we are going to assume procedure call return semantics in the sense that
+[00:03:02 -> 00:03:06] when you make a procedure call, then the procedure executes while the...
+[00:03:06 -> 00:03:11] So let's say a caller makes a call to a callee, then the callee executes and
+[00:03:11 -> 00:03:14] the caller waits until the callee finishes execution.
+[00:03:14 -> 00:03:18] And only when the callee finishes execution, the caller resumes.
+[00:03:18 -> 00:03:22] Also when the callee finishes execution, the caller resumes exactly at the point just
+[00:03:22 -> 00:03:23] after the call.
+[00:03:23 -> 00:03:24] Right?
+[00:03:24 -> 00:03:28] So these are the standard procedure call return semantics that we take for granted.
+[00:03:28 -> 00:03:34] But it is important to know that these semantics are just part of our programming
+[00:03:34 -> 00:03:35] model assumptions.
+[00:03:35 -> 00:03:38] In fact, there are some exceptions to such semantics.
+[00:03:38 -> 00:03:43] For example, there is the throw-catch mechanism for exceptions in many languages, including
+[00:03:44 -> 00:03:48] and Java, where an exception may be thrown somewhere.
+[00:03:48 -> 00:03:52] And so the control flow may need not necessarily be sequential anymore.
+[00:03:52 -> 00:03:58] And the control may suddenly switch to the caller of the caller of the caller because
+[00:03:58 -> 00:04:04] an exception is supposed to unroll the stack until the first catch block is encountered
+[00:04:04 -> 00:04:09] or until no catch block is encountered, in which case the exception terminates the
+[00:04:09 -> 00:04:14] program and shows this message to the programmer or to the user.
+[00:04:14 -> 00:04:18] So we are not really going to talk about these kind of semantics and how to generate
+[00:04:18 -> 00:04:19] code for them.
+[00:04:19 -> 00:04:22] Maybe we'll touch them a little bit later on.
+[00:04:22 -> 00:04:26] But we're going to focus primarily on sequential execution.
+[00:04:26 -> 00:04:29] Also there are some other programming models.
+[00:04:29 -> 00:04:33] For example, call cc, which means call with current continuation.
+[00:04:33 -> 00:04:37] So in this programming model, unlike the regular procedure call where after the procedure
+[00:04:37 -> 00:04:42] call finishes, it's supposed to return back to the caller in a call with current
+[00:04:42 -> 00:04:44] continuation.
+[00:04:44 -> 00:04:49] The caller is supposed to also pass a continuation object to the caller.
+[00:04:49 -> 00:04:53] The idea is when the callee finishes, it is supposed to use the continuation object
+[00:04:53 -> 00:04:54] to resume execution.
+[00:04:54 -> 00:05:00] And that continuation object may or may not correspond to the caller just after
+[00:05:00 -> 00:05:01] the function call.
+[00:05:01 -> 00:05:05] So if it corresponds to the caller just after the function call, it starts looking
+[00:05:05 -> 00:05:08] like a normal function call, normal procedure call that you're familiar with.
+[00:05:08 -> 00:05:13] But if it is something else, then it can execute something else after that.
+[00:05:13 -> 00:05:19] If you recall, we used function objects in some in our discussion on recursive
+[00:05:19 -> 00:05:26] descent passing, and that can be thought of as a continuation passing mechanism.
+[00:05:26 -> 00:05:28] All right.
+[00:05:28 -> 00:05:34] OK, so one of the most basic and most very important abstractions,
+[00:05:34 -> 00:05:37] programming abstractions, is the notion of a procedure or a function call.
+[00:05:37 -> 00:05:42] And so we're going to deal with it especially.
+[00:05:42 -> 00:05:47] And we're going to define this new term called activations.
+[00:05:47 -> 00:05:48] So what is an activation?
+[00:05:48 -> 00:05:51] An activation is an invocation of a procedure P.
+[00:05:51 -> 00:05:56] So an invocation of a procedure P is also called an activation of P.
+[00:05:56 -> 00:05:58] And there could be multiple invocations of the same procedure P.
+[00:05:58 -> 00:06:02] So there could be multiple activations of the same procedure P.
+[00:06:03 -> 00:06:05] And then there is an associated notion with activation, which is what is the
+[00:06:05 -> 00:06:07] lifetime of that activation?
+[00:06:07 -> 00:06:10] So let's understand what's the lifetime of an activation.
+[00:06:10 -> 00:06:15] Lifetime of an activation of a procedure P is all the steps that,
+[00:06:15 -> 00:06:20] you know, so by lifetime, I mean, what is the time for which this
+[00:06:20 -> 00:06:23] procedure P's activation was active?
+[00:06:23 -> 00:06:27] And so that is basically for all the steps in P's executions, whatever is the
+[00:06:27 -> 00:06:31] body of P, whatever it executes, that's going to be a part of the lifetime
+[00:06:31 -> 00:06:33] of an activation of P.
+[00:06:33 -> 00:06:36] And it will also include all the steps in the procedure that P calls.
+[00:06:36 -> 00:06:40] So if P calls some other procedures, then whatever is the lifetime of those
+[00:06:40 -> 00:06:45] procedures also gets included in the lifetime of the current activation of P
+[00:06:45 -> 00:06:47] that we are currently considering.
+[00:06:47 -> 00:06:48] OK.
+[00:06:48 -> 00:06:55] So fairly intuitive and standard definition of lifetime and activation.
+[00:06:55 -> 00:06:59] Just like we talk about lifetime of an activation of a procedure P, we can
+[00:06:59 -> 00:07:03] also talk about the lifetime of a variable in the program, right?
+[00:07:03 -> 00:07:06] So just like, so what is a variable?
+[00:07:06 -> 00:07:12] A variable is just a storage memory space, represents a storage memory space
+[00:07:12 -> 00:07:15] which has a name so that the programmer can refer to it.
+[00:07:15 -> 00:07:20] And so the lifetime of a variable is the portion of execution in which X is
+[00:07:20 -> 00:07:21] defined, right?
+[00:07:21 -> 00:07:24] So it's possible that X is defined only for some portion of the
+[00:07:24 -> 00:07:27] execution, especially true for local variables.
+[00:07:27 -> 00:07:31] And so the lifetime of a local variable would just be that portion of the
+[00:07:31 -> 00:07:35] execution where there was a definition of that particular variable X.
+[00:07:35 -> 00:07:38] It's important to note here that lifetime is not equal to scope.
+[00:07:38 -> 00:07:41] So I'm asking this question, is lifetime equal to scope?
+[00:07:41 -> 00:07:43] And the answer is no, all right?
+[00:07:43 -> 00:07:49] Lifetime is a dynamic runtime concept, while scope is a static concept.
+[00:07:49 -> 00:07:56] So for example, the same local variable may be instantiated 100 times,
+[00:07:56 -> 00:07:59] in which case there will be 100 different instances of a variable,
+[00:07:59 -> 00:08:02] and each of those instances could have a different lifetime.
+[00:08:02 -> 00:08:06] So lifetime is associated with dynamic runtime quantities,
+[00:08:06 -> 00:08:13] whereas scope is associated with static abstract syntax tree,
+[00:08:13 -> 00:08:17] the quantities that are present in the static compile time abstract syntax tree.
+[00:08:17 -> 00:08:19] It has nothing to do with the runtime notion.
+[00:08:19 -> 00:08:24] So for example, many simultaneous runtime instances of the same
+[00:08:24 -> 00:08:26] procedure or variable are possible.
+[00:08:28 -> 00:08:32] We just discussed, so we'll talk about lifetimes of each of those different
+[00:08:32 -> 00:08:37] instances, whereas scope is only for the variable name,
+[00:08:37 -> 00:08:40] as it exists only once in the abstract syntax tree.
+[00:08:40 -> 00:08:43] Further, lifetimes can often cross scope boundaries.
+[00:08:43 -> 00:08:50] So for example, maybe it is not a local variable, or maybe it is a local
+[00:08:50 -> 00:08:53] variable, or maybe it's a variable that was mallogged.
+[00:08:53 -> 00:08:59] And in which case, the lifetime of a variable will be basically much big,
+[00:08:59 -> 00:09:02] it's kind of dynamic and depends on the runtime, and
+[00:09:02 -> 00:09:04] has nothing to do with the static scoping system.
+[00:09:04 -> 00:09:07] So lifetime is associated with runtime quantity.
+[00:09:07 -> 00:09:09] So even for example, something that was mallogged,
+[00:09:09 -> 00:09:12] we would talk about the lifetime of that quantity,
+[00:09:12 -> 00:09:19] whereas scope is only meant for static compile time program syntax features.
+[00:09:20 -> 00:09:25] All right, so one of the important observations when we talk about
+[00:09:25 -> 00:09:31] procedure calls, as we just discussed, are that lifetimes of the activations of
+[00:09:31 -> 00:09:34] procedures are nested for a caller-callee relationship.
+[00:09:34 -> 00:09:39] So let's say P is a procedure, and it calls another procedure Q.
+[00:09:39 -> 00:09:42] So P is the caller and Q is the callee.
+[00:09:42 -> 00:09:47] Now, based on our semantics, we know that when P calls Q,
+[00:09:47 -> 00:09:50] then Q returns before P returns, right?
+[00:09:50 -> 00:09:52] Because Q is going to return only then P is going to return.
+[00:09:52 -> 00:09:55] Because until Q returns, P is going to wait.
+[00:09:55 -> 00:10:01] And so the lifetime of Q is contained within the lifetime of P.
+[00:10:01 -> 00:10:04] And that's represented by this figure.
+[00:10:04 -> 00:10:09] If the orange line is the lifetime of P, then the blue line is the lifetime
+[00:10:09 -> 00:10:13] of Q, which is properly contained in the lifetime of P.
+[00:10:14 -> 00:10:18] And when I say lifetime of P, I'm really talking about lifetime of P's activation,
+[00:10:18 -> 00:10:20] and lifetime of Q's activation.
+[00:10:20 -> 00:10:26] I'm talking about one instance or one invocation or one activation of P and Q.
+[00:10:26 -> 00:10:33] And so the lifetime of one invocation or one activation of P contains
+[00:10:33 -> 00:10:39] the lifetime of the corresponding activation of Q, all right?
+[00:10:39 -> 00:10:41] So let's take an example.
+[00:10:41 -> 00:10:45] Let's say this is my C program that has three different functions,
+[00:10:45 -> 00:10:46] definitions.
+[00:10:46 -> 00:10:49] One is the function G that always returns one.
+[00:10:49 -> 00:10:53] The other is function F that calls G and returns its return value.
+[00:10:53 -> 00:10:57] So it just says the body is returned G.
+[00:10:57 -> 00:11:02] And then int main, which is the main function, it returns G plus F.
+[00:11:02 -> 00:11:06] So basically, this program really doesn't mean anything,
+[00:11:06 -> 00:11:10] but we want to just use it to understand the notion of lifetimes
+[00:11:10 -> 00:11:12] and activations.
+[00:11:12 -> 00:11:17] So here is how I would represent the activations of this.
+[00:11:17 -> 00:11:20] Here's one way to represent the activations of this program.
+[00:11:20 -> 00:11:23] So the first activation is for the procedure main.
+[00:11:23 -> 00:11:26] So that's represented by this node main.
+[00:11:26 -> 00:11:28] And then I basically represent activations
+[00:11:28 -> 00:11:35] as a tree where this edge is drawn if one of the activations
+[00:11:35 -> 00:11:37] is contained within the other's activation.
+[00:11:37 -> 00:11:40] So my first observation here is actually
+[00:11:40 -> 00:11:43] there are two different activations of G, all right?
+[00:11:43 -> 00:11:45] So although it's just one procedure G,
+[00:11:45 -> 00:11:47] it's actually two different activations of G
+[00:11:47 -> 00:11:51] because it is called twice in this program.
+[00:11:51 -> 00:11:53] Recall again that activation is a runtime concept
+[00:11:53 -> 00:11:55] and lifetime is a runtime concept.
+[00:11:55 -> 00:11:58] So G is called first by main directly.
+[00:11:58 -> 00:12:00] And the second time, it's called by F,
+[00:12:00 -> 00:12:02] which is again called by main, all right?
+[00:12:02 -> 00:12:05] So there are two different activations of G.
+[00:12:05 -> 00:12:10] The first activation of G is contained within main.
+[00:12:10 -> 00:12:14] Similarly, the activation of F is contained within main.
+[00:12:14 -> 00:12:17] And the activation of G is contained within F.
+[00:12:17 -> 00:12:20] And so I can now use this relation,
+[00:12:20 -> 00:12:23] which is, is the activations lifetime
+[00:12:23 -> 00:12:27] contained within the other's activation lifetime or not?
+[00:12:27 -> 00:12:29] And if I draw edges of the sword,
+[00:12:29 -> 00:12:31] then I'm going to end up with a tree
+[00:12:31 -> 00:12:36] because that's how the program is going to work.
+[00:12:38 -> 00:12:40] It's going to only, I mean,
+[00:12:40 -> 00:12:42] so if you draw an edge between from,
+[00:12:42 -> 00:12:47] if A's lifetime is contained within B's lifetime,
+[00:12:47 -> 00:12:49] then you draw edge from B to A.
+[00:12:49 -> 00:12:52] And so what you're going to end up with is a tree
+[00:12:52 -> 00:12:55] of this sort, as it's shown in this example.
+[00:12:55 -> 00:12:58] And so we are also going to sometimes use a tree
+[00:12:58 -> 00:13:00] to represent the activation lifetimes,
+[00:13:00 -> 00:13:04] just like in this example.
+[00:13:04 -> 00:13:05] Notice that this activation tree
+[00:13:05 -> 00:13:07] shows the nesting behavior, all right?
+[00:13:07 -> 00:13:09] That's because that's what the edges represent.
+[00:13:09 -> 00:13:11] It represents that the activation of one
+[00:13:11 -> 00:13:14] is nested in the activation of the other.
+[00:13:14 -> 00:13:16] Here's another activation tree example,
+[00:13:16 -> 00:13:19] slightly more interesting example,
+[00:13:19 -> 00:13:22] where we say int main and it says return F3,
+[00:13:22 -> 00:13:24] it calls F on three.
+[00:13:24 -> 00:13:27] And F is a function that takes input integer
+[00:13:27 -> 00:13:29] and it's a recursive function.
+[00:13:29 -> 00:13:33] It calls itself until X is zero,
+[00:13:33 -> 00:13:36] in which case it calls G, all right?
+[00:13:36 -> 00:13:38] And so if I look at the activation tree for this program,
+[00:13:38 -> 00:13:41] notice that there will be multiple instances of F,
+[00:13:41 -> 00:13:43] each time with a different argument.
+[00:13:43 -> 00:13:44] And so when we talk about activations,
+[00:13:44 -> 00:13:45] we are also talking about
+[00:13:45 -> 00:13:48] not just the procedure name and the body,
+[00:13:48 -> 00:13:49] but also what are the arguments
+[00:13:49 -> 00:13:51] with which it was called.
+[00:13:51 -> 00:13:54] And so in this case, it's main,
+[00:13:54 -> 00:13:58] the main activation is contains
+[00:13:58 -> 00:14:02] or F3, which contains F2, which contains F1,
+[00:14:02 -> 00:14:04] which contains F0, which contains G.
+[00:14:04 -> 00:14:08] And so this particular chain
+[00:14:08 -> 00:14:10] actually represents our activation tree.
+[00:14:10 -> 00:14:11] In general, it could be a tree,
+[00:14:11 -> 00:14:16] but in this case, it happens to be just a linear chain.
+[00:14:16 -> 00:14:20] Okay, so that's the notion of an activation tree,
+[00:14:20 -> 00:14:22] but then there's also the notion of active activations,
+[00:14:22 -> 00:14:24] which means what are the activations
+[00:14:24 -> 00:14:26] that are currently active
+[00:14:26 -> 00:14:31] or that are currently whose lifetime has neither been,
+[00:14:31 -> 00:14:34] so it has been started, but not ended yet, right?
+[00:14:34 -> 00:14:37] So for example, when the program just starts,
+[00:14:37 -> 00:14:41] the only current activation is main,
+[00:14:41 -> 00:14:42] then maybe it calls G,
+[00:14:42 -> 00:14:46] at which point the two active activations are main and G.
+[00:14:46 -> 00:14:47] Then again, G returns,
+[00:14:47 -> 00:14:50] and so the only activation is main again.
+[00:14:50 -> 00:14:51] And then it calls F,
+[00:14:51 -> 00:14:55] so now the currently active activations are main and F.
+[00:14:55 -> 00:14:58] Similarly, main and F and G, when F calls G.
+[00:14:58 -> 00:15:01] And then G returns, so it becomes main and F
+[00:15:01 -> 00:15:03] and finally it's main, and then main exits,
+[00:15:03 -> 00:15:06] in which case all the activations are finished,
+[00:15:06 -> 00:15:07] we assume.
+[00:15:07 -> 00:15:10] All right, so in this,
+[00:15:10 -> 00:15:13] so that's the idea of currently active activations.
+[00:15:13 -> 00:15:16] And once again, if the activations are currently active,
+[00:15:16 -> 00:15:20] then it must be true that some of those activations
+[00:15:20 -> 00:15:22] are nested in the other activations,
+[00:15:22 -> 00:15:26] as you can see in this particular example as well.
+[00:15:26 -> 00:15:29] So because activations,
+[00:15:29 -> 00:15:32] the active activations are properly nested,
+[00:15:33 -> 00:15:36] a stack can trace the currently active activations.
+[00:15:36 -> 00:15:39] So for example, when G is running,
+[00:15:39 -> 00:15:41] then the currently active activations are main and G,
+[00:15:41 -> 00:15:46] and so I can use a stack to track both main and G.
+[00:15:46 -> 00:15:48] So in this, so we can use a stack,
+[00:15:48 -> 00:15:51] and a stack, notice that it only keeps track
+[00:15:51 -> 00:15:53] of the currently active activations.
+[00:15:53 -> 00:15:56] It doesn't keep track of all the entire activation tree,
+[00:15:56 -> 00:15:59] which will also include all the inactive activations.
+[00:16:01 -> 00:16:03] All right, so now if we look at our memory layout
+[00:16:03 -> 00:16:05] that we had looked at in our last lecture module,
+[00:16:05 -> 00:16:07] we said that there is some code
+[00:16:07 -> 00:16:08] and there is some other space,
+[00:16:08 -> 00:16:10] which is the data space,
+[00:16:10 -> 00:16:13] and some of that space will be used to store the stack.
+[00:16:13 -> 00:16:18] Maybe that stack is at one end of the other area.
+[00:16:18 -> 00:16:20] Typically the stack grows downwards.
+[00:16:20 -> 00:16:23] This is just a convention that hardware machines also use.
+[00:16:23 -> 00:16:26] So we're also going to assume that the stack grows
+[00:16:26 -> 00:16:28] from higher addresses to lower addresses.
+[00:16:28 -> 00:16:30] So the stack is growing downwards.
+[00:16:30 -> 00:16:31] And what is the stack?
+[00:16:31 -> 00:16:34] This is the stack of currently active activations.
+[00:16:34 -> 00:16:36] And the reason we arrived at a stack
+[00:16:36 -> 00:16:39] is because of these features of a procedure called semantics
+[00:16:39 -> 00:16:41] that activations are properly nested.

@@ -1,0 +1,172 @@
+Title: Compiler Design Module 61 : Programming Language Semantics
+Video ID: dVWazbknvxY
+Detected language: en
+------------------------------------------------------------
+
+[00:00:00 -> 00:00:06] Now we'll discuss how we can specify the semantics of a programming language.
+[00:00:06 -> 00:00:09] So what do I mean by programming language semantics?
+[00:00:09 -> 00:00:12] For every language expression or statement, what is its meaning?
+[00:00:12 -> 00:00:18] For example, when I say x equals zero, what is it supposed to do to the state of the
+[00:00:18 -> 00:00:19] program?
+[00:00:19 -> 00:00:24] Now this is where x equals zero is supposed to be, let's say, the assignment operator.
+[00:00:24 -> 00:00:27] Now we already informally understand what it's supposed to do.
+[00:00:27 -> 00:00:33] In fact, these are the semantics that we informally assumed when we did code generation, for
+[00:00:33 -> 00:00:34] example.
+[00:00:34 -> 00:00:37] But we want to make it more formal.
+[00:00:37 -> 00:00:41] And so in general, if I look at a programming language, it has many definitions.
+[00:00:41 -> 00:00:46] For example, it has the definition of tokens, which is, for example, specified using regular
+[00:00:46 -> 00:00:47] expressions.
+[00:00:47 -> 00:00:49] And that's useful for lexical analysis.
+[00:00:49 -> 00:00:53] You have the specification of a grammar, which is used for syntactic analysis.
+[00:00:53 -> 00:00:57] You have a specification of typing rules, which is used for semantic analysis.
+[00:00:57 -> 00:01:02] And then now next we are going to discuss the specification of evaluation rules,
+[00:01:02 -> 00:01:05] which is the actual meaning of program execution.
+[00:01:05 -> 00:01:10] And this is important for code generation and optimization.
+[00:01:10 -> 00:01:15] So far, our code generation strategy has informally assumed the semantics, but we
+[00:01:15 -> 00:01:22] should formalize it so that we can be sure that what we are doing is as per the
+[00:01:22 -> 00:01:26] intended semantics of the language when we are doing code generation.
+[00:01:26 -> 00:01:27] All right.
+[00:01:27 -> 00:01:33] So for example, during code generation for a stack machine, we have informally
+[00:01:33 -> 00:01:35] assumed the stack semantics of a language.
+[00:01:35 -> 00:01:39] For example, we have informally assumed the meaning of a function declaration or
+[00:01:39 -> 00:01:43] the meaning of an operator plus and things like that.
+[00:01:43 -> 00:01:45] Why do I say it was informal?
+[00:01:45 -> 00:01:50] For example, we never say whether plus is supposed to be meant for.
+[00:01:50 -> 00:01:51] What is it meant for?
+[00:01:51 -> 00:01:54] Is it meant for integers or whether it's meant for floating point?
+[00:01:54 -> 00:01:56] How big is an integer?
+[00:01:56 -> 00:01:57] How big can an integer be?
+[00:01:57 -> 00:02:01] Is it in mathematical integer, which means can it be infinite size?
+[00:02:01 -> 00:02:02] Of course not.
+[00:02:02 -> 00:02:05] So what is the limit of size that it can have?
+[00:02:05 -> 00:02:08] All these things we have kind of omitted in our informal description of
+[00:02:08 -> 00:02:10] what the program is supposed to do.
+[00:02:10 -> 00:02:16] And we even generated code for using that informal description without actually
+[00:02:16 -> 00:02:17] specifying these things.
+[00:02:17 -> 00:02:21] For example, when we generate the code for addition, we didn't even specify
+[00:02:21 -> 00:02:23] what's the maximum size that an integer can be.
+[00:02:23 -> 00:02:26] We just assumed that whatever the register can hold is good enough.
+[00:02:26 -> 00:02:30] And that was a 32-bit value in the case of the MIPS architecture that we were
+[00:02:30 -> 00:02:31] generating code for.
+[00:02:31 -> 00:02:36] But does that agree with what the language designer expected the language
+[00:02:36 -> 00:02:37] to do?
+[00:02:37 -> 00:02:42] So these are all things that need to be formalized and specified with the
+[00:02:42 -> 00:02:45] exact precision so that we can be sure that the code that we're
+[00:02:45 -> 00:02:50] generating is actually matching the language designer's expectations.
+[00:02:50 -> 00:02:54] So we want to formalize this informal specification.
+[00:02:54 -> 00:02:59] And one way to do that is to specify the formal semantics of a stack machine.
+[00:02:59 -> 00:03:04] So here's one proposal, which is not a good proposal, that we just have a
+[00:03:04 -> 00:03:06] stack machine and we know what a stack machine is going to do.
+[00:03:06 -> 00:03:10] We have the notion of registers, it's a 32-bit.
+[00:03:10 -> 00:03:14] We have the semantics of all the opcodes, like add, iu, and pop,
+[00:03:14 -> 00:03:16] and push, and all that.
+[00:03:16 -> 00:03:18] And then we just specify the code generator function, cgen.
+[00:03:19 -> 00:03:22] Say, if you see this operator, then this is the code that you should generate.
+[00:03:22 -> 00:03:24] And because in that code, we have three or four instructions.
+[00:03:24 -> 00:03:27] And for each instruction, we know the semantics.
+[00:03:27 -> 00:03:29] So from that, we know the semantics of every operator.
+[00:03:29 -> 00:03:34] And that would be one way of specifying the formal semantics of a
+[00:03:34 -> 00:03:35] programming language.
+[00:03:35 -> 00:03:38] So once again, what is the proposal?
+[00:03:38 -> 00:03:41] You first specify the formal semantics of the low-level assembly
+[00:03:41 -> 00:03:42] language.
+[00:03:42 -> 00:03:45] Then you specify the cgen function that's going to translate to that
+[00:03:45 -> 00:03:46] assembly language.
+[00:03:46 -> 00:03:47] And there you are.
+[00:03:47 -> 00:03:49] You have the semantics of the high-level language, because you have
+[00:03:49 -> 00:03:54] the cgen function and you have the semantics of the lower-level
+[00:03:54 -> 00:03:55] language.
+[00:03:55 -> 00:03:58] But that's not satisfactory, because it would be correct, but it
+[00:03:58 -> 00:04:00] would be too restrictive.
+[00:04:00 -> 00:04:03] Because there are many choices that you make during cgen.
+[00:04:03 -> 00:04:06] And if you kind of just say that these are the choices that must
+[00:04:06 -> 00:04:08] be followed all the time, then it's too restrictive.
+[00:04:08 -> 00:04:12] For example, if I generate code for another machine, which has
+[00:04:12 -> 00:04:15] larger number of opcodes, it gives me potential to do things
+[00:04:15 -> 00:04:17] differently, I won't be able to do it.
+[00:04:17 -> 00:04:20] Because with these semantics, I'm constrained to, for
+[00:04:20 -> 00:04:25] example, use the same meaning, for example.
+[00:04:25 -> 00:04:29] So what do I mean by correct, but too restrictive?
+[00:04:29 -> 00:04:30] It's an over-specification.
+[00:04:30 -> 00:04:34] So we are over-specifying in this way of specifying the
+[00:04:34 -> 00:04:36] semantics, because we are specifying that things should
+[00:04:36 -> 00:04:39] be, we should only use three or four registers, we
+[00:04:39 -> 00:04:42] should only grow the stack downwards, and so on and so
+[00:04:42 -> 00:04:43] forth.
+[00:04:43 -> 00:04:46] And these things were not really meant to be specified in
+[00:04:46 -> 00:04:47] the original language.
+[00:04:47 -> 00:04:50] And that's why it's an over-specification.
+[00:04:50 -> 00:04:53] So assembly language descriptions of programming
+[00:04:53 -> 00:04:55] language implementations will have irrelevant detail,
+[00:04:55 -> 00:04:58] like whether to use a stack machine at all or not,
+[00:04:58 -> 00:05:00] whether the stack grows upward or downward, what is
+[00:05:00 -> 00:05:02] the number of registers, what is the representation of
+[00:05:02 -> 00:05:06] an integer, for example, is it a two's complement
+[00:05:06 -> 00:05:08] representation, or is it something else, maybe one's
+[00:05:08 -> 00:05:12] complement, or something totally different.
+[00:05:12 -> 00:05:15] What is the instruction set that I am allowed to use?
+[00:05:15 -> 00:05:18] So all these things I don't want to specify when I'm
+[00:05:18 -> 00:05:20] designing a programming language, for example,
+[00:05:20 -> 00:05:24] programming language like C or C++.
+[00:05:24 -> 00:05:27] And so I should have a more higher-level way of
+[00:05:27 -> 00:05:29] specifying the semantics of a programming language
+[00:05:29 -> 00:05:32] that allows me the flexibility to choose these
+[00:05:32 -> 00:05:36] implementation-level details for a given machine
+[00:05:36 -> 00:05:37] architecture.
+[00:05:37 -> 00:05:40] So we need a complete description that is not
+[00:05:40 -> 00:05:42] overly restrictive.
+[00:05:42 -> 00:05:44] And we need a high-level way of describing the
+[00:05:44 -> 00:05:47] behavior of a language.
+[00:05:47 -> 00:05:51] Now, one approach to doing this is to have a
+[00:05:51 -> 00:05:52] reference implementation.
+[00:05:52 -> 00:05:55] For example, I could have a program emulator, right?
+[00:05:55 -> 00:05:57] So you give it a program, and it's going to
+[00:05:57 -> 00:06:00] generate the result, and then you say, no,
+[00:06:00 -> 00:06:05] whatever result this program generates, that's the
+[00:06:05 -> 00:06:07] same result that your code generation strategy
+[00:06:07 -> 00:06:08] should also emit.
+[00:06:08 -> 00:06:10] And that would be one way of specifying the semantics.
+[00:06:10 -> 00:06:14] But that's also not satisfactory, because, again,
+[00:06:14 -> 00:06:17] there will be artifacts of the way this reference
+[00:06:17 -> 00:06:18] implementation was implemented.
+[00:06:18 -> 00:06:24] Once again, how big was an integer, how are
+[00:06:24 -> 00:06:27] things implemented?
+[00:06:27 -> 00:06:29] All those artifacts would become part of the
+[00:06:29 -> 00:06:32] language, because I'll have to kind of obey those
+[00:06:32 -> 00:06:33] artifacts.
+[00:06:33 -> 00:06:36] How is the output represented, for example, and
+[00:06:36 -> 00:06:36] so on.
+[00:06:36 -> 00:06:40] And once again, that would be an over-specification.
+[00:06:40 -> 00:06:44] And so that would not be an acceptable approach.
+[00:06:44 -> 00:06:48] We are looking for semantics which need not be
+[00:06:48 -> 00:06:55] necessarily executable, but they should give you as
+[00:06:55 -> 00:06:58] much generality as possible in your space of
+[00:06:58 -> 00:07:00] implementations.
+[00:07:00 -> 00:07:02] And that would be a precise specification rather
+[00:07:02 -> 00:07:05] than an over-specification.
+[00:07:05 -> 00:07:07] So we need an abstract method of specifying the
+[00:07:07 -> 00:07:10] meaning of a program precisely.
+[00:07:10 -> 00:07:12] It should be mathematically precise in the sense that
+[00:07:12 -> 00:07:14] it should be correct, or requirement one.
+[00:07:14 -> 00:07:19] Both the proposals that I have discussed so far are
+[00:07:19 -> 00:07:24] correct, whether I generate assembly language or use a
+[00:07:24 -> 00:07:25] reference implementation.
+[00:07:25 -> 00:07:27] They're both correct, but they're not general in the
+[00:07:27 -> 00:07:32] sense that they kind of thwart many behaviors
+[00:07:32 -> 00:07:34] that were possible.
+[00:07:34 -> 00:07:36] They just kind of disallow that kind of thing.
+[00:07:36 -> 00:07:40] So we want it to be as general as possible while being
+[00:07:40 -> 00:07:41] correct.
+[00:07:41 -> 00:07:43] So for example, I could have an abstract machine.
+[00:07:43 -> 00:07:46] So I could basically imagine that there is some machine
+[00:07:46 -> 00:07:49] which has the notion of an integer, and then there is
+[00:07:49 -> 00:07:51] this plus, and I can say what is the size of an
+[00:07:51 -> 00:07:51] integer.
+[00:07:51 -> 00:07:53] But these are all abstract things.
+[00:07:53 -> 00:07:56] They need not be executable.
+[00:07:56 -> 00:07:58] They need not be physically realizable.
+[00:07:58 -> 00:08:01] But there is the notion of some abstraction.
+[00:08:01 -> 00:08:04] And as long as we are true to this abstraction, that
+[00:08:05 -> 00:08:07] can basically serve as a specification.
+[00:08:07 -> 00:08:10] And then an implementation should basically adhere to
+[00:08:10 -> 00:08:11] this abstract specification.

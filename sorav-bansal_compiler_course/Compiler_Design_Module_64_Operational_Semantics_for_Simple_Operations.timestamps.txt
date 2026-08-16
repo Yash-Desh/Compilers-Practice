@@ -1,0 +1,446 @@
+Title: Compiler Design Module 64 : Operational Semantics for Simple Operations
+Video ID: JMnk_KFiUSQ
+Detected language: en
+------------------------------------------------------------
+
+[00:00:00 -> 00:00:02] So now we'll start discussing the operational semantics
+[00:00:02 -> 00:00:05] for our C, C++-like language.
+[00:00:05 -> 00:00:08] And we're going to do this using our formal typing rule,
+[00:00:08 -> 00:00:11] a formal evaluation rules of inference.
+[00:00:11 -> 00:00:12] And we'll start with simple rules
+[00:00:12 -> 00:00:16] and then we'll gradually build up to more complex rules.
+[00:00:16 -> 00:00:19] We'll not exhaustively enumerate all the rules,
+[00:00:19 -> 00:00:22] but we'll enumerate hopefully enough rules
+[00:00:22 -> 00:00:25] to give you a flavor of what these rules look like.
+[00:00:25 -> 00:00:28] So our first few rules are basically about constants.
+[00:00:28 -> 00:00:31] So for example, this particular rule says
+[00:00:31 -> 00:00:36] that inside this context S0, which is the current object,
+[00:00:36 -> 00:00:41] this object, a variable environment E and the store S,
+[00:00:41 -> 00:00:44] true evaluates to the Boolean value true.
+[00:00:44 -> 00:00:46] So I'm representing a Boolean value true
+[00:00:46 -> 00:00:50] using this notation bool brackets true,
+[00:00:50 -> 00:00:52] and it leaves the state unchanged, right?
+[00:00:52 -> 00:00:54] So that's what comma S means.
+[00:00:54 -> 00:00:57] So whatever it was the store here is the store here.
+[00:00:57 -> 00:01:00] So store is unchanged, the value is true.
+[00:01:00 -> 00:01:05] And similarly, the rule for false S0ES under this context,
+[00:01:06 -> 00:01:10] it is true that the identifier false,
+[00:01:10 -> 00:01:14] the constant false evaluates to the Boolean value false
+[00:01:14 -> 00:01:19] and does not modify the store, okay?
+[00:01:19 -> 00:01:23] And a similar rule can be used for an integer.
+[00:01:23 -> 00:01:25] So if I is an integer literal,
+[00:01:25 -> 00:01:28] so I'm informally specifying what is an integer literal,
+[00:01:28 -> 00:01:32] we already at this point, because of our lecture,
+[00:01:32 -> 00:01:35] we know what is an integer literal and so on.
+[00:01:35 -> 00:01:37] And so if I is an integer literal,
+[00:01:37 -> 00:01:40] then under a context that integer literal I,
+[00:01:40 -> 00:01:45] so it evaluates to int I and leaves the state unchanged.
+[00:01:45 -> 00:01:47] By integer literal, I mean a constant
+[00:01:47 -> 00:01:50] like three or seven or whatever, okay?
+[00:01:50 -> 00:01:52] So those are all rules for constants.
+[00:01:52 -> 00:01:55] Now the next rule is for a variable identifier.
+[00:01:55 -> 00:02:00] And here we say that we want to know what does ID,
+[00:02:01 -> 00:02:03] which is ID stands for a variable identifier.
+[00:02:03 -> 00:02:06] What is the value that it represents?
+[00:02:06 -> 00:02:09] V, and what is the side effects that it causes?
+[00:02:09 -> 00:02:12] So first of all, it does not cause any side effects
+[00:02:12 -> 00:02:15] because the same store that is under which ID
+[00:02:15 -> 00:02:19] was evaluated is returned by the evaluation of ID.
+[00:02:19 -> 00:02:23] But the value is determined by the environment
+[00:02:23 -> 00:02:26] and the store that was part of the context.
+[00:02:26 -> 00:02:29] So if the environment maps ID to LID,
+[00:02:29 -> 00:02:32] LID is the location of that particular variable,
+[00:02:32 -> 00:02:36] and the store maps LID to a value V,
+[00:02:36 -> 00:02:39] then under that context S0ES,
+[00:02:39 -> 00:02:43] ID evaluates to V, S, all right?
+[00:02:43 -> 00:02:46] So basically if the environment maps ID to a location
+[00:02:46 -> 00:02:49] and the store maps that location to a value V,
+[00:02:49 -> 00:02:53] then at the ID evaluates to that value V
+[00:02:53 -> 00:02:55] and leaves the store unchanged.
+[00:02:55 -> 00:02:59] And the current object is not relevant
+[00:02:59 -> 00:03:03] for the evaluation of this particular expression ID.
+[00:03:03 -> 00:03:06] All right, okay?
+[00:03:06 -> 00:03:08] And now we have a similar rule,
+[00:03:08 -> 00:03:11] but this time it's the this keyword in C++.
+[00:03:11 -> 00:03:13] So what does this keyword evaluate?
+[00:03:13 -> 00:03:17] So under the context, this evaluates to S0.
+[00:03:19 -> 00:03:21] And leaves the state store unchanged.
+[00:03:21 -> 00:03:24] So what do I mean by returns S0?
+[00:03:24 -> 00:03:28] Well, I'm just assuming that S0 is being stored
+[00:03:28 -> 00:03:30] as a pointer to the current object, let's say.
+[00:03:30 -> 00:03:32] And so under that,
+[00:03:32 -> 00:03:36] this should just return that pointer back, all right?
+[00:03:36 -> 00:03:39] And so this is the first time we see S0 being used
+[00:03:39 -> 00:03:41] on the right-hand side of an inference rule.
+[00:03:41 -> 00:03:44] And also notice that there is no precondition
+[00:03:44 -> 00:03:46] for this rule to trigger.
+[00:03:46 -> 00:03:49] So this will always evaluate to the current object
+[00:03:49 -> 00:03:54] in which it has been evaluated, all right?
+[00:03:54 -> 00:03:57] Okay, now let's look at the assignment rule,
+[00:03:57 -> 00:03:59] the rule for the assignment operator.
+[00:03:59 -> 00:04:01] I'm using the colon equal to notation
+[00:04:01 -> 00:04:03] for the assignment operator.
+[00:04:03 -> 00:04:08] So ID is assigned the value E under a context S0 ES.
+[00:04:10 -> 00:04:12] What is the value that it returns
+[00:04:12 -> 00:04:14] and how does it update the store?
+[00:04:14 -> 00:04:16] Now this is perhaps the first expression
+[00:04:16 -> 00:04:19] that we are seeing that both returns a value
+[00:04:19 -> 00:04:23] and updates the store, that means it has side effects.
+[00:04:23 -> 00:04:26] Okay, so what is the value that it returns
+[00:04:26 -> 00:04:29] and what is the store that it returns?
+[00:04:29 -> 00:04:34] Well, to do this, we need to evaluate E
+[00:04:35 -> 00:04:37] under the same context, and so that's what we do.
+[00:04:37 -> 00:04:40] So if under the same context S0 ES,
+[00:04:40 -> 00:04:43] the RHS of the assignment E evaluates
+[00:04:43 -> 00:04:48] to V, S1, so it may update the store from S to S1.
+[00:04:48 -> 00:04:51] So let's say if E evaluates to V
+[00:04:51 -> 00:04:56] and updates the store to S1 and ID is mapped to LID,
+[00:04:58 -> 00:05:01] and so then what do we return?
+[00:05:01 -> 00:05:05] We want to return S1 updated such that LID
+[00:05:05 -> 00:05:07] has been updated with the value V,
+[00:05:07 -> 00:05:10] that's what the semantics of assignment is, right?
+[00:05:10 -> 00:05:13] So whatever is the location that ID points to,
+[00:05:13 -> 00:05:15] we want to update the contents of that location
+[00:05:15 -> 00:05:17] with the new value as computed by E.
+[00:05:17 -> 00:05:20] What is the new value that's computed by E?
+[00:05:20 -> 00:05:21] It's V.
+[00:05:21 -> 00:05:23] What is the location pointed to by ID?
+[00:05:23 -> 00:05:24] It's LID.
+[00:05:24 -> 00:05:29] So we want to say that S2 equals S1,
+[00:05:29 -> 00:05:32] where LID has been replaced with V, right?
+[00:05:32 -> 00:05:33] So this is the new store,
+[00:05:33 -> 00:05:35] and that's the store that gets returned
+[00:05:35 -> 00:05:36] by this assignment.
+[00:05:36 -> 00:05:38] So whatever is the store that was returned
+[00:05:38 -> 00:05:41] by the RHS of the assignment,
+[00:05:41 -> 00:05:46] that is updated such that V is stored at the location LID,
+[00:05:47 -> 00:05:49] and that's what's returned by this particular assignment.
+[00:05:49 -> 00:05:52] That's S2, and that's what's returned by S2.
+[00:05:52 -> 00:05:57] Notice that this particular order,
+[00:05:57 -> 00:05:58] this particular set of rules
+[00:05:58 -> 00:06:00] also determines the order of evaluation.
+[00:06:00 -> 00:06:04] For example, it says that you need to first evaluate E,
+[00:06:04 -> 00:06:06] and then whatever are the result of E,
+[00:06:06 -> 00:06:09] you need to assign it to ID.
+[00:06:09 -> 00:06:13] And so if the evaluation of E involved some side effect,
+[00:06:13 -> 00:06:16] then that should happen before the side effect
+[00:06:16 -> 00:06:18] due to this particular assignment.
+[00:06:18 -> 00:06:23] So for example, notice that this S1 needs to be used
+[00:06:24 -> 00:06:26] in the RHS of this particular rule.
+[00:06:26 -> 00:06:29] So that means S1 needs to be computed
+[00:06:29 -> 00:06:31] before S2 can be computed.
+[00:06:31 -> 00:06:34] And that basically means that E needs to be computed
+[00:06:34 -> 00:06:36] before the assignment can be executed.
+[00:06:37 -> 00:06:39] It is, these subtleties are important
+[00:06:39 -> 00:06:41] because let's take an example.
+[00:06:41 -> 00:06:46] Let's say I have X equals star X equals three.
+[00:06:48 -> 00:06:50] Now this statement, what if,
+[00:06:50 -> 00:06:52] or let's say, let's make it a little simpler.
+[00:06:52 -> 00:06:57] Let's say X equals star Y equals three, all right?
+[00:06:57 -> 00:06:59] And now in this particular case,
+[00:07:00 -> 00:07:04] it is possible for,
+[00:07:04 -> 00:07:07] so I need to first evaluate star Y equals three,
+[00:07:07 -> 00:07:08] which will have its own side effect.
+[00:07:08 -> 00:07:13] And only after that do I evaluate this,
+[00:07:13 -> 00:07:16] the whole expression, the outer assignment, right?
+[00:07:16 -> 00:07:17] And this order is important
+[00:07:17 -> 00:07:18] because if I do it in the other order,
+[00:07:18 -> 00:07:20] then the final state will be different.
+[00:07:20 -> 00:07:22] For example, if I first assign X
+[00:07:22 -> 00:07:23] and then assign star Y,
+[00:07:23 -> 00:07:26] then if X and star Y were pointing to the same location,
+[00:07:26 -> 00:07:28] then the state would be different
+[00:07:28 -> 00:07:31] from if I first evaluate star Y equals three
+[00:07:31 -> 00:07:34] and then evaluate X equals star Y equals three, okay?
+[00:07:34 -> 00:07:35] So the order is important
+[00:07:35 -> 00:07:37] and these particular rules are basically saying
+[00:07:37 -> 00:07:39] what the order is.
+[00:07:39 -> 00:07:42] And the order in this case is that the RHS
+[00:07:42 -> 00:07:45] of the assignment is evaluated
+[00:07:45 -> 00:07:48] before the assignment is executed.
+[00:07:49 -> 00:07:53] All right, let's take another example.
+[00:07:53 -> 00:07:56] In this time, we're going to look at the addition operator
+[00:07:56 -> 00:07:58] or any other binary arithmetic operator.
+[00:07:59 -> 00:08:01] E1 plus E2, what does it stand for?
+[00:08:01 -> 00:08:04] Well, clearly under a context.
+[00:08:04 -> 00:08:07] So we evaluate E1 under that context
+[00:08:07 -> 00:08:10] and let's say E1 returns V1
+[00:08:10 -> 00:08:12] and returns a new state S1.
+[00:08:12 -> 00:08:15] Notice that E1 could basically also have some side effects
+[00:08:15 -> 00:08:20] so E1 would maybe return a new store S1.
+[00:08:22 -> 00:08:25] And then E2 is evaluated under the new store, all right?
+[00:08:25 -> 00:08:27] So E and S0 remain the same,
+[00:08:27 -> 00:08:30] but store has changed during evaluation of E2.
+[00:08:30 -> 00:08:33] So E2 is evaluated in a different context from E1.
+[00:08:33 -> 00:08:35] E2 is evaluated in a context
+[00:08:35 -> 00:08:38] which has the side effects induced by E1,
+[00:08:38 -> 00:08:39] which are captured by S1.
+[00:08:39 -> 00:08:42] And then under this context,
+[00:08:42 -> 00:08:45] if E2 evaluates to V2, S2,
+[00:08:45 -> 00:08:47] then under the original context,
+[00:08:47 -> 00:08:52] E1 plus E2 evaluates to V1 plus V2, S2, all right?
+[00:08:54 -> 00:08:55] So this was a typo.
+[00:08:56 -> 00:08:59] V1 plus V2, S2, all right?
+[00:08:59 -> 00:09:00] So that's the complete rule.
+[00:09:00 -> 00:09:04] And once again, notice that before I can evaluate E2,
+[00:09:04 -> 00:09:06] I need to have the context for
+[00:09:06 -> 00:09:08] in which this evaluation needs to be performed.
+[00:09:08 -> 00:09:10] And so to have the context, I need S1
+[00:09:10 -> 00:09:14] and S1 can only be available after I've evaluated E1.
+[00:09:14 -> 00:09:17] So this again dictates the order of evaluation.
+[00:09:17 -> 00:09:21] It's basically saying that in case of E1 plus E2,
+[00:09:21 -> 00:09:24] E1 should be evaluated before E2 is evaluated.
+[00:09:24 -> 00:09:25] So once again, this is important.
+[00:09:25 -> 00:09:28] And I can again use an example to show this.
+[00:09:28 -> 00:09:33] If I have X equals Y3 plus Y equals four.
+[00:09:35 -> 00:09:38] Let's make it star Y equals four.
+[00:09:38 -> 00:09:43] Now, if X and star Y are pointing to the same location,
+[00:09:43 -> 00:09:46] then X, the order matters.
+[00:09:46 -> 00:09:48] If I evaluate the first assignment,
+[00:09:48 -> 00:09:50] then the final value of the store could be different.
+[00:09:51 -> 00:09:53] If I evaluate the first assignment first,
+[00:09:53 -> 00:09:55] then the final value of the store would be different
+[00:09:55 -> 00:09:58] from if I evaluate the second assignment first, all right?
+[00:09:58 -> 00:10:00] And this particular rule is basically clearly
+[00:10:00 -> 00:10:02] disambiguating what the order is.
+[00:10:02 -> 00:10:07] It says that the left operand is evaluated
+[00:10:07 -> 00:10:13] before the right operand, all right?
+[00:10:13 -> 00:10:16] Now, the language like C, C++
+[00:10:16 -> 00:10:18] also has a notion of statements.
+[00:10:18 -> 00:10:21] And although C and C++ do not associate values
+[00:10:21 -> 00:10:23] with statements in our particular language,
+[00:10:23 -> 00:10:25] if you recall from the typing rules,
+[00:10:25 -> 00:10:28] we were associating values with statements as well.
+[00:10:28 -> 00:10:32] So for example, if I have the semicolon operator,
+[00:10:32 -> 00:10:35] that's the separator operator,
+[00:10:35 -> 00:10:40] then E1 semicolon E2 is basically a statement
+[00:10:40 -> 00:10:42] that evaluates to whatever is the value
+[00:10:42 -> 00:10:44] returned by E2, right?
+[00:10:44 -> 00:10:45] So once again, the rule is the following,
+[00:10:45 -> 00:10:50] that under the context S0ES, you first evaluate E1,
+[00:10:50 -> 00:10:54] to get V1, S1, and then you evaluate E2
+[00:10:54 -> 00:10:57] under the new store S1.
+[00:10:57 -> 00:10:58] And let's say you get V2, S2,
+[00:10:58 -> 00:11:01] then this whole expression E1 semicolon E2
+[00:11:01 -> 00:11:03] evaluates to V2, S2.
+[00:11:03 -> 00:11:06] Once again, these are not C, C++ semantics.
+[00:11:06 -> 00:11:10] These are just semantics of our own custom language
+[00:11:10 -> 00:11:12] that we are using and we are giving values.
+[00:11:12 -> 00:11:14] So the idea is that if you join lots of expressions
+[00:11:14 -> 00:11:16] using the semicolon,
+[00:11:16 -> 00:11:19] then the final expression that is created,
+[00:11:19 -> 00:11:21] the statement expression, so to say,
+[00:11:21 -> 00:11:23] has the value that is the value returned
+[00:11:23 -> 00:11:28] by the last expression in that long list of expressions
+[00:11:28 -> 00:11:32] separated with the semicolon operator, okay?
+[00:11:33 -> 00:11:34] All right.
+[00:11:35 -> 00:11:37] And similarly, there's the notion of a statement block.
+[00:11:37 -> 00:11:39] So I could have a statement block
+[00:11:39 -> 00:11:41] where I could just put the expression
+[00:11:41 -> 00:11:44] or a statement expression or any other thing
+[00:11:44 -> 00:11:45] which looks like an expression
+[00:11:45 -> 00:11:49] under inside curly braces to indicate a new scope.
+[00:11:49 -> 00:11:53] And if the inside of the curly braces,
+[00:11:53 -> 00:11:56] inside of the scope evaluates to V, S1
+[00:11:56 -> 00:11:57] under the same context,
+[00:11:57 -> 00:12:01] then the scope makes no difference.
+[00:12:01 -> 00:12:04] The scope, the expression put under the scope
+[00:12:04 -> 00:12:06] also evaluates to the same value
+[00:12:06 -> 00:12:09] and to the same store S1.
+[00:12:09 -> 00:12:11] So this is the rule for a statement block.
+[00:12:12 -> 00:12:13] Okay.
+[00:12:13 -> 00:12:18] So we have seen some rules to see how we assign values
+[00:12:18 -> 00:12:23] and specify side effects of expression evaluation.
+[00:12:24 -> 00:12:26] Let's see how we're going to use these rules
+[00:12:26 -> 00:12:27] to evaluate an expression.
+[00:12:27 -> 00:12:30] So let's say we have this small expression,
+[00:12:30 -> 00:12:33] X colon equals, so colon equals stands for assignment.
+[00:12:33 -> 00:12:37] So X is assigned seven plus five, semicolon four.
+[00:12:37 -> 00:12:40] So what is the value that this expression
+[00:12:40 -> 00:12:42] is going to evaluate through?
+[00:12:42 -> 00:12:47] And what is the final store at the end of this evaluation?
+[00:12:48 -> 00:12:51] Notice that none of the rules that we have discussed
+[00:12:51 -> 00:12:53] so far either update the environment E
+[00:12:53 -> 00:12:56] of that variable environment,
+[00:12:56 -> 00:12:58] nor do they update the S0, the current object.
+[00:12:58 -> 00:13:03] So the only question that remains is what are,
+[00:13:03 -> 00:13:05] what is the value and what is the store?
+[00:13:05 -> 00:13:07] So everything, the environment and the current object
+[00:13:07 -> 00:13:09] are not changed by these evaluations.
+[00:13:10 -> 00:13:12] Okay, and in the beginning we can assume
+[00:13:12 -> 00:13:17] that S0 is some arbitrary current object S0.
+[00:13:17 -> 00:13:21] E has a mapping for X to LX.
+[00:13:21 -> 00:13:24] So E maps the variable X to LX.
+[00:13:24 -> 00:13:26] So this is a variable environment.
+[00:13:26 -> 00:13:28] It already, so X is in the scope
+[00:13:28 -> 00:13:29] of the variable environment.
+[00:13:29 -> 00:13:33] And S is a store and store maps LX to zero
+[00:13:33 -> 00:13:37] initially before the evaluation of this expression starts.
+[00:13:37 -> 00:13:39] So we are interested in knowing that under this context
+[00:13:39 -> 00:13:44] of S0, E, S, what does this expression evaluate to?
+[00:13:44 -> 00:13:47] And so this is what our evaluation judgment
+[00:13:47 -> 00:13:48] is going to look like.
+[00:13:48 -> 00:13:52] Under S0, E, S, what does this expression evaluate to?
+[00:13:52 -> 00:13:54] And the question we are asking is what's the value
+[00:13:54 -> 00:13:56] and what's the new store?
+[00:13:56 -> 00:13:57] To be able to answer this question,
+[00:13:57 -> 00:14:02] we'll first, we'll basically apply our evaluation rules
+[00:14:02 -> 00:14:07] using a top-down traversal of the expression AST,
+[00:14:07 -> 00:14:09] abstract syntax tree.
+[00:14:09 -> 00:14:10] And so the first operator here
+[00:14:10 -> 00:14:12] is going to be the scope operator,
+[00:14:12 -> 00:14:13] and that really does nothing.
+[00:14:13 -> 00:14:16] And so I'm going to omit one or two steps here or there.
+[00:14:16 -> 00:14:19] And so I'm not going to show the step for the scope
+[00:14:19 -> 00:14:21] because that really does nothing really.
+[00:14:21 -> 00:14:23] But the next step is basically looking
+[00:14:23 -> 00:14:26] at the next top-level operator in the AST
+[00:14:26 -> 00:14:29] would be the semicolon delimiter,
+[00:14:29 -> 00:14:32] which joins the two expressions.
+[00:14:32 -> 00:14:34] And so I'm going to say,
+[00:14:34 -> 00:14:36] I'm going to apply that rule,
+[00:14:36 -> 00:14:38] which is the statement rule, if you recall.
+[00:14:38 -> 00:14:42] And so that rule says that first evaluate the left-hand side
+[00:14:42 -> 00:14:45] of the semicolon operator under the same environment,
+[00:14:45 -> 00:14:49] S0, E, S, and find out what the value is,
+[00:14:49 -> 00:14:52] and then evaluate the right-hand side of the semicolon,
+[00:14:52 -> 00:14:56] which is four, under an updated environment.
+[00:14:56 -> 00:14:57] In the updated environment,
+[00:14:57 -> 00:15:00] the S0 and E parts remain the same,
+[00:15:00 -> 00:15:03] but the store S can be changed.
+[00:15:03 -> 00:15:04] So we don't know what the store is
+[00:15:04 -> 00:15:06] until we evaluate the left-hand side.
+[00:15:06 -> 00:15:08] And so these are all the unknowns
+[00:15:08 -> 00:15:11] have been marked using the red question mark.
+[00:15:11 -> 00:15:15] So it's clear that before I can evaluate the right-hand side,
+[00:15:15 -> 00:15:16] I need to evaluate the left-hand side
+[00:15:16 -> 00:15:18] because I need to have the context
+[00:15:18 -> 00:15:21] before I can even start evaluating the right-hand side
+[00:15:21 -> 00:15:23] of the semicolon operator.
+[00:15:23 -> 00:15:25] So when I look at the left-hand side,
+[00:15:25 -> 00:15:27] it is basically an assignment.
+[00:15:27 -> 00:15:30] So I'm going to apply the assignment rule.
+[00:15:30 -> 00:15:33] And so I'm going to apply the assignment rule,
+[00:15:33 -> 00:15:36] and actually I have skipped that in this particular...
+[00:15:37 -> 00:15:39] I am using the assignment rules
+[00:15:39 -> 00:15:40] just that I've labeled it wrongly.
+[00:15:40 -> 00:15:42] So this is the assignment rule.
+[00:15:44 -> 00:15:46] All right, so I'm using the assignment rule.
+[00:15:46 -> 00:15:47] And in the assignment rule,
+[00:15:47 -> 00:15:52] I first evaluate the RHS of the assignment.
+[00:15:54 -> 00:15:56] So although I'm writing it in the different order,
+[00:15:56 -> 00:15:58] it's the RHS that's evaluated first,
+[00:15:58 -> 00:16:00] and then the LHS.
+[00:16:03 -> 00:16:04] Hold on.
+[00:16:04 -> 00:16:08] Okay, maybe I evaluate the LHS first and the ID first,
+[00:16:08 -> 00:16:09] and then the RHS.
+[00:16:09 -> 00:16:11] In any case, the ID is not going to cause any side effects.
+[00:16:11 -> 00:16:13] So it doesn't really matter in this particular case
+[00:16:13 -> 00:16:15] in which order we evaluate.
+[00:16:15 -> 00:16:17] And so I evaluate X first.
+[00:16:17 -> 00:16:19] So X is going to evaluate
+[00:16:19 -> 00:16:21] based on the environment and the store.
+[00:16:21 -> 00:16:25] And so for that, I'm going to use my rule for ID.
+[00:16:25 -> 00:16:27] And in that case, I'm going to say,
+[00:16:27 -> 00:16:30] oh, what does E map X to?
+[00:16:30 -> 00:16:34] So E maps X to LX, location X, LX.
+[00:16:34 -> 00:16:36] And S maps LX to zero.
+[00:16:36 -> 00:16:41] And so the variable X evaluates to zero, S.
+[00:16:42 -> 00:16:43] All right.
+[00:16:43 -> 00:16:46] If you recall, the assignment rule that we had
+[00:16:46 -> 00:16:48] did not actually specify,
+[00:16:49 -> 00:16:52] did not really require us to evaluate X,
+[00:16:52 -> 00:16:54] but we are doing that anyway
+[00:16:54 -> 00:16:56] in this particular evaluation.
+[00:16:56 -> 00:16:59] So let's say it also wanted us to do that as well.
+[00:17:00 -> 00:17:04] And then we look at the RHS of the assignment,
+[00:17:04 -> 00:17:06] which in this case is seven plus five,
+[00:17:06 -> 00:17:07] under the updated store.
+[00:17:07 -> 00:17:08] So what's the updated store?
+[00:17:08 -> 00:17:11] It's just S, it hasn't really changed.
+[00:17:11 -> 00:17:15] And so we are going to use the updated store.
+[00:17:15 -> 00:17:17] So that's the new updated store S here.
+[00:17:17 -> 00:17:20] And what does seven plus five evaluate to?
+[00:17:20 -> 00:17:23] Well, I'm going to use my addition rule
+[00:17:23 -> 00:17:25] and my constant rules to find out
+[00:17:25 -> 00:17:27] that seven plus five values to 12,
+[00:17:27 -> 00:17:30] and it does not update the store S.
+[00:17:31 -> 00:17:32] Okay.
+[00:17:32 -> 00:17:36] Finally, now that I have these two rules set up,
+[00:17:36 -> 00:17:38] I know that the assignment should evaluate
+[00:17:38 -> 00:17:41] to the RHS of the assignment, which is 12,
+[00:17:41 -> 00:17:43] and it should update the store S
+[00:17:43 -> 00:17:48] so that it puts a mapping of 12 to X.
+[00:17:48 -> 00:17:49] So that's my next step.
+[00:17:49 -> 00:17:51] So X colon equals seven plus five
+[00:17:51 -> 00:17:53] is going to evaluate to 12, S prime,
+[00:17:53 -> 00:17:56] where S prime is everything that was S
+[00:17:56 -> 00:17:59] except that LX should now be mapped to 12.
+[00:17:59 -> 00:18:02] And so S prime will be S
+[00:18:02 -> 00:18:04] except that LX is replaced by 12.
+[00:18:04 -> 00:18:07] And so that's what S prime is going to look like.
+[00:18:07 -> 00:18:10] And so X, the assignment basically evaluates
+[00:18:10 -> 00:18:12] to 12, S prime.
+[00:18:12 -> 00:18:15] And now I have the S prime
+[00:18:15 -> 00:18:16] under which four should be evaluated.
+[00:18:16 -> 00:18:20] So I basically put S prime here, right?
+[00:18:20 -> 00:18:22] And then I get four, S prime
+[00:18:22 -> 00:18:23] because four is just a constant.
+[00:18:23 -> 00:18:25] It doesn't really change the store
+[00:18:25 -> 00:18:27] and the value returned is also four.
+[00:18:27 -> 00:18:29] And so finally, this particular expression
+[00:18:29 -> 00:18:32] is just going to return whatever is the RHS
+[00:18:32 -> 00:18:35] of the semicolon operator, which is four comma S prime.
+[00:18:35 -> 00:18:37] And recall that S prime is nothing
+[00:18:37 -> 00:18:39] but a store that maps LX to 12.
+[00:18:40 -> 00:18:41] Now, before I finish,
+[00:18:41 -> 00:18:44] I want to clarify on the semantics
+[00:18:44 -> 00:18:45] of the assignment operator.
+[00:18:45 -> 00:18:49] So actually in my previous rule
+[00:18:49 -> 00:18:52] that we had discussed for the assignment operator,
+[00:18:52 -> 00:18:53] let's revisit it again.
+[00:18:54 -> 00:18:58] In this, I had used ID colon equal E
+[00:18:58 -> 00:19:03] as my syntax on which I was doing pattern matching.
+[00:19:04 -> 00:19:07] But in general, it is possible in a CC++ language
+[00:19:07 -> 00:19:10] to have a more general form of assignment.
+[00:19:10 -> 00:19:15] For example, I could have E1 colon equals E2, all right?
+[00:19:16 -> 00:19:19] Where E1 is also a general expression.
+[00:19:19 -> 00:19:21] And this is useful, for example,
+[00:19:21 -> 00:19:25] to say things like star X colon equals four, right?
+[00:19:25 -> 00:19:29] Here, star X is not an ID.
+[00:19:29 -> 00:19:30] It is a general expression.
+[00:19:30 -> 00:19:33] It involves the dereference operator and things like that.
+[00:19:33 -> 00:19:34] And so the evaluation of E1
+[00:19:34 -> 00:19:38] could also potentially have side effects.
+[00:19:38 -> 00:19:40] And so our language will need to define
+[00:19:40 -> 00:19:41] what is the order in which
+[00:19:41 -> 00:19:42] these side effects should be applied.
+[00:19:42 -> 00:19:44] And typically the order would be that
+[00:19:44 -> 00:19:48] you first evaluate the side effects of the LHS,
+[00:19:48 -> 00:19:51] and then you evaluate the side effects of the RHS.
+[00:19:51 -> 00:19:53] However, in this particular rule,
+[00:19:53 -> 00:19:55] I'm assuming that the assignments
+[00:19:55 -> 00:19:57] are only being done to an identifier
+[00:19:57 -> 00:19:58] and not to a general expression.
+[00:19:58 -> 00:20:00] And so we didn't really have to worry
+[00:20:00 -> 00:20:03] about the side effects of the LHS
+[00:20:03 -> 00:20:04] in this particular rule.
+[00:20:05 -> 00:20:08] And so while I was actually discussing this example,
+[00:20:08 -> 00:20:11] you know, I made a slight deviation
+[00:20:11 -> 00:20:14] because I started evaluating the LHS of the assignment,
+[00:20:14 -> 00:20:15] which is also okay.
+[00:20:15 -> 00:20:18] And that is actually for a more general version
+[00:20:18 -> 00:20:19] of the assignment rule.
+[00:20:19 -> 00:20:24] I should point out that while in our custom language
+[00:20:24 -> 00:20:25] that looks like C, C++,
+[00:20:25 -> 00:20:27] we are defining the order of evaluation
+[00:20:27 -> 00:20:29] very deterministically.
+[00:20:29 -> 00:20:31] For example, we are always pretty much
+[00:20:31 -> 00:20:33] evaluating the left operand
+[00:20:33 -> 00:20:35] before the right operand and so on.
+[00:20:36 -> 00:20:37] A language like C and C++
+[00:20:37 -> 00:20:41] actually leaves the order of evaluation unspecified.
+[00:20:41 -> 00:20:43] And that's a much longer topic of discussion.
+[00:20:43 -> 00:20:48] And I would point you to a paper
+[00:20:49 -> 00:20:52] which discusses this order of evaluation semantics
+[00:20:52 -> 00:20:57] of C and C++ in the comment section of this video.

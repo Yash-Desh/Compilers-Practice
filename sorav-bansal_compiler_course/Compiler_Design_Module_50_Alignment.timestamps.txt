@@ -1,0 +1,297 @@
+Title: Compiler Design Module 50 : Alignment
+Video ID: 8jkh68xSFx8
+Detected language: en
+------------------------------------------------------------
+
+[00:00:00 -> 00:00:05] So one of the interesting quirks of runtime organization,
+[00:00:05 -> 00:00:08] typically associated with the hardware quirks
+[00:00:08 -> 00:00:11] is the issue of memory object alignment.
+[00:00:13 -> 00:00:16] So what is memory object alignment?
+[00:00:16 -> 00:00:20] Well, it basically means that
+[00:00:20 -> 00:00:22] the objects should be in work.
+[00:00:22 -> 00:00:24] So first of all, it's a hardware quirk
+[00:00:24 -> 00:00:27] that often has significant performance implications,
+[00:00:27 -> 00:00:29] and sometimes it can even have correctness implications.
+[00:00:29 -> 00:00:31] So we're going to see that in more detail.
+[00:00:31 -> 00:00:34] So here is the exact problem.
+[00:00:34 -> 00:00:38] So memory is usually byte addressable,
+[00:00:38 -> 00:00:42] which means that you can name any one byte in memory.
+[00:00:42 -> 00:00:44] So I could say byte number 100,
+[00:00:44 -> 00:00:47] and that basically is going to be,
+[00:00:47 -> 00:00:52] I'll have some value, a byte value at address 100.
+[00:00:52 -> 00:00:55] Similarly, I could say byte number 101,
+[00:00:55 -> 00:00:59] and I will have a byte value at address 101, and so on.
+[00:00:59 -> 00:01:01] Notice that it's not bit addressable.
+[00:01:01 -> 00:01:05] For example, I couldn't say, give me bit number 801.
+[00:01:05 -> 00:01:07] That just doesn't make sense.
+[00:01:07 -> 00:01:10] The way I'll access bit number 801 is basically,
+[00:01:10 -> 00:01:13] I'm going to first have to access byte number 100,
+[00:01:13 -> 00:01:16] because the memory is not bit addressable,
+[00:01:16 -> 00:01:16] but byte addressable.
+[00:01:16 -> 00:01:19] So I have to convert the bit address to a byte address.
+[00:01:19 -> 00:01:22] So I first convert it to byte address 100,
+[00:01:22 -> 00:01:24] and I have to read the whole byte in one go,
+[00:01:24 -> 00:01:27] and then I can maybe look at the first,
+[00:01:27 -> 00:01:31] the second bit to look at bit number 801, and so on.
+[00:01:31 -> 00:01:34] Question is, but from the memory's perspective,
+[00:01:34 -> 00:01:38] you can only access it at minimum of byte generality.
+[00:01:40 -> 00:01:43] Okay, so a memory is usually byte addressable,
+[00:01:43 -> 00:01:47] but often multi-byte accesses are required
+[00:01:47 -> 00:01:51] for many typical operations.
+[00:01:51 -> 00:01:56] So for example, an integer in C, an int variable,
+[00:01:57 -> 00:02:01] is typically implemented using four bytes.
+[00:02:01 -> 00:02:03] And so if I basically,
+[00:02:03 -> 00:02:06] if the memory only supports single byte operations,
+[00:02:06 -> 00:02:07] then if I want to say,
+[00:02:07 -> 00:02:09] if I want to read an integer value,
+[00:02:09 -> 00:02:12] then I would have to do four different memory accesses
+[00:02:12 -> 00:02:14] to get each of the four bytes of that integer,
+[00:02:14 -> 00:02:16] and then I'll have to string them together
+[00:02:16 -> 00:02:17] to make an integer.
+[00:02:17 -> 00:02:19] Well, that could be option number one,
+[00:02:19 -> 00:02:20] but that would be really slow,
+[00:02:20 -> 00:02:22] because I would basically have to go to the memory
+[00:02:22 -> 00:02:24] four different times.
+[00:02:25 -> 00:02:26] And that's unnecessary,
+[00:02:26 -> 00:02:31] because the interconnect between the CPU and the memory
+[00:02:32 -> 00:02:33] has a long latency.
+[00:02:33 -> 00:02:38] Let's say it can have a latency of around 100 nanoseconds.
+[00:02:38 -> 00:02:40] So if it takes 100 nanoseconds
+[00:02:40 -> 00:02:42] to send a message to memory and bring it back,
+[00:02:42 -> 00:02:46] so a round trip is 100 nanoseconds, I would say.
+[00:02:46 -> 00:02:48] But the pipe is pretty fast.
+[00:02:48 -> 00:02:50] So once I send a message,
+[00:02:50 -> 00:02:52] multiple messages can come together.
+[00:02:52 -> 00:02:55] And so it takes 100 nanoseconds to get one byte.
+[00:02:55 -> 00:02:58] It takes 100 nanoseconds to get 10 bytes.
+[00:02:58 -> 00:03:01] So even though the latency is high,
+[00:03:01 -> 00:03:02] the bandwidth is also high.
+[00:03:02 -> 00:03:05] So I can get multiple data in one go.
+[00:03:05 -> 00:03:09] And so memories typically support multi-byte accesses
+[00:03:09 -> 00:03:10] to make things more efficient.
+[00:03:10 -> 00:03:13] So if I want to access an integer,
+[00:03:13 -> 00:03:15] I don't have to make four round trips.
+[00:03:15 -> 00:03:16] I can just do it in one round trip.
+[00:03:16 -> 00:03:19] So I just say, give me four bytes starting
+[00:03:19 -> 00:03:19] at this address.
+[00:03:19 -> 00:03:21] And so all the four bytes are going to come back
+[00:03:21 -> 00:03:23] in one round trip time to you.
+[00:03:23 -> 00:03:27] So you just pay 100 nanoseconds for the entire four bytes.
+[00:03:27 -> 00:03:28] So this is, you know,
+[00:03:28 -> 00:03:31] so you can read 32 bits of four bytes in one go.
+[00:03:33 -> 00:03:35] But often memories have some restrictions
+[00:03:35 -> 00:03:39] on what four bytes you can read in one go
+[00:03:39 -> 00:03:41] or what eight bytes or 16 bytes.
+[00:03:41 -> 00:03:43] I'm just using four bytes as an example.
+[00:03:44 -> 00:03:46] So for example, memories may say,
+[00:03:46 -> 00:03:49] may have alignment restrictions.
+[00:03:49 -> 00:03:49] So for example,
+[00:03:49 -> 00:03:52] they may allow you to read four bytes
+[00:03:52 -> 00:03:55] starting at address 100 in one go,
+[00:03:55 -> 00:03:57] but they may not allow you to read four bytes
+[00:03:57 -> 00:04:00] starting at address 101,
+[00:04:00 -> 00:04:03] because 101 is not aligned to a four byte boundary.
+[00:04:03 -> 00:04:05] 100 is aligned to a four byte boundary,
+[00:04:05 -> 00:04:09] but 101 is not allowed aligned to a four byte boundary.
+[00:04:09 -> 00:04:11] And so why would memories have this kind
+[00:04:11 -> 00:04:12] of a restriction?
+[00:04:12 -> 00:04:14] Well, that is just so that they can make
+[00:04:14 -> 00:04:16] their own implementation faster.
+[00:04:16 -> 00:04:18] So memories would typically say that
+[00:04:18 -> 00:04:20] if they allow only aligned,
+[00:04:20 -> 00:04:21] a memory designer would say that
+[00:04:21 -> 00:04:23] if I allow only aligned accesses,
+[00:04:23 -> 00:04:25] then I would be able to make
+[00:04:25 -> 00:04:27] the typical case of accesses faster.
+[00:04:27 -> 00:04:30] And also it's not just about the main memory,
+[00:04:30 -> 00:04:31] but also the caching hierarchy.
+[00:04:31 -> 00:04:36] So these restrictions allow hardware designers
+[00:04:37 -> 00:04:39] to implement faster memories.
+[00:04:39 -> 00:04:41] So because it's more restricted,
+[00:04:41 -> 00:04:44] you will need less circuitry to do the calculations
+[00:04:44 -> 00:04:45] and things like that.
+[00:04:45 -> 00:04:48] And it becomes easier and faster
+[00:04:48 -> 00:04:51] to generate data for aligned accesses
+[00:04:51 -> 00:04:53] than unaligned accesses in many cases.
+[00:04:53 -> 00:04:56] So some architectures like PowerPC
+[00:04:56 -> 00:04:59] would disallow unaligned accesses.
+[00:04:59 -> 00:05:02] Other architectures like x86
+[00:05:02 -> 00:05:04] would allow unaligned accesses,
+[00:05:04 -> 00:05:06] but they will have slower speed,
+[00:05:06 -> 00:05:08] or they would allow unaligned accesses
+[00:05:08 -> 00:05:11] only for certain opcodes and so on.
+[00:05:11 -> 00:05:15] So for example, you can access four bytes in one go
+[00:05:15 -> 00:05:17] starting at address 101,
+[00:05:17 -> 00:05:19] but that would be slower speed.
+[00:05:19 -> 00:05:22] But if you access it at starting at an aligned address,
+[00:05:22 -> 00:05:25] so 100 is an aligned access for four byte access,
+[00:05:25 -> 00:05:28] 101 is an unaligned access address.
+[00:05:28 -> 00:05:29] So for aligned accesses,
+[00:05:29 -> 00:05:31] the accesses will be faster maybe on your machine,
+[00:05:31 -> 00:05:33] and unaligned it will be slower.
+[00:05:33 -> 00:05:36] And there are examples of such machines as well.
+[00:05:36 -> 00:05:38] Also, there are some examples.
+[00:05:38 -> 00:05:41] Also, for example, x86 instruction set
+[00:05:41 -> 00:05:43] contains some opcodes which will work
+[00:05:43 -> 00:05:44] only for aligned accesses.
+[00:05:44 -> 00:05:47] There are some other opcodes which are slower,
+[00:05:47 -> 00:05:49] which will work for both unaligned and aligned accesses.
+[00:05:49 -> 00:05:51] And so if you want to use the faster opcode,
+[00:05:51 -> 00:05:54] it would be better if the accesses were aligned.
+[00:05:55 -> 00:05:57] Now, that's a lot of low-level detail
+[00:05:57 -> 00:05:59] of how you should be,
+[00:05:59 -> 00:06:02] what is, how can one access memory,
+[00:06:02 -> 00:06:04] and what is the correctness requirement,
+[00:06:04 -> 00:06:06] and what is the performance requirement
+[00:06:06 -> 00:06:08] associated with alignment.
+[00:06:08 -> 00:06:09] But when we write our programs,
+[00:06:09 -> 00:06:12] we don't want to be bothered with all this.
+[00:06:12 -> 00:06:14] We just write our program saying,
+[00:06:14 -> 00:06:16] okay, I want an integer variable,
+[00:06:16 -> 00:06:18] and it's up to the compiler maybe
+[00:06:18 -> 00:06:20] to figure out how it wants to give,
+[00:06:20 -> 00:06:23] what address it wants to give to that particular variable.
+[00:06:23 -> 00:06:25] And hopefully the compiler is going to make
+[00:06:25 -> 00:06:27] an intelligent choice so that most of the accesses
+[00:06:27 -> 00:06:28] are going to be aligned.
+[00:06:28 -> 00:06:30] Or if I'm compiling for an architecture
+[00:06:30 -> 00:06:33] where unaligned accesses are illegal,
+[00:06:33 -> 00:06:35] then all the accesses should be aligned.
+[00:06:36 -> 00:06:39] So what are the implications for the compiler?
+[00:06:39 -> 00:06:42] So for example, it may need to be careful
+[00:06:42 -> 00:06:43] while allocating objects.
+[00:06:43 -> 00:06:46] So for example, allocate a 32-bit object
+[00:06:46 -> 00:06:48] at a four-byte aligned address,
+[00:06:48 -> 00:06:51] or a 64-bit object at an eight-byte aligned address,
+[00:06:51 -> 00:06:53] and so on, okay?
+[00:06:53 -> 00:06:54] So one can be careful.
+[00:06:54 -> 00:06:55] What does it mean?
+[00:06:55 -> 00:06:57] So let's say it's a global variable,
+[00:06:57 -> 00:06:59] and recall that for global variables,
+[00:06:59 -> 00:07:02] the compiler explicitly identifies
+[00:07:02 -> 00:07:04] what address it's going to be stored at.
+[00:07:04 -> 00:07:05] That's in the data region.
+[00:07:05 -> 00:07:07] That's statically allocated.
+[00:07:07 -> 00:07:08] So when it's giving an address,
+[00:07:08 -> 00:07:10] it can figure out what is this type of this object.
+[00:07:10 -> 00:07:11] If it is an integer,
+[00:07:11 -> 00:07:14] then it should give it a four-byte aligned address.
+[00:07:14 -> 00:07:17] If it is a eight-byte double,
+[00:07:17 -> 00:07:19] then it should give it an eight-byte aligned address,
+[00:07:19 -> 00:07:21] and so on.
+[00:07:21 -> 00:07:23] So that's only for the global variables.
+[00:07:23 -> 00:07:24] What about, let's say, local variables
+[00:07:24 -> 00:07:26] or heap-allocated variables?
+[00:07:27 -> 00:07:29] So once again, the same thing applies.
+[00:07:29 -> 00:07:32] So when you have a local variable,
+[00:07:32 -> 00:07:34] on the stack, in the activation record,
+[00:07:34 -> 00:07:36] if you're allocating a local variable,
+[00:07:36 -> 00:07:38] maybe you won't need to have some amount of padding
+[00:07:38 -> 00:07:42] to be able to identify the correct legal address
+[00:07:42 -> 00:07:45] or desired address for that particular variable.
+[00:07:45 -> 00:07:47] So let's say I have an integer variable,
+[00:07:47 -> 00:07:52] which is a local variable in my procedure body.
+[00:07:52 -> 00:07:53] Then whenever that procedure gets invoked,
+[00:07:53 -> 00:07:57] the activation record should allocate enough space,
+[00:07:57 -> 00:08:00] not just for the local variable,
+[00:08:00 -> 00:08:01] but also the padding required
+[00:08:01 -> 00:08:04] so that it becomes correctly aligned.
+[00:08:04 -> 00:08:05] And that can also sometimes mean
+[00:08:05 -> 00:08:07] that different activations of the same procedure
+[00:08:08 -> 00:08:09] take different amount of space,
+[00:08:09 -> 00:08:11] because maybe the first activation was such
+[00:08:11 -> 00:08:15] that it already gives the local variable
+[00:08:15 -> 00:08:16] an aligned address,
+[00:08:16 -> 00:08:19] but the second activation of the same procedure
+[00:08:19 -> 00:08:21] gives it an unaligned address,
+[00:08:21 -> 00:08:22] and so padding was required.
+[00:08:22 -> 00:08:23] And so the activation record
+[00:08:23 -> 00:08:25] of the second invocation of the same procedure
+[00:08:25 -> 00:08:28] has different size from the activation record
+[00:08:28 -> 00:08:31] of the first invocation of the same procedure.
+[00:08:31 -> 00:08:33] All right, so we're going to see this
+[00:08:33 -> 00:08:36] in a little bit more detail with an example.
+[00:08:36 -> 00:08:39] Also, use padding for compound objects.
+[00:08:39 -> 00:08:41] So typical languages have compound objects.
+[00:08:41 -> 00:08:44] For example, C has the notion of a struct,
+[00:08:44 -> 00:08:46] C++ has the notion of classes,
+[00:08:46 -> 00:08:50] and almost all languages have the notion of objects,
+[00:08:50 -> 00:08:53] classes, compound objects.
+[00:08:53 -> 00:08:55] And so let's look at the example of C.
+[00:08:55 -> 00:08:58] So in C, or in C++,
+[00:08:58 -> 00:09:00] let's say in C++ I define a class foo,
+[00:09:00 -> 00:09:03] then I could have, let's say two fields in it,
+[00:09:03 -> 00:09:05] int, i1, char.
+[00:09:05 -> 00:09:07] Let's say I have three fields in it,
+[00:09:07 -> 00:09:11] int, i1, character array s of five characters,
+[00:09:11 -> 00:09:13] and then integer, i2.
+[00:09:13 -> 00:09:18] Now, the compiler knows that i1 and i2 are integers,
+[00:09:18 -> 00:09:20] and so it's very likely that in the code,
+[00:09:20 -> 00:09:23] I'm going to access these variables,
+[00:09:23 -> 00:09:25] i1 and i2, in one row.
+[00:09:25 -> 00:09:27] So for example, I would say i1 is equal to i1 plus one,
+[00:09:27 -> 00:09:30] that's going to have to read all the four bytes
+[00:09:30 -> 00:09:32] associated with i1 in one row.
+[00:09:33 -> 00:09:35] And so that's going to be a very common operation.
+[00:09:35 -> 00:09:39] And so maybe the compiler wants that i1 and i2
+[00:09:39 -> 00:09:43] should both be allocated at four byte aligned addresses.
+[00:09:44 -> 00:09:47] But that means that if both i1 and i2
+[00:09:47 -> 00:09:51] are allocated at four byte aligned addresses,
+[00:09:51 -> 00:09:55] that the middle field here is a five character array.
+[00:09:55 -> 00:09:57] And so the only way this can be achieved
+[00:09:57 -> 00:09:58] is only if we add some padding.
+[00:09:58 -> 00:10:01] So for example, the compiler may want to introduce
+[00:10:01 -> 00:10:04] a pad of three bytes between either the first integer
+[00:10:04 -> 00:10:08] and s, or between s and the second integer,
+[00:10:08 -> 00:10:11] so that i1 and i2 can remain aligned,
+[00:10:11 -> 00:10:16] and I can have character array of five bytes,
+[00:10:17 -> 00:10:20] s, in the middle of both of them.
+[00:10:20 -> 00:10:22] And so what this padding bytes are going to do
+[00:10:22 -> 00:10:24] is it's going to take some extra space,
+[00:10:24 -> 00:10:25] in this case, three bytes.
+[00:10:25 -> 00:10:29] And so that is wastage of space, you may think,
+[00:10:29 -> 00:10:34] but this space is useful if the machine
+[00:10:34 -> 00:10:36] has alignment restrictions,
+[00:10:36 -> 00:10:38] either because of correctness reasons
+[00:10:38 -> 00:10:40] or because of performance reasons.
+[00:10:40 -> 00:10:43] And typically, even if it is for performance reasons,
+[00:10:43 -> 00:10:45] three bytes would be typically a very small price
+[00:10:45 -> 00:10:48] to pay in space to have faster accesses
+[00:10:48 -> 00:10:53] to my integer objects.
+[00:10:53 -> 00:10:56] Here's another example of what may be required
+[00:10:56 -> 00:10:58] by the compiler to be able to deal with alignment.
+[00:10:58 -> 00:11:01] So let's say I have the C code
+[00:11:01 -> 00:11:05] where I have this local variable called X of type integer.
+[00:11:05 -> 00:11:10] Now, actually C has this interesting requirement
+[00:11:10 -> 00:11:14] that all addresses of, so C is a low-level language,
+[00:11:14 -> 00:11:16] so it basically can say,
+[00:11:16 -> 00:11:18] it also has alignment restrictions
+[00:11:18 -> 00:11:22] on how variables of certain types should be allocated.
+[00:11:22 -> 00:11:26] And so C requires that all variables of type integer
+[00:11:26 -> 00:11:28] should be four byte aligned.
+[00:11:28 -> 00:11:32] And so what this means, for example,
+[00:11:32 -> 00:11:33] when I'm implementing this,
+[00:11:33 -> 00:11:34] when I'm generating code for this,
+[00:11:34 -> 00:11:37] when compiler is generating code for this,
+[00:11:37 -> 00:11:40] is that the first few instructions
+[00:11:40 -> 00:11:43] of foo could look like the following.
+[00:11:43 -> 00:11:45] It's going to, let's say the stack pointer
+[00:11:45 -> 00:11:49] is denoting the current stack, top of the stack.
+[00:11:49 -> 00:11:52] So the first thing it does is it adds
+[00:11:52 -> 00:11:54] the address of the stack pointer
+[00:11:54 -> 00:11:57] so that it becomes aligned with the foo byte boundary.
+[00:11:57 -> 00:12:01] Notice the mask of this and is basically
+[00:12:01 -> 00:12:03] all ones except the last two bits, which are zero.
+[00:12:03 -> 00:12:06] And so ending with the ESP basically means
+[00:12:06 -> 00:12:11] just decrease ESP by just the right amount
+[00:12:11 -> 00:12:14] so that ESP now becomes four byte aligned.
+[00:12:14 -> 00:12:17] And now you basically subtract four from ESP
+[00:12:17 -> 00:12:18] and this is the region
+[00:12:18 -> 00:12:20] where you're going to store the value X.
+[00:12:20 -> 00:12:23] And so using this computation,
+[00:12:23 -> 00:12:25] using this and operator with a mask
+[00:12:25 -> 00:12:27] that has the last two bits to be zero,
+[00:12:28 -> 00:12:29] one can align the stack pointer.
+[00:12:29 -> 00:12:32] In other words, I'm aligning the place
+[00:12:32 -> 00:12:36] or the activation record so that I can have aligned
+[00:12:36 -> 00:12:39] allocation for my integer object.

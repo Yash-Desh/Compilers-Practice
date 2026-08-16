@@ -1,0 +1,145 @@
+Title: Compiler Design Module 46   Runtime Organization
+Video ID: Q63Tdn2ZK8U
+Detected language: en
+------------------------------------------------------------
+
+[00:00:00 -> 00:00:06] So far we have looked at the compiler frontend, the lexer, the parser, and the semantic analysis phase.
+[00:00:08 -> 00:00:13] If we look at the compiler pipeline again, we have a lexer, we have a parser,
+[00:00:14 -> 00:00:19] we have semantic analysis, and these basically form these three steps can be kind of thought
+[00:00:19 -> 00:00:24] of as the front end of the compiler, and the back end of the compiler is optimization
+[00:00:24 -> 00:00:30] and code generation, and so for the rest of the course we will be talking mostly about the back end
+[00:00:30 -> 00:00:34] of the compiler, and before we can talk about these things we will need to know what is the
+[00:00:34 -> 00:00:40] runtime organization. So far we have been talking about the language, the language syntax,
+[00:00:40 -> 00:00:45] the language semantics, the language type system, but now we are interested in figuring out
+[00:00:45 -> 00:00:51] how to translate or implement this language on the existing computing substrate, and to be able
+[00:00:51 -> 00:00:56] to understand how to do this we need to first understand what is the substrate available,
+[00:00:56 -> 00:01:04] and that's exactly what we mean by runtime organization. So what does runtime organization
+[00:01:04 -> 00:01:10] contain? It contains a lot of things, but some of the things that it represents is what lives
+[00:01:10 -> 00:01:17] where, so it's basically also called and can be also thought of as how is the storage organized.
+[00:01:17 -> 00:01:22] So when we say what, we are interested in figuring out where does code stay,
+[00:01:24 -> 00:01:28] where do variables live, for example the programming language may support local and
+[00:01:28 -> 00:01:33] global variables, so where should be the space for those variables be allocated,
+[00:01:34 -> 00:01:40] and where should other type of memory allocation be performed from, and for example a language
+[00:01:40 -> 00:01:45] like C has the notion of malloc, so where is this memory coming from, where should it be
+[00:01:45 -> 00:01:53] maintained, a language like C++ has the idea of a new operator, so once again it's similar to
+[00:01:53 -> 00:01:57] malloc, a language like Java also has a new operator, but there are some other languages
+[00:01:57 -> 00:02:02] like for example Python or Perl or OCaml, and these languages don't really have explicit
+[00:02:02 -> 00:02:07] operators, but they have implicit memory allocation, so you can implicitly copy a
+[00:02:07 -> 00:02:13] list into something else, or you can start growing a list just by calling some operators
+[00:02:13 -> 00:02:18] on the list, and internally there's some memory that's being allocated to be able to represent
+[00:02:18 -> 00:02:23] the information that you're trying to represent, so question is where is this memory going to be
+[00:02:23 -> 00:02:29] allocated from, and this all this basically comes under the purview of storage organization,
+[00:02:30 -> 00:02:35] right, and then the question is where, so one thing is what and the other thing is where, I
+[00:02:35 -> 00:02:44] guess what are the options for where, and so one of the options is to store these constructs,
+[00:02:44 -> 00:02:50] for example code, variables, malloc memory in the memory address space, so a computer is
+[00:02:50 -> 00:02:59] typically made up of a memory and there's a CPU, and recall that the CPU is basically just
+[00:02:59 -> 00:03:04] a loop that's going to just execute one instruction after the other, and so it can
+[00:03:04 -> 00:03:10] make references into the memory, and so this memory is basically can be abstracted as an
+[00:03:10 -> 00:03:16] address space, and so basically we were going to store much of this information actually in the
+[00:03:16 -> 00:03:22] address space, and that's no surprise, but then the question is how to manage or how to lay out
+[00:03:22 -> 00:03:28] this address space, where should we put what, so that they can live, all these different
+[00:03:28 -> 00:03:34] things can live peacefully and coexist with each other, for example variables should coexist
+[00:03:34 -> 00:03:40] with malloc memory and should coexist with code, now some things can be even maintained in
+[00:03:40 -> 00:03:45] registers, and this actually happens a lot, some variables will not be allocated in memory, but
+[00:03:45 -> 00:03:51] will be allocated in registers, and typically such decisions are made by the compiler, so what
+[00:03:51 -> 00:03:56] do I mean by registers, these are on-chip registers of the CPU which are much faster than
+[00:03:56 -> 00:03:59] memory, and they are not represented as an address space, but there's only a small number of
+[00:03:59 -> 00:04:04] registers that you can access, and I guess we have already discussed such an organization of
+[00:04:04 -> 00:04:09] a computer, and there's a third option, and you may want to actually store some of this
+[00:04:10 -> 00:04:13] stuff on the disk, not necessarily in the memory address space, but maybe on the disk,
+[00:04:14 -> 00:04:19] and once again you know it can it's some for some languages it's the compiler is completely
+[00:04:19 -> 00:04:24] not involved with managing the disk, for some other languages the compiler may be involved in
+[00:04:24 -> 00:04:31] managing the contents of the disk, typically the disk management is done by the operating system,
+[00:04:31 -> 00:04:36] all right, so that's another part of runtime organization which is who manages what,
+[00:04:36 -> 00:04:43] the sum of, so by who I mean it obviously it's not a person, but it is some code right,
+[00:04:43 -> 00:04:47] and so which code manages what, and who has written that code, and that's what we mean by
+[00:04:47 -> 00:04:55] who, so for example sum of, and when I say manages what, so by what I mean who manages code,
+[00:04:55 -> 00:05:01] who manages you know the placement of variables, who manages the placement of malloc memory,
+[00:05:01 -> 00:05:11] and so on right, so by who, so one of the actors, the who actors is the code generated
+[00:05:11 -> 00:05:15] by the compiler, so it's not the compiler that's going to manage these things, these things
+[00:05:15 -> 00:05:21] are supposed to be managed at runtime, and unless we are talking about just-in-time compilation or
+[00:05:21 -> 00:05:26] something like that, for ahead of time compilers the compiler is nowhere in the picture during
+[00:05:26 -> 00:05:33] runtime, and so this type of things can only be managed by the code that has been generated
+[00:05:33 -> 00:05:38] by the compiler, and not the compiler itself, and so you know some of these things will be
+[00:05:38 -> 00:05:42] managed by the code generated by the compiler, for example what to put in registers, and what
+[00:05:42 -> 00:05:48] not to put in registers is something that the code generated by the compilers is managing,
+[00:05:48 -> 00:05:53] right, and what is living in which register and so on, of course if something has to be managed
+[00:05:53 -> 00:05:58] by the code generated by the compiler then the compiler also needs to manage how to lay out,
+[00:05:58 -> 00:06:02] how to generate that code and things like that, so ultimately it is the decision of the
+[00:06:02 -> 00:06:08] compiler, and in turn it's like the decision of the compiler developer, but at runtime really
+[00:06:08 -> 00:06:12] what is actually making the decision is the code generated by the compiler, and the other
+[00:06:12 -> 00:06:16] thing is the operating system, so operating system is making decisions, for example the
+[00:06:16 -> 00:06:23] operating system may be using paging or some kind of virtual memory to decide what lives where,
+[00:06:23 -> 00:06:27] and so this responsibility of what lives where is being sort of shared between the
+[00:06:27 -> 00:06:33] compiler and the operating system, for example typically there will be the notion of a virtual
+[00:06:33 -> 00:06:37] memory, and there will be a notion of a physical memory, I'm not going to go into
+[00:06:37 -> 00:06:43] these concepts because they are kind of outside the scope of this course, but if you recognize
+[00:06:43 -> 00:06:50] these concepts that's great because then you'll be able to follow this discussion, so the mapping
+[00:06:50 -> 00:06:54] from virtual memory to physical memory is typically maintained and managed by the
+[00:06:54 -> 00:07:02] operating system, but the organization of this data or stuff inside the virtual memory is
+[00:07:02 -> 00:07:06] typically managed by the compiler, and even there some of it is managed by the operating
+[00:07:06 -> 00:07:12] system and some of it is managed by the compiler, then the other thing is some of it could be
+[00:07:12 -> 00:07:17] managed by runtime libraries, that by runtime libraries it's not necessarily part of the
+[00:07:17 -> 00:07:20] operating system, but just some libraries that were linked with your program, for example
+[00:07:21 -> 00:07:25] malloc and free are not really part of the operating system, they're just user level
+[00:07:25 -> 00:07:30] libraries that could be linked against, and then that can kind of manage what gets put
+[00:07:30 -> 00:07:37] where, and then finally the hardware can get gets to manage some of what lives there as well,
+[00:07:37 -> 00:07:45] for example inside a computer, memory, although we think of memory as a single address space,
+[00:07:46 -> 00:07:51] typical modern computer doesn't have a single memory, it actually has multiple
+[00:07:51 -> 00:07:59] banks of memory, and depending on what you place where, it increases the bandwidth available
+[00:08:00 -> 00:08:04] to access memory, and so some of these optimizations can be done by the operating
+[00:08:04 -> 00:08:08] system, some of them are done at the hardware level, for example things like prefetching,
+[00:08:09 -> 00:08:16] caching, and so on. All right, so with that background, let's understand how does
+[00:08:16 -> 00:08:21] the program actually start, and you know what does the runtime look like when the program
+[00:08:21 -> 00:08:26] is just about to start, so initially the operating system is in control and it loads the
+[00:08:26 -> 00:08:32] program's code into the address space of the program, and when I say address space,
+[00:08:32 -> 00:08:36] it could be virtual memory or physical memory, I really don't care when I'm talking when I'm
+[00:08:36 -> 00:08:42] looking at it from a compiler's perspective, it does not typically it is virtual memory
+[00:08:42 -> 00:08:48] because we are talking about programs that are compiled for you know modern operating,
+[00:08:48 -> 00:08:54] for multiple user operating systems like maybe linux or windows whatever, but then there are
+[00:08:54 -> 00:08:59] also programs that run on really small devices where there is no concept of virtual memory,
+[00:08:59 -> 00:09:04] and even their compilers are useful, so in any case I'm not going to worry about whether
+[00:09:04 -> 00:09:07] it's virtual memory or physical memory, I'm just going to call it a memory address space,
+[00:09:08 -> 00:09:14] and initially the OS is in control, the OS allocates memory and exports it as an address
+[00:09:14 -> 00:09:19] space, so we just discussed this, and so this is what if I was to draw the address space as
+[00:09:19 -> 00:09:25] a rectangle, then this is the rectangle, and the meaning of this drawing is the following that
+[00:09:25 -> 00:09:35] the addresses are you know, so each kind of row horizontal row in this figure represents an
+[00:09:35 -> 00:09:42] address, and let's say the addresses are increasing from bottom to top okay, and this
+[00:09:42 -> 00:09:48] address space although I have represented it as a contiguous address space, it need not be
+[00:09:48 -> 00:09:52] contiguous in the general case, so we're going to just make a simplification assume that the
+[00:09:52 -> 00:09:57] address space is contiguous, typically when the operating system is offering virtual memory then
+[00:09:57 -> 00:10:02] it does offer contiguous address space, but you know as I just said compilers may be used
+[00:10:02 -> 00:10:06] in situations where it's not being used with virtual memory in which case the address space
+[00:10:06 -> 00:10:11] may not be contiguous, in which case the compiler needs to know what is the memory that's
+[00:10:11 -> 00:10:16] available and what is not, in any case we are assuming that it is contiguous address space,
+[00:10:16 -> 00:10:20] even for a contiguous address space for example the compiler needs to know what are the addresses,
+[00:10:20 -> 00:10:26] what are the exact address values that are available you know, for example is it zero to
+[00:10:26 -> 00:10:31] hundred, zero to ten thousand or zero to ten million whatever, or is it you know maybe the
+[00:10:31 -> 00:10:34] first few addresses are not available, maybe the last few addresses are not available,
+[00:10:34 -> 00:10:38] somewhere in the middle the addresses are available, whatever it is the compiler needs
+[00:10:38 -> 00:10:44] to know, and this is basically a contract between the operating system and the program
+[00:10:44 -> 00:10:49] developer and when I say program developer it includes the, if the program has been written
+[00:10:49 -> 00:10:54] in assembly then it means the human program developer, if the program has been written
+[00:10:54 -> 00:10:58] in a higher level language then the program developer includes the developer or may or
+[00:10:58 -> 00:11:03] may not include the developer, but definitely includes the compiler because now the compiler
+[00:11:03 -> 00:11:07] and the operating system are basically following the same contract and that's why your program
+[00:11:07 -> 00:11:17] is going to be able to work. All right and then in this one of the features of this contract
+[00:11:17 -> 00:11:21] between the compiler and the operating system is after you have firstly where is the code,
+[00:11:21 -> 00:11:26] so that's part of the contract and the other part of the contract is what is the entry point,
+[00:11:26 -> 00:11:31] what's the first instruction that the operating system should transfer control to and so this is
+[00:11:31 -> 00:11:38] is programmed by the compiler but used by the operating system, so the compiler is going to
+[00:11:38 -> 00:11:43] set up this information put it in the ELF executable let's say and the operating system
+[00:11:43 -> 00:11:47] will know where to read it from and then it's going to set the program counter to that
+[00:11:47 -> 00:11:52] particular entry point so that the control now is transferred to the program and now the
+[00:11:52 -> 00:12:01] program can execute as it is expected to execute. All right so in this figure I'm
+[00:12:01 -> 00:12:05] showing as though the code is all contiguous typically it is contiguous but you know the
+[00:12:05 -> 00:12:09] compiler may or may not want to keep it contiguous but let for simplicity we just want to assume that
+[00:12:09 -> 00:12:15] the code is contiguous also in this figure I'm showing that code is somewhere in the middle of
+[00:12:15 -> 00:12:20] the address space some compilers would want to keep it at one end of the address space
+[00:12:22 -> 00:12:26] but keeping it in the middle is also okay keeping it at one another end is also okay
+[00:12:26 -> 00:12:30] but the important thing is that code is only some part of the address space and there's a
+[00:12:30 -> 00:12:35] lot of other part of the address space that has not been used and I'm calling it the other space
+[00:12:35 -> 00:12:40] right now and solely we are going to develop more understanding of what how this other
+[00:12:40 -> 00:12:45] space can be organized so that we can store other things like malloc memory and variables
+[00:12:45 -> 00:12:53] and things like that okay and so at runtime these the space is managed other space is
+[00:12:53 -> 00:12:57] typically used to store data and it's managed by generated code and libraries

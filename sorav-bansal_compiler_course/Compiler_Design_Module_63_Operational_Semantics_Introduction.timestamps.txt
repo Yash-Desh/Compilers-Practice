@@ -1,0 +1,647 @@
+Title: Compiler Design Module 63 : Operational Semantics Introduction
+Video ID: QzsLn_jzbfw
+Detected language: en
+------------------------------------------------------------
+
+[00:00:00 -> 00:00:03] So we now start discussing the operational semantics
+[00:00:03 -> 00:00:06] of CC++ Light Language,
+[00:00:06 -> 00:00:09] for which we had also discussed semantic rules,
+[00:00:09 -> 00:00:11] semantic analysis rules.
+[00:00:11 -> 00:00:14] So what are operational semantics?
+[00:00:14 -> 00:00:15] Recall that operational semantics
+[00:00:15 -> 00:00:18] basically trace the execution of the program
+[00:00:18 -> 00:00:20] on an abstract machine.
+[00:00:20 -> 00:00:21] And there are two types of operational semantics,
+[00:00:21 -> 00:00:24] the small step and big step operational semantics.
+[00:00:24 -> 00:00:27] And we'll be discussing big step operational semantics.
+[00:00:27 -> 00:00:28] Recall that we also said that
+[00:00:28 -> 00:00:30] all these different types of operational semantics
+[00:00:30 -> 00:00:32] are essentially equivalent.
+[00:00:32 -> 00:00:33] They're just different ways
+[00:00:33 -> 00:00:35] of representing the same properties.
+[00:00:35 -> 00:00:37] And so we just choose one of them,
+[00:00:37 -> 00:00:39] which is big step operational semantics,
+[00:00:39 -> 00:00:42] primarily because they are easy to understand
+[00:00:42 -> 00:00:46] and easy to formulate, okay?
+[00:00:46 -> 00:00:50] So how are we going to specify the operational semantics?
+[00:00:50 -> 00:00:51] We're going to specify them
+[00:00:51 -> 00:00:54] as logical rules of inference.
+[00:00:54 -> 00:00:56] And we have already been introduced
+[00:00:56 -> 00:00:58] to the idea of logical rules of inference
+[00:00:58 -> 00:01:00] or inference rules, in short,
+[00:01:00 -> 00:01:02] when we were discussing about typing.
+[00:01:02 -> 00:01:05] And our typing judgment was of the form
+[00:01:05 -> 00:01:06] that under a given context,
+[00:01:06 -> 00:01:08] the context could be, for example,
+[00:01:08 -> 00:01:11] the scope or the variables that have been defined,
+[00:01:11 -> 00:01:15] the environment, the current object, and so on.
+[00:01:15 -> 00:01:19] A certain expression has a type C, right?
+[00:01:19 -> 00:01:21] Or something like that.
+[00:01:21 -> 00:01:23] So this was the judgment in typing
+[00:01:23 -> 00:01:25] when we were discussing typing rules
+[00:01:25 -> 00:01:27] and semantic analysis.
+[00:01:28 -> 00:01:32] Very similarly, we are going to use an evaluation judgment
+[00:01:32 -> 00:01:34] to specify the operational semantics.
+[00:01:34 -> 00:01:35] And the evaluation judgment
+[00:01:35 -> 00:01:37] is going to look like the following,
+[00:01:37 -> 00:01:39] somewhat like the following.
+[00:01:39 -> 00:01:41] Under a given context,
+[00:01:41 -> 00:01:44] again, the context is going to capture the environment,
+[00:01:44 -> 00:01:47] which will include the scope and things like that.
+[00:01:47 -> 00:01:51] It is true that E evaluates to value V.
+[00:01:51 -> 00:01:52] So in the given context,
+[00:01:52 -> 00:01:54] E evaluates to value V.
+[00:01:54 -> 00:01:59] That's what this notation stands for.
+[00:01:59 -> 00:02:00] Under a given context,
+[00:02:00 -> 00:02:04] it is true that E evaluates to value V.
+[00:02:05 -> 00:02:08] Okay, so for example,
+[00:02:08 -> 00:02:11] maybe we have one such rule
+[00:02:11 -> 00:02:14] in our operational semantics database of rules.
+[00:02:14 -> 00:02:18] It says that if under a given context,
+[00:02:18 -> 00:02:20] E1 evaluates to five,
+[00:02:20 -> 00:02:23] and under the same context,
+[00:02:23 -> 00:02:25] E2 evaluates to seven.
+[00:02:25 -> 00:02:27] Then under the same context,
+[00:02:27 -> 00:02:30] E1 plus E2 evaluate to 12, all right?
+[00:02:30 -> 00:02:34] And now, this rule seems really straightforward.
+[00:02:34 -> 00:02:37] And also, it's a very specific rule.
+[00:02:37 -> 00:02:39] We are using specific values
+[00:02:39 -> 00:02:41] of the constants five and seven.
+[00:02:41 -> 00:02:43] Typically, we will just use placeholders
+[00:02:43 -> 00:02:45] for these values
+[00:02:45 -> 00:02:47] so that we can have one rule
+[00:02:47 -> 00:02:50] that covers a lot of different values that are possible.
+[00:02:50 -> 00:02:55] Also, this kind of typing or evaluation judgment
+[00:02:58 -> 00:03:00] is saying that E1 is a valid expression
+[00:03:00 -> 00:03:03] that can be evaluated to a legal value,
+[00:03:03 -> 00:03:05] and the value is going to be,
+[00:03:05 -> 00:03:07] let's say, an integer five, all right?
+[00:03:07 -> 00:03:08] And in this case,
+[00:03:08 -> 00:03:11] the value is going to be an integer seven, and so on.
+[00:03:12 -> 00:03:13] Also, there is this context
+[00:03:13 -> 00:03:15] that is on the left-hand side
+[00:03:15 -> 00:03:17] of the turnstile operator,
+[00:03:17 -> 00:03:18] and it's really not doing much
+[00:03:18 -> 00:03:19] in this particular rule
+[00:03:19 -> 00:03:21] because it's just saying that
+[00:03:21 -> 00:03:22] the context should be the same
+[00:03:22 -> 00:03:24] for evaluating E1 and E2,
+[00:03:24 -> 00:03:26] and E1 plus E2.
+[00:03:27 -> 00:03:29] Also, this rule is saying that
+[00:03:29 -> 00:03:31] during the evaluation of E1 plus E2,
+[00:03:31 -> 00:03:33] the context does not change, okay?
+[00:03:33 -> 00:03:36] So, as we are already familiar,
+[00:03:37 -> 00:03:40] an inference rule basically encodes
+[00:03:40 -> 00:03:41] a lot of information
+[00:03:41 -> 00:03:44] in a very small amount of notation,
+[00:03:44 -> 00:03:46] and so it's very important
+[00:03:46 -> 00:03:48] to carefully read an inference rule.
+[00:03:49 -> 00:03:50] Now, the question is,
+[00:03:50 -> 00:03:52] when you're talking about evaluation,
+[00:03:52 -> 00:03:55] what should constitute the context, all right?
+[00:03:55 -> 00:03:56] So, one thing that may,
+[00:03:56 -> 00:03:58] that immediately strikes us is,
+[00:03:58 -> 00:04:01] what if E1 has references to some variables?
+[00:04:01 -> 00:04:03] Let's say X or Y, or things like that.
+[00:04:03 -> 00:04:05] So, one thing that the context should give us
+[00:04:05 -> 00:04:06] is what are the current values
+[00:04:06 -> 00:04:08] of these variables, right?
+[00:04:08 -> 00:04:10] And so, for example,
+[00:04:10 -> 00:04:12] one thing that the context should involve
+[00:04:12 -> 00:04:14] is mappings from variables to values.
+[00:04:14 -> 00:04:18] For example, I could have E1 to be X,
+[00:04:18 -> 00:04:20] and E2 to be one,
+[00:04:20 -> 00:04:25] and only this expression, X plus one,
+[00:04:26 -> 00:04:27] can only be evaluated
+[00:04:27 -> 00:04:30] if the context involves a mapping for X, right?
+[00:04:30 -> 00:04:33] And this would basically tell you
+[00:04:33 -> 00:04:37] what is the way to evaluate X plus one,
+[00:04:37 -> 00:04:39] assuming that you can already evaluate X,
+[00:04:39 -> 00:04:40] and you can evaluate one.
+[00:04:41 -> 00:04:44] And similarly, you can kind of
+[00:04:44 -> 00:04:47] make bigger expressions out of smaller,
+[00:04:47 -> 00:04:48] you can evaluate bigger expressions
+[00:04:48 -> 00:04:49] out of smaller expressions.
+[00:04:49 -> 00:04:52] So, just like we were talking about typing judgments,
+[00:04:52 -> 00:04:54] these rules here, E1, E2,
+[00:04:54 -> 00:04:58] basically are placeholders for any expression
+[00:04:58 -> 00:05:02] that can be pattern-matched to this particular rule.
+[00:05:02 -> 00:05:03] In general, in particular,
+[00:05:03 -> 00:05:06] this rule is basically for the addition operator.
+[00:05:06 -> 00:05:08] So, we're also going to label these rules.
+[00:05:08 -> 00:05:10] For example, this is for the addition operator,
+[00:05:10 -> 00:05:13] because when we're going to traverse
+[00:05:13 -> 00:05:14] the abstract syntax tree,
+[00:05:14 -> 00:05:16] we are going to see what operator
+[00:05:16 -> 00:05:18] is the top-level operator,
+[00:05:18 -> 00:05:19] and based on that, we are going to invoke
+[00:05:19 -> 00:05:21] the appropriate evaluation rule,
+[00:05:21 -> 00:05:24] just like we used to invoke the typing rule
+[00:05:24 -> 00:05:25] during semantic analysis.
+[00:05:26 -> 00:05:28] Okay.
+[00:05:28 -> 00:05:31] So, for C, C++-like languages,
+[00:05:31 -> 00:05:34] once again, we're not really talking
+[00:05:34 -> 00:05:35] exactly about C, C++,
+[00:05:35 -> 00:05:38] because that's a much bigger language
+[00:05:38 -> 00:05:40] and has lots of different subtleties
+[00:05:40 -> 00:05:43] that we are not discussing in the lecture modules,
+[00:05:43 -> 00:05:47] but we have a language which kind of resembles C, C++
+[00:05:47 -> 00:05:49] so that it is familiar to us,
+[00:05:49 -> 00:05:51] the syntax is familiar to us,
+[00:05:51 -> 00:05:53] but it's not too complex, right?
+[00:05:53 -> 00:05:54] It has simple semantics,
+[00:05:54 -> 00:05:56] it has simple syntax, and so on.
+[00:05:57 -> 00:05:59] So, for C, C++-like language,
+[00:05:59 -> 00:06:01] we track variables with their values,
+[00:06:01 -> 00:06:04] and to track variables and their values,
+[00:06:04 -> 00:06:05] we have two things.
+[00:06:05 -> 00:06:07] One is the environment,
+[00:06:07 -> 00:06:10] which says where in memory a variable is.
+[00:06:10 -> 00:06:13] So, if I say a variable x,
+[00:06:13 -> 00:06:15] then the environment is going to say
+[00:06:15 -> 00:06:18] that x is a variable that lives at location,
+[00:06:18 -> 00:06:20] let's say 100, or in the memory space,
+[00:06:20 -> 00:06:22] or 10,000, or whatever.
+[00:06:22 -> 00:06:24] Or in general, you're just going to keep it abstract
+[00:06:24 -> 00:06:28] and say x is a variable that represents the location L.
+[00:06:28 -> 00:06:29] Right?
+[00:06:29 -> 00:06:30] And then there's a store,
+[00:06:30 -> 00:06:32] which is the actual memory, all right?
+[00:06:32 -> 00:06:36] And which basically says what is in the memory.
+[00:06:36 -> 00:06:39] So, for example, x maps to location L,
+[00:06:39 -> 00:06:41] and then we can look into the store and say,
+[00:06:41 -> 00:06:44] what are the contents of memory
+[00:06:44 -> 00:06:47] of the store at location L, all right?
+[00:06:47 -> 00:06:50] And so, to track the context,
+[00:06:50 -> 00:06:53] we need two maps.
+[00:06:53 -> 00:06:55] One is the environment,
+[00:06:55 -> 00:06:57] which maps a variable to a location,
+[00:06:57 -> 00:06:58] and second is the store,
+[00:06:58 -> 00:06:59] which maps location to values.
+[00:06:59 -> 00:07:01] Now, why do I need two maps?
+[00:07:01 -> 00:07:04] Why couldn't I have just done with one map?
+[00:07:04 -> 00:07:05] I think it will become very clear
+[00:07:05 -> 00:07:07] when we look at some examples.
+[00:07:07 -> 00:07:11] So, environment maps variables to memory locations,
+[00:07:11 -> 00:07:14] and store maps memory locations to values.
+[00:07:15 -> 00:07:16] All right.
+[00:07:17 -> 00:07:19] Okay.
+[00:07:19 -> 00:07:21] So, a variable environment maps variables to locations
+[00:07:21 -> 00:07:24] and keeps track of variables
+[00:07:24 -> 00:07:27] that are currently in scope, all right?
+[00:07:27 -> 00:07:29] So, only those variables are present in the environment,
+[00:07:29 -> 00:07:31] which are in the current scope.
+[00:07:31 -> 00:07:32] And for statically scoped languages,
+[00:07:32 -> 00:07:37] this is determined by what the static scoping rules say.
+[00:07:38 -> 00:07:39] Right?
+[00:07:39 -> 00:07:41] Coming through the scope resolution.
+[00:07:41 -> 00:07:44] So, and also tells us where those variables are.
+[00:07:44 -> 00:07:46] So, for example, one example of an environment is
+[00:07:46 -> 00:07:51] E equals A mapping to L1 and B mapping to L2.
+[00:07:51 -> 00:07:56] So, here these are A and B are variable names, right?
+[00:07:56 -> 00:08:02] So, these are just names of variables, okay?
+[00:08:02 -> 00:08:06] And the L1 and L2 are locations, right?
+[00:08:06 -> 00:08:10] So, these are locations in memory, okay?
+[00:08:10 -> 00:08:16] And so, in memory or store, all right.
+[00:08:16 -> 00:08:18] Okay, so that's the variable environment.
+[00:08:18 -> 00:08:21] Notice that this has no notion of value so far.
+[00:08:21 -> 00:08:23] It's just mapping names to locations.
+[00:08:23 -> 00:08:25] And that's just coming from, for example,
+[00:08:25 -> 00:08:27] scoping rules and things like that.
+[00:08:27 -> 00:08:32] And then a store maps these locations to values.
+[00:08:32 -> 00:08:37] For example, a store S could be L1 maps to five
+[00:08:37 -> 00:08:39] and L2 maps to seven.
+[00:08:39 -> 00:08:42] So, five and seven here are values.
+[00:08:42 -> 00:08:45] And L1 and L2 are locations.
+[00:08:45 -> 00:08:48] Now, why do I need different environment
+[00:08:48 -> 00:08:48] and different scope?
+[00:08:48 -> 00:08:51] So, a different store, because the environment
+[00:08:51 -> 00:08:52] basically is just mapping things
+[00:08:52 -> 00:08:54] that are currently in scope.
+[00:08:54 -> 00:08:56] Whereas the store is mapping everything
+[00:08:56 -> 00:08:58] that may or may not be in scope.
+[00:08:58 -> 00:09:00] For example, you know, there are many reasons
+[00:09:00 -> 00:09:02] why you would want to separate these things
+[00:09:02 -> 00:09:04] in a language like C and C++.
+[00:09:04 -> 00:09:09] Because, for example, what about star X, right?
+[00:09:09 -> 00:09:11] So, star X is not a variable.
+[00:09:11 -> 00:09:15] But star X is, has some, star X refers to a location.
+[00:09:15 -> 00:09:19] So, first of all, X refers to a location, let's say L.
+[00:09:19 -> 00:09:22] Then star L basically means you dereference L
+[00:09:22 -> 00:09:25] and you get a value and you treat it as a new location.
+[00:09:25 -> 00:09:29] And then that's what star L basically refers to, right?
+[00:09:29 -> 00:09:34] And so, star X is not really a variable name.
+[00:09:34 -> 00:09:36] X is a variable name, but star X is not a variable name.
+[00:09:36 -> 00:09:40] And so, to be able to, you know,
+[00:09:40 -> 00:09:43] so the memory state is more than just the variable names.
+[00:09:43 -> 00:09:45] The memory state is a lot of other things.
+[00:09:45 -> 00:09:48] For example, through dereferencing or through aliasing.
+[00:09:48 -> 00:09:51] For example, two or more expressions
+[00:09:51 -> 00:09:54] may refer to the same variable, to the same location.
+[00:09:54 -> 00:09:58] For example, star X and Y may refer to the same location.
+[00:09:58 -> 00:10:00] And so the environment won't be able
+[00:10:00 -> 00:10:01] to capture something like that,
+[00:10:01 -> 00:10:04] but the combination of environment and scope
+[00:10:04 -> 00:10:09] and store will be able to capture that for us.
+[00:10:09 -> 00:10:13] So for example, if star X and Y point to the same location,
+[00:10:13 -> 00:10:17] then in the environment, X would point to some location,
+[00:10:17 -> 00:10:22] let's say LX, and Y would point to some location,
+[00:10:22 -> 00:10:23] let's say LY.
+[00:10:23 -> 00:10:26] And then store would point to,
+[00:10:28 -> 00:10:31] point LX to LY, all right?
+[00:10:31 -> 00:10:34] And so that way, in this particular configuration,
+[00:10:34 -> 00:10:36] I have star X equals Y,
+[00:10:36 -> 00:10:39] because Y is pointing to LY in the environment.
+[00:10:39 -> 00:10:41] So this is environment, by the way.
+[00:10:42 -> 00:10:45] So Y is pointing to LY in the environment,
+[00:10:45 -> 00:10:46] and X is pointing to LX,
+[00:10:46 -> 00:10:49] but in the store, LX is pointing to LY.
+[00:10:49 -> 00:10:51] So LY is the value, all right?
+[00:10:51 -> 00:10:56] And so, you know, these kind of pointer-based syntax
+[00:10:58 -> 00:11:01] is not possible to do just with, you know,
+[00:11:01 -> 00:11:03] mappings from variables to values.
+[00:11:03 -> 00:11:04] You need the idea of locations,
+[00:11:04 -> 00:11:07] and then you map variables to locations,
+[00:11:07 -> 00:11:08] and then locations to values.
+[00:11:09 -> 00:11:11] All right.
+[00:11:11 -> 00:11:13] Moreover, we are going to have another notation
+[00:11:13 -> 00:11:18] to define, to basically represent updates to the store.
+[00:11:18 -> 00:11:21] So for example, I can say S, open brackets,
+[00:11:21 -> 00:11:26] 12 for L1, basically means that whatever is the store,
+[00:11:26 -> 00:11:31] in that store, just assign the value 12 to location L1,
+[00:11:31 -> 00:11:32] all right?
+[00:11:32 -> 00:11:34] So more formally, if I call this whole thing,
+[00:11:34 -> 00:11:39] this whole memory here as S prime,
+[00:11:39 -> 00:11:41] then S prime defines the store,
+[00:11:41 -> 00:11:44] such that S prime L1 equals 12,
+[00:11:44 -> 00:11:46] because that's the overriding thing.
+[00:11:46 -> 00:11:48] So 12 has been assigned to L1,
+[00:11:48 -> 00:11:50] but everything else, which is not L1,
+[00:11:50 -> 00:11:53] so for everything else that is not L1,
+[00:11:55 -> 00:11:58] S prime L equals SL, all right?
+[00:11:58 -> 00:12:00] So that's the definition of S prime.
+[00:12:00 -> 00:12:03] So for example, if S was L1 mapping to five,
+[00:12:03 -> 00:12:04] and L2 mapping to seven,
+[00:12:04 -> 00:12:06] so these are the only two locations
+[00:12:06 -> 00:12:09] that have been mapped in the store so far,
+[00:12:09 -> 00:12:13] then S prime would map L1 to 12, and L2 to seven.
+[00:12:13 -> 00:12:16] So it will leave L2 unchanged,
+[00:12:16 -> 00:12:21] and it will update the mapping of L1 to 12.
+[00:12:21 -> 00:12:24] So that's the idea of this particular notation,
+[00:12:24 -> 00:12:29] S updated such that 12 has been replaced at L1.
+[00:12:30 -> 00:12:33] Okay, all right.
+[00:12:33 -> 00:12:37] Also notice that when I say store represents memory,
+[00:12:37 -> 00:12:39] store is actually not the memory
+[00:12:39 -> 00:12:41] as in the hardware sense of memory,
+[00:12:41 -> 00:12:43] which is mapping an entire address space
+[00:12:43 -> 00:12:47] from let's say two to the power 32 addresses to bytes.
+[00:12:47 -> 00:12:49] It's actually a very abstract way
+[00:12:49 -> 00:12:50] of representing the store,
+[00:12:50 -> 00:12:51] and the abstraction is that
+[00:12:51 -> 00:12:54] it's just a map from some location IDs.
+[00:12:54 -> 00:12:57] So in this case, the location IDs are L1 and L2.
+[00:12:57 -> 00:12:59] We haven't even said what is,
+[00:12:59 -> 00:13:01] how are these location IDs represented?
+[00:13:01 -> 00:13:03] Are they represented as integers?
+[00:13:03 -> 00:13:06] Are they represented as strings or something else?
+[00:13:06 -> 00:13:08] We haven't really said anything about that.
+[00:13:08 -> 00:13:10] But it just said that there are some location IDs,
+[00:13:10 -> 00:13:15] and those location IDs are mapping to values in this way.
+[00:13:15 -> 00:13:16] Once again, we are not really saying
+[00:13:16 -> 00:13:17] how those values are represented.
+[00:13:17 -> 00:13:20] We're just saying it's an integer called five, right?
+[00:13:20 -> 00:13:21] It's an integer called seven.
+[00:13:21 -> 00:13:23] And so we don't really say anything,
+[00:13:23 -> 00:13:26] and that's the whole idea of satisfying semantics
+[00:13:26 -> 00:13:28] at an abstract level,
+[00:13:28 -> 00:13:30] so that different machines can,
+[00:13:30 -> 00:13:31] different implementations can implement it
+[00:13:31 -> 00:13:32] in different ways.
+[00:13:32 -> 00:13:35] For example, if I have a machine
+[00:13:35 -> 00:13:37] that has only 16-bit address space,
+[00:13:38 -> 00:13:40] it's possible to implement this language on that,
+[00:13:40 -> 00:13:43] because the abstract machine,
+[00:13:43 -> 00:13:44] the operational semantics,
+[00:13:44 -> 00:13:47] will not really specify how big L1 should be.
+[00:13:47 -> 00:13:50] It just says that there is some location ID called L1.
+[00:13:50 -> 00:13:52] It really doesn't say how big L1 needs to be,
+[00:13:52 -> 00:13:52] and so on.
+[00:13:54 -> 00:13:55] All right.
+[00:13:55 -> 00:13:58] Now, what are the values in a C, C++-like language
+[00:13:58 -> 00:13:59] that we're going to consider?
+[00:13:59 -> 00:14:02] So one of the types of values are the simple values,
+[00:14:02 -> 00:14:04] like integer five,
+[00:14:04 -> 00:14:09] and I'm going to use the notation int five
+[00:14:09 -> 00:14:10] to represent an integer five.
+[00:14:10 -> 00:14:15] Similarly, I'm going to use float 5.0
+[00:14:15 -> 00:14:18] for a floating point 5.0.
+[00:14:19 -> 00:14:21] Or a value could also be just a location,
+[00:14:21 -> 00:14:23] for example, L1, right?
+[00:14:23 -> 00:14:26] Now, once again, because I have left the idea,
+[00:14:26 -> 00:14:30] I'm not really specifying the exact big representation
+[00:14:30 -> 00:14:33] of how a floating point is going to be represented.
+[00:14:33 -> 00:14:38] Is it going to be some IEEE format-based representation,
+[00:14:38 -> 00:14:40] or is it going to be a fixed point representation?
+[00:14:40 -> 00:14:42] We haven't really said anything about that.
+[00:14:42 -> 00:14:43] We haven't also said anything
+[00:14:43 -> 00:14:44] about how an integer is represented.
+[00:14:44 -> 00:14:46] It's two's complement, or something like that.
+[00:14:46 -> 00:14:48] And similarly, we won't say
+[00:14:48 -> 00:14:49] how the location is represented.
+[00:14:49 -> 00:14:51] We're just saying that it maps to a location,
+[00:14:51 -> 00:14:52] but we haven't really said
+[00:14:52 -> 00:14:55] whether its location is 32 bits, four bits,
+[00:14:55 -> 00:14:57] 16 bits, eight bits, whatever, right?
+[00:14:57 -> 00:15:02] So, the values are also abstract,
+[00:15:02 -> 00:15:06] just like locations are abstract in our semantics.
+[00:15:07 -> 00:15:09] Okay, then there are kind of object values,
+[00:15:09 -> 00:15:11] or more complex values,
+[00:15:11 -> 00:15:13] or compound values, if you will.
+[00:15:13 -> 00:15:15] And these are for structures and classes.
+[00:15:15 -> 00:15:16] And in our language,
+[00:15:16 -> 00:15:19] we're going to assume classes just like C++.
+[00:15:19 -> 00:15:23] And so, classes can have multiple attributes,
+[00:15:23 -> 00:15:27] which are the fields of a class, just like in C++.
+[00:15:27 -> 00:15:29] And so, I can say there's a class X
+[00:15:29 -> 00:15:33] that has attributes a1, a2, dot, dot, dot, an.
+[00:15:33 -> 00:15:38] And a value is basically an object of type X
+[00:15:39 -> 00:15:42] whose attribute a1 maps to location l1,
+[00:15:42 -> 00:15:46] attribute a2 maps to location l2, and so on,
+[00:15:46 -> 00:15:50] and attribute an maps to location ln.
+[00:15:50 -> 00:15:51] So, this is also a value, all right?
+[00:15:51 -> 00:15:54] So, this is important, I would like to emphasize this.
+[00:15:54 -> 00:15:56] This is also a value.
+[00:15:58 -> 00:16:00] Once again, I haven't really said
+[00:16:00 -> 00:16:02] what is the representation of the value.
+[00:16:02 -> 00:16:03] Is it going to be contiguous?
+[00:16:03 -> 00:16:06] Are the attributes going to be contiguously laid out?
+[00:16:06 -> 00:16:07] Recall that when we were talking
+[00:16:07 -> 00:16:08] about code generation for objects,
+[00:16:08 -> 00:16:11] we had different ways of how we could layout
+[00:16:11 -> 00:16:12] the attribute so that it becomes easier
+[00:16:12 -> 00:16:14] for us to implement code generation.
+[00:16:14 -> 00:16:18] But at this point, at this level of abstraction,
+[00:16:18 -> 00:16:19] we are really not talking about
+[00:16:19 -> 00:16:21] how the attributes are laid out.
+[00:16:21 -> 00:16:23] We really don't care, it's left abstract,
+[00:16:23 -> 00:16:24] so that different implementations are free
+[00:16:24 -> 00:16:26] to choose whatever layout they like.
+[00:16:26 -> 00:16:28] We're only saying that, look,
+[00:16:28 -> 00:16:30] there are some locations that have been decided
+[00:16:30 -> 00:16:33] for a1, a2, and so on,
+[00:16:33 -> 00:16:37] and those locations are just abstract quantities,
+[00:16:37 -> 00:16:38] l1, l2, and ln.
+[00:16:38 -> 00:16:39] We are not really saying anything
+[00:16:39 -> 00:16:42] about how these locations are represented
+[00:16:42 -> 00:16:44] or how these things are packed.
+[00:16:45 -> 00:16:47] So x is the class of the object,
+[00:16:47 -> 00:16:48] ai's are the attributes,
+[00:16:48 -> 00:16:50] and li's are the locations
+[00:16:50 -> 00:16:53] where ai's are stored respectively.
+[00:16:53 -> 00:16:54] And this is also a value.
+[00:16:54 -> 00:16:57] So for example, my store could map
+[00:16:57 -> 00:17:00] a particular location, let's say l,
+[00:17:00 -> 00:17:04] to a value which is this entire class object.
+[00:17:04 -> 00:17:06] So this whole thing represents a value,
+[00:17:06 -> 00:17:07] an object value,
+[00:17:07 -> 00:17:11] and a store could map a location to this value,
+[00:17:11 -> 00:17:13] and that would be perfectly fine,
+[00:17:13 -> 00:17:15] and we won't really,
+[00:17:17 -> 00:17:19] we don't have to worry about how big is the value,
+[00:17:19 -> 00:17:21] does it overlap with other locations or not,
+[00:17:21 -> 00:17:24] because for us, locations are just abstract quantities,
+[00:17:24 -> 00:17:26] and there's no notion of overlapping
+[00:17:26 -> 00:17:28] or how they're represented in memory
+[00:17:28 -> 00:17:29] or things like that.
+[00:17:30 -> 00:17:31] All right.
+[00:17:32 -> 00:17:34] So notice that the layout of the object
+[00:17:34 -> 00:17:37] is not specified at all,
+[00:17:37 -> 00:17:38] and there are many other things
+[00:17:38 -> 00:17:40] that have not been specified
+[00:17:40 -> 00:17:41] at this level of abstraction,
+[00:17:41 -> 00:17:42] and that's the whole point
+[00:17:42 -> 00:17:45] of representing the language semantics
+[00:17:45 -> 00:17:48] so that you keep things as abstract as possible,
+[00:17:48 -> 00:17:51] and yet give a precise and complete description
+[00:17:51 -> 00:17:53] of what the language is supposed to mean.
+[00:17:54 -> 00:17:58] All right, then there is a special value called void,
+[00:17:58 -> 00:18:00] just like we discussed void
+[00:18:00 -> 00:18:02] when we were discussing typing rules,
+[00:18:02 -> 00:18:04] and the semantics of void,
+[00:18:04 -> 00:18:06] recall when we were talking about typing rule,
+[00:18:06 -> 00:18:09] we said void is the supertype of all other types,
+[00:18:09 -> 00:18:10] and that's an assumption
+[00:18:10 -> 00:18:12] that we are making in our language,
+[00:18:12 -> 00:18:15] which is not necessarily true for C and C++,
+[00:18:15 -> 00:18:16] and we will basically assume
+[00:18:16 -> 00:18:20] that no operations can be performed on this value void.
+[00:18:20 -> 00:18:24] So void was a type when we were discussing typing rules.
+[00:18:24 -> 00:18:27] Now when we are discussing our evaluation rules,
+[00:18:27 -> 00:18:28] void is not just a type,
+[00:18:28 -> 00:18:31] but void is also a value, all right?
+[00:18:31 -> 00:18:32] And void is a special value,
+[00:18:32 -> 00:18:36] and void value basically means it's a nothing value,
+[00:18:36 -> 00:18:37] and which basically means
+[00:18:37 -> 00:18:42] that there are no operations that can be performed on it,
+[00:18:42 -> 00:18:44] and so concrete implementations are free
+[00:18:44 -> 00:18:46] to use any representation for the void value.
+[00:18:46 -> 00:18:47] For example, they may decide
+[00:18:47 -> 00:18:51] that they're not going to use any space whatsoever
+[00:18:51 -> 00:18:53] in memory for the void value, and that's also okay,
+[00:18:53 -> 00:18:56] or they may just use any random bit pattern
+[00:18:56 -> 00:18:57] for the void value, and that's also fine.
+[00:18:57 -> 00:19:00] It's just up to the language implementer
+[00:19:00 -> 00:19:01] to basically decide how he or she
+[00:19:01 -> 00:19:03] wants to represent void.
+[00:19:03 -> 00:19:04] But it's important to know
+[00:19:04 -> 00:19:09] that void is also one of the values in our language, okay?
+[00:19:09 -> 00:19:13] So this is what our evaluation judgment will look like.
+[00:19:13 -> 00:19:17] S0, E, and S would represent our context, all right?
+[00:19:17 -> 00:19:23] So these three things would represent our context.
+[00:19:23 -> 00:19:25] And under this, I'll talk about what these,
+[00:19:25 -> 00:19:28] each of these three are, S0, E, and S.
+[00:19:28 -> 00:19:31] But under this context, it is true that
+[00:19:31 -> 00:19:34] E evaluates to value V,
+[00:19:34 -> 00:19:37] so expression E evaluates to value V,
+[00:19:37 -> 00:19:39] and recall that V, you know,
+[00:19:39 -> 00:19:41] the value could also be the void value,
+[00:19:41 -> 00:19:44] or it could be an object value, or a simple value,
+[00:19:45 -> 00:19:49] and store S prime.
+[00:19:49 -> 00:19:52] So E does not just provide you a value,
+[00:19:52 -> 00:19:56] but it also provides you a new store, S prime.
+[00:19:56 -> 00:19:58] And in what context is E evaluated?
+[00:19:58 -> 00:20:01] E is evaluated in three different components
+[00:20:01 -> 00:20:03] of the context.
+[00:20:03 -> 00:20:05] One is this object, S0,
+[00:20:05 -> 00:20:08] so recall that in an object-oriented language,
+[00:20:08 -> 00:20:10] an expression can be evaluated in the context
+[00:20:10 -> 00:20:15] of a particular class and its object.
+[00:20:15 -> 00:20:19] So for example, I could say this dot something
+[00:20:19 -> 00:20:22] in the context of an object,
+[00:20:22 -> 00:20:24] and then this is supposed to mean something.
+[00:20:24 -> 00:20:26] And to be able to capture the idea of this,
+[00:20:26 -> 00:20:31] we need to have notion of what is the object
+[00:20:31 -> 00:20:35] under whose context I'm currently executing this expression
+[00:20:35 -> 00:20:37] or evaluating this expression.
+[00:20:37 -> 00:20:39] So S0 is the current object,
+[00:20:39 -> 00:20:43] also, you know, this object in C++.
+[00:20:43 -> 00:20:46] And so we're gonna call that S0 or S0.
+[00:20:46 -> 00:20:48] Then given the current variable environment E,
+[00:20:48 -> 00:20:50] so E is the current variable environment
+[00:20:50 -> 00:20:51] that represents the current scope,
+[00:20:51 -> 00:20:53] and we have discussed this.
+[00:20:53 -> 00:20:56] The current variable environment maps variable names
+[00:20:56 -> 00:20:58] to locations.
+[00:20:58 -> 00:21:00] Locations are abstract.
+[00:21:00 -> 00:21:02] And then a current store,
+[00:21:02 -> 00:21:05] which is the current store of memory,
+[00:21:05 -> 00:21:08] which is mapping locations, abstract locations,
+[00:21:08 -> 00:21:10] to abstract values, right?
+[00:21:10 -> 00:21:13] So we have already discussed E and S.
+[00:21:13 -> 00:21:15] The only thing new here is S0,
+[00:21:15 -> 00:21:17] which is supposed to represent the current object
+[00:21:17 -> 00:21:22] under whose context this particular evaluation E
+[00:21:22 -> 00:21:24] is being evaluated.
+[00:21:24 -> 00:21:27] And this judgment E colon V comma S prime
+[00:21:27 -> 00:21:32] is supposed to mean that if the evaluation of E terminates,
+[00:21:32 -> 00:21:35] then the value of E is V
+[00:21:35 -> 00:21:40] and the new store is S prime, okay?
+[00:21:40 -> 00:21:42] So notice there are two things here.
+[00:21:42 -> 00:21:44] One is we're assuming that the evaluation
+[00:21:44 -> 00:21:49] of an expression is going to evaluate to a value V.
+[00:21:49 -> 00:21:50] And we're also assuming that,
+[00:21:50 -> 00:21:53] we're also kind of saying, not assuming,
+[00:21:53 -> 00:21:55] that during the evaluation of E,
+[00:21:55 -> 00:21:58] it is possible that the store gets updated
+[00:21:58 -> 00:22:00] from S to S prime.
+[00:22:00 -> 00:22:03] And so the new store is now S prime.
+[00:22:04 -> 00:22:08] Okay, so few things to note here.
+[00:22:08 -> 00:22:11] S0 is the current object, this object,
+[00:22:11 -> 00:22:15] and in whose context we are evaluating the expression.
+[00:22:15 -> 00:22:17] E is the current environment
+[00:22:17 -> 00:22:19] under which we are evaluating the expression.
+[00:22:19 -> 00:22:23] So one thing to note here is that neither S0 nor E
+[00:22:23 -> 00:22:26] are changing during the evaluation of the expression.
+[00:22:26 -> 00:22:29] This is just the semantics of a CC++-like language
+[00:22:29 -> 00:22:31] that while you're evaluating the expression,
+[00:22:31 -> 00:22:34] it's not possible for you to change the context
+[00:22:34 -> 00:22:36] under which you were executing the expression,
+[00:22:36 -> 00:22:37] evaluating the expression.
+[00:22:37 -> 00:22:39] In other words, you can't change this object
+[00:22:39 -> 00:22:41] under which, there are other ways to do it,
+[00:22:41 -> 00:22:44] but not through just the evaluation of an expression.
+[00:22:44 -> 00:22:47] Similarly, you cannot change the environment,
+[00:22:47 -> 00:22:48] scope environment,
+[00:22:48 -> 00:22:50] just through the evaluation of an expression.
+[00:22:50 -> 00:22:52] Recall that we change the environment
+[00:22:52 -> 00:22:54] when we see declarations and stuff like that,
+[00:22:54 -> 00:22:56] and that's only when we get into a new scope
+[00:22:56 -> 00:22:57] or things like that,
+[00:22:57 -> 00:22:59] and we're going to see rules which change the environment,
+[00:22:59 -> 00:23:01] but the evaluation of an expression
+[00:23:01 -> 00:23:03] does not change the environment.
+[00:23:03 -> 00:23:05] However, the evaluation of the expression
+[00:23:05 -> 00:23:06] does change the store,
+[00:23:06 -> 00:23:08] and that's how we represent the side effects
+[00:23:08 -> 00:23:10] of an expression evaluation.
+[00:23:10 -> 00:23:13] So example, we say that assignment is an expression.
+[00:23:13 -> 00:23:15] So we can say X equals Y,
+[00:23:15 -> 00:23:17] and X equals Y returns a value,
+[00:23:17 -> 00:23:21] but it also updates the store
+[00:23:21 -> 00:23:22] because it updates the memory,
+[00:23:22 -> 00:23:26] because what it does is it changes the location of X,
+[00:23:26 -> 00:23:27] which is LX,
+[00:23:27 -> 00:23:29] the contents of the locations of X,
+[00:23:29 -> 00:23:32] which is LX in the store.
+[00:23:32 -> 00:23:35] So all the side effects are represented
+[00:23:35 -> 00:23:36] by updates to the store,
+[00:23:36 -> 00:23:38] not through the updates to the environment
+[00:23:38 -> 00:23:40] or to the current object.
+[00:23:40 -> 00:23:41] All the side effects are only represented
+[00:23:41 -> 00:23:43] through the updates to the store,
+[00:23:43 -> 00:23:45] and that's what we know
+[00:23:45 -> 00:23:48] about C, C++ like languages anyway.
+[00:23:48 -> 00:23:49] They don't really change the environment.
+[00:23:49 -> 00:23:51] They don't really change any,
+[00:23:51 -> 00:23:52] they don't really introduce any new variables,
+[00:23:52 -> 00:23:55] but they can change the state of the memory,
+[00:23:56 -> 00:23:58] and that's what S prime is supposed to represent,
+[00:23:58 -> 00:23:59] and we also call them side effects
+[00:23:59 -> 00:24:03] of evaluating the expression.
+[00:24:03 -> 00:24:07] Finally, notice an important subtlety.
+[00:24:07 -> 00:24:10] If the evaluation of E terminates, then, all right?
+[00:24:10 -> 00:24:11] So it's very important.
+[00:24:11 -> 00:24:13] This is the antecedent
+[00:24:13 -> 00:24:17] of this particular evaluation judgment.
+[00:24:17 -> 00:24:19] This is only, this is saying that,
+[00:24:20 -> 00:24:23] this statement that E evaluates to V
+[00:24:23 -> 00:24:28] is only true if the evaluation of E actually terminates.
+[00:24:28 -> 00:24:29] If evaluation of E does not terminate,
+[00:24:29 -> 00:24:32] then this rule is not saying anything, all right?
+[00:24:32 -> 00:24:34] So it's very important to notice
+[00:24:34 -> 00:24:37] that this is saying if the evaluation of E terminates
+[00:24:37 -> 00:24:40] only then we can say that the value of E is V
+[00:24:40 -> 00:24:42] and the new store is S prime.
+[00:24:42 -> 00:24:44] This is going to become more evident
+[00:24:44 -> 00:24:47] when you're going to talk about actual evaluation rules
+[00:24:48 -> 00:24:50] and when we are reading those rules,
+[00:24:50 -> 00:24:53] it is important that we kind of keep saying this, all right?
+[00:24:53 -> 00:24:56] So we keep saying if the evaluation of E terminates,
+[00:24:56 -> 00:24:58] then E evaluates to V
+[00:24:58 -> 00:25:01] and updates the store to S prime.
+[00:25:02 -> 00:25:03] If we don't say this,
+[00:25:03 -> 00:25:05] then some of our evaluation rules
+[00:25:05 -> 00:25:08] will not look sound, will not look correct,
+[00:25:08 -> 00:25:10] and so it's important to basically keep saying this
+[00:25:10 -> 00:25:13] if the evaluation of E terminates then.
+[00:25:13 -> 00:25:15] Now, an obvious question here would be
+[00:25:15 -> 00:25:18] what if the evaluation of E does not terminate?
+[00:25:18 -> 00:25:20] Does that mean, what is that supposed to mean
+[00:25:20 -> 00:25:23] in our language, in our C, C++-like language?
+[00:25:23 -> 00:25:27] Well, the answer to that is going to be more nuanced.
+[00:25:27 -> 00:25:29] First of all, we're going to discuss
+[00:25:29 -> 00:25:31] big-step operational semantics.
+[00:25:31 -> 00:25:33] So in big-step operational semantics,
+[00:25:33 -> 00:25:35] it is important to have such an antecedent
+[00:25:35 -> 00:25:39] that if the evaluation of E terminates,
+[00:25:39 -> 00:25:41] because we basically represent the value
+[00:25:41 -> 00:25:44] of a larger expression in terms of the smaller expressions
+[00:25:44 -> 00:25:46] and that can only be done
+[00:25:46 -> 00:25:48] by assuming that things are terminating
+[00:25:48 -> 00:25:50] and the value was actually computable.
+[00:25:50 -> 00:25:51] So this is coming back,
+[00:25:51 -> 00:25:54] coming to the faulting problem and computability.
+[00:25:54 -> 00:25:58] If we instead use small-step operational semantics,
+[00:25:58 -> 00:26:02] which would just change one part of the program state
+[00:26:02 -> 00:26:05] in one step, smaller steps,
+[00:26:05 -> 00:26:07] then it would have been possible
+[00:26:07 -> 00:26:11] to express non-terminating evaluations as well,
+[00:26:11 -> 00:26:13] more easily,
+[00:26:13 -> 00:26:16] but we are using big-step operational semantics.
+[00:26:16 -> 00:26:18] Typically, languages like C and C++
+[00:26:18 -> 00:26:22] would say that if a program is non-terminating
+[00:26:22 -> 00:26:26] and it has, and syntactically,
+[00:26:26 -> 00:26:28] it is not possible to figure out
+[00:26:28 -> 00:26:29] that it is non-terminating.
+[00:26:29 -> 00:26:31] For example, it's not non-terminating
+[00:26:31 -> 00:26:34] using a while one or a for,
+[00:26:34 -> 00:26:37] for semicolon, semicolon, just for ever loop,
+[00:26:37 -> 00:26:40] then it would, it's actually undefined behavior in C.
+[00:26:40 -> 00:26:43] So that's kind of a program is illegal in C.
+[00:26:44 -> 00:26:47] In any case, that's a bit of a digression,
+[00:26:47 -> 00:26:48] but in our particular language,
+[00:26:48 -> 00:26:49] we are going to assume,
+[00:26:49 -> 00:26:51] we're only going to give semantics
+[00:26:51 -> 00:26:54] to that part of the language, which is terminating.
+[00:26:54 -> 00:26:57] So only terminating programs will be given semantics
+[00:26:57 -> 00:26:58] in our particular language.
+[00:26:58 -> 00:27:00] We are going to assume that in our language,
+[00:27:00 -> 00:27:02] if a program is non-terminating,
+[00:27:02 -> 00:27:03] then it has no semantics, all right?
+[00:27:03 -> 00:27:05] What do I mean by a program has no semantics?
+[00:27:05 -> 00:27:07] Well, it basically means that the program
+[00:27:07 -> 00:27:10] can be implemented in any which way you like
+[00:27:10 -> 00:27:13] because there are no well-defined semantics
+[00:27:13 -> 00:27:14] for the language, all right?
+[00:27:14 -> 00:27:17] And so the code generator can basically assume
+[00:27:17 -> 00:27:19] that the program is terminating.

@@ -1,0 +1,211 @@
+Title: Compiler Design Module 48 : Activation Records
+Video ID: b_sTkqzpQFE
+Detected language: en
+------------------------------------------------------------
+
+[00:00:00 -> 00:00:08] So now that we have learned about activations and their lifetimes, we will talk about what
+[00:00:08 -> 00:00:11] information is required to implement an activation.
+[00:00:11 -> 00:00:17] And so this information we also call an activation record.
+[00:00:17 -> 00:00:24] So if the program is executing and it has a number of active activations, then we
+[00:00:24 -> 00:00:30] already know that these number of activations can be represented as a stack.
+[00:00:30 -> 00:00:36] And so we can think of this as a stack of activations and we discussed this last time.
+[00:00:36 -> 00:00:40] And now we're going to talk about what is the information that's stored to implement
+[00:00:40 -> 00:00:41] each activation.
+[00:00:41 -> 00:00:44] And so that's what we're going to call an activation record.
+[00:00:44 -> 00:00:48] And so we are basically maintaining a stack of activation records.
+[00:00:48 -> 00:00:54] So in our previous example, for example, main was calling F3, then F2 and so on.
+[00:00:54 -> 00:01:00] So what we will basically be maintaining is an activation record for the first activation
+[00:01:00 -> 00:01:07] of F, which is F3, then the activation record of F2 and so on until whatever is the last,
+[00:01:07 -> 00:01:10] most recent activation that was created.
+[00:01:10 -> 00:01:14] Okay, so what's in an activation record?
+[00:01:14 -> 00:01:21] And before we talk about that, an activation record is also commonly called a frame.
+[00:01:21 -> 00:01:28] So if F calls G, then G's activation record contains two types of information.
+[00:01:28 -> 00:01:33] One is what is the information that's required to complete the execution of G?
+[00:01:33 -> 00:01:36] So whatever is the information that's required for G's execution to complete?
+[00:01:36 -> 00:01:40] For example, what were the arguments that were supplied to G?
+[00:01:40 -> 00:01:46] And then what is the information that's required to resume the execution of F from
+[00:01:46 -> 00:01:47] where it left off?
+[00:01:47 -> 00:01:53] So in other words, the activation record of a function activation contains information
+[00:01:53 -> 00:02:01] that is required to complete the execution of the current activation and resume the activation
+[00:02:01 -> 00:02:04] of the caller activation.
+[00:02:04 -> 00:02:05] So that's what it means.
+[00:02:05 -> 00:02:09] So recall that F is suspended until G completes, at which point F resumes.
+[00:02:09 -> 00:02:13] And so we need to have enough information in G's activation to be able to resume
+[00:02:13 -> 00:02:16] F's activation.
+[00:02:16 -> 00:02:17] So let's look at this example.
+[00:02:17 -> 00:02:21] It's the same example that we looked at last time.
+[00:02:22 -> 00:02:28] The three functions G, F, and main, and F is a recursive function.
+[00:02:28 -> 00:02:34] Now, there are a couple of interesting program points that we are going to mark here
+[00:02:34 -> 00:02:36] with these asterisk signs.
+[00:02:36 -> 00:02:39] So star, star, star, and triple star.
+[00:02:39 -> 00:02:44] So there are three kind of code addresses that I'm marking with these markers.
+[00:02:44 -> 00:02:50] And notice that all these three code addresses are basically right after the function call.
+[00:02:50 -> 00:02:55] So for example, main makes a function call F. And so the instruction that just follows
+[00:02:55 -> 00:03:00] that function call, which is probably we're just going to take the return value of F3
+[00:03:00 -> 00:03:06] and return it as the return value of main, that instruction I'm going calling the star.
+[00:03:06 -> 00:03:08] I'm marking using the star marker.
+[00:03:08 -> 00:03:14] Similarly, I have a double star marker at this point where F is calling Fx minus
+[00:03:14 -> 00:03:15] 1.
+[00:03:15 -> 00:03:17] So Fx is calling Fx minus 1.
+[00:03:17 -> 00:03:23] And I have a triple star marker for the instruction where Fx is calling G.
+[00:03:23 -> 00:03:29] And so the instruction just after the call to G is marked with the triple star marker.
+[00:03:29 -> 00:03:33] Now, why do I need to mark these things?
+[00:03:33 -> 00:03:39] Well, as you can imagine, if I am inside the activation of G, then the activation
+[00:03:39 -> 00:03:45] record of G must have this information of where I need to return to be able to resume
+[00:03:45 -> 00:03:47] the activation of F.
+[00:03:47 -> 00:03:52] And so the activation record of G should contain this marker, triple star marker.
+[00:03:52 -> 00:03:58] Similarly, the activation record of Fx minus 1 should contain this information about the
+[00:03:58 -> 00:04:02] double star marker so that that's where you need to resume your caller activation.
+[00:04:04 -> 00:04:09] So with that background, here are some example activation record fields that may
+[00:04:09 -> 00:04:12] be required to implement activations.
+[00:04:12 -> 00:04:18] So this is the result of that activation.
+[00:04:18 -> 00:04:20] So you call the function, you call the procedure.
+[00:04:22 -> 00:04:25] Procedure activation got instantiated.
+[00:04:25 -> 00:04:29] Maybe you want to basically know what is the result of this activation.
+[00:04:29 -> 00:04:32] And you may want to return this result back to the caller.
+[00:04:32 -> 00:04:37] And so the activation record of this function contains the result so that the caller
+[00:04:37 -> 00:04:42] can use it after the activation is finished.
+[00:04:43 -> 00:04:46] Similarly, it should have information about the arguments of that function with which
+[00:04:46 -> 00:04:47] it was called.
+[00:04:49 -> 00:04:51] I'll come to the control link in a minute.
+[00:04:51 -> 00:04:52] The return address.
+[00:04:52 -> 00:04:56] So after this activation is finished, then where should I return?
+[00:04:56 -> 00:05:01] And that's exactly these star markers that I had that I talked about earlier.
+[00:05:01 -> 00:05:06] So this is the code address where the activation should return after being finished.
+[00:05:06 -> 00:05:07] So it's going to return to the caller.
+[00:05:07 -> 00:05:10] So the return address will typically be a code address within the call.
+[00:05:12 -> 00:05:16] And control link is a pointer to the caller's activation.
+[00:05:16 -> 00:05:21] So it's not just enough to know the caller's return address, the caller's address where
+[00:05:21 -> 00:05:23] I need to return, which is my return address.
+[00:05:23 -> 00:05:29] But it's also important to know what is the information in the, how should I be
+[00:05:29 -> 00:05:32] able to retrieve the caller's activation record.
+[00:05:32 -> 00:05:36] And to do that, I'm going to use a pointer to the caller's activation.
+[00:05:36 -> 00:05:38] And I'm calling it a control link.
+[00:05:38 -> 00:05:43] So notice that control link is basically the data that is required to resume the
+[00:05:43 -> 00:05:49] caller and return address is the pointer to the code address that is required to resume
+[00:05:49 -> 00:05:51] the caller.
+[00:05:52 -> 00:05:59] So for example, here is let's assume that I have a function, an activation stack
+[00:05:59 -> 00:06:09] where main calls f3, calls f2, calls f1, calls g.
+[00:06:11 -> 00:06:14] So I have this activation stack.
+[00:06:14 -> 00:06:17] And so I'll have activations for each of these activations.
+[00:06:17 -> 00:06:20] And so let's look at, let's consider what would be the activation of this
+[00:06:20 -> 00:06:23] particular call f3.
+[00:06:24 -> 00:06:26] So the argument, there's only one argument.
+[00:06:26 -> 00:06:27] So the argument would be 3.
+[00:06:28 -> 00:06:31] The result hasn't been computed yet because it's still executing.
+[00:06:31 -> 00:06:33] So the result field is empty.
+[00:06:34 -> 00:06:39] The control link would be the pointer to the main's activation record.
+[00:06:39 -> 00:06:41] So main function's activation record.
+[00:06:41 -> 00:06:43] I haven't shown the main function's activation record.
+[00:06:43 -> 00:06:45] But let's say there is a main function's activation record.
+[00:06:45 -> 00:06:49] And this field here is going to store a pointer to it.
+[00:06:49 -> 00:06:51] And finally, the return address.
+[00:06:51 -> 00:06:55] And notice that the return address is here is the single star because that's
+[00:06:55 -> 00:06:59] where it wants to return when it finishes this activation f3.
+[00:07:00 -> 00:07:03] Now let's look at the next activation in the activation stack, which is f2.
+[00:07:03 -> 00:07:05] So what would be the activation record for f2?
+[00:07:06 -> 00:07:11] Now f2's activation record is also similar because the result hasn't been computed yet.
+[00:07:12 -> 00:07:14] The argument is 2 this time instead of 3.
+[00:07:15 -> 00:07:18] The control link is no longer main's ar.
+[00:07:18 -> 00:07:22] But it is going to point to f3's ar this time because that's the caller.
+[00:07:22 -> 00:07:25] And the return address is also changed because it's no longer the single star,
+[00:07:25 -> 00:07:29] but the double star because that's where you want to return.
+[00:07:29 -> 00:07:30] So the return address is also different.
+[00:07:32 -> 00:07:37] Similarly, if you look at f1's ar, the only difference is that the argument has become 1.
+[00:07:37 -> 00:07:41] The control link is now f2's activation record or ar.
+[00:07:41 -> 00:07:43] And the return address is again double star.
+[00:07:45 -> 00:07:48] And finally, f0's ar, similar.
+[00:07:48 -> 00:07:49] Nothing spectacular here.
+[00:07:49 -> 00:07:50] The argument is 0.
+[00:07:50 -> 00:07:52] The control link is f1's ar.
+[00:07:52 -> 00:07:54] And the return address is also double star.
+[00:07:55 -> 00:07:57] And finally, we have g's ar.
+[00:07:57 -> 00:08:01] And so now maybe the g's has almost just finished executing.
+[00:08:01 -> 00:08:03] And so now g has a result.
+[00:08:03 -> 00:08:08] And the result here is 1, which will be used by the caller ar when it resumes.
+[00:08:10 -> 00:08:11] There is no argument to g.
+[00:08:11 -> 00:08:12] And so this is nil.
+[00:08:13 -> 00:08:19] And control link is pointing to f0's ar because that's where g was called from.
+[00:08:19 -> 00:08:21] And the return address this time is the triple star,
+[00:08:21 -> 00:08:25] which is a different address from the previous two return addresses that we saw.
+[00:08:26 -> 00:08:30] So that's how what an activation record in our simple language may look like.
+[00:08:30 -> 00:08:34] And indeed, that's the typical type of information that a compiler would want to
+[00:08:34 -> 00:08:39] maintain to be able to finish the execution of the current activation
+[00:08:39 -> 00:08:42] and to be able to resume the caller activation.
+[00:08:44 -> 00:08:47] So if I look at the stack of activation record,
+[00:08:47 -> 00:08:49] it's going to look something like the following.
+[00:08:49 -> 00:08:51] There will be main's activation record,
+[00:08:52 -> 00:08:55] followed by f3's activation record, f2's activation record,
+[00:08:55 -> 00:08:58] and so on until g's activation record.
+[00:08:58 -> 00:09:01] This is something that we have already seen that activations can,
+[00:09:01 -> 00:09:04] because activations are properly nested, they can be represented as a stack.
+[00:09:06 -> 00:09:09] Also, the control links in these activation records
+[00:09:09 -> 00:09:10] are basically pointing to their parent.
+[00:09:10 -> 00:09:15] For example, g's ar, the control link in g's ar is pointing to f0's ar.
+[00:09:17 -> 00:09:20] The control link in f0's ar is pointing to f1's ar.
+[00:09:20 -> 00:09:21] And so on.
+[00:09:24 -> 00:09:27] So while I show this as a stack of ar's,
+[00:09:28 -> 00:09:32] and it's a general stack in the sense that the activations could be anywhere in the memory,
+[00:09:33 -> 00:09:38] usually in practice, the stack is not as abstract and is usually organized as an array,
+[00:09:38 -> 00:09:43] which means because the stack is just going to grow and shrink,
+[00:09:43 -> 00:09:47] why not just store each of these activations contiguously as an array?
+[00:09:48 -> 00:09:50] And that has some advantages.
+[00:09:50 -> 00:09:55] For example, now the control link computation can become simpler.
+[00:09:55 -> 00:09:59] For example, maybe I don't even need to store the pointer.
+[00:09:59 -> 00:10:02] Or even if I need to store the pointer, maybe I just need to store
+[00:10:02 -> 00:10:07] the offset to the previous activation in the same array.
+[00:10:07 -> 00:10:10] And because this kind of layout of an array
+[00:10:10 -> 00:10:14] will have stronger invariants on what control links can point to.
+[00:10:14 -> 00:10:19] And I could potentially, I mean by I, I mean the compiler could potentially use that
+[00:10:19 -> 00:10:21] to optimize the code it generates.
+[00:10:22 -> 00:10:25] So typically, compilers exploit this contiguous
+[00:10:25 -> 00:10:30] stack layout to omit having to store some information, such as the control links.
+[00:10:30 -> 00:10:35] So it is possible for the, in some scenarios, in some environments, in some settings,
+[00:10:35 -> 00:10:37] that you don't need to store the control link.
+[00:10:37 -> 00:10:40] In fact, when the, when, for example, g finishes,
+[00:10:41 -> 00:10:48] it is evident where f0's ar would be by just adding an offset to the current activation.
+[00:10:49 -> 00:10:53] To the current stack pointer to get to the f0's ar and so on.
+[00:10:53 -> 00:10:57] We're going to see this in more detail as we look at code generation in more detail.
+[00:10:59 -> 00:11:01] Further, some information can be kept in registers.
+[00:11:01 -> 00:11:06] So while in my original description of an activation record, I said
+[00:11:06 -> 00:11:09] the return address is there, the control link is there,
+[00:11:09 -> 00:11:11] the arguments are there, and the result is there.
+[00:11:11 -> 00:11:16] Maybe some of these things you don't want to actually keep in memory,
+[00:11:16 -> 00:11:18] and you can also keep them in registers.
+[00:11:18 -> 00:11:21] So one very common example is the return value.
+[00:11:21 -> 00:11:23] So maybe the return value, because it's such a common thing,
+[00:11:24 -> 00:11:28] you can avoid memory accesses by just keeping the return value in a register.
+[00:11:28 -> 00:11:32] And so the callee can populate that register,
+[00:11:32 -> 00:11:36] and the caller can read that register to understand what is the return value.
+[00:11:37 -> 00:11:40] Similarly, there are other things that you could, you could store in registers.
+[00:11:40 -> 00:11:46] For example, the caller can pass information to the callee, the arguments.
+[00:11:46 -> 00:11:51] One way to do that is to basically populate fields inside the callee's
+[00:11:52 -> 00:11:54] activation record corresponding to arguments.
+[00:11:54 -> 00:11:58] The other option is to just use registers to pass arguments.
+[00:11:58 -> 00:12:05] Now, usually programming languages will provide a potentially unbounded number of arguments,
+[00:12:05 -> 00:12:08] but there's only a very small number of registers available on a machine.
+[00:12:08 -> 00:12:13] So typical calling conventions would say that the first few arguments would be
+[00:12:13 -> 00:12:18] passed in registers, and the other arguments would be passed in memory
+[00:12:18 -> 00:12:19] as part of the activation record.
+[00:12:25 -> 00:12:29] The important thing is this activation record is laid out by the compiler.
+[00:12:29 -> 00:12:35] And so what should be the layout of an activation record is decided at compile time.
+[00:12:36 -> 00:12:40] So maybe the compiler has some logic to figure out what is the activation record that it needs.
+[00:12:40 -> 00:12:46] Typically, the compilers use the same layout of the activation record for all programs,
+[00:12:46 -> 00:12:52] but there are some options available, for example, for compilers like GCC or LLVM,
+[00:12:52 -> 00:12:57] where you can kind of choose what is the layout of the activation record that you need.
+[00:12:58 -> 00:13:04] These layouts are also kind of come under the purview of calling conventions because
+[00:13:04 -> 00:13:07] they dictate what is the contract between the caller and the callee.
+[00:13:07 -> 00:13:11] So the AR layout is part of this contract between the caller and the callee.
+[00:13:13 -> 00:13:19] The code that is generated by the compiler is tightly coupled with this layout that
+[00:13:19 -> 00:13:22] has been already decided. So depending on what is the layout,
+[00:13:22 -> 00:13:25] the generated code would appropriately be different.
+[00:13:25 -> 00:13:29] For example, if you are expecting the return value in a register, then
+[00:13:29 -> 00:13:33] the generated code would reflect that particular problem and so on.
+[00:13:35 -> 00:13:44] And this responsibility of who populates the... So the AR layout is a contract that has to be
+[00:13:44 -> 00:13:49] decided by the compiler and this is a first step. But after the AR layout is decided,
+[00:13:49 -> 00:13:54] who populates the AR? Who populates the activation record? Should it be the caller
+[00:13:54 -> 00:13:59] that populates the activation record or is it the function itself that populates the
+[00:13:59 -> 00:14:04] activation record? And the answer is it's both. So the responsibility is shared.
+[00:14:04 -> 00:14:08] The arguments are populated by the caller, for example. The return value,
+[00:14:08 -> 00:14:11] of course, is populated by the function itself and so on.
+[00:14:11 -> 00:14:15] And we're going to see some examples of what strategies make sense and what don't.
