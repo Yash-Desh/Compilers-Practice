@@ -1,0 +1,470 @@
+Title: Compiler Design Module 66 : Operational Semantics of the Allocation Operation
+Video ID: XllpLvpRceY
+Detected language: en
+------------------------------------------------------------
+
+[00:00:00 -> 00:00:05] So now we're going to discuss the semantic evaluation rules
+[00:00:05 -> 00:00:08] for the allocation of a new object.
+[00:00:08 -> 00:00:09] So for an object-oriented language,
+[00:00:09 -> 00:00:11] such as R, which we're assuming
+[00:00:11 -> 00:00:13] to be a C, C++-like language,
+[00:00:14 -> 00:00:19] you can declare a new type using this keyword class.
+[00:00:19 -> 00:00:20] And let's say you say class T,
+[00:00:20 -> 00:00:24] and then maybe it derives from some other classes.
+[00:00:24 -> 00:00:26] So you can specify the base classes
+[00:00:26 -> 00:00:28] in these dot, dot, dots.
+[00:00:28 -> 00:00:31] And then you say, you have some attributes,
+[00:00:31 -> 00:00:35] A1, A2, An, of this class T.
+[00:00:35 -> 00:00:37] Now, some of these attributes could be defined
+[00:00:37 -> 00:00:38] in this class definition,
+[00:00:38 -> 00:00:41] but some of these attributes could be coming from,
+[00:00:41 -> 00:00:42] let's say, the base classes.
+[00:00:42 -> 00:00:44] And maybe the syntax for C++
+[00:00:44 -> 00:00:46] to initialize base classes is different.
+[00:00:46 -> 00:00:49] But essentially what it means is
+[00:00:49 -> 00:00:52] that when you allocate a new object of type T,
+[00:00:52 -> 00:00:55] then this is called a constructor.
+[00:00:55 -> 00:00:57] And so the constructor gets called,
+[00:00:57 -> 00:00:59] and when the constructor gets called,
+[00:00:59 -> 00:01:02] then each of the attributes need to get initialized.
+[00:01:02 -> 00:01:03] And maybe the programmer intends them
+[00:01:03 -> 00:01:05] to be initialized in this way.
+[00:01:05 -> 00:01:07] So to initialize A1,
+[00:01:07 -> 00:01:10] you need to execute the expression E1,
+[00:01:10 -> 00:01:13] and whatever is the value that is returned by E1
+[00:01:13 -> 00:01:16] is the value that goes for A1.
+[00:01:16 -> 00:01:20] And similarly, E2 for A2 and En for An.
+[00:01:21 -> 00:01:25] Now, so that's the idea of,
+[00:01:25 -> 00:01:27] that's the syntax of a declaration of a class
+[00:01:27 -> 00:01:29] and its constructor,
+[00:01:29 -> 00:01:32] and how its attributes may be initialized.
+[00:01:32 -> 00:01:33] And then maybe there is some more body,
+[00:01:33 -> 00:01:35] but just for simplicity,
+[00:01:35 -> 00:01:37] I'm assuming that there is no extra body
+[00:01:37 -> 00:01:38] of the constructor,
+[00:01:38 -> 00:01:40] so it's just the attribute initialization expressions.
+[00:01:41 -> 00:01:44] And then if you want to allocate a new object
+[00:01:44 -> 00:01:46] of this class,
+[00:01:46 -> 00:01:49] you could use this keyword called new,
+[00:01:49 -> 00:01:52] and so new T is going to return an object of class T.
+[00:01:52 -> 00:01:54] Now, once again, I'm not strictly conforming
+[00:01:54 -> 00:01:55] to the C++ standard,
+[00:01:55 -> 00:01:58] and I'm not supporting all features of C++
+[00:01:58 -> 00:01:59] or anything like that.
+[00:01:59 -> 00:02:02] I'm just defining my own toy language and syntax,
+[00:02:02 -> 00:02:06] which resembles a modern object-oriented language.
+[00:02:07 -> 00:02:10] Okay, so now the question is,
+[00:02:10 -> 00:02:15] how should I specify the evaluation rules for new T?
+[00:02:15 -> 00:02:18] Notice that new T not only involves allocation
+[00:02:18 -> 00:02:18] of a new object,
+[00:02:18 -> 00:02:21] but also the execution of the constructor logic,
+[00:02:21 -> 00:02:23] which includes execution of E1, E2, En,
+[00:02:23 -> 00:02:24] and so on,
+[00:02:24 -> 00:02:27] and then setting the attribute values
+[00:02:27 -> 00:02:29] A1 dot dot An accordingly.
+[00:02:29 -> 00:02:32] Now, before we can even talk about allocating an object,
+[00:02:32 -> 00:02:35] the question is, what is an object in this case?
+[00:02:35 -> 00:02:37] An object, class T,
+[00:02:37 -> 00:02:40] is just a collection of attributes, right?
+[00:02:40 -> 00:02:41] I mean, of course,
+[00:02:41 -> 00:02:43] when we talk about actual code generation,
+[00:02:43 -> 00:02:45] we may decide to represent an object
+[00:02:45 -> 00:02:48] as a contiguous array of these attributes,
+[00:02:48 -> 00:02:51] like when we talked about code generation for objects
+[00:02:52 -> 00:02:53] in one of our modules.
+[00:02:53 -> 00:02:55] But at the abstract level,
+[00:02:55 -> 00:02:57] we really don't care how they are laid out.
+[00:02:57 -> 00:02:59] We just, what we care about is that
+[00:02:59 -> 00:03:01] the attribute A1 has a location,
+[00:03:01 -> 00:03:04] attribute A2 is mapped to another location, and so on.
+[00:03:04 -> 00:03:07] And what is this whole entire class T object?
+[00:03:07 -> 00:03:09] It is just a collection of these locations, all right?
+[00:03:09 -> 00:03:11] Okay, so let's start.
+[00:03:11 -> 00:03:15] So informal semantics of such a new,
+[00:03:15 -> 00:03:17] such an allocation instruction using the new keyword are,
+[00:03:17 -> 00:03:20] you first allocate allocations
+[00:03:20 -> 00:03:23] to hold all the attributes of an object of class T
+[00:03:23 -> 00:03:25] using new lock, for example.
+[00:03:25 -> 00:03:27] So we have already been introduced
+[00:03:27 -> 00:03:29] to this operator called new lock
+[00:03:29 -> 00:03:34] when we were discussing in a previous module.
+[00:03:34 -> 00:03:37] And so we can use the same new lock operator
+[00:03:39 -> 00:03:43] to basically allocate new locations in the store, right?
+[00:03:43 -> 00:03:46] And we need to map A1 to the appropriate location
+[00:03:46 -> 00:03:47] and so on.
+[00:03:47 -> 00:03:49] And so just allocating the locations
+[00:03:49 -> 00:03:50] for each of the attributes
+[00:03:50 -> 00:03:52] is equivalent to allocating a new object.
+[00:03:52 -> 00:03:54] So there's no other space
+[00:03:54 -> 00:03:56] that is required to allocate the object, right?
+[00:03:56 -> 00:03:58] The object is just the sum of the parts,
+[00:03:58 -> 00:03:59] which is each of the attributes.
+[00:03:59 -> 00:04:01] So if I just allocate each of the attributes
+[00:04:01 -> 00:04:02] using new lock,
+[00:04:02 -> 00:04:05] I've pretty much allocated the object, all right?
+[00:04:05 -> 00:04:08] And so we will represent the newly allocated object
+[00:04:08 -> 00:04:11] using the syntax, which is a T brackets,
+[00:04:11 -> 00:04:13] and then A1 is mapped to L1,
+[00:04:13 -> 00:04:14] A2 is mapped to L2,
+[00:04:14 -> 00:04:18] where L1 and L2 are locations in the store,
+[00:04:18 -> 00:04:20] and An is mapped to Ln.
+[00:04:20 -> 00:04:22] And so this whole thing can be called a value
+[00:04:22 -> 00:04:25] or an object of class T.
+[00:04:26 -> 00:04:29] All right, so that's how we're going to represent
+[00:04:29 -> 00:04:30] a newly allocated object
+[00:04:30 -> 00:04:32] or any object for that matter of class T.
+[00:04:33 -> 00:04:36] Okay, and notice that this representation
+[00:04:36 -> 00:04:38] is leaving things as abstract as possible.
+[00:04:38 -> 00:04:40] For example, it doesn't say whether L1 needs to be,
+[00:04:40 -> 00:04:45] you know, what is the relative locations of L1 and L2?
+[00:04:45 -> 00:04:47] They can be farther apart.
+[00:04:47 -> 00:04:49] We also don't say how they are stringed together,
+[00:04:49 -> 00:04:50] how do I reach them and things like that.
+[00:04:50 -> 00:04:54] So all those things are kind of not specified here
+[00:04:55 -> 00:04:56] because we want to leave things abstract,
+[00:04:56 -> 00:04:59] but we have already seen a code generation strategy
+[00:04:59 -> 00:05:02] of how things may be done in practice in reality,
+[00:05:02 -> 00:05:03] but here we are just leaving things
+[00:05:03 -> 00:05:05] as abstract as possible.
+[00:05:06 -> 00:05:10] Then we say we set attributes to the default value.
+[00:05:10 -> 00:05:14] So before we actually initialize E1, E2, and so on,
+[00:05:14 -> 00:05:15] you know, we need to basically say,
+[00:05:15 -> 00:05:16] we need to initialize the store.
+[00:05:16 -> 00:05:18] So we'll say that we have allocated these locations,
+[00:05:18 -> 00:05:20] but while we're allocating locations,
+[00:05:20 -> 00:05:22] we haven't really set them, given them any values.
+[00:05:22 -> 00:05:23] The values will be computed
+[00:05:23 -> 00:05:25] by evaluating these expressions,
+[00:05:25 -> 00:05:28] these initializer expressions, E1, E2, and so on.
+[00:05:28 -> 00:05:31] And so before we can even do the initialization,
+[00:05:31 -> 00:05:34] we need to assign some value to A1, E2, right?
+[00:05:34 -> 00:05:37] Recall that when we talked about declarations,
+[00:05:37 -> 00:05:38] the rule that we had used
+[00:05:38 -> 00:05:40] was an initialized declaration,
+[00:05:40 -> 00:05:43] but what if it was an uninitialized declaration?
+[00:05:43 -> 00:05:44] So in our language,
+[00:05:44 -> 00:05:46] we're going to assume that there are default values
+[00:05:46 -> 00:05:47] for every type.
+[00:05:47 -> 00:05:48] So for example,
+[00:05:48 -> 00:05:51] zero may be the default value for integer, all right?
+[00:05:51 -> 00:05:54] Or if you want to leave things more unspecified,
+[00:05:54 -> 00:05:56] you could say an uninitialized value
+[00:05:56 -> 00:06:00] is the default value for, let's say, an integer
+[00:06:00 -> 00:06:00] or something like that.
+[00:06:00 -> 00:06:03] So every type should have a default value,
+[00:06:03 -> 00:06:06] and uninitialized value is also a valid default value,
+[00:06:06 -> 00:06:07] but it should, you know,
+[00:06:07 -> 00:06:08] there should be some way of representing
+[00:06:08 -> 00:06:09] what the value is.
+[00:06:09 -> 00:06:11] Maybe it's an uninitialized value, maybe it's zero,
+[00:06:11 -> 00:06:13] maybe it's an empty string for the string type,
+[00:06:13 -> 00:06:14] and so on, right?
+[00:06:14 -> 00:06:15] So whatever it is,
+[00:06:15 -> 00:06:17] there needs to be a default value for every type.
+[00:06:17 -> 00:06:20] And so we need that,
+[00:06:20 -> 00:06:21] and we will,
+[00:06:21 -> 00:06:24] before we actually execute the constructor initializers
+[00:06:24 -> 00:06:25] like E1, E2, EN,
+[00:06:25 -> 00:06:29] we will first set the attributes to the default value,
+[00:06:29 -> 00:06:30] and this is important, okay,
+[00:06:30 -> 00:06:31] as we're going to see,
+[00:06:31 -> 00:06:35] because after all, in what context does E1 execute?
+[00:06:35 -> 00:06:37] E1 executes in a context
+[00:06:37 -> 00:06:39] where E1 has already been allocated,
+[00:06:39 -> 00:06:41] and E2 also has been allocated,
+[00:06:41 -> 00:06:44] and so if E1 ever kind of tries to access E2,
+[00:06:44 -> 00:06:46] then, you know, what value should it see?
+[00:06:46 -> 00:06:48] We can't just say that, you know,
+[00:06:48 -> 00:06:49] so we need to give it some value,
+[00:06:49 -> 00:06:51] that value may be an uninitialized value,
+[00:06:51 -> 00:06:52] that's fine,
+[00:06:52 -> 00:06:53] but we need to have some notion
+[00:06:53 -> 00:06:55] of a default value for every type.
+[00:06:55 -> 00:06:58] Okay, so we're going to have a default value
+[00:06:58 -> 00:06:59] for every type,
+[00:06:59 -> 00:07:02] and then we are going to evaluate the initializers
+[00:07:02 -> 00:07:04] and set the resulting attribute values.
+[00:07:04 -> 00:07:08] For example, we're going to evaluate E1,
+[00:07:08 -> 00:07:10] and then whatever is the resulting value,
+[00:07:10 -> 00:07:12] we are going to set E1 to that value,
+[00:07:12 -> 00:07:13] and so on.
+[00:07:14 -> 00:07:16] Okay, but the question is, you know,
+[00:07:16 -> 00:07:17] when I'm evaluating E1,
+[00:07:17 -> 00:07:19] what should be my environment,
+[00:07:19 -> 00:07:20] variable environment E,
+[00:07:20 -> 00:07:22] and what should be my stored S, okay?
+[00:07:22 -> 00:07:24] And so those are the kind of questions
+[00:07:24 -> 00:07:25] that are going to be answered
+[00:07:25 -> 00:07:27] by our formal evaluation rules,
+[00:07:27 -> 00:07:29] as we've been doing so far as well.
+[00:07:30 -> 00:07:32] And finally, after we have done all the initialization,
+[00:07:32 -> 00:07:35] we just return the newly allocated object
+[00:07:35 -> 00:07:37] in this form,
+[00:07:37 -> 00:07:40] which is, it's just a collection of attributes,
+[00:07:40 -> 00:07:43] and each attribute has been mapped to a location,
+[00:07:43 -> 00:07:44] l1 dot dot ln,
+[00:07:44 -> 00:07:47] and these locations have been in turn allocated
+[00:07:47 -> 00:07:49] or created using the new lock operator.
+[00:07:50 -> 00:07:53] Okay, so that's the idea.
+[00:07:53 -> 00:07:55] Okay, so before we begin,
+[00:07:55 -> 00:07:57] let's just define some notation.
+[00:07:57 -> 00:07:59] So let's say that for an attribute ai,
+[00:07:59 -> 00:08:02] so T is the type of the class
+[00:08:02 -> 00:08:03] that we are, you know,
+[00:08:05 -> 00:08:06] whose object we are allocating,
+[00:08:06 -> 00:08:09] then that class has attributes a1 dot dot an,
+[00:08:09 -> 00:08:11] and for every attribute ai,
+[00:08:11 -> 00:08:14] let's say Ti is its type, all right?
+[00:08:14 -> 00:08:19] And then let Dti be the default value for type Ti, okay?
+[00:08:20 -> 00:08:23] And, you know, Ti could also be another class
+[00:08:23 -> 00:08:24] or something like that,
+[00:08:24 -> 00:08:26] and even then they should have a default value,
+[00:08:26 -> 00:08:27] which is going to be formed by
+[00:08:27 -> 00:08:29] actually calling the constructor
+[00:08:29 -> 00:08:31] of that particular class and so on.
+[00:08:31 -> 00:08:34] And then Ei is the initializer for ai,
+[00:08:34 -> 00:08:35] and this is something that we've already seen
+[00:08:35 -> 00:08:37] in the previous syntax, okay?
+[00:08:37 -> 00:08:40] So Dti is the default value for Ti,
+[00:08:40 -> 00:08:42] Ti is the type of ai,
+[00:08:42 -> 00:08:44] and then Ei is the initializer that gets called
+[00:08:44 -> 00:08:47] at the time of object creation.
+[00:08:47 -> 00:08:51] Okay, also the order of initialization matters.
+[00:08:51 -> 00:08:54] Should I call e1 first or should I call e2 first?
+[00:08:54 -> 00:08:55] All right, does it matter?
+[00:08:55 -> 00:08:56] Well, it matters because
+[00:08:58 -> 00:09:01] the evaluation of e1 can have some side effects,
+[00:09:01 -> 00:09:02] and so it may update the store,
+[00:09:02 -> 00:09:06] and so if e1 is called before e2,
+[00:09:06 -> 00:09:08] the final store value may be different
+[00:09:08 -> 00:09:10] from if e2 is evaluated before e1,
+[00:09:10 -> 00:09:11] and so the order matters.
+[00:09:11 -> 00:09:13] And so we're going to assume somewhat similarly
+[00:09:13 -> 00:09:16] to what C++ and other object-oriented languages
+[00:09:16 -> 00:09:17] also assume,
+[00:09:17 -> 00:09:20] that the attributes are listed
+[00:09:20 -> 00:09:24] and kind of evaluated in greatest ancestor first order,
+[00:09:24 -> 00:09:27] which means the base class attributes are evaluated
+[00:09:27 -> 00:09:30] before the derived class attributes always, all right?
+[00:09:30 -> 00:09:31] And so, yeah, that's what it means,
+[00:09:31 -> 00:09:34] greater ancestor first in the type hierarchy,
+[00:09:34 -> 00:09:36] and so the base class attributes appear
+[00:09:36 -> 00:09:38] before derived class attributes in this order,
+[00:09:38 -> 00:09:40] a1.a1, and that's the order
+[00:09:40 -> 00:09:41] which we are going to also use
+[00:09:41 -> 00:09:45] for our evaluation purposes as well in our evaluation rule.
+[00:09:46 -> 00:09:50] Okay, so now we are ready to start developing
+[00:09:50 -> 00:09:54] our evaluation rule for the allocation statement, newT.
+[00:09:54 -> 00:09:56] And once again, just like everything else,
+[00:09:56 -> 00:09:56] we have a context
+[00:09:56 -> 00:09:59] which is characterized by the current object S0.
+[00:09:59 -> 00:10:02] So maybe newT is appearing in some,
+[00:10:02 -> 00:10:04] the content of some default object
+[00:10:04 -> 00:10:05] or some current object, right?
+[00:10:05 -> 00:10:07] So that's S0.
+[00:10:07 -> 00:10:09] E is the current variable environment
+[00:10:09 -> 00:10:11] under where this newT was called,
+[00:10:11 -> 00:10:14] and S is the current value of the store.
+[00:10:15 -> 00:10:18] And store is just mapping locations to values.
+[00:10:18 -> 00:10:20] And I want to know what is the value
+[00:10:20 -> 00:10:22] that newT should return
+[00:10:22 -> 00:10:26] and how should, how would it update my store?
+[00:10:26 -> 00:10:29] Okay, so the first thing here is that,
+[00:10:29 -> 00:10:31] just like our informal semantics,
+[00:10:31 -> 00:10:32] we are going to say that
+[00:10:32 -> 00:10:34] we're going to first allocate N locations
+[00:10:34 -> 00:10:35] for the N attributes.
+[00:10:35 -> 00:10:37] So I'm going to say L1 equals new log S,
+[00:10:37 -> 00:10:39] L2 equals new log S,
+[00:10:39 -> 00:10:41] and I'm just using this notation says,
+[00:10:41 -> 00:10:43] you know, L2 equals new log S union L1,
+[00:10:43 -> 00:10:45] which means L2 should be different
+[00:10:45 -> 00:10:48] from any already mapped location in S,
+[00:10:48 -> 00:10:50] and it should also be different from L1, all right?
+[00:10:50 -> 00:10:53] And similarly, Ln is just new log of S union L1
+[00:10:53 -> 00:10:54] union L2, all right?
+[00:10:54 -> 00:10:56] I could have used some different notation as well.
+[00:10:56 -> 00:10:58] For example, I would have just allocated
+[00:10:58 -> 00:11:01] all the locations in one go using a new log,
+[00:11:01 -> 00:11:03] a group new log operator or something like that.
+[00:11:03 -> 00:11:05] But basically the idea is that all these locations,
+[00:11:05 -> 00:11:10] L1 dot L2 dot Ln should be new.
+[00:11:10 -> 00:11:12] They should not have been previously allocated
+[00:11:12 -> 00:11:13] in the store.
+[00:11:13 -> 00:11:15] They should be distinct from the locations
+[00:11:15 -> 00:11:16] already present in the store,
+[00:11:16 -> 00:11:19] and they should be mutually distinct as well.
+[00:11:19 -> 00:11:22] Okay, so now that we have allocated the locations,
+[00:11:22 -> 00:11:23] what's the next step?
+[00:11:23 -> 00:11:25] Well, the next step is that we want to set
+[00:11:25 -> 00:11:28] the default values for the respective types
+[00:11:28 -> 00:11:30] for these locations in the store.
+[00:11:30 -> 00:11:32] So, so before I do that,
+[00:11:32 -> 00:11:34] let's represent the value.
+[00:11:34 -> 00:11:38] So V is now simply found by stringing together
+[00:11:38 -> 00:11:39] all these locations.
+[00:11:39 -> 00:11:42] So just say, A1 is just L1, A2 is L2, An is Ln.
+[00:11:42 -> 00:11:44] I've already allocated them.
+[00:11:44 -> 00:11:46] And so that's the value when I string them together
+[00:11:46 -> 00:11:47] with the T operator,
+[00:11:47 -> 00:11:50] which is T represents the type of the class,
+[00:11:50 -> 00:11:52] the class, the type basically.
+[00:11:52 -> 00:11:55] And so, so this is the value that will get returned,
+[00:11:55 -> 00:11:56] all right?
+[00:11:56 -> 00:11:58] So you will see that this is the value that comes here
+[00:11:58 -> 00:12:01] because this is the new object that has been created.
+[00:12:01 -> 00:12:03] Okay, all right.
+[00:12:03 -> 00:12:04] So that's the new object,
+[00:12:04 -> 00:12:06] but I can't just return it straight away, right?
+[00:12:06 -> 00:12:08] So I need to initialize it,
+[00:12:08 -> 00:12:11] and I need to do some things about with it.
+[00:12:11 -> 00:12:12] And so, as I said before,
+[00:12:12 -> 00:12:14] I'm going to first set the default values
+[00:12:14 -> 00:12:17] for these locations, L1 dot dot ln.
+[00:12:17 -> 00:12:21] And so that's this particular component of the rule
+[00:12:21 -> 00:12:26] that says S1 equals S updated such that A1 gets,
+[00:12:28 -> 00:12:30] this should have been actually L1.
+[00:12:31 -> 00:12:36] So L1 gets DT1, L2 gets DT2 and Ln gets DTn, okay?
+[00:12:40 -> 00:12:45] So just update the store such that we map L1 to DT1,
+[00:12:45 -> 00:12:50] L2 to DT2, Ln to DTn, recall DT1, DT2 and DTn
+[00:12:50 -> 00:12:53] are the default values for the types T1 dot dot Tn,
+[00:12:53 -> 00:12:55] which are the types of the attributes.
+[00:12:55 -> 00:12:58] And we represent the new updated store as S1.
+[00:12:59 -> 00:13:00] Okay, what's the next step?
+[00:13:00 -> 00:13:04] We want to evaluate the initializers, E1 dot dot En.
+[00:13:04 -> 00:13:07] But what should be the store
+[00:13:07 -> 00:13:10] in which I evaluate these initializers?
+[00:13:10 -> 00:13:11] And what should be the environment,
+[00:13:11 -> 00:13:15] variable environment in which I evaluate the initializers?
+[00:13:15 -> 00:13:19] And what should be the current object S0
+[00:13:19 -> 00:13:21] under which I should evaluate these initializers,
+[00:13:21 -> 00:13:22] all right?
+[00:13:22 -> 00:13:24] So the answer to that is
+[00:13:24 -> 00:13:27] the store should probably be something derived
+[00:13:27 -> 00:13:29] from S1 or something derived from S1.
+[00:13:29 -> 00:13:33] The environment E under which E1, E2, En are evaluated
+[00:13:33 -> 00:13:36] should be completely different from this environment E
+[00:13:36 -> 00:13:38] under which the new T is being evaluated
+[00:13:38 -> 00:13:39] because we are using static scoping.
+[00:13:39 -> 00:13:40] And in static scoping,
+[00:13:42 -> 00:13:43] the environment, variable environment
+[00:13:43 -> 00:13:45] that should be active is the variable environment
+[00:13:45 -> 00:13:48] at the location, at the static location,
+[00:13:48 -> 00:13:53] the static scope of the definition of E1, E2 and En.
+[00:13:53 -> 00:13:55] And so the first thing I want to do
+[00:13:55 -> 00:13:58] is define a new variable environment.
+[00:13:58 -> 00:14:00] And the only mappings in this new variable environment,
+[00:14:00 -> 00:14:05] E prime, are A1 maps to L1, A2 maps to L2
+[00:14:05 -> 00:14:07] and En maps to Ln.
+[00:14:07 -> 00:14:08] So I completely noticed that E prime
+[00:14:08 -> 00:14:12] is completely independent of E, all right?
+[00:14:12 -> 00:14:14] Which was the environment at the location
+[00:14:14 -> 00:14:16] at which new T was called.
+[00:14:16 -> 00:14:19] And this is coming from our static scoping semantics
+[00:14:19 -> 00:14:23] or static scoping nature of our programming language.
+[00:14:24 -> 00:14:25] Okay.
+[00:14:25 -> 00:14:28] And now we are ready to evaluate E1 and E2, En
+[00:14:28 -> 00:14:30] and we already said that we're going to evaluate it
+[00:14:30 -> 00:14:32] in the order of greatest ancestor.
+[00:14:32 -> 00:14:34] First, we're gonna first evaluate E1,
+[00:14:34 -> 00:14:37] then E2 and so on till En.
+[00:14:37 -> 00:14:40] And in what environment will I evaluate it?
+[00:14:40 -> 00:14:42] I'll evaluate it in E prime.
+[00:14:42 -> 00:14:44] What is the store I will evaluate it in?
+[00:14:44 -> 00:14:45] I'll evaluate it in S1.
+[00:14:45 -> 00:14:48] What is the current object in which I will evaluate it?
+[00:14:48 -> 00:14:51] I cannot evaluate it in the current object S0
+[00:14:51 -> 00:14:53] because now this has to be evaluated
+[00:14:53 -> 00:14:56] because if these initializers use this keyword,
+[00:14:56 -> 00:14:57] what should this refer to?
+[00:14:57 -> 00:14:59] This should refer to the newly created object,
+[00:14:59 -> 00:15:01] not the object at which the new T was called.
+[00:15:01 -> 00:15:04] And so, this is the final rule.
+[00:15:04 -> 00:15:08] I would say V, which is the newly created object,
+[00:15:08 -> 00:15:11] which was allocated, this becomes the new S0
+[00:15:11 -> 00:15:14] in which E1, E2 and En will get evaluated.
+[00:15:14 -> 00:15:17] E prime is the environment that we have already
+[00:15:17 -> 00:15:19] discussed under which this will get evaluated.
+[00:15:19 -> 00:15:21] And S1 is the updated store,
+[00:15:21 -> 00:15:23] which has the default values of E1.
+[00:15:23 -> 00:15:25] And what do we evaluate?
+[00:15:25 -> 00:15:29] We want to evaluate E1, E2, E3 in sequence.
+[00:15:29 -> 00:15:30] And as we are evaluating them,
+[00:15:30 -> 00:15:32] we also want to keep assigning
+[00:15:32 -> 00:15:34] so that if E2 refers to A1,
+[00:15:34 -> 00:15:36] then it should see the updated value.
+[00:15:36 -> 00:15:38] And so the one way to represent that
+[00:15:38 -> 00:15:40] is that we just create an expression
+[00:15:40 -> 00:15:43] formed using semicolons and the scope operator
+[00:15:43 -> 00:15:47] and the curly braces and say A1 colon equal to E1,
+[00:15:47 -> 00:15:49] semicolon, A2 colon equal to E2,
+[00:15:49 -> 00:15:53] semicolon, dot, dot, dot, An equals En.
+[00:15:53 -> 00:15:57] So this forms my expression and notice
+[00:15:57 -> 00:15:59] that semicolon is a sequencing operator.
+[00:15:59 -> 00:16:02] So first A1 is going equal to E1 will get evaluated.
+[00:16:02 -> 00:16:07] And then A2 equals E2 is going to evaluate it and so on.
+[00:16:07 -> 00:16:10] And we evaluate this whole expression under S1.
+[00:16:10 -> 00:16:13] So whatever are the side effects of A1 equals E1
+[00:16:13 -> 00:16:17] will be available,
+[00:16:17 -> 00:16:20] will be the context, will form the part
+[00:16:20 -> 00:16:24] of the context for A2 equals E2 and so on.
+[00:16:24 -> 00:16:26] And let's say this whole expression
+[00:16:26 -> 00:16:29] now evaluates to VN comma S2.
+[00:16:30 -> 00:16:33] So it values some value and some S2.
+[00:16:33 -> 00:16:35] So I'm going to, what is VN?
+[00:16:35 -> 00:16:38] VN is just representing the value computed by An equals En.
+[00:16:38 -> 00:16:40] And I really don't care about that,
+[00:16:40 -> 00:16:41] but I care about S2.
+[00:16:41 -> 00:16:43] How has it updated the store?
+[00:16:43 -> 00:16:45] Those are the side effects of doing this allocation.
+[00:16:45 -> 00:16:50] And so finally, I'm going to say,
+[00:16:50 -> 00:16:52] new T gives me V comma S2.
+[00:16:52 -> 00:16:53] So V is the value,
+[00:16:53 -> 00:16:55] which is representing the entire object,
+[00:16:55 -> 00:16:58] which is formed by stringing together all these locations,
+[00:16:58 -> 00:16:59] L1 dot LN.
+[00:16:59 -> 00:17:01] And then S2 is the updated store,
+[00:17:01 -> 00:17:03] which involves all the side effects
+[00:17:03 -> 00:17:07] of actually doing first doing the default value settings
+[00:17:07 -> 00:17:10] and then actually calling the initializers in order.
+[00:17:10 -> 00:17:13] Okay, so that's the complete rule for new,
+[00:17:13 -> 00:17:15] which is the allocation statement
+[00:17:15 -> 00:17:17] in our CC++ like language.
+[00:17:18 -> 00:17:21] And notice that the first couple of rules here,
+[00:17:21 -> 00:17:25] which is new log and saying what is V
+[00:17:25 -> 00:17:28] is basically just about allocation of the object.
+[00:17:28 -> 00:17:30] The next three rules here,
+[00:17:32 -> 00:17:33] are basically initializing the object.
+[00:17:33 -> 00:17:35] So I'm just, I've circled two,
+[00:17:35 -> 00:17:37] but maybe even this one,
+[00:17:37 -> 00:17:42] the S1 equals S DT1 for L1 and so on.
+[00:17:42 -> 00:17:44] By the way, this should be L1, right?
+[00:17:44 -> 00:17:46] I already made this correction in a previous slide.
+[00:17:46 -> 00:17:48] Let me just make it here as well.
+[00:17:49 -> 00:17:53] So the initialization will be
+[00:17:53 -> 00:17:55] through all these three statements.
+[00:17:55 -> 00:17:57] And the important things to note here is,
+[00:17:57 -> 00:18:03] let me just fix this as well.
+[00:18:03 -> 00:18:04] Okay, and the important thing is,
+[00:18:04 -> 00:18:06] what is the context under which
+[00:18:06 -> 00:18:07] we initialize the attribute?
+[00:18:07 -> 00:18:09] So under which we call the initializer expressions,
+[00:18:09 -> 00:18:12] it is V E' S1.
+[00:18:12 -> 00:18:14] And all these three are very interesting to see.
+[00:18:14 -> 00:18:18] These are actually quite different from S0 E S,
+[00:18:18 -> 00:18:19] all these three components are different.
+[00:18:19 -> 00:18:22] And so it also gives you some idea of why,
+[00:18:22 -> 00:18:26] how context is being used to represent these rules
+[00:18:26 -> 00:18:29] and to represent the semantics of the language.
+[00:18:31 -> 00:18:32] And finally, let me look at the body
+[00:18:32 -> 00:18:35] of the initialization, which is also interesting.
+[00:18:35 -> 00:18:37] I've just kind of, you know,
+[00:18:37 -> 00:18:39] used a trick here to use the semicolon operator
+[00:18:39 -> 00:18:43] to basically show sequencing.
+[00:18:43 -> 00:18:45] And then I can just evaluate this entire,
+[00:18:45 -> 00:18:47] treat this whole thing as one expression
+[00:18:47 -> 00:18:48] and then say, whatever is the value
+[00:18:48 -> 00:18:50] that this expression evaluates to,
+[00:18:50 -> 00:18:51] that's the, you know,
+[00:18:51 -> 00:18:54] I want to use the store from that expression
+[00:18:54 -> 00:18:56] to represent the store of my final allocation.

@@ -1,0 +1,134 @@
+Title: Compiler Design Module 49 : Variables
+Video ID: IGN8pWzcIc0
+Detected language: en
+------------------------------------------------------------
+
+[00:00:00 -> 00:00:05] So far we have learned about activation records and how activation records can be maintained as a stack
+[00:00:05 -> 00:00:12] of the activations themselves or corresponding to the activations themselves. Now one of the
+[00:00:12 -> 00:00:16] common feature in programming languages is variables and variables are a way to allocate
+[00:00:16 -> 00:00:22] memory and there are two common types of variables one is global variable and other is
+[00:00:22 -> 00:00:28] local variables. So let's talk about global variables. A global variable's lifetime transcends
+[00:00:28 -> 00:00:34] all procedure activation lifetimes and so it has you can think of it as a global lifetime so
+[00:00:34 -> 00:00:40] typically global variables you know the lifetime of a global variable starts when the program starts
+[00:00:40 -> 00:00:46] and ends only when the program completely finishes and so global variable is basically
+[00:00:47 -> 00:00:52] live as long as the program is live and so that's pretty much for our purposes from
+[00:00:52 -> 00:00:57] a perspective of compiler a global variable is always live or we can call it a global
+[00:00:57 -> 00:01:05] lifetime. So to be able to you know so because a global variable has a global lifetime
+[00:01:05 -> 00:01:11] clearly it cannot be maintained as part of some activation because activations do not have global
+[00:01:11 -> 00:01:16] lifetime activations are created and die and they have much shorter time lifetimes as
+[00:01:16 -> 00:01:22] dictated by the duration of individual procedure invocations. So for this reason
+[00:01:22 -> 00:01:28] globals are actually typically assigned a fixed address once in at the very beginning
+[00:01:28 -> 00:01:32] and so that we also mean typically this is done by the compiler so the compiler basically
+[00:01:32 -> 00:01:39] assigns an address to the global variable or variables and and that's it and the operating
+[00:01:39 -> 00:01:43] system when it's loading the program does not only load the code but also loads these
+[00:01:44 -> 00:01:51] global variables into memory at initialization time of the program or this is also called
+[00:01:51 -> 00:01:56] the load time of the program and the other commonly used term for this type of allocation
+[00:01:56 -> 00:02:03] of memory is also called static allocation or statically allocated. So just like code there
+[00:02:03 -> 00:02:09] is a region in memory which is called data and just like code is static in the sense that we
+[00:02:09 -> 00:02:14] assume that code is not going to grow or shrink over time as the program executes
+[00:02:14 -> 00:02:19] similarly data is assumed to be static so this static data which contains information
+[00:02:19 -> 00:02:24] about the global variables can be considered to be static in the address. This is in contrast
+[00:02:24 -> 00:02:29] to for example the stack which grows and shrinks as procedures are called as the
+[00:02:29 -> 00:02:37] activation record stack grows and shrinks. Okay once again the data addresses and size
+[00:02:37 -> 00:02:42] is basically determined by the compiler and typically this can be done at compile time
+[00:02:42 -> 00:02:46] because just like you are allocating space for code you may want to allocate space for
+[00:02:46 -> 00:02:53] your global variables. Now another type of memory allocation are through the heap and
+[00:02:54 -> 00:03:00] we call these heap objects they are distinct from global variables because these are not
+[00:03:00 -> 00:03:06] created at program initialization time in fact they can be created anytime during the program
+[00:03:06 -> 00:03:12] using programming interfaces like malloc or new or other types of implicit allocation
+[00:03:12 -> 00:03:18] and other languages. So such heap objects are created anytime and can be deleted anytime during
+[00:03:18 -> 00:03:23] the program execution. In fact they have nothing to do with the global lifetime of the program it
+[00:03:23 -> 00:03:28] can be any part in they can be any they can live in they can be created anytime in the
+[00:03:28 -> 00:03:32] program and destroyed anytime so of course they're contained within the program's lifetime
+[00:03:32 -> 00:03:37] but they don't have any other requirement. Also what about their relation with procedure
+[00:03:37 -> 00:03:45] activations an object on heap typically outlives the procedure that creates it in fact that is
+[00:03:45 -> 00:03:51] that's how we define heap objects so unlike global objects that have global lifetime
+[00:03:51 -> 00:03:56] and local variables or local objects that have lifetimes associated with individual procedure
+[00:03:56 -> 00:04:00] invocations or activations we're going to discuss that later heap objects is everything
+[00:04:00 -> 00:04:05] in the middle so everything that's remaining and so a heap object is an object that outlives
+[00:04:05 -> 00:04:11] the procedure that creates it and so it cannot be stored in the activation record. So here is an
+[00:04:11 -> 00:04:18] example from C++ I could just say return new int so the activation that created it is this
+[00:04:18 -> 00:04:24] activation of foo but this object is going to live much longer than the lifetime of the
+[00:04:24 -> 00:04:34] activation foo. So unlike the data region which is for global variables which is static
+[00:04:34 -> 00:04:39] the heap is dynamic because it can grow and shrink depending on how many times
+[00:04:40 -> 00:04:44] the new operator has been called or how many times the delete operator has been called
+[00:04:45 -> 00:04:50] or for language like C, malloc and free are called and so the heap is a dynamic structure
+[00:04:51 -> 00:04:58] and just like the stack the heap is a dynamic structure too and this is unlike the data
+[00:04:58 -> 00:05:04] and the code and so typically what is the organization that is used is that he the stack
+[00:05:04 -> 00:05:09] is growing in one direction so the stack is positioned at one end of the address space
+[00:05:09 -> 00:05:16] and it grows in the other direction and the heap is placed in the other end of the address space
+[00:05:16 -> 00:05:22] and it grows in the opposite direction and so that way both the stack and the heap do not
+[00:05:22 -> 00:05:27] interfere with each other when they are growing they only interfere when we actually run out of
+[00:05:27 -> 00:05:32] the address space completely and at that point we anyway have a problem at our hands because
+[00:05:32 -> 00:05:38] we run out of memory so that's a typical way of organizing things in this particular figure
+[00:05:39 -> 00:05:42] I'm showing code and data somewhere in the middle but you can imagine that maybe the
+[00:05:42 -> 00:05:47] code and data have been pushed on one end of this address space and then heaps start from
+[00:05:47 -> 00:05:51] there or even if code and data is somewhere in the middle the heap can basically allocate
+[00:05:51 -> 00:05:57] some things here and then maybe allocate things in other reasons so heap is actually free to
+[00:05:57 -> 00:06:03] anyway which way it likes but typically we would want it to be as contiguous as possible
+[00:06:03 -> 00:06:08] because it gives better locality it also reduces fragmentation and things like that
+[00:06:09 -> 00:06:17] okay let's look at local variables so a local variable's lifetime is contained within the
+[00:06:17 -> 00:06:21] lifetime of the procedure activation that created it in fact that is the definition of
+[00:06:21 -> 00:06:27] a local variable and so where should we store the local variables well actually there
+[00:06:27 -> 00:06:32] are two options on where we can store local variables notice one first of all that local
+[00:06:32 -> 00:06:36] variable is also a dynamic quantity in the sense it doesn't live for the entire duration
+[00:06:36 -> 00:06:42] of the program it gets created and destroyed depending on how procedures are being called
+[00:06:42 -> 00:06:49] and returned and so a local variable is the place where the local variable needs to be a
+[00:06:49 -> 00:06:54] dynamic place because it cannot be for example from the data region because data region is
+[00:06:54 -> 00:06:59] static the moment you run out of data space you won't be able to allocate any more local
+[00:06:59 -> 00:07:04] variables so either the local variables need to be allocated in the stack of activation records
+[00:07:04 -> 00:07:09] or they need to be allocated from the heap and so what do compilers and programming languages
+[00:07:09 -> 00:07:15] typically do well there are both options that are used for by different programming languages
+[00:07:15 -> 00:07:22] for example languages like c c plus plus and rust would typically allocate local variables
+[00:07:22 -> 00:07:27] as part of the activation record so recall that when we discussed activation records we said
+[00:07:28 -> 00:07:33] it has these four fields result arguments control link and return address but maybe there
+[00:07:33 -> 00:07:37] is a fifth variable set of fields which is what are the local variables in the current
+[00:07:37 -> 00:07:45] activation so if you have in c you declare local variables inside a procedure body then
+[00:07:45 -> 00:07:50] when that procedure gets called the the activation record that is created would also
+[00:07:50 -> 00:07:58] allocate some space for the local variables in that particular procedure call and so that could
+[00:07:58 -> 00:08:02] be part of the activation record and in this case because the activation records themselves
+[00:08:02 -> 00:08:07] are living as part of the stack the local variables space is also being allocated as
+[00:08:07 -> 00:08:14] part of the same stack another option is to allocate and deallocate within the heap and so
+[00:08:14 -> 00:08:19] in this case whenever an activation is invoked so whenever a procedure gets called if there
+[00:08:19 -> 00:08:25] was a local variable inside that procedure then maybe that that local variable is just
+[00:08:25 -> 00:08:31] allocated on the heap and so the compiler responsibility to generate code to allocate
+[00:08:31 -> 00:08:38] that local variable and maybe when the from the heap and then when the procedure returns
+[00:08:38 -> 00:08:43] then the compiler would have generated code on the return path to deallocate that particular
+[00:08:43 -> 00:08:48] variable in this particular case the local variables are being allocated and deallocated
+[00:08:48 -> 00:08:53] on the heap which one is better is it better to allocate on stack or whether it is better to
+[00:08:53 -> 00:08:58] allocate on heap well typically it is much cheaper to allocate on the stack because
+[00:08:58 -> 00:09:05] allocating on the stack typically just means because a stack is organized in array it just
+[00:09:05 -> 00:09:11] means decreasing you know just changing the stack pointer the top pointer of the stack
+[00:09:11 -> 00:09:15] so that you have allocated more space and so it's typically much cheaper to allocate space
+[00:09:16 -> 00:09:24] and so and so that makes sense on the other hand some languages like especially the garbage
+[00:09:24 -> 00:09:31] collected languages like java python o camel and so on they do not really you know make
+[00:09:31 -> 00:09:36] a distinction between local variables and heap allocated objects for them all of these are
+[00:09:36 -> 00:09:41] basically dynamically created objects and let's just allocate them on the heap because references
+[00:09:41 -> 00:09:47] to them can get passed around and that's legal and in and so in such cases it it does not make
+[00:09:47 -> 00:09:52] sense to allocate these local variables in activation records because their lifetimes
+[00:09:52 -> 00:09:59] can actually transcend or go beyond the lifetimes of the activation that created it
+[00:09:59 -> 00:10:05] so you know you can say that then they are not local variables sure so some languages like
+[00:10:05 -> 00:10:10] these wouldn't you know would have variables for example in java if you wanted to create
+[00:10:10 -> 00:10:15] a local variable you just say new and you would have to call new and so it would basically get
+[00:10:15 -> 00:10:20] allocated on the heap similarly languages like python if you just declare a local variable
+[00:10:20 -> 00:10:24] whenever the you can kind of use the reference for that local variable and pass it to your
+[00:10:24 -> 00:10:28] caller and so that kind of a thing can only be legal if that local variable was allocated on
+[00:10:28 -> 00:10:33] the heap and not on the stack because the stack would get deallocated as soon as the
+[00:10:33 -> 00:10:38] function returns the procedure returns and so these kind of languages which do these do this
+[00:10:38 -> 00:10:45] type of allocation deallocation implicitly based on compiler support typically also use garbage
+[00:10:45 -> 00:10:53] collection to identify identify garbage or identify memory that was allocated but was not
+[00:10:53 -> 00:10:59] properly deallocated the reason for this is that typically it is pretty expensive to first
+[00:10:59 -> 00:11:04] allocate and then deallocate on every function call so let's say you have a small function
+[00:11:04 -> 00:11:07] and then you call it and there was a local variable that was created and then you
+[00:11:07 -> 00:11:14] deallocate it when you return that would be a lot of a lot of runtime cost to pay to both allocate
+[00:11:14 -> 00:11:19] and deallocate on the other hand maybe you just want to pay the cost of allocation which is
+[00:11:19 -> 00:11:25] maybe cheap and just defer deallocation to later on and so how do you defer the deallocation
+[00:11:25 -> 00:11:29] to later on well you just say that okay periodically we are going to do garbage
+[00:11:29 -> 00:11:33] collection i'm going to have some way of identifying what is memory that is not currently
+[00:11:33 -> 00:11:39] getting used so all such local variables that have been allocated but have not been deallocated
+[00:11:39 -> 00:11:45] would appear as garbage to such a garbage collection algorithm and and so the the
+[00:11:45 -> 00:11:50] the runtime would be able to collect it so all these are options on how to implement local
+[00:11:50 -> 00:11:54] variables where it can be argued that some of these are not local variables and they should
+[00:11:54 -> 00:12:01] just be called heap allocated objects but but so so local variables are usually if the local
+[00:12:01 -> 00:12:06] variables lifetime is typically within the lifetime of an activation record or activation
+[00:12:06 -> 00:12:09] then they're typically implemented as part of the stack
