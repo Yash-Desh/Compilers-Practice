@@ -1,0 +1,31 @@
+# Virtual environments (rebuilt automatically by `uv run`)
+.venv/
+venv/
+env/
+
+# Python artifacts
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+
+# Audio/video pulled down for transcription — regenerate with yt-dlp
+*.wav
+*.mp3
+*.m4a
+*.webm
+*.mp4
+*.part
+
+# Logs
+*.log
+
+# Editor and OS cruft
+.vscode/
+.idea/
+*.swp
+*~
+.DS_Store
+Thumbs.db
