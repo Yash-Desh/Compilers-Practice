@@ -1,0 +1,8 @@
+# Virtual environment (~420 MB, rebuilt automatically by `uv run`)
+.venv/
+
+# Default transcript output directory
+transcripts/
+
+# Batch run logs
+*.log
