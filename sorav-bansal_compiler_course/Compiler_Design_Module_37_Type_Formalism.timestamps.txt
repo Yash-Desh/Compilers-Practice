@@ -1,0 +1,391 @@
+Title: Compiler Design Module 37 : Type Formalism
+Video ID: 0ZQAM2vSCbk
+Detected language: en
+------------------------------------------------------------
+
+[00:00:00 -> 00:00:05] So now we're going to discuss type checking in more detail.
+[00:00:05 -> 00:00:08] Before that, I want to point out that type checking
+[00:00:08 -> 00:00:11] and type inference are actually quite similar
+[00:00:11 -> 00:00:15] and because they rely on the same set of typing rules.
+[00:00:15 -> 00:00:18] Checking involves checking that, you know,
+[00:00:18 -> 00:00:21] if the program is obeying rules.
+[00:00:21 -> 00:00:22] So when you are doing type checking,
+[00:00:22 -> 00:00:25] you basically assume that all the types are available.
+[00:00:25 -> 00:00:27] So each and every expression, for example,
+[00:00:27 -> 00:00:29] in the program has been annotated
+[00:00:29 -> 00:00:31] with its respective type.
+[00:00:31 -> 00:00:33] And checking just involves checking,
+[00:00:33 -> 00:00:35] whether type checking just involves checking
+[00:00:35 -> 00:00:37] whether the annotated types obey
+[00:00:37 -> 00:00:38] all the typing rules or not.
+[00:00:39 -> 00:00:42] In contrast, inference is about filling
+[00:00:42 -> 00:00:43] in the missing types.
+[00:00:43 -> 00:00:45] So when you're doing type inference,
+[00:00:45 -> 00:00:48] some of the types are missing.
+[00:00:48 -> 00:00:51] And even you just use the same set of typing rules
+[00:00:51 -> 00:00:53] to fill those missing types.
+[00:00:53 -> 00:00:57] So as opposed to checking whether the type rules
+[00:00:57 -> 00:01:00] have been satisfied, if the type is not available,
+[00:01:00 -> 00:01:02] then you kind of infer that this is the type.
+[00:01:03 -> 00:01:07] Now, type inference may not be always possible
+[00:01:07 -> 00:01:09] because maybe the context is not enough
+[00:01:09 -> 00:01:12] to uniquely specify a type.
+[00:01:12 -> 00:01:13] For example, there could be multiple types
+[00:01:13 -> 00:01:17] that may follow, that may obey the rules
+[00:01:17 -> 00:01:18] and the type hasn't been specified.
+[00:01:18 -> 00:01:20] So we can't say which one it is.
+[00:01:20 -> 00:01:22] So in general, inference is not always possible,
+[00:01:22 -> 00:01:26] but often it is possible.
+[00:01:26 -> 00:01:30] Different languages have different designs
+[00:01:32 -> 00:01:34] with respect to whether they do type checking
+[00:01:34 -> 00:01:35] or type inference.
+[00:01:35 -> 00:01:39] For example, a language like C or C++
+[00:01:39 -> 00:01:41] would have a lot of manually annotated types.
+[00:01:41 -> 00:01:44] So you are supposed to annotate, for example,
+[00:01:44 -> 00:01:47] the types of all the local variables, global variables,
+[00:01:47 -> 00:01:50] function arguments, functions, function signatures,
+[00:01:50 -> 00:01:54] classes, et cetera, class objects, and so on.
+[00:01:54 -> 00:01:57] But there are, for example, in C,
+[00:01:57 -> 00:02:01] if I just write one plus two, or if I write X plus Y,
+[00:02:01 -> 00:02:04] and let's say X was of type integer
+[00:02:04 -> 00:02:06] and Y was of type long,
+[00:02:06 -> 00:02:09] then there is some set of typing rules
+[00:02:09 -> 00:02:12] that is used to identify the type of X plus Y.
+[00:02:12 -> 00:02:14] Now, these types are, for the expressions,
+[00:02:14 -> 00:02:16] are not manually annotated, but inferred.
+[00:02:16 -> 00:02:19] So even C, for example, has type inference.
+[00:02:19 -> 00:02:22] More recently, C++, for example, has the auto keyword.
+[00:02:23 -> 00:02:24] You can use the auto keyword anywhere,
+[00:02:24 -> 00:02:27] but it's only a limited form of type inference.
+[00:02:27 -> 00:02:31] So sometimes the C++ compiler will be able to infer
+[00:02:31 -> 00:02:33] the type whenever you use auto.
+[00:02:33 -> 00:02:35] So auto is supposed to mean automatic type inference.
+[00:02:35 -> 00:02:38] So you say, instead of declaring a variable with its type,
+[00:02:38 -> 00:02:40] you say auto X and then use,
+[00:02:40 -> 00:02:41] and then sign it to something,
+[00:02:41 -> 00:02:44] and based on that, the type of X would be inferred.
+[00:02:44 -> 00:02:47] Now, so inference has limitations,
+[00:02:47 -> 00:02:49] and so sometimes it will work,
+[00:02:49 -> 00:02:51] sometimes it will not work.
+[00:02:51 -> 00:02:53] Languages, in fact, have very well-defined rules
+[00:02:53 -> 00:02:56] on when it will work and when it will not work.
+[00:02:57 -> 00:02:58] Just to take another example,
+[00:02:58 -> 00:03:01] functional programming languages like OCaml,
+[00:03:01 -> 00:03:05] they are largely based on inference of types
+[00:03:05 -> 00:03:06] and not checking of types.
+[00:03:06 -> 00:03:08] But sometimes even there,
+[00:03:08 -> 00:03:09] you need to manually annotate the types
+[00:03:09 -> 00:03:12] so that the compiler can disambiguate
+[00:03:12 -> 00:03:13] between multiple choices.
+[00:03:15 -> 00:03:20] So because type checking and type inference
+[00:03:20 -> 00:03:21] are so similar,
+[00:03:21 -> 00:03:24] or people often use these two terms interchangeably.
+[00:03:24 -> 00:03:26] In any case, both these,
+[00:03:26 -> 00:03:27] whether we talk about checking
+[00:03:27 -> 00:03:29] or whether we talk about inference,
+[00:03:29 -> 00:03:31] we are supposed to have a base set of typing rules
+[00:03:31 -> 00:03:34] based on which we will either check or infer.
+[00:03:34 -> 00:03:37] And we are going to now our next discussion,
+[00:03:37 -> 00:03:39] the next few modules will be about
+[00:03:39 -> 00:03:41] what these typing rules could look like.
+[00:03:41 -> 00:03:43] And we'll take some example language,
+[00:03:43 -> 00:03:45] and then we'll try to specify typing rules
+[00:03:45 -> 00:03:47] for that language to give us a flavor
+[00:03:47 -> 00:03:48] of what kind of typing rules
+[00:03:48 -> 00:03:50] are used in a typical language.
+[00:03:50 -> 00:03:52] So to be able to specify the rules,
+[00:03:52 -> 00:03:55] we are going to specify a type checking formalism.
+[00:03:55 -> 00:03:56] What is a formalism?
+[00:03:56 -> 00:03:59] It is just a formal notation
+[00:03:59 -> 00:04:01] used to specify typing rules precisely.
+[00:04:01 -> 00:04:03] Instead of just talking in English
+[00:04:03 -> 00:04:04] or something like that,
+[00:04:04 -> 00:04:06] we're going to define our own small logical language
+[00:04:06 -> 00:04:08] in which we are going to be able to say
+[00:04:08 -> 00:04:10] that what is of what type and so on.
+[00:04:11 -> 00:04:14] This formalism is going to take the shape
+[00:04:14 -> 00:04:15] of inference rules.
+[00:04:15 -> 00:04:16] And what is an inference rule?
+[00:04:16 -> 00:04:19] Well, it is some kind of a statement
+[00:04:19 -> 00:04:20] which looks like the following.
+[00:04:20 -> 00:04:23] If hypothesis is true,
+[00:04:23 -> 00:04:25] then conclusion is true, all right?
+[00:04:25 -> 00:04:29] And basically whenever I'm going to specify
+[00:04:29 -> 00:04:30] an inference rule,
+[00:04:30 -> 00:04:32] I will just specify the hypothesis
+[00:04:32 -> 00:04:34] and then specify the conclusion.
+[00:04:34 -> 00:04:36] I'm not going to use these extra words,
+[00:04:36 -> 00:04:38] if is true, then is true.
+[00:04:38 -> 00:04:43] That's just implicit in that notation.
+[00:04:43 -> 00:04:45] And so I just want to keep things,
+[00:04:45 -> 00:04:49] keep all the extraneous stuff out
+[00:04:49 -> 00:04:54] and just focus on the exact rule, all right?
+[00:04:54 -> 00:04:56] Okay, so for example,
+[00:04:56 -> 00:04:59] in our case of type checking or type inference,
+[00:04:59 -> 00:05:01] we will have rules of the type.
+[00:05:01 -> 00:05:04] If E1 has a certain type
+[00:05:04 -> 00:05:07] and E2 has some other certain type,
+[00:05:07 -> 00:05:10] then E3 would have a certain type, okay?
+[00:05:10 -> 00:05:12] So let's look at an example.
+[00:05:12 -> 00:05:17] So for example, I'm going to use this notation here,
+[00:05:19 -> 00:05:24] this notation here to basically say X colon T,
+[00:05:24 -> 00:05:28] which basically stands for X as type T, all right?
+[00:05:28 -> 00:05:32] Where X is an expression and type T is a type.
+[00:05:32 -> 00:05:34] All right, so for example,
+[00:05:34 -> 00:05:38] I may want to say if E1 is of type T,
+[00:05:39 -> 00:05:42] this represents a conjunction operator
+[00:05:43 -> 00:05:47] and so if E1 is of type T and E2 is of type T,
+[00:05:47 -> 00:05:50] so these two form my hypothesis,
+[00:05:50 -> 00:05:54] then, so this is the if then symbol,
+[00:05:54 -> 00:05:58] so you can read it as implies,
+[00:05:58 -> 00:06:00] but I can also read it as if this is true,
+[00:06:00 -> 00:06:02] then this is true.
+[00:06:02 -> 00:06:03] So this is the conclusion,
+[00:06:03 -> 00:06:07] then E1 plus E2 is of type T.
+[00:06:07 -> 00:06:09] Now I haven't said what is type T,
+[00:06:09 -> 00:06:11] maybe I may want to have different types,
+[00:06:11 -> 00:06:13] I may want to even have a rule
+[00:06:13 -> 00:06:15] that says T1, T2 and T3.
+[00:06:15 -> 00:06:18] This is just an example to explain the shape
+[00:06:18 -> 00:06:20] or the form of a typing rule.
+[00:06:21 -> 00:06:24] All right, I can even write this kind of a typing rule
+[00:06:24 -> 00:06:27] in this form and this will be my short form
+[00:06:27 -> 00:06:30] or notation for inference rules.
+[00:06:30 -> 00:06:32] Now this notation is basically something
+[00:06:32 -> 00:06:36] that is very popular because of historical reasons
+[00:06:36 -> 00:06:37] and people use it a lot,
+[00:06:37 -> 00:06:39] so it's good to understand this notation
+[00:06:39 -> 00:06:41] because we are also going to use similar notation.
+[00:06:41 -> 00:06:45] It's a very concise form of writing what we had here.
+[00:06:45 -> 00:06:49] Here, basically, firstly, we have this long line
+[00:06:49 -> 00:06:50] that separates the hypotheses
+[00:06:50 -> 00:06:53] which are appearing at the top of the line
+[00:06:53 -> 00:06:56] and the conclusion which is appearing below the line.
+[00:06:57 -> 00:07:00] The hypotheses are just separated by space
+[00:07:00 -> 00:07:03] or comma or new line or something like that,
+[00:07:03 -> 00:07:07] so I kind of omit the and operator.
+[00:07:07 -> 00:07:11] So in this case, it says also have this weird operator
+[00:07:11 -> 00:07:13] called the turn style operator, all right?
+[00:07:13 -> 00:07:18] So this operator, I'm calling it the turn style operator
+[00:07:18 -> 00:07:22] and the turn style operator basically should be read as
+[00:07:22 -> 00:07:23] it is provable that.
+[00:07:23 -> 00:07:26] So the hypothesis is saying if it is provable
+[00:07:26 -> 00:07:31] that E1 is of type T and if it is provable
+[00:07:31 -> 00:07:34] that E2 is of type T,
+[00:07:34 -> 00:07:41] then it is provable that E1 plus E2 is of type T, all right?
+[00:07:44 -> 00:07:47] Okay, so this is just another notation
+[00:07:47 -> 00:07:50] for this particular sentence that we had earlier.
+[00:07:51 -> 00:07:54] This notation is called an inference rule.
+[00:07:54 -> 00:07:57] This turn style operator stands for
+[00:07:57 -> 00:08:01] it is provable that and this long line here
+[00:08:01 -> 00:08:04] represents, separates hypotheses from conclusions.
+[00:08:05 -> 00:08:08] All right, so inference rule is basically looks like this,
+[00:08:08 -> 00:08:12] hypothesis one and hypothesis two and dot dot dot
+[00:08:12 -> 00:08:14] and hypothesis n, so a set of n hypotheses
+[00:08:15 -> 00:08:17] implies conclusion.
+[00:08:17 -> 00:08:19] In other words, if hypothesis one and hypothesis two
+[00:08:19 -> 00:08:21] and so on dot that hypothesis n hold,
+[00:08:21 -> 00:08:23] then conclusion holds, all right?
+[00:08:23 -> 00:08:26] That's what this inference rule looks like
+[00:08:26 -> 00:08:29] and this is the form of, this is the notation
+[00:08:29 -> 00:08:31] in which you're going to write the inference rule.
+[00:08:31 -> 00:08:33] If it is provable that hypothesis one is true,
+[00:08:33 -> 00:08:37] if it is provable that hypothesis two is true and so on,
+[00:08:37 -> 00:08:41] then it is provable that conclusion is true.
+[00:08:41 -> 00:08:42] Now this is a type rule.
+[00:08:43 -> 00:08:45] Okay, in addition to a type rule,
+[00:08:45 -> 00:08:49] we also basically have a notion of a name of a type rule.
+[00:08:49 -> 00:08:52] This is just to easily refer to a certain type rule.
+[00:08:52 -> 00:08:55] So we may have some name here, right?
+[00:08:55 -> 00:08:57] So when we're going to look at type rules,
+[00:08:57 -> 00:08:59] we're also going to give them a name
+[00:08:59 -> 00:09:03] so that it becomes easy to refer to them and so on.
+[00:09:03 -> 00:09:07] All right, so for example,
+[00:09:07 -> 00:09:12] type rules would have hypotheses of the form.
+[00:09:12 -> 00:09:15] It is provable that E is of type T, all right?
+[00:09:15 -> 00:09:24] So this is a single colon, all right?
+[00:09:24 -> 00:09:29] And actually even the conclusions are of the same form.
+[00:09:29 -> 00:09:32] So as we just saw, the hypothesis and conclusion
+[00:09:32 -> 00:09:37] that can include this form of a statement
+[00:09:37 -> 00:09:39] which is it is provable that some expression
+[00:09:39 -> 00:09:41] is of some type T.
+[00:09:41 -> 00:09:43] So to read it, it is provable
+[00:09:43 -> 00:09:45] that expression E is of type T.
+[00:09:45 -> 00:09:49] This is how you read this particular notation.
+[00:09:49 -> 00:09:53] It is provable that expression E is of type T, right?
+[00:09:53 -> 00:09:57] Okay, so now we are ready to start defining
+[00:09:57 -> 00:09:58] our first few typing rules.
+[00:09:58 -> 00:09:59] And before we do that,
+[00:09:59 -> 00:10:02] let me introduce you to the programming language
+[00:10:02 -> 00:10:04] for which I'm going to define the typing rules.
+[00:10:04 -> 00:10:07] Now I wanted to pick a programming language
+[00:10:07 -> 00:10:10] that is very close to the typically popular
+[00:10:10 -> 00:10:15] programming languages like C, C++, Java, Python, et cetera.
+[00:10:15 -> 00:10:18] And so our programming language is also like C, C++.
+[00:10:19 -> 00:10:23] However, we don't capture all the possible scenarios
+[00:10:23 -> 00:10:24] of C and C++.
+[00:10:24 -> 00:10:27] We're just looking at some subset of C and C++.
+[00:10:27 -> 00:10:30] Also, we kind of deviate from the actual semantics
+[00:10:30 -> 00:10:32] of C and C++ in our programming language
+[00:10:32 -> 00:10:33] a little bit, all right?
+[00:10:33 -> 00:10:37] For example, we basically assume that the declarations
+[00:10:37 -> 00:10:41] in new scope can only occur at the beginning of a new scope
+[00:10:41 -> 00:10:43] and cannot be interspersed with statements.
+[00:10:43 -> 00:10:46] This is like going back into the older version of C.
+[00:10:46 -> 00:10:48] This is just for simplicity.
+[00:10:48 -> 00:10:51] Our goal is to not define a full-fledged language,
+[00:10:51 -> 00:10:55] but just to look at some simplistic subset
+[00:10:55 -> 00:10:56] of a typical language
+[00:10:56 -> 00:10:59] and look at the typing rules that it supports
+[00:10:59 -> 00:11:00] so that we get a flavor
+[00:11:00 -> 00:11:03] of what the full-fledged language typing rules would be.
+[00:11:04 -> 00:11:08] Also, in our programming language,
+[00:11:08 -> 00:11:10] even statements represent values
+[00:11:10 -> 00:11:12] and are thus associated with types.
+[00:11:12 -> 00:11:14] So in a language like C or C++,
+[00:11:14 -> 00:11:17] a statement is not associated with any value.
+[00:11:17 -> 00:11:18] Expressions are associated with a value.
+[00:11:18 -> 00:11:20] In other words, expressions compute a value.
+[00:11:20 -> 00:11:24] Statements are just supposed to compute something,
+[00:11:24 -> 00:11:27] but they don't really return a value, right?
+[00:11:27 -> 00:11:30] So in our language,
+[00:11:30 -> 00:11:33] we're going to get rid of that assumption.
+[00:11:33 -> 00:11:34] Instead, what we're going to do
+[00:11:34 -> 00:11:35] is we're going to consider statements
+[00:11:35 -> 00:11:37] as also expressions, all right?
+[00:11:37 -> 00:11:38] So we're not going to make a distinction
+[00:11:38 -> 00:11:40] between statements and expressions.
+[00:11:40 -> 00:11:43] And every, both statements and expressions will be,
+[00:11:43 -> 00:11:45] I'm just going to use the term expressions from now on.
+[00:11:45 -> 00:11:47] So every expression will have a value,
+[00:11:47 -> 00:11:50] including expressions that, for example,
+[00:11:50 -> 00:11:52] end with a semicolon or something like that.
+[00:11:52 -> 00:11:54] Or if I have a list of statements,
+[00:11:54 -> 00:11:56] I'm going to call that a single expression.
+[00:11:56 -> 00:11:59] So for example, the body of an entire function
+[00:11:59 -> 00:12:03] can be thought of as an expression, all right?
+[00:12:04 -> 00:12:06] Whereas in the original C and C++ languages,
+[00:12:06 -> 00:12:08] the body of a function would be called a statement.
+[00:12:08 -> 00:12:13] So this is just a deviation from C, C++ semantics
+[00:12:14 -> 00:12:18] to be able to show some interesting ways,
+[00:12:18 -> 00:12:20] typing rules in these environments.
+[00:12:21 -> 00:12:23] Okay, further, I'm going to assume
+[00:12:23 -> 00:12:27] that this language is object-oriented,
+[00:12:27 -> 00:12:29] and it has the typical subtyping relation
+[00:12:29 -> 00:12:32] based on derived types and base types,
+[00:12:32 -> 00:12:34] just like the example we just saw.
+[00:12:35 -> 00:12:38] Also, I'm going to assume one more fact
+[00:12:38 -> 00:12:42] that the void type is a supertype of all types.
+[00:12:42 -> 00:12:46] So I'm going to assume that everything is a derived type
+[00:12:46 -> 00:12:46] of the void type,
+[00:12:46 -> 00:12:49] or every other type is a derived type of the void type.
+[00:12:49 -> 00:12:53] For example, the int type, the integer type in C,
+[00:12:53 -> 00:12:54] the int type is,
+[00:12:54 -> 00:12:57] I'm going to assume that it's a subtype of void, right?
+[00:12:57 -> 00:12:59] So what is a value of type void?
+[00:13:00 -> 00:13:02] It's a value that cannot be used for anything.
+[00:13:02 -> 00:13:05] For example, you can do plus on an integer, right?
+[00:13:05 -> 00:13:08] Or you could do concatenation on a string.
+[00:13:08 -> 00:13:09] What can you do on void?
+[00:13:09 -> 00:13:10] You can't do anything.
+[00:13:10 -> 00:13:11] But all the other types,
+[00:13:11 -> 00:13:14] I'm assuming that they are kind of a subtype
+[00:13:14 -> 00:13:15] of the void type,
+[00:13:15 -> 00:13:18] because you can do more things with those subtypes,
+[00:13:18 -> 00:13:21] but I'm just going to assume
+[00:13:21 -> 00:13:24] that they are all descending
+[00:13:24 -> 00:13:28] or deriving from this base type,
+[00:13:28 -> 00:13:30] universally based type called void.
+[00:13:31 -> 00:13:34] And the void type really has no operations,
+[00:13:34 -> 00:13:36] no legal operations on it.
+[00:13:36 -> 00:13:37] Okay, why am I doing this?
+[00:13:37 -> 00:13:41] Well, it makes some of the discussion easier.
+[00:13:41 -> 00:13:44] We don't have to take special cases and so on.
+[00:13:44 -> 00:13:49] Also, it does represent some type systems,
+[00:13:49 -> 00:13:50] some real world type systems,
+[00:13:50 -> 00:13:51] not CC++ type system,
+[00:13:51 -> 00:13:54] but some other type systems of real programming languages.
+[00:13:54 -> 00:13:57] So it's good to kind of look
+[00:13:57 -> 00:13:58] at this kind of scenario as well.
+[00:14:00 -> 00:14:04] Okay, so let's look at our first typing rule.
+[00:14:04 -> 00:14:05] The first typing rule says,
+[00:14:05 -> 00:14:08] if I is an integer literal,
+[00:14:08 -> 00:14:10] so what is an integer literal?
+[00:14:10 -> 00:14:13] Well, any constant like one, two, three,
+[00:14:13 -> 00:14:15] or one, seven, eight, nine,
+[00:14:15 -> 00:14:17] or six, four, five, or whatever.
+[00:14:17 -> 00:14:18] So if it is an integer literal,
+[00:14:18 -> 00:14:22] and recall that we already have,
+[00:14:22 -> 00:14:24] using our lexing phase and all that
+[00:14:24 -> 00:14:25] in our abstract syntax tree,
+[00:14:25 -> 00:14:26] we've already identified
+[00:14:26 -> 00:14:29] all the integer literals explicitly.
+[00:14:29 -> 00:14:31] So if I is an integer literal,
+[00:14:31 -> 00:14:35] then it is provable that I is of type int.
+[00:14:35 -> 00:14:36] All right, so this is a typing rule,
+[00:14:36 -> 00:14:39] and I also give it a name,
+[00:14:39 -> 00:14:41] and that's the name called int.
+[00:14:41 -> 00:14:44] So notice that I'm assuming here that int is a type,
+[00:14:44 -> 00:14:48] and that it is in a CC++-like language.
+[00:14:48 -> 00:14:51] And the precondition says I is an integer literal.
+[00:14:51 -> 00:14:54] It's easy to check because in my abstract syntax tree,
+[00:14:54 -> 00:14:56] I already have that kind of information.
+[00:14:57 -> 00:15:00] Then it is provable that I is of type int.
+[00:15:00 -> 00:15:01] So now this is a typing rule.
+[00:15:01 -> 00:15:03] I can use it either for type checking
+[00:15:03 -> 00:15:04] or for type inference.
+[00:15:04 -> 00:15:06] Typically, for example, in a language like C,
+[00:15:06 -> 00:15:10] we don't really explicitly say that this is,
+[00:15:10 -> 00:15:11] if I just write one, two, three,
+[00:15:11 -> 00:15:14] it's kind of implicit that this is an integer.
+[00:15:14 -> 00:15:17] And that's because the compiler is doing a type
+[00:15:17 -> 00:15:19] inference based on this particular rule.
+[00:15:19 -> 00:15:21] All right, okay.
+[00:15:21 -> 00:15:25] But you're also welcome to actually annotate
+[00:15:25 -> 00:15:26] and say that this is a type int,
+[00:15:26 -> 00:15:31] and in which case the compiler would just type check,
+[00:15:31 -> 00:15:31] and that's it.
+[00:15:32 -> 00:15:36] Okay, now here's another typing rule.
+[00:15:36 -> 00:15:39] If it is provable that E1 is of type int,
+[00:15:39 -> 00:15:43] and it is provable that E2 is of type int,
+[00:15:43 -> 00:15:48] then it is provable that E1 plus E2 is of type int.
+[00:15:48 -> 00:15:50] I'm going to call this the add rule.
+[00:15:50 -> 00:15:52] Add typing rule.
+[00:15:52 -> 00:15:56] Okay, so for example, let's say I want to check
+[00:15:56 -> 00:15:59] what is the type of one plus two.
+[00:15:59 -> 00:16:01] So I want to, so to be able to identify the type,
+[00:16:01 -> 00:16:05] I need to basically either infer or,
+[00:16:05 -> 00:16:07] so I could have basically to,
+[00:16:07 -> 00:16:09] once again, I could either do checking
+[00:16:09 -> 00:16:10] or I could do inference.
+[00:16:10 -> 00:16:12] In the checking world, I would have the annotation
+[00:16:12 -> 00:16:13] that maybe this is already an int,
+[00:16:13 -> 00:16:16] and then I would approve that these rules
+[00:16:16 -> 00:16:19] are actually being obeyed in this annotation.
+[00:16:19 -> 00:16:20] In case of inference, I just have to infer.
+[00:16:21 -> 00:16:22] So let's take the example of inference,
+[00:16:22 -> 00:16:25] because here it's actually possible to infer.
+[00:16:26 -> 00:16:29] And so I'm going to say, okay,
+[00:16:29 -> 00:16:33] so how am I going to infer the type of one plus two?
+[00:16:33 -> 00:16:36] Well, I'm going to say one is an integer literal,
+[00:16:36 -> 00:16:38] so one is of type int.
+[00:16:38 -> 00:16:41] Two is an integer literal, so two is of type int.
+[00:16:41 -> 00:16:45] And one is of type int, and two is of type int,
+[00:16:45 -> 00:16:48] thus it must be true that one plus two is of type int.
+[00:16:48 -> 00:16:49] So what do I do?
+[00:16:49 -> 00:16:51] I basically apply the int rule twice,
+[00:16:51 -> 00:16:54] once for one and the other time for two,
+[00:16:54 -> 00:16:57] and then finally I apply the add rule.
+[00:16:57 -> 00:17:00] So this is what my proof looks like.
+[00:17:00 -> 00:17:02] The first time I apply the int rule,
+[00:17:02 -> 00:17:04] which is one is an integer literal,
+[00:17:04 -> 00:17:06] that means it must be proved that one is an int.
+[00:17:06 -> 00:17:07] Two is an integer literal,
+[00:17:07 -> 00:17:09] so it must be provable that two is an int.
+[00:17:09 -> 00:17:11] And finally, one is an int,
+[00:17:11 -> 00:17:13] it is provable that one is an int,
+[00:17:13 -> 00:17:14] it is provable that two is an int,
+[00:17:14 -> 00:17:17] so it must be provable that one plus two is an int.
+[00:17:17 -> 00:17:22] So this is a very simple example of two type rules
+[00:17:22 -> 00:17:24] and how it can be used to identify
+[00:17:24 -> 00:17:26] the type of an expression.

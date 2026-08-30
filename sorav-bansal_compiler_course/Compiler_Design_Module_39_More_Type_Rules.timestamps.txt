@@ -1,0 +1,485 @@
+Title: Compiler Design Module 39 : More Type Rules
+Video ID: EJHgY_1yyGs
+Detected language: en
+------------------------------------------------------------
+
+[00:00:00 -> 00:00:02] So now I'm going to discuss more typing rules
+[00:00:02 -> 00:00:04] for our language.
+[00:00:04 -> 00:00:05] I'm not going to discuss all the typing rules,
+[00:00:05 -> 00:00:09] but I'm going to discuss some representative typing rules
+[00:00:09 -> 00:00:11] that will give you an idea of what goes on
+[00:00:11 -> 00:00:13] in these typing rules.
+[00:00:13 -> 00:00:15] So the first typing rule here is similar
+[00:00:15 -> 00:00:17] to something that we've discussed before,
+[00:00:17 -> 00:00:21] which is that if there's an identifier false,
+[00:00:21 -> 00:00:24] then it is always true that the identifier false
+[00:00:24 -> 00:00:25] is of type bool.
+[00:00:26 -> 00:00:29] Notice that there is no hypothesis that's required
+[00:00:29 -> 00:00:32] for this conclusion, and this is called the false one.
+[00:00:32 -> 00:00:35] Similarly, it is true that the identifier true
+[00:00:35 -> 00:00:37] is of type bool in our language.
+[00:00:39 -> 00:00:41] Similarly, if C is a character literal,
+[00:00:41 -> 00:00:44] for example, if it is a character literal A,
+[00:00:44 -> 00:00:49] for example, then it is true that C is of type cal
+[00:00:50 -> 00:00:52] or character, C-H-A-R.
+[00:00:53 -> 00:00:58] Finally, if B, if it is true that B is of type bool,
+[00:00:58 -> 00:01:02] then not of B is also of type bool,
+[00:01:03 -> 00:01:06] which basically represents a negation in our language.
+[00:01:06 -> 00:01:09] But when I look at the typing rules,
+[00:01:09 -> 00:01:14] then not B is of the same type as B if B was type bool.
+[00:01:14 -> 00:01:16] Notice that the typing rules also tell us
+[00:01:16 -> 00:01:19] what are correctly typed expressions
+[00:01:19 -> 00:01:20] and what are not correctly typed expressions.
+[00:01:20 -> 00:01:22] For example, we don't have a typing rule
+[00:01:22 -> 00:01:27] that says what is the type of not B if B was an int,
+[00:01:27 -> 00:01:30] and that basically means that in our language,
+[00:01:30 -> 00:01:33] not of B would be in type error
+[00:01:33 -> 00:01:35] if B was not of type bool.
+[00:01:35 -> 00:01:37] For example, if B was of type int,
+[00:01:37 -> 00:01:41] and I use not B, exclamation B, in my syntax,
+[00:01:41 -> 00:01:43] then that is not well-typed
+[00:01:43 -> 00:01:46] because the typing rules don't support it.
+[00:01:46 -> 00:01:48] However, if B was of type bool,
+[00:01:48 -> 00:01:50] then exclamation B is well-typed,
+[00:01:50 -> 00:01:52] and it's of type bool.
+[00:01:52 -> 00:01:56] Similarly, if it is true that some expression E1
+[00:01:56 -> 00:02:01] is of type bool, and it is true that E2 is of type bool,
+[00:02:01 -> 00:02:05] then it is true that E1, logical, and E2
+[00:02:05 -> 00:02:08] is also of type bool.
+[00:02:08 -> 00:02:09] So these are some typing rules
+[00:02:09 -> 00:02:14] that basically expand the scope of well-typed programs.
+[00:02:14 -> 00:02:16] We have already seen some of these before,
+[00:02:16 -> 00:02:20] and we're just expanding these to include more,
+[00:02:20 -> 00:02:23] to kind of admit more programs as well-typed.
+[00:02:23 -> 00:02:28] Here's another rule that's relating to a relational operator,
+[00:02:28 -> 00:02:30] for example, the less than operator.
+[00:02:30 -> 00:02:33] So it says that if X is of type int,
+[00:02:33 -> 00:02:35] and it is true that Y is of type int,
+[00:02:35 -> 00:02:38] then X less than Y is of type bool.
+[00:02:39 -> 00:02:41] Now notice that this assigns a type
+[00:02:41 -> 00:02:45] to this relational expression X less than Y.
+[00:02:45 -> 00:02:47] But for example, if X was of type int
+[00:02:47 -> 00:02:49] and Y was of type bool,
+[00:02:49 -> 00:02:51] then we don't have any type rule
+[00:02:51 -> 00:02:53] that basically assigns a type to X less than Y,
+[00:02:53 -> 00:02:56] and that would be qualified as a type error.
+[00:02:57 -> 00:03:00] So for example, which of these are well-typed?
+[00:03:01 -> 00:03:03] Is exclamation three well-typed?
+[00:03:03 -> 00:03:04] The answer is no.
+[00:03:04 -> 00:03:06] Is one greater than two well-typed?
+[00:03:06 -> 00:03:10] Well, one is of type int, two is of type int,
+[00:03:10 -> 00:03:12] and one greater than two becomes a relational operator,
+[00:03:12 -> 00:03:14] which kind of falls in the same category as less than,
+[00:03:14 -> 00:03:16] and so the answer is yes.
+[00:03:16 -> 00:03:19] Is true greater than false a well-typed expression?
+[00:03:19 -> 00:03:20] Well, the answer is no,
+[00:03:20 -> 00:03:22] because we don't have a rule that says
+[00:03:22 -> 00:03:26] how the relational operator should be type
+[00:03:26 -> 00:03:29] if both the left-hand side and the right-hand side
+[00:03:29 -> 00:03:31] are bools.
+[00:03:31 -> 00:03:34] We only have a rule for ints, but not bools,
+[00:03:34 -> 00:03:36] and so in this case, the answer is no.
+[00:03:36 -> 00:03:38] And similarly, in this case, the answer is no,
+[00:03:38 -> 00:03:40] because even if one of them is a bool,
+[00:03:40 -> 00:03:41] which means not an int,
+[00:03:41 -> 00:03:43] then we don't know how to type
+[00:03:43 -> 00:03:44] this relational expression.
+[00:03:46 -> 00:03:51] Okay, our language supports the sequence operator,
+[00:03:51 -> 00:03:55] which is a semicolon operator similar to C and C++,
+[00:03:55 -> 00:03:59] and here is a rule for the sequence operator.
+[00:03:59 -> 00:04:03] It says that if it is true that E1 is of type T1,
+[00:04:03 -> 00:04:06] and E2 is of type T2,
+[00:04:06 -> 00:04:07] then E1 semicolon E2,
+[00:04:07 -> 00:04:11] which means E1 sequenced with E2, is of type T2.
+[00:04:12 -> 00:04:15] So basically in our language,
+[00:04:15 -> 00:04:17] this evaluation of E1 semicolon E2
+[00:04:17 -> 00:04:19] is going to represent an expression
+[00:04:19 -> 00:04:22] that evaluates to the value that E2 evaluates to.
+[00:04:22 -> 00:04:25] And so when you sequence these expressions in this way,
+[00:04:25 -> 00:04:27] the type of this expression is also the same type
+[00:04:27 -> 00:04:31] as the type of E2, which in this case is T2.
+[00:04:31 -> 00:04:34] Notice that it requires this expression is well-typed
+[00:04:34 -> 00:04:38] only if both E1 and E2 are well-typed.
+[00:04:39 -> 00:04:41] So for example, is this expression well-typed?
+[00:04:41 -> 00:04:44] Two plus three semicolon four plus five?
+[00:04:44 -> 00:04:46] Well, the answer is yes,
+[00:04:46 -> 00:04:49] because we know that two plus three is well-typed.
+[00:04:49 -> 00:04:51] We know that four is well-typed.
+[00:04:51 -> 00:04:53] Both of these have type end.
+[00:04:53 -> 00:04:55] We know that this expression is well-typed
+[00:04:55 -> 00:04:57] because this will have the type end
+[00:04:57 -> 00:05:00] based on the sequence rule.
+[00:05:00 -> 00:05:03] And then if this is end and this is five
+[00:05:03 -> 00:05:05] and I do a plus, then that is also well-typed.
+[00:05:05 -> 00:05:07] So this entire expression is well-typed.
+[00:05:08 -> 00:05:09] Now let's look at this expression.
+[00:05:09 -> 00:05:10] Is this expression well-typed?
+[00:05:10 -> 00:05:13] Well, this has type end based on our rules.
+[00:05:13 -> 00:05:15] This has type bool based on our rules.
+[00:05:15 -> 00:05:19] So this whole thing has type bool based on our rules.
+[00:05:19 -> 00:05:22] This has type end, but we don't have a rule
+[00:05:22 -> 00:05:24] which says what is the type of bool plus end,
+[00:05:24 -> 00:05:27] a term of type bool plus a term of type end.
+[00:05:27 -> 00:05:33] And so this is not well-typed.
+[00:05:33 -> 00:05:37] Similarly, we have a typing rule for scope.
+[00:05:37 -> 00:05:40] So if the programmer creates a new scope
+[00:05:40 -> 00:05:42] using these curly braces,
+[00:05:42 -> 00:05:43] then if the original expression,
+[00:05:43 -> 00:05:45] if it was true that the original expression E
+[00:05:45 -> 00:05:47] was of type T, then this new expression
+[00:05:48 -> 00:05:51] which creates a new scope and puts E inside that scope
+[00:05:51 -> 00:05:53] is also of the same type T.
+[00:05:53 -> 00:05:57] So for example, this expression here is well-typed
+[00:05:57 -> 00:06:00] because we know that this expression is of type end.
+[00:06:00 -> 00:06:01] And so because of that,
+[00:06:01 -> 00:06:03] this expression is of type end using the scope rule.
+[00:06:03 -> 00:06:06] And because of that, this expression is of type end
+[00:06:06 -> 00:06:09] because of the sequence rule.
+[00:06:09 -> 00:06:10] And so the answer here is yes,
+[00:06:10 -> 00:06:11] this is a well-typed expression.
+[00:06:13 -> 00:06:14] All right, now I'm going to come
+[00:06:14 -> 00:06:17] to one of the more complicated expressions,
+[00:06:17 -> 00:06:19] which is the assignment expression.
+[00:06:19 -> 00:06:20] So firstly, let's understand
+[00:06:20 -> 00:06:23] what the assignment expression says.
+[00:06:23 -> 00:06:25] So we allow in our language,
+[00:06:25 -> 00:06:29] an expression of the type X colon equals Y,
+[00:06:29 -> 00:06:32] which basically means that Y is assigned to variable X.
+[00:06:33 -> 00:06:35] Recall that an assignment expression evaluates
+[00:06:35 -> 00:06:37] to the value that has been assigned.
+[00:06:37 -> 00:06:40] So it basically means that if I say X colon equals Y
+[00:06:40 -> 00:06:42] and let's say Y had the value three,
+[00:06:42 -> 00:06:45] then this whole expression X colon equals Y
+[00:06:45 -> 00:06:47] will also have the value three.
+[00:06:47 -> 00:06:49] And it will have the extra effect
+[00:06:49 -> 00:06:52] that three will be assigned to the variable X.
+[00:06:53 -> 00:06:54] And so for example,
+[00:06:54 -> 00:06:57] if I say X colon equals four plus five,
+[00:06:57 -> 00:07:00] it has the effect that nine is written into X,
+[00:07:00 -> 00:07:05] but also this whole expression here evaluates to nine.
+[00:07:06 -> 00:07:14] For example, I could do X colon equals four plus five
+[00:07:14 -> 00:07:17] plus one, and I could expect the value 10
+[00:07:17 -> 00:07:19] for this whole expression.
+[00:07:19 -> 00:07:20] And so the type of this expression
+[00:07:20 -> 00:07:23] is the type of the assigned RHS expression.
+[00:07:23 -> 00:07:26] So because I'm assigning a value
+[00:07:26 -> 00:07:27] to the assignment expression,
+[00:07:27 -> 00:07:30] I'm also assigning a type to the assignment expression
+[00:07:30 -> 00:07:31] and the type is the same
+[00:07:31 -> 00:07:33] as a type of the RHS expression,
+[00:07:33 -> 00:07:36] then this example would be in.
+[00:07:36 -> 00:07:38] So I'm going to show you the full typing rule
+[00:07:38 -> 00:07:40] in a few slides from now,
+[00:07:40 -> 00:07:41] but I just want to introduce
+[00:07:41 -> 00:07:43] what this assignment operation means
+[00:07:43 -> 00:07:44] and how one would go about typing it.
+[00:07:46 -> 00:07:47] So here is my first attempt
+[00:07:47 -> 00:07:50] to try and type the assignment expression.
+[00:07:50 -> 00:07:53] And let me say that it's an incorrect attempt.
+[00:07:53 -> 00:07:55] So the rule says, this incorrect rule says
+[00:07:55 -> 00:07:58] that if it is true that X is of type T zero,
+[00:07:58 -> 00:08:00] and if it is true that Y,
+[00:08:00 -> 00:08:03] another expression is of type T one,
+[00:08:03 -> 00:08:06] and if T one is a subtype of T zero,
+[00:08:06 -> 00:08:10] then X colon equals Y is well typed
+[00:08:10 -> 00:08:13] and this whole expression is of type T one
+[00:08:13 -> 00:08:17] because this whole expression evaluates to the value Y
+[00:08:17 -> 00:08:19] and so the expression also has a type
+[00:08:19 -> 00:08:20] and that type is T one.
+[00:08:21 -> 00:08:23] Why is this rule incorrect?
+[00:08:23 -> 00:08:24] Well, think about it.
+[00:08:24 -> 00:08:26] Is the following expression type correct?
+[00:08:26 -> 00:08:28] If I say one colon equals two,
+[00:08:28 -> 00:08:29] should it be type correct?
+[00:08:29 -> 00:08:32] Well, it appears that this rule allows,
+[00:08:32 -> 00:08:34] this type rule deems this to be type correct.
+[00:08:34 -> 00:08:36] For example, you can, in this case,
+[00:08:36 -> 00:08:39] one is of type int.
+[00:08:39 -> 00:08:41] So T zero would be int.
+[00:08:41 -> 00:08:43] Two is of type int.
+[00:08:43 -> 00:08:45] So T one would be int.
+[00:08:45 -> 00:08:48] T one is a subtype of T zero
+[00:08:48 -> 00:08:50] because int is a subtype of itself.
+[00:08:50 -> 00:08:55] And so one colon equals two is type correct
+[00:08:55 -> 00:08:58] based on this rule because it appears
+[00:08:58 -> 00:09:00] that one colon equals two is correct
+[00:09:00 -> 00:09:04] and it also evaluates to the value type
+[00:09:04 -> 00:09:06] or it also has type int.
+[00:09:06 -> 00:09:09] However, we know that this is not correct
+[00:09:09 -> 00:09:13] because we only want to assign two variables
+[00:09:13 -> 00:09:14] not to any arbitrary expressions.
+[00:09:14 -> 00:09:18] In this case, I want this to be some kind of a variable,
+[00:09:18 -> 00:09:19] for example, X or Y.
+[00:09:19 -> 00:09:22] I cannot have one or I cannot have X plus one
+[00:09:22 -> 00:09:24] on the LHS of an assignment operator.
+[00:09:24 -> 00:09:27] So I need to, if I want to catch such errors
+[00:09:27 -> 00:09:29] at compile time, I need to change my typing rules.
+[00:09:29 -> 00:09:34] I need to make my typing rules more strict.
+[00:09:34 -> 00:09:36] So let's try to understand how we would make
+[00:09:36 -> 00:09:38] the type rules more strict.
+[00:09:39 -> 00:09:41] We want to say that one colon equals two is incorrect
+[00:09:41 -> 00:09:43] but we want to say that X colon equals two is correct.
+[00:09:43 -> 00:09:45] So we want to have a way of distinguishing
+[00:09:45 -> 00:09:48] between the type of one and the type of X
+[00:09:48 -> 00:09:52] even though they may both have the type int
+[00:09:52 -> 00:09:54] but we want to have some difference
+[00:09:54 -> 00:09:55] between the two types.
+[00:09:56 -> 00:09:58] So one is of type int
+[00:09:58 -> 00:10:01] and so the difference is that X is also of type int
+[00:10:01 -> 00:10:03] but X is a type of type reference to int.
+[00:10:04 -> 00:10:09] And so we call the type of one an int value type
+[00:10:09 -> 00:10:13] and we call the type of X an int reference type
+[00:10:13 -> 00:10:15] and we represent an int reference type
+[00:10:15 -> 00:10:17] with an ampersand operator just after int.
+[00:10:18 -> 00:10:21] So for any type, so this is not just specific
+[00:10:21 -> 00:10:23] to the int type, we can have a reference type
+[00:10:23 -> 00:10:26] for the bool type or for any other type in our system,
+[00:10:26 -> 00:10:27] for example, the char type.
+[00:10:28 -> 00:10:31] But the important thing here is that we need to have
+[00:10:31 -> 00:10:33] a way to distinguish between the two types
+[00:10:34 -> 00:10:36] and the two types are the reference type
+[00:10:36 -> 00:10:38] and the value type for any underlying type.
+[00:10:38 -> 00:10:40] In this case, it's the int type.
+[00:10:40 -> 00:10:41] So we have the int reference type
+[00:10:41 -> 00:10:43] which is represented as int ampersand
+[00:10:43 -> 00:10:48] and the int value type which is represented as int.
+[00:10:48 -> 00:10:50] Reference type and value types.
+[00:10:50 -> 00:10:54] So for example, if I is an integer literal
+[00:10:55 -> 00:10:58] then it is true that I is of type int
+[00:10:59 -> 00:11:02] and when I say int, I mean the value type int.
+[00:11:03 -> 00:11:07] So for example, if one was an integer literal,
+[00:11:07 -> 00:11:08] one is an integer literal,
+[00:11:08 -> 00:11:13] then it is true that one is of type int.
+[00:11:13 -> 00:11:16] However, if the user declares a new variable
+[00:11:16 -> 00:11:19] and we're going to see how declarations work later on,
+[00:11:19 -> 00:11:22] but let's just say that X was declared as of type int,
+[00:11:22 -> 00:11:24] then in this code here,
+[00:11:24 -> 00:11:28] we want to be able to allow assignments to X.
+[00:11:28 -> 00:11:31] For example, we need to be able to allow X colon equals one
+[00:11:32 -> 00:11:36] and so what should be the type of X in this region,
+[00:11:36 -> 00:11:37] in this code region?
+[00:11:37 -> 00:11:40] Can it be just the value type int?
+[00:11:40 -> 00:11:42] Well, we already said that the value type
+[00:11:42 -> 00:11:44] cannot be on the LHS of assignment
+[00:11:44 -> 00:11:46] and so if we give it the value type,
+[00:11:46 -> 00:11:49] then X colon equals one will be disallowed.
+[00:11:49 -> 00:11:51] Can it be a reference type int?
+[00:11:51 -> 00:11:53] Yes, we want it to be a reference type int
+[00:11:53 -> 00:11:58] and so we will have ways to give types to variables
+[00:11:58 -> 00:11:59] and we'll give them reference types
+[00:11:59 -> 00:12:02] and we'll allow assignments to reference types
+[00:12:02 -> 00:12:03] but not to value types.
+[00:12:03 -> 00:12:05] So only reference types can appear
+[00:12:05 -> 00:12:07] on the LHS of an assignment statement,
+[00:12:07 -> 00:12:08] but value types cannot appear
+[00:12:08 -> 00:12:12] on the LHS of an assignment statement.
+[00:12:12 -> 00:12:17] So a term X of type, of reference type int ampersand
+[00:12:18 -> 00:12:21] can be safely used in any context
+[00:12:21 -> 00:12:23] where a term of type int was expected.
+[00:12:23 -> 00:12:26] So here's another interesting thing about reference types.
+[00:12:27 -> 00:12:32] A term of int ampersand can be used anywhere
+[00:12:32 -> 00:12:35] where a term of type int was expected.
+[00:12:35 -> 00:12:37] So for example, just like one plus two
+[00:12:37 -> 00:12:39] is a correct expression,
+[00:12:39 -> 00:12:41] X plus two is also a type correct expression
+[00:12:41 -> 00:12:46] because any place where a value type was expected,
+[00:12:46 -> 00:12:49] in this case, a term of value type was expected.
+[00:12:49 -> 00:12:53] So int value, one is of type int value.
+[00:12:53 -> 00:12:56] A term of type int reference can be used.
+[00:12:56 -> 00:12:58] So for example, you can always replace one with X
+[00:12:58 -> 00:13:01] and that would still be type correct.
+[00:13:01 -> 00:13:03] But the other way around is not true.
+[00:13:03 -> 00:13:06] It's not true that a term of type int
+[00:13:07 -> 00:13:09] can be always safely used in a context
+[00:13:09 -> 00:13:13] where a term of type int ampersand was expected.
+[00:13:13 -> 00:13:16] For example, X colon equals three
+[00:13:16 -> 00:13:18] is something that I want to allow as type correct,
+[00:13:18 -> 00:13:22] but I don't want to be able to replace X with one here
+[00:13:22 -> 00:13:24] and allow one colon equals three.
+[00:13:24 -> 00:13:25] So this is incorrect, but this is correct.
+[00:13:25 -> 00:13:27] In this case, both are correct.
+[00:13:28 -> 00:13:29] So there is this relationship
+[00:13:29 -> 00:13:32] between value type and reference type.
+[00:13:32 -> 00:13:36] A term of reference type can be used in any context
+[00:13:36 -> 00:13:38] where a term of value type was expected,
+[00:13:40 -> 00:13:44] but not vice versa.
+[00:13:44 -> 00:13:45] How do we say that?
+[00:13:45 -> 00:13:46] We already know how to say that.
+[00:13:46 -> 00:13:50] We say, if a term of type of reference type
+[00:13:50 -> 00:13:51] can be safely used in any context
+[00:13:51 -> 00:13:55] where a term of type value type was expected,
+[00:13:55 -> 00:13:58] then what do we know about it?
+[00:13:58 -> 00:13:59] We know that the reference type
+[00:13:59 -> 00:14:02] is always a subtype of value type,
+[00:14:02 -> 00:14:04] because it's exactly the definition
+[00:14:04 -> 00:14:07] of the subtyping relation that we discussed previously.
+[00:14:07 -> 00:14:09] And so for any type T,
+[00:14:09 -> 00:14:13] the corresponding reference type represented by T ampersand
+[00:14:13 -> 00:14:16] is a subtype of the corresponding value type
+[00:14:16 -> 00:14:18] represented by T.
+[00:14:18 -> 00:14:20] So a reference type is a subtype
+[00:14:20 -> 00:14:24] of the corresponding value type.
+[00:14:24 -> 00:14:27] So let's take an example subtyping relations.
+[00:14:27 -> 00:14:30] Say we have two types, T and U,
+[00:14:30 -> 00:14:34] such that U is a subtype of T.
+[00:14:34 -> 00:14:36] What will be all the subtyping relations?
+[00:14:36 -> 00:14:38] So it's not just true that U is a subtype of T.
+[00:14:38 -> 00:14:41] We recall that we also said that subtyping is reflexive.
+[00:14:41 -> 00:14:44] So U is a subtype of U, T is a subtype of T,
+[00:14:44 -> 00:14:46] but now we also have reference types,
+[00:14:46 -> 00:14:48] U ampersand and T ampersand,
+[00:14:48 -> 00:14:50] and how are those related to each other?
+[00:14:51 -> 00:14:54] Well, U is a subtype of U, T is a subtype of T.
+[00:14:54 -> 00:14:58] That just comes from reflexivity of the subtyping relation.
+[00:14:58 -> 00:15:01] U ampersand is a subtype of U, T ampersand is a subtype of T.
+[00:15:01 -> 00:15:04] That comes from the fact that reference types
+[00:15:04 -> 00:15:07] are always a subtype of the value types.
+[00:15:07 -> 00:15:10] And then U is a subtype of T, as said here.
+[00:15:10 -> 00:15:15] And if I was to draw the tree
+[00:15:15 -> 00:15:17] of the subtyping relation as a diagram,
+[00:15:17 -> 00:15:21] as a tree diagram, then U is a subtype of T,
+[00:15:21 -> 00:15:22] denoted by this arrow,
+[00:15:22 -> 00:15:25] and U ampersand is a subtype of U.
+[00:15:25 -> 00:15:26] It basically means that anywhere
+[00:15:26 -> 00:15:27] where a term of type T was expected,
+[00:15:27 -> 00:15:31] I can use a term of type U ampersand.
+[00:15:31 -> 00:15:36] And similarly, T ampersand is a subtype of T.
+[00:15:37 -> 00:15:38] Now you may ask the question,
+[00:15:38 -> 00:15:43] what about the relation between T ampersand and U ampersand?
+[00:15:44 -> 00:15:47] Well, the relation between T ampersand and U ampersand
+[00:15:47 -> 00:15:50] depends on whether you want to allow an assignment
+[00:15:50 -> 00:15:54] to a U variable from a T value.
+[00:15:54 -> 00:15:57] So for example, depending on the programming language
+[00:15:57 -> 00:16:00] designer, they may decide that indeed U ampersand
+[00:16:00 -> 00:16:02] is a subtype of T ampersand.
+[00:16:02 -> 00:16:05] And if they do that, they're basically allowing
+[00:16:05 -> 00:16:09] an assignment to a U variable from a T value.
+[00:16:09 -> 00:16:11] And this is typically not done,
+[00:16:11 -> 00:16:15] for example, in languages like C++.
+[00:16:15 -> 00:16:18] So once again, when a programming language designer
+[00:16:18 -> 00:16:21] is choosing the subtype relation carefully
+[00:16:21 -> 00:16:23] to kind of balance the trade-off
+[00:16:23 -> 00:16:26] between what kind of errors,
+[00:16:26 -> 00:16:27] what kind of programming syntax
+[00:16:27 -> 00:16:29] they want to allow as type correct,
+[00:16:29 -> 00:16:32] which in turn is guided by what kind of errors
+[00:16:34 -> 00:16:36] is the programming language designer
+[00:16:36 -> 00:16:40] willing to allow at runtime
+[00:16:40 -> 00:16:44] and wants to catch at compile time.
+[00:16:46 -> 00:16:47] All right, so with that,
+[00:16:47 -> 00:16:51] we come to our final typing rule for the assignment operator.
+[00:16:51 -> 00:16:53] The typing rule looks like this.
+[00:16:53 -> 00:16:56] If it is true that an expression E0
+[00:16:56 -> 00:16:59] is of reference type T0 ampersand,
+[00:16:59 -> 00:17:02] and E1 is of some type T1,
+[00:17:02 -> 00:17:05] which may be a reference type or a value type,
+[00:17:05 -> 00:17:09] and T1 is a subtype of T0.
+[00:17:09 -> 00:17:10] Notice that I'm saying T1 is a subtype
+[00:17:10 -> 00:17:12] of value type T0,
+[00:17:12 -> 00:17:15] even though E0 is actually a reference type.
+[00:17:15 -> 00:17:20] Then E0 colon equal to E1 is well-typed,
+[00:17:23 -> 00:17:26] and this whole expression has type val of T1.
+[00:17:26 -> 00:17:28] So what does val of T1 mean?
+[00:17:28 -> 00:17:31] Val T1 returns a value type corresponding to T1,
+[00:17:31 -> 00:17:33] which means if T1 was a reference type,
+[00:17:33 -> 00:17:35] then it removes the ampersand.
+[00:17:35 -> 00:17:37] So if T1 was int ampersand,
+[00:17:37 -> 00:17:40] then it just, val of T1 gives int.
+[00:17:40 -> 00:17:42] And if T1 was originally a value type,
+[00:17:42 -> 00:17:43] for example, if T1 was int,
+[00:17:43 -> 00:17:46] then it just returns T1 itself.
+[00:17:46 -> 00:17:49] So val T1 returns the value type corresponding to T1
+[00:17:49 -> 00:17:51] if T1 was a reference type,
+[00:17:51 -> 00:17:53] and returns T1 if T1 is a value type.
+[00:17:53 -> 00:17:58] So for example, val of int is just int,
+[00:17:58 -> 00:18:03] and val of int ampersand is also int.
+[00:18:08 -> 00:18:11] Now notice that the conclusion assigns a value type
+[00:18:11 -> 00:18:12] to the assignment expression.
+[00:18:12 -> 00:18:17] So this is a value type and not a reference type,
+[00:18:17 -> 00:18:21] which means that I cannot use this
+[00:18:21 -> 00:18:24] and kind of assign another value to it.
+[00:18:24 -> 00:18:25] So for example, this following expression
+[00:18:25 -> 00:18:26] would be incorrect.
+[00:18:26 -> 00:18:28] So X colon equal to Y,
+[00:18:28 -> 00:18:32] this thing has a value type and not a reference type.
+[00:18:32 -> 00:18:34] And so it cannot appear at the left-hand side
+[00:18:34 -> 00:18:37] of an assignment operator.
+[00:18:37 -> 00:18:40] And so this is not type correct
+[00:18:41 -> 00:18:43] based on our typing rule.
+[00:18:43 -> 00:18:45] Now I'll leave this as an exercise.
+[00:18:45 -> 00:18:47] You can change this typing rule
+[00:18:47 -> 00:18:50] so it starts accepting this expression above.
+[00:18:50 -> 00:18:52] And I'll let you figure that out.
+[00:18:52 -> 00:18:54] And if you do that,
+[00:18:54 -> 00:18:57] you also want to figure out whether doing that,
+[00:18:57 -> 00:18:59] what would be the execution semantics of that?
+[00:18:59 -> 00:19:02] Your typing rules will also dictate
+[00:19:02 -> 00:19:04] what the corresponding execution semantics are.
+[00:19:04 -> 00:19:05] So for example,
+[00:19:05 -> 00:19:06] what should the value of Z be assigned to?
+[00:19:06 -> 00:19:08] Should it be assigned to X
+[00:19:08 -> 00:19:10] or should it be assigned to Y?
+[00:19:10 -> 00:19:11] And depending on that,
+[00:19:11 -> 00:19:13] you would probably want to choose
+[00:19:13 -> 00:19:19] how you change the conclusion of your typing rule.
+[00:19:19 -> 00:19:22] However, notice that our current typing rule
+[00:19:22 -> 00:19:24] accepts the following expression.
+[00:19:24 -> 00:19:27] It accepts X colon equals Y colon equals Z
+[00:19:27 -> 00:19:29] because Y colon equals Z of value type,
+[00:19:29 -> 00:19:30] which can be again assigned
+[00:19:30 -> 00:19:36] to another reference type using the assignment.
+[00:19:36 -> 00:19:38] Now I want to point out that
+[00:19:40 -> 00:19:42] we kind of use this subtyping relation
+[00:19:42 -> 00:19:44] as a hypothesis in our assignment
+[00:19:45 -> 00:19:48] or as a precondition in our assignment rule.
+[00:19:48 -> 00:19:49] What if we didn't use it
+[00:19:49 -> 00:19:51] and what if we kind of restricted
+[00:19:51 -> 00:19:53] that E1 should be of the same,
+[00:19:53 -> 00:19:56] so E0 should still be a reference type
+[00:19:56 -> 00:19:57] of some type T and,
+[00:19:57 -> 00:20:01] but E1 should be the value type T
+[00:20:01 -> 00:20:03] corresponding to E0's reference type.
+[00:20:04 -> 00:20:09] In which case this is a valid well-typed expression
+[00:20:09 -> 00:20:11] and has type T.
+[00:20:11 -> 00:20:14] Now clearly this rule is shorter and simpler
+[00:20:14 -> 00:20:16] than the rule that I had earlier.
+[00:20:16 -> 00:20:17] But what is the problem?
+[00:20:17 -> 00:20:19] First of all, it requires the RHS
+[00:20:19 -> 00:20:21] to be of the same type as LHS.
+[00:20:21 -> 00:20:22] And so this is sound,
+[00:20:22 -> 00:20:25] which means that this is a rule
+[00:20:25 -> 00:20:29] that will only accept correct programs,
+[00:20:29 -> 00:20:33] but it is imprecise because it rejects some programs
+[00:20:33 -> 00:20:36] that we want to admit in our language.
+[00:20:36 -> 00:20:39] So for example, you can see that this rule,
+[00:20:40 -> 00:20:43] this rule is stricter than this rule.
+[00:20:43 -> 00:20:48] For example, we can substitute T0 with T
+[00:20:48 -> 00:20:49] and T1 with T
+[00:20:49 -> 00:20:52] and all the requirements hypothesis
+[00:20:52 -> 00:20:54] that this rule requires are satisfied
+[00:20:54 -> 00:20:57] by the hypothesis that the original rule required.
+[00:20:57 -> 00:21:01] And the conclusion is also kind of similar.
+[00:21:01 -> 00:21:06] If we kind of restrict T0 and T1 to be the same type T.
+[00:21:07 -> 00:21:09] But the original rule is actually more general
+[00:21:09 -> 00:21:12] because it admits more programs than the new rule.
+[00:21:12 -> 00:21:17] For example, for object oriented inheritance,
+[00:21:17 -> 00:21:21] let's say I have a class A which represents type A
+[00:21:21 -> 00:21:26] and I have another type B which derives from type A.
+[00:21:26 -> 00:21:28] And so my subtyping relation looks like
+[00:21:28 -> 00:21:33] B is a subtype of A or B is a derived type of A.
+[00:21:33 -> 00:21:38] Now in my assignment rule that I had earlier,
+[00:21:38 -> 00:21:40] I allow this kind of operation,
+[00:21:40 -> 00:21:45] which is a variable of reference type capital A
+[00:21:45 -> 00:21:50] is assigned a value of derived type or subtype capital B.
+[00:21:52 -> 00:21:54] And so this is allowed by our original assignment rule,
+[00:21:54 -> 00:21:58] but will be disallowed by the assignment imprecise rule.
+[00:21:58 -> 00:22:01] Even though the assignment imprecise rule is sound,
+[00:22:01 -> 00:22:06] it rejects more programs.
+[00:22:06 -> 00:22:08] It does not admit as many programs
+[00:22:08 -> 00:22:11] as we wanted it to or as original rule did.
+[00:22:11 -> 00:22:14] And it is for that reason we call it imprecise.
+[00:22:14 -> 00:22:17] We call it sound because it still only accepts
+[00:22:17 -> 00:22:18] the correct programs.
+[00:22:18 -> 00:22:20] It doesn't accept any incorrect program,
+[00:22:20 -> 00:22:23] but it doesn't accept all the correct programs.
+[00:22:23 -> 00:22:25] And that's why we call it imprecise.

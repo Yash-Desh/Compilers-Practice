@@ -1,0 +1,159 @@
+Title: Compiler Design Module 39.1 : Type Rules Revised for Reference Types
+Video ID: n_V9oJ_wZMI
+Detected language: en
+------------------------------------------------------------
+
+[00:00:00 -> 00:00:08] Now that we are introduced to reference types we are going to revise our typing rules to accommodate
+[00:00:08 -> 00:00:14] these reference types and the idea is very simple. Recall the addition rule which said the original
+[00:00:14 -> 00:00:27] rule said that if E1 is of type int, E2 is of type int, then E1 plus E2 is of type int. So
+[00:00:27 -> 00:00:33] this was the original addition rule that we had discussed earlier but now the revised
+[00:00:34 -> 00:00:39] addition rule would just generalize this to accommodate the subtyping relation for the
+[00:00:39 -> 00:00:47] reference type. It says if it is true that E1 is of type T1 and E2 is of type E2 and T1 is a
+[00:00:47 -> 00:00:53] subtype of int. So T1 could either be int or a subtype of int. Recall that int reference
+[00:00:53 -> 00:01:01] is a subtype of int or and T2 is a subtype of int then it is true that E1 plus E2 is of type
+[00:01:01 -> 00:01:06] int. Now there are two things to notice here. Number one is of course the generalization where
+[00:01:06 -> 00:01:13] we are allowing T1 to be either int or its subtype and the second thing here is that E1
+[00:01:13 -> 00:01:21] plus E2 is necessarily the value type int not the reference type int and it's not any
+[00:01:21 -> 00:01:27] other subtype of int either. So what are the implications on what are the valid
+[00:01:27 -> 00:01:32] expressions that the language supports because of this typing rule? Well here if I declare a
+[00:01:32 -> 00:01:39] variable int x then x is of reference type int and because of this rule x plus 3 is a well
+[00:01:39 -> 00:01:47] typed expression. So x plus 3 is a well typed expression and so this is a type correct
+[00:01:47 -> 00:01:54] expression because x is of type int reference 3 is of type int and so int reference gets pattern
+[00:01:54 -> 00:02:01] matched with T1 int gets pattern matched with T2 and E1 plus E2 gets pattern matched is of
+[00:02:01 -> 00:02:07] type int and so this whole expression is of type int if we use the sequence rule and the
+[00:02:07 -> 00:02:16] scope rule after that. Now let's take another example I say x plus 3 colon equals 1. Now
+[00:02:16 -> 00:02:24] this is not well typed because x plus 3 is of type int by our typing rule because you know when
+[00:02:24 -> 00:02:29] you use addition operator you get an int type but what you require in the LHS of an assignment
+[00:02:29 -> 00:02:34] operator recall from the last module is an int reference type and so this is not
+[00:02:36 -> 00:02:41] a type correct expression based on our rules. So you can similarly generalize all our typing
+[00:02:41 -> 00:02:46] rules to accommodate reference types by just using subtyping relation recall that a reference
+[00:02:46 -> 00:02:52] type is a subtype of the corresponding value type and so you know if you just generalize
+[00:02:52 -> 00:03:00] it like this you basically can accommodate reference types as it is as though they were
+[00:03:00 -> 00:03:07] just value be if they're only the values being used in the expression. All right now
+[00:03:07 -> 00:03:12] let's go to another typing rule which is the typing rule for a loop the while construct in
+[00:03:12 -> 00:03:20] a language. So the while construct in a language looks like while some expression E and then some
+[00:03:20 -> 00:03:25] other expression x which forms the body of the while loop. So the idea being that if E is true
+[00:03:25 -> 00:03:32] then x is executed and after x has finished execution you again evaluate E and you keep
+[00:03:32 -> 00:03:39] doing this until E evaluates to false. If E never evaluates to false then this becomes an infinite
+[00:03:39 -> 00:03:47] loop. If E evaluates to false in the very first check then x is never executed and so the question
+[00:03:47 -> 00:03:52] is what is the type in our language? What type do we want to assign this expression y E x?
+[00:03:53 -> 00:03:58] All right so here is the typing rule which gives a type to this expression says if E is
+[00:03:58 -> 00:04:09] of some type TB, x is of type T and TB is a subtype of bool then it is true that y E x is
+[00:04:09 -> 00:04:18] of type y. Now notice that you know first of all I notice that E can be of type TB such that TB is
+[00:04:18 -> 00:04:23] a subtype of bools for example E can be of the bool reference type. This is a similar
+[00:04:23 -> 00:04:28] generalization that we saw on a previous slide. x can be of any arbitrary type T
+[00:04:29 -> 00:04:34] and this expression here is of type void. Recall that void is a supertype of all other
+[00:04:34 -> 00:04:41] types and there's no operation that is valid on a void type. This choice of using a void
+[00:04:41 -> 00:04:48] type for the whole while expression is interesting. One question that may arise in the
+[00:04:48 -> 00:04:55] mind is well if x is of type T, why not just give T as a type of the entire while loop? Well
+[00:04:55 -> 00:05:00] the answer is well you know recall that the intended semantics of the while loop are that if
+[00:05:00 -> 00:05:09] E did not execute even once then x is never executed. So if you know if the intention
+[00:05:09 -> 00:05:16] here was that you know the value returned by this loop is the value returned by the last
+[00:05:16 -> 00:05:22] execution of the body it is possible that the body never executed and in which case it would be
+[00:05:22 -> 00:05:28] incorrect to say that this whole expression has type T and so you know the choice that
+[00:05:28 -> 00:05:33] the language designer has made here which is us so the choice that we make as a language
+[00:05:33 -> 00:05:40] designer here is that we just give it a void type. So what does it mean? So for example
+[00:05:40 -> 00:05:45] let's consider this expression while x is not equal to 10 x colon equals x plus 1.
+[00:05:46 -> 00:05:53] Well this expression here will have the type void. Recall that this expression here will have
+[00:05:53 -> 00:06:02] the type int and this expression here will have the type bool but void cannot be used with the
+[00:06:02 -> 00:06:09] addition operator because there is no typing rule that basically allows me to add void to 1
+[00:06:09 -> 00:06:14] and so this is not type correct and because of this plus 1 at the end.
+[00:06:16 -> 00:06:23] Okay now here's another rule for the address of operator which is the ampersand operator found
+[00:06:23 -> 00:06:33] commonly in C and C++. So if it is true that x is a reference type T ampersand then address
+[00:06:33 -> 00:06:39] of x or ampersand x in the programming language syntax is of type T star or the pointer type
+[00:06:39 -> 00:06:46] two star. So for example if x was a reference type int then ampersand x is of type
+[00:06:47 -> 00:06:55] this whole expression here would be of type int star but notice so this is type correct
+[00:06:55 -> 00:07:00] based on our address of rule in conjunction with the sequence rule and the scope rule
+[00:07:01 -> 00:07:07] but what about ampersand one well ampersand one does not fit into this type rule because one is
+[00:07:07 -> 00:07:13] of type int but not but what we require is that you know the operand of the ampersand operator
+[00:07:13 -> 00:07:17] the address of operator should be a reference type and one is not a reference type and so
+[00:07:17 -> 00:07:25] this is not type correct. All right now let's come to our next construct of our language which
+[00:07:25 -> 00:07:32] is the if then else operator. So you want to give a type to if e1 then e2 else e3. If it is true
+[00:07:32 -> 00:07:39] that e1 is of type Tb so that Tb is a subtype of bool and e2 is of type T2 and e3 is of type
+[00:07:39 -> 00:07:47] T3 then it is true that if e1 then e2 else e3 is of type void. Now once again this is a choice
+[00:07:47 -> 00:07:52] that the programming language designer has made just saying that you know this expression
+[00:07:52 -> 00:07:59] is of type void and not for example a type that is related to either T2 or T3
+[00:08:00 -> 00:08:06] and once again the the implications of that is that whatever is the return value of this
+[00:08:06 -> 00:08:12] cannot be added to some other value for example or cannot be used with the logical and operator
+[00:08:12 -> 00:08:18] etc because nothing can be used with the void. So let's see what kind of expressions this
+[00:08:18 -> 00:08:23] typing rule admits and what it rejects. So if one less than two then four else true.
+[00:08:24 -> 00:08:33] Now this basically so four evaluates to int, true evaluates to bool, one is less than two
+[00:08:33 -> 00:08:41] evaluates to bool and this whole expression therefore evaluates to void and so far we
+[00:08:41 -> 00:08:45] have been able to type the whole expression and so indeed this expression is type correct.
+[00:08:45 -> 00:08:51] What about this expression if one is less than two then four else five plus one. Now this
+[00:08:51 -> 00:08:59] expression here based on our typing rules will be of type void and I cannot use the plus
+[00:08:59 -> 00:09:04] operator with the void type and so this is not type correct. Notice that our language
+[00:09:04 -> 00:09:08] allows the then expression and the else expression to have different types as seen
+[00:09:08 -> 00:09:16] in this example. All right so before I move on to my next construct I want to introduce
+[00:09:16 -> 00:09:21] I want to introduce this notion of the least upper bound of two types and before I do that
+[00:09:21 -> 00:09:30] I'll introduce upper bound and upper bound u represented by u equals ub upper bound of two
+[00:09:30 -> 00:09:36] types s and t. Let s and t be two arbitrary types then we say that u is an upper bound
+[00:09:36 -> 00:09:46] of s and t if the following holds so u is an upper bound of s and t if and only if s is
+[00:09:48 -> 00:09:55] a subtype of u and t is a subtype of u so both of these should hold okay so both of these
+[00:09:55 -> 00:10:03] should hold. All right so for example void is the upper bound of any two types t1 and t2
+[00:10:03 -> 00:10:08] because t1 is always a subtype of void and t2 will always be a subtype of void because void recall
+[00:10:08 -> 00:10:13] by design is a super type of all other types in a language and so void is the upper bound of
+[00:10:14 -> 00:10:22] is an upper bound of any two types. Similarly int is an upper bound of int and int ampersand
+[00:10:23 -> 00:10:31] or int reference because int is a subtype of int reflexivity and
+[00:10:33 -> 00:10:39] int ampersand is also a subtype of int because every reference type is a subtype of its
+[00:10:39 -> 00:10:44] corresponding value type okay so now that we understand what's an upper bound so
+[00:10:44 -> 00:10:49] diagrammatically speaking you know if I kind of draw my subtyping relation the partial order
+[00:10:50 -> 00:10:57] as in a diagram then an upper bound basically represents so let's say this was s and this
+[00:10:57 -> 00:11:03] was t then you know the all common ancestors of both s and t represent the upper bounds of
+[00:11:04 -> 00:11:10] s and t and there could be multiple upper bounds for two types. There's a special upper
+[00:11:10 -> 00:11:15] bound called a least upper bound called which I'm calling l here which is lub of s comma t
+[00:11:16 -> 00:11:22] for two types s and t lub is such that l is an upper bound of s and t so it is a least it is
+[00:11:22 -> 00:11:31] a common ancestor of s and t and further for any other upper bound u2 of s comma t u2 should
+[00:11:31 -> 00:11:40] be a subtype of l sorry l is a subtype of u2 all right so it is the least such upper bound
+[00:11:40 -> 00:11:51] so it is the first common ancestor of s comma t so once again l is a least upper bound if
+[00:11:51 -> 00:11:58] it is an upper bound such that for any other upper bound l is a subtype of u2 okay
+[00:11:58 -> 00:12:04] so first of all what are some properties of least upper bound in general for any partially
+[00:12:04 -> 00:12:12] ordered set like the set of types in our language recall that you know our types are can be thought
+[00:12:12 -> 00:12:18] of as a set and the subtyping relation can be used to order that set because the subtyping
+[00:12:18 -> 00:12:24] relation is reflexive transitive and anti-symmetric this is also called a partially ordered set
+[00:12:24 -> 00:12:29] and in general the least upper bound for any two types need not be unique for a given
+[00:12:29 -> 00:12:34] partially ordered set even in the presence of a void type which is you know which is the great
+[00:12:34 -> 00:12:39] which is the which is an upper bound for all other types it's not necessary that lub is unique
+[00:12:40 -> 00:12:46] for any arbitrary lattice or for any arbitrary poset or partially ordered set but in our
+[00:12:46 -> 00:12:50] language the language that we are discussing as an example we are ensuring that it's always
+[00:12:50 -> 00:12:57] unique and and you know typically language designers will ensure that the typing I mean if
+[00:12:57 -> 00:13:01] they want to use the least upper bound operator in their typing rules then they will ensure that
+[00:13:01 -> 00:13:06] the least upper bound is always unique so we're going to use the lub operator in our typing rules
+[00:13:06 -> 00:13:13] as we see it's going to see in the next slide so let's see what is the lub of int and bool
+[00:13:13 -> 00:13:20] well int is not a subtype of bool neither is bool a subtype of int what is the only upper
+[00:13:20 -> 00:13:26] bound of int and bool that we know it's probably just void okay and that's the only upper
+[00:13:26 -> 00:13:31] bound of int and bool and so it's also the least upper bound of int and bool what about
+[00:13:32 -> 00:13:39] what about lub of int and int ampersand recall that int ampersand is a subtype of int and
+[00:13:39 -> 00:13:45] int is also a subtype of int so like there are two upper bounds of int and ampersand one of
+[00:13:45 -> 00:13:57] them is int and another one is so another upper bound of int and int ampersand is void
+[00:13:58 -> 00:14:05] which one is the least upper bound well because int is a subtype of void this is
+[00:14:05 -> 00:14:09] the least upper bound so the least upper bound of int and int ampersand is just int
+[00:14:09 -> 00:14:19] all right so now i come to my last construct in this module which is the ternary operator which is
+[00:14:19 -> 00:14:28] similar to the if-then-else operator but it has slightly different meaning so the syntax is
+[00:14:28 -> 00:14:33] e1 question mark e2 colon e3 this is similar to the ternary operator you'll find in c and c plus
+[00:14:33 -> 00:14:39] plus and the idea is you will check the value of e1 if it evaluates to true then you return
+[00:14:39 -> 00:14:45] e2 else you return e3 the difference between if-then-else and the ternary operator is that
+[00:14:45 -> 00:14:50] this actually returns a value that can be used for further computation as you're going to see
+[00:14:50 -> 00:14:57] in this typing rule as well so this rule is called the ternary operator and if it is true
+[00:14:57 -> 00:15:05] that e1 is of type tb such that tb is a subtype of bool and e2 is of type t2 and e3 is
+[00:15:05 -> 00:15:12] of type t3 then it's true that e1 question mark e2 colon e3 is of type least upper bound of t2
+[00:15:12 -> 00:15:19] comma t3 and it's not just the least upper bound but the value you know the value type
+[00:15:19 -> 00:15:26] of the least upper bound of t2 comma t3 so recall that for the if-then-else operator the
+[00:15:26 -> 00:15:31] we were basically saying that it is a void type but for the ternary operator we are actually
+[00:15:31 -> 00:15:38] giving a more precise type a type that can be used in more operations so for example
+[00:15:39 -> 00:15:43] can i you know let's look at some examples to understand what these with this typing rule
+[00:15:43 -> 00:15:51] admits and rejects so is x question mark y colon z colon equals 10 a valid expression
+[00:15:52 -> 00:16:00] well y and z could be reference types but x question mark y colon z is definitely a value
+[00:16:00 -> 00:16:06] type because of because we are saying that the value type the value type will only be returned
+[00:16:06 -> 00:16:12] by this expression and we recall that the lhs of an expression of an assignment statement
+[00:16:12 -> 00:16:16] should always be a reference type and so this cannot be a well-typed expression ever
+[00:16:18 -> 00:16:24] all right let's take another example one if one is less than two question mark f5
+[00:16:25 -> 00:16:34] colon four plus three so five is of type int four is of type int so this whole expression one is
+[00:16:34 -> 00:16:40] less than two is of type bool so this this pattern matches with tb and this whole expression
+[00:16:40 -> 00:16:50] is of type lub of int comma int which is just int and int plus three so three is also int so
+[00:16:50 -> 00:16:56] int plus int is well-typed and so this is a well-typed expression all right let's take
+[00:16:56 -> 00:17:03] another example one is less than two question mark five colon true now one is less than two
+[00:17:03 -> 00:17:11] is boolean so that matches with tv five is int true is bool and so int matches with t2
+[00:17:11 -> 00:17:21] true matches with t3 and so the type of this expression would be val of lub of int comma bool
+[00:17:23 -> 00:17:29] which is just void and so this is also a well-typed expression because
+[00:17:29 -> 00:17:33] it you know our typing rules evaluate a type for it it's a type correct expression

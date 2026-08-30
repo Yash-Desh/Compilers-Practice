@@ -1,0 +1,291 @@
+Title: Compiler Design Module 44 : Static vs  Dynamic Types
+Video ID: vCsm3I4Hep8
+Detected language: en
+------------------------------------------------------------
+
+[00:00:00 -> 00:00:08] Okay, so we've discussed typing and typing rules and how to do static type checking.
+[00:00:08 -> 00:00:11] So one of the things that was kind of implicit in our discussion so far was that we're doing
+[00:00:11 -> 00:00:18] static type checking because we used to check the AST statically to see whether it is well
+[00:00:18 -> 00:00:20] typed or not.
+[00:00:20 -> 00:00:25] Actually type systems can be thought of as two different types of type systems.
+[00:00:25 -> 00:00:30] One is a static type system and another is a dynamic type checking system.
+[00:00:30 -> 00:00:40] So languages can either have static type checking or dynamic type checking.
+[00:00:40 -> 00:00:47] We've already seen how static type checking works by doing bottom up pass over the AST.
+[00:00:47 -> 00:00:49] How does dynamic type checking work?
+[00:00:49 -> 00:00:54] Well dynamic type checking is nothing but just putting runtime checks to check whether
+[00:00:54 -> 00:00:58] the values are of the expected types or not.
+[00:00:58 -> 00:01:04] So in fact I think we have used the example of array out of bounds in the past where
+[00:01:04 -> 00:01:10] we may want to say that this is an array of size 100 and then let's say we index
+[00:01:10 -> 00:01:15] into the array using some variable i and then there would be dynamic type checker
+[00:01:15 -> 00:01:21] that would check whether i lies between 0 and 100 or not and if not then it would
+[00:01:21 -> 00:01:27] be flagged as a type error otherwise it would be a successful type check.
+[00:01:27 -> 00:01:34] Now array out of bounds was an example of a property that is better checked dynamically
+[00:01:34 -> 00:01:39] than statically because statically it's very difficult to say whether something belongs
+[00:01:39 -> 00:01:43] to an array's array bounds or not.
+[00:01:43 -> 00:01:46] However there are many properties that are very easy to check statically.
+[00:01:47 -> 00:01:52] For example whether something is of type integer or not.
+[00:01:52 -> 00:01:59] If it has been constructed through an expression tree that produces a value of type integer
+[00:01:59 -> 00:02:02] for sure we can say that that expression has type integer.
+[00:02:02 -> 00:02:06] For example if it is formed by adding two integers then it would be an integer
+[00:02:06 -> 00:02:07] and so on.
+[00:02:07 -> 00:02:11] But languages that have such form of static type checking also kind of have
+[00:02:11 -> 00:02:16] notionally the idea of dynamic types as well.
+[00:02:16 -> 00:02:21] So for example if I say 1 plus 2 the dynamic type of 1 will also be integer.
+[00:02:21 -> 00:02:27] This dynamic type of 2 will also be integer and then when I add the 2 the result would
+[00:02:27 -> 00:02:32] be 3 and the dynamic type of 3 would also be an integer.
+[00:02:32 -> 00:02:42] Now this is dynamic types that are getting propagated in the system and the runtime
+[00:02:42 -> 00:02:47] may or may not want to maintain these dynamic types.
+[00:02:47 -> 00:02:53] Even languages with static type checking have the notion of dynamic types for the kind
+[00:02:53 -> 00:02:55] of types that are being checked.
+[00:02:55 -> 00:02:58] I'm not talking about array out of bounds but even things like whether something is
+[00:02:58 -> 00:03:04] an integer, whether something is a pointer to a character and things like that.
+[00:03:04 -> 00:03:07] While we have looked at it from a static type checking point of view you can even
+[00:03:07 -> 00:03:12] consider that the runtime may be maintaining types all along the way and it may want to
+[00:03:12 -> 00:03:14] check them.
+[00:03:14 -> 00:03:19] So just that they may or may not implement dynamic checks and typically they will not
+[00:03:19 -> 00:03:23] implement dynamic checks because what is the point of implementing dynamic checks
+[00:03:23 -> 00:03:28] if you have already statically checked that all possible computations can only
+[00:03:28 -> 00:03:31] produce an integer or a pointer to a character.
+[00:03:31 -> 00:03:36] So if you have checked that statically you don't need dynamic checks and that's
+[00:03:36 -> 00:03:39] why static type checking is so useful because you don't really pay any
+[00:03:39 -> 00:03:41] runtime cost.
+[00:03:41 -> 00:03:49] Okay so we do not need the dynamic checks for properties that have been checked
+[00:03:49 -> 00:03:54] statically for example we don't need to check dynamically that 1 plus 2 produces
+[00:03:54 -> 00:03:59] an int we can check these things statically.
+[00:03:59 -> 00:04:06] Now that actually the notion of dynamic type allows us to state our soundness
+[00:04:06 -> 00:04:08] theorem differently.
+[00:04:08 -> 00:04:14] Recall that when we talked about a type system we said a type system is sound if
+[00:04:14 -> 00:04:19] all the values that an expression can produce are always of the same type as
+[00:04:19 -> 00:04:23] the type inferred by our static type system rules.
+[00:04:23 -> 00:04:28] So that's another there's another way to state the same property soundness
+[00:04:28 -> 00:04:33] property and we can also call it a soundness theorem is that for all
+[00:04:33 -> 00:04:42] expressions E the dynamic type is a subtype of the static type so a type
+[00:04:42 -> 00:04:48] system is sound if the dynamic type that is given by the execution semantics
+[00:04:48 -> 00:04:53] of the language is will always be a subtype of the static type so notice
+[00:04:53 -> 00:04:56] that I'm not saying that the dynamic type needs to be equal to the static
+[00:04:56 -> 00:05:00] type that would be a very strong condition and that's not what we are
+[00:05:00 -> 00:05:04] aiming for that would make it very restrictive and that would result as we
+[00:05:04 -> 00:05:08] going to see with examples that would result in many programs getting
+[00:05:08 -> 00:05:13] rejected by the type static type system we are okay as long as the dynamic
+[00:05:13 -> 00:05:20] type is a subtype of static type okay all right so in other words the
+[00:05:20 -> 00:05:25] static type checker will not accept any program that would have failed the
+[00:05:26 -> 00:05:33] So what do I mean by of equal power? basically whatever is the whatever
+[00:05:33 -> 00:05:38] properties that the dynamic type checker is checking is exactly the same
+[00:05:38 -> 00:05:41] properties that the static type checker is checking that's what I mean
+[00:05:41 -> 00:05:44] by equal power for example the dynamic type checker is not checking array
+[00:05:44 -> 00:05:47] out of bounds or anything like that it's only checking those properties
+[00:05:47 -> 00:05:51] of the static type checker is also checking and soundness basically means
+[00:05:51 -> 00:05:55] that the static type checker will not accept any program that would have failed
+[00:05:55 -> 00:06:03] the dynamic type checker of equal power. So notice that the the key phrases
+[00:06:03 -> 00:06:09] will not accept any program. So it says that anything that it accepts
+[00:06:09 -> 00:06:16] must always pass the dynamic type checker and anything you know so if the
+[00:06:16 -> 00:06:20] static type checker accepts a program then it should have also passed then
+[00:06:20 -> 00:06:24] that program would always pass the dynamic type checker's checks also
+[00:06:24 -> 00:06:28] assuming that the dynamic type checker is checking for exactly the same properties.
+[00:06:28 -> 00:06:34] Another way to say that is that all dynamically type incorrect
+[00:06:34 -> 00:06:38] programs would always be rejected by the static type checker. So
+[00:06:38 -> 00:06:42] anything that is dynamically type incorrect would definitely get rejected
+[00:06:42 -> 00:06:45] by the static type checker because the static type checker is basically
+[00:06:45 -> 00:06:50] the soundness theorem says that the static type checker checks whether for
+[00:06:50 -> 00:06:56] all possible executions the type system is being followed or not and so if there
+[00:06:56 -> 00:06:59] was a program that could be dynamically type incorrect means there
+[00:06:59 -> 00:07:03] is some execution under which the type check the dynamic type check would
+[00:07:03 -> 00:07:07] have failed then the static type checker would also have failed on that
+[00:07:07 -> 00:07:13] particular program because that's the definition of soundness. Okay so but
+[00:07:13 -> 00:07:20] notice that it is not saying much because even if the static type checker
+[00:07:20 -> 00:07:26] simply just rejects all programs that would be sound okay so because that
+[00:07:26 -> 00:07:32] still holds our static type our soundness theorem because it just says
+[00:07:32 -> 00:07:36] that anything that is accepted by the static type checker will always be
+[00:07:36 -> 00:07:41] resulting dynamically type correct executions but if the static type
+[00:07:41 -> 00:07:47] checker doesn't accept any program that's vacuously going to obey the
+[00:07:47 -> 00:07:52] soundness theorem. Also notice that if the static type checker just assigns
+[00:07:52 -> 00:07:59] void to all the you know just assigns void the void type for every
+[00:07:59 -> 00:08:04] expression or for every operator then what will happen is that only very
+[00:08:04 -> 00:08:08] few programs would be able to pass the static type checker for example
+[00:08:08 -> 00:08:14] I've used this example before so let's say I have 1 plus 2 plus 3 now if 1
+[00:08:14 -> 00:08:19] plus let's say this is the association so if this 1 plus 2 is computed
+[00:08:19 -> 00:08:24] first and if my static type checker just says that the
+[00:08:24 -> 00:08:28] return type of 1 plus 2 is going to be a void then 1 plus 2 plus 3 would
+[00:08:28 -> 00:08:32] not be accepted by the static type checker right so the static type
+[00:08:32 -> 00:08:36] checker will only accept for example programs that have a single plus in
+[00:08:36 -> 00:08:41] them because now the resulting value can never be added again to something
+[00:08:41 -> 00:08:48] else to another integer so it's very easy to build a static type checker
+[00:08:48 -> 00:08:52] that is sound because you can just reject everything or you can accept
+[00:08:52 -> 00:08:57] only a very small fraction of the correct programs and notice that is
+[00:08:57 -> 00:09:01] why we are when we were talking about typing rules our focus was not
+[00:09:01 -> 00:09:04] only on soundness but also on precision we wanted it to be as
+[00:09:04 -> 00:09:09] general as possible and if you recall we were using the subtyping relation
+[00:09:09 -> 00:09:18] to improve the generality of our rules okay so the the flip property of
+[00:09:18 -> 00:09:24] soundness is called completeness and a complete a type system would be
+[00:09:24 -> 00:09:29] complete if all dynamically correct programs are accepted by the static
+[00:09:29 -> 00:09:34] type checker all right now this is a different property from soundness in
+[00:09:34 -> 00:09:40] soundness we were saying all dynamically type incorrect programs are rejected by
+[00:09:40 -> 00:09:44] the static type checker so that's soundness and the type system we have
+[00:09:44 -> 00:09:48] seen is sound completeness is the flip I just replace the word incorrect
+[00:09:48 -> 00:09:52] with correct and rejected with accepted and so completeness properties all
+[00:09:52 -> 00:09:57] dynamically type correct programs are accepted by the static type checker
+[00:09:57 -> 00:10:05] now is the type system that we discussed sound well actually in sound
+[00:10:05 -> 00:10:10] the answer is yes is it complete the answer is actually no and in general
+[00:10:10 -> 00:10:15] completeness is much harder property than soundness all right I mean
+[00:10:15 -> 00:10:19] actually I should say both soundness and completeness together is much harder
+[00:10:19 -> 00:10:24] to achieve than achieving only soundness right I can also achieve only
+[00:10:24 -> 00:10:27] completeness example I could accept all programs and that would be still
+[00:10:27 -> 00:10:31] complete but that won't be sound so soundness is very important I can't you
+[00:10:31 -> 00:10:35] know without soundness the type system doesn't we make sense but achieving
+[00:10:35 -> 00:10:39] soundness is easy but we want to be as general as possible but achieving
+[00:10:39 -> 00:10:43] both soundness and completeness may not always be possible and here is an
+[00:10:43 -> 00:10:48] example so let's say there are two classes C and D and let's say D is a
+[00:10:48 -> 00:10:54] derived class of class C in other words D is a subtype of C all right now let's
+[00:10:54 -> 00:11:02] say I declare two objects of type C small C and after type D small D and
+[00:11:02 -> 00:11:08] let's say I have a program which is which says another object D2 of type
+[00:11:08 -> 00:11:14] D is depending on some condition using the ternary operator either C or
+[00:11:14 -> 00:11:20] D now notice that the type of this particular expression here on the right
+[00:11:20 -> 00:11:24] of the assignment operator would be the least upper bound of C and D which
+[00:11:24 -> 00:11:31] would be C right based on our typing rules because the type of C is C the
+[00:11:31 -> 00:11:35] type of D is D and so least upper bound of C and D is C based on the
+[00:11:35 -> 00:11:42] type hierarchy so this would be C but the the type of the LHS of my
+[00:11:42 -> 00:11:48] assignment is D and notice for an assignment I wanted that the LHS should
+[00:11:48 -> 00:11:53] be a subtype of the LHS and that's not true here C is not a subtype of D it's
+[00:11:53 -> 00:11:57] the other way around D is a subtype of C but C is not a subtype of D and so
+[00:11:57 -> 00:12:02] this would fail the type check this would fail the static type check so
+[00:12:02 -> 00:12:11] let me just write it down this fails static type check all right but let's
+[00:12:11 -> 00:12:16] say let's look at the dynamic type checker let's say that dynamically I am
+[00:12:16 -> 00:12:24] hundred percent sure somehow that this condition is always false now if this
+[00:12:24 -> 00:12:31] condition is always false then I would always assign D2 to D all right so
+[00:12:31 -> 00:12:35] let's say you know dynamically it so turns out that for all possible inputs
+[00:12:35 -> 00:12:39] that I will ever execute on this program this condition is always
+[00:12:39 -> 00:12:44] false but that's very difficult to figure out at compile time and and so
+[00:12:44 -> 00:12:49] this is always false and this the dynamic type of D2 will always be D
+[00:12:49 -> 00:12:56] and so dynamically this will never fail the type check and so this would
+[00:12:56 -> 00:13:00] be a dynamically type correct program in that case but it has been rejected
+[00:13:00 -> 00:13:06] by a static type system and thus our type system as we discussed is not a
+[00:13:06 -> 00:13:11] complete type system and general it is almost impossible to unless it's a very
+[00:13:11 -> 00:13:16] simple language to have both a sound and complete static type checker in
+[00:13:16 -> 00:13:22] general here is a Venn diagram that explains this relationship between
+[00:13:22 -> 00:13:26] dynamically type correct programs and statically type correct programs if
+[00:13:26 -> 00:13:30] this is a space of all possible programs that could be put together
+[00:13:30 -> 00:13:38] that are kind of parsable so I should say maybe all parsable programs then and
+[00:13:38 -> 00:13:48] scopeable programs then a subset of those programs is is dynamically type
+[00:13:48 -> 00:13:54] correct and another yet another subset of the dynamically type correct
+[00:13:54 -> 00:14:01] programs is the statically type correct all right so so so this is
+[00:14:01 -> 00:14:05] something we should keep in mind and we already saw some example of a
+[00:14:05 -> 00:14:10] program that would be rejected by the static type checker so that program
+[00:14:10 -> 00:14:13] that we just saw in the previous slide would lie in this space because
+[00:14:13 -> 00:14:18] it's dynamically type correct but statically type incorrect soundness
+[00:14:18 -> 00:14:24] basically says that this set of statically type programs is a subset
+[00:14:24 -> 00:14:29] of dynamically type correct programs so that's what soundness is that
+[00:14:29 -> 00:14:32] means that any type correct it cannot be that a statically type correct
+[00:14:32 -> 00:14:36] program is dynamically type incorrect so that's what soundness says so this
+[00:14:36 -> 00:14:40] needs to be subset but you know soundness is easy to achieve because I
+[00:14:40 -> 00:14:45] could just shrink this shrink the brown line really small and that would
+[00:14:45 -> 00:14:50] still be sound completeness says that actually there this there is no
+[00:14:50 -> 00:14:53] space between statically types checker it and dynamically type
+[00:14:53 -> 00:14:57] correct which means they are exactly equal and that's not sound that would
+[00:14:57 -> 00:15:01] be sound and complete but that's usually very difficult to achieve as we just
+[00:15:01 -> 00:15:07] discussed so here's an example of you know why static type system may be
+[00:15:07 -> 00:15:12] often too restrictive in practice so in fact this is an example from the
+[00:15:12 -> 00:15:18] C++ language and it's a you know these kind of problems actually appear
+[00:15:18 -> 00:15:22] practically because the static type system is too restrictive and I thought
+[00:15:22 -> 00:15:26] I should discuss this as well so let's say there is this class called
+[00:15:26 -> 00:15:32] club count and I declare let's say a member variable I and and then I have
+[00:15:32 -> 00:15:38] a method a class member function called ink which increments I and then
+[00:15:38 -> 00:15:43] returns the makes returns a copy of the current object so return start
+[00:15:43 -> 00:15:47] this recall that C++ implements return by value so it's going to
+[00:15:47 -> 00:15:51] create a copy of the current object and return it and that's I mean
+[00:15:51 -> 00:15:55] because the current object is of type count the returned object will
+[00:15:55 -> 00:16:00] also be of type count now let's say there is a derived class from count and
+[00:16:00 -> 00:16:04] let's say that's the derived class is called stock and let's say you know
+[00:16:04 -> 00:16:09] it derives from count which means it has I a state member variable but it
+[00:16:09 -> 00:16:16] also has some extra extra field that's a name field which says that
+[00:16:16 -> 00:16:21] what is the name of this particular stock okay so so this would be a
+[00:16:21 -> 00:16:28] derived class or sometimes stock is a subtype of count now let's say I wanted
+[00:16:28 -> 00:16:34] to write such a program where it says stock a stock B equals a dot increment and
+[00:16:34 -> 00:16:39] then you know I want to use B's name somewhere because I know that B is of
+[00:16:39 -> 00:16:45] type stock now is this program type correct the answer is no this program
+[00:16:45 -> 00:16:49] is that type incorrect as far as the static type system goes why because
+[00:16:50 -> 00:16:57] if you look at this particular function call here a dot ink this is going to
+[00:16:57 -> 00:17:03] return of an expression of type what will be the type of a dot ink well we
+[00:17:03 -> 00:17:07] are just going to use the method typing rule and it's going to tell us
+[00:17:07 -> 00:17:12] that the return type is count whereas I'm trying to assign it to a
+[00:17:12 -> 00:17:18] variable which is stock and that would fail the type check of the
+[00:17:18 -> 00:17:22] assignment operator because the assignment operator needs that the RHS
+[00:17:22 -> 00:17:28] of the assignment operator needs to be a subtype of the LHS whereas here it's
+[00:17:28 -> 00:17:33] not true because the RHS type is count and the LHS type is stock and count
+[00:17:33 -> 00:17:41] is not a subtype of stock and so this is type incorrect more
+[00:17:41 -> 00:17:46] specifically this is type correct statically so if I statically it's
+[00:17:46 -> 00:17:51] static type incorrect but if I look at the dynamic type then actually I there
+[00:17:51 -> 00:17:56] is no way that this program can have a type error because I'm doing stock A
+[00:17:56 -> 00:18:04] and A is of type stock and I'm calling ink on stock not on count it
+[00:18:04 -> 00:18:10] just so happens that ink is defined inside the class count and so so
+[00:18:10 -> 00:18:15] dynamically speaking this is always okay because B would just get a copy
+[00:18:15 -> 00:18:22] of A and A is a stock so we are okay so this is you know can be argued that
+[00:18:22 -> 00:18:30] dynamically this is okay all right and now if I want to do this it's it's a
+[00:18:30 -> 00:18:34] little difficult to do it just because the static type system doesn't allow us
+[00:18:34 -> 00:18:37] to do it right so this is a practical example this is a practical
+[00:18:37 -> 00:18:42] programming pattern that makes it difficult to write useful programs
+[00:18:42 -> 00:18:47] because the static type system is too restrictive now how would you solve
+[00:18:47 -> 00:18:53] this problem well either one option is that I basically you know if I
+[00:18:53 -> 00:18:59] basically used the type count for B that would have sort of solved the
+[00:18:59 -> 00:19:05] problem right because that way this statement would have passed the
+[00:19:05 -> 00:19:09] static type check but then I won't be able to use name inside B because
+[00:19:09 -> 00:19:14] now B is of type count and although the dynamic type is stock the
+[00:19:14 -> 00:19:19] static type is count and so I can't just refer to the field name because
+[00:19:19 -> 00:19:23] name is only specific to stock all right so so this is also not a
+[00:19:23 -> 00:19:29] satisfactory solution it's not even a solution actually all right so so this
+[00:19:29 -> 00:19:33] would so while something something like this would have passed the
+[00:19:33 -> 00:19:37] dynamic type check it fails the static type check so one potential
+[00:19:37 -> 00:19:40] workaround of this kind of thing and this is something that C++
+[00:19:40 -> 00:19:46] is the idea of a dynamic cast operator all right so what I can do is I can say
+[00:19:46 -> 00:19:53] stock star s equals dynamic cast stock star ampersand B the idea is you know
+[00:19:53 -> 00:19:59] the statically I'm basically saying that B is a count of is type count but
+[00:19:59 -> 00:20:03] then I can create an alias to it I can create a pointer to it of type
+[00:20:03 -> 00:20:09] stock by using this operator called dynamic cast and this may or may not
+[00:20:09 -> 00:20:13] succeed at runtime depending on whether B was actually an object of type
+[00:20:13 -> 00:20:18] stock or was it only an object of type count if it was only an object of type
+[00:20:18 -> 00:20:23] count then this dynamic cast operator would return null pointer otherwise
+[00:20:23 -> 00:20:27] you know it would be able it would return a non null pointer and I
+[00:20:27 -> 00:20:32] would have a pointer to an object of type stock and now I can reference
+[00:20:32 -> 00:20:37] the name of that stock later on in the program and I can you know maybe
+[00:20:37 -> 00:20:40] assert that s is never null pointer so in the example that we had the
+[00:20:40 -> 00:20:44] programmer knows that it's not possible that B is not a type stock
+[00:20:44 -> 00:20:48] and so I expect that this particular dynamic cast would always succeed on
+[00:20:48 -> 00:20:54] runtime at runtime now there are a couple of problems with there's a
+[00:20:54 -> 00:20:58] couple of while this approach works and actually practically used in a lot
+[00:20:58 -> 00:21:02] of C++ code because it's a workaround to the problem that I just
+[00:21:02 -> 00:21:08] described you know first of all it has some amount of runtime overhead it is
+[00:21:08 -> 00:21:13] not a very satisfactory solution in that sense because it's kind of saying
+[00:21:13 -> 00:21:18] that you know it's a way of kind of getting bridging this gap between
+[00:21:18 -> 00:21:24] dynamically type correct and statically type correct programs but
+[00:21:24 -> 00:21:28] but this is this you know so this is a trade-off that that language
+[00:21:28 -> 00:21:33] designers have to make and indeed the current kind of state of practice is
+[00:21:33 -> 00:21:39] something like the dynamic cast operator is is often used in real code another
+[00:21:39 -> 00:21:44] potential workaround which is slightly more complicated but would have also
+[00:21:44 -> 00:21:47] kind of I mean you know some people may think of it as more principle
+[00:21:47 -> 00:21:51] because you are letting the static type checker do more with what you're
+[00:21:51 -> 00:21:56] doing is to basically define the count class as a template and allow it to
+[00:21:56 -> 00:22:01] take a type T that you know that is basically the return type of the
+[00:22:01 -> 00:22:07] increment method so the idea is that I am going to you know return not a
+[00:22:07 -> 00:22:11] type of I'm going to return a copy but I'm not going to return a copy
+[00:22:11 -> 00:22:17] of type count but a copy of type T so or which basically means that it's
+[00:22:17 -> 00:22:23] must be true that T is a subtype or derived class of count so this is a
+[00:22:23 -> 00:22:29] code I basically again do increment of I and then I say return star this except
+[00:22:29 -> 00:22:36] that before star I do a static cast of this with a T star now why is this
+[00:22:36 -> 00:22:40] code correct well first of all what I need to do for the derived type is
+[00:22:40 -> 00:22:44] now stock doesn't derive from count but count is no longer a class but a
+[00:22:44 -> 00:22:48] template so I'm going to say it's stock derives from count with the
+[00:22:48 -> 00:22:54] of stock right so this is slightly stylized usage which basically means
+[00:22:54 -> 00:22:59] that it is the count but the no the type T which is supposed to be the
+[00:22:59 -> 00:23:03] right type of count is actually stock and so anytime you do an ink you
+[00:23:03 -> 00:23:09] should return a stock and not a count also notice that it has a static cast
+[00:23:09 -> 00:23:12] operator instead of a dynamic cast operator and the static cast is not
+[00:23:12 -> 00:23:16] evaluated at runtime but is evaluated at compile time and indeed in
+[00:23:16 -> 00:23:21] this case the compile time check would succeed because this would be of count
+[00:23:21 -> 00:23:27] star but because of count stock star and count and because the compiler would be
+[00:23:27 -> 00:23:32] able to check that you know this is actually always being called with from
+[00:23:32 -> 00:23:37] the stock or from whatever it's being called it is actually a valid type
+[00:23:37 -> 00:23:43] so at compile time you can check whether for all possible paths to this
+[00:23:43 -> 00:23:48] particular point is it true that this cast can be done and if so then then
+[00:23:48 -> 00:23:52] that's fine otherwise it would otherwise this would have thrown a compiler so
+[00:23:52 -> 00:23:56] unlike dynamic cast which which gives you returns a null pointer at runtime
+[00:23:56 -> 00:23:59] a static cast either gives you a compiler or it succeeds your
+[00:23:59 -> 00:24:02] compilation

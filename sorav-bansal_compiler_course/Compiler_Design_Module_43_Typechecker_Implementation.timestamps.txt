@@ -1,0 +1,224 @@
+Title: Compiler Design Module 43 : Typechecker Implementation
+Video ID: EplUYdZVk64
+Detected language: en
+------------------------------------------------------------
+
+[00:00:00 -> 00:00:03] So, so far we have looked at different typing rules
+[00:00:03 -> 00:00:05] and now we're going to discuss
+[00:00:05 -> 00:00:09] how to implement type checking, right?
+[00:00:09 -> 00:00:13] So actually we have already discussed this a little bit
+[00:00:13 -> 00:00:15] when we got introduced the idea
+[00:00:15 -> 00:00:17] of type checking and type inference,
+[00:00:17 -> 00:00:20] but now we're going to actually look at some rules
+[00:00:20 -> 00:00:24] and look at the realization in terms of code
+[00:00:24 -> 00:00:27] or pseudo code as a type checker.
+[00:00:27 -> 00:00:30] So recall that type checking involves
+[00:00:30 -> 00:00:32] traversing the abstract syntax tree
+[00:00:32 -> 00:00:37] and doing a bottom-up transfer of types.
+[00:00:37 -> 00:00:40] And so at any point in the abstract syntax tree,
+[00:00:40 -> 00:00:45] you have, let's say a node n with children, c1 dot dot ci.
+[00:00:45 -> 00:00:48] And in this abstract syntax tree,
+[00:00:48 -> 00:00:52] the environment is passed usually down the tree
+[00:00:52 -> 00:00:56] or sometimes, you know, across the siblings
+[00:00:56 -> 00:01:01] and type information is passed up the AST, all right?
+[00:01:02 -> 00:01:06] So the information is going to travel
+[00:01:06 -> 00:01:09] in a certain direction in terms of the environment.
+[00:01:09 -> 00:01:13] The environment information is going to travel top down
+[00:01:13 -> 00:01:14] or maybe left to right,
+[00:01:14 -> 00:01:19] and type information is going to get passed up the AST.
+[00:01:20 -> 00:01:21] So let's look at some examples.
+[00:01:21 -> 00:01:24] So type inference may also be possible.
+[00:01:24 -> 00:01:25] So this was type checking,
+[00:01:25 -> 00:01:27] but let's look at type inference.
+[00:01:27 -> 00:01:31] Type inference may also be possible in a single AST pass.
+[00:01:31 -> 00:01:34] So just like this, you basically descend down the AST,
+[00:01:34 -> 00:01:38] building the environment, and then you go back up,
+[00:01:38 -> 00:01:39] giving types to everything,
+[00:01:39 -> 00:01:42] and then everywhere there's a missing type,
+[00:01:42 -> 00:01:44] you can fill up the missing type based on the rules.
+[00:01:46 -> 00:01:47] Sometimes, for some languages,
+[00:01:47 -> 00:01:50] this can be done as a single AST pass,
+[00:01:50 -> 00:01:52] you know, depending on how much of,
+[00:01:52 -> 00:01:54] so checking can always be done in a single AST pass,
+[00:01:54 -> 00:01:57] but inference is a little bit more complex,
+[00:01:57 -> 00:02:02] and languages like C and C++ restrict inference
+[00:02:03 -> 00:02:06] to things that can be done in a single AST pass.
+[00:02:06 -> 00:02:09] So for example, this auto keyword in C++
+[00:02:09 -> 00:02:14] can only be used to infer types in certain patterns
+[00:02:14 -> 00:02:17] where it would be possible to infer the type
+[00:02:17 -> 00:02:19] in a bottom-up traversal.
+[00:02:21 -> 00:02:24] Whereas certain other languages like OCaml,
+[00:02:24 -> 00:02:28] they have much more elaborate type inference mechanism,
+[00:02:28 -> 00:02:30] for example, which may require multiple passes.
+[00:02:30 -> 00:02:32] So they would say that, okay,
+[00:02:32 -> 00:02:36] they would even recognize types of identifiers
+[00:02:36 -> 00:02:39] based on the context in which they are being used
+[00:02:39 -> 00:02:40] anywhere in the program.
+[00:02:40 -> 00:02:43] And so that requires multiple passes over the AST
+[00:02:43 -> 00:02:46] to be able to narrow down the set of possible types
+[00:02:46 -> 00:02:49] that a particular identifier can have.
+[00:02:49 -> 00:02:50] And there are different algorithms
+[00:02:50 -> 00:02:52] to be able to do type inference
+[00:02:52 -> 00:02:54] in such languages like OCaml,
+[00:02:55 -> 00:02:57] but we are not really discussing that in this course.
+[00:03:00 -> 00:03:01] But it's interesting to note
+[00:03:01 -> 00:03:03] that many type inference algorithms
+[00:03:03 -> 00:03:06] can actually be implemented in a single AST pass,
+[00:03:06 -> 00:03:08] and in fact, languages like C and C++
+[00:03:08 -> 00:03:10] support such kind of type inference.
+[00:03:10 -> 00:03:12] For example, expressions in C
+[00:03:12 -> 00:03:15] and the auto keyword in C++.
+[00:03:16 -> 00:03:20] All right, so now let's look at a single rule,
+[00:03:20 -> 00:03:23] a typing rule, and look at its particular implementation,
+[00:03:23 -> 00:03:24] how it may be implemented
+[00:03:24 -> 00:03:28] in a typical programming environment
+[00:03:28 -> 00:03:32] that we are used to using recursion and things like that.
+[00:03:32 -> 00:03:34] So let's look at this particular rule,
+[00:03:34 -> 00:03:37] typing rule that says if under an environment,
+[00:03:37 -> 00:03:40] E1 is an integer and E2 is an integer,
+[00:03:40 -> 00:03:41] then under the same environment,
+[00:03:41 -> 00:03:46] E1 plus E2 is an integer, is type integer.
+[00:03:46 -> 00:03:48] So to be able to implement this,
+[00:03:48 -> 00:03:51] we're going to have a code which looks like this,
+[00:03:51 -> 00:03:54] it says, anytime you have an AST node
+[00:03:54 -> 00:03:58] which has a plus in it, here is one way to type check it.
+[00:03:58 -> 00:04:01] You first type check the left side,
+[00:04:01 -> 00:04:03] the left node of the plus operator,
+[00:04:03 -> 00:04:04] so that would be E1.
+[00:04:04 -> 00:04:07] So I would say T1 equals type check ENV E1.
+[00:04:07 -> 00:04:09] So type check is a method or function
+[00:04:09 -> 00:04:12] that I'm defining that takes two arguments.
+[00:04:12 -> 00:04:13] The first argument is the environment,
+[00:04:13 -> 00:04:17] that includes O and C, that includes E, O and C in it.
+[00:04:17 -> 00:04:19] And the second argument is the expression,
+[00:04:19 -> 00:04:22] which is whatever is on the left side of the colon.
+[00:04:23 -> 00:04:26] And its return value is basically the type
+[00:04:26 -> 00:04:29] of this expression under this environment.
+[00:04:31 -> 00:04:34] So if I want to find the type of E1 plus E2
+[00:04:34 -> 00:04:37] under a given environment ENV,
+[00:04:37 -> 00:04:38] then based on this rule,
+[00:04:38 -> 00:04:41] I would say first find the type of E1
+[00:04:41 -> 00:04:43] under the same environment ENV.
+[00:04:44 -> 00:04:47] And let's say that the answer is T1.
+[00:04:47 -> 00:04:50] So first of all, this call basically says
+[00:04:50 -> 00:04:53] that type check succeeded and it returned T1.
+[00:04:53 -> 00:04:56] And we basically check whether T1 is an integer or not.
+[00:04:56 -> 00:04:59] So I'll write this check in red
+[00:04:59 -> 00:05:01] because the meaning is that if this check fails,
+[00:05:01 -> 00:05:03] then I basically bail out and say
+[00:05:03 -> 00:05:05] that the type check failed based on this rule.
+[00:05:05 -> 00:05:07] Maybe there's some other rule
+[00:05:07 -> 00:05:10] that can type check this particular expression,
+[00:05:10 -> 00:05:11] but not this rule.
+[00:05:11 -> 00:05:13] So if E1 was not an integer,
+[00:05:13 -> 00:05:16] then this particular rule cannot be applied on it.
+[00:05:16 -> 00:05:18] And that's what check is going to do.
+[00:05:18 -> 00:05:21] It's going to maybe return a type error
+[00:05:21 -> 00:05:22] and in which case the caller
+[00:05:22 -> 00:05:24] should basically try some other rule.
+[00:05:24 -> 00:05:27] The top level caller would probably call type check
+[00:05:27 -> 00:05:30] for different, for all the possible rules
+[00:05:30 -> 00:05:31] to see which one matches if any.
+[00:05:31 -> 00:05:34] And you can imagine more efficient algorithms
+[00:05:34 -> 00:05:36] instead of actually going through each and every rule,
+[00:05:36 -> 00:05:37] you can index the rules
+[00:05:37 -> 00:05:39] so that only the relevant rules are compared.
+[00:05:40 -> 00:05:45] All right, similarly, you do T2 equals type check ENV E2.
+[00:05:45 -> 00:05:47] So you type check E2 under the same environment ENV
+[00:05:47 -> 00:05:49] and let's say you get a type T2.
+[00:05:49 -> 00:05:50] And once again, you're going to check
+[00:05:50 -> 00:05:52] whether T2 is an integer or not
+[00:05:52 -> 00:05:54] because that's what the two hypotheses are.
+[00:05:54 -> 00:05:58] So at this point, all the hypotheses are being met
+[00:05:58 -> 00:06:00] because both the checks have succeeded,
+[00:06:00 -> 00:06:02] in which case I can conclude
+[00:06:02 -> 00:06:06] by just returning the type integer for E1 plus E2.
+[00:06:06 -> 00:06:08] All right, so that's the conclusion.
+[00:06:08 -> 00:06:10] That represents the conclusion of our type E2.
+[00:06:10 -> 00:06:13] And so this method here type checks
+[00:06:13 -> 00:06:15] based on this particular rule.
+[00:06:15 -> 00:06:16] And so for every rule,
+[00:06:16 -> 00:06:19] I could have a different method like this
+[00:06:19 -> 00:06:24] or and then the type checker could basically
+[00:06:24 -> 00:06:25] call each of these methods
+[00:06:25 -> 00:06:27] to see which one of them matches if any.
+[00:06:27 -> 00:06:29] And if depending on which one matches,
+[00:06:29 -> 00:06:33] I could basically either infer or check.
+[00:06:33 -> 00:06:34] And if none of them matches,
+[00:06:34 -> 00:06:38] then I would basically say it's a type E2.
+[00:06:38 -> 00:06:39] Now here is a more complicated example.
+[00:06:39 -> 00:06:41] This is going to be our last example.
+[00:06:41 -> 00:06:43] So in this example,
+[00:06:43 -> 00:06:45] this is again taken from something
+[00:06:45 -> 00:06:46] that we've already discussed.
+[00:06:46 -> 00:06:48] This is the declaration no in it,
+[00:06:48 -> 00:06:50] where basically we're looking at
+[00:06:50 -> 00:06:55] a declaration of the type Tx equals E0 semicolon E1,
+[00:06:55 -> 00:06:57] colon, so what should be the type
+[00:06:57 -> 00:07:01] of this whole expression here, right?
+[00:07:01 -> 00:07:03] And so that's what I want to check.
+[00:07:03 -> 00:07:04] And in my hypothesis,
+[00:07:04 -> 00:07:07] notice that I have rules of the following form.
+[00:07:07 -> 00:07:11] So for this to have type T1,
+[00:07:11 -> 00:07:16] E0 should have type T0 for some arbitrary type T0.
+[00:07:16 -> 00:07:18] And under the updated environment,
+[00:07:18 -> 00:07:23] which maps X to T, E1 should have type T1.
+[00:07:25 -> 00:07:28] And T0 should be a subtype of T,
+[00:07:28 -> 00:07:29] in which case I would be able to say
+[00:07:29 -> 00:07:32] that this whole expression of type T1.
+[00:07:32 -> 00:07:35] Notice that T1 here is the same T1
+[00:07:35 -> 00:07:40] that was the type of E1 under the updated environment, okay?
+[00:07:40 -> 00:07:41] So to be able to implement this rule,
+[00:07:41 -> 00:07:44] once again, this is my type check function
+[00:07:44 -> 00:07:47] that takes an environment and the expression.
+[00:07:47 -> 00:07:49] In this case, the expression is a new scope
+[00:07:49 -> 00:07:52] with a declaration and a statement
+[00:07:52 -> 00:07:54] or a statement expression E1.
+[00:07:54 -> 00:07:56] Now, the first thing I do here
+[00:07:56 -> 00:07:58] is check what is the type of E0.
+[00:07:58 -> 00:08:03] So I said T0 equals type check ENV E0, all right?
+[00:08:03 -> 00:08:04] So notice I'm using the same ENV
+[00:08:05 -> 00:08:10] because that's the ENV O, C that's being used here, right?
+[00:08:10 -> 00:08:12] So whatever is the O, C that's being passed
+[00:08:12 -> 00:08:15] to this function is the same ENV being used
+[00:08:15 -> 00:08:16] to type check E0.
+[00:08:16 -> 00:08:17] And let's say we get type T0.
+[00:08:19 -> 00:08:22] Then notice that I'm not really checking what's T0.
+[00:08:22 -> 00:08:24] I just say it's T0, all right?
+[00:08:24 -> 00:08:26] Because there is actually no requirement on T0
+[00:08:26 -> 00:08:27] if you look at this rule.
+[00:08:27 -> 00:08:29] It doesn't say that T0 needs to be an end
+[00:08:29 -> 00:08:30] or something like that.
+[00:08:30 -> 00:08:32] So I really don't have any requirement here,
+[00:08:32 -> 00:08:33] except that I have a requirement
+[00:08:34 -> 00:08:37] that T0 needs to be a subtype of T, all right?
+[00:08:37 -> 00:08:39] So I'm gonna do that later, all right?
+[00:08:39 -> 00:08:41] So I'm gonna check that in the third rule
+[00:08:41 -> 00:08:43] in my third hypothesis and that's the third step.
+[00:08:43 -> 00:08:45] The second step is I'm going to say
+[00:08:45 -> 00:08:48] I'm gonna type check E1,
+[00:08:48 -> 00:08:49] but I'm going to change the environment
+[00:08:49 -> 00:08:50] before I type check E1.
+[00:08:50 -> 00:08:52] That's exactly what this rule says, right?
+[00:08:52 -> 00:08:53] And how am I gonna change it?
+[00:08:53 -> 00:08:56] I'm going to add to the environment
+[00:08:56 -> 00:08:59] a mapping from X to T, capital T.
+[00:09:00 -> 00:09:03] So I type check under this new environment
+[00:09:03 -> 00:09:07] env.add x colon T, the expression E1,
+[00:09:07 -> 00:09:08] and let's say I get T1.
+[00:09:10 -> 00:09:14] Then I check whether T0 is a subtype of T, all right?
+[00:09:14 -> 00:09:17] So whether T0 is a subtype of capital T
+[00:09:17 -> 00:09:19] and capital T recall is occurring
+[00:09:19 -> 00:09:23] as a part of the AST syntax.
+[00:09:23 -> 00:09:26] It says that this is the type
+[00:09:26 -> 00:09:28] of the newly declared variable.
+[00:09:28 -> 00:09:30] And if all these three checks pass,
+[00:09:30 -> 00:09:32] which means all the three hypotheses are being met,
+[00:09:32 -> 00:09:35] I basically have my conclusion,
+[00:09:35 -> 00:09:37] which is I can return T1.
+[00:09:37 -> 00:09:40] And notice that T1 is nothing but the type
+[00:09:40 -> 00:09:42] that was returned by the type check on E1
+[00:09:42 -> 00:09:44] under the updated environment.
+[00:09:44 -> 00:09:46] So that's going to return T1, right?
+[00:09:46 -> 00:09:48] So this is the implementation
+[00:09:48 -> 00:09:51] for this particular rule, declaration no in it.

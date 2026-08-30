@@ -1,0 +1,409 @@
+Title: Compiler Design Module 42 : Typing Methods
+Video ID: qzNDLRXjivM
+Detected language: en
+------------------------------------------------------------
+
+[00:00:00 -> 00:00:04] So we've been looking at typing rules and type environments
+[00:00:04 -> 00:00:08] and we also looked at how type environment is used
+[00:00:08 -> 00:00:10] to resolve the type of variable
+[00:00:10 -> 00:00:12] and how type environment can change
+[00:00:12 -> 00:00:16] as you are walking the abstract syntax tree.
+[00:00:16 -> 00:00:21] Our next topic is about typing of functions or methods.
+[00:00:21 -> 00:00:26] And consider a function call like the one shown here.
+[00:00:26 -> 00:00:29] So let's say f is a function or method
+[00:00:29 -> 00:00:32] and it is being called on N arguments.
+[00:00:32 -> 00:00:34] Each of the arguments is an expression.
+[00:00:35 -> 00:00:38] Let's say E1, E2 and up to EN.
+[00:00:39 -> 00:00:41] We're interested in finding the type
+[00:00:41 -> 00:00:42] of this particular expression.
+[00:00:42 -> 00:00:45] So this call of a function
+[00:00:45 -> 00:00:47] or also called a dispatch of a function
+[00:00:47 -> 00:00:50] for certain actual values of arguments
+[00:00:51 -> 00:00:54] basically evaluates to an expression
+[00:00:54 -> 00:00:58] which is probably the return value of the call function.
+[00:00:58 -> 00:01:03] And so we assume that we already know the types
+[00:01:03 -> 00:01:08] of E1, E2 or EN and that would form our hypothesis.
+[00:01:08 -> 00:01:11] So for example, the hypothesis could say
+[00:01:11 -> 00:01:14] that E1 is of type T1, E2 is of type T2
+[00:01:14 -> 00:01:17] under a particular type environment.
+[00:01:17 -> 00:01:19] And notice that we're using the same type environment
+[00:01:19 -> 00:01:21] because we're basically assuming
+[00:01:21 -> 00:01:23] that the type environment is not changing
+[00:01:23 -> 00:01:25] during this function called dispatch.
+[00:01:25 -> 00:01:29] Now EN is of type TN
+[00:01:29 -> 00:01:33] and then f needs some type as well.
+[00:01:33 -> 00:01:35] And based on that, we will be able to say
+[00:01:35 -> 00:01:38] what is the type of this expression
+[00:01:38 -> 00:01:42] f applied on E1, E2 dot dot dot EN.
+[00:01:42 -> 00:01:44] Now there are two things that are missing here.
+[00:01:44 -> 00:01:47] One is how should I represent the type of f?
+[00:01:47 -> 00:01:50] And the second thing is even if I know the type of f
+[00:01:50 -> 00:01:53] how do I know what should be the type of this dispatch
+[00:01:53 -> 00:01:57] or this call to the function?
+[00:01:57 -> 00:02:02] And I need a rule that is both sound and precise.
+[00:02:03 -> 00:02:07] All right, so here is the answer to the first question.
+[00:02:07 -> 00:02:10] I'm going to represent the type of a method
+[00:02:10 -> 00:02:15] or a function f as the tuple T1, T2, T dot dot dot TN
+[00:02:16 -> 00:02:20] and TN plus one to represent the fact
+[00:02:20 -> 00:02:25] that f can take N arguments of each of type T1, T2 dot dot TN
+[00:02:29 -> 00:02:32] and if it gets these arguments of these types
+[00:02:32 -> 00:02:37] then it returns a value of type TN plus one.
+[00:02:37 -> 00:02:40] So this tuple basically represents
+[00:02:40 -> 00:02:44] that the first N types represent the types of the arguments
+[00:02:44 -> 00:02:47] and the last type which is TN plus one
+[00:02:47 -> 00:02:49] represents the type of the return value.
+[00:02:50 -> 00:02:53] Okay, notice that these types here
+[00:02:53 -> 00:02:56] are the formal, these types are for the formal arguments
+[00:02:56 -> 00:02:58] X1, X2, XN and these can be replaced
+[00:02:58 -> 00:03:02] by the actual arguments during a function called dispatch.
+[00:03:03 -> 00:03:06] All right, so now that we have a type for f
+[00:03:06 -> 00:03:08] so now let's revisit our function
+[00:03:08 -> 00:03:10] called dispatch typing rule.
+[00:03:10 -> 00:03:14] So under a type environment O, E1 has type T1,
+[00:03:14 -> 00:03:17] E2 has type T2, EN has type TN
+[00:03:17 -> 00:03:20] for some types T1 to TN.
+[00:03:20 -> 00:03:25] F has types T1 prime, T2 prime, TN prime,
+[00:03:25 -> 00:03:28] notice that T1 prime is different from T1 and so on
+[00:03:28 -> 00:03:32] and TN plus one, notice that TN is prime
+[00:03:32 -> 00:03:33] but TN plus one is not prime
+[00:03:35 -> 00:03:40] and it is true that T1 is a subtype of T1 prime,
+[00:03:40 -> 00:03:43] T2 is a subtype of T2 prime and so on
+[00:03:43 -> 00:03:47] till TN is a subtype of TN prime
+[00:03:47 -> 00:03:52] then I can say that the dispatch F of E1, E2 dot dot EN
+[00:03:54 -> 00:03:57] is of type TN plus one.
+[00:03:57 -> 00:03:59] So let's look at what's happening here.
+[00:03:59 -> 00:04:03] Basically I'm saying that if F accepts arguments
+[00:04:03 -> 00:04:07] of type T1 dot dot TN and returns a value
+[00:04:07 -> 00:04:12] of type TN plus one then and if E1 is of type T1
+[00:04:13 -> 00:04:16] dot dot TN but I have a twist here,
+[00:04:16 -> 00:04:18] I'm saying that E1 and E1 dot dot EN
+[00:04:18 -> 00:04:20] do not need to be the same type
+[00:04:20 -> 00:04:22] as the types of the formal arguments,
+[00:04:22 -> 00:04:26] they can be subtypes of those formal arguments types.
+[00:04:26 -> 00:04:30] So E1, E2, EN represent actual arguments
+[00:04:30 -> 00:04:34] and so the actual arguments can be a subtype,
+[00:04:34 -> 00:04:35] can have a type as a subtype
+[00:04:35 -> 00:04:38] of the type of the formal arguments.
+[00:04:38 -> 00:04:40] So that's what it represents.
+[00:04:40 -> 00:04:45] So E1 has type T1 and T1 can be a subtype of T1 prime.
+[00:04:45 -> 00:04:47] T1 prime is the type of the first formal argument.
+[00:04:48 -> 00:04:52] And so this is to make the rule more precise,
+[00:04:52 -> 00:04:55] I could have just used T1 instead of T1 prime here
+[00:04:55 -> 00:04:57] as well but that would not be as general
+[00:04:57 -> 00:04:59] and that would reject many programs,
+[00:04:59 -> 00:05:01] many correct programs so I want to be
+[00:05:01 -> 00:05:04] as precise as possible and so I'm accepting
+[00:05:04 -> 00:05:08] any subtypes as arguments of the formal,
+[00:05:08 -> 00:05:10] any subtypes of the formal arguments
+[00:05:10 -> 00:05:12] as the actual arguments and in that case
+[00:05:12 -> 00:05:15] I'm going to return a return value of Tn plus one.
+[00:05:17 -> 00:05:22] Okay, so once again I want to point out
+[00:05:22 -> 00:05:26] that if T1 is a subtype of T1 prime,
+[00:05:26 -> 00:05:30] then E1 can be put used in place
+[00:05:30 -> 00:05:34] of the first formal argument which has type T1 prime
+[00:05:34 -> 00:05:37] and recall that E1 has type T1.
+[00:05:37 -> 00:05:40] And notice that the return type is just Tn plus one
+[00:05:40 -> 00:05:42] so there is no primed version of the return type
+[00:05:42 -> 00:05:47] because there is no meaning of primed version
+[00:05:47 -> 00:05:49] in this particular setting.
+[00:05:50 -> 00:05:52] All right, so that was the function
+[00:05:52 -> 00:05:54] called dispatch for any general function
+[00:05:54 -> 00:05:56] but let's also look at the special case
+[00:05:56 -> 00:05:58] where the function is actually a member function
+[00:05:58 -> 00:06:00] of a class so let's say it's an object oriented
+[00:06:00 -> 00:06:03] language and I want to define this function
+[00:06:03 -> 00:06:06] as a member function of a particular class.
+[00:06:06 -> 00:06:09] So in which case let's say there's a class C
+[00:06:09 -> 00:06:13] and then this represents a declaration of a function foo.
+[00:06:13 -> 00:06:16] It has some return value, return type.
+[00:06:16 -> 00:06:17] This is the name of the function
+[00:06:17 -> 00:06:20] and then these are all the formal arguments
+[00:06:20 -> 00:06:21] of this function.
+[00:06:21 -> 00:06:24] So for example, the type of A1 and then A1,
+[00:06:24 -> 00:06:29] type of A2, A2 and so on till type of An, An.
+[00:06:29 -> 00:06:32] And let's say at some point in the program
+[00:06:32 -> 00:06:37] I basically instantiate a object C, small c
+[00:06:37 -> 00:06:44] of class capital C and then I dispatch
+[00:06:44 -> 00:06:48] a call to foo on the object C, small c.
+[00:06:48 -> 00:06:50] So the difference between this dispatch
+[00:06:50 -> 00:06:52] and the dispatch that we saw in the previous slide
+[00:06:52 -> 00:06:54] is that this is the object oriented version
+[00:06:54 -> 00:06:58] of the dispatch because foo is a member function
+[00:06:58 -> 00:07:01] of class C and small c is an object
+[00:07:01 -> 00:07:05] on which foo is being, from which foo is being resolved.
+[00:07:05 -> 00:07:09] Notice that small c could have been,
+[00:07:09 -> 00:07:11] in this case, in this particular example
+[00:07:11 -> 00:07:14] I'm showing that small c is an object of type capital C
+[00:07:14 -> 00:07:19] but it is also possible in an object oriented language
+[00:07:19 -> 00:07:23] to instead have this to be a small,
+[00:07:24 -> 00:07:27] an object of type capital D such that capital D
+[00:07:27 -> 00:07:31] is a subtype of C.
+[00:07:31 -> 00:07:34] In which case also it would be okay
+[00:07:34 -> 00:07:39] to call foo on C because small c is an object
+[00:07:40 -> 00:07:43] of type D which is a subtype of class C
+[00:07:43 -> 00:07:46] and so, and capital, and C has foo
+[00:07:46 -> 00:07:51] so it's okay to say C.foo in that case as well.
+[00:07:51 -> 00:07:52] And so the first thing I want to do
+[00:07:52 -> 00:07:56] is basically correctly identify which foo it is,
+[00:07:56 -> 00:08:00] because maybe foo is, so I want to know
+[00:08:00 -> 00:08:03] where was foo defined or in which class was it defined?
+[00:08:03 -> 00:08:04] Was it defined in C?
+[00:08:04 -> 00:08:05] Was it defined in D?
+[00:08:05 -> 00:08:08] Was it defined in some super type of C
+[00:08:08 -> 00:08:09] or something like that?
+[00:08:09 -> 00:08:12] So to do that, I'm just going to have this annotation.
+[00:08:12 -> 00:08:17] So whenever I say C.foo, I'm using our scoping rules.
+[00:08:18 -> 00:08:21] We will basically know that what is this foo,
+[00:08:21 -> 00:08:22] where is this foo coming from?
+[00:08:22 -> 00:08:25] What is the declaration that matches
+[00:08:25 -> 00:08:27] with this particular identifier?
+[00:08:27 -> 00:08:29] And using scoping, we will be able to resolve this
+[00:08:29 -> 00:08:30] and I'm going to instead say,
+[00:08:32 -> 00:08:37] qualify it precisely to say small c at capital C,
+[00:08:38 -> 00:08:39] so .foo, which basically means
+[00:08:39 -> 00:08:42] I'm calling capital C's foo, right?
+[00:08:42 -> 00:08:44] So it's completely disambiguating
+[00:08:44 -> 00:08:49] that foo is a member of class capital C
+[00:08:49 -> 00:08:51] because it could have been a member
+[00:08:51 -> 00:08:52] of any particular class,
+[00:08:52 -> 00:08:55] which is present in the type hierarchy.
+[00:08:55 -> 00:08:57] All right, so with that disambiguation,
+[00:08:57 -> 00:09:02] now I want to have a rule, a typing rule and say,
+[00:09:02 -> 00:09:04] how do I resolve whether this expression
+[00:09:04 -> 00:09:05] is correctly typed or not?
+[00:09:05 -> 00:09:07] And if it is correctly typed,
+[00:09:07 -> 00:09:09] what is the type of the return value?
+[00:09:10 -> 00:09:12] Okay, so here is the member function
+[00:09:12 -> 00:09:13] dispatch typing rule.
+[00:09:13 -> 00:09:16] It looks very similar to the rule
+[00:09:16 -> 00:09:20] that we had for a general function dispatch,
+[00:09:20 -> 00:09:22] non-member function dispatch.
+[00:09:22 -> 00:09:25] The only, so E0 is a type T0
+[00:09:25 -> 00:09:27] under an environment O and so on.
+[00:09:27 -> 00:09:30] And then instead of F, I'm saying T.f.
+[00:09:30 -> 00:09:33] So T.f represents that F is a function
+[00:09:33 -> 00:09:35] of some arbitrary class capital T.
+[00:09:36 -> 00:09:40] And then I have, just like I had for function dispatch,
+[00:09:40 -> 00:09:43] I have a type signature for T.f,
+[00:09:43 -> 00:09:47] which is again, T1 prime, T2 prime, Tn prime,
+[00:09:47 -> 00:09:48] and Tn plus one.
+[00:09:48 -> 00:09:50] Basically meaning that it takes N arguments
+[00:09:51 -> 00:09:56] of types T1, T2, Tn, T1 prime, T2 prime, Tn prime
+[00:09:57 -> 00:10:00] and returns a return value of type Tn plus one.
+[00:10:01 -> 00:10:05] Now, so basically it's going to look very similar
+[00:10:05 -> 00:10:09] that I'm going to say that, so apart from E is one,
+[00:10:09 -> 00:10:12] so last time we just had E1 dot dot En,
+[00:10:12 -> 00:10:15] but now I also introduced an expression called E0.
+[00:10:15 -> 00:10:20] And that E0 would form the expression object
+[00:10:20 -> 00:10:22] on which F is being invoked, right?
+[00:10:22 -> 00:10:24] Recall that a member function is invoked
+[00:10:24 -> 00:10:26] on an object of a given class.
+[00:10:26 -> 00:10:30] So I'm going to say E0 at T.f.
+[00:10:30 -> 00:10:32] This represents that the value of the object
+[00:10:32 -> 00:10:35] is represented by the expression E0.
+[00:10:35 -> 00:10:37] And at T basically represent,
+[00:10:37 -> 00:10:39] at T.f represents that I'm interested
+[00:10:39 -> 00:10:43] in the F present inside class T.
+[00:10:43 -> 00:10:47] And capital T should be a super type
+[00:10:47 -> 00:10:49] of the type of E0, hopefully,
+[00:10:49 -> 00:10:50] for this to be well-typed.
+[00:10:50 -> 00:10:55] And so we're going to have that in our hypothesis.
+[00:10:55 -> 00:10:59] And then E1 dot dot En, those are the actual arguments.
+[00:10:59 -> 00:11:02] And then what should be the type, all right?
+[00:11:02 -> 00:11:04] So here is the full rule.
+[00:11:04 -> 00:11:07] If T0 is a subtype of T,
+[00:11:07 -> 00:11:12] so basically notice that I have E0 at T.f.
+[00:11:12 -> 00:11:14] So this can only be well-typed
+[00:11:14 -> 00:11:18] if the type of E0 was a subtype of capital T.
+[00:11:18 -> 00:11:20] So it was derived from capital T.
+[00:11:20 -> 00:11:23] And so that's what this particular hypothesis is stating.
+[00:11:23 -> 00:11:26] T0 needs to be a subtype of capital T.
+[00:11:26 -> 00:11:29] Similarly, just like our regular function dispatch,
+[00:11:29 -> 00:11:33] the types of E1 dot dot En need to be subtypes
+[00:11:33 -> 00:11:36] of T1 prime, T2 prime, dot dot Tn prime respectively.
+[00:11:36 -> 00:11:39] So T1 needs to be a subtype of T1 prime,
+[00:11:39 -> 00:11:42] T2 needs to be a subtype of T2 prime, and so on.
+[00:11:42 -> 00:11:45] Tn needs to be a subtype of Tn prime.
+[00:11:45 -> 00:11:46] And if all these hypotheses
+[00:11:46 -> 00:11:48] or conditions are satisfied,
+[00:11:48 -> 00:11:51] then under the same environment O,
+[00:11:51 -> 00:11:56] E0 at T.f E1 dot dot En has type Tn plus one.
+[00:11:57 -> 00:12:01] So this is the type rule for our member function dispatch.
+[00:12:01 -> 00:12:03] And this is also a sound type rule
+[00:12:03 -> 00:12:07] because the type returned matches with the value
+[00:12:07 -> 00:12:09] that would be computed at runtime.
+[00:12:09 -> 00:12:11] It is also a precise type rule
+[00:12:11 -> 00:12:15] because we are trying to be as general as possible
+[00:12:15 -> 00:12:17] in accommodating all possible correct programs
+[00:12:17 -> 00:12:21] by using the subtyping relation.
+[00:12:21 -> 00:12:26] Okay, I want to kind of discuss
+[00:12:26 -> 00:12:28] the notion of function polymorphism
+[00:12:28 -> 00:12:29] that's present in many languages,
+[00:12:29 -> 00:12:30] including C and C++.
+[00:12:30 -> 00:12:33] For example, the same identifier foo
+[00:12:33 -> 00:12:36] may have multiple signatures.
+[00:12:36 -> 00:12:38] So for example, in this case,
+[00:12:38 -> 00:12:39] foo takes an integer argument
+[00:12:39 -> 00:12:42] and returns an integer return value.
+[00:12:42 -> 00:12:45] And yet another function with the same name foo
+[00:12:45 -> 00:12:49] takes a long argument and returns a long return value
+[00:12:49 -> 00:12:52] or a string argument and returns a string return value.
+[00:12:53 -> 00:12:55] Now, the first thing about this type of polymorphism
+[00:12:55 -> 00:12:58] is that if there are multiple definitions
+[00:12:58 -> 00:13:02] of the same identifier foo with different arguments,
+[00:13:02 -> 00:13:03] that is acceptable.
+[00:13:03 -> 00:13:06] But notice that in this case, in the fourth case,
+[00:13:06 -> 00:13:09] I have foo that takes integer, but returns a string.
+[00:13:09 -> 00:13:11] Now, this would be incorrect
+[00:13:11 -> 00:13:13] because I already have a definition
+[00:13:13 -> 00:13:15] where foo takes an integer argument return int
+[00:13:15 -> 00:13:17] and here foo takes the same integer argument
+[00:13:17 -> 00:13:18] but returns string.
+[00:13:18 -> 00:13:22] So different versions of the same identifier are possible,
+[00:13:22 -> 00:13:24] but they need to have different arguments
+[00:13:24 -> 00:13:26] because otherwise there's no way for the compiler
+[00:13:26 -> 00:13:30] to identify which foo to use, right?
+[00:13:30 -> 00:13:31] I mean, I can only look at the arguments
+[00:13:31 -> 00:13:34] to decide which foo to use.
+[00:13:34 -> 00:13:36] And so this kind of usage,
+[00:13:36 -> 00:13:38] this kind of polymorphism is incorrect.
+[00:13:38 -> 00:13:40] So I'm not going to consider this
+[00:13:40 -> 00:13:42] because languages typically won't support it
+[00:13:42 -> 00:13:44] because here it's the same set of arguments
+[00:13:44 -> 00:13:46] but a different return value.
+[00:13:46 -> 00:13:48] So that's not legal.
+[00:13:48 -> 00:13:50] But this type of polymorphism is possible to support
+[00:13:50 -> 00:13:52] and it's easy to support actually.
+[00:13:52 -> 00:13:54] And the way to do this is simply maintain
+[00:13:54 -> 00:13:56] multiple type signatures for an identifier
+[00:13:56 -> 00:13:58] inside the type environment.
+[00:13:58 -> 00:14:02] So I have for the same identifier foo,
+[00:14:02 -> 00:14:05] I could have int to int, long to long
+[00:14:05 -> 00:14:06] or string to string.
+[00:14:06 -> 00:14:10] And then when I'm actually doing type resolution,
+[00:14:10 -> 00:14:13] then I can check what is the type of my argument.
+[00:14:13 -> 00:14:17] And depending on what's the type of the argument,
+[00:14:17 -> 00:14:20] I will know which foo to use, right?
+[00:14:20 -> 00:14:22] So for example, if the type of the argument
+[00:14:22 -> 00:14:26] is a subtype of string, then I will use the third foo.
+[00:14:26 -> 00:14:27] If it's a subtype of int,
+[00:14:27 -> 00:14:29] then I would use the first foo and so on.
+[00:14:30 -> 00:14:34] Now, even there, there may be a chance of ambiguity.
+[00:14:34 -> 00:14:37] For example, if I just say one or something like that,
+[00:14:37 -> 00:14:38] then what is it?
+[00:14:38 -> 00:14:40] Is it a long or is it an int?
+[00:14:40 -> 00:14:43] If the actual argument was just an integer constant,
+[00:14:43 -> 00:14:45] it could be a long or an int,
+[00:14:45 -> 00:14:48] where different languages could take different approaches.
+[00:14:48 -> 00:14:50] For example, they could throw an ambiguity error
+[00:14:50 -> 00:14:52] saying that, look, I couldn't figure out
+[00:14:52 -> 00:14:53] whether which foo are you talking about.
+[00:14:53 -> 00:14:56] Or they could have resolution rules or precedence rules
+[00:14:56 -> 00:14:57] where they could say that,
+[00:14:59 -> 00:15:02] I'm going to maybe look at the one
+[00:15:02 -> 00:15:05] that matches most precisely, right?
+[00:15:05 -> 00:15:08] Or I'm going to look at the first definition of foo
+[00:15:08 -> 00:15:11] in case of multiple matches or something like that.
+[00:15:11 -> 00:15:12] And that is just a language design decision
+[00:15:12 -> 00:15:16] and different languages could take different approaches there.
+[00:15:17 -> 00:15:21] All right, the other thing to notice here
+[00:15:21 -> 00:15:23] is that while I've been talking about expressions
+[00:15:23 -> 00:15:26] as though they're appearing in a free form
+[00:15:26 -> 00:15:28] outside of all the classes,
+[00:15:28 -> 00:15:30] often in object-oriented languages,
+[00:15:30 -> 00:15:35] expressions are being used or defined or specified
+[00:15:35 -> 00:15:38] inside of class definitions or inside of the body
+[00:15:38 -> 00:15:40] or the member functions of the classes, right?
+[00:15:40 -> 00:15:44] So for example, the body of a member function,
+[00:15:44 -> 00:15:47] in which case I may need class-specific environment
+[00:15:47 -> 00:15:49] while dealing with an expression.
+[00:15:49 -> 00:15:52] So for example, the C++ programming language
+[00:15:52 -> 00:15:54] has the notion of a this keyword.
+[00:15:54 -> 00:15:55] Now, what should this resolve to?
+[00:15:55 -> 00:15:57] What should be the type of this, right?
+[00:15:57 -> 00:16:00] It really depends on what is the current class
+[00:16:00 -> 00:16:02] in which this is being used.
+[00:16:02 -> 00:16:06] And so the type of this would be the context
+[00:16:06 -> 00:16:08] of the current class in which this was used.
+[00:16:08 -> 00:16:11] And similarly, I could access member variables
+[00:16:11 -> 00:16:13] or functions for that particular class
+[00:16:13 -> 00:16:16] if I'm in that particular class environment.
+[00:16:16 -> 00:16:19] And notice that our object, our type environment,
+[00:16:19 -> 00:16:22] which is O, does not really capture the notion
+[00:16:22 -> 00:16:23] of what is the current class.
+[00:16:23 -> 00:16:27] It just has a mapping from identifiers to their types,
+[00:16:27 -> 00:16:30] but it doesn't capture what is the context
+[00:16:30 -> 00:16:33] in terms of whether I'm inside a particular class or not.
+[00:16:33 -> 00:16:35] And so with just using a type environment,
+[00:16:35 -> 00:16:40] I won't be able to resolve this keyword, for example.
+[00:16:40 -> 00:16:43] And so it's easy to solve something like this.
+[00:16:43 -> 00:16:46] We just need to extend the environment, right?
+[00:16:46 -> 00:16:49] And so anytime we basically want more information
+[00:16:49 -> 00:16:52] from the environment, we need to extend the environment.
+[00:16:52 -> 00:16:56] And in this case, we need to know the current class
+[00:16:56 -> 00:16:58] in which the expression is sitting.
+[00:16:58 -> 00:17:00] And we will change the form of our sentence
+[00:17:00 -> 00:17:02] or judgment, typing judgment.
+[00:17:02 -> 00:17:05] And earlier, it was just under the assumptions
+[00:17:05 -> 00:17:09] that under the assumptions created
+[00:17:09 -> 00:17:11] by the type environment O,
+[00:17:11 -> 00:17:13] it is true that E has type T.
+[00:17:13 -> 00:17:15] Now I'm gonna say under the assumptions
+[00:17:15 -> 00:17:17] of type environment O,
+[00:17:17 -> 00:17:21] and if I am sitting in the current class C
+[00:17:21 -> 00:17:25] or if my current class is C, then E has type T.
+[00:17:25 -> 00:17:27] So for example, I could have a rule
+[00:17:27 -> 00:17:31] which says that O comma C
+[00:17:32 -> 00:17:37] this is of type C star, right?
+[00:17:39 -> 00:17:42] So basically this means that if I am currently in class,
+[00:17:42 -> 00:17:44] if my current class is C
+[00:17:44 -> 00:17:49] and I ever see this expression called this keyword in C,
+[00:17:49 -> 00:17:51] then its type is going to be a pointer
+[00:17:51 -> 00:17:55] to the current class, which is C star, okay?
+[00:17:55 -> 00:17:56] So this is how I am going to change
+[00:17:56 -> 00:17:58] the form of my sentence.
+[00:17:58 -> 00:18:00] And all my current rules that I had, typing rules,
+[00:18:00 -> 00:18:03] I can just add C to the left-hand side
+[00:18:03 -> 00:18:04] of the turn style operator.
+[00:18:04 -> 00:18:05] Just like when I added O,
+[00:18:05 -> 00:18:10] now I can add more environment variables.
+[00:18:10 -> 00:18:13] In this case, it's the current class C.
+[00:18:14 -> 00:18:17] So for example, I could change my add example
+[00:18:17 -> 00:18:19] to O comma C.
+[00:18:19 -> 00:18:22] Under O comma C, E1 has type int
+[00:18:22 -> 00:18:24] and E2 has type int.
+[00:18:24 -> 00:18:26] Then under the same O comma C,
+[00:18:26 -> 00:18:31] E1 plus E2 would have type int.
+[00:18:31 -> 00:18:34] All right, so here's a summary of typing rules.
+[00:18:34 -> 00:18:37] Type rules are defined on the expression structure.
+[00:18:37 -> 00:18:40] So notice that in all the typing rules,
+[00:18:40 -> 00:18:44] we are looking at one particular operator
+[00:18:44 -> 00:18:47] that is possible in an expression tree.
+[00:18:47 -> 00:18:52] And we have already discussed how the type proof
+[00:18:52 -> 00:18:53] basically has the same structure
+[00:18:53 -> 00:18:55] as the abstract syntax tree,
+[00:18:55 -> 00:18:57] one for each node of the abstract syntax tree.
+[00:18:57 -> 00:19:00] So the type rules are defined on the expression structure.
+[00:19:01 -> 00:19:04] Types of identifiers are modeled by an environment.
+[00:19:04 -> 00:19:08] For example, O, we also said that types of certain things
+[00:19:08 -> 00:19:10] may also depend on the current class.
+[00:19:10 -> 00:19:12] And so some identifiers, for example,
+[00:19:12 -> 00:19:14] member functions or member variables
+[00:19:14 -> 00:19:18] may depend on the environment C as well.
+[00:19:18 -> 00:19:21] Now, just a word of caution,
+[00:19:21 -> 00:19:22] type rules are very compact.
+[00:19:22 -> 00:19:27] They have very dense notation.
+[00:19:28 -> 00:19:31] And so one has to be very careful
+[00:19:31 -> 00:19:32] about reading the subtle details.
+[00:19:32 -> 00:19:37] For example, T1 prime and T1, Tn plus one, and so on.
+[00:19:37 -> 00:19:41] I mean, they encode a lot of information.
+[00:19:41 -> 00:19:44] For example, when I say that I'm using the same
+[00:19:44 -> 00:19:47] identifier or same environment O at different places,
+[00:19:47 -> 00:19:49] I'm basically implicitly implying
+[00:19:49 -> 00:19:51] that I'm under the same environment, all right?
+[00:19:51 -> 00:19:55] So while being compact is a good thing
+[00:19:55 -> 00:20:00] because it makes things shorter
+[00:20:00 -> 00:20:05] and more easy to kind of communicate
+[00:20:05 -> 00:20:07] because they become more shorter.
+[00:20:07 -> 00:20:11] They also require more effort to read.
+[00:20:11 -> 00:20:14] And so that's something one has to be careful about.
