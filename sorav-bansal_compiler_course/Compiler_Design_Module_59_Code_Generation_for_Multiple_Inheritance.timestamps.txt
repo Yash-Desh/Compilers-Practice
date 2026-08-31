@@ -1,0 +1,482 @@
+Title: Compiler Design Module 59 : Code Generation for Multiple Inheritance
+Video ID: CC-tasLZjBE
+Detected language: en
+------------------------------------------------------------
+
+[00:00:00 -> 00:00:05] So, last time we talked about how inheritance may be implemented so that we can still follow
+[00:00:05 -> 00:00:11] the object oriented principle which is that an object of a derived class can be used in
+[00:00:11 -> 00:00:16] place of an object of a base class and we looked at how the memory could be laid out
+[00:00:16 -> 00:00:21] and how dynamic dispatch could be implemented to do something like that.
+[00:00:21 -> 00:00:26] The trick there was that we basically lay out, we encapsulate the state of A and
+[00:00:26 -> 00:00:32] inside B, if A is the base class of B, such that A's state is laid out first and then
+[00:00:32 -> 00:00:34] B's state is laid out second.
+[00:00:34 -> 00:00:38] Similarly, in the virtual function table, V table, we lay out A's virtual functions
+[00:00:38 -> 00:00:43] before B's virtual functions and so the same code will work on, for A, would work
+[00:00:43 -> 00:00:48] on objects of class A and objects of class B.
+[00:00:48 -> 00:00:52] But consider this particular program where this scheme fails.
+[00:00:52 -> 00:00:59] So here is class A that has its own fields int x and a virtual function vA and it has
+[00:00:59 -> 00:01:04] a class B which has its own fields int y, virtual void vB.
+[00:01:04 -> 00:01:10] Notice that B is not a derived class of A, it's a completely independent class.
+[00:01:10 -> 00:01:16] But now class C is a class that derives from both A and B.
+[00:01:16 -> 00:01:23] So C inherits from both A and from B and it has some of its own fields and virtual
+[00:01:23 -> 00:01:27] functions, so z and vz.
+[00:01:27 -> 00:01:33] Now the problem is that now there are two base classes for the same derived class
+[00:01:33 -> 00:01:38] C and so we cannot use the same trick anymore, right?
+[00:01:38 -> 00:01:45] The reason we could use that trick was because there was a linear chain of base
+[00:01:45 -> 00:01:51] and derived classes, but now there is this branching and now either we have to put A
+[00:01:51 -> 00:01:57] first or we have to put B first and if we put A first then we can't use the same code
+[00:01:57 -> 00:02:02] that we use for objects of class B for objects of class C because now B is somewhere
+[00:02:02 -> 00:02:04] in the middle and so on.
+[00:02:04 -> 00:02:06] So let's see how one would implement something like this.
+[00:02:06 -> 00:02:14] So first of all, the scheme that we discussed in the previous module will not work now.
+[00:02:14 -> 00:02:19] Alright, so here is, let's try to deconstruct this.
+[00:02:19 -> 00:02:22] So here is one way to do it.
+[00:02:22 -> 00:02:28] You have three V tables in your object representation now.
+[00:02:28 -> 00:02:34] One is meant to be the V table for class A, objects of class A.
+[00:02:34 -> 00:02:39] Second is the V table for objects of class B and the third is the V table for objects
+[00:02:39 -> 00:02:41] of class C.
+[00:02:41 -> 00:02:45] And then you have, following the V table, you have the corresponding fields.
+[00:02:45 -> 00:02:52] So for example, A's fields, so X, B's fields, Y and C's fields, Z.
+[00:02:52 -> 00:02:58] Now this is all fine, we just laid out the object like this but with this we can
+[00:02:58 -> 00:03:04] see that it may not be possible to use the same object in the context of B and
+[00:03:04 -> 00:03:05] so on.
+[00:03:05 -> 00:03:06] So how are we going to manage that?
+[00:03:06 -> 00:03:08] So we're going to see that.
+[00:03:08 -> 00:03:13] The reason we won't be able to use B is because now B's V table is here.
+[00:03:13 -> 00:03:15] So this is B's V table.
+[00:03:15 -> 00:03:21] So this is what is B and this is what is A.
+[00:03:21 -> 00:03:27] And so if I pass this object in the context of A's code, then it would still work.
+[00:03:27 -> 00:03:28] It may still work.
+[00:03:28 -> 00:03:33] But if I pass this object in the context of B, it will not work because now the
+[00:03:33 -> 00:03:39] V table of B is actually at an offset from the pointer C and so on.
+[00:03:39 -> 00:03:40] So we have a problem.
+[00:03:40 -> 00:03:46] Also now this time I have decided to have a separate V table for C.
+[00:03:46 -> 00:03:50] So C, this is C but C without A and B, right?
+[00:03:50 -> 00:03:55] So anything that is not in A and B already, that is stored after A and B.
+[00:03:55 -> 00:03:59] So okay, now let's say this is my object layout.
+[00:03:59 -> 00:04:02] Once again, this is only one of the possibilities.
+[00:04:02 -> 00:04:04] There could be other possibilities as well.
+[00:04:04 -> 00:04:07] Now this object is also pointing to a V table.
+[00:04:07 -> 00:04:09] So let's look at the V table.
+[00:04:09 -> 00:04:15] So the V table for A, for example, would basically have the virtual function VA as
+[00:04:15 -> 00:04:16] you would expect, right?
+[00:04:16 -> 00:04:18] Because VA is function.
+[00:04:18 -> 00:04:19] And then it has type info.
+[00:04:19 -> 00:04:25] So because it's an object C of type C, so the type info or the type ID is C.
+[00:04:25 -> 00:04:28] And then it has the top offset, which is 0.
+[00:04:29 -> 00:04:35] Recall that the top offset is basically the offset from the pointers to the object,
+[00:04:35 -> 00:04:37] which is C, to the top of the object, right?
+[00:04:37 -> 00:04:39] So what does it mean?
+[00:04:39 -> 00:04:43] Right now just assume that it is 0, but we're going to see what it means very soon.
+[00:04:43 -> 00:04:44] Why is it meaningful?
+[00:04:44 -> 00:04:45] Very soon, all right?
+[00:04:45 -> 00:04:47] Now that's for A.
+[00:04:47 -> 00:04:54] Because we have laid out the object A first, it's easy to understand how things
+[00:04:54 -> 00:04:55] would work for A.
+[00:04:55 -> 00:05:00] They will just remain the same as the case for single inheritance.
+[00:05:00 -> 00:05:05] But now when I look at B, then this is how B's V table is going to look like.
+[00:05:05 -> 00:05:12] So now I'm going to replicate the fields top offset and type info for B again,
+[00:05:12 -> 00:05:17] because I want that this object should also be able to work in the context of B.
+[00:05:17 -> 00:05:20] And so what I'm going to do is I'm going to replicate some fields.
+[00:05:20 -> 00:05:24] In this case, I've replicated the top offset field and the type info field,
+[00:05:24 -> 00:05:26] except that the top offset field has a different value now.
+[00:05:26 -> 00:05:28] And we're going to discuss that soon.
+[00:05:28 -> 00:05:31] And then we basically have the virtual functions of B.
+[00:05:31 -> 00:05:34] In this case, that's VB.
+[00:05:34 -> 00:05:35] So what's the idea?
+[00:05:35 -> 00:05:41] The idea is that when I'm going to use this object in the context of B,
+[00:05:41 -> 00:05:43] then I'm going to use this particular pointer, right?
+[00:05:43 -> 00:05:45] So let me use a different color.
+[00:05:45 -> 00:05:48] I'm going to use this particular pointer.
+[00:05:48 -> 00:05:52] So if I want to use an object of type B, then I'm going to change the pointer.
+[00:05:52 -> 00:05:56] I'm going to adjust the pointer from C to B, all right?
+[00:05:56 -> 00:06:02] So this is also called pointer adjustment.
+[00:06:02 -> 00:06:06] And I need pointer adjustment because there's multiple inheritance.
+[00:06:06 -> 00:06:08] If there was just single inheritance,
+[00:06:08 -> 00:06:11] then I could have done without the need for pointer adjustment.
+[00:06:11 -> 00:06:12] But because there's multiple inheritance,
+[00:06:12 -> 00:06:17] I have to adjust the pointer for at least one of the base classes.
+[00:06:17 -> 00:06:19] And so I'm going to adjust the pointer.
+[00:06:19 -> 00:06:26] And now this part of this portion, this particular portion of the object,
+[00:06:26 -> 00:06:28] looks exactly like it's an object of type B.
+[00:06:28 -> 00:06:34] Also, this portion of the V table looks exactly like the V table for
+[00:06:34 -> 00:06:35] an object of type B, right?
+[00:06:35 -> 00:06:38] So if it was an object of just class B,
+[00:06:38 -> 00:06:40] then this is exactly what the structure would look like.
+[00:06:40 -> 00:06:43] And so if this pointer is initialized correctly,
+[00:06:43 -> 00:06:45] the B pointer is initialized correctly,
+[00:06:45 -> 00:06:49] then the same code should work nicely on an object of type C,
+[00:06:49 -> 00:06:52] just a matter of adjusting the pointer, okay?
+[00:06:52 -> 00:06:54] But that seems a little bit complicated.
+[00:06:54 -> 00:06:56] We're going to discuss that in a bit more detail.
+[00:06:56 -> 00:07:00] But also, what about C's own fields?
+[00:07:00 -> 00:07:03] So C's own field, so for one of the fields is Z here,
+[00:07:03 -> 00:07:05] which is part of the memory layout.
+[00:07:05 -> 00:07:08] But C's virtual functions can also live in the V table.
+[00:07:08 -> 00:07:11] And so we'll have more entries in the V table.
+[00:07:11 -> 00:07:13] So we can have, for example, the top offset,
+[00:07:13 -> 00:07:18] the type info, which is again replicated,
+[00:07:20 -> 00:07:24] and then the virtual functions of C, okay?
+[00:07:24 -> 00:07:28] So that's the idea.
+[00:07:28 -> 00:07:29] I'm going to replicate some stuff,
+[00:07:29 -> 00:07:31] and then I'm going to adjust the pointers
+[00:07:31 -> 00:07:33] depending on where it has been found.
+[00:07:33 -> 00:07:33] Now, before we do that,
+[00:07:33 -> 00:07:36] now let's look at what is the use of type info.
+[00:07:36 -> 00:07:39] Why do I need to replicate type info three times here?
+[00:07:39 -> 00:07:40] Well, the idea is very simple,
+[00:07:40 -> 00:07:45] because the same object can be used in different contexts.
+[00:07:45 -> 00:07:48] For example, if I'm using it in the context of A,
+[00:07:48 -> 00:07:51] then this is the type info that can get read
+[00:07:51 -> 00:07:53] because of a dynamic cast operator.
+[00:07:53 -> 00:07:55] If I'm using the same object in the context of B
+[00:07:55 -> 00:07:57] with pointer adjustment,
+[00:07:57 -> 00:07:59] this is where B is going to point.
+[00:07:59 -> 00:08:03] And so this is the type info that's going to get read,
+[00:08:04 -> 00:08:05] right?
+[00:08:05 -> 00:08:06] Because B's code is just going to say,
+[00:08:06 -> 00:08:07] look into the V table
+[00:08:07 -> 00:08:09] and look at the minus four offset of the V table.
+[00:08:09 -> 00:08:14] And from there, find what is the type ID of this object
+[00:08:14 -> 00:08:16] and to implement the dynamic cast operator.
+[00:08:16 -> 00:08:18] And that's where it's going to look.
+[00:08:18 -> 00:08:20] So we need to replicate it there as well.
+[00:08:20 -> 00:08:25] Moreover, if I do a type cast from dynamic cast
+[00:08:25 -> 00:08:27] from an object of type B to object of type C,
+[00:08:27 -> 00:08:29] I need to do a pointer readjustment.
+[00:08:29 -> 00:08:31] So just like from C to B,
+[00:08:31 -> 00:08:34] I had to kind of change the pointer from here to here.
+[00:08:34 -> 00:08:35] By the way, what do I mean by change the pointer?
+[00:08:35 -> 00:08:37] I just add an offset to the point, right?
+[00:08:37 -> 00:08:39] So for example, in this case,
+[00:08:39 -> 00:08:42] I will add an offset of eight to the pointer to get B.
+[00:08:42 -> 00:08:44] That would be pointer adjustment in the forward direction
+[00:08:44 -> 00:08:46] from C to B.
+[00:08:46 -> 00:08:49] If I want to adjust the pointer back from B to C,
+[00:08:49 -> 00:08:50] how do I do that?
+[00:08:50 -> 00:08:54] Well, it's not possible to do that
+[00:08:54 -> 00:08:55] without extra information.
+[00:08:55 -> 00:08:58] And that's what the top offset information is giving you.
+[00:08:58 -> 00:09:01] It's telling you what is the offset
+[00:09:01 -> 00:09:03] to the top of the object
+[00:09:03 -> 00:09:06] as of type C,
+[00:09:06 -> 00:09:07] because it's type info C.
+[00:09:07 -> 00:09:08] And so from here,
+[00:09:08 -> 00:09:12] if I want to get back to the pointer to object C,
+[00:09:12 -> 00:09:14] what is the offset that I should use?
+[00:09:14 -> 00:09:15] You know, because the derived class
+[00:09:15 -> 00:09:18] could have been some other derived class D,
+[00:09:18 -> 00:09:20] or maybe it could just have been an object of type B,
+[00:09:20 -> 00:09:22] in which case the top offset would have been zero.
+[00:09:22 -> 00:09:24] But in this case, in this example,
+[00:09:24 -> 00:09:25] the top offset would be minus eight
+[00:09:25 -> 00:09:27] because the object is of type C.
+[00:09:27 -> 00:09:29] And so the top of the object is
+[00:09:31 -> 00:09:34] an offset of minus eight from the object B
+[00:09:34 -> 00:09:37] that's been used in the context of B.
+[00:09:37 -> 00:09:39] And so that's what minus eight top offset means.
+[00:09:39 -> 00:09:41] And that's what the significance of top offset is
+[00:09:41 -> 00:09:44] that we have been usually setting to zero so far.
+[00:09:46 -> 00:09:46] All right.
+[00:09:46 -> 00:09:49] And finally, there is a V table for C.
+[00:09:49 -> 00:09:52] So if I want to basically access
+[00:09:52 -> 00:09:57] a virtual function of C, say VC,
+[00:09:57 -> 00:10:00] then I need to index through V table,
+[00:10:00 -> 00:10:01] the third V table, right?
+[00:10:01 -> 00:10:05] Now, you know, I'm just having this as a simple design.
+[00:10:05 -> 00:10:07] In reality, most operating,
+[00:10:07 -> 00:10:11] most compilers would basically still merge
+[00:10:11 -> 00:10:13] this V table of C with the V table of A.
+[00:10:13 -> 00:10:14] So that's just, you know,
+[00:10:14 -> 00:10:15] that would be a more efficient scheme
+[00:10:15 -> 00:10:17] because you save four bytes
+[00:10:17 -> 00:10:20] to store an extra V table pointer,
+[00:10:20 -> 00:10:22] and also the extra type info and all that.
+[00:10:23 -> 00:10:25] But just for simplicity and ease of explanation,
+[00:10:25 -> 00:10:27] I'm using three V tables here.
+[00:10:27 -> 00:10:30] I could have done with two V tables here as well.
+[00:10:30 -> 00:10:31] All right.
+[00:10:31 -> 00:10:34] So with a V table, now, once again,
+[00:10:34 -> 00:10:37] I have the type info and just in case,
+[00:10:37 -> 00:10:40] I want to know what is my top of the object
+[00:10:40 -> 00:10:42] from here, from this V table.
+[00:10:42 -> 00:10:45] So I'm using the convention that the top offset
+[00:10:45 -> 00:10:47] is the offset of the top of the object
+[00:10:47 -> 00:10:49] from the V table pointer.
+[00:10:49 -> 00:10:50] All right.
+[00:10:50 -> 00:10:51] And that's an easy,
+[00:10:51 -> 00:10:54] that's a convention that will make life easier for me
+[00:10:54 -> 00:10:57] when I'm looking at these kinds of structures later on.
+[00:10:57 -> 00:10:59] And so V table minus 16
+[00:10:59 -> 00:11:01] is where the top of the object is
+[00:11:01 -> 00:11:02] in this particular case.
+[00:11:03 -> 00:11:04] All right.
+[00:11:04 -> 00:11:06] So that's the new structure
+[00:11:06 -> 00:11:10] in the presence of multiple inheritance.
+[00:11:10 -> 00:11:12] Notice that now I need to do pointer adjustment
+[00:11:12 -> 00:11:15] when I switch between contexts.
+[00:11:15 -> 00:11:16] So let's understand how we're going
+[00:11:16 -> 00:11:17] to switch between contexts.
+[00:11:17 -> 00:11:20] Let's say I write code like this.
+[00:11:20 -> 00:11:24] So I say A star A equals C.
+[00:11:25 -> 00:11:27] What will be the code generated for this?
+[00:11:27 -> 00:11:28] Well, the code generated for this
+[00:11:28 -> 00:11:31] would be actually not very different
+[00:11:31 -> 00:11:33] from the case of single inheritance.
+[00:11:33 -> 00:11:34] I'm just going to, you know,
+[00:11:36 -> 00:11:39] whatever is the pointer value for C,
+[00:11:39 -> 00:11:41] that's going to go to A.
+[00:11:41 -> 00:11:44] So this A will be equal to C, right?
+[00:11:44 -> 00:11:45] So the value of the pointer value
+[00:11:45 -> 00:11:46] for A and C would be same.
+[00:11:46 -> 00:11:48] And the code that was supposed to work for A
+[00:11:48 -> 00:11:50] would also work for this pointer
+[00:11:50 -> 00:11:54] because everything is laid out as though it is A
+[00:11:54 -> 00:11:56] because these are the first few fields
+[00:11:56 -> 00:11:58] of the A's memory layout.
+[00:11:58 -> 00:12:01] And this is the V table of A's memory layout, right?
+[00:12:01 -> 00:12:04] So everything works nicely for A.
+[00:12:04 -> 00:12:05] Now let's take a different case.
+[00:12:05 -> 00:12:08] Let's say I ask, what is the code
+[00:12:08 -> 00:12:12] that should be generated for B star B equals C?
+[00:12:13 -> 00:12:16] Now in this case, I want to convert an object,
+[00:12:16 -> 00:12:18] a pointer to the objects of class C
+[00:12:18 -> 00:12:20] to a pointer to an object of class B.
+[00:12:21 -> 00:12:24] And it's not just okay to use the same pointer.
+[00:12:24 -> 00:12:28] I need to do pointer adjustment as we just discussed.
+[00:12:28 -> 00:12:31] And so what I need to do is I'll need to add
+[00:12:31 -> 00:12:33] eight to the pointer C.
+[00:12:33 -> 00:12:35] And so what I'm going to get at the assembly level
+[00:12:35 -> 00:12:39] is that B would be equal to C plus eight, all right?
+[00:12:39 -> 00:12:42] And that's what pointer adjustment I'm going to do.
+[00:12:42 -> 00:12:44] And once I do B is equal to C plus eight,
+[00:12:44 -> 00:12:46] I'll get a pointer somewhere here.
+[00:12:46 -> 00:12:48] And this is where B is going to point.
+[00:12:48 -> 00:12:50] And now this whole thing looks like a B
+[00:12:50 -> 00:12:54] and it's V table also looks like a B, right?
+[00:12:54 -> 00:12:56] And there's a type info which can be used
+[00:12:56 -> 00:12:58] for dynamic cast and also the top offset
+[00:12:58 -> 00:13:01] which can also be used for dynamic cast, right?
+[00:13:01 -> 00:13:04] So if I, for example, want to dynamic cast back to C,
+[00:13:04 -> 00:13:05] then I'm going to first check
+[00:13:05 -> 00:13:08] whether it is actually a C object or not.
+[00:13:08 -> 00:13:09] I'm going to see yes, it is.
+[00:13:09 -> 00:13:11] And then I'm going to add the top offset
+[00:13:11 -> 00:13:13] to get back to my C object.
+[00:13:14 -> 00:13:19] All right, I should also point out
+[00:13:19 -> 00:13:21] that maybe these fields are redundant, right?
+[00:13:21 -> 00:13:23] So I have simplified things by using three V tables
+[00:13:23 -> 00:13:26] and maybe some of these fields like the top offset
+[00:13:26 -> 00:13:28] from the V table of C is redundant
+[00:13:28 -> 00:13:30] while I still need the top offset from B.
+[00:13:31 -> 00:13:32] So that's okay.
+[00:13:32 -> 00:13:34] All right, finally, okay.
+[00:13:34 -> 00:13:37] Then we have C.VA, right?
+[00:13:37 -> 00:13:38] So how do I implement C.VA?
+[00:13:38 -> 00:13:40] So C in this case,
+[00:13:40 -> 00:13:44] the compiler knows that C is an object of class C.
+[00:13:44 -> 00:13:46] So it can just, you know, decide that, okay,
+[00:13:46 -> 00:13:50] I know where is VA living in C's structure,
+[00:13:50 -> 00:13:52] in C's memory layout.
+[00:13:52 -> 00:13:53] So where is VA living?
+[00:13:53 -> 00:13:56] I know that VA lives at an offset
+[00:13:56 -> 00:13:57] from the first V table.
+[00:13:57 -> 00:13:59] Because I'm in the context of C,
+[00:13:59 -> 00:14:00] I know that there are three V tables
+[00:14:00 -> 00:14:03] and I also know that VA lives at an offset
+[00:14:03 -> 00:14:04] from the first V table,
+[00:14:04 -> 00:14:06] at an offset zero from the first V table.
+[00:14:06 -> 00:14:09] So I'm just going to dereference the first V table
+[00:14:09 -> 00:14:12] and dereference the first zero,
+[00:14:12 -> 00:14:13] zeroth offset there
+[00:14:13 -> 00:14:15] and I'm going to get the value of VA.
+[00:14:16 -> 00:14:20] All right, similarly, how do I implement C.VC?
+[00:14:20 -> 00:14:21] Now in this case, once again,
+[00:14:21 -> 00:14:22] because it's in the context of C,
+[00:14:22 -> 00:14:25] the code would know that look,
+[00:14:25 -> 00:14:29] VC is actually at zero offset from the third V table.
+[00:14:29 -> 00:14:30] So it's going to actually index
+[00:14:30 -> 00:14:31] through the third V table
+[00:14:31 -> 00:14:34] and at offset zero, it's going to find VC.
+[00:14:34 -> 00:14:36] All right, okay.
+[00:14:36 -> 00:14:40] But then how do I implement C.VB?
+[00:14:40 -> 00:14:42] Okay, that's also easy.
+[00:14:42 -> 00:14:44] Now this time I'm going to know that it's actually,
+[00:14:44 -> 00:14:45] it's again in the context of C.
+[00:14:45 -> 00:14:48] So the code should know that it's a context of C.
+[00:14:48 -> 00:14:49] In the context of C,
+[00:14:49 -> 00:14:52] VB lives at an offset from the second V table.
+[00:14:52 -> 00:14:54] So I'm going to go through the second V table
+[00:14:54 -> 00:14:55] and at an offset zero,
+[00:14:55 -> 00:14:58] I should expect to find the pointer to VB.
+[00:14:59 -> 00:15:03] Okay, now how about this code?
+[00:15:03 -> 00:15:06] If I say B star B equals C,
+[00:15:06 -> 00:15:09] so I first convert C to a B
+[00:15:09 -> 00:15:10] and then I call B.VB.
+[00:15:12 -> 00:15:15] Okay, so now this VB is being called
+[00:15:15 -> 00:15:18] in the context of B and not in the context of C.
+[00:15:18 -> 00:15:22] So first of all, when I use B star B equals C,
+[00:15:22 -> 00:15:25] what I'm going to get is I'm going to get a pointer B
+[00:15:25 -> 00:15:27] that is at an offset.
+[00:15:27 -> 00:15:30] So I'm going to have pointer adjustments to get B
+[00:15:30 -> 00:15:33] at an offset of eight from C.
+[00:15:33 -> 00:15:35] And then I'm going to call B.VB.
+[00:15:35 -> 00:15:37] So inside, now this is being called in the context of B.
+[00:15:37 -> 00:15:40] So I'm going to just look at the only V table
+[00:15:40 -> 00:15:43] that B is supposed to have, which is this one.
+[00:15:43 -> 00:15:45] And then I'm going to look at an offset zero
+[00:15:45 -> 00:15:46] from this V table,
+[00:15:46 -> 00:15:50] which is going to be this particular value.
+[00:15:50 -> 00:15:52] And then I can call it.
+[00:15:52 -> 00:15:53] So, so far so good.
+[00:15:53 -> 00:15:55] This should work nicely.
+[00:15:57 -> 00:15:59] Okay, so fine.
+[00:15:59 -> 00:16:02] But now here is another complication.
+[00:16:02 -> 00:16:07] What if VB has been overridden by class C?
+[00:16:07 -> 00:16:09] So that's our next case.
+[00:16:09 -> 00:16:13] So what if class C also defines a virtual function VB
+[00:16:13 -> 00:16:16] in addition to its own virtual function VC,
+[00:16:16 -> 00:16:17] and it's the overridden version.
+[00:16:17 -> 00:16:21] So let me just write overwrite here, right?
+[00:16:21 -> 00:16:26] So VB has been overridden by C, all right?
+[00:16:27 -> 00:16:31] Now, if I call B.VB, things should still work,
+[00:16:31 -> 00:16:34] except that now inside the V table.
+[00:16:34 -> 00:16:37] So once again, this would be where B is pointing.
+[00:16:37 -> 00:16:39] And so from the V table, I'm going to go,
+[00:16:39 -> 00:16:40] and I'm going to look at the zeroth offset.
+[00:16:40 -> 00:16:43] And this case, instead of the B's VB,
+[00:16:43 -> 00:16:45] I should have a pointer to C's VB.
+[00:16:45 -> 00:16:46] That's what dynamic dispatch means,
+[00:16:46 -> 00:16:50] because it's the overridden version of the function.
+[00:16:50 -> 00:16:51] But will it work?
+[00:16:51 -> 00:16:55] Now the problem here is that C's VB
+[00:16:55 -> 00:16:58] is going to expect an object of type C.
+[00:16:58 -> 00:17:02] So for example, C's VB can basically have a reference
+[00:17:02 -> 00:17:04] to this pointer, right?
+[00:17:04 -> 00:17:06] So for example, it could call,
+[00:17:06 -> 00:17:08] it could say this dot something, right?
+[00:17:08 -> 00:17:11] And C++, this is supposed to be the pointer
+[00:17:11 -> 00:17:13] to the current object.
+[00:17:13 -> 00:17:15] And the code of VB is,
+[00:17:15 -> 00:17:19] C's VB can potentially access C's virtual functions
+[00:17:19 -> 00:17:19] or C's fields.
+[00:17:19 -> 00:17:23] For example, C's VB is perfectly okay
+[00:17:23 -> 00:17:28] to say this dot Z, all right, inside C's VB.
+[00:17:28 -> 00:17:30] And that should be legal code.
+[00:17:30 -> 00:17:34] After all, that's what it's supposed to do.
+[00:17:34 -> 00:17:36] I mean, it's in the context of C.
+[00:17:36 -> 00:17:38] So whatever is available in C
+[00:17:38 -> 00:17:40] should be accessible through VB.
+[00:17:42 -> 00:17:43] How do I implement that?
+[00:17:43 -> 00:17:44] All right.
+[00:17:47 -> 00:17:48] So it's actually not an issue
+[00:17:48 -> 00:17:51] because I could have just said that
+[00:17:51 -> 00:17:52] in the case of single inheritance,
+[00:17:52 -> 00:17:55] I could have just treated this B pointer as C pointer
+[00:17:55 -> 00:17:56] and things would have worked.
+[00:17:56 -> 00:17:58] And I could have just looked at it
+[00:17:58 -> 00:18:00] and the context of C.
+[00:18:00 -> 00:18:02] But now I cannot do that
+[00:18:02 -> 00:18:05] because the C pointer is actually at an offset,
+[00:18:05 -> 00:18:06] small c.
+[00:18:06 -> 00:18:09] So that's an offset of minus eight from B, right?
+[00:18:09 -> 00:18:10] So before I call VB,
+[00:18:10 -> 00:18:15] I need to do pointer readjustment back to C
+[00:18:15 -> 00:18:18] so that this pointer available to VB
+[00:18:18 -> 00:18:19] is the correct one, right?
+[00:18:19 -> 00:18:22] Because this dot Z, the code for this dot Z
+[00:18:23 -> 00:18:24] inside VB is going to do what?
+[00:18:24 -> 00:18:28] It's going to add, you know, four, eight,
+[00:18:28 -> 00:18:30] six, 12, 16, 20.
+[00:18:30 -> 00:18:32] So it's going to add 20
+[00:18:32 -> 00:18:36] to whatever is the pointer supplied as this, right?
+[00:18:36 -> 00:18:37] So if I say this dot Z,
+[00:18:37 -> 00:18:41] it's going to dereference a value at offset 20
+[00:18:41 -> 00:18:43] to get the value of Z.
+[00:18:43 -> 00:18:45] But if I call B dot VB,
+[00:18:45 -> 00:18:47] then the value of this that's being passed
+[00:18:47 -> 00:18:49] would be this value.
+[00:18:49 -> 00:18:51] And an offset 20 from this value
+[00:18:51 -> 00:18:53] would be some jump.
+[00:18:53 -> 00:18:54] It won't be Z.
+[00:18:54 -> 00:18:56] So what do I need to do
+[00:18:56 -> 00:18:58] before I actually transfer control to VB?
+[00:18:58 -> 00:19:03] I need to adjust the pointer B back to C, right?
+[00:19:03 -> 00:19:05] So this is,
+[00:19:06 -> 00:19:09] no, this is during dynamic dispatch.
+[00:19:09 -> 00:19:14] Only if the function has been overridden,
+[00:19:14 -> 00:19:16] I need to readjust the pointer back from B to C.
+[00:19:16 -> 00:19:18] If the function has not been overridden,
+[00:19:18 -> 00:19:20] then I don't need to do this, all right?
+[00:19:20 -> 00:19:22] And so the compiler needs to worry about that.
+[00:19:22 -> 00:19:25] And how will the compiler do something like this?
+[00:19:25 -> 00:19:26] Well, the answer is the following.
+[00:19:26 -> 00:19:31] It's going to not have a direct call to C,
+[00:19:31 -> 00:19:33] jump to C, V colon, colon VB,
+[00:19:33 -> 00:19:34] because that would be wrong,
+[00:19:34 -> 00:19:36] because this pointer would be wrong.
+[00:19:36 -> 00:19:40] Instead, it's going to have a pointer.
+[00:19:40 -> 00:19:41] It's going to have a thunk.
+[00:19:41 -> 00:19:42] What's a thunk?
+[00:19:42 -> 00:19:46] It's basically a small number of instructions
+[00:19:46 -> 00:19:50] that can be executed before calling a function, all right?
+[00:19:51 -> 00:19:53] And this thunk is going to look like the following.
+[00:19:53 -> 00:19:56] It's going to add minus eight to the this pointer.
+[00:19:56 -> 00:19:58] So let's say that this pointer is somehow living
+[00:19:58 -> 00:20:01] in the stack pointer register,
+[00:20:01 -> 00:20:02] or it could be any other register.
+[00:20:02 -> 00:20:03] I'm just using stack pointer here.
+[00:20:03 -> 00:20:05] So it's just going to add minus eight
+[00:20:05 -> 00:20:08] to that stack pointer register.
+[00:20:08 -> 00:20:10] And so that's going to be the adjustment
+[00:20:10 -> 00:20:13] to the this pointer.
+[00:20:13 -> 00:20:16] And once again, assuming in the calling conventions
+[00:20:16 -> 00:20:19] that the stack pointer has this pointer,
+[00:20:20 -> 00:20:21] if this is confusing you,
+[00:20:21 -> 00:20:23] I can also change this to, let's say,
+[00:20:23 -> 00:20:26] something like A0 or A1 or whatever, right?
+[00:20:26 -> 00:20:31] Whatever is the register or the memory location
+[00:20:31 -> 00:20:34] that's supposed to hold this pointer
+[00:20:34 -> 00:20:36] at the entry of VB,
+[00:20:36 -> 00:20:40] that location currently has this pointer in it,
+[00:20:40 -> 00:20:41] and it has B in it, right?
+[00:20:41 -> 00:20:44] Because that's what B.VB is supposed to do.
+[00:20:45 -> 00:20:49] But in general, if VB wasn't overridden,
+[00:20:49 -> 00:20:50] then this would have been fine,
+[00:20:50 -> 00:20:52] but because VB has been overridden,
+[00:20:52 -> 00:20:53] before I call the overridden value,
+[00:20:53 -> 00:20:56] I need to readjust my pointer.
+[00:20:56 -> 00:21:01] So I need to add minus eight to B,
+[00:21:01 -> 00:21:04] and then branch to C's VB, all right?
+[00:21:04 -> 00:21:06] And so this is what the compiler should do.
+[00:21:06 -> 00:21:10] It should not point the VB to C's VB directly,
+[00:21:10 -> 00:21:12] but it should add some extra code
+[00:21:12 -> 00:21:13] that's going to readjust the pointer
+[00:21:13 -> 00:21:18] before actually calling C's VB, okay?
+[00:21:18 -> 00:21:20] Now, also this creates another problem,
+[00:21:20 -> 00:21:24] because if let's say I call C.VB, all right?
+[00:21:24 -> 00:21:27] So what if I call C.VB now in the overridden,
+[00:21:27 -> 00:21:30] in this scenario where VB has been overridden?
+[00:21:30 -> 00:21:31] Now, in this case,
+[00:21:31 -> 00:21:34] C.VB would basically be called in the context of C,
+[00:21:34 -> 00:21:37] so the pointer would already be the right pointer,
+[00:21:37 -> 00:21:39] the top pointer, C.
+[00:21:39 -> 00:21:42] And if I just look at the V table
+[00:21:42 -> 00:21:44] and look at the zeroth offset,
+[00:21:44 -> 00:21:46] then this is what I get.
+[00:21:46 -> 00:21:48] But here, I'm unnecessarily doing a readjustment.
+[00:21:48 -> 00:21:50] Here, I didn't need a readjustment,
+[00:21:51 -> 00:21:52] because I already have.
+[00:21:52 -> 00:21:54] So for C.VB, I don't need a readjustment,
+[00:21:54 -> 00:21:57] while for B.VB, I need a readjustment.
+[00:21:57 -> 00:21:59] So to handle this,
+[00:21:59 -> 00:22:01] if there's an overridden function,
+[00:22:01 -> 00:22:02] what the compiler would need to do
+[00:22:02 -> 00:22:04] is need to have another pointer,
+[00:22:04 -> 00:22:07] which is just pointing to C.VB,
+[00:22:07 -> 00:22:10] and for VB called in context of C,
+[00:22:10 -> 00:22:12] it should go through C's V table,
+[00:22:12 -> 00:22:14] and in this case, an offset of four,
+[00:22:14 -> 00:22:17] and look at C's VB, all right?
+[00:22:17 -> 00:22:22] Okay, this is how you will implement multiple inheritance.
+[00:22:26 -> 00:22:28] You will generate code for multiple inheritance.

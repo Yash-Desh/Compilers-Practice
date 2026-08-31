@@ -1,0 +1,407 @@
+Title: Compiler Design Module 54   Code Generation for Function Calls
+Video ID: B80TpNQY7KA
+Detected language: en
+------------------------------------------------------------
+
+[00:00:00 -> 00:00:07] So, now that we have discussed code generation for arithmetic operators and if-then-else
+[00:00:07 -> 00:00:13] style branching, let's now discuss something more which is code generation for function
+[00:00:13 -> 00:00:14] call dispatch.
+[00:00:14 -> 00:00:18] So, one of the big differences between the high level language that we are using now
+[00:00:18 -> 00:00:23] and the language that we had earlier on expressions only is the ability to do make
+[00:00:23 -> 00:00:27] function calls and that really increases the power of the language.
+[00:00:27 -> 00:00:32] For example, now we have the idea of recursion and in other words recursion is just one form
+[00:00:32 -> 00:00:37] of looping and so now our language also has loops and things like that.
+[00:00:37 -> 00:00:44] So, before we can talk about code generation for function call dispatch, recall that
+[00:00:44 -> 00:00:48] code generation and activation record design need to be done simultaneously.
+[00:00:48 -> 00:00:53] So let's first talk about the activation record design.
+[00:00:53 -> 00:00:57] Now here is one way to organize your activation record and this is the way that I am going
+[00:00:57 -> 00:01:01] to use, this is the strategy that I am going to use for my code generation for the language
+[00:01:01 -> 00:01:05] that we discussed.
+[00:01:05 -> 00:01:12] Recall that we have our result, the arguments, there is something called the control link
+[00:01:12 -> 00:01:17] which basically points to the activation record of the caller and then there is
+[00:01:17 -> 00:01:20] the return address which is the code address at which you should return after
+[00:01:20 -> 00:01:24] you are done executing the current callee.
+[00:01:24 -> 00:01:31] Now for our code generation strategy, these are the invariants that we are going to follow.
+[00:01:31 -> 00:01:35] The result we are going to put it in the register A0.
+[00:01:35 -> 00:01:39] This works well for us because in any case one of the invariants of a code generation
+[00:01:39 -> 00:01:45] strategy is that the value of an expression is available after it is computed in the
+[00:01:45 -> 00:01:51] register A0 and you can imagine that the value of a function called dispatch is the
+[00:01:51 -> 00:01:55] return value and so even that is available in A0 so things remain consistent.
+[00:01:55 -> 00:01:58] So the result is going to appear in A0.
+[00:01:58 -> 00:02:03] The arguments will be on the stack and they will be laid out from the last argument
+[00:02:03 -> 00:02:04] down to the first argument.
+[00:02:04 -> 00:02:11] So if I look from the bottom up then I would see the first argument first, the
+[00:02:11 -> 00:02:14] second argument second and so on.
+[00:02:14 -> 00:02:20] Similarly for the control link we will introduce the notion of a frame pointer.
+[00:02:20 -> 00:02:25] So recall that we said that the control link may or may not be necessary depending
+[00:02:25 -> 00:02:30] on whether we can use the stack pointer, the top of the stack to identify the current
+[00:02:30 -> 00:02:38] AR and then use the contiguous array layout of the stack of ARs to identify the AR
+[00:02:38 -> 00:02:40] of the caller.
+[00:02:40 -> 00:02:47] So in our strategy we are going to use the frame pointer and we will also briefly discuss
+[00:02:47 -> 00:02:51] if there was no frame pointer then how would we go about it.
+[00:02:51 -> 00:02:55] What the frame pointer is going to point to, so recall that the stack pointer points
+[00:02:55 -> 00:03:01] to the top of the activation record.
+[00:03:01 -> 00:03:08] The frame pointer would point conceptually speaking to the bottom of the activation
+[00:03:08 -> 00:03:09] record.
+[00:03:09 -> 00:03:14] So we have two pointers, the stack pointer and the frame pointer and both of them would
+[00:03:14 -> 00:03:23] be pointing, would be marking out or outlining the activation record.
+[00:03:23 -> 00:03:27] One of them would be close to the bottom, the other one would be close to the top
+[00:03:27 -> 00:03:31] and then when I return then I am going to shift both these pointers up to the
+[00:03:31 -> 00:03:32] caller.
+[00:03:32 -> 00:03:36] We are going to see this in more detail and finally the return address that's also
+[00:03:36 -> 00:03:40] going to live on the stack.
+[00:03:40 -> 00:03:47] So notice that this information, arguments, control link and the return address would
+[00:03:47 -> 00:03:56] live on the stack and $SP which is the stack pointer register will track the current
+[00:03:56 -> 00:03:58] stack top.
+[00:03:58 -> 00:04:04] So because the stack grows downwards this is where let's say $SP will point at some
+[00:04:04 -> 00:04:05] point in the function execution.
+[00:04:05 -> 00:04:11] Of course while the function is executing maybe allocating more temporary variables or
+[00:04:11 -> 00:04:16] other variables in which case $SP could be moving dynamically during the evaluation of
+[00:04:16 -> 00:04:19] the body of the function.
+[00:04:19 -> 00:04:23] But we are going to introduce another register called the frame pointer and there is actually
+[00:04:23 -> 00:04:30] a register in MIPS architecture called FP which is meant to be for the frame pointer
+[00:04:30 -> 00:04:35] and this is used to track the current AR and that would typically point somewhere
+[00:04:36 -> 00:04:38] near the bottom of the current AR.
+[00:04:38 -> 00:04:46] Alright, so here is what the AR layout is going to look like.
+[00:04:46 -> 00:04:49] The stack grows downwards as always.
+[00:04:49 -> 00:04:53] The frame pointer, so let's say I am currently executing in the callee.
+[00:04:53 -> 00:04:58] So let's say this part is the callee.
+[00:04:58 -> 00:05:04] So the frame pointer is going to point to the start of the activation record of
+[00:05:04 -> 00:05:09] the callee and then the stack pointer, the frame pointer is going to point to the bottom
+[00:05:09 -> 00:05:16] of the activation record of the callee and stack pointer is going to point to the top
+[00:05:16 -> 00:05:20] of the activation record of the callee.
+[00:05:20 -> 00:05:26] Also just above the frame pointer we would have information that would basically
+[00:05:26 -> 00:05:32] allow us to return back to the caller's activation record and caller's code address.
+[00:05:32 -> 00:05:37] So for example, before the callee was called, what was the return address?
+[00:05:37 -> 00:05:39] So what is the return address that's stored here?
+[00:05:39 -> 00:05:41] What were the arguments with which this callee was called?
+[00:05:41 -> 00:05:43] That's also available on the stack.
+[00:05:43 -> 00:05:45] And then what is the old frame pointer?
+[00:05:45 -> 00:05:48] This is similar to our control link.
+[00:05:48 -> 00:05:52] So that's going to, old frame pointer means frame pointer of the caller.
+[00:05:52 -> 00:05:57] So when I return, I want to load the old frame pointer into $FP and so on, right?
+[00:05:57 -> 00:06:00] So that's what we are going to do.
+[00:06:00 -> 00:06:05] And when I return, I want to basically move the stack pointer.
+[00:06:05 -> 00:06:06] I want to remove all this stuff.
+[00:06:06 -> 00:06:12] So when I'm going to return, I'm going to remove all this stuff, put my SP here,
+[00:06:12 -> 00:06:20] somewhere here, right in the caller's context, and the frame pointer would point to whatever
+[00:06:20 -> 00:06:21] is the old FP.
+[00:06:21 -> 00:06:25] And old FP based on our conventions is going to be pointing somewhere above the
+[00:06:25 -> 00:06:26] stack pointer all the time, right?
+[00:06:26 -> 00:06:30] So that's old FP, by the invariance that we are maintaining, would always be something
+[00:06:30 -> 00:06:38] that's a higher address than the stack pointer, all right?
+[00:06:38 -> 00:06:48] So this is the size of an activation record, which is the old FP, the arguments, and
+[00:06:48 -> 00:06:49] the return address.
+[00:06:49 -> 00:06:53] The size of the AR, I mean the size of the AR at just function entry and the
+[00:06:53 -> 00:06:55] callee entry time.
+[00:06:55 -> 00:07:00] This is all the information that's required to dispatch the function call.
+[00:07:00 -> 00:07:01] That needs to be saved.
+[00:07:01 -> 00:07:04] This is the old frame pointer, the arguments with which the callee was called, and the
+[00:07:04 -> 00:07:05] return address.
+[00:07:05 -> 00:07:08] So what's the size of the AR?
+[00:07:08 -> 00:07:12] If n is the number of arguments, 1 dot dot n, then the size of the AR is four
+[00:07:12 -> 00:07:14] into n plus eight.
+[00:07:14 -> 00:07:19] Four for each argument, four for the old frame pointer, and four for the return
+[00:07:19 -> 00:07:20] address.
+[00:07:20 -> 00:07:24] So the size becomes four into n plus eight in our strategy.
+[00:07:24 -> 00:07:25] Okay.
+[00:07:25 -> 00:07:30] Now also, what part is populated by the caller and what part is populated by the
+[00:07:30 -> 00:07:31] callee?
+[00:07:31 -> 00:07:33] This is also a part of my AR design.
+[00:07:33 -> 00:07:37] It's not just enough to say what are the contents, but what is populated by what.
+[00:07:37 -> 00:07:40] This is part of the calling conventions contract.
+[00:07:40 -> 00:07:43] And this also needs to be decided at code generation time.
+[00:07:43 -> 00:07:48] And in this case, I'm going to ensure that...
+[00:07:48 -> 00:07:50] So clearly the arguments need to be populated by the caller, right?
+[00:07:50 -> 00:07:53] Because the callee cannot know what are the arguments.
+[00:07:53 -> 00:07:56] The actual arguments are going to be populated by the caller.
+[00:07:56 -> 00:07:59] Also, the old frame pointer will be populated by the caller because it's a
+[00:07:59 -> 00:08:00] caller's frame pointer.
+[00:08:00 -> 00:08:04] So the callee won't know what is the frame point of the caller.
+[00:08:04 -> 00:08:10] And so these n plus four, four into n plus four words, the arguments and the old
+[00:08:10 -> 00:08:13] frame pointer is populated by the caller.
+[00:08:13 -> 00:08:16] The return address is populated by the callee, and we're going to see how that
+[00:08:16 -> 00:08:17] is done.
+[00:08:17 -> 00:08:21] And so that's the breakdown of what is populated by the caller
+[00:08:21 -> 00:08:25] and what is populated by the colleague.
+[00:08:25 -> 00:08:28] Okay, before we can talk about the code generation
+[00:08:28 -> 00:08:30] for a function called dispatch,
+[00:08:30 -> 00:08:34] we'll introduce two more relevant MIPS off-codes.
+[00:08:34 -> 00:08:38] One is called jump and link JAL to a label.
+[00:08:38 -> 00:08:41] What it does is it branches to the label.
+[00:08:41 -> 00:08:43] This is a typo.
+[00:08:43 -> 00:08:48] This is branches to label
+[00:08:48 -> 00:08:50] and saves the address of the next instruction
+[00:08:51 -> 00:08:53] in a register called RA.
+[00:08:53 -> 00:08:55] So the MIPS architecture has a special register.
+[00:08:55 -> 00:08:57] Recall that there were 32 registers in RA
+[00:08:57 -> 00:08:58] in the MIPS architecture,
+[00:08:58 -> 00:09:00] and one of them is called RA.
+[00:09:00 -> 00:09:03] So what JAL, the label, does is it branches to label
+[00:09:03 -> 00:09:07] and saves the address of the next instruction in $RA.
+[00:09:08 -> 00:09:12] Now, this is going to implement our function call,
+[00:09:12 -> 00:09:12] as you can imagine.
+[00:09:12 -> 00:09:14] It's going to jump to the function entry.
+[00:09:14 -> 00:09:17] It'll be used to jump to the function entry,
+[00:09:17 -> 00:09:19] and such that, during the jump,
+[00:09:19 -> 00:09:23] the return address is stored to this register called RA,
+[00:09:23 -> 00:09:25] so that when the colleague wants to return,
+[00:09:25 -> 00:09:27] it can use RA to return back.
+[00:09:28 -> 00:09:31] All right, and then there is this instruction
+[00:09:31 -> 00:09:32] called jump register reg.
+[00:09:34 -> 00:09:37] That's going to be used to jump to a register,
+[00:09:37 -> 00:09:39] so branch to the address stored in the register.
+[00:09:39 -> 00:09:42] And you can imagine that this is typically used
+[00:09:42 -> 00:09:45] to jump to the return address register.
+[00:09:45 -> 00:09:48] And this is jump register $RA
+[00:09:48 -> 00:09:50] basically implements a function return
+[00:09:50 -> 00:09:53] in the MIPS architecture.
+[00:09:53 -> 00:09:56] All right, so with that background,
+[00:09:56 -> 00:09:58] let's look at the code generation
+[00:09:58 -> 00:10:00] for a function called dispatch.
+[00:10:00 -> 00:10:02] So let's say there's a function that appears
+[00:10:02 -> 00:10:05] in my, on the caller side,
+[00:10:05 -> 00:10:08] which says F, and then some arguments
+[00:10:08 -> 00:10:09] which are the expressions.
+[00:10:09 -> 00:10:11] Notice that these are actual arguments,
+[00:10:11 -> 00:10:13] so the actual expression values.
+[00:10:13 -> 00:10:15] So the first thing I do
+[00:10:15 -> 00:10:18] is I save the current frame pointer.
+[00:10:18 -> 00:10:20] Recall that in our AR,
+[00:10:20 -> 00:10:26] the first thing in the stack was the old FP.
+[00:10:26 -> 00:10:28] So I first save the old FP.
+[00:10:28 -> 00:10:30] So that's what the first two instructions are doing.
+[00:10:30 -> 00:10:33] They just store word $FP, $0 SP.
+[00:10:33 -> 00:10:34] We'll just store the frame pointer
+[00:10:34 -> 00:10:35] at the top of the stack,
+[00:10:35 -> 00:10:38] and then decrement the stack pointers.
+[00:10:38 -> 00:10:40] In other words, these two are pushing the frame pointer
+[00:10:40 -> 00:10:41] to the top of the stack.
+[00:10:43 -> 00:10:46] Then generate the code for all the arguments.
+[00:10:46 -> 00:10:48] And recall that the arguments were laid out
+[00:10:48 -> 00:10:49] in the reverse order.
+[00:10:49 -> 00:10:51] So the first argument that I'm going to generate
+[00:10:51 -> 00:10:54] the code for is EN, the last.
+[00:10:54 -> 00:10:56] So I'm going to generate the code for EN,
+[00:10:56 -> 00:10:57] then EN minus one, and so on.
+[00:10:57 -> 00:10:59] So I first generate code for EN,
+[00:10:59 -> 00:11:00] and then whatever is the result,
+[00:11:00 -> 00:11:02] I will expect it in the register A0,
+[00:11:02 -> 00:11:05] and so I push A0 to the stack
+[00:11:05 -> 00:11:07] using these two instructions,
+[00:11:07 -> 00:11:09] store word and add image and update.
+[00:11:10 -> 00:11:13] And I keep doing this for all the arguments
+[00:11:13 -> 00:11:16] until I reach E1, so code generation for E1,
+[00:11:16 -> 00:11:21] and then push the value to the top of the stack again.
+[00:11:21 -> 00:11:23] Finally, make the function call
+[00:11:23 -> 00:11:27] using the JAL F entry opcode.
+[00:11:27 -> 00:11:32] Now, notice that everything on the caller side,
+[00:11:32 -> 00:11:36] at this point, basically what I have in the stack
+[00:11:36 -> 00:11:40] is old FP, and then all the arguments
+[00:11:41 -> 00:11:45] laid out from the last argument to the first argument.
+[00:11:45 -> 00:11:50] And now this is where $SP points at function entry.
+[00:11:51 -> 00:11:56] Now, by the time the control reaches
+[00:11:56 -> 00:11:59] the first instruction in function entry,
+[00:11:59 -> 00:12:00] the return address register
+[00:12:00 -> 00:12:02] would be populated with the return address.
+[00:12:02 -> 00:12:06] So $RA would be populated with the return address,
+[00:12:06 -> 00:12:08] and so the first thing that the callee may want to do
+[00:12:08 -> 00:12:11] is to push $RA to the stack,
+[00:12:11 -> 00:12:14] and that would complete our activation record.
+[00:12:15 -> 00:12:18] All right, so this is the callee side code.
+[00:12:19 -> 00:12:21] The first thing that,
+[00:12:21 -> 00:12:24] so this is code gen for a function definition.
+[00:12:26 -> 00:12:29] This is the def keyword,
+[00:12:29 -> 00:12:31] the identifier of the function,
+[00:12:31 -> 00:12:35] the formal arguments x1.xn equals E,
+[00:12:35 -> 00:12:36] which is the body of the function.
+[00:12:36 -> 00:12:38] So the question is, how do I generate the code
+[00:12:38 -> 00:12:40] for such a function definition?
+[00:12:40 -> 00:12:42] So first of all, there is,
+[00:12:42 -> 00:12:43] we need to generate a new label
+[00:12:43 -> 00:12:45] for every function identifier
+[00:12:46 -> 00:12:48] called, let's say, F underscore entry,
+[00:12:48 -> 00:12:50] and this is the label that is going to be used
+[00:12:50 -> 00:12:51] with the JAL instruction
+[00:12:51 -> 00:12:53] for every function called dispatch
+[00:12:53 -> 00:12:55] to this particular function.
+[00:12:55 -> 00:12:59] And the first thing we do is we move $SP to $FP.
+[00:12:59 -> 00:13:00] Why do we do this?
+[00:13:00 -> 00:13:02] Well, this is basically representing
+[00:13:02 -> 00:13:04] the new frame pointer,
+[00:13:04 -> 00:13:07] the new bottom of the activation record.
+[00:13:07 -> 00:13:09] So I've just entered the function.
+[00:13:09 -> 00:13:11] What is the activation record's bottom?
+[00:13:11 -> 00:13:14] It's the current value of the stack pointer,
+[00:13:14 -> 00:13:15] which is current value
+[00:13:15 -> 00:13:17] of the top of the activation record.
+[00:13:17 -> 00:13:18] Because the stack pointer can keep growing
+[00:13:18 -> 00:13:21] and shrinking as we evaluate the body,
+[00:13:21 -> 00:13:23] but the frame pointer would remain constant,
+[00:13:23 -> 00:13:25] which would point to the bottom
+[00:13:25 -> 00:13:28] of the activation record, all right?
+[00:13:28 -> 00:13:30] Then we store word,
+[00:13:30 -> 00:13:33] the return address to the top of the stack.
+[00:13:33 -> 00:13:35] So we just push the return address,
+[00:13:35 -> 00:13:37] which is in register RA,
+[00:13:37 -> 00:13:38] to the top of the stack
+[00:13:38 -> 00:13:39] by using these two instructions,
+[00:13:39 -> 00:13:41] forward and addIU.
+[00:13:41 -> 00:13:45] And then we are ready to generate the code for E,
+[00:13:45 -> 00:13:49] which is the body of the function.
+[00:13:49 -> 00:13:53] After we are done generating the code for E,
+[00:13:53 -> 00:13:55] we load the return address
+[00:13:55 -> 00:13:57] from the top of the stack.
+[00:13:57 -> 00:14:00] We call the top of the stack as $4 plus SP,
+[00:14:00 -> 00:14:04] and we load that into the return address register.
+[00:14:05 -> 00:14:07] We restore the stack pointer
+[00:14:07 -> 00:14:09] to where it was before the call,
+[00:14:10 -> 00:14:13] which means that I add a constant Z,
+[00:14:13 -> 00:14:15] where Z is just four into N plus eight,
+[00:14:15 -> 00:14:17] which is exactly the size of the activation record.
+[00:14:17 -> 00:14:20] So I restored the stack pointer back to where it was
+[00:14:21 -> 00:14:24] before the function call dispatch must have started.
+[00:14:24 -> 00:14:26] Notice that some part of the Z
+[00:14:26 -> 00:14:28] was actually populated by the caller,
+[00:14:28 -> 00:14:31] but it is being deallocated by the callee.
+[00:14:31 -> 00:14:32] So for example,
+[00:14:32 -> 00:14:34] the part where the arguments are stored
+[00:14:34 -> 00:14:36] or the part where the old frame pointer is stored,
+[00:14:36 -> 00:14:40] that part of the activation record
+[00:14:40 -> 00:14:42] was allocated by the caller,
+[00:14:42 -> 00:14:44] but is getting deallocated by the callee.
+[00:14:44 -> 00:14:46] Now, this is just a design choice
+[00:14:46 -> 00:14:48] in this particular code generation strategy.
+[00:14:48 -> 00:14:50] It is also perfectly possible
+[00:14:50 -> 00:14:54] to deallocate that part of the activation record
+[00:14:54 -> 00:14:56] inside the caller, not in the callee.
+[00:14:58 -> 00:15:00] Notice that in the caller,
+[00:15:00 -> 00:15:01] after the function call return,
+[00:15:01 -> 00:15:02] I didn't really generate any instructions.
+[00:15:02 -> 00:15:04] So if I go back,
+[00:15:04 -> 00:15:09] if I go back to this particular instruction,
+[00:15:10 -> 00:15:13] JAL, F entry, I didn't have any code.
+[00:15:13 -> 00:15:14] So after I return,
+[00:15:14 -> 00:15:16] I would expect my control to be
+[00:15:16 -> 00:15:18] exactly after the JAL instruction.
+[00:15:18 -> 00:15:19] So at this point,
+[00:15:19 -> 00:15:22] and at this point I don't do any cleanup, right?
+[00:15:22 -> 00:15:23] So I'm assuming that the callee
+[00:15:23 -> 00:15:25] has done all the cleanup for me.
+[00:15:25 -> 00:15:26] And this is just a strategy.
+[00:15:26 -> 00:15:28] I could have put some more instructions here
+[00:15:28 -> 00:15:30] if I wanted, but I'm not doing that.
+[00:15:30 -> 00:15:32] And so in this case,
+[00:15:32 -> 00:15:34] the callee is basically doing all the cleanup.
+[00:15:34 -> 00:15:37] And one of the cleanup items is that
+[00:15:37 -> 00:15:39] you need to deallocate the stack space
+[00:15:39 -> 00:15:44] by popping off Z number of bytes.
+[00:15:44 -> 00:15:46] And that's done by just increment,
+[00:15:46 -> 00:15:48] just adding Z to $SP,
+[00:15:48 -> 00:15:50] where Z is four into N plus eight.
+[00:15:50 -> 00:15:52] N is the number of arguments.
+[00:15:53 -> 00:15:56] Finally, we want to restore the old frame pointer.
+[00:15:56 -> 00:15:59] And the old frame pointer,
+[00:15:59 -> 00:16:00] based on this arithmetic,
+[00:16:00 -> 00:16:04] you will be able to see that
+[00:16:04 -> 00:16:06] it is available at zero plus $SP.
+[00:16:06 -> 00:16:08] And so I can just load that into $SP.
+[00:16:08 -> 00:16:12] And now I can return to the return address,
+[00:16:12 -> 00:16:13] which was populated earlier
+[00:16:13 -> 00:16:15] in my code generation strategy.
+[00:16:16 -> 00:16:17] Okay.
+[00:16:17 -> 00:16:19] Now, once again, I may ask you the question,
+[00:16:19 -> 00:16:21] why do I need to push the RA
+[00:16:21 -> 00:16:23] and then load it again?
+[00:16:23 -> 00:16:25] Could I just not have had to push the RA
+[00:16:25 -> 00:16:28] and just load it in the $RA register?
+[00:16:28 -> 00:16:29] The answer is really easy.
+[00:16:31 -> 00:16:33] The code gen of E could have clobbered RA.
+[00:16:33 -> 00:16:35] And so I need to push it to the stack
+[00:16:35 -> 00:16:37] and then pop it back
+[00:16:37 -> 00:16:39] because I can't trust that $RA
+[00:16:39 -> 00:16:42] is not clobbered inside E.
+[00:16:43 -> 00:16:44] All right.
+[00:16:44 -> 00:16:46] But if I push it to the stack,
+[00:16:46 -> 00:16:47] then we are safe because of our invariance
+[00:16:47 -> 00:16:52] that code gen will not modify the stack in any way.
+[00:16:54 -> 00:16:55] All right.
+[00:16:55 -> 00:16:56] So if I look at the stack states
+[00:16:56 -> 00:16:58] during a procedure call,
+[00:16:58 -> 00:17:00] let's say this is the stack state
+[00:17:00 -> 00:17:01] before the call,
+[00:17:01 -> 00:17:05] this is the caller's stack state, right?
+[00:17:05 -> 00:17:07] This is the caller's frame pointer
+[00:17:08 -> 00:17:10] and the caller's stack pointer, right?
+[00:17:10 -> 00:17:11] So the caller's frame pointer
+[00:17:11 -> 00:17:12] and the caller's stack pointer
+[00:17:12 -> 00:17:13] before the call.
+[00:17:15 -> 00:17:19] Now, just after the call
+[00:17:19 -> 00:17:21] on function entry of the callee,
+[00:17:21 -> 00:17:23] I would have the frame pointer
+[00:17:23 -> 00:17:26] is still pointing to the caller's frame pointer.
+[00:17:26 -> 00:17:28] The $fp is still pointing there.
+[00:17:28 -> 00:17:30] Even though I have pushed this value here.
+[00:17:30 -> 00:17:32] So at this point,
+[00:17:32 -> 00:17:36] this value is actually equal to $fp, right?
+[00:17:36 -> 00:17:38] Because that's exactly what I had pushed.
+[00:17:38 -> 00:17:43] Also, the arguments have been pushed by the caller.
+[00:17:43 -> 00:17:44] And so the stack pointer
+[00:17:44 -> 00:17:49] is pointing to the next top of the stack.
+[00:17:49 -> 00:17:51] And so this is what the stack would look like
+[00:17:51 -> 00:17:53] on function entry
+[00:17:53 -> 00:17:56] before executing any instruction in the function, right?
+[00:17:56 -> 00:17:59] Now, the first few instructions in the callee function
+[00:17:59 -> 00:18:01] are going to push more stuff.
+[00:18:01 -> 00:18:02] For example,
+[00:18:02 -> 00:18:04] it's going to push the return address on the stack.
+[00:18:04 -> 00:18:07] Also, it's going to modify the fp value.
+[00:18:07 -> 00:18:08] So let's look at that.
+[00:18:08 -> 00:18:12] Indeed, after three instructions,
+[00:18:12 -> 00:18:14] it's going to look like the following.
+[00:18:14 -> 00:18:16] It has the return address.
+[00:18:16 -> 00:18:17] So the first three instructions, if you recall,
+[00:18:17 -> 00:18:21] are you push the return address on the stack
+[00:18:21 -> 00:18:24] and you update the frame pointer register.
+[00:18:24 -> 00:18:25] And so that's exactly what's happening.
+[00:18:25 -> 00:18:27] I push the return address
+[00:18:27 -> 00:18:28] and then I have the frame pointer.
+[00:18:28 -> 00:18:31] The stack pointer is now pointing to one lower
+[00:18:31 -> 00:18:35] than the return address location.
+[00:18:35 -> 00:18:37] And now, at this point,
+[00:18:37 -> 00:18:39] it is safe for the body to execute.
+[00:18:39 -> 00:18:42] So body executes from here on.
+[00:18:42 -> 00:18:46] And the body can potentially change
+[00:18:46 -> 00:18:48] the stack pointer up and down,
+[00:18:48 -> 00:18:51] but the frame pointer would remain the same.
+[00:18:51 -> 00:18:54] If the body involves another function call,
+[00:18:54 -> 00:18:57] then the frame pointer would get saved
+[00:18:57 -> 00:19:01] and restored before and after the call.
+[00:19:02 -> 00:19:04] And so this is how
+[00:19:04 -> 00:19:06] my code generation strategy is going to work.
+[00:19:06 -> 00:19:11] Now, after the body has been executed,
+[00:19:11 -> 00:19:13] then the function would want to return
+[00:19:13 -> 00:19:15] and recall that the last few instructions
+[00:19:15 -> 00:19:19] in my code generation strategy were,
+[00:19:19 -> 00:19:21] A, they were cleaning up the stack
+[00:19:21 -> 00:19:23] by incrementing the stack pointer.
+[00:19:23 -> 00:19:24] So that's what is happening.
+[00:19:24 -> 00:19:26] So stack pointer is here,
+[00:19:26 -> 00:19:28] but I'm going to add Z to it,
+[00:19:28 -> 00:19:30] which is four into N plus eight.
+[00:19:30 -> 00:19:31] And so my stack pointer is now pointing
+[00:19:31 -> 00:19:34] at this location, which is old FP.
+[00:19:34 -> 00:19:37] Moreover, I'm going to load old FP into dollar FP.
+[00:19:37 -> 00:19:39] And so these two values
+[00:19:39 -> 00:19:41] are again going to become equal.
+[00:19:42 -> 00:19:43] All right.
+[00:19:43 -> 00:19:44] And at this point,
+[00:19:44 -> 00:19:49] I'm ready to resume in my caller's context.
+[00:19:50 -> 00:19:52] And the caller's side,
+[00:19:52 -> 00:19:54] I'm not going to really do anything.
+[00:19:54 -> 00:19:55] The only thing I'm going to do
+[00:19:55 -> 00:19:56] is that I'm going to assume
+[00:19:56 -> 00:19:58] that all this stuff below the stack pointer,
+[00:19:58 -> 00:20:01] including the location pointed to by the stack pointer,
+[00:20:01 -> 00:20:03] is now available for other stuff.
+[00:20:03 -> 00:20:06] And this can be assumed to be completely dead.

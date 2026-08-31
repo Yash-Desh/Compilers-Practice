@@ -1,0 +1,437 @@
+Title: Compiler Design Module 53 : Code Generation
+Video ID: OhoPmpoqeHs
+Detected language: en
+------------------------------------------------------------
+
+[00:00:00 -> 00:00:02] So now that we have been introduced to the idea of
+[00:00:02 -> 00:00:04] a one-registered stack machine and how one could
+[00:00:04 -> 00:00:08] potentially do code generation for such a stack machine.
+[00:00:08 -> 00:00:11] For example, we looked at the language of expressions.
+[00:00:11 -> 00:00:15] Let's try to look at a more featured language
+[00:00:15 -> 00:00:19] to discuss our code generation strategy.
+[00:00:19 -> 00:00:20] Unlike our previous languages,
+[00:00:20 -> 00:00:23] it's just the language of expressions involving constants.
+[00:00:23 -> 00:00:25] In this particular language,
+[00:00:25 -> 00:00:27] we have a grammar.
+[00:00:27 -> 00:00:29] The grammar is shown in this slide.
+[00:00:29 -> 00:00:33] The non-terminals are P, D,
+[00:00:33 -> 00:00:37] args, and E. Let's start with E.
+[00:00:37 -> 00:00:40] E is the non-terminal that
+[00:00:40 -> 00:00:42] represents the language of expressions,
+[00:00:42 -> 00:00:44] and it could be an integer which is
+[00:00:44 -> 00:00:46] the constant integer 1, 2, 3, 4,
+[00:00:46 -> 00:00:48] 5, and so on,
+[00:00:48 -> 00:00:52] a variable ID, identifier,
+[00:00:52 -> 00:00:55] or expressions formed by
+[00:00:55 -> 00:00:58] recursive constructors like if-then-is.
+[00:00:58 -> 00:01:02] If E equals E, then E else E,
+[00:01:02 -> 00:01:06] or E plus E to represent addition,
+[00:01:06 -> 00:01:08] E minus E to represent subtraction,
+[00:01:08 -> 00:01:11] and a function call,
+[00:01:11 -> 00:01:13] an identifier which is a function name
+[00:01:13 -> 00:01:19] applied to a comma separated list of expressions,
+[00:01:19 -> 00:01:21] E comma E comma E.
+[00:01:21 -> 00:01:23] I've just labeled them as E1, E2, EN,
+[00:01:23 -> 00:01:26] but they're just E's here as well.
+[00:01:27 -> 00:01:29] That's the language of expressions.
+[00:01:29 -> 00:01:33] For example, 2 plus 3 is an expression,
+[00:01:33 -> 00:01:34] x plus 2 is an expression,
+[00:01:34 -> 00:01:36] f3 is an expression,
+[00:01:36 -> 00:01:40] fx comma 9 is an expression.
+[00:01:40 -> 00:01:44] If x equals y,
+[00:01:44 -> 00:01:49] then 2 else 3 is also an expression.
+[00:01:49 -> 00:01:51] These are just examples of expressions.
+[00:01:51 -> 00:01:55] Now, the other non-terminal here is
+[00:01:56 -> 00:01:58] D and P.
+[00:01:58 -> 00:02:01] D basically represents declarations.
+[00:02:01 -> 00:02:03] D represents a single declaration,
+[00:02:03 -> 00:02:06] and a definition of a function,
+[00:02:06 -> 00:02:07] or a definition of function.
+[00:02:07 -> 00:02:13] It requires a def keyword followed by an ID,
+[00:02:13 -> 00:02:16] which is ID represents a variable identifier.
+[00:02:16 -> 00:02:19] In this case, it's a function identifier,
+[00:02:19 -> 00:02:23] and open parenthesis,
+[00:02:23 -> 00:02:25] close parenthesis, and args.
+[00:02:25 -> 00:02:28] Args is the formal arguments,
+[00:02:28 -> 00:02:31] the names of the formal arguments of the function
+[00:02:31 -> 00:02:34] that we are going to define, equals E.
+[00:02:34 -> 00:02:38] So the idea is that the function f
+[00:02:38 -> 00:02:40] takes as inputs these formal arguments,
+[00:02:40 -> 00:02:43] args, as represented by args,
+[00:02:43 -> 00:02:47] and then makes a computation as denoted by E.
+[00:02:47 -> 00:02:48] So that's what it means,
+[00:02:48 -> 00:02:50] and then somebody can call this function
+[00:02:50 -> 00:02:55] to evaluate E for the arguments supplied.
+[00:02:55 -> 00:02:57] We're going to see that as well.
+[00:02:57 -> 00:02:58] And what is args?
+[00:02:58 -> 00:02:59] Args is a non-terminal
+[00:02:59 -> 00:03:02] that is just a comma-separated list of variable IDs.
+[00:03:02 -> 00:03:05] So args is not expressions, notice.
+[00:03:05 -> 00:03:06] Args is just variable IDs
+[00:03:06 -> 00:03:09] because these represent the formal arguments,
+[00:03:09 -> 00:03:11] not the actual arguments of the function.
+[00:03:12 -> 00:03:15] And then finally, the top-level non-terminal P
+[00:03:15 -> 00:03:19] represents a semicolon-separated
+[00:03:19 -> 00:03:21] sequence of declarations, function declarations.
+[00:03:21 -> 00:03:26] So P is either semicolon P or D, all right?
+[00:03:26 -> 00:03:28] So notice that the program
+[00:03:28 -> 00:03:30] should have at least one declaration.
+[00:03:30 -> 00:03:34] Also, the idea is that the first function,
+[00:03:34 -> 00:03:36] the first declaration is the entry point, all right?
+[00:03:36 -> 00:03:39] So we assume that the first function is the entry point,
+[00:03:39 -> 00:03:42] and from there, the computation will start.
+[00:03:42 -> 00:03:43] So let's look at an example
+[00:03:43 -> 00:03:45] to understand this language a little bit better.
+[00:03:45 -> 00:03:48] Here's an example of a function, fib.
+[00:03:48 -> 00:03:51] fib takes a single argument, x,
+[00:03:53 -> 00:03:55] and this is the expression that it computes.
+[00:03:55 -> 00:04:00] It says if x equals one, then zero, else.
+[00:04:00 -> 00:04:03] If x equals two, then one, else.
+[00:04:03 -> 00:04:06] fib x minus one plus fib x minus two.
+[00:04:06 -> 00:04:10] So notice that this whole thing is an expression.
+[00:04:11 -> 00:04:13] This is a variable ID,
+[00:04:13 -> 00:04:18] or also can be produced using the non-terminal args,
+[00:04:19 -> 00:04:24] and this whole thing here is a declaration,
+[00:04:25 -> 00:04:28] and also it's a program, all right?
+[00:04:28 -> 00:04:33] So, anyway, so this particular program,
+[00:04:33 -> 00:04:38] as you can imagine, computes the x-th Fibonacci number,
+[00:04:39 -> 00:04:41] because this is just exactly the same logic
+[00:04:41 -> 00:04:44] that you would use to compute the Fibonacci series.
+[00:04:45 -> 00:04:49] And notice that a function call here,
+[00:04:49 -> 00:04:52] fib x minus one, is a recursive function call.
+[00:04:52 -> 00:04:54] It doesn't matter if a recursive recursion
+[00:04:54 -> 00:04:55] is allowed in a language,
+[00:04:55 -> 00:04:57] and in this particular case,
+[00:04:57 -> 00:05:01] this is also an expression in our grammar, all right?
+[00:05:01 -> 00:05:03] All these are actually expressions.
+[00:05:05 -> 00:05:07] All right, so this is an example program,
+[00:05:07 -> 00:05:10] and we want to understand how one would generate code
+[00:05:10 -> 00:05:13] for such a program for our one-registered stack machine,
+[00:05:13 -> 00:05:14] all right?
+[00:05:14 -> 00:05:15] So what we are discussing now,
+[00:05:15 -> 00:05:18] so we already discussed a simple language of expressions.
+[00:05:18 -> 00:05:19] Now we want to discuss code generation
+[00:05:19 -> 00:05:22] for a more featured language that has function calls,
+[00:05:22 -> 00:05:26] if-then-else constructs, and function declarations.
+[00:05:27 -> 00:05:29] All right, so once again,
+[00:05:29 -> 00:05:31] we're going to follow the same invariant that we had
+[00:05:31 -> 00:05:32] when we were discussing code generation
+[00:05:32 -> 00:05:34] for the language of expressions.
+[00:05:34 -> 00:05:37] For each expression E, we'll generate MIPS code
+[00:05:37 -> 00:05:40] that computes E's value in the accumulator A0,
+[00:05:40 -> 00:05:42] and preserves the stack pointer
+[00:05:42 -> 00:05:43] and the contents of the stack.
+[00:05:43 -> 00:05:45] So this is exactly the same invariant that we're using
+[00:05:45 -> 00:05:48] when we were discussing code generation
+[00:05:48 -> 00:05:49] for the language of expressions.
+[00:05:51 -> 00:05:54] So we're going to define a function cgen,
+[00:05:54 -> 00:05:58] such that cgen takes as input an expression E.
+[00:05:58 -> 00:06:00] For example, it could take an expression
+[00:06:00 -> 00:06:02] if-then-else something, so it could, for example,
+[00:06:02 -> 00:06:07] take the entire body of the function fib as an argument,
+[00:06:07 -> 00:06:09] and its result is the code generated
+[00:06:09 -> 00:06:12] for the expression E.
+[00:06:12 -> 00:06:14] Now, I'm going to define this,
+[00:06:14 -> 00:06:17] so our job to, you know, our code generation strategy
+[00:06:17 -> 00:06:20] is going to be defined by the cgen function.
+[00:06:20 -> 00:06:24] And we're going to define cgen based on recursively,
+[00:06:24 -> 00:06:26] inductively, based on the operators
+[00:06:26 -> 00:06:28] that are supported in our language.
+[00:06:29 -> 00:06:32] So for example, cgen for i, which is,
+[00:06:32 -> 00:06:35] where i is, you know, i is the representative
+[00:06:35 -> 00:06:37] for an integer.
+[00:06:37 -> 00:06:41] So cgen for any integer i, a constant integer i,
+[00:06:41 -> 00:06:45] is just load immediate i into a0, right?
+[00:06:45 -> 00:06:48] Because that's going to follow our invariant,
+[00:06:48 -> 00:06:50] which is the result should be in a0,
+[00:06:50 -> 00:06:55] and the stack shouldn't be clobbered, all right?
+[00:06:56 -> 00:06:58] Let's take another example.
+[00:06:58 -> 00:07:01] So let's see, I have cgen of E1 plus E2.
+[00:07:01 -> 00:07:06] So notice that when I'm specifying cgen in this way,
+[00:07:06 -> 00:07:10] I'm basically using E1 plus E2 as a template.
+[00:07:10 -> 00:07:12] So E1 can match any expression,
+[00:07:12 -> 00:07:14] and E2 can also match any expression.
+[00:07:14 -> 00:07:18] So basically, I'm just structurally defining cgen
+[00:07:18 -> 00:07:20] over the different operators
+[00:07:20 -> 00:07:22] that can form the structure of an expression.
+[00:07:22 -> 00:07:24] So cgen E1 plus E2,
+[00:07:24 -> 00:07:27] I need to first generate the code for E1,
+[00:07:27 -> 00:07:29] then save the result,
+[00:07:29 -> 00:07:31] then generate the code for E2,
+[00:07:31 -> 00:07:33] and then do the addition, right?
+[00:07:33 -> 00:07:35] And so that's exactly what we're going to do.
+[00:07:35 -> 00:07:37] This is something that we have also seen
+[00:07:37 -> 00:07:39] when we were generating code for expressions.
+[00:07:39 -> 00:07:40] So I do cgen E1,
+[00:07:40 -> 00:07:43] then at this point here,
+[00:07:43 -> 00:07:48] I expect the result to be in a0, right?
+[00:07:48 -> 00:07:51] And so what I do is I save a0.
+[00:07:51 -> 00:07:53] So this is just a strategy of code generation, right?
+[00:07:53 -> 00:07:56] So I save a0 to the top of the stack.
+[00:07:56 -> 00:07:57] Where is the top of the stack?
+[00:07:57 -> 00:07:59] It's at zero dollar SP.
+[00:07:59 -> 00:08:01] So at exactly where dollar SP is pointing,
+[00:08:01 -> 00:08:02] the stack point is pointing,
+[00:08:02 -> 00:08:07] and then I also decrement the stack pointer
+[00:08:07 -> 00:08:09] to show that the stack size has increased.
+[00:08:09 -> 00:08:10] So I use add IAU,
+[00:08:10 -> 00:08:12] which is add immediate and update,
+[00:08:12 -> 00:08:15] dollar SP, dollar SP minus four.
+[00:08:15 -> 00:08:16] Then once I have saved it,
+[00:08:16 -> 00:08:18] I can now generate code for E2.
+[00:08:18 -> 00:08:20] Now, because of our invariant,
+[00:08:20 -> 00:08:22] we can be sure that cgen E2
+[00:08:22 -> 00:08:25] is not going to clobber the existing contents
+[00:08:25 -> 00:08:26] of the stack,
+[00:08:26 -> 00:08:28] and it's also not going to change the stack pointer.
+[00:08:28 -> 00:08:31] So it can potentially push within the cgen body,
+[00:08:31 -> 00:08:32] but by the time it returns,
+[00:08:32 -> 00:08:34] it would have popped the stack
+[00:08:34 -> 00:08:36] so that stack remains exactly as it was before.
+[00:08:36 -> 00:08:38] And at this point,
+[00:08:38 -> 00:08:40] the result is in a0.
+[00:08:40 -> 00:08:44] a0 has the result for E2,
+[00:08:45 -> 00:08:49] and top of the stack has the result for E1,
+[00:08:49 -> 00:08:50] because that's what we pushed,
+[00:08:50 -> 00:08:52] and we assume that it hasn't modified.
+[00:08:52 -> 00:08:53] So what do I do?
+[00:08:53 -> 00:08:54] I load the top of the stack,
+[00:08:54 -> 00:08:56] which is zero dollar SP,
+[00:08:56 -> 00:08:59] into the temporary register T1,
+[00:08:59 -> 00:09:00] and then I do addition.
+[00:09:00 -> 00:09:02] I say add a0, a0, T1.
+[00:09:02 -> 00:09:05] So this is just going to put a0 plus T1 in a0.
+[00:09:05 -> 00:09:08] And so now the result of E1 plus E2 is in a0.
+[00:09:08 -> 00:09:09] This is exactly what we wanted,
+[00:09:09 -> 00:09:10] but we can't stop here.
+[00:09:10 -> 00:09:11] We can't finish here,
+[00:09:11 -> 00:09:14] because in this whole code generation strategy,
+[00:09:14 -> 00:09:16] we have also modified the stack,
+[00:09:16 -> 00:09:18] because we have incremented the stack pointer.
+[00:09:18 -> 00:09:19] And so I want to,
+[00:09:21 -> 00:09:23] so I want to kind of,
+[00:09:24 -> 00:09:26] so we had decremented the stack pointer.
+[00:09:26 -> 00:09:28] So we had increased the size of the stack.
+[00:09:28 -> 00:09:31] Now we want to pop back.
+[00:09:31 -> 00:09:33] So this was a typo.
+[00:09:33 -> 00:09:34] It should be plus four.
+[00:09:34 -> 00:09:38] And so we want to basically release space from the stack,
+[00:09:38 -> 00:09:40] so that if there was somebody else
+[00:09:40 -> 00:09:42] who's using this,
+[00:09:42 -> 00:09:43] who's calling this recursively,
+[00:09:43 -> 00:09:45] he can see the same stack as he entered.
+[00:09:45 -> 00:09:50] So the stack state at the exit of this strategy,
+[00:09:50 -> 00:09:51] of this implementation,
+[00:09:51 -> 00:09:55] is the same as the stack state as the input.
+[00:09:55 -> 00:09:57] The only difference is that a0 now holds
+[00:09:57 -> 00:09:59] the computation result of E1 plus E2.
+[00:10:01 -> 00:10:02] All right.
+[00:10:03 -> 00:10:06] Now, I want to point out that I'm using color coding
+[00:10:06 -> 00:10:08] to denote the different parts
+[00:10:08 -> 00:10:11] of my code generation function implementation.
+[00:10:11 -> 00:10:14] I'm using red to represent all the static parts,
+[00:10:14 -> 00:10:15] so the calls that are being made
+[00:10:15 -> 00:10:18] at static compile time.
+[00:10:18 -> 00:10:21] I'm using E1 plus E2 as,
+[00:10:22 -> 00:10:24] I'm using these blues font
+[00:10:24 -> 00:10:27] for representing the expression syntax,
+[00:10:27 -> 00:10:28] the higher level program syntax
+[00:10:28 -> 00:10:30] that has basically being used as,
+[00:10:30 -> 00:10:33] typically being used as arguments
+[00:10:33 -> 00:10:34] for the Cgen function.
+[00:10:34 -> 00:10:36] And I'm using the green font
+[00:10:36 -> 00:10:38] for the instructions that are actually getting generated
+[00:10:38 -> 00:10:40] that will be executed at runtime.
+[00:10:40 -> 00:10:43] And so the right way to write this implementation
+[00:10:43 -> 00:10:45] would have been to put print statements
+[00:10:45 -> 00:10:49] that would be executed at compile time.
+[00:10:49 -> 00:10:51] So print would get executed at compile,
+[00:10:51 -> 00:10:52] this print would execute at compile time,
+[00:10:52 -> 00:10:54] the next print would execute at compile time.
+[00:10:54 -> 00:10:59] But just to remove the extra syntax,
+[00:10:59 -> 00:11:01] I'm just using this particular representation
+[00:11:01 -> 00:11:03] where I'm just getting rid of all the print
+[00:11:03 -> 00:11:05] and just using color coding to say
+[00:11:05 -> 00:11:07] that this is what's going to get printed
+[00:11:07 -> 00:11:08] in the output stream.
+[00:11:08 -> 00:11:10] The whole operation is happening at compile time,
+[00:11:10 -> 00:11:11] just that these green things
+[00:11:11 -> 00:11:13] are going to get executed at runtime
+[00:11:13 -> 00:11:15] and right now we're just printing them out
+[00:11:15 -> 00:11:20] to the output stream of the executable.
+[00:11:20 -> 00:11:21] Okay, now here's a question.
+[00:11:21 -> 00:11:25] Why do I need to store A0 at the top of the stack
+[00:11:25 -> 00:11:28] and why do I need to push A0 to the stack?
+[00:11:28 -> 00:11:31] Why can't I, could I, and then later load
+[00:11:31 -> 00:11:34] from the top of the stack into T1?
+[00:11:34 -> 00:11:39] Could I optimize and just put A0 into T1
+[00:11:39 -> 00:11:40] using the move instruction?
+[00:11:41 -> 00:11:43] So the answer is actually,
+[00:11:43 -> 00:11:47] it looks very inviting to do this
+[00:11:47 -> 00:11:50] because it's an optimization and seems like T1,
+[00:11:50 -> 00:11:53] all I'm doing is pushing and then popping into T1,
+[00:11:53 -> 00:11:55] why not I just move into T1 directly?
+[00:11:55 -> 00:11:57] But it's going to be a mistake
+[00:11:57 -> 00:11:59] because there is no guarantee
+[00:11:59 -> 00:12:03] that Cgen E2 will not clobber T1, all right?
+[00:12:03 -> 00:12:05] And if Cgen T2 clobbers T1,
+[00:12:05 -> 00:12:08] then the code generation strategy would be faulty
+[00:12:08 -> 00:12:08] and so that would,
+[00:12:08 -> 00:12:12] because we are, no, that's not part of our invasions.
+[00:12:12 -> 00:12:13] So here is an example.
+[00:12:13 -> 00:12:16] Let's say E2 was equals E3 plus E4,
+[00:12:16 -> 00:12:18] then surely T1 would have gotten clobbered
+[00:12:18 -> 00:12:20] during Cgen E2
+[00:12:20 -> 00:12:22] and so this would have not worked.
+[00:12:22 -> 00:12:24] On the other hand, if you push it to the stack,
+[00:12:24 -> 00:12:27] because of an invariance, it would have still worked.
+[00:12:28 -> 00:12:30] All right, so this is our code generation strategy
+[00:12:30 -> 00:12:32] for E1 plus E2 operator.
+[00:12:32 -> 00:12:34] We can similarly generalize this
+[00:12:34 -> 00:12:35] for other mathematical operators.
+[00:12:35 -> 00:12:38] For example, if instead of plus, I may have minus.
+[00:12:38 -> 00:12:39] And so if I have minus,
+[00:12:39 -> 00:12:42] the only change that happens is in this particular opcode,
+[00:12:42 -> 00:12:43] instead of add, I have subtract.
+[00:12:45 -> 00:12:49] Okay, now let's look at another interesting example,
+[00:12:49 -> 00:12:51] which is different from the typical operators,
+[00:12:51 -> 00:12:53] plus, minus, multiplication, et cetera.
+[00:12:54 -> 00:12:56] This is a branching operation.
+[00:12:56 -> 00:12:59] If E1 equals E2, then E3 else E4.
+[00:12:59 -> 00:13:01] How would we, what would be our code generation strategy
+[00:13:01 -> 00:13:05] for a construct like if then else.
+[00:13:06 -> 00:13:08] Now, to be able to talk about this,
+[00:13:08 -> 00:13:10] I need to introduce two more relevant opcodes
+[00:13:10 -> 00:13:12] from the MIPS architecture.
+[00:13:12 -> 00:13:15] The first opcode is branch if equals
+[00:13:15 -> 00:13:18] that takes two registers, R1 and R2 and a label.
+[00:13:19 -> 00:13:23] And branches to label if and only if R1 equals R2.
+[00:13:23 -> 00:13:25] If R1 is not equal to R2, it does,
+[00:13:25 -> 00:13:26] it behaves as a no op,
+[00:13:26 -> 00:13:29] which means it just moves to the next instruction.
+[00:13:29 -> 00:13:33] If R1 equals R2, then it just changes the PC value,
+[00:13:33 -> 00:13:36] next PC value to whatever is specified using label.
+[00:13:37 -> 00:13:39] So this is a conditional branch,
+[00:13:39 -> 00:13:41] condition on the equality of the two operands,
+[00:13:41 -> 00:13:42] R1 and R2.
+[00:13:42 -> 00:13:44] There is another operation,
+[00:13:44 -> 00:13:46] which is an unconditional branch,
+[00:13:46 -> 00:13:47] the branch label,
+[00:13:47 -> 00:13:49] which is just unconditionally branches to label.
+[00:13:50 -> 00:13:55] So if I wanted to generate code for if E1 equals E2,
+[00:13:55 -> 00:13:58] then E3 else E4, what do I need to do?
+[00:13:58 -> 00:14:00] Well, the first thing I need to do is I need
+[00:14:00 -> 00:14:04] to evaluate this particular expression E1 equals E2.
+[00:14:04 -> 00:14:06] And only after I get the result,
+[00:14:06 -> 00:14:08] will I be able to make a decision
+[00:14:08 -> 00:14:10] whether to go to E3 or E4.
+[00:14:10 -> 00:14:12] So I first generate the code for E1,
+[00:14:12 -> 00:14:13] so I say cgen E1.
+[00:14:14 -> 00:14:16] And then once again,
+[00:14:16 -> 00:14:19] the next thing I want to do is perhaps cgen E2,
+[00:14:19 -> 00:14:20] but before I can do that,
+[00:14:20 -> 00:14:22] I want to save the result of E1
+[00:14:22 -> 00:14:23] because I don't want it to get clobbered.
+[00:14:23 -> 00:14:25] So I just push it on this tag
+[00:14:25 -> 00:14:26] using these two instructions.
+[00:14:28 -> 00:14:31] And then I do cgen E2, all right?
+[00:14:31 -> 00:14:33] And at this point, I'm ready,
+[00:14:33 -> 00:14:35] at this particular point after cgen E2,
+[00:14:35 -> 00:14:40] I'm ready to compute the equality relation.
+[00:14:40 -> 00:14:42] And to compute the equality relation,
+[00:14:42 -> 00:14:44] I first load from the top of the stack into T1,
+[00:14:44 -> 00:14:47] just like you were doing for rotation.
+[00:14:47 -> 00:14:51] And I'm going to use the branch equal to,
+[00:14:51 -> 00:14:53] to check whether they're equal or not.
+[00:14:53 -> 00:14:54] And depending on that,
+[00:14:54 -> 00:14:57] I'm going to either jump to a label called true branch,
+[00:14:57 -> 00:15:01] or I'm going to fall through to the label false branch.
+[00:15:02 -> 00:15:03] Okay?
+[00:15:03 -> 00:15:05] And both true branch and false branch
+[00:15:05 -> 00:15:06] are going to do some computation.
+[00:15:06 -> 00:15:09] Typically false branch would just compute E3,
+[00:15:09 -> 00:15:11] sorry, false branch would compute E4,
+[00:15:11 -> 00:15:13] and true branch would compute E3.
+[00:15:13 -> 00:15:15] And then both of them would branch
+[00:15:15 -> 00:15:19] to the end of this whole expression computation,
+[00:15:19 -> 00:15:20] which is endif.
+[00:15:21 -> 00:15:22] Okay.
+[00:15:22 -> 00:15:25] There's one more kind of important thing
+[00:15:25 -> 00:15:26] you need to be careful about,
+[00:15:26 -> 00:15:28] which is the second invariant.
+[00:15:28 -> 00:15:31] So notice that whatever is computed by false branch
+[00:15:31 -> 00:15:32] would be in A0.
+[00:15:32 -> 00:15:34] And so by the time we get to,
+[00:15:34 -> 00:15:37] irrespective of which branch we go to,
+[00:15:37 -> 00:15:39] the result would be appearing in A0
+[00:15:39 -> 00:15:41] because both E3 and E4,
+[00:15:41 -> 00:15:43] the code gen for E3 and E4,
+[00:15:43 -> 00:15:46] we can assume that the result would be generated in A0.
+[00:15:46 -> 00:15:49] But what about the stack point or the stack?
+[00:15:49 -> 00:15:51] Notice that to compute E1 equals E2,
+[00:15:51 -> 00:15:53] we had modified the stack,
+[00:15:53 -> 00:15:56] but now we don't want to,
+[00:15:56 -> 00:15:58] you know, we want to release that particular space.
+[00:15:58 -> 00:15:59] So either I could have released this space
+[00:15:59 -> 00:16:02] in the endif position,
+[00:16:02 -> 00:16:03] which would have been also fine,
+[00:16:03 -> 00:16:06] but it's better to release the space as soon as possible
+[00:16:06 -> 00:16:08] so that, you know, you can save space.
+[00:16:08 -> 00:16:09] And so in this case,
+[00:16:09 -> 00:16:12] I just do addIU $sp $sp4
+[00:16:12 -> 00:16:13] immediately after the load word,
+[00:16:13 -> 00:16:14] because at this point,
+[00:16:14 -> 00:16:18] I don't need, you know, the top of the stack is dead.
+[00:16:19 -> 00:16:23] And so I can release space.
+[00:16:23 -> 00:16:27] So release the space.
+[00:16:27 -> 00:16:28] All right.
+[00:16:29 -> 00:16:31] Now, so this is the code generation strategy
+[00:16:31 -> 00:16:34] for if E1 equals E2, then E3 else E4.
+[00:16:34 -> 00:16:37] You first generate code for E1,
+[00:16:37 -> 00:16:38] then you save code for E1,
+[00:16:39 -> 00:16:41] save the result for E1,
+[00:16:41 -> 00:16:42] then you generate the code for E2,
+[00:16:42 -> 00:16:47] then you do the computation of equality.
+[00:16:48 -> 00:16:50] So no, you don't do the computation for equality,
+[00:16:50 -> 00:16:51] that's in BEQ,
+[00:16:51 -> 00:16:55] but you restore the stack to the state that it was,
+[00:16:55 -> 00:16:58] you pop off the stuff that you had saved
+[00:16:58 -> 00:17:00] for storing the result of E1,
+[00:17:00 -> 00:17:03] and then you execute this branch
+[00:17:03 -> 00:17:05] equal to instruction that's going to check.
+[00:17:05 -> 00:17:06] So yeah, one of the things you do
+[00:17:06 -> 00:17:10] is you load the result of E1 into T1,
+[00:17:10 -> 00:17:13] and then you check whether T1 and E0 are equal.
+[00:17:13 -> 00:17:14] If they are equal,
+[00:17:14 -> 00:17:16] then you jump to the true branch,
+[00:17:16 -> 00:17:19] otherwise you fall through to the false branch.
+[00:17:19 -> 00:17:20] Inside the false branch,
+[00:17:20 -> 00:17:22] I'm going to execute,
+[00:17:23 -> 00:17:24] you know, I'm going to generate the code
+[00:17:24 -> 00:17:27] generated by Cgen of E4.
+[00:17:27 -> 00:17:28] Inside the true branch,
+[00:17:28 -> 00:17:31] I'm going to generate code generated by Cgen of E3.
+[00:17:31 -> 00:17:31] So whatever is the code
+[00:17:31 -> 00:17:35] that is required to compute E4 will appear here.
+[00:17:35 -> 00:17:36] And whatever is the code
+[00:17:36 -> 00:17:39] that is required to compute E3 will appear here.
+[00:17:41 -> 00:17:46] Okay, this is the complete picture in a single slide.
+[00:17:47 -> 00:17:49] Cgen of E1, if E1 is equals E2,
+[00:17:49 -> 00:17:54] then E3 as E4 involves first Cgen E1,
+[00:17:54 -> 00:17:58] save the result of E1 by pushing it to stack,
+[00:17:58 -> 00:18:01] then generate the code for E2,
+[00:18:01 -> 00:18:04] load the saved result of E1 into T1,
+[00:18:06 -> 00:18:07] release the space in the stack
+[00:18:07 -> 00:18:09] by popping off the top word,
+[00:18:09 -> 00:18:12] check whether T1 is equal to the result of E2,
+[00:18:12 -> 00:18:14] which is in E0.
+[00:18:14 -> 00:18:16] And if it is, go to a true branch,
+[00:18:16 -> 00:18:18] otherwise go to false branch.
+[00:18:18 -> 00:18:22] At true branch, generate the code using Cgen of E3.
+[00:18:22 -> 00:18:23] At false branch,
+[00:18:23 -> 00:18:25] generate the code using Cgen of E4.
+[00:18:25 -> 00:18:27] In both cases, after you've generated the code
+[00:18:27 -> 00:18:29] for computing the respective expressions,
+[00:18:29 -> 00:18:30] branch to end if,
+[00:18:30 -> 00:18:34] and that's the end of my implementation
+[00:18:34 -> 00:18:35] for the if-then-else construct.

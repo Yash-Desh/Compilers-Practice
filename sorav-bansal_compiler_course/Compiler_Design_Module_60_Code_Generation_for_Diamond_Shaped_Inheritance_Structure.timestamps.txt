@@ -1,0 +1,89 @@
+Title: Compiler Design Module 60 : Code Generation for Diamond Shaped Inheritance Structure
+Video ID: XVLw3WM5AQ4
+Detected language: en
+------------------------------------------------------------
+
+[00:00:00 -> 00:00:06] So we have been discussing multiple inheritance. We will discuss one more case of multiple inheritance
+[00:00:06 -> 00:00:13] which is the diamond. So what is the diamond? Well it's a structure which of inheritance
+[00:00:13 -> 00:00:19] which looks like the following. So A derives, B derives from A and B derives from C and then D
+[00:00:20 -> 00:00:26] derives from both B and C. So what should be, what does this mean and what should be the
+[00:00:26 -> 00:00:32] semantics? Well so first of all in C++ this is the code that you would need to write to construct
+[00:00:32 -> 00:00:39] such a diamond structure. You declare a class A which has a field X and the virtual function
+[00:00:39 -> 00:00:46] VA. Then you would declare a class B which derives from A and has Y and VB and class C
+[00:00:46 -> 00:00:54] that also derives from A and has Z and VC and then class D which derives from both B and C
+[00:00:54 -> 00:01:00] this is multiple inheritance and then it has a field W and a virtual function VD.
+[00:01:00 -> 00:01:06] The question is what should be, firstly what should be the meaning of such a derivation?
+[00:01:07 -> 00:01:12] So actually there are two cases here. One is there should be multiple copies of A which
+[00:01:12 -> 00:01:17] means D would have multiple copies of the state of A. So for example multiple copies of
+[00:01:17 -> 00:01:24] X and the other case is that there would be a single copy of A and the way that would be
+[00:01:24 -> 00:01:31] done in C++ is through this virtual keyword. Here this means that B derives from A but A is a
+[00:01:32 -> 00:01:37] virtual base class as opposed to a non-virtual base class. So what does a virtual base class
+[00:01:37 -> 00:01:43] mean? Well it just means that you know if there is multiple inheritance then there would
+[00:01:43 -> 00:01:48] be only a single class A. So think of virtual base class as a level of indirection. So it's
+[00:01:48 -> 00:01:54] a pointer to a base class right and so if there are multiple virtual base classes you just have
+[00:01:54 -> 00:02:01] multiple copies of the pointers but the original base object remains a single object. So this
+[00:02:01 -> 00:02:06] remains a single copy of A. So let's first consider the case of multiple copies of A.
+[00:02:08 -> 00:02:13] The basic principles remain the same. So for example this is the object D that first has
+[00:02:14 -> 00:02:22] the object B that contains A inside it. So this is object B. This is object of class B
+[00:02:23 -> 00:02:30] and then an object of class C which is this X and Z. Notice that X has been repeated twice
+[00:02:30 -> 00:02:36] so there are multiple copies of A and then there is the V table sorry this is this should
+[00:02:36 -> 00:02:41] be C and then there are multiple and then there is the V table for D
+[00:02:42 -> 00:02:48] just like we had earlier right. So this is just what this just you know nothing changes
+[00:02:48 -> 00:02:54] between multiple inheritance as we discussed in the previous module and multiple inheritance
+[00:02:54 -> 00:03:00] with the diamond structure just that the there are two copies of X and depending on
+[00:03:00 -> 00:03:05] what context it has been used in it the appropriate copy would get used right.
+[00:03:05 -> 00:03:10] Now which copy gets used that's a programming language semantics issue we are discussing code
+[00:03:10 -> 00:03:15] generation but you know based on the semantics I know whether it should be X or whether it
+[00:03:15 -> 00:03:21] should be this X or this X and based on that I would be able to do that. All right typically
+[00:03:21 -> 00:03:26] the programming language would require the use the programmer to disambiguate which X it is
+[00:03:27 -> 00:03:34] he or she is talking about. All right similarly on the on the V table side everything looks
+[00:03:34 -> 00:03:43] the same so this is the V table part of B right and then this is the V table part of C.
+[00:03:44 -> 00:03:49] Notice that the top offset here is minus 12 because that's the offset from the V table
+[00:03:49 -> 00:03:54] pointer the place where the V table pointer has been stored to the top of the object right so
+[00:03:54 -> 00:03:59] that's minus 12 in this case because there are three fields before this V table comes and recall
+[00:03:59 -> 00:04:05] that the top offset is required to do pointer adjust readjustment and things like that in case
+[00:04:05 -> 00:04:15] of multiple inheritance and then you have you know the V table fields for D itself okay.
+[00:04:15 -> 00:04:21] So nothing much has changed actually for multiple copies of A let's look at the other
+[00:04:21 -> 00:04:26] case which is the single copy of A. So first thing to note here in the single copy of A is
+[00:04:26 -> 00:04:34] that the classes B and C also know that their base class is actually a virtual base class right
+[00:04:34 -> 00:04:41] so they know that it's not like the virtual base class is encapsulated the fields of the
+[00:04:41 -> 00:04:46] virtual base class are encapsulated in the fields in the object B it's more like I have
+[00:04:46 -> 00:04:53] a pointer to the place where object A lives right. So this is how it's going to look like.
+[00:04:54 -> 00:05:05] This is you know this is now this is the object D this part is this part is object of class B
+[00:05:07 -> 00:05:19] this part is the object of class C this part is the remaining fields of D and then this part
+[00:05:20 -> 00:05:28] is the object of class A. Now you may say okay but what now if I want if I was executing this
+[00:05:28 -> 00:05:34] using this in the context of B then B doesn't contain A and so isn't that a problem because
+[00:05:34 -> 00:05:40] B is supposed to be a derived class of A and based on our single inheritance principle B
+[00:05:40 -> 00:05:45] A's fields should have been placed laid out before B's fields but that's the difference
+[00:05:45 -> 00:05:49] between a virtual base class and a non-virtual base class so our previous code generation
+[00:05:49 -> 00:05:53] strategy where the fields of the base class were laid out before the fields of
+[00:05:53 -> 00:05:58] the derived class was for a non-virtual base class. In the case of a virtual base class
+[00:05:58 -> 00:06:02] through the V table I will know I will in the V table I will store a pointer to the base
+[00:06:02 -> 00:06:09] class so I will need to have a pointer here and this would be the base class point base
+[00:06:09 -> 00:06:16] class object pointer something like that all right and and so this is going to come from
+[00:06:16 -> 00:06:19] the V table so it's not as V table is going to point to a structure that's going to point
+[00:06:19 -> 00:06:23] to this all right so we're going to see that in more detail and so here is what it looks
+[00:06:23 -> 00:06:30] like V table for this was object B so this is object B so V table for B looks like the
+[00:06:30 -> 00:06:36] following it has the virtual function for VB it has the type info as always it has the top
+[00:06:36 -> 00:06:40] offset which is zero in this case because that's what that's the distance between the
+[00:06:40 -> 00:06:44] the top of the object and the V table pointer the place where the V table point has been stored
+[00:06:45 -> 00:06:49] and then there is an other field now that's the V base field and this is
+[00:06:50 -> 00:06:56] meant to this is used for classes that are derived from virtual base classes
+[00:06:56 -> 00:07:02] and V base is basically pointing to the virtual base object all right and so this in
+[00:07:02 -> 00:07:10] this case I'm storing an offset which says at what offset from the top is my base object
+[00:07:10 -> 00:07:16] present and the answer here is 24 because the offset here this one from the top is 24 because
+[00:07:16 -> 00:07:23] there are six fields in the middle one two three one two three four five six and so this is
+[00:07:23 -> 00:07:28] offset number 24 so that's the way and so even the code for B in the context of B is
+[00:07:28 -> 00:07:36] going to first look at the V base add that and then use the V table and the fields to access
+[00:07:36 -> 00:07:42] elements of A and so that's just because A is a virtual base class and not a non-virtual base
+[00:07:42 -> 00:07:48] class all right so that's so I guess that basically explains how things are going to
+[00:07:48 -> 00:07:55] work with the virtual base class similarly the same thing identical thing for C so C is
+[00:07:56 -> 00:08:05] this object here is C and this is what the this is also part of the C's V table
+[00:08:05 -> 00:08:11] and in this case virtual base is at offset 16 in this particular case right and so that's
+[00:08:11 -> 00:08:18] the code for in the context of C is going to dereference this value identify that 16 add 16
+[00:08:18 -> 00:08:25] to the top to get to the V table so the offset is from the V table of the object itself so in
+[00:08:25 -> 00:08:31] this case this that's where it's going to be B in the context of C in any case because of
+[00:08:31 -> 00:08:36] pointer adjustment and so it's at an offset of 16 and that's where it should look for X
+[00:08:36 -> 00:08:40] all right and so the rest of the fields are exactly as you would imagine these are the
+[00:08:40 -> 00:08:47] remaining fields of D and once again this top pointer but here I don't need a V base pointer
+[00:08:47 -> 00:08:54] because D doesn't have a virtual base class and then these are the fields for A

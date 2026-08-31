@@ -1,0 +1,134 @@
+Title: Compiler Design Module 52 : Simulating a Stack Machine
+Video ID: QXKe0_q71V8
+Detected language: en
+------------------------------------------------------------
+
+[00:00:00 -> 00:00:04] So last time we talked about a stack machine but now let's look at a typical hardware machine
+[00:00:05 -> 00:00:12] and as you may know a typical hardware machine has both a register file which is a set of
+[00:00:12 -> 00:00:19] registers for example a typical machine could have 8 16 32 or 64 or you know some some small
+[00:00:19 -> 00:00:28] number of tens to maybe hundreds of registers and then a memory space okay and the registers
+[00:00:28 -> 00:00:32] are basically you know you can name the registers and say I want to access register
+[00:00:33 -> 00:00:40] let's say 10 that makes sense but for memory you basically say that I want to access register
+[00:00:40 -> 00:00:48] let's say memory location 10 and and that's also fine just that memory has a much bigger size
+[00:00:49 -> 00:00:56] and it is possible to access memory using indirect mode so unlike registers where I have
+[00:00:56 -> 00:01:02] to explicitly say it's registered 10 I can't say tell me the register that is stored in give me
+[00:01:02 -> 00:01:08] the register contents of the register whose number is stored in another register where I
+[00:01:08 -> 00:01:13] can do that for memories I say give me the contents of memory at location x where x is
+[00:01:13 -> 00:01:20] stored in register r10 right so so memory has this extra advantage that it gives you
+[00:01:20 -> 00:01:25] indirect access on the other hand memory and memory is also larger on the other hand memory
+[00:01:25 -> 00:01:32] slower than registers so while registers can be accessed in a single cycle let's say
+[00:01:32 -> 00:01:40] the memory would typically require tens to hundreds of cycles to access now our first
+[00:01:40 -> 00:01:45] attempt to do code generation for a real hardware machine would be to simulate a one
+[00:01:45 -> 00:01:51] register stack machine on a hardware machine right so we're going to build this code
+[00:01:51 -> 00:01:56] generation algorithm step by step and our first attempt is just going to
+[00:01:57 -> 00:02:00] simulate a one register stack machine on a hardware machine so we're going to
+[00:02:00 -> 00:02:06] pretend that there are two layers one is the so first level is the high level programming
+[00:02:06 -> 00:02:10] language that we want to generate code for the second layer is the one register stack
+[00:02:10 -> 00:02:15] machine so we first lower the high level program into the one register stack machine
+[00:02:15 -> 00:02:21] and then we lower the one register stack machine to a hardware machine so in other words
+[00:02:21 -> 00:02:26] we simulate the one register stack machine on a hardware machine so we added one extra layer
+[00:02:26 -> 00:02:32] between the high level program and the actual hardware machine and and so and so this constrains
+[00:02:32 -> 00:02:37] the possibility so things that i could have done if i had directly generated code for the
+[00:02:37 -> 00:02:42] hardware machine are now not possible because i do first generate code for the one register
+[00:02:42 -> 00:02:46] stack machine for example i may not be able to use all the registers available in the
+[00:02:46 -> 00:02:50] hardware machine but we're going to come to that later let's first understand how code
+[00:02:50 -> 00:02:58] generation would typically work for for a high level language so what are some typical hardware
+[00:02:58 -> 00:03:04] machine architectures one of the prototypical architectures for a reduced instruction set
+[00:03:04 -> 00:03:09] computer or RISC is the MIPS architecture so what does the reduced instruction set
+[00:03:09 -> 00:03:15] computer mean it's basically you know there are two large categorizations of
+[00:03:15 -> 00:03:22] computers based on the instruction set that they support and this is the reduced instruction set
+[00:03:22 -> 00:03:29] the other one is called the complex instruction set or CISC so what does the MIPS architecture
+[00:03:29 -> 00:03:32] have so MIPS architecture is a reduced instruction set computer it has 32 general
+[00:03:32 -> 00:03:40] purpose registers each of them is 32 bit long there are explicit load and store op codes
+[00:03:40 -> 00:03:44] so if i want to read from memory there are explicit load and store op codes which you are
+[00:03:44 -> 00:03:50] going to read a word from memory and put them in a register and i can use direct or indirect mode
+[00:03:50 -> 00:03:56] of addressing to address memory but if i want to read memory i have to use these explicit op
+[00:03:56 -> 00:04:00] codes load and store i cannot just you know directly add to a memory location or something
+[00:04:00 -> 00:04:05] like that most of their op codes operate on registers so if i want to do any other
+[00:04:05 -> 00:04:10] operation for example if i want to do addition or multiplication or division it has to operate
+[00:04:10 -> 00:04:17] on registers in this in this architecture so if i wanted to do something for addition of
+[00:04:18 -> 00:04:22] two memory locations then i would first need to load those memory locations into registers and
+[00:04:22 -> 00:04:31] then do the operation on them so here are some examples load word so LW stands for load word
+[00:04:31 -> 00:04:40] load word loads into register one the contents of memory from this address and so this address
+[00:04:40 -> 00:04:48] basically represents reg2 plus offset all right so this is the offset mode of addressing the
+[00:04:48 -> 00:04:55] memory offset brackets reg2 and this represents reg2 plus offset and notice that this is you know
+[00:04:55 -> 00:05:00] you can use this way of addressing to do both direct and indirect addressing so for example
+[00:05:00 -> 00:05:05] if reg2 was nil which means i don't specify any register then it becomes a direct mode
+[00:05:05 -> 00:05:09] of addressing i'm just specifying the address that i want to access the memory using
+[00:05:09 -> 00:05:16] and if i if i use reg2 then it becomes an indirect access if i use offset equals zero
+[00:05:16 -> 00:05:21] then it's just indirect access otherwise it's offset in direct access here's another example
+[00:05:21 -> 00:05:29] of instruction add reg1 reg2 reg3 that adds reg2 and reg3 into reg1 notice that this
+[00:05:29 -> 00:05:33] opcode operates only on registers and cannot access memory locations directly
+[00:05:34 -> 00:05:40] in contrast to the MIPS architecture there is the x86 intel x86 architecture that's actually very
+[00:05:40 -> 00:05:46] popular architecture in terms of the market share that it captures it's a complex instruction
+[00:05:46 -> 00:05:52] set computer which is just the opposite of a reduced instruction set computer it has eight
+[00:05:52 -> 00:05:56] general purpose registers each of which is also 32 bits long just like the MIPS architecture
+[00:05:56 -> 00:06:02] but the important thing is that opcodes can operate typically both on memory and registers
+[00:06:02 -> 00:06:08] memory and registers for example i can just say add memory address to register which stands for reg
+[00:06:08 -> 00:06:13] gets reg plus memory address right so which means it actually does both a memory address
+[00:06:13 -> 00:06:18] and an addition in a single opcode if i were to do the same operation in a risk computer
+[00:06:18 -> 00:06:24] then i would have to have two instructions first to load and then to add as a result
+[00:06:24 -> 00:06:30] there are actually 400 plus opcodes in the x86 architecture whereas in something like MIPS
+[00:06:30 -> 00:06:36] there's much fewer of opcodes typically on the order of 40 to 100 opcodes that you would have
+[00:06:36 -> 00:06:41] so almost an order of magnitude difference between the number of opcodes you may think you may
+[00:06:41 -> 00:06:46] imagine that x86 would be a faster architecture because it can do more in a single opcode but
+[00:06:46 -> 00:06:54] it is also the case that simple opcodes allow fast allow simpler machines and and so
+[00:06:54 -> 00:07:02] they consume less power typically arm is an example of a risk computer x86 is an example of
+[00:07:02 -> 00:07:08] a sys computer sys computers have a lot of need to have a lot of circuitry to basically optimize
+[00:07:10 -> 00:07:15] their operations for example in this case a single opcode needs to do a lot of things
+[00:07:15 -> 00:07:19] and so while they can often have better performance than risk computers they also are
+[00:07:19 -> 00:07:26] very power hungry here are some relevant MIPS opcodes that we'll need for our course
+[00:07:26 -> 00:07:32] load word reg1 offset reg2 and here is a meaning represented in a c like syntax
+[00:07:32 -> 00:07:39] reg1 gets star reg2 plus offset this is load word we have already seen this before
+[00:07:39 -> 00:07:44] then here's another opcode add reg1 reg2 reg3 that this stands for reg1 gets reg2 plus
+[00:07:44 -> 00:07:49] reg3 notice that the destination operand is always the first operand and then the source
+[00:07:49 -> 00:07:56] operands are the other operands store word store word reg1 of reg2 this is an exception
+[00:07:56 -> 00:08:00] to that rule that the destination is the first operand here the destination is the second
+[00:08:00 -> 00:08:07] operand so this basically stores the value in reg1 to this address in memory reg2 plus offset
+[00:08:07 -> 00:08:15] so it says star reg2 plus off gets reg1 there's another opcode add image8 so unlike
+[00:08:15 -> 00:08:19] add which is just going to add the registers this one adds an image8 value to register
+[00:08:19 -> 00:08:27] this is add image8 and u stands for update so add image8 and update reg1 reg2 m so reg
+[00:08:27 -> 00:08:33] basically stands for reg1 gets reg2 plus the image8 value m and then load image8 which is
+[00:08:33 -> 00:08:40] load image8 reg1 m which stands for reg1 gets this image8 value m so once again
+[00:08:40 -> 00:08:46] summarizing lw stands for load word add stands for add store word add image8 and update and
+[00:08:46 -> 00:08:57] load image8 now how are we going to simulate a stack machine on a MIPS machine so we're going
+[00:08:57 -> 00:09:04] to use three registers sp for the stack pointer a0 for the accumulator and t1 for the
+[00:09:04 -> 00:09:08] temporary register recall that because we are using we are simulating only a single
+[00:09:11 -> 00:09:17] register stack machine one register stack machine only we only need three out of the
+[00:09:17 -> 00:09:22] 32 registers available on the MIPS architecture for for our code generation strategy
+[00:09:23 -> 00:09:28] so here's the invariant that we're going to follow the stack will be maintained in memory
+[00:09:28 -> 00:09:32] so recall that in the stack machine the stack was abstract quantity which to which we could
+[00:09:32 -> 00:09:36] push and pop but now we're going to assume how we're going to implement this stack on
+[00:09:36 -> 00:09:41] a real machine we're going to implement it in memory notice that in memory i can actually do
+[00:09:41 -> 00:09:46] random access whereas in the stack abstraction i can only do top of the stack access but in
+[00:09:46 -> 00:09:50] case you know memory is a more general abstraction and so a stack can be implemented in memory and
+[00:09:50 -> 00:09:56] the stack will grow downwards as has been our typical convention the register dollar sp will
+[00:09:56 -> 00:10:04] point to the next stack location all right so and dollar sp plus four would point to the
+[00:10:04 -> 00:10:08] current top of stack so i'm going to assume that all my values are four bytes long or 32
+[00:10:09 -> 00:10:16] long and so i'm going to use four uh you know an offset so every value is four bytes long
+[00:10:16 -> 00:10:19] and sp plus four is going to point to the current top of the stack if i want to know
+[00:10:19 -> 00:10:24] what is the value at the current top of the stack then that's i can get that by dereferencing
+[00:10:24 -> 00:10:30] the address sp plus four on the other hand sp will point to the next stack location so if
+[00:10:30 -> 00:10:36] i want to push something then i would put it at sp and then maybe decrement sp by another four
+[00:10:36 -> 00:10:42] bytes the accumulator is maintained in the register a zero one of the registers on the
+[00:10:42 -> 00:10:48] mip machine and so this is what a simulating a stack machine on a mips machine would look like
+[00:10:49 -> 00:10:54] this this on the left hand side we i show the code for the stack machines for example
+[00:10:54 -> 00:10:59] accumulator is being assigned the value seven and pushing the accumulator to the stack
+[00:10:59 -> 00:11:02] accumulator being assigned the value five then you are doing executing the add-op code
+[00:11:02 -> 00:11:08] that's going to pop off the top two words of the stack and then push the result and then ultimately
+[00:11:08 -> 00:11:14] we pop off the top word of the stack to reduce the size of the stack to simulate this accumulator
+[00:11:14 -> 00:11:18] getting seven is just the load immediate instruction that's going to load the value
+[00:11:18 -> 00:11:24] seven into a zero which is what is emulating our accumulator push accumulator is just going
+[00:11:24 -> 00:11:30] to do a stored word of dollar a zero to zero dollar sp recall that zero dollar sp is
+[00:11:30 -> 00:11:37] basically the next thing that needs to be addressed at the next stack location and so
+[00:11:37 -> 00:11:41] we just store a zero into the next stack location and then we update the stack location
+[00:11:41 -> 00:11:47] by four to basically represent the fact that the stack has grown by four bytes so add immediate
+[00:11:47 -> 00:11:53] and update is being used here so here sp would get sp minus four similarly assigning to
+[00:11:54 -> 00:12:01] accumulator to five is just load immediate a zero five add is going to do load word of the top of
+[00:12:01 -> 00:12:06] the stack recall that the top of the stack is four plus sp so that's what four dollar sp
+[00:12:06 -> 00:12:10] represents but i'm going to put this in a temporary register i don't want to clobber
+[00:12:10 -> 00:12:15] my accumulator because accumulator already may have some useful information in fact in
+[00:12:15 -> 00:12:21] this program it does and then i'm going to say add a zero a zero t one that's going to
+[00:12:21 -> 00:12:27] add a zero and t1 and put it in a zero and that's exactly the emulation of the add opcode using
+[00:12:27 -> 00:12:34] our invariance and finally the pop stack opcode is going to just increment sp by four using
+[00:12:34 -> 00:12:48] the add immediate and update opcode

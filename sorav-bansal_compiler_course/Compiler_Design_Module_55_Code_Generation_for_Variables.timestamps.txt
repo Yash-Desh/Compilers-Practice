@@ -1,0 +1,133 @@
+Title: Compiler Design Module 55 : Code Generation for Variables
+Video ID: 2jn6Ux2bQlQ
+Detected language: en
+------------------------------------------------------------
+
+[00:00:00 -> 00:00:05] So, we have now discussed code generation for a function call and we discussed the idea
+[00:00:05 -> 00:00:07] of an activation record.
+[00:00:07 -> 00:00:12] And then we said that when we do a function call, then we also call code gen on the body
+[00:00:12 -> 00:00:13] of the function.
+[00:00:13 -> 00:00:18] But recall that the body of the function can make references to variables and the
+[00:00:18 -> 00:00:23] only variables in our language are basically the arguments that have been passed.
+[00:00:23 -> 00:00:26] The actual arguments are the values of the formal arguments and the formal arguments
+[00:00:26 -> 00:00:32] are the variables and the actual arguments are the values for those variables.
+[00:00:32 -> 00:00:37] And so if the body of the function, the callee function, accesses those variables, then we
+[00:00:37 -> 00:00:40] need to supply the corresponding values.
+[00:00:40 -> 00:00:47] And so that's the next topic of our discussion and we call it code gen for variable references.
+[00:00:47 -> 00:00:52] And once again, we want to implement cgen for a function definition.
+[00:00:52 -> 00:00:56] The definition has a number of formal arguments which are the only variables in our language
+[00:00:56 -> 00:01:02] and then it has an expression that may refer to the values of these formal arguments.
+[00:01:02 -> 00:01:08] And so e may contain references to x1 dot dot xn and we need to convert them into, so
+[00:01:08 -> 00:01:13] let's say there was a reference to x1, then I need to convert them to a load word
+[00:01:13 -> 00:01:18] instruction that would load the value of x1 into the register a0 because that's the
+[00:01:18 -> 00:01:22] invariant of a code generator that the value would be available in a0.
+[00:01:22 -> 00:01:28] So the only question that's remaining is what should be the address that I should use
+[00:01:28 -> 00:01:33] to access the value of let's say some variable xi.
+[00:01:33 -> 00:01:40] So here is the stat state during function body and during the function body you
+[00:01:40 -> 00:01:45] have the old frame pointer, so this is the start of the activation record, then
+[00:01:45 -> 00:01:51] the arguments laid out in the reverse order, the return address and then some maybe temporary
+[00:01:51 -> 00:01:58] values that I have created for intermediate evaluation of the body of the function and
+[00:01:58 -> 00:02:03] this is where the next value of the stack pointer is pointing, so this is where
+[00:02:03 -> 00:02:07] the next value in the stack should be pushed and this is the frame pointer that's pointing
+[00:02:07 -> 00:02:14] to the bottom of the activation record, in other words actually it's pointing to the return
+[00:02:14 -> 00:02:17] address and there is some stuff above it and then there's some stuff below it.
+[00:02:18 -> 00:02:24] Now if the argument, if the body of the function contains, the body of the function is an
+[00:02:24 -> 00:02:29] expression, so if the expression contains a reference to some formal variable let's
+[00:02:29 -> 00:02:37] say x, x10, then clearly that I need to basically refer some location over here,
+[00:02:37 -> 00:02:42] right, because that's where x10 is going to live assuming n is greater than 10, it's
+[00:02:42 -> 00:02:47] somewhere in this argument area and I actually can basically name it exactly.
+[00:02:47 -> 00:02:51] So there are two options on how to name this particular location that I am marking with
+[00:02:51 -> 00:02:59] the red line, first option is to use a frame pointer relative address, so for any
+[00:02:59 -> 00:03:05] argument xi, for the ith argument where i is between 1 and n, the instruction would
+[00:03:05 -> 00:03:11] be load from the address $fp plus 4 into i and so this is the offsetted address
+[00:03:12 -> 00:03:17] 4 into i of $fp and I can do that inside the body of the function.
+[00:03:17 -> 00:03:21] Recall that because of scoping rules in our language, this is the only place, the
+[00:03:21 -> 00:03:25] body of the function is the only place where I can access these formal arguments.
+[00:03:25 -> 00:03:29] For example, I can't access the formal arguments in the callee of the body.
+[00:03:29 -> 00:03:33] So if the body makes another call, then I won't be able to access these formal
+[00:03:33 -> 00:03:40] arguments, so because of scoping rules, we are sure that the only place that
+[00:03:40 -> 00:03:44] the formal arguments can be accessed is the body of the function itself and
+[00:03:46 -> 00:03:49] throughout the body, we have something called a frame pointer, which is
+[00:03:49 -> 00:03:52] pointing to the bottom of the activation record and we know that the
+[00:03:52 -> 00:03:58] argument is available at 4 into i for the ith argument from that frame
+[00:03:58 -> 00:04:02] pointer, so that's option one, option two, so there's actually another option
+[00:04:02 -> 00:04:06] and the other option is that I use an offset that's relative to the stack
+[00:04:06 -> 00:04:11] pointer. Now, there's a slight problem here because during the body of the
+[00:04:11 -> 00:04:15] function, it is possible that the body require the evaluation of the body
+[00:04:15 -> 00:04:19] required to push some more stuff on the stack, recall that most of the
+[00:04:19 -> 00:04:22] time we are pushing some stuff on the stack to save some intermediate
+[00:04:22 -> 00:04:27] results, so there could be some temporary values and sp could be at a
+[00:04:27 -> 00:04:33] non-constant offset from the ith argument, but it's still possible
+[00:04:33 -> 00:04:39] actually and so you could say cgen x i equals load word z of dollar sp, so I'm
+[00:04:39 -> 00:04:43] adding some unknown quantity z, but is z actually unknown? No, z is based on
+[00:04:43 -> 00:04:48] the current count of temporary values, so if I am able to count how many
+[00:04:48 -> 00:04:51] temporary values are there, so let's say there were t temporary values, then
+[00:04:51 -> 00:04:58] I would say 4 into t plus 4 into i and plus 4 because of the return
+[00:04:58 -> 00:05:04] address and that would give me from the stack pointer the location, so 4 into z
+[00:05:04 -> 00:05:12] would be 4 into t plus 4 plus 4 into i for the ith argument. Is z known at
+[00:05:12 -> 00:05:16] code generation time and the answer is yes because it is the code generator
+[00:05:16 -> 00:05:21] that is basically laying out the temporaries in the stack and so during
+[00:05:21 -> 00:05:26] the code generation, the only thing that we need to do is change this
+[00:05:26 -> 00:05:31] code generator function to also return the number of temporaries that have
+[00:05:31 -> 00:05:35] been pushed on the stack and if we are able to keep a count of that, then we
+[00:05:35 -> 00:05:39] can use that count to identify this value z, so for example whenever
+[00:05:39 -> 00:05:42] we push something on the stack as an intermediate result, we also keep a
+[00:05:42 -> 00:05:46] count of you know we just increment the count of temporaries and
+[00:05:46 -> 00:05:51] based on that we can maintain a count of z and that way we can also
+[00:05:51 -> 00:05:57] use an offset into sp to access the ith variable inside the body. Now in this
+[00:05:57 -> 00:06:02] particular language, this is always possible to do because you know you
+[00:06:02 -> 00:06:06] can just count the temporaries, it is in fact you know some it is
+[00:06:06 -> 00:06:09] often considered better to not use a frame pointer and only use a stack
+[00:06:09 -> 00:06:14] pointer because that saves a register, as an optimization saving a
+[00:06:14 -> 00:06:17] register is a big optimization because that means you have more you
+[00:06:17 -> 00:06:20] have more faster memory available close to you and you can use it to
+[00:06:20 -> 00:06:24] store other relevant stuff and not just the frame pointer which is which is
+[00:06:24 -> 00:06:30] now it seems not very necessary and so it is almost redundant and so
+[00:06:30 -> 00:06:35] many languages so you know this may be considered option 2 may be considered
+[00:06:35 -> 00:06:39] a better strategy than option 1. What do real programming languages and
+[00:06:39 -> 00:06:45] real compilers do? Well they so for example it depends also depends on
+[00:06:45 -> 00:06:49] the language so for example a C compiler would typically use option 2
+[00:06:49 -> 00:06:53] which is used to avoid the need for a frame pointer and thus have an extra
+[00:06:53 -> 00:06:58] register. It also depends on the particular architecture that we are
+[00:06:58 -> 00:07:02] working on so for example if it's the x86 architecture register there are
+[00:07:02 -> 00:07:06] only very few registers there are only eight registers and so saving the
+[00:07:06 -> 00:07:09] register becomes a big optimization. On the other hand if it was a MIPS
+[00:07:09 -> 00:07:13] architecture you have more registers for example you have 32 registers and
+[00:07:13 -> 00:07:18] so saving a register is not so important and it is it may be more
+[00:07:18 -> 00:07:22] important too. So what is the advantage of using a frame pointer? The advantage
+[00:07:22 -> 00:07:26] of using a frame pointer is that it becomes easy more easy to debug so for
+[00:07:26 -> 00:07:31] example while the code generator may keep track of what is where if I'm
+[00:07:31 -> 00:07:35] using GDB or some other debugger to identify what is the state of the
+[00:07:35 -> 00:07:39] program at any given point of time or after a crash then it is much
+[00:07:39 -> 00:07:42] easier to walk through using the frame pointers because all I need to do
+[00:07:42 -> 00:07:47] is I need let's say I wanted to do a backtrace then I need to look
+[00:07:47 -> 00:07:51] at the current value of frame pointer and then at a constant offset from
+[00:07:51 -> 00:07:55] there I'll get the frame pointer of the calling and I can keep doing this till I
+[00:07:55 -> 00:07:59] get to the main function the top level function and so frame pointer
+[00:07:59 -> 00:08:06] improves debug ability readability of the sending code stack pointer gives
+[00:08:06 -> 00:08:12] you saves you one register. Also in some cases it becomes harder to
+[00:08:12 -> 00:08:16] use a stack pointer for example in C it is possible to use variable length
+[00:08:16 -> 00:08:21] arrays as local variables. In those cases if I wanted I need to also keep
+[00:08:21 -> 00:08:26] track of the size of the variable length array to be able to access let's
+[00:08:26 -> 00:08:30] say an argument or something like that because now Z will also have to
+[00:08:30 -> 00:08:35] count the size of the variable length array that the user declared as a
+[00:08:35 -> 00:08:38] local variable and so it becomes more complex at that point and that
+[00:08:38 -> 00:08:42] actually at that point sometimes it would have been better to actually use
+[00:08:42 -> 00:08:47] a frame pointer rather than a stack pointer in some cases. But usually
+[00:08:47 -> 00:08:51] it would be considered an optimization a better thing to actually avoid the
+[00:08:51 -> 00:08:57] need for a frame pointer. All right to summarize our code generation strategy
+[00:08:57 -> 00:09:01] the activation record must be designed together with the code generator we
+[00:09:01 -> 00:09:07] saw that when we were generating code for our language and generating the
+[00:09:08 -> 00:09:13] code generation can be done by a recursive traversal of the AST. So
+[00:09:13 -> 00:09:17] notice that the cgen function is nothing but defined on all the
+[00:09:17 -> 00:09:20] operators and so the way you're going to generate the code is you're going
+[00:09:20 -> 00:09:31] to do a recursive descent on the on the AST and then for every node you're
+[00:09:31 -> 00:09:34] going to apply the appropriate rule and that that's how you're going to
+[00:09:34 -> 00:09:40] generate the code for the entire program. Further it's very clear that
+[00:09:40 -> 00:09:44] there are several improvement opportunities. The first one is that we
+[00:09:44 -> 00:09:48] are not using all the available registers in MIPS. We are doing too
+[00:09:48 -> 00:09:53] much pushing and popping on this tag. We are using a frame pointer when we
+[00:09:53 -> 00:09:57] didn't have to use a frame pointer necessarily and so on. So there are
+[00:09:57 -> 00:09:59] several improvement opportunities and that those will be our kind of
+[00:09:59 -> 00:10:03] future topics on how one could generate optimized code rather than
+[00:10:03 -> 00:10:06] just generate any functional code.

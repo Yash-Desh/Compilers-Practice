@@ -1,0 +1,197 @@
+Title: Compiler Design Module 56 : Code Generation Example
+Video ID: fVrkEkm1ZCM
+Detected language: en
+------------------------------------------------------------
+
+[00:00:00 -> 00:00:07] So, now that we have devised a code generation strategy and discussed the implementation
+[00:00:07 -> 00:00:15] of all possible constructs or constructors in our language, let's look at a real example,
+[00:00:15 -> 00:00:19] a concrete example and look at how we are going to generate code for that and what
+[00:00:19 -> 00:00:22] the code generated code is going to look like.
+[00:00:22 -> 00:00:24] So let's say my program is the following.
+[00:00:24 -> 00:00:33] It is a function definition, there is only one definition, one function sum to x, which
+[00:00:33 -> 00:00:39] is defined as follows, if x equals 0 then 0 else x plus sum to x minus 1.
+[00:00:39 -> 00:00:47] So this is a recursive function that computes the sum of the first x integers, alright.
+[00:00:47 -> 00:00:51] So this is a valid program in our language and we want to generate code for it.
+[00:00:51 -> 00:00:53] So how are we going to generate the code for it?
+[00:00:53 -> 00:00:55] So we are going to recall that code generation is a top-down procedure.
+[00:00:55 -> 00:01:01] So we are going to call cgen on the top level construct, which is the function definition
+[00:01:01 -> 00:01:03] itself.
+[00:01:03 -> 00:01:07] And then we are going to look at the rule for that function definition.
+[00:01:07 -> 00:01:11] So the first thing, recall what is the code that's generated for a function definition
+[00:01:11 -> 00:01:16] is basically we generate a label for that function, sum to underscore entry, and
+[00:01:16 -> 00:01:22] then we do some basic stuff so that we set up the AR properly.
+[00:01:22 -> 00:01:29] For example, we load the frame pointer, we reinitialize the frame pointer, we save the
+[00:01:29 -> 00:01:32] return address, which is in $rA, and that's it.
+[00:01:32 -> 00:01:36] And then we can generate the code for the expression of this function, which is on
+[00:01:36 -> 00:01:37] the right side.
+[00:01:37 -> 00:01:40] Okay, so let's see, alright.
+[00:01:40 -> 00:01:42] So that's exactly what we are going to do.
+[00:01:42 -> 00:01:47] Firstly we are going to do a label for sum to function, then we say move $sp to
+[00:01:47 -> 00:01:48] $fp.
+[00:01:48 -> 00:01:53] We reinitialize the frame pointer, and then we push the return address on the stack using
+[00:01:53 -> 00:01:57] these two instructions, store word and addIU.
+[00:01:57 -> 00:02:00] The next step is to generate the code for the body.
+[00:02:00 -> 00:02:02] So we are going to call cgen on the body.
+[00:02:02 -> 00:02:03] And what is the body?
+[00:02:03 -> 00:02:04] Body is an if-then-else construct.
+[00:02:04 -> 00:02:07] So we are going to look up the if-then-else rule.
+[00:02:07 -> 00:02:10] What does the if-then-else rule do?
+[00:02:10 -> 00:02:18] It basically first computes the first left-hand side of the equality, which is x, then it
+[00:02:18 -> 00:02:23] computes the right-hand side of the equality, which is 0, then it checks whether they
+[00:02:23 -> 00:02:28] are equal, and depending on that, it either jumps to the true branch or the false branch.
+[00:02:28 -> 00:02:34] Also after it computes x, and before it computes 0, it pushes to the stack, and
+[00:02:34 -> 00:02:37] before it branches, it pops from the stack.
+[00:02:37 -> 00:02:42] So these are all the rules that we had discussed from the code generation implementation of
+[00:02:42 -> 00:02:43] if-then-else.
+[00:02:43 -> 00:02:47] Alright, so let's start off with that.
+[00:02:47 -> 00:02:51] So the first thing we are going to do for the if-then-else is to compute the left
+[00:02:51 -> 00:02:54] side of the equality relation, x.
+[00:02:54 -> 00:02:59] So for that, we are going to call cgen of x, and recall cgen of x is going to,
+[00:02:59 -> 00:03:00] which rule is it going to use?
+[00:03:00 -> 00:03:02] It's going to use a rule for a variable reference.
+[00:03:02 -> 00:03:05] And the variable reference in our code generation strategy is going to come from
+[00:03:06 -> 00:03:14] load word $a0 from address 4 plus fp, because x is the first argument.
+[00:03:14 -> 00:03:20] So it's just 4 into 1 plus $fp, so that's 4 plus fp, and that gives me x.
+[00:03:20 -> 00:03:24] And now I'm going to save that on the stack, so I'm going to push that on the
+[00:03:24 -> 00:03:29] stack because of my if-then-else code generation rule.
+[00:03:29 -> 00:03:36] So I push store word $a0 on sp, and then decrement sp using addiu.
+[00:03:36 -> 00:03:40] So I push a0 on stack, and then I generate the code for 0.
+[00:03:40 -> 00:03:42] What's the generated code for 0?
+[00:03:42 -> 00:03:45] Because we haven't probably discussed this, we discussed this right in the beginning
+[00:03:45 -> 00:03:49] when we said that what is the code generated for a constant, and so 0 is a constant.
+[00:03:49 -> 00:03:54] So cgen of a constant is just load word that constant into $a0.
+[00:03:54 -> 00:03:56] So that's the code for 0.
+[00:03:56 -> 00:04:01] All right, now we have to move on with the rest of the code for the if-then-else construct.
+[00:04:01 -> 00:04:02] So what is the rest of the code?
+[00:04:02 -> 00:04:10] We are going to first pop the extra space that we have created for storing x here.
+[00:04:11 -> 00:04:15] And then we are going to do the branch equals instruction to either
+[00:04:15 -> 00:04:17] jump to the true branch or the false branch.
+[00:04:18 -> 00:04:19] So here's the code for that.
+[00:04:20 -> 00:04:27] So I omit some of the initial code for setting up the activation record.
+[00:04:27 -> 00:04:31] The code for loading x, pushing x, loading 0.
+[00:04:32 -> 00:04:36] Then I'm going to compare x and 0.
+[00:04:36 -> 00:04:42] So for that I load 0, I load x into t1.
+[00:04:42 -> 00:04:46] I pop off the stack because I had pushed into the stack, so I pop off the stack.
+[00:04:46 -> 00:04:50] Recall this is because of our invariant that the stack should remain unchanged.
+[00:04:51 -> 00:05:03] And then I use branch equal to on t1 and a0 to either jump to true 1 or false true to false 1.
+[00:05:05 -> 00:05:09] So this is just pattern matching on the if-then-else construct.
+[00:05:09 -> 00:05:16] And just substituting cgen e1 for the code for generating x.
+[00:05:17 -> 00:05:20] And cgen e2 for the code for generating 0.
+[00:05:23 -> 00:05:25] Now let's look at the individual labels.
+[00:05:25 -> 00:05:26] What should happen on false 1?
+[00:05:26 -> 00:05:30] So false 1 is basically when I am here in the else branch.
+[00:05:31 -> 00:05:37] Because that's what the condition is relating to false and that's where we will go.
+[00:05:37 -> 00:05:40] And so at the false branch I'm going to do code gen of
+[00:05:41 -> 00:05:44] this particular expression x plus sum 2 x minus 1.
+[00:05:44 -> 00:05:48] And so for this code gen I'm going to use the plus, the rule for the plus.
+[00:05:49 -> 00:05:54] And the rule for the plus is that first you generate code for the LHS of the first operand,
+[00:05:54 -> 00:05:58] then you generate code for the second operand of plus and then you add them, right?
+[00:05:58 -> 00:06:00] So that's what I'm going to do.
+[00:06:00 -> 00:06:04] The first operand of plus is x, so what's the code generated for x?
+[00:06:05 -> 00:06:08] That's just load word dollar a0, four dollar fp.
+[00:06:08 -> 00:06:09] We have seen this before.
+[00:06:09 -> 00:06:12] Then I'm going to generate the code for sum 2 x minus 1.
+[00:06:12 -> 00:06:17] Now this one is going to match with the rule for function dispatch.
+[00:06:17 -> 00:06:24] And so I'm going to call cgen on the function dispatch with the function identifier as sum 2.
+[00:06:24 -> 00:06:29] And so I'm going to jump to sum 2 entry because of this and jump and link.
+[00:06:29 -> 00:06:32] And then before I do that I need to compute the arguments
+[00:06:32 -> 00:06:34] and I also need to set up the activation record.
+[00:06:35 -> 00:06:38] All right, so we're going to first set up the activation record.
+[00:06:38 -> 00:06:45] So before we do that, in the rule for plus itself I need to push the value computed
+[00:06:45 -> 00:06:48] for the first operand and so I first push the value of x.
+[00:06:49 -> 00:06:52] And now I start setting up the activation record.
+[00:06:52 -> 00:06:55] The first thing I do is I push the current value of fp on this tag.
+[00:06:55 -> 00:06:58] So that's going to form my old fp.
+[00:06:58 -> 00:07:05] So this is what my newly constructed activation record starts looking like.
+[00:07:06 -> 00:07:10] And then I compute the argument x minus 1.
+[00:07:10 -> 00:07:14] So to compute x minus 1, I first compute x because I'm going to use the rule for
+[00:07:14 -> 00:07:17] subtraction called cgen x minus 1.
+[00:07:17 -> 00:07:19] So I first compute the first operand which is x.
+[00:07:19 -> 00:07:23] Then I'm going to save the first operand on the tag.
+[00:07:23 -> 00:07:25] Then compute the second argument and then do the minus.
+[00:07:26 -> 00:07:31] So for the first argument I just do load word a0 $4 fp for x.
+[00:07:31 -> 00:07:32] We've seen this before.
+[00:07:32 -> 00:07:34] And then I push x on the tag.
+[00:07:36 -> 00:07:38] Recall that I'm using the rule for minus.
+[00:07:40 -> 00:07:43] And on this slide I have more space.
+[00:07:43 -> 00:07:49] So I'm going to now, now that I have pushed, so here this is where we were last time.
+[00:07:49 -> 00:07:51] This is where we were on the last slide.
+[00:07:51 -> 00:07:56] We had just computed x and then we have pushed x on the tag.
+[00:07:56 -> 00:08:01] Now we compute the second argument which is 1, which is just load immediate $a01.
+[00:08:03 -> 00:08:09] And then I basically want to do the subtraction and for that I use a temporary register.
+[00:08:09 -> 00:08:12] I load x into the temporary register and then I use the subtract instruction
+[00:08:13 -> 00:08:16] which does t1 minus a0 into a0.
+[00:08:17 -> 00:08:20] At this point, at this particular point just after the subtract instruction
+[00:08:21 -> 00:08:22] the value is in a0.
+[00:08:22 -> 00:08:30] The only problem is that I had pushed some stuff on the tag because of the first operand of minus.
+[00:08:30 -> 00:08:36] And so going by the rule for minus I'm going to pop off the tag.
+[00:08:36 -> 00:08:40] Pop up one word of the tag using the addiu sp sp4 instruction.
+[00:08:42 -> 00:08:42] All right.
+[00:08:43 -> 00:08:46] Also I'm going to I'm done.
+[00:08:46 -> 00:08:47] I'm not done yet.
+[00:08:47 -> 00:08:48] I need to also do the plus right.
+[00:08:48 -> 00:08:52] So this was just I also need to call the function right now.
+[00:08:52 -> 00:08:55] I've just prepared the argument which is x minus one.
+[00:08:55 -> 00:08:57] Now I actually need to call the function.
+[00:08:57 -> 00:08:58] So let's see what's the next thing.
+[00:08:58 -> 00:09:04] The next thing is I store the computed value a0 on the stack.
+[00:09:04 -> 00:09:06] So this is the first argument.
+[00:09:06 -> 00:09:07] Recall that arguments live on stack.
+[00:09:08 -> 00:09:11] Then I addiu sp sp minus four.
+[00:09:11 -> 00:09:13] So I just pushed it on the stack.
+[00:09:14 -> 00:09:16] And I'm almost done.
+[00:09:16 -> 00:09:21] I just call some two entry using the JAL instruction jump and link instruction.
+[00:09:21 -> 00:09:22] And that's my function called dispatch.
+[00:09:24 -> 00:09:27] After the function called dispatch I also need to do the addition right.
+[00:09:27 -> 00:09:29] So that's I haven't shown that yet.
+[00:09:30 -> 00:09:32] So here is the code for addition.
+[00:09:32 -> 00:09:37] So just after the JAL when it returns at this particular point I can assume
+[00:09:37 -> 00:09:41] that the return value of the function is available in a0.
+[00:09:42 -> 00:09:45] And so now what I want to do is I want to add x to a0.
+[00:09:45 -> 00:09:46] But where is x?
+[00:09:47 -> 00:09:52] So x was because of the plus operator I had saved the value of x on the stack.
+[00:09:52 -> 00:09:55] And I'm assuming that because of the function call the stack hasn't been changed.
+[00:09:55 -> 00:09:57] That's the invariant we're maintaining.
+[00:09:57 -> 00:10:00] And so I can assume that stack x is at the top of the stack.
+[00:10:00 -> 00:10:01] And where's the top?
+[00:10:01 -> 00:10:03] That's just four plus sp.
+[00:10:03 -> 00:10:06] So I load x from four plus sp to t1.
+[00:10:06 -> 00:10:11] And then I execute add on t1 plus a0 to store in a0.
+[00:10:11 -> 00:10:13] And that computes x plus retval in a0.
+[00:10:14 -> 00:10:19] Finally, because of the plus operator I had pushed some x to stack.
+[00:10:19 -> 00:10:22] So I just pop off that stuff from stack.
+[00:10:22 -> 00:10:29] At this particular location I have computed the value x plus sum to x minus one in a0.
+[00:10:30 -> 00:10:34] And I have cleaned up the stack to exactly the state where
+[00:10:34 -> 00:10:36] it was before I started this computation.
+[00:10:36 -> 00:10:40] And so I'm done with the entire body of the else part.
+[00:10:40 -> 00:10:42] And I can branch to end if one.
+[00:10:42 -> 00:10:44] Notice that I'm using this suffix called one.
+[00:10:44 -> 00:10:48] This is just to basically disambiguate between different if then else's, right?
+[00:10:48 -> 00:10:50] So maybe there are nested if then else's or
+[00:10:50 -> 00:10:53] different functions are different if then else's and so on.
+[00:10:53 -> 00:10:56] And so you can just give them numbers depending on which one it is.
+[00:10:56 -> 00:11:00] And based on that you can disambiguate between different labels.
+[00:11:01 -> 00:11:04] Similarly, let's look at the code for true one.
+[00:11:04 -> 00:11:05] That's actually much easier.
+[00:11:05 -> 00:11:07] On the true branch it's just zero.
+[00:11:07 -> 00:11:12] So I just do load image at zero into a0 and branch to end if one, okay?
+[00:11:13 -> 00:11:16] Notice that this code is also satisfying our invariance.
+[00:11:16 -> 00:11:20] It's loading the value into a0 and leaving the stack unmodified.
+[00:11:21 -> 00:11:23] Finally, end if one.
+[00:11:23 -> 00:11:24] What is end if one supposed to do?
+[00:11:25 -> 00:11:27] Now I have computed the expression.
+[00:11:28 -> 00:11:33] Now the instructions that are supposed to execute after this are the ones that are
+[00:11:33 -> 00:11:37] due to the function definition, the function declaration.
+[00:11:37 -> 00:11:39] And so recall that what is the function declaration,
+[00:11:39 -> 00:11:42] what is the footer of the function declaration code?
+[00:11:42 -> 00:11:47] It is load word from the top of the stack into $rA.
+[00:11:47 -> 00:11:50] So get the return address into $rA.
+[00:11:51 -> 00:11:56] Pop the stack by z amount where z is equal to four into n plus eight.
+[00:11:57 -> 00:11:59] Recall that's just coming from our rule.
+[00:11:59 -> 00:12:02] And here n is just one, the number of arguments is just one.
+[00:12:02 -> 00:12:04] So four into one plus eight is 12.
+[00:12:04 -> 00:12:06] So I add 12 to sp.
+[00:12:06 -> 00:12:10] I load the old four frame pointer into $fp,
+[00:12:10 -> 00:12:11] once again coming from the declaration rule.
+[00:12:11 -> 00:12:15] And then I call jr $rA to return back to the caller.
+[00:12:15 -> 00:12:22] And that is indeed the full code or implementation of this function sum to x.

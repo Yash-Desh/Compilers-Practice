@@ -1,0 +1,667 @@
+Title: Compiler Design Module 57 : Temporaries
+Video ID: hkQYMmVCPp0
+Detected language: en
+------------------------------------------------------------
+
+[00:00:00 -> 00:00:04] Sophia, so far we have discussed the generation of code,
+[00:00:04 -> 00:00:08] but one thing that we may have noticed is that there's
+[00:00:08 -> 00:00:10] a lot of work that is
+[00:00:10 -> 00:00:15] done while creating temporaries and then erasing them.
+[00:00:15 -> 00:00:16] So to create temporaries,
+[00:00:16 -> 00:00:18] we would push into the stack and you would
+[00:00:18 -> 00:00:20] execute at least a couple of instructions,
+[00:00:20 -> 00:00:23] which one would be to decrement the stack pointer,
+[00:00:23 -> 00:00:25] and to pop, we would increment the stack pointer,
+[00:00:25 -> 00:00:28] and we would do it once for every temporary that is created.
+[00:00:28 -> 00:00:32] So one observation here is that stack allocation and
+[00:00:32 -> 00:00:34] deallocation costs are independent
+[00:00:34 -> 00:00:37] of the size of the allocation or deallocation.
+[00:00:37 -> 00:00:42] So irrespective of whether I allocate one temporary,
+[00:00:42 -> 00:00:44] or whether I allocate 10 temporaries,
+[00:00:44 -> 00:00:48] the cost of doing that is same because it's just one instruction,
+[00:00:48 -> 00:00:50] which is the add instruction on $SP.
+[00:00:50 -> 00:00:55] So that's an interesting observation.
+[00:00:55 -> 00:00:58] So using that, maybe I can club,
+[00:00:58 -> 00:01:01] I can do an analysis over the program and to see
+[00:01:01 -> 00:01:04] how are the maximum number of temporaries that I would need.
+[00:01:04 -> 00:01:07] Depending on that, I basically a priori allocate
+[00:01:07 -> 00:01:13] that many number of temporaries somewhere in my stack,
+[00:01:13 -> 00:01:16] and then while I am generating the code,
+[00:01:16 -> 00:01:18] I know which temporary to use,
+[00:01:18 -> 00:01:21] and so that would work nicely.
+[00:01:21 -> 00:01:23] The biggest problem here is how do I know how
+[00:01:23 -> 00:01:26] many temporaries I need a priori.
+[00:01:26 -> 00:01:31] So here is one strategy and this is just one of the strategies,
+[00:01:31 -> 00:01:33] that for every function body,
+[00:01:33 -> 00:01:35] estimate the maximum number of temporaries
+[00:01:35 -> 00:01:38] that may be required to evaluate it.
+[00:01:38 -> 00:01:40] So there are two things here.
+[00:01:40 -> 00:01:44] One is, I am basically doing this for every function body.
+[00:01:44 -> 00:01:46] So I'm doing it individually for every function body.
+[00:01:46 -> 00:01:49] Instead of trying to estimate the number of temporaries
+[00:01:49 -> 00:01:51] that may be required for the entire program,
+[00:01:51 -> 00:01:54] I do it for every individual function body.
+[00:01:54 -> 00:01:57] That's meaningful because we don't
+[00:01:57 -> 00:01:59] know how many functions will be called,
+[00:01:59 -> 00:02:01] how many times a function will be called.
+[00:02:01 -> 00:02:03] For example, if it's a recursive function,
+[00:02:03 -> 00:02:05] at compile time, at code generation time,
+[00:02:05 -> 00:02:07] it's very difficult to figure out
+[00:02:07 -> 00:02:08] how many instances of
+[00:02:08 -> 00:02:10] this function or activations of
+[00:02:10 -> 00:02:11] this function are going to be called.
+[00:02:11 -> 00:02:13] So at a global level,
+[00:02:13 -> 00:02:14] it is not possible to estimate
+[00:02:14 -> 00:02:16] the number of temporaries that the program will need.
+[00:02:16 -> 00:02:19] But at an individual activation level,
+[00:02:19 -> 00:02:20] it is possible to do that.
+[00:02:20 -> 00:02:22] It may be possible to do that.
+[00:02:22 -> 00:02:24] In our language that we have been looking at,
+[00:02:24 -> 00:02:27] I'll show that it is actually possible to do that.
+[00:02:27 -> 00:02:30] Also, because we are going to do this
+[00:02:30 -> 00:02:32] at the granularity of a function body,
+[00:02:32 -> 00:02:35] the best place to store these temporaries,
+[00:02:35 -> 00:02:37] which are pre-allocated,
+[00:02:37 -> 00:02:41] would be in the activation record of that activation.
+[00:02:41 -> 00:02:45] Also, these allocation can be done at function entry,
+[00:02:45 -> 00:02:50] and the deallocation can be done at function exit.
+[00:02:50 -> 00:02:56] This is just like, for example, an activation record.
+[00:02:56 -> 00:02:58] So some part of the activation record is
+[00:02:58 -> 00:03:00] allocated on function entry,
+[00:03:00 -> 00:03:02] and that part is also deallocated,
+[00:03:02 -> 00:03:04] including the part that is allocated by
+[00:03:04 -> 00:03:06] the caller at function exit.
+[00:03:06 -> 00:03:08] So if we just put
+[00:03:08 -> 00:03:10] the temporaries as part of the activation record,
+[00:03:10 -> 00:03:12] this deallocation allocation can piggyback on
+[00:03:12 -> 00:03:14] the allocation and deallocation of
+[00:03:14 -> 00:03:21] the activation record. So this is a function definition,
+[00:03:21 -> 00:03:23] def fib x equals,
+[00:03:23 -> 00:03:27] so this is the canonical example that we've been using
+[00:03:27 -> 00:03:28] for Fibonacci series.
+[00:03:28 -> 00:03:31] So fib x equals, if x equals one, then zero,
+[00:03:31 -> 00:03:33] else if x equals two, then one,
+[00:03:33 -> 00:03:35] else fib x minus one plus fib x minus two.
+[00:03:37 -> 00:03:39] All right, so we want to generate the code for this,
+[00:03:39 -> 00:03:43] and the question is how many temporaries do I need
+[00:03:43 -> 00:03:45] to evaluate the body of this function?
+[00:03:45 -> 00:03:48] So I'm not interested in the definition,
+[00:03:48 -> 00:03:50] but what is the number of temporaries
+[00:03:50 -> 00:03:53] that's required in the body of the function?
+[00:03:53 -> 00:03:56] So notice that there is an assignment,
+[00:03:56 -> 00:03:58] and recall that for the assignment,
+[00:03:58 -> 00:04:00] sorry, there's an equality comparison,
+[00:04:00 -> 00:04:04] and for, which is a part of the if then else construct,
+[00:04:04 -> 00:04:06] and for the equality comparison,
+[00:04:06 -> 00:04:09] I first evaluate the LHS of the equality comparison,
+[00:04:09 -> 00:04:12] and then save it as a temporary
+[00:04:12 -> 00:04:15] before evaluating the RHS of the equality comparison.
+[00:04:15 -> 00:04:17] So I will need one temporary
+[00:04:17 -> 00:04:20] for evaluating the equality comparison,
+[00:04:20 -> 00:04:22] x equals one, all right?
+[00:04:22 -> 00:04:23] Because while I'm evaluating one,
+[00:04:23 -> 00:04:26] I want to save the value of x,
+[00:04:26 -> 00:04:29] because one is going to be evaluated in a zero,
+[00:04:29 -> 00:04:31] and so I need to save x on the stack.
+[00:04:32 -> 00:04:34] Similarly, the same logic applies
+[00:04:34 -> 00:04:36] for the second comparison,
+[00:04:36 -> 00:04:38] so the body of else of the first if
+[00:04:38 -> 00:04:43] now has another equality comparison, x equals two,
+[00:04:43 -> 00:04:45] and so I need a temporary for x equals two.
+[00:04:45 -> 00:04:47] Then we have these two function calls,
+[00:04:47 -> 00:04:50] fib x minus one plus fib x minus two,
+[00:04:50 -> 00:04:52] and for these function calls,
+[00:04:52 -> 00:04:56] we will have to push the arguments on the stack,
+[00:04:56 -> 00:04:59] and also the frame pointer and stuff like that.
+[00:04:59 -> 00:05:03] Now some of these can be thought of as temporary space,
+[00:05:03 -> 00:05:04] and it's up to us whether we want
+[00:05:04 -> 00:05:07] to kind of pre-allocate space for this or not.
+[00:05:07 -> 00:05:09] I'm going to discuss this in more detail later,
+[00:05:09 -> 00:05:11] but let's say that we need at least one temporary each
+[00:05:11 -> 00:05:13] for the two recursive function calls.
+[00:05:14 -> 00:05:16] Moreover, we need to have one temporary
+[00:05:16 -> 00:05:18] for the plus sign here, right?
+[00:05:18 -> 00:05:20] So because of the plus sign,
+[00:05:20 -> 00:05:23] I need to, while I'm computing fib x minus two,
+[00:05:23 -> 00:05:27] I need to save the returned value of fib x minus one,
+[00:05:27 -> 00:05:28] and for that I need at least one temporary
+[00:05:28 -> 00:05:30] for the sum of the two return values
+[00:05:30 -> 00:05:32] of the two recursive calls.
+[00:05:33 -> 00:05:35] And finally, I need one temporary each
+[00:05:35 -> 00:05:37] for x minus one and x minus two.
+[00:05:37 -> 00:05:40] So if I want to compute x minus one,
+[00:05:40 -> 00:05:40] the way I'm going to do that
+[00:05:40 -> 00:05:42] is I'm going to first compute x,
+[00:05:42 -> 00:05:44] then save it, and then compute one,
+[00:05:44 -> 00:05:46] and so for that save, I need one temporary.
+[00:05:46 -> 00:05:49] It seems like we need a lot of temporaries, right?
+[00:05:49 -> 00:05:52] Because we need temporaries for computing each expression.
+[00:05:52 -> 00:05:55] But notice that when I have,
+[00:05:55 -> 00:05:58] while I'm computing x minus one, for example,
+[00:05:58 -> 00:06:00] I don't need to keep the temporary
+[00:06:00 -> 00:06:02] for this x equals one, right?
+[00:06:02 -> 00:06:05] So these temporaries can be reused.
+[00:06:05 -> 00:06:08] In fact, I'm going to show you ways in this module
+[00:06:08 -> 00:06:10] that the total number of temporaries
+[00:06:10 -> 00:06:14] that I need for this entire function is only two, okay?
+[00:06:14 -> 00:06:16] And so how do we arrive at this
+[00:06:17 -> 00:06:19] and is there an automatic algorithm that can identify
+[00:06:19 -> 00:06:21] what is the minimum number of temporaries
+[00:06:21 -> 00:06:24] that I need to be able to execute this function
+[00:06:24 -> 00:06:26] without having to create temporaries on the fly?
+[00:06:26 -> 00:06:29] I just create these two temporaries,
+[00:06:29 -> 00:06:31] let's say for this example, at function entry,
+[00:06:31 -> 00:06:34] and then the code is going to use those two temporaries
+[00:06:34 -> 00:06:36] during the execution,
+[00:06:36 -> 00:06:38] and then when it needs to return,
+[00:06:38 -> 00:06:41] it just deallocates those two temporaries.
+[00:06:41 -> 00:06:42] Notice that these two temporaries
+[00:06:42 -> 00:06:45] are for one activation of the function.
+[00:06:47 -> 00:06:50] All right, so to be able to compute the number of temporaries,
+[00:06:50 -> 00:06:52] I'm going to define this function called nt
+[00:06:52 -> 00:06:54] that's defined on an expression.
+[00:06:54 -> 00:06:58] So nte would return the number of temporaries
+[00:06:58 -> 00:06:59] required to evaluate e.
+[00:06:59 -> 00:07:01] And just like everything else,
+[00:07:01 -> 00:07:03] we are going to define nt inductively.
+[00:07:03 -> 00:07:05] So we are going to define nt
+[00:07:05 -> 00:07:08] for every different operator that may appear.
+[00:07:08 -> 00:07:10] And for a given expression,
+[00:07:10 -> 00:07:11] the way we are going to compute nt
+[00:07:11 -> 00:07:13] is we're going to do a top-down traversal
+[00:07:13 -> 00:07:16] of the expression tree to compute nt
+[00:07:16 -> 00:07:18] using our computation rules.
+[00:07:20 -> 00:07:24] So here's the first rule, nt of e1 plus e2.
+[00:07:24 -> 00:07:25] So this is for the plus operator.
+[00:07:25 -> 00:07:29] I need at least, so to compute e1 plus e2,
+[00:07:29 -> 00:07:31] how many temporaries do I need?
+[00:07:31 -> 00:07:32] Well, the answer is,
+[00:07:32 -> 00:07:33] whatever is the number of temporaries
+[00:07:33 -> 00:07:35] that I need to compute e1,
+[00:07:35 -> 00:07:37] at least I need that many temporaries
+[00:07:37 -> 00:07:41] to compute e1 plus e2.
+[00:07:41 -> 00:07:45] So I need at least nt e1 temporaries
+[00:07:45 -> 00:07:47] to compute e1 plus e2.
+[00:07:47 -> 00:07:52] I also need at least nt e2 plus one temporaries.
+[00:07:52 -> 00:07:54] Why do I say plus one for e2?
+[00:07:54 -> 00:07:56] Because while I'm computing e2,
+[00:07:56 -> 00:07:59] I also need to hold on to e1's value.
+[00:07:59 -> 00:08:02] So I need one extra temporary while I'm computing e2.
+[00:08:02 -> 00:08:03] So whatever is the number of temporaries
+[00:08:03 -> 00:08:06] that e2 needs, I'm going to need that much.
+[00:08:06 -> 00:08:08] Plus one, because while I'm computing e2,
+[00:08:08 -> 00:08:11] I need to hold on to e1's value.
+[00:08:11 -> 00:08:13] And for that, I need one extra temporary.
+[00:08:14 -> 00:08:18] And so we get this rule
+[00:08:18 -> 00:08:21] that nt of e1 plus e2 equals
+[00:08:21 -> 00:08:26] maximum of nt e1 comma nt e2 plus one, all right?
+[00:08:26 -> 00:08:27] Why maximum?
+[00:08:27 -> 00:08:29] Because while I'm computing e2,
+[00:08:29 -> 00:08:31] I don't need to hold on to the temporaries
+[00:08:31 -> 00:08:35] that were computed within the evaluation of e1.
+[00:08:35 -> 00:08:38] Similarly, why nt,
+[00:08:38 -> 00:08:39] so that's the reason for max,
+[00:08:39 -> 00:08:42] because whatever are the temporaries
+[00:08:42 -> 00:08:43] that have been used for e1,
+[00:08:43 -> 00:08:46] I'm going to be able to reuse them
+[00:08:46 -> 00:08:47] during the computation of e2,
+[00:08:47 -> 00:08:50] except for one extra space that I need
+[00:08:50 -> 00:08:52] to hold on to the return value of e1.
+[00:08:53 -> 00:08:55] So that's the reason for max, all right?
+[00:08:55 -> 00:08:58] And so we're going to see the similar pattern everywhere.
+[00:08:58 -> 00:09:00] Once again, this is recursive definition of nt,
+[00:09:00 -> 00:09:03] and this is supposed to be pattern max.
+[00:09:03 -> 00:09:05] So this is actually a definition,
+[00:09:06 -> 00:09:09] a rule to compute the number of temporaries required
+[00:09:09 -> 00:09:11] for the plus operator appearing
+[00:09:11 -> 00:09:13] anywhere in the expression tree.
+[00:09:13 -> 00:09:15] Now similarly, generalizing to other operators,
+[00:09:15 -> 00:09:16] if there is a minus,
+[00:09:16 -> 00:09:20] then I say nt e1 minus e2 equals max nt e1 comma
+[00:09:20 -> 00:09:24] nt e2 plus one, exactly similar to plus.
+[00:09:24 -> 00:09:27] Now, here's another rule for if then else.
+[00:09:27 -> 00:09:30] So in our language, we have if e1 equals e2,
+[00:09:30 -> 00:09:32] then e3 else e4.
+[00:09:32 -> 00:09:34] So the rule for this is,
+[00:09:34 -> 00:09:36] recall that I can compute e1,
+[00:09:36 -> 00:09:37] and so whatever is the number of temporaries
+[00:09:37 -> 00:09:40] I need for e1, that's minimum I need.
+[00:09:40 -> 00:09:41] Then I need to compute e2
+[00:09:41 -> 00:09:43] while holding onto the value of e1.
+[00:09:43 -> 00:09:44] So I need whatever is the number of temporaries
+[00:09:44 -> 00:09:46] for e2 plus one.
+[00:09:46 -> 00:09:48] And then after I've done this computation,
+[00:09:48 -> 00:09:50] then I can release these temporaries
+[00:09:50 -> 00:09:52] that I had created for e1 and e2
+[00:09:52 -> 00:09:55] and for the equality computation.
+[00:09:55 -> 00:09:58] And then I just jump to the computation of e3 or e4,
+[00:09:58 -> 00:10:02] depending on whether the condition was true or false.
+[00:10:02 -> 00:10:05] And so while I am computing e3 or e4,
+[00:10:05 -> 00:10:08] I don't need to hang on to any temporaries
+[00:10:08 -> 00:10:11] due to the equality comparison.
+[00:10:11 -> 00:10:13] And so the rule is,
+[00:10:13 -> 00:10:15] nt of this whole if then else expression
+[00:10:15 -> 00:10:20] is max of nt e1 comma nt e2 plus one
+[00:10:20 -> 00:10:24] comma nt e3 comma nt e4.
+[00:10:24 -> 00:10:27] Because the only place where we need to hold onto
+[00:10:27 -> 00:10:28] a temporary is while computing e2.
+[00:10:28 -> 00:10:30] For other things,
+[00:10:30 -> 00:10:31] we don't need to hold onto any temporary
+[00:10:31 -> 00:10:34] because of the if then else constant.
+[00:10:34 -> 00:10:35] All right.
+[00:10:35 -> 00:10:37] Now let's look at a function called dispatch.
+[00:10:37 -> 00:10:42] So a function called dispatch looks like id e1 dot dot en.
+[00:10:42 -> 00:10:42] And the question is,
+[00:10:42 -> 00:10:43] what's the number of temporaries
+[00:10:43 -> 00:10:48] that I need to pre-allocate for this function?
+[00:10:48 -> 00:10:51] Now this is a little bit of a subtle question
+[00:10:51 -> 00:10:53] because you may imagine
+[00:10:53 -> 00:10:55] that while I'm computing the function called dispatch,
+[00:10:55 -> 00:10:58] I need to save the values,
+[00:10:58 -> 00:11:01] computed values of each of the arguments.
+[00:11:01 -> 00:11:04] So I need to save the value of e1, e2, en and so on.
+[00:11:04 -> 00:11:08] I also need to save the value of the old frame pointer.
+[00:11:08 -> 00:11:11] And so it may be tempting to think of them as temporaries.
+[00:11:11 -> 00:11:13] And so we can pre-allocate space for them
+[00:11:13 -> 00:11:15] in our activation record.
+[00:11:15 -> 00:11:16] But there's a problem with this.
+[00:11:16 -> 00:11:19] The problem is a function called dispatch is special
+[00:11:19 -> 00:11:20] in the sense that there is a contract
+[00:11:20 -> 00:11:22] between caller and callee
+[00:11:22 -> 00:11:27] about where to expect the arguments,
+[00:11:27 -> 00:11:28] the actual arguments.
+[00:11:28 -> 00:11:30] So the callee should know where to expect
+[00:11:30 -> 00:11:32] the actual arguments.
+[00:11:32 -> 00:11:33] And that's where the caller will fill in
+[00:11:34 -> 00:11:36] the actual arguments.
+[00:11:36 -> 00:11:41] And so it will be pretty difficult
+[00:11:42 -> 00:11:44] to kind of pre-allocate space for that
+[00:11:44 -> 00:11:46] because while we are pre-allocating,
+[00:11:46 -> 00:11:47] we don't really, it's very difficult
+[00:11:47 -> 00:11:50] to kind of stick to those calling convention rules
+[00:11:50 -> 00:11:51] because in this case,
+[00:11:51 -> 00:11:53] we are just allocating some space
+[00:11:53 -> 00:11:55] in the activation record,
+[00:11:55 -> 00:11:56] irrespective of where it is
+[00:11:56 -> 00:11:59] with respect to the other temporaries in the program.
+[00:11:59 -> 00:12:01] And so one approach to doing this,
+[00:12:01 -> 00:12:03] and that's the approach we're going to take,
+[00:12:03 -> 00:12:06] is that all the stuff that's allocated
+[00:12:06 -> 00:12:07] for the function called dispatch,
+[00:12:07 -> 00:12:08] including the frame pointer,
+[00:12:08 -> 00:12:10] is allocated dynamically.
+[00:12:10 -> 00:12:12] So for that, we're not going to pre-allocate
+[00:12:12 -> 00:12:13] at function entry.
+[00:12:13 -> 00:12:17] And so the only temporaries here are actually none.
+[00:12:17 -> 00:12:20] So the frame pointer is not considered a temporary
+[00:12:20 -> 00:12:24] in this scheme that we want to follow.
+[00:12:24 -> 00:12:26] The arguments are not considered temporary,
+[00:12:26 -> 00:12:28] or they're not considered pre-allocated temporaries.
+[00:12:28 -> 00:12:29] Let's put it like that.
+[00:12:29 -> 00:12:32] Because we want them to be allocated
+[00:12:32 -> 00:12:36] as and when they are required, all right?
+[00:12:36 -> 00:12:40] And so NT of ID E1 E2 dot dot EN
+[00:12:40 -> 00:12:45] is max of just NT E1 dot dot dot NT EN.
+[00:12:45 -> 00:12:49] So because we expect that all the other temporaries,
+[00:12:49 -> 00:12:50] all the other space on the stack
+[00:12:50 -> 00:12:52] will be dynamically allocated,
+[00:12:52 -> 00:12:55] there is nothing really that needs to be pre-allocated
+[00:12:55 -> 00:12:56] for a function called dispatch.
+[00:12:56 -> 00:12:58] And so we're going to just assume
+[00:12:58 -> 00:12:59] that the function called dispatch
+[00:13:00 -> 00:13:03] can be computed without any temporaries of itself.
+[00:13:03 -> 00:13:06] It just needs to have the number of temporaries
+[00:13:06 -> 00:13:09] that's required to evaluate each of its arguments.
+[00:13:09 -> 00:13:13] All right, so this max of NT E1 dot dot NT EN.
+[00:13:13 -> 00:13:14] Finally, the base case is,
+[00:13:14 -> 00:13:18] so for NT int, which is an integer constant,
+[00:13:18 -> 00:13:19] we don't need any temporary.
+[00:13:19 -> 00:13:20] So it's just zero.
+[00:13:20 -> 00:13:22] And similarly for NT ID,
+[00:13:22 -> 00:13:23] we don't need any constant.
+[00:13:23 -> 00:13:25] It's just a load word instruction.
+[00:13:25 -> 00:13:27] So we just use a zero there as well.
+[00:13:29 -> 00:13:29] All right.
+[00:13:30 -> 00:13:34] So with that, we are ready to kind of run this procedure NT
+[00:13:34 -> 00:13:37] that we have just defined on the Fibonacci program
+[00:13:37 -> 00:13:40] that we use as a canonical example.
+[00:13:40 -> 00:13:44] And so whenever we see a body of the function,
+[00:13:44 -> 00:13:47] so whenever we see a function declaration,
+[00:13:47 -> 00:13:48] it would be associated with the body.
+[00:13:48 -> 00:13:52] And that's what we basically are going to compute.
+[00:13:52 -> 00:13:56] That's the top level program,
+[00:13:56 -> 00:13:58] or that's top level syntax
+[00:13:58 -> 00:13:59] that we're going to call the NT.
+[00:13:59 -> 00:14:00] So we're going to call NT on the body.
+[00:14:00 -> 00:14:03] So the body here represents the entire body
+[00:14:03 -> 00:14:04] of this function.
+[00:14:05 -> 00:14:07] And what is that going to be?
+[00:14:07 -> 00:14:10] So we're going to use our implementation rule.
+[00:14:10 -> 00:14:11] The first rule that we're going to use
+[00:14:11 -> 00:14:12] is the if-then-else rule.
+[00:14:12 -> 00:14:14] So in the if-then-else rule,
+[00:14:14 -> 00:14:18] we're going to say that it is the max of NT E1,
+[00:14:18 -> 00:14:21] which is X, NT E2 plus one,
+[00:14:21 -> 00:14:25] which is one plus NT one.
+[00:14:25 -> 00:14:27] So NT X one plus NT one.
+[00:14:27 -> 00:14:31] And then E3, which is NT zero.
+[00:14:31 -> 00:14:33] And E4, which is this entire remaining expression
+[00:14:33 -> 00:14:34] on the else side.
+[00:14:34 -> 00:14:37] So NT of if X equals two,
+[00:14:37 -> 00:14:40] then one else Fib X minus one plus Fib X minus two.
+[00:14:40 -> 00:14:41] I haven't written the whole thing here,
+[00:14:41 -> 00:14:46] but that it's the remaining body of the function body.
+[00:14:48 -> 00:14:49] Okay, so this is what it evaluates to.
+[00:14:49 -> 00:14:51] Now, what is NT X?
+[00:14:51 -> 00:14:53] That's just zero because it's an identifier.
+[00:14:53 -> 00:14:54] We just saw that rule.
+[00:14:54 -> 00:14:55] What is NT one?
+[00:14:55 -> 00:14:56] That's also zero.
+[00:14:56 -> 00:14:58] So this becomes max of zero comma one.
+[00:14:58 -> 00:14:59] What is NT zero again?
+[00:14:59 -> 00:15:00] Again zero.
+[00:15:00 -> 00:15:03] So max of zero, one, zero is just one.
+[00:15:03 -> 00:15:05] And then we want to break down this further.
+[00:15:05 -> 00:15:09] So we get max of one and then we break this down.
+[00:15:09 -> 00:15:10] So this is yet another if-then-else.
+[00:15:10 -> 00:15:12] So we use the same rule.
+[00:15:12 -> 00:15:14] So E1 is X, E2 is two.
+[00:15:14 -> 00:15:17] So NT X one plus NT two.
+[00:15:18 -> 00:15:20] E3 is one, so NT one.
+[00:15:20 -> 00:15:23] And then NT of whatever is the remaining body,
+[00:15:23 -> 00:15:26] which is NT of Fib X minus one plus Fib X minus two,
+[00:15:26 -> 00:15:30] which is the remaining body E4 of the if-then-else.
+[00:15:30 -> 00:15:33] Now once again, NT X is zero, NT two is zero,
+[00:15:33 -> 00:15:34] and NT one is zero.
+[00:15:34 -> 00:15:37] So this becomes max of one comma zero comma one comma zero,
+[00:15:37 -> 00:15:38] which is again one.
+[00:15:38 -> 00:15:41] And now we're going to break this down further.
+[00:15:41 -> 00:15:44] Now this becomes max of one comma,
+[00:15:44 -> 00:15:45] because of the plus,
+[00:15:45 -> 00:15:47] we are going to use the rule for the plus.
+[00:15:47 -> 00:15:50] And so we say NT of Fib X minus one,
+[00:15:50 -> 00:15:51] this becomes our E1.
+[00:15:51 -> 00:15:54] And one plus NT of Fib X minus two.
+[00:15:54 -> 00:15:55] So this becomes our E2,
+[00:15:55 -> 00:15:57] and one comes because while we're computing E2,
+[00:15:57 -> 00:16:00] we need to hold on to the computed value of E1.
+[00:16:01 -> 00:16:03] All right, so we are almost there.
+[00:16:03 -> 00:16:05] Finally, this is a function called dispatch.
+[00:16:05 -> 00:16:07] And for a function called dispatch,
+[00:16:07 -> 00:16:08] we don't really create any extra temporaries.
+[00:16:08 -> 00:16:10] We just create the number of temporaries
+[00:16:10 -> 00:16:12] that are required for the argument.
+[00:16:12 -> 00:16:13] And so how many temporaries are required
+[00:16:13 -> 00:16:14] for the argument?
+[00:16:14 -> 00:16:16] The argument here is X minus one.
+[00:16:16 -> 00:16:17] So the number of temporaries that's required
+[00:16:17 -> 00:16:19] is the number of temporaries for X,
+[00:16:19 -> 00:16:21] which is just zero.
+[00:16:21 -> 00:16:22] And number of temporaries that's one,
+[00:16:22 -> 00:16:23] which is also zero.
+[00:16:23 -> 00:16:25] But I need to hold on to X while computing one.
+[00:16:25 -> 00:16:28] So that's one, so one plus zero.
+[00:16:28 -> 00:16:29] And so the number of temporaries that are required
+[00:16:29 -> 00:16:32] for NT Fib X minus one is just one,
+[00:16:32 -> 00:16:34] and NT Fib X minus one, two is one.
+[00:16:34 -> 00:16:37] And so this becomes one,
+[00:16:37 -> 00:16:39] so this becomes max of one comma one comma one
+[00:16:39 -> 00:16:43] plus one, which is two, all right?
+[00:16:43 -> 00:16:44] And so with that,
+[00:16:44 -> 00:16:46] I know that I can do this with two temporaries.
+[00:16:46 -> 00:16:47] So this is just the computation
+[00:16:47 -> 00:16:50] of what is the minimum number of temporaries.
+[00:16:50 -> 00:16:51] So this is what I need with my scheme
+[00:16:51 -> 00:16:54] of pre-allocating temporaries for all arithmetic
+[00:16:54 -> 00:16:55] and if-then-else operators,
+[00:16:55 -> 00:16:57] but not pre-allocating temporaries
+[00:16:57 -> 00:16:59] for a function called dispatch.
+[00:16:59 -> 00:17:03] All right, so this is the AR layout for with,
+[00:17:03 -> 00:17:05] you know, this was the original AR layout
+[00:17:05 -> 00:17:06] that we had said,
+[00:17:06 -> 00:17:07] this is the activation record is old FP,
+[00:17:07 -> 00:17:09] the arguments laid out in reverse order
+[00:17:09 -> 00:17:10] and the return address.
+[00:17:10 -> 00:17:12] And this is where the frame pointer register
+[00:17:12 -> 00:17:14] would point during the activation.
+[00:17:14 -> 00:17:18] Now in the new layout with temporary pre-allocation,
+[00:17:18 -> 00:17:20] what I'm going to do is I'm going to allocate
+[00:17:20 -> 00:17:22] that many number of temporaries
+[00:17:22 -> 00:17:25] just below the original AR shown in this purple.
+[00:17:25 -> 00:17:28] So that's a temporary one, temporary two, and so on.
+[00:17:28 -> 00:17:30] Once again, I'm laying them out in the reverse order.
+[00:17:31 -> 00:17:34] So for a function definition,
+[00:17:34 -> 00:17:36] if x1 dot dot xn equals e,
+[00:17:36 -> 00:17:40] how many, the size of the AR has now increased.
+[00:17:40 -> 00:17:42] Actually, why has it increased?
+[00:17:42 -> 00:17:44] Well, it has increased because
+[00:17:44 -> 00:17:46] now we are going to pre-allocate the temporaries as well.
+[00:17:46 -> 00:17:48] Earlier we were dynamically allocating
+[00:17:49 -> 00:17:49] and de-allocating on the fly.
+[00:17:49 -> 00:17:52] Now we are pre-allocating or function entry.
+[00:17:52 -> 00:17:54] And so at function entry itself,
+[00:17:54 -> 00:17:56] I had to allocate more.
+[00:17:56 -> 00:17:58] Overall, this is going to be an optimization
+[00:17:58 -> 00:18:01] because in any case I would have allocated that stuff,
+[00:18:01 -> 00:18:03] but I'm saving some instructions to actually,
+[00:18:03 -> 00:18:06] you know, keep moving the stack pointer up and down.
+[00:18:06 -> 00:18:08] Now the stack pointer is going to move less
+[00:18:08 -> 00:18:10] because I've already pre-allocated.
+[00:18:10 -> 00:18:12] You may think that this is a problem
+[00:18:12 -> 00:18:13] because you are wasting more space
+[00:18:13 -> 00:18:15] because you're taking extra space
+[00:18:15 -> 00:18:17] for a longer amount of time.
+[00:18:17 -> 00:18:18] And that's true.
+[00:18:18 -> 00:18:20] So in fact, this is an optimization
+[00:18:20 -> 00:18:22] that's trading off space for time.
+[00:18:22 -> 00:18:26] We are using more space over a larger amount of time
+[00:18:26 -> 00:18:29] to reduce the number of instructions, right?
+[00:18:29 -> 00:18:31] And this will usually be an optimization
+[00:18:31 -> 00:18:34] because the amount of space that we are demanding,
+[00:18:34 -> 00:18:36] the extra space that we're demanding is very, very small.
+[00:18:36 -> 00:18:39] It's only a few temporaries, few words.
+[00:18:39 -> 00:18:41] On the other hand, the amount of time that we'll save
+[00:18:41 -> 00:18:43] is also a few instructions,
+[00:18:43 -> 00:18:45] but those instructions are going,
+[00:18:45 -> 00:18:46] they're going to be consequential
+[00:18:46 -> 00:18:49] because the time is basically just proportional
+[00:18:49 -> 00:18:50] to the number of instructions.
+[00:18:50 -> 00:18:52] Let's assume, all right?
+[00:18:52 -> 00:18:55] Okay, so for a function definition, fx1.xn,
+[00:18:55 -> 00:18:57] the ar has two plus n,
+[00:18:57 -> 00:19:00] n is the number of arguments, plus nte.
+[00:19:00 -> 00:19:03] So what is the number of temporaries calculated for e
+[00:19:03 -> 00:19:04] by our previous algorithm?
+[00:19:04 -> 00:19:07] That's the size, total size of the ar.
+[00:19:07 -> 00:19:08] This is words.
+[00:19:08 -> 00:19:10] So in bytes, this will be multiplied by four, right?
+[00:19:10 -> 00:19:13] So I'm assuming that each word is four bytes.
+[00:19:14 -> 00:19:17] Okay, so now let's, you know, we just discussed how,
+[00:19:17 -> 00:19:19] what is the, you know, how do you define,
+[00:19:19 -> 00:19:21] how do you determine what are the number
+[00:19:21 -> 00:19:23] of temporaries you need for a function body?
+[00:19:23 -> 00:19:25] We also discussed what's the new activation record
+[00:19:25 -> 00:19:26] structure that's going to look,
+[00:19:26 -> 00:19:28] that is going to be, need to be allocated
+[00:19:28 -> 00:19:31] so that you can pre-allocate that many temporaries.
+[00:19:31 -> 00:19:34] But then how do you now generate code
+[00:19:34 -> 00:19:35] to use these pre-allocated temporaries?
+[00:19:35 -> 00:19:38] Earlier we had, our code strategy was just allocating
+[00:19:38 -> 00:19:40] in the allocated temporaries on the fly,
+[00:19:40 -> 00:19:43] but now I want to use these temporaries as well.
+[00:19:44 -> 00:19:45] And so to do this, I'm going to add a new argument
+[00:19:45 -> 00:19:48] to our cgen function, the code generator function,
+[00:19:48 -> 00:19:50] and the new argument is going to be nt.
+[00:19:50 -> 00:19:53] nt is going to be a constant at code generation time.
+[00:19:53 -> 00:19:55] So this is going to be known constant
+[00:19:55 -> 00:19:57] at code generation time.
+[00:19:57 -> 00:20:00] And what it will represent is that nt is the position
+[00:20:00 -> 00:20:03] of the next available temporary, all right?
+[00:20:03 -> 00:20:08] So I'm going to assume that in this picture,
+[00:20:08 -> 00:20:11] the temporaries are kind of laid out as a stack.
+[00:20:11 -> 00:20:14] And so the first available temporary is going to be t1.
+[00:20:14 -> 00:20:15] The next available, so if t1 is used,
+[00:20:15 -> 00:20:17] the next available will be t2.
+[00:20:17 -> 00:20:20] And unlike our usual convention,
+[00:20:20 -> 00:20:23] I'm going to assume that these temporaries are going,
+[00:20:23 -> 00:20:25] the stack is growing bottom to top
+[00:20:25 -> 00:20:27] rather than top to bottom.
+[00:20:27 -> 00:20:28] Okay, so it doesn't matter.
+[00:20:28 -> 00:20:30] You could have used any other convention as well.
+[00:20:30 -> 00:20:31] You could have used the stack
+[00:20:31 -> 00:20:33] to grow top to bottom as well.
+[00:20:33 -> 00:20:35] It doesn't really matter.
+[00:20:35 -> 00:20:37] Okay, so the temporary area will be used
+[00:20:37 -> 00:20:39] as a small fixed size stack, right?
+[00:20:39 -> 00:20:42] Because an nt will keep increasing or decreasing
+[00:20:42 -> 00:20:44] to indicate the current top of,
+[00:20:44 -> 00:20:46] or the next top of the stacks
+[00:20:46 -> 00:20:48] because it's a position of the next available temporary.
+[00:20:48 -> 00:20:51] So any pushing should be happening at nt.
+[00:20:51 -> 00:20:54] Initially, nt would be pointing to the location
+[00:20:54 -> 00:20:56] where t1 is supposed to be put.
+[00:20:57 -> 00:21:01] All right, and we can offset this through $fp
+[00:21:01 -> 00:21:05] to identify variables or arguments and temporaries.
+[00:21:05 -> 00:21:07] So just like we were offsetting through $fp
+[00:21:07 -> 00:21:11] to identify variables, what were we doing?
+[00:21:11 -> 00:21:15] We were saying $fp plus n into four, plus four.
+[00:21:15 -> 00:21:17] That's what we were doing.
+[00:21:17 -> 00:21:20] Or $fp plus n into four if n is starting from one.
+[00:21:20 -> 00:21:23] Now, we're going to change the offset for variables
+[00:21:23 -> 00:21:24] because we also say,
+[00:21:24 -> 00:21:28] now we'll have to say $fp plus nt,
+[00:21:28 -> 00:21:30] e, which we know at compile time.
+[00:21:30 -> 00:21:33] What is now nt that has been calculated for the body
+[00:21:33 -> 00:21:37] plus four, plus four into n, right?
+[00:21:37 -> 00:21:39] So we're going to have to change the offset
+[00:21:39 -> 00:21:41] for the variables accordingly.
+[00:21:41 -> 00:21:43] Also, now we can now address the temporaries.
+[00:21:43 -> 00:21:47] If we want to say t1, then that's just $fp plus zero.
+[00:21:47 -> 00:21:49] If I want to say t2, then that's just $fp plus four.
+[00:21:49 -> 00:21:52] So if I just go back to my figure,
+[00:21:52 -> 00:21:55] t1 is at $fp plus zero, t2 is at $fp plus four,
+[00:21:55 -> 00:21:56] and so on.
+[00:21:57 -> 00:21:59] All right, so with that background,
+[00:21:59 -> 00:22:02] let's look at our code generation implementation.
+[00:22:02 -> 00:22:05] So originally, before we used temporary preallocation,
+[00:22:05 -> 00:22:07] cgen function for e1 plus e2
+[00:22:07 -> 00:22:09] would look like the following.
+[00:22:09 -> 00:22:11] We would first do cgen e1,
+[00:22:11 -> 00:22:15] then we would push the value of e1 on the stack,
+[00:22:15 -> 00:22:20] and so this is exactly the temporary allocation, right?
+[00:22:20 -> 00:22:22] Then we would compute e2,
+[00:22:22 -> 00:22:27] and then finally we would load the value from the stack,
+[00:22:27 -> 00:22:29] pop the stack, right?
+[00:22:29 -> 00:22:31] So these are the extra instructions,
+[00:22:31 -> 00:22:32] popping and pushing,
+[00:22:32 -> 00:22:35] the ones that I'm pointing out with arrows.
+[00:22:36 -> 00:22:39] I'm just wasting time popping and pushing small stuff.
+[00:22:39 -> 00:22:41] Why not I just do this once in the beginning
+[00:22:41 -> 00:22:42] and then keep reusing them?
+[00:22:42 -> 00:22:44] So how do I do that?
+[00:22:44 -> 00:22:46] Well, here is our new implementation
+[00:22:46 -> 00:22:47] with the stack preallocation.
+[00:22:47 -> 00:22:49] As I said, the cgen function
+[00:22:49 -> 00:22:52] now takes an extra argument nt,
+[00:22:52 -> 00:22:54] and so cgen e1 plus e2 nt,
+[00:22:54 -> 00:22:56] and recall that nt is the compile time,
+[00:22:56 -> 00:22:57] code generation time constant,
+[00:22:57 -> 00:22:59] so I know what nt is.
+[00:22:59 -> 00:23:01] And so I say cgen e1 nt,
+[00:23:01 -> 00:23:05] so compute e1 such that
+[00:23:05 -> 00:23:07] the next temporary can be pushed
+[00:23:07 -> 00:23:09] at whatever is the value of nt, right?
+[00:23:09 -> 00:23:10] Recall that nt is basically
+[00:23:10 -> 00:23:12] where can the next temporary be used?
+[00:23:12 -> 00:23:14] Where should I use,
+[00:23:14 -> 00:23:17] which space should I use for putting the next temporary?
+[00:23:17 -> 00:23:21] So I can compute e1 with the same value of nt,
+[00:23:22 -> 00:23:25] and then I can store the computed value
+[00:23:25 -> 00:23:28] at nt dollar sp, okay?
+[00:23:28 -> 00:23:29] So what does that mean?
+[00:23:29 -> 00:23:32] Now, whatever is the space that was used by e1,
+[00:23:32 -> 00:23:33] it doesn't matter.
+[00:23:33 -> 00:23:34] I don't need those values anymore,
+[00:23:34 -> 00:23:37] but now I can save the computed value to nt,
+[00:23:37 -> 00:23:39] because that's where I want to save
+[00:23:39 -> 00:23:41] the computed value of e1
+[00:23:41 -> 00:23:43] before I start computing the value of e2.
+[00:23:43 -> 00:23:46] And so when I call cgen of e2,
+[00:23:46 -> 00:23:47] I need to be careful
+[00:23:47 -> 00:23:49] because I don't want the computation of e2
+[00:23:49 -> 00:23:54] to clobber the value that I've saved for e1,
+[00:23:55 -> 00:23:59] and so I basically change my argument to nt plus four,
+[00:23:59 -> 00:24:00] right, so which basically means
+[00:24:00 -> 00:24:04] now if computation of e2 requires some temporary space,
+[00:24:04 -> 00:24:05] then it should start from nt plus four
+[00:24:05 -> 00:24:08] because the nt is now taken by the value of e1.
+[00:24:09 -> 00:24:12] Now, you know, the other way to,
+[00:24:12 -> 00:24:13] so let me finish this,
+[00:24:13 -> 00:24:15] and then finally, I'm going to say
+[00:24:15 -> 00:24:17] just the same thing, load word dollar t1,
+[00:24:17 -> 00:24:18] but instead of four dollar sp,
+[00:24:18 -> 00:24:21] I'm going to say nt dollar fp, all right?
+[00:24:21 -> 00:24:23] So this is actually, this is a mistake.
+[00:24:23 -> 00:24:26] It should have been an fp here in both places.
+[00:24:26 -> 00:24:29] We are actually doing this relative to the frame pointer
+[00:24:29 -> 00:24:30] and not the stack pointer.
+[00:24:30 -> 00:24:34] All right, so here's the load word dollar t1
+[00:24:35 -> 00:24:37] and then I finally do the addition operation,
+[00:24:37 -> 00:24:40] which is add dollar a0, dollar t1, dollar a0,
+[00:24:40 -> 00:24:42] and I don't need to do any popping, right,
+[00:24:42 -> 00:24:44] because anything that was calling it
+[00:24:44 -> 00:24:45] knows that now, you know,
+[00:24:45 -> 00:24:47] whatever is the temporary space
+[00:24:47 -> 00:24:49] that was used for e1 plus e2,
+[00:24:49 -> 00:24:50] I don't need to bother about it,
+[00:24:50 -> 00:24:54] and it can kind of start reusing that as well.
+[00:24:54 -> 00:24:56] So in other words, what is the invariant for cgen?
+[00:24:56 -> 00:24:58] Just like earlier the invariant was
+[00:24:58 -> 00:25:00] that I will not modify the stack,
+[00:25:00 -> 00:25:02] the new invariant for cgen is
+[00:25:02 -> 00:25:05] I will not modify the stack, that's true,
+[00:25:05 -> 00:25:07] and compute the value in a0,
+[00:25:07 -> 00:25:10] but also that I'm not going to touch
+[00:25:10 -> 00:25:13] the temporaries below nt, right?
+[00:25:13 -> 00:25:15] So I'm not going to touch any temporaries below nt,
+[00:25:15 -> 00:25:19] I'm only going to use the temporaries above nt,
+[00:25:19 -> 00:25:23] and that's the invariant that we can assume for cgen,
+[00:25:23 -> 00:25:24] and using that invariant,
+[00:25:24 -> 00:25:26] we can show that this implementation
+[00:25:26 -> 00:25:28] of e1 plus e2 is correct.
+[00:25:29 -> 00:25:33] Finally, how do I initialize nt?
+[00:25:33 -> 00:25:36] Recall that I said that nt is a compile time constant,
+[00:25:36 -> 00:25:38] so how do I know what is the compile time constant
+[00:25:38 -> 00:25:40] that I use for the initial value?
+[00:25:40 -> 00:25:42] Well, that's easy.
+[00:25:42 -> 00:25:44] Anytime I see a function definition,
+[00:25:44 -> 00:25:46] recall that we are doing this temporary pre-allocation
+[00:25:46 -> 00:25:49] at function granularity,
+[00:25:49 -> 00:25:50] so for every function body,
+[00:25:50 -> 00:25:51] we are doing separate things.
+[00:25:51 -> 00:25:54] For every function activation, in that sense,
+[00:25:54 -> 00:25:56] we are going to have separate pre-allocation,
+[00:25:56 -> 00:26:00] and so earlier we were saying cgen def,
+[00:26:00 -> 00:26:01] so we would say cgen, and then the expression,
+[00:26:01 -> 00:26:04] and the expression could have been a function definition.
+[00:26:04 -> 00:26:05] Now we're going to say,
+[00:26:05 -> 00:26:08] anytime you basically do a cgen for a function definition,
+[00:26:08 -> 00:26:13] you start with offset zero for that function def,
+[00:26:15 -> 00:26:17] while computing the body of that function zero,
+[00:26:17 -> 00:26:21] so the value of nt will be initialized to zero
+[00:26:21 -> 00:26:26] at every function definition in the abstract syntax tree.
+[00:26:28 -> 00:26:32] The reason it will work when the value of zero would work
+[00:26:32 -> 00:26:34] is because I know that I've already computed
+[00:26:34 -> 00:26:36] what's the maximum number of temporaries I need,
+[00:26:36 -> 00:26:38] and I've allocated that much amount of space
+[00:26:38 -> 00:26:39] in the activation record,
+[00:26:39 -> 00:26:42] so I know that if I start from zero here,
+[00:26:42 -> 00:26:45] then the computation would proceed safely
+[00:26:45 -> 00:26:48] and will never overflow the space, temporary space.
+[00:26:48 -> 00:26:50] For example, if I had started from some other number,
+[00:26:50 -> 00:26:52] for example, if I start from four,
+[00:26:52 -> 00:26:55] then I wouldn't have been safe, right?
+[00:26:56 -> 00:26:57] Yeah, so that's the idea.
+[00:26:57 -> 00:27:00] Also, starting from negative number doesn't make sense
+[00:27:00 -> 00:27:03] because that would underflow the stack,
+[00:27:03 -> 00:27:05] and so that doesn't make sense as well.

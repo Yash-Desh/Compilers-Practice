@@ -1,0 +1,205 @@
+Title: Compiler Design Module 51 : Stack Machine
+Video ID: eYk0EennUrA
+Detected language: en
+------------------------------------------------------------
+
+[00:00:00 -> 00:00:06] So we are now going to talk about an example of a machine architecture and see how we could
+[00:00:06 -> 00:00:10] potentially generate code for that particular machine architecture. So we are going to look
+[00:00:10 -> 00:00:16] at a very simple machine and we also call it a stack machine and this particular machine
+[00:00:16 -> 00:00:21] the only storage is a stack. Now this is different from you know the typical machine that we are
+[00:00:22 -> 00:00:26] familiar with which has resistors and memory and things. In this particular machine let's
+[00:00:26 -> 00:00:33] assume that there's only one way of doing storage and that's a stack. And the instructions are
+[00:00:34 -> 00:00:42] of the form result equals some operation f applied to some number of arguments a1 dot dot an.
+[00:00:42 -> 00:00:48] For example the operation could be plus and the arguments could be you know any integers
+[00:00:49 -> 00:00:53] four byte integers and the result is also supposed to be a four byte integer.
+[00:00:53 -> 00:00:59] Now what such an operation is going to do for a stack machine so this is the instruction set
+[00:00:59 -> 00:01:06] of this particular machine it's going to pop the top n words of the stack apply f on these
+[00:01:06 -> 00:01:11] popped words and then push the result on the stack right. So we're just assuming that this
+[00:01:11 -> 00:01:16] there is such a machine that has stack as the only storage we're also assuming that it
+[00:01:16 -> 00:01:22] has an instruction set and the instruction any instruction in this instruction set looks
+[00:01:22 -> 00:01:27] has this particular form and has this particular semantics or meaning.
+[00:01:28 -> 00:01:32] So here are some example instructions for example an instruction like push i.
+[00:01:32 -> 00:01:36] So let's say this is a stack and by convention we're going to assume that the stack grows
+[00:01:36 -> 00:01:41] downwards so when you have an instruction like push i is just going to push the argument i
+[00:01:41 -> 00:01:46] which is a constant which is supposed to be a constant here and it's just going to push that
+[00:01:46 -> 00:01:54] constant to the top of the stack. Now similarly there could be an output called add and so add
+[00:01:54 -> 00:02:01] takes two operands so if there were two operands at the top of the stack let's say x and y
+[00:02:01 -> 00:02:06] then it's going to pop off the top two operands so it's going to remove x and y from
+[00:02:06 -> 00:02:13] the stack and then instead push x plus y so it's going to compute the addition and then
+[00:02:13 -> 00:02:18] push the result on the stack. So this is the operation of this machine.
+[00:02:20 -> 00:02:24] Here is an example computation so let's say I wanted to compute three plus four on this
+[00:02:24 -> 00:02:31] particular stack machine then I'm going to first push three by dollar I mean it's a constant
+[00:02:31 -> 00:02:35] three so I'm going to push the immediate value constant value three I'm going to push
+[00:02:35 -> 00:02:40] the constant value four and then I'm going to execute the add output that output is going to
+[00:02:41 -> 00:02:46] pop off the top two words in which case which in this case are going to be three and four
+[00:02:46 -> 00:02:52] and is going to push the sum of these two quantities which in this case would be seven
+[00:02:52 -> 00:02:57] and the I mean assuming here that the programmer should expect the result of this
+[00:02:57 -> 00:03:02] program at the top of the stack and that makes sense because the only storage is a stack
+[00:03:02 -> 00:03:07] so you know we at the end of a program we expect the result to be at the top of the
+[00:03:07 -> 00:03:14] stack now before we go further let's just compare such a stack machine to a typical
+[00:03:14 -> 00:03:20] register machine a register machine has explicit operands for example if I want to say add I just
+[00:03:20 -> 00:03:25] don't say add I say add what so I say add r1 r2 r3 maybe this means that you're supposed
+[00:03:25 -> 00:03:31] to add r2 and r3 and put the sum in r1 I could use different registers name for example
+[00:03:31 -> 00:03:37] I could say r1 r5 r7 and then that's going to do you know name different registers on
+[00:03:37 -> 00:03:42] the other hand on a stack machine we just have this opcode called add and the operands are implicit
+[00:03:43 -> 00:03:48] because the operands are just the top two words of the stack and so we don't have to explicitly
+[00:03:48 -> 00:03:53] name them now they're both advantages and disadvantages of a stack machine over a
+[00:03:53 -> 00:03:58] register machine one of the big advantages is that the instruction opcodes are much smaller
+[00:03:58 -> 00:04:03] or the instructions themselves take smaller amount of space as you can see we just need
+[00:04:03 -> 00:04:10] to have the opcode and because the operands are implicit we don't really need to know the
+[00:04:10 -> 00:04:15] instruction size itself is going to be typically smaller well you could argue although the
+[00:04:15 -> 00:04:20] instruction size is smaller you may need more number of instructions to perform the same
+[00:04:20 -> 00:04:27] number of operations but overall you know it's for typical type of programs it is usually
+[00:04:27 -> 00:04:33] considered that it is possible to implement them using shorter code size on stack machines than
+[00:04:33 -> 00:04:40] on register machines in fact this was one of the reasons why the java virtual machine bite code
+[00:04:41 -> 00:04:46] so the java virtual machine is also a machine abstraction and that was designed as a stack
+[00:04:46 -> 00:04:51] machine because originally java was supposed to be a language that allows code mobility and so
+[00:04:51 -> 00:04:56] code was supposed to be shipped over the network and network bandwidths were low and so
+[00:04:56 -> 00:05:01] a lot of stress was given on the size of the code and so one of the reasons that they
+[00:05:01 -> 00:05:06] chose a stack machine for the java virtual machine was because of this reason
+[00:05:08 -> 00:05:11] the disadvantage of using a stack machine is sometimes the number of instructions that
+[00:05:11 -> 00:05:16] you require to do the same amount of computation can be more and which means the program can be
+[00:05:16 -> 00:05:21] slower for example but then you know it also depends on what kind of program it is what the
+[00:05:21 -> 00:05:27] application that we are interested in developing and it's not necessary that one is going to be
+[00:05:27 -> 00:05:32] faster or slower or one is going to be bigger or shorter than the other it is the the answer
+[00:05:32 -> 00:05:37] is more nuanced and depends on the application now there's a generalization of a stack machine
+[00:05:37 -> 00:05:42] it's called an n register stack machine conceptually the idea is you let's keep the
+[00:05:42 -> 00:05:48] top n stack locations in registers and you know the thought behind using an n register
+[00:05:48 -> 00:05:53] generalizing the stack machine to an n register stack machine is that there's some values that
+[00:05:53 -> 00:06:00] access very frequently and so we want to avoid memory accesses and and so let's keep some values
+[00:06:00 -> 00:06:06] in registers and and you know maybe we want to keep the top n values in stack locations
+[00:06:06 -> 00:06:12] in registers because that's going to make our you know code generation strategy simpler as
+[00:06:12 -> 00:06:16] we're going to see with some examples and a special case of an n register stack machine
+[00:06:16 -> 00:06:21] is a one register stack machine where there's only one register and a stack and this unique
+[00:06:21 -> 00:06:28] register is also called an accumulator in such a machine okay so what is the advantage of
+[00:06:28 -> 00:06:32] one register stack machine we can look we can understand this using this example
+[00:06:33 -> 00:06:38] so in a pure stack machine if i wanted to do an addition then i would use the add-op code
+[00:06:38 -> 00:06:43] and it's going to do three operations it's going to pop the top word then pop the
+[00:06:43 -> 00:06:50] second top word so it's going to do two pops so it's going to say t1 equals pop
+[00:06:50 -> 00:06:58] and t2 equals t2 is also assigned pop and then it's going to push t1 plus t2 right so you this
+[00:06:58 -> 00:07:03] has three memory accesses two because of the pops and one because of the push on the other
+[00:07:03 -> 00:07:08] hand in a one register stack machine the ad would have different semantics notice that
+[00:07:09 -> 00:07:15] we're assuming that the top one location of the stack is already in the register or
+[00:07:15 -> 00:07:20] which we also call in the accumulator and i'm using the acc abbreviation to represent the
+[00:07:20 -> 00:07:26] accumulator and there are semantics of the add-op code are accumulator is assigned accumulator plus
+[00:07:26 -> 00:07:36] stack top all right so it has a very different semantics first of all it is not it is adding
+[00:07:36 -> 00:07:40] value it is storing the result in the accumulator itself it's not actually storing
+[00:07:40 -> 00:07:43] the result on the top of the stack secondly it's reading one of the operands from the
+[00:07:43 -> 00:07:48] accumulator itself so it doesn't need to make a memory access for that and third it's actually
+[00:07:48 -> 00:07:53] not changing the size of the stack right so it's just that this particular machine
+[00:07:53 -> 00:07:59] has different semantics for its opcode and in this particular case i'm assuming that this is
+[00:07:59 -> 00:08:05] the semantics of the add-op code the accumulator is assigned accumulator plus stack top notice
+[00:08:05 -> 00:08:09] that it has only one memory access and you can see that because of adding one register
+[00:08:09 -> 00:08:14] i've saved two memory accesses for this simple operation and so one can imagine that you know
+[00:08:14 -> 00:08:19] adding registers is going to improve performance typically because memory accesses are more
+[00:08:19 -> 00:08:28] expensive than register accesses typically speaking all right so how would you uh you
+[00:08:28 -> 00:08:35] know operate a one register stack machine so let's say you wanted to compute an expression
+[00:08:36 -> 00:08:42] op applied to an argument even dot dot en you know for example op the operation could be plus
+[00:08:43 -> 00:08:51] and then even dot en could be integer constants now here is one strategy right so this is just
+[00:08:51 -> 00:08:57] one of the potential strategies but it's it's a it's one of the most it's simplest and
+[00:08:57 -> 00:09:03] probably the easiest to understand and also you know the natural strategy for this kind of
+[00:09:03 -> 00:09:10] architecture for each ei even dot en so but for i from one to n for each ei
+[00:09:10 -> 00:09:15] computed in the accumulator so first we compute let's say even and we compute it in the
+[00:09:15 -> 00:09:20] accumulator then we compute e2 computed in the accumulator but then by the time we compute
+[00:09:20 -> 00:09:25] e2 we don't want we want to also preserve the value that was computed for e1 and so
+[00:09:25 -> 00:09:31] before we compute e2 we push the value of e1 right so the other the other part of the
+[00:09:31 -> 00:09:40] strategy is you push even dot dot en minus one to stack as they are computed okay so i computed
+[00:09:40 -> 00:09:44] even in the accumulator but then before i start computing e2 i push even to the stack
+[00:09:45 -> 00:09:49] pushing into the stack basically means i sort of saved that value because i may need it later
+[00:09:49 -> 00:09:54] to actually compute my operation right after i computed all the operands and then even
+[00:09:55 -> 00:10:03] you know e2 is going to do override clobber my accumulator but hopefully it's not going to
+[00:10:03 -> 00:10:07] override the top of the stack if it needs some storage space on the stack maybe it's going to
+[00:10:07 -> 00:10:14] push on the stack but never override the value that i save for even and then i eventually
+[00:10:14 -> 00:10:19] evaluate the operation and store the result in the resistor the accumulator and finally when
+[00:10:19 -> 00:10:26] i am done i want to pop off the top n minus one words from the stack so that the stack remain
+[00:10:26 -> 00:10:32] stack looks exactly as it was before this computation started okay so here's an example
+[00:10:32 -> 00:10:38] let's say i wanted to compute seven plus five then i would say push seven that's going to push
+[00:10:38 -> 00:10:48] the constant seven put five into the accumulator add and that's going to execute this particular
+[00:10:48 -> 00:10:55] operation accumulator will get seven plus five and one thing that's missing is that i may want to
+[00:10:55 -> 00:11:01] pop all right so basically clear the extra space that i had used on the stack for
+[00:11:02 -> 00:11:10] saving seven all right so here's the invariant that i want to follow after evaluating an
+[00:11:10 -> 00:11:15] expression e the accumulator holds the value of e right so that's the invariant that i'm
+[00:11:15 -> 00:11:20] using in my code generation strategy for example when i compute even i assume that after even has
+[00:11:20 -> 00:11:25] been computed the value is the computed value is stored in the accumulator the accumulator
+[00:11:25 -> 00:11:30] holds the value of e and the other invariant that i'm following is that the stack is unchanged
+[00:11:30 -> 00:11:35] so the stack is unchanged so if i start computing e whatever was the value before
+[00:11:35 -> 00:11:42] the starting of computation of e is also the same contents of the stack at the end of
+[00:11:42 -> 00:11:46] computation of e and that's something that i'm going to maintain as my invariant during this
+[00:11:46 -> 00:11:52] code generation strategy so in other words expression evaluation will preserve the stack
+[00:11:52 -> 00:12:00] in our strategy so for example if i wanted to compute three plus seven plus five then i
+[00:12:00 -> 00:12:06] would first compute three and put put it in the accumulator then i would save this value
+[00:12:06 -> 00:12:11] from the accumulator to the stack and then i would go on and try to compute seven plus five
+[00:12:11 -> 00:12:16] now notice that seven plus five is going to also maybe push and pop from the stack and it's
+[00:12:16 -> 00:12:20] going to clobber the accumulator but because i have the invariant that's the evaluation of
+[00:12:20 -> 00:12:26] seven plus five will not change the stack as it existed before the start of this evaluation
+[00:12:26 -> 00:12:31] the value three would still remain intact in the stack so here are the steps that would
+[00:12:31 -> 00:12:36] be involved in kind of generating the code or this is what the generated code would look
+[00:12:36 -> 00:12:42] like it would first evaluate three in the accumulator save this value three to the stack
+[00:12:42 -> 00:12:48] evaluate seven in the accumulator save the value seven to the stack by pushing nine not
+[00:12:48 -> 00:12:57] overwriting evaluate five and then now we are kind of ending our you know now we are ready
+[00:12:57 -> 00:13:02] to do the first addition which is the seven plus five so i'm going to say add that's going
+[00:13:02 -> 00:13:07] to put 12 in the accumulator and then i'm going to pop stack that's going to remove seven from the
+[00:13:07 -> 00:13:13] stack and then finally i'm going to compute three plus whatever was the result of seven
+[00:13:13 -> 00:13:17] plus five so i'm going to say the result of seven plus five is already in the accumulator
+[00:13:17 -> 00:13:21] three is on the stack so i'm going to execute add and that's going to put three plus
+[00:13:22 -> 00:13:26] twelve seven plus five into the accumulator and then i want to pop the stack to basically
+[00:13:26 -> 00:13:33] get rid of the save three value which i no longer need okay notice that steps three to six are
+[00:13:33 -> 00:13:39] basically computing seven plus five and steps one two and seven are basically computing the
+[00:13:39 -> 00:13:46] top level expression top level operation of addition so this just represents a code
+[00:13:46 -> 00:13:52] generation strategy and there could be different code generation strategies here in this strategy
+[00:13:52 -> 00:13:57] the evaluation is being done left to right and that's just a matter of choice for example
+[00:13:57 -> 00:14:02] we decided that we were going to first compute three then look at the next expression which is
+[00:14:02 -> 00:14:07] seven plus five we could have done the other way around we could have first computed seven
+[00:14:07 -> 00:14:10] plus five and then computed three the reason we could have done the other way around is
+[00:14:10 -> 00:14:15] because addition is a commutative operator some operators are commutative others are not
+[00:14:15 -> 00:14:20] depending on what the operator is we could choose what strategy we want
+[00:14:20 -> 00:14:28] if the operator is not commutative then the order is specified by the operator
+[00:14:28 -> 00:14:32] if the operator is commutative then you know the order is specified by the code generation
+[00:14:32 -> 00:14:39] strategy in this case our strategy decides to do the evaluation left to right okay what
+[00:14:39 -> 00:14:45] about optimization is this an optimized code or is it just some code right so actually
+[00:14:45 -> 00:14:50] this machine is rather narrow in its interface it only has stack as a storage and there's a
+[00:14:50 -> 00:14:57] very limited instruction set that we can do and maybe there are opportunities to optimize here
+[00:14:57 -> 00:15:02] but the way we generated this code we really didn't worry too much about optimization
+[00:15:02 -> 00:15:07] perhaps the only things that we cared about while you know in terms of optimization was
+[00:15:08 -> 00:15:13] where to store the result so we basically the choice of storing the result in the accumulator
+[00:15:13 -> 00:15:18] was sort of based on this assumption that accessing reading and writing the
+[00:15:18 -> 00:15:22] cumulative is going to be cheaper than reading and writing to memory and so it makes more sense
+[00:15:22 -> 00:15:27] to keep the most recent values in the accumulator because they are also going to be the most
+[00:15:27 -> 00:15:31] likely used for values that are going to be used in future in the near future
+[00:15:32 -> 00:15:37] other than that we haven't really done much optimization here also i the scope for
+[00:15:37 -> 00:15:42] optimization is not that much the whole premise of optimization is that
+[00:15:43 -> 00:15:46] there should be a lot of redundancy there should be many different ways of doing the same thing
+[00:15:47 -> 00:15:52] and only then it makes sense to choose the best way of doing that thing right so if there are
+[00:15:52 -> 00:15:56] for example in a real machine there will be lots of ways to compute the same function
+[00:15:56 -> 00:16:01] and so optimization is basically about finding the you know a better way to do the same
+[00:16:01 -> 00:16:06] function in this particular machine though that space of potential solutions is not that large
+[00:16:06 -> 00:16:13] and so that is also a reason why optimization is is is not such a big issue and we haven't
+[00:16:13 -> 00:16:19] even discussed optimization in this context yet here's what the generated code would look like
+[00:16:19 -> 00:16:24] it's just the pseudo code for the steps that i had in english earlier accumulator gets three
+[00:16:24 -> 00:16:30] push accumulator accumulator gets seven push accumulator accumulator gets five add plus
+[00:16:30 -> 00:16:35] pop which is add execute add and then execute pop and then again execute add and execute pop
+[00:16:35 -> 00:16:40] i'm just putting add plus pop in a single row actually there are different instructions
+[00:16:40 -> 00:16:46] but but just putting it in a single row for easy readability here's what the code generation
+[00:16:46 -> 00:16:50] strategy for something like this would look like this is i'm assuming that my
+[00:16:50 -> 00:16:54] input programming language the higher level language is the language of expressions that
+[00:16:54 -> 00:17:01] is just computing express some operations on some constant integers example examples like
+[00:17:01 -> 00:17:06] we saw three plus five or three plus seven plus five and things like that and so the code
+[00:17:06 -> 00:17:10] generation strategy that i just described informally would look something like the
+[00:17:10 -> 00:17:16] following there would be a function called cgen that's going to look take as input an
+[00:17:16 -> 00:17:22] expression and output the set of instructions that are going to implement or compute that
+[00:17:22 -> 00:17:27] expression for example if the expression is just a single constant const for example three
+[00:17:27 -> 00:17:33] then code gen for three is just going to have the instruction which just assigns
+[00:17:34 -> 00:17:39] that constant to the accumulator all right because in a code generation strategy the only
+[00:17:39 -> 00:17:42] that the invariance that we're following is that the result is in the accumulator
+[00:17:42 -> 00:17:48] and we are not clobbering the stack in any way and this this this this particular rule
+[00:17:48 -> 00:17:53] of code generation is following toward those invariants now let's look at another rule just
+[00:17:53 -> 00:17:58] using examples we're going to see this in more detail code gen for a plus b where a is an
+[00:17:58 -> 00:18:06] expression and b is an expression involves first code genning a then after code gen for a is
+[00:18:06 -> 00:18:12] complete then i would i can assume that the result of a is an accumulator then i do push
+[00:18:12 -> 00:18:17] accumulator so push it on the stack save it on the stack now i can do code gen b and i
+[00:18:17 -> 00:18:23] can be sure that code gen b is not going to clobber my pushed value it can clobber the
+[00:18:23 -> 00:18:28] accumulator but will not clobber the push value because of my invariant and then i after i've done
+[00:18:28 -> 00:18:33] code gen of b i'm going to execute the add instruction because at this point i know that
+[00:18:33 -> 00:18:38] the accumulator contains the value computed for b and the top of the stack contains the
+[00:18:38 -> 00:18:46] value computed for a and so i can execute add to get the addition result in the accumulator
+[00:18:46 -> 00:18:49] and finally i want to clean up the stack by using the pop instruction

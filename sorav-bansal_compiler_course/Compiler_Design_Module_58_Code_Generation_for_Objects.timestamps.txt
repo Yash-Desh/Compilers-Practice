@@ -1,0 +1,261 @@
+Title: Compiler Design Module 58 : Code Generation for Objects
+Video ID: -plAY9K9UhA
+Detected language: en
+------------------------------------------------------------
+
+[00:00:00 -> 00:00:05] So now that we have discussed code generation for a language, let's also discuss how code
+[00:00:05 -> 00:00:08] generation is done for object-oriented languages.
+[00:00:08 -> 00:00:13] In particular, we are interested in figuring out how code generation is done for objects
+[00:00:13 -> 00:00:16] in the presence of inheritance.
+[00:00:16 -> 00:00:21] So just to review what is inheritance, let's say I declare a type, a class A, then
+[00:00:21 -> 00:00:26] maybe it has some fields, maybe it has some functions, maybe it also has some
+[00:00:26 -> 00:00:27] virtual functions.
+[00:00:27 -> 00:00:35] And then we declare a derived class B, which derives from A, and it has its own fields
+[00:00:35 -> 00:00:41] and functions, and it can have its own virtual functions, and it can have virtual function
+[00:00:41 -> 00:00:48] implementations of the functions defined in A, which have been overridden by the definition
+[00:00:48 -> 00:00:50] of B.
+[00:00:50 -> 00:00:58] So the first principle or slogan of an object-oriented language is that an object of class B, an
+[00:00:58 -> 00:01:03] object of a derived class, can be used wherever an object of class A is expected.
+[00:01:03 -> 00:01:09] So an object of class B is also an object of class A, and so anything that can be
+[00:01:09 -> 00:01:14] done on object of class A can be done on an object of class B.
+[00:01:14 -> 00:01:17] From a code generation point of view, this means that any code that has been
+[00:01:17 -> 00:01:23] generated for an object of class A should work unmodified for an object of class B.
+[00:01:23 -> 00:01:28] And this is actually a little bit difficult to achieve, as we're going to see in this
+[00:01:28 -> 00:01:31] module and the next few modules.
+[00:01:31 -> 00:01:35] So the implication is that code that's meant for class A should work unmodified
+[00:01:35 -> 00:01:37] for an object of class B.
+[00:01:37 -> 00:01:46] All right, further, if vfun, a virtual function, is a virtual function in A that
+[00:01:46 -> 00:01:53] is overridden in B, then the call to vfun should choose the callee at runtime.
+[00:01:53 -> 00:01:57] So if vfun is a virtual function that was first defined in A but was overridden in
+[00:01:57 -> 00:02:05] B, then if I call a.vfun, something like this, on an object of class A, then vfun
+[00:02:05 -> 00:02:08] should actually be the function.
+[00:02:08 -> 00:02:14] And if small a was an object of class B that is, you know, being used in a context
+[00:02:14 -> 00:02:20] where it is being treated as an object of class A, yet the vfun should be B's
+[00:02:20 -> 00:02:24] implementation because vfun is a virtual function.
+[00:02:24 -> 00:02:27] This is just by the definition of virtual functions.
+[00:02:27 -> 00:02:35] Virtual functions can be overridden and their value should be chosen at runtime,
+[00:02:35 -> 00:02:37] depending on what is the actual object.
+[00:02:37 -> 00:02:43] So if B has overridden the definition of vfun and small a is an object of type
+[00:02:43 -> 00:02:51] B, then a.vfun should call B's implementation and not A's implementation of vfun.
+[00:02:51 -> 00:02:53] All right, so here's an example code.
+[00:02:53 -> 00:02:58] Let's say I declare an object of type B and then I call foo on it and then I call
+[00:02:58 -> 00:03:03] vfun, so this vfun should actually be B's vfun and not A's vfun.
+[00:03:03 -> 00:03:08] All right, so there are two questions that primarily arise when we are talking
+[00:03:08 -> 00:03:10] about code generation for object-oriented languages.
+[00:03:10 -> 00:03:13] First of all, code generation for object-oriented languages is not very different
+[00:03:13 -> 00:03:16] from code generation for general languages.
+[00:03:16 -> 00:03:20] So everything that we have discussed so far still holds with some additional
+[00:03:20 -> 00:03:26] things that you have to do to handle objects, especially with respect to inheritance.
+[00:03:26 -> 00:03:29] So one thing is how are objects represented in memory?
+[00:03:29 -> 00:03:32] All right, so that, you know, the object should be represented in memory
+[00:03:32 -> 00:03:35] such that the inheritance principle is followed.
+[00:03:35 -> 00:03:37] Okay, and we're going to see how that's done.
+[00:03:37 -> 00:03:40] And second, how is dynamic dispatch implemented?
+[00:03:40 -> 00:03:44] So if I call a.vfun, then automatically the compiler should know whether it
+[00:03:44 -> 00:03:48] should call, at runtime it should resolve the value of vfun and depending on
+[00:03:48 -> 00:03:53] which object it is, it should either call A's vfun or B's vfun.
+[00:03:53 -> 00:03:57] All right, so let's first talk about the memory layout in the presence
+[00:03:57 -> 00:03:58] of inheritance.
+[00:03:58 -> 00:04:02] So let's say I have a class A and it has some, it has a field int x.
+[00:04:02 -> 00:04:05] There could be multiple fields, but I'm just using a single field
+[00:04:05 -> 00:04:07] to demonstrate the point.
+[00:04:07 -> 00:04:12] It has a virtual function va, virtual void va, and it has a non-virtual function fa.
+[00:04:14 -> 00:04:17] There's another class B that derives from class A.
+[00:04:17 -> 00:04:24] It has its own fields y, it overrides va, it has its own static non-virtual
+[00:04:24 -> 00:04:29] function vb, fb, maybe not, let's not use the word static, but a non-virtual
+[00:04:29 -> 00:04:33] function fb, and then a virtual function vb for class B.
+[00:04:34 -> 00:04:38] All right, so now the question is how am I going to represent these objects,
+[00:04:38 -> 00:04:45] A and B, such that the code meant for A can also work on objects of type B.
+[00:04:46 -> 00:04:50] So the idea is the following, that I'm going to have an object that's going
+[00:04:50 -> 00:04:55] to have, let's say this is an object of type B, and that's why I use small
+[00:04:55 -> 00:05:00] B here to represent an object of type B, and it's pointing to this region
+[00:05:00 -> 00:05:05] of memory, and the region of memory is laid out as follows, because it derives
+[00:05:05 -> 00:05:08] from class A, it needs to have all the fields of class A, in this case there's
+[00:05:08 -> 00:05:13] only one field of class A which is x, so the first we lay out all the fields
+[00:05:13 -> 00:05:18] of class A, x in this case, and then we lay out all the fields of class B,
+[00:05:18 -> 00:05:19] which in this case is y.
+[00:05:21 -> 00:05:27] All right, the idea here is that A's object representation would look
+[00:05:27 -> 00:05:28] something like this.
+[00:05:28 -> 00:05:32] So if I was to just have an object of class A, then it would look something
+[00:05:32 -> 00:05:35] like this, all right, it would also have a V table, so we're going to
+[00:05:35 -> 00:05:38] discuss what a V table is very soon, but let's just bear with me for a
+[00:05:38 -> 00:05:43] minute, and then this would be what an object of class A would look like,
+[00:05:43 -> 00:05:48] all right, it won't have the y field, but it would have the x field,
+[00:05:48 -> 00:05:52] because it's just an object of class A, it's not an object of class B,
+[00:05:52 -> 00:05:57] and notice that the same code that was going to operate on an object of
+[00:05:57 -> 00:06:02] class A can now operate on an object of class B as well, because the first
+[00:06:02 -> 00:06:07] two fields are identical in both, all right, and how is the code that's
+[00:06:07 -> 00:06:10] generated for an object of class A going to work?
+[00:06:10 -> 00:06:13] It's just going to assign an offset for every variable, so for example,
+[00:06:13 -> 00:06:18] in this case it can say that x lives at offset four from the object,
+[00:06:18 -> 00:06:22] so in both cases, x is going to live at offset four from the object,
+[00:06:22 -> 00:06:30] and now any code that sets or gets x can use the offset four,
+[00:06:30 -> 00:06:36] and that offset four will work on both object layouts of B and A, all right,
+[00:06:36 -> 00:06:41] so that's the trick that we're going to play to basically implement inheritance.
+[00:06:41 -> 00:06:45] Okay, I should also point out that this is just one possible strategy to
+[00:06:45 -> 00:06:49] implement inheritance from a code generation perspective.
+[00:06:50 -> 00:06:55] There can be any number of strategies, and some are more inefficient than others.
+[00:06:55 -> 00:06:59] This is one of the most efficient strategies to generate code to
+[00:06:59 -> 00:07:03] implement inheritance, and this is also one of the most commonly used
+[00:07:03 -> 00:07:07] strategies to generate code for inheritance, all right.
+[00:07:07 -> 00:07:09] Now, what is Vtable?
+[00:07:09 -> 00:07:13] Vtable is used to implement dynamic dispatch of virtual functions,
+[00:07:13 -> 00:07:18] so what Vtable points to is basically a table that contains the names
+[00:07:18 -> 00:07:24] of the pointers to the functions, and indexed by their names,
+[00:07:24 -> 00:07:28] so let's say the compiler decides that the first virtual function VA
+[00:07:28 -> 00:07:33] is going to live at offset zero of the virtual function Vtable,
+[00:07:33 -> 00:07:36] virtual function table Vtable, and so that's where VA is going to live,
+[00:07:36 -> 00:07:38] and VA is nothing but a pointer, so for example,
+[00:07:38 -> 00:07:42] I could also say this is because it's an object of type B,
+[00:07:42 -> 00:07:45] and because VA has been overridden by class B,
+[00:07:45 -> 00:07:50] so this is probably B, B is VA, all right, so this is B is VA,
+[00:07:51 -> 00:07:53] all right, maybe I should just, I'm just saying B.VA here.
+[00:07:54 -> 00:07:57] Similarly, VB is also B is VB, all right,
+[00:07:59 -> 00:08:05] but if let's say there was no, let's say if there was no VA override,
+[00:08:05 -> 00:08:09] so if there was no override here, if VA was not overridden by class B,
+[00:08:10 -> 00:08:16] then this would not have been B is VA, but this would have been A is VA, all right,
+[00:08:19 -> 00:08:25] okay, so that's the idea, basically you have one layer of indirection
+[00:08:25 -> 00:08:30] that is resolved by the compiler code, generated code at runtime,
+[00:08:30 -> 00:08:35] so if I want to call VA, I want to dispatch a call to VA,
+[00:08:35 -> 00:08:37] what is the code, generated code supposed to do?
+[00:08:37 -> 00:08:43] It's supposed to index through the Vtable at offset zero,
+[00:08:44 -> 00:08:47] pick up the pointer from there, and then call that pointer, all right,
+[00:08:47 -> 00:08:52] so using let's say branching link instruction or something like that,
+[00:08:52 -> 00:08:55] the important point is that the pointer is picked at runtime,
+[00:08:55 -> 00:08:59] and so that's why it's called a dynamic dispatch, it's a runtime dispatch,
+[00:08:59 -> 00:09:01] what function gets called is decided runtime,
+[00:09:01 -> 00:09:05] and that's achieved by this extra layer of indirection through the Vtable,
+[00:09:06 -> 00:09:12] all right, now let's, there is some more detail here,
+[00:09:12 -> 00:09:16] in the Vtable, so I'm using, I know I'm using a real example,
+[00:09:16 -> 00:09:22] this is probably what GCC does for compiling C++ programs,
+[00:09:22 -> 00:09:25] and what it does is it also stores not just the virtual functions in the Vtable,
+[00:09:25 -> 00:09:29] but also the type ID of the class that,
+[00:09:30 -> 00:09:35] so you know, maybe this object is appearing in the context of A,
+[00:09:36 -> 00:09:41] but maybe I want to know whether it is actually an object of type A or not,
+[00:09:41 -> 00:09:43] at some point, all right, before I discuss that,
+[00:09:43 -> 00:09:49] I also want to discuss that the layout of these virtual function pointers is also important,
+[00:09:49 -> 00:09:52] for example, I would first lay out all the objects,
+[00:09:52 -> 00:09:55] all the virtual functions of class A,
+[00:09:55 -> 00:09:58] before listing all the virtual functions of class B,
+[00:09:58 -> 00:10:01] and that's also following from the same inheritance principle,
+[00:10:01 -> 00:10:05] because if I look at any object of class A,
+[00:10:05 -> 00:10:08] it would just have VA and it would not have VB, all right,
+[00:10:09 -> 00:10:13] but the code is just going to say let's look at offset zero from Vtable,
+[00:10:13 -> 00:10:17] and that should work for both objects of class A and objects of class B,
+[00:10:17 -> 00:10:21] and this trick that we first lay out the objects of the base class,
+[00:10:21 -> 00:10:23] and the fields of the base class,
+[00:10:23 -> 00:10:25] or the virtual functions of the base class,
+[00:10:25 -> 00:10:29] and then lay out the virtual functions of the derived class works,
+[00:10:29 -> 00:10:31] so the same trick that we were using for the fields
+[00:10:32 -> 00:10:33] in the actual object representation,
+[00:10:33 -> 00:10:38] the same trick we can use in the virtual table function table Vtable also,
+[00:10:38 -> 00:10:41] and so the virtual functions are also listed in the same order,
+[00:10:41 -> 00:10:44] first for the base class and then for the derived class.
+[00:10:45 -> 00:10:47] Now apart from the listing the virtual functions,
+[00:10:47 -> 00:10:50] we also have some extra information that may be required.
+[00:10:50 -> 00:10:53] One of the things is what is the actual object type ID,
+[00:10:53 -> 00:10:56] and maybe the program may ask for this,
+[00:10:56 -> 00:10:59] and then there is another field which says what is the offset
+[00:11:00 -> 00:11:03] to the top of the object, all right,
+[00:11:03 -> 00:11:05] and in this case I'm just using zero value here,
+[00:11:05 -> 00:11:07] so zero is the actual value,
+[00:11:07 -> 00:11:09] and top of is just the description of this value.
+[00:11:10 -> 00:11:13] We can ignore this for the time being,
+[00:11:13 -> 00:11:15] but this basically stands for,
+[00:11:16 -> 00:11:18] from this pointer where Vtable is pointing,
+[00:11:18 -> 00:11:22] how far up is the top of the object, right,
+[00:11:22 -> 00:11:25] in this case the top of the object is exactly where the Vtable is,
+[00:11:25 -> 00:11:27] and so the answer is zero, right.
+[00:11:27 -> 00:11:28] Why is this required?
+[00:11:28 -> 00:11:29] We don't really require it right now,
+[00:11:29 -> 00:11:33] but we will be requiring it when we talk about multiple inheritance later on.
+[00:11:34 -> 00:11:36] Why do I require the type ID B?
+[00:11:37 -> 00:11:38] Why do I care?
+[00:11:38 -> 00:11:41] Well, the answer is really simple and we know it.
+[00:11:41 -> 00:11:46] The answer is because the programmer may want to know by using the dynamic cast.
+[00:11:46 -> 00:11:49] If the programmer uses the dynamic cast operator,
+[00:11:49 -> 00:11:51] recall that we discussed the dynamic cast operator
+[00:11:51 -> 00:11:53] when we were talking about type systems,
+[00:11:54 -> 00:11:59] and then we said that C++ gives you this operator called dynamic cast,
+[00:11:59 -> 00:12:06] so if the programmer says that I want to cast an object of type A to an object of type B,
+[00:12:06 -> 00:12:10] recall that it can either return null pointer or return an actual pointer
+[00:12:10 -> 00:12:13] depending on whether it was actually an object of type B or not,
+[00:12:13 -> 00:12:18] but how will the code figure out whether it is an object of type B or not?
+[00:12:18 -> 00:12:21] Well, the answer is using this type ID,
+[00:12:21 -> 00:12:23] so it's going to dereference to the Vtable
+[00:12:24 -> 00:12:30] and look at the minus four offset of this Vtable and say what is the type ID,
+[00:12:30 -> 00:12:34] and if that type ID matches with the argument of dynamic cast,
+[00:12:34 -> 00:12:39] which is let's say B, then it's going to return a valid pointer,
+[00:12:39 -> 00:12:41] in this case it's just going to return the same pointer back
+[00:12:41 -> 00:12:44] and otherwise it's going to return a null,
+[00:12:44 -> 00:12:47] so the code that's generated to implement dynamic cast involves
+[00:12:47 -> 00:12:51] checking the type ID through an offset of the Vtable.
+[00:12:53 -> 00:12:56] All right, okay, so let's take another example.
+[00:12:56 -> 00:13:00] Let's say I have three levels of inheritance,
+[00:13:00 -> 00:13:05] so class B inherits from class A, sorry, this is a typo,
+[00:13:05 -> 00:13:12] so class B inherits from class A and class C inherits from class B, all right,
+[00:13:12 -> 00:13:16] so now we already know what an object of type B looks like,
+[00:13:16 -> 00:13:19] B basically has fields of A, then fields of B,
+[00:13:19 -> 00:13:22] then it has virtual functions of A and virtual functions of B
+[00:13:22 -> 00:13:24] and it also has a type ID of the object,
+[00:13:24 -> 00:13:28] in this case that's B and then it has a top offset which in this case is zero.
+[00:13:29 -> 00:13:33] If I was to draw the same figure for an object of type C,
+[00:13:33 -> 00:13:34] what will it look like?
+[00:13:34 -> 00:13:37] Well, it would be very similar once again,
+[00:13:37 -> 00:13:40] this is class B inherits from class A,
+[00:13:40 -> 00:13:45] so C is going to have the fields of A followed by fields of B
+[00:13:46 -> 00:13:48] and followed by fields of C, all right,
+[00:13:48 -> 00:13:51] and it's the same order and once again the idea is
+[00:13:51 -> 00:13:54] so that the same object can be used in the context of B
+[00:13:54 -> 00:13:57] and in the context of A without any changes
+[00:13:57 -> 00:14:01] and once again the virtual functions are also laid out in the same order,
+[00:14:01 -> 00:14:05] notice that because C does not have a virtual function of its own,
+[00:14:05 -> 00:14:08] we just basically have VA and VB in the virtual function table.
+[00:14:09 -> 00:14:13] All right, in general more generally if I have a class hierarchy,
+[00:14:13 -> 00:14:15] let's say AN, AN minus one and so on,
+[00:14:15 -> 00:14:17] where A1 is the base class,
+[00:14:17 -> 00:14:20] A2 is the derived class of A1 and so on,
+[00:14:20 -> 00:14:22] this is also the subtyping relation,
+[00:14:22 -> 00:14:27] then I can basically have a representation,
+[00:14:27 -> 00:14:29] a memory layout of the object
+[00:14:29 -> 00:14:35] such that AN points to a V table followed by the fields of AN
+[00:14:35 -> 00:14:38] such that the first few fields are the A1's fields,
+[00:14:38 -> 00:14:41] then they are followed by A2's fields,
+[00:14:41 -> 00:14:43] then A3's fields and so on
+[00:14:43 -> 00:14:46] and so the first few bytes,
+[00:14:46 -> 00:14:50] the first region here represents an A1 object
+[00:14:52 -> 00:14:56] then including that region and some more is A2,
+[00:14:56 -> 00:14:59] then including that region and some more is A3 and so on
+[00:14:59 -> 00:15:02] until the whole object is covered which is the entire object
+[00:15:02 -> 00:15:05] and this code generation strategy will ensure
+[00:15:05 -> 00:15:07] that the same memory layout of the object
+[00:15:07 -> 00:15:12] can be used in either context of A1, A2, A3 and so on.
+[00:15:13 -> 00:15:17] All right, similarly if I look at the layout of the V table,
+[00:15:17 -> 00:15:19] it's similar, so there's only a single V table
+[00:15:19 -> 00:15:25] for the entire hierarchy,
+[00:15:25 -> 00:15:27] for all the classes in the entire hierarchy
+[00:15:27 -> 00:15:29] and that V table will have the following format,
+[00:15:30 -> 00:15:33] it would have the virtual functions of A1
+[00:15:33 -> 00:15:36] followed by the virtual functions of A2 and so on,
+[00:15:36 -> 00:15:38] right, till the virtual functions of AN.
+[00:15:38 -> 00:15:41] Notice that it's possible that A2 overrides
+[00:15:41 -> 00:15:42] some virtual functions of A1
+[00:15:42 -> 00:15:45] in which case it would just mean that the pointer here,
+[00:15:45 -> 00:15:48] the pointer here has been changed, all right,
+[00:15:48 -> 00:15:49] and that's fine
+[00:15:49 -> 00:15:52] but the layout doesn't change and so the code can still,
+[00:15:52 -> 00:15:55] the same code should still work for both A1 and A2 and AN
+[00:15:55 -> 00:15:57] and so on, the code that was meant for A1.
+[00:15:59 -> 00:16:01] Also, there is the notion of a type ID
+[00:16:01 -> 00:16:05] that is the field that's just above the V table pointer,
+[00:16:05 -> 00:16:07] that's a minus four of V table pointer
+[00:16:07 -> 00:16:10] and that basically says whether it's actually A1, A2, A3, AN
+[00:16:10 -> 00:16:13] and that's useful for the dynamic cast operator
+[00:16:13 -> 00:16:16] and finally, there is this field called top offset
+[00:16:16 -> 00:16:19] which says, if this is my original pointer AN,
+[00:16:19 -> 00:16:21] then what is the top of the object?
+[00:16:21 -> 00:16:23] The top of the object actually in this case
+[00:16:23 -> 00:16:24] happens to be the same pointer
+[00:16:24 -> 00:16:28] and so the answer so far, this is always going to be zero
+[00:16:28 -> 00:16:29] but we're going to see some examples
+[00:16:29 -> 00:16:31] where this can be non-zero as well.
