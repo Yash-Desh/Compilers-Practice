@@ -19,6 +19,10 @@ __pycache__/
 *.mp4
 *.part
 
+# Compiled output from the practice programs — rebuild with clang/gcc
+a.out
+*.o
+
 # Logs
 *.log
 
