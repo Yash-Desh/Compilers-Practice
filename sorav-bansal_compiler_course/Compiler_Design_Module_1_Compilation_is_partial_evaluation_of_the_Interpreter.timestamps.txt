@@ -1,0 +1,221 @@
+Title: Compiler Design Module 1 : Compilation is partial evaluation of the Interpreter
+Video ID: x8klFfatAZg
+Detected language: en
+------------------------------------------------------------
+
+[00:00:00 -> 00:00:05] Hi. This is compiler design lecture one.
+[00:00:05 -> 00:00:08] Before we start, let's understand what is a compiler.
+[00:00:08 -> 00:00:10] But before we understand what is a compiler,
+[00:00:10 -> 00:00:12] let's understand what is an interpreter.
+[00:00:12 -> 00:00:15] Well, consider a machine.
+[00:00:15 -> 00:00:21] I draw this machine with these squiggly lines.
+[00:00:21 -> 00:00:24] What is a machine? Well, a Turing machine.
+[00:00:24 -> 00:00:26] If you know what is a Turing machine,
+[00:00:27 -> 00:00:33] a hardware machine like the Intel x86 machine is a machine.
+[00:00:33 -> 00:00:37] A mobile phone that can compute something is a machine.
+[00:00:37 -> 00:00:39] Essentially, any computer is a machine.
+[00:00:39 -> 00:00:43] In fact, even a Java virtual machine is a machine.
+[00:00:43 -> 00:00:46] What is a computing machine?
+[00:00:46 -> 00:00:50] On a computing machine, you can run a program which has some instructions,
+[00:00:50 -> 00:00:53] and I'm going to call these instructions the low-level instructions.
+[00:00:53 -> 00:00:57] A program with low-level instructions can execute on such a machine.
+[00:00:57 -> 00:00:59] However, there is a problem.
+[00:00:59 -> 00:01:04] This program with low-level instructions is too hard for humans to understand
+[00:01:04 -> 00:01:07] and program because these instructions are low-level.
+[00:01:08 -> 00:01:12] Typically, what could be done or what was done in
+[00:01:12 -> 00:01:17] the early days of computing was that people invented high-level instructions.
+[00:01:17 -> 00:01:19] The machine remains the same, whatever it is.
+[00:01:19 -> 00:01:23] Maybe it's a Java virtual machine or maybe it's an Intel x86 machine.
+[00:01:23 -> 00:01:28] But then they would invent a new language or
+[00:01:28 -> 00:01:33] a new machine which executes on top of this low-level machine.
+[00:01:34 -> 00:01:39] The instructions of this high-level machine would be higher level than the low-level
+[00:01:39 -> 00:01:45] machines and so the program would require high-level instructions.
+[00:01:45 -> 00:01:50] Now, because this high-level instructions cannot actually execute directly on the
+[00:01:50 -> 00:01:54] low-level machine because the low-level machine implements low-level instructions,
+[00:01:54 -> 00:01:58] we need something in the middle and that something in the middle could be the interpreter.
+[00:01:58 -> 00:02:02] The interpreter itself should be able to execute on the low-level machine, right?
+[00:02:02 -> 00:02:06] So the interpreter itself needs to be implemented using the low-level instructions.
+[00:02:06 -> 00:02:09] But the interpreter should be able to interpret these high-level instructions of
+[00:02:09 -> 00:02:13] the high-level program, of the high-level programming language, okay?
+[00:02:13 -> 00:02:17] So typically how an interpreter works is it fetches the next instruction from
+[00:02:17 -> 00:02:22] the high-level program, interprets it, executes it,
+[00:02:22 -> 00:02:26] and then moves to the next high-level instruction and so on, okay?
+[00:02:27 -> 00:02:32] So while an interpreter is executing, it takes kind of two inputs.
+[00:02:32 -> 00:02:34] One is the program with the high-level instructions that we already saw in
+[00:02:34 -> 00:02:39] the picture, but it also needs some input data to basically execute.
+[00:02:39 -> 00:02:41] And then as it executes, it generates some output.
+[00:02:41 -> 00:02:43] Maybe it prints something to the screen,
+[00:02:43 -> 00:02:47] maybe it sends some commands to the printer or whatever.
+[00:02:47 -> 00:02:52] Okay, so we understand the pictorial representation of interpreter, but
+[00:02:52 -> 00:02:57] let's try to understand what is an interpreter in a functional form.
+[00:02:57 -> 00:03:01] So you can think of interpret, the function of an interpreter,
+[00:03:01 -> 00:03:08] to be a function that takes two arguments, program and data.
+[00:03:08 -> 00:03:11] The program here is the program in high-level instructions, and
+[00:03:11 -> 00:03:14] the data is whatever the data the user gives.
+[00:03:14 -> 00:03:17] And it generates an output, okay?
+[00:03:17 -> 00:03:22] And recall that an output could be either some print statements on the console, or
+[00:03:22 -> 00:03:27] it could be output to the printer or whatever else, okay?
+[00:03:28 -> 00:03:33] So importantly, the interpreter itself needs to be implemented using
+[00:03:33 -> 00:03:35] low-level instructions so it can execute on the machine.
+[00:03:35 -> 00:03:40] Whereas the program that executes would be written in the high-level,
+[00:03:40 -> 00:03:45] using high-level instructions, that's the whole need of the interpreter, okay?
+[00:03:46 -> 00:03:48] So to basically represent this more precisely,
+[00:03:48 -> 00:03:51] I'm using these annotations in red.
+[00:03:51 -> 00:03:54] LL stands for low-level and HL stands for high-level.
+[00:03:54 -> 00:03:58] And so the interpreter itself is written in low-level instructions,
+[00:03:58 -> 00:04:01] while the program is written using high-level instructions.
+[00:04:03 -> 00:04:06] Now, it is possible to write the interpret function here
+[00:04:09 -> 00:04:10] slightly differently.
+[00:04:10 -> 00:04:14] Instead of saying that it takes two arguments, program and data,
+[00:04:14 -> 00:04:16] how about we stage these arguments?
+[00:04:16 -> 00:04:22] First it takes program and returns a function that takes data and
+[00:04:22 -> 00:04:23] returns output, right?
+[00:04:23 -> 00:04:27] So this is also called currying the inputs of the function.
+[00:04:27 -> 00:04:31] So instead of taking both arguments at once, we kind of stage this and
+[00:04:31 -> 00:04:33] say, let's take the program first.
+[00:04:33 -> 00:04:37] And what the interpreter is going to do is it's going to return another
+[00:04:37 -> 00:04:42] function that would be able to take data and generate output, all right?
+[00:04:43 -> 00:04:47] Now, it makes sense to curry the arguments of interpret this way,
+[00:04:47 -> 00:04:52] because typically the same program is executed on
+[00:04:52 -> 00:04:58] several different types of data or values of data, okay?
+[00:04:58 -> 00:05:02] So I want to again emphasize that we would like to probably
+[00:05:03 -> 00:05:07] represent our interpret function in this manner, where it first takes program and
+[00:05:07 -> 00:05:11] then returns a function that takes data and returns output, right?
+[00:05:13 -> 00:05:17] Okay, now that we understand this representation of the interpret function,
+[00:05:17 -> 00:05:20] let's understand what is a compiler.
+[00:05:20 -> 00:05:23] Many of you must have used a compiler, and typically we understand a compiler
+[00:05:23 -> 00:05:29] as something that takes a high level program and returns an executable.
+[00:05:29 -> 00:05:33] The executable itself should be able to execute or
+[00:05:33 -> 00:05:34] run on the machine itself.
+[00:05:34 -> 00:05:38] So the executable itself needs to be written,
+[00:05:38 -> 00:05:43] needs to be a program that uses low level instructions, right?
+[00:05:43 -> 00:05:44] What is the executable?
+[00:05:44 -> 00:05:46] Well, the executable, when run on the machine,
+[00:05:46 -> 00:05:50] would take data and return output, just like before.
+[00:05:50 -> 00:05:56] Now, notice here that these functions,
+[00:05:56 -> 00:06:00] data to output, are kind of identical in both these functions, right?
+[00:06:00 -> 00:06:05] And so, in a way, when we apply the interpreter
+[00:06:05 -> 00:06:11] on the high level program to get a function that takes data and
+[00:06:11 -> 00:06:15] returns output, we are basically generating an executable, right?
+[00:06:15 -> 00:06:18] So when we apply the interpreter on the program,
+[00:06:18 -> 00:06:20] we generate an executable, sort of, right?
+[00:06:20 -> 00:06:26] At least the function representation seems to say that, okay?
+[00:06:26 -> 00:06:29] So once again, what is low level and what is high level?
+[00:06:29 -> 00:06:31] The interpret function is low level, it must be low level,
+[00:06:31 -> 00:06:33] it should be executable on the machine.
+[00:06:33 -> 00:06:35] The program, input program, is high level.
+[00:06:35 -> 00:06:38] Similarly, the compile function needs to be low level,
+[00:06:38 -> 00:06:40] because it needs to execute on the machine.
+[00:06:40 -> 00:06:43] The executable needs to be low level,
+[00:06:43 -> 00:06:47] because it also needs to execute on the machine, all right?
+[00:06:47 -> 00:06:51] And we say that, look, when we apply interpret on the high
+[00:06:51 -> 00:06:55] level program, what we get, actually, is the executable.
+[00:06:55 -> 00:06:59] Because both, I mean, both the return functions in the first
+[00:06:59 -> 00:07:01] case and in the second case are doing the same thing,
+[00:07:01 -> 00:07:04] they take data and return output.
+[00:07:04 -> 00:07:08] Another way to say this is that the executable is a
+[00:07:08 -> 00:07:13] specialization of the interpreter on the program, all right?
+[00:07:13 -> 00:07:14] So what do I mean by specialization?
+[00:07:14 -> 00:07:16] Well, I'm gonna define that more formally in the next
+[00:07:16 -> 00:07:20] slide, but basically, think about it, that one program
+[00:07:20 -> 00:07:23] is applied partially on the second, on one of the
+[00:07:23 -> 00:07:26] inputs, so that you get another program, which is a
+[00:07:26 -> 00:07:29] specialized version of that on the first program
+[00:07:29 -> 00:07:30] on a given input, all right?
+[00:07:31 -> 00:07:34] So more precisely, this is also called partial
+[00:07:34 -> 00:07:36] evaluation or specialization.
+[00:07:36 -> 00:07:39] So let's say there is a function prog that takes two
+[00:07:39 -> 00:07:42] inputs, I'm just dividing the two inputs into two parts.
+[00:07:42 -> 00:07:45] One is the static part, iStatic, and one is the
+[00:07:45 -> 00:07:48] dynamic part, iDynamic, and it returns an output,
+[00:07:48 -> 00:07:49] all right?
+[00:07:49 -> 00:07:52] A partial evaluation, let's say the static part is
+[00:07:52 -> 00:07:54] static across several runs, so what you can do is
+[00:07:54 -> 00:07:57] you can partially evaluate prog on the static part
+[00:07:57 -> 00:08:00] to get a new program, prog star, that just takes
+[00:08:01 -> 00:08:03] iDynamic and not iStatic, because iStatic has already
+[00:08:03 -> 00:08:07] been folded into prog star, and it returns the output,
+[00:08:07 -> 00:08:08] all right?
+[00:08:08 -> 00:08:11] So we say that prog star is the residual program,
+[00:08:11 -> 00:08:16] and obtained by partially evaluating or specializing
+[00:08:16 -> 00:08:17] prog on iStatic.
+[00:08:18 -> 00:08:21] Now, what is the advantage of specialization
+[00:08:21 -> 00:08:22] or partial evaluation?
+[00:08:22 -> 00:08:27] Well, this makes sense only if prog star is hopefully
+[00:08:27 -> 00:08:31] faster, or in some ways better, maybe shorter,
+[00:08:31 -> 00:08:33] than the original program, all right?
+[00:08:33 -> 00:08:36] And if that's true, then this is a good thing to do,
+[00:08:36 -> 00:08:41] because then you can partially evaluate prog star once,
+[00:08:41 -> 00:08:45] and then you can execute prog star on iDynamic
+[00:08:45 -> 00:08:48] 100 different times, and each of the 100 times
+[00:08:48 -> 00:08:51] it's going to be slightly faster than executing
+[00:08:51 -> 00:08:53] the original program on both iStatic and iDynamic.
+[00:08:54 -> 00:08:59] So here is the crux of the lecture,
+[00:09:01 -> 00:09:05] and this is also called the first Futamura projection.
+[00:09:05 -> 00:09:07] There are actually three Futamura projections.
+[00:09:07 -> 00:09:08] We are not going to go through the second
+[00:09:08 -> 00:09:10] and third Futamura projections.
+[00:09:10 -> 00:09:12] They're not relevant to the course,
+[00:09:12 -> 00:09:14] but the first Futamura projection says,
+[00:09:14 -> 00:09:17] specializing an interpreter for a given source code.
+[00:09:17 -> 00:09:18] What is source code?
+[00:09:18 -> 00:09:21] Source code is another name for a high-level program,
+[00:09:21 -> 00:09:22] yields an executable.
+[00:09:22 -> 00:09:25] And this is exactly what we saw in our previous slide.
+[00:09:25 -> 00:09:28] So, think about the interpret function,
+[00:09:28 -> 00:09:31] which takes a program and returns another function
+[00:09:31 -> 00:09:33] that takes data and returns output.
+[00:09:37 -> 00:09:39] Think about a specializer function
+[00:09:39 -> 00:09:44] that takes both interpret and program,
+[00:09:44 -> 00:09:48] and it yields a function, which is the executable,
+[00:09:49 -> 00:09:51] which takes data and generates output.
+[00:09:51 -> 00:09:53] Recall that an executable is nothing but a function
+[00:09:53 -> 00:09:56] that takes data and generates output, right?
+[00:09:56 -> 00:09:59] And so, interpret can be thought of as a function
+[00:09:59 -> 00:10:03] that takes a program and generates an executable,
+[00:10:03 -> 00:10:05] and you could specialize this,
+[00:10:05 -> 00:10:08] and you can specialize the interpreter on a program
+[00:10:08 -> 00:10:10] to generate an executable, all right?
+[00:10:10 -> 00:10:12] So, partial evaluation of the interpreter
+[00:10:12 -> 00:10:15] over the high-level program yields the executable.
+[00:10:15 -> 00:10:18] Now, the partial evaluation of the interpreter
+[00:10:18 -> 00:10:20] on the program yields an executable,
+[00:10:20 -> 00:10:22] and once again, this is meaningful
+[00:10:22 -> 00:10:25] only if executing the executable
+[00:10:25 -> 00:10:29] on 100 different input data is faster
+[00:10:29 -> 00:10:30] than executing the original interpreter
+[00:10:30 -> 00:10:34] on both the program and the data, right?
+[00:10:34 -> 00:10:37] Notice that one trivial way to specialize
+[00:10:37 -> 00:10:39] the interpreter on the high-level program
+[00:10:39 -> 00:10:42] or the source code is to just put
+[00:10:42 -> 00:10:45] the whole entire interpreter code
+[00:10:45 -> 00:10:49] and the high-level program in a single file
+[00:10:49 -> 00:10:51] and call it the executable, all right?
+[00:10:51 -> 00:10:53] And then say that this executable
+[00:10:53 -> 00:10:55] is just going to execute the first part,
+[00:10:55 -> 00:10:57] which is the interpreter, on the second part,
+[00:10:57 -> 00:10:58] which is the high-level program,
+[00:10:58 -> 00:11:01] both of which are part of the executable.
+[00:11:01 -> 00:11:06] But this type of specialization is not any beneficial,
+[00:11:06 -> 00:11:08] although it is still a specialization.
+[00:11:09 -> 00:11:10] We would like to do something better,
+[00:11:10 -> 00:11:13] and that's exactly what is compilation.
+[00:11:14 -> 00:11:18] And in many ways, the quality of compilation
+[00:11:18 -> 00:11:19] depends on how much faster
+[00:11:19 -> 00:11:22] is the specialized program, the executable,
+[00:11:22 -> 00:11:27] compared to the original interpreter program
+[00:11:27 -> 00:11:29] that would have interpreted the entire program
+[00:11:29 -> 00:11:31] from scratch, right?
+[00:11:32 -> 00:11:34] Okay, just for completeness,
+[00:11:34 -> 00:11:36] I list the second and third FutaMura projections
+[00:11:36 -> 00:11:37] on the slide.
+[00:11:37 -> 00:11:40] I'm not going to go through these in the lecture,
+[00:11:40 -> 00:11:41] but you're free to look through them
+[00:11:41 -> 00:11:43] if you're interested.
+[00:11:43 -> 00:11:47] All right, so takeaways from the first FutaMura projection.
+[00:11:48 -> 00:11:51] The executable is a partial evaluation of the interpreter
+[00:11:51 -> 00:11:52] on the program source code.
+[00:11:54 -> 00:11:57] A compilation is this process of partial evaluation,
+[00:11:58 -> 00:12:01] and this makes sense only if the executable
+[00:12:01 -> 00:12:03] runs faster than the execution
+[00:12:03 -> 00:12:05] of the original interpreter on the input program.

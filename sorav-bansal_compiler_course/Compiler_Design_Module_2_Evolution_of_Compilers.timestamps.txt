@@ -1,0 +1,467 @@
+Title: Compiler Design Module 2 : Evolution of Compilers
+Video ID: MfStbwbAwH8
+Detected language: en
+------------------------------------------------------------
+
+[00:00:00 -> 00:00:01] Okay, great.
+[00:00:01 -> 00:00:05] So we're going to talk about the timeline of compilers
+[00:00:05 -> 00:00:07] and why worry about compilers.
+[00:00:07 -> 00:00:10] So there are two parts to today's discussion.
+[00:00:10 -> 00:00:12] One is why bother studying about compilers?
+[00:00:12 -> 00:00:14] Why are compilers important in the future?
+[00:00:14 -> 00:00:17] And we'll also touch a little bit upon the past
+[00:00:17 -> 00:00:20] because the past will give us some understanding
+[00:00:20 -> 00:00:22] and learning about how things have evolved
+[00:00:22 -> 00:00:24] and also give some perspective
+[00:00:24 -> 00:00:26] on how they are likely to evolve in future.
+[00:00:28 -> 00:00:30] Okay, so why study compilers?
+[00:00:30 -> 00:00:34] So I think the answer lies in two major technology trends
+[00:00:34 -> 00:00:37] related to the computer industry.
+[00:00:37 -> 00:00:42] One is that the Moore's law is running out of steam.
+[00:00:42 -> 00:00:43] What is the Moore's law?
+[00:00:43 -> 00:00:45] Well, if you're not familiar with it,
+[00:00:45 -> 00:00:47] we're going to discuss that in more detail
+[00:00:47 -> 00:00:49] in the next slides.
+[00:00:49 -> 00:00:51] And the other major technology trend
+[00:00:51 -> 00:00:54] is that programs are becoming more complex
+[00:00:54 -> 00:00:57] and so programming language abstractions
+[00:00:57 -> 00:00:58] are becoming higher level.
+[00:00:58 -> 00:01:01] So if you want to write complex programs,
+[00:01:01 -> 00:01:03] you don't want to write them in low level languages,
+[00:01:03 -> 00:01:05] just like you didn't want to write programs
+[00:01:05 -> 00:01:07] in assembly language.
+[00:01:07 -> 00:01:09] Now, if your programs are even more complex
+[00:01:09 -> 00:01:11] than what they used to be 10 years ago,
+[00:01:11 -> 00:01:13] then you don't want to write them in the same language
+[00:01:13 -> 00:01:15] that you're writing simpler programs.
+[00:01:15 -> 00:01:19] And so programming languages keep becoming higher level.
+[00:01:19 -> 00:01:24] And so the gap between the abstractions
+[00:01:24 -> 00:01:28] in the programming language and the hardware
+[00:01:28 -> 00:01:29] keeps increasing and the compilers need
+[00:01:29 -> 00:01:32] to play a bigger and bigger role.
+[00:01:32 -> 00:01:34] All right, so what's the Moore's law?
+[00:01:34 -> 00:01:37] Well, the Moore's law is not a law,
+[00:01:37 -> 00:01:42] but it was a prediction made by Gordon Moore
+[00:01:42 -> 00:01:44] who was a co-founder of Intel
+[00:01:44 -> 00:01:47] and actually another company called Fairchild Semiconductors.
+[00:01:47 -> 00:01:50] He made this prediction in 1965.
+[00:01:50 -> 00:01:52] He said, number of integrated components
+[00:01:52 -> 00:01:55] will double every year for at least the next decade.
+[00:01:55 -> 00:01:58] So based on what he saw in 1965,
+[00:01:58 -> 00:02:00] is that he made a prediction for the next 10 years
+[00:02:00 -> 00:02:03] the number of integrated components will double every year.
+[00:02:03 -> 00:02:05] Now, this is a very bold prediction
+[00:02:05 -> 00:02:08] because you're basically predicting an exponential growth
+[00:02:08 -> 00:02:10] in the number of integrated components
+[00:02:13 -> 00:02:15] in a processing chip.
+[00:02:16 -> 00:02:19] And you're saying that it will double every year
+[00:02:19 -> 00:02:21] for at least the next decade.
+[00:02:21 -> 00:02:23] And surprisingly, it came true.
+[00:02:23 -> 00:02:27] And so in 1975, this was revised
+[00:02:27 -> 00:02:29] to double every two years.
+[00:02:29 -> 00:02:34] And even that has held true for a long, long time,
+[00:02:36 -> 00:02:38] almost 30, 40 years.
+[00:02:38 -> 00:02:41] And for a bold prediction like this,
+[00:02:41 -> 00:02:43] which predicts an exponential amount of growth
+[00:02:43 -> 00:02:46] to hold for a long period like 30, 40 years
+[00:02:46 -> 00:02:47] is pretty phenomenal.
+[00:02:47 -> 00:02:50] And that's why it's also colloquially known
+[00:02:50 -> 00:02:51] as the Moore's law.
+[00:02:51 -> 00:02:55] In 2015, this was revised to double every 2.5 years.
+[00:02:56 -> 00:03:00] In any case, there are some kind of parallel predictions
+[00:03:00 -> 00:03:02] that were made, which are also called laws,
+[00:03:02 -> 00:03:04] which were related to the speed of CPU.
+[00:03:04 -> 00:03:07] And for example, people predicted
+[00:03:07 -> 00:03:11] that the speed of a processing unit, a CPU,
+[00:03:11 -> 00:03:16] will increase exponentially starting 1965, let's say.
+[00:03:17 -> 00:03:20] And it actually did increase exponentially for a long time,
+[00:03:20 -> 00:03:23] but it actually saturated into thousands.
+[00:03:23 -> 00:03:28] And so we can't go beyond a certain amount of frequency
+[00:03:28 -> 00:03:30] at which we can run our computers.
+[00:03:30 -> 00:03:34] Similarly, the Moore's law is also pretty much saturating
+[00:03:34 -> 00:03:37] because if you're doubling the number
+[00:03:37 -> 00:03:39] of integrated components or transistors
+[00:03:39 -> 00:03:42] on your computing substrate,
+[00:03:42 -> 00:03:44] then you're also making them smaller
+[00:03:44 -> 00:03:45] and smaller and smaller,
+[00:03:45 -> 00:03:46] but there are physical limits
+[00:03:46 -> 00:03:48] to how small you can make things.
+[00:03:49 -> 00:03:51] All right, so what are these physical limits
+[00:03:51 -> 00:03:53] to how small you can make things
+[00:03:53 -> 00:03:55] or physical limits to transistor scaling?
+[00:03:55 -> 00:03:58] Well, there are some physical limits
+[00:03:58 -> 00:04:00] that are beyond the scope of this course,
+[00:04:00 -> 00:04:01] but it's good to know.
+[00:04:01 -> 00:04:05] I mean, things like source-to-drain current leakage,
+[00:04:05 -> 00:04:07] limited gate material,
+[00:04:07 -> 00:04:09] limited options for the transistor material,
+[00:04:09 -> 00:04:11] like silicon.
+[00:04:11 -> 00:04:13] So it's safe to assume for our purposes
+[00:04:13 -> 00:04:15] that just like all exponentials,
+[00:04:15 -> 00:04:18] this exponential will also come to an end.
+[00:04:18 -> 00:04:20] And if we assume that this exponential will come to an end,
+[00:04:20 -> 00:04:23] it basically means that architectures
+[00:04:23 -> 00:04:26] are likely to evolve in a different way
+[00:04:26 -> 00:04:29] than what they did for so many years.
+[00:04:29 -> 00:04:33] In fact, we already saw this evolution change
+[00:04:33 -> 00:04:34] in the 2000s.
+[00:04:34 -> 00:04:38] Till the computers were just increasing
+[00:04:38 -> 00:04:39] in their frequency, in their speed,
+[00:04:40 -> 00:04:42] we were just running with a single processor,
+[00:04:42 -> 00:04:45] but as soon as the architects realized
+[00:04:45 -> 00:04:49] that they can no longer increase the frequency of a CPU,
+[00:04:49 -> 00:04:52] they started packing more and more cores
+[00:04:52 -> 00:04:57] or logical CPUs onto a single physical CPU.
+[00:04:58 -> 00:05:00] And that gave rise to multi-core computing
+[00:05:00 -> 00:05:01] as we know it today.
+[00:05:01 -> 00:05:04] So similar things are likely to happen
+[00:05:04 -> 00:05:07] at a much faster pace in the coming future, actually.
+[00:05:07 -> 00:05:09] So yeah, so this is an example.
+[00:05:09 -> 00:05:11] Architectural innovations are necessitated
+[00:05:11 -> 00:05:14] because the physical hardware,
+[00:05:14 -> 00:05:18] the physics is not going to support us forever.
+[00:05:19 -> 00:05:22] And we already see an example that single cores,
+[00:05:22 -> 00:05:25] we moved from single core CPU to multi-core CPU.
+[00:05:25 -> 00:05:29] Also, there has been a flurry of activity
+[00:05:29 -> 00:05:31] in the instruction set architecture design.
+[00:05:31 -> 00:05:34] For example, there are more single instruction
+[00:05:34 -> 00:05:38] multiple data instruction sets in common CPUs
+[00:05:38 -> 00:05:39] like Intel and ARM.
+[00:05:39 -> 00:05:44] There are also special custom processing elements
+[00:05:44 -> 00:05:47] like GPUs that only export,
+[00:05:47 -> 00:05:49] that only implement single instruction
+[00:05:49 -> 00:05:53] multiple data abstractions.
+[00:05:54 -> 00:05:56] And this is particularly useful for graphics
+[00:05:56 -> 00:05:59] and that's why this kind of experiments
+[00:05:59 -> 00:06:04] were grew in the GPU space.
+[00:06:04 -> 00:06:07] Although these GPUs are not just used today for graphics
+[00:06:07 -> 00:06:12] but also used for general purpose computation.
+[00:06:12 -> 00:06:13] There are more complex instruction sets
+[00:06:13 -> 00:06:18] that have been added over the last 10, 15, 20 years.
+[00:06:18 -> 00:06:22] For example, x86, 64 SSE and ARM SVE
+[00:06:23 -> 00:06:25] scalable vector extensions are examples
+[00:06:25 -> 00:06:30] of instruction sets that basically allow parallel
+[00:06:32 -> 00:06:34] computation or vectorized computation.
+[00:06:34 -> 00:06:39] And the problem is that the programming languages
+[00:06:39 -> 00:06:44] like C or Java for that matter or Python for that matter
+[00:06:44 -> 00:06:45] do not really have abstractions
+[00:06:45 -> 00:06:48] that allow you to do that map directly
+[00:06:48 -> 00:06:50] to these kinds of primitives.
+[00:06:50 -> 00:06:52] For example, there is no vectorized instruction
+[00:06:52 -> 00:06:54] in C or Java.
+[00:06:54 -> 00:06:57] So now the onus is on the compiler
+[00:06:57 -> 00:07:00] to convert your program that is written
+[00:07:00 -> 00:07:04] in your traditional plus minus multiplication form
+[00:07:04 -> 00:07:06] that humans find it easy to understand
+[00:07:06 -> 00:07:10] and map them efficiently to these complex instructions.
+[00:07:10 -> 00:07:13] And the quality of and the speed of your code
+[00:07:13 -> 00:07:16] will be determined by the quality of
+[00:07:16 -> 00:07:18] by the power of the compiler.
+[00:07:19 -> 00:07:20] All right.
+[00:07:20 -> 00:07:24] So actually I think that the stumbling block
+[00:07:24 -> 00:07:27] for architectural innovations is really compiler support.
+[00:07:27 -> 00:07:29] Architects I feel are pretty,
+[00:07:30 -> 00:07:32] they have lots of ideas on what could be done
+[00:07:32 -> 00:07:34] what more instructions could be added and so on.
+[00:07:35 -> 00:07:37] And they have been adding instructions
+[00:07:37 -> 00:07:38] and they could have been adding those instructions
+[00:07:38 -> 00:07:41] at a faster rate than what they are doing today.
+[00:07:41 -> 00:07:43] But if those instructions are only used
+[00:07:43 -> 00:07:46] by specialist assembly programmers,
+[00:07:46 -> 00:07:50] then that is not very satisfactory.
+[00:07:50 -> 00:07:52] Unless compilers provide first class support
+[00:07:52 -> 00:07:55] for such instruction sets,
+[00:07:55 -> 00:07:59] these instruction sets are not meaningful
+[00:07:59 -> 00:08:03] or there's not enough usage to justify
+[00:08:03 -> 00:08:07] the cost of developing them, right?
+[00:08:08 -> 00:08:12] So and unfortunately compilers haven't been keeping pace
+[00:08:12 -> 00:08:15] and for reasons that we're going to see soon.
+[00:08:15 -> 00:08:17] And so in many ways I think
+[00:08:17 -> 00:08:20] that if compilers can be improved,
+[00:08:20 -> 00:08:24] that's going to boost the entire computer systems
+[00:08:24 -> 00:08:26] ecosystem significantly.
+[00:08:26 -> 00:08:27] So in many ways compilers are today
+[00:08:27 -> 00:08:29] acting as a bottleneck, unfortunately.
+[00:08:29 -> 00:08:33] That's also great for people who are interested
+[00:08:33 -> 00:08:35] in compilers because it also means
+[00:08:35 -> 00:08:37] that any improvements that they make
+[00:08:37 -> 00:08:40] are likely to have a significant impact in the future.
+[00:08:40 -> 00:08:42] So every problem is also an opportunity.
+[00:08:43 -> 00:08:44] Now let's look at the other side,
+[00:08:44 -> 00:08:46] programming language abstractions.
+[00:08:46 -> 00:08:49] If we just look at the different programming languages
+[00:08:49 -> 00:08:53] that have been popular over the years,
+[00:08:53 -> 00:08:55] we'll get a sense of how programming languages
+[00:08:55 -> 00:08:57] have been evolving.
+[00:08:57 -> 00:09:01] For example, 1940s are probably the first computers
+[00:09:01 -> 00:09:05] and almost all programming was being done directly
+[00:09:05 -> 00:09:08] on the machine using assembly code, right?
+[00:09:08 -> 00:09:10] The lowest level of instructions
+[00:09:10 -> 00:09:12] that one can use to program that machine.
+[00:09:13 -> 00:09:18] In 1950s, the first few high-level languages came around
+[00:09:18 -> 00:09:22] along with their interpreters or the compilers.
+[00:09:22 -> 00:09:27] Actually the Fortran compiler is largely known
+[00:09:27 -> 00:09:28] as the first compiler.
+[00:09:29 -> 00:09:32] So Fortran, Flomatic, Cobol are some examples
+[00:09:32 -> 00:09:33] of languages in 1950s.
+[00:09:34 -> 00:09:38] Notice that these languages are higher level
+[00:09:38 -> 00:09:40] than assembly in the sense that
+[00:09:40 -> 00:09:41] they provide higher level abstractions.
+[00:09:41 -> 00:09:45] For example, they provide abstractions of variables.
+[00:09:45 -> 00:09:48] They provide abstractions of operators
+[00:09:48 -> 00:09:50] like plus, minus, and so on.
+[00:09:50 -> 00:09:53] They provide abstractions of control flow
+[00:09:53 -> 00:09:55] which is more restrictive.
+[00:09:55 -> 00:09:58] For example, a well-structured loop
+[00:09:58 -> 00:09:59] or an if-then-else statement
+[00:09:59 -> 00:10:02] in comparison to an assembly program
+[00:10:02 -> 00:10:06] which just allows you an arbitrary branch, right?
+[00:10:06 -> 00:10:09] In 1960s, there were more languages that were developed
+[00:10:09 -> 00:10:10] that were even more high level
+[00:10:10 -> 00:10:12] like Algol, Simula, and Basic.
+[00:10:12 -> 00:10:15] Some of these languages had started
+[00:10:15 -> 00:10:17] implicating object-oriented paradigms
+[00:10:17 -> 00:10:19] and so you can see why they were higher level
+[00:10:19 -> 00:10:23] than what the languages of 1950s.
+[00:10:23 -> 00:10:28] And then 1970s, C, Smalltalk, Simula, Prolog, ML.
+[00:10:30 -> 00:10:32] Now, some of these languages
+[00:10:32 -> 00:10:34] are actually still very, very popular
+[00:10:34 -> 00:10:38] such as C and ML, and even Prolog for that matter.
+[00:10:39 -> 00:10:44] And one takeaway from this is that
+[00:10:46 -> 00:10:47] language design is not easy
+[00:10:47 -> 00:10:51] and it took many years to come up with languages
+[00:10:51 -> 00:10:55] that actually stayed for a long time in the future.
+[00:10:55 -> 00:10:59] But even so, it wasn't as though these languages
+[00:10:59 -> 00:11:01] would solve all our problems.
+[00:11:01 -> 00:11:03] In fact, there were so many more problems
+[00:11:03 -> 00:11:04] that still remain.
+[00:11:04 -> 00:11:07] And then 1980s, we saw more languages
+[00:11:07 -> 00:11:12] like MATLAB, C++, Erlang, Perl, Tickle.
+[00:11:12 -> 00:11:14] And some of these languages were domain-specific.
+[00:11:14 -> 00:11:17] For example, MATLAB was supposed to be
+[00:11:17 -> 00:11:19] for scientific computation.
+[00:11:19 -> 00:11:22] They were very, very, very sensitive
+[00:11:22 -> 00:11:24] about high performance.
+[00:11:24 -> 00:11:26] But at the same time, they were very careful
+[00:11:26 -> 00:11:29] about making it very easy for programmers to course.
+[00:11:29 -> 00:11:31] For example, they will have higher level abstractions
+[00:11:31 -> 00:11:34] like matrix multiply operators and things like that.
+[00:11:36 -> 00:11:38] There were some languages like Perl and Tickle,
+[00:11:38 -> 00:11:41] they're popularly known as scripting languages.
+[00:11:41 -> 00:11:43] They didn't really care so much about performance
+[00:11:43 -> 00:11:45] but they really cared about high level abstractions
+[00:11:45 -> 00:11:48] so that it becomes really easy for the programmer to program.
+[00:11:48 -> 00:11:51] And it made sense for these languages to grow in 1980s
+[00:11:51 -> 00:11:54] because the computers were just becoming faster and faster.
+[00:11:54 -> 00:11:58] And so it became practical to have such languages
+[00:11:58 -> 00:12:01] which were actually very slow
+[00:12:01 -> 00:12:04] compared to the other languages like Assembly or C.
+[00:12:04 -> 00:12:05] But they were good enough
+[00:12:05 -> 00:12:07] because the computers were anyway so fast
+[00:12:07 -> 00:12:10] that they were good enough and they made computing
+[00:12:10 -> 00:12:12] and programming more accessible to users.
+[00:12:13 -> 00:12:15] C++ is an example of a language
+[00:12:15 -> 00:12:20] that introduced the object-oriented paradigm
+[00:12:20 -> 00:12:22] into the C language.
+[00:12:22 -> 00:12:24] So while object-oriented programming
+[00:12:24 -> 00:12:26] was already becoming popular
+[00:12:26 -> 00:12:28] with languages like Simula for example,
+[00:12:29 -> 00:12:31] people also liked the low level nature of C
+[00:12:31 -> 00:12:33] because it allowed them to do
+[00:12:33 -> 00:12:37] low level performance engineering, right?
+[00:12:37 -> 00:12:40] And C++ is an attempt to kind of
+[00:12:40 -> 00:12:42] get the best of both worlds.
+[00:12:42 -> 00:12:46] And people are still working on it actively.
+[00:12:48 -> 00:12:52] It is a noble cause but it's obviously a very hard problem
+[00:12:52 -> 00:12:57] because you want to have both low level performance control
+[00:12:57 -> 00:12:59] and have high level abstractions
+[00:12:59 -> 00:13:01] and that is a big challenge.
+[00:13:02 -> 00:13:05] And whenever you have high level abstractions
+[00:13:05 -> 00:13:08] and you are sensitive about performance,
+[00:13:08 -> 00:13:11] the only thing that can help you is good compiler support.
+[00:13:12 -> 00:13:15] 1990 saw more languages like Python,
+[00:13:15 -> 00:13:19] Haskell, Java, R, JavaScript.
+[00:13:19 -> 00:13:21] And some of these languages were motivated
+[00:13:21 -> 00:13:24] by the need for mobility or code security
+[00:13:24 -> 00:13:26] and things like that, for example,
+[00:13:26 -> 00:13:27] Java and JavaScript,
+[00:13:27 -> 00:13:30] while others were kind of domain-specific
+[00:13:30 -> 00:13:33] or had higher level, even higher level operators,
+[00:13:33 -> 00:13:34] for example, Haskell.
+[00:13:36 -> 00:13:37] All right.
+[00:13:37 -> 00:13:41] So, but even this is not enough, of course.
+[00:13:41 -> 00:13:43] And in 2000s, we had more languages
+[00:13:43 -> 00:13:48] like C-sharp, Go, Rust, Closure, F-sharp, and Nim.
+[00:13:49 -> 00:13:52] Now it's clear that people, you know,
+[00:13:52 -> 00:13:53] these languages, you know,
+[00:13:53 -> 00:13:55] so the typical tension that people see
+[00:13:55 -> 00:13:59] is we want both safety and performance.
+[00:13:59 -> 00:14:02] And obviously it seems pretty hard to do that.
+[00:14:02 -> 00:14:05] And so what people do is they kind of
+[00:14:05 -> 00:14:06] branch off in different directions
+[00:14:06 -> 00:14:11] to kind of attack this trade-off
+[00:14:11 -> 00:14:13] in different measures, right?
+[00:14:13 -> 00:14:16] So one language would have, you know,
+[00:14:16 -> 00:14:17] would improve the safety,
+[00:14:17 -> 00:14:21] but by compromising on performance in one dimension,
+[00:14:21 -> 00:14:23] while the other one would do the opposite
+[00:14:23 -> 00:14:25] and things like that.
+[00:14:25 -> 00:14:27] But it is interesting to note
+[00:14:27 -> 00:14:30] that if there was perfect compiler support,
+[00:14:30 -> 00:14:32] then well, you know, in theory,
+[00:14:32 -> 00:14:34] it is possible to have all the safety you like.
+[00:14:34 -> 00:14:37] You can have the highest level programming language,
+[00:14:37 -> 00:14:39] like maybe Go or Rust.
+[00:14:39 -> 00:14:42] I mean, these are supposed to be safe languages.
+[00:14:43 -> 00:14:44] And then you have compiler support
+[00:14:44 -> 00:14:47] that is able to translate and map
+[00:14:47 -> 00:14:49] these high-level safe abstractions
+[00:14:49 -> 00:14:53] to high-performance, low-level assembly code,
+[00:14:53 -> 00:14:54] just like, you know,
+[00:14:54 -> 00:14:56] just like the performance you would get
+[00:14:56 -> 00:14:59] if you wrote the same logic in a C program.
+[00:14:59 -> 00:15:01] And if that was possible,
+[00:15:01 -> 00:15:02] we would have the best of both worlds.
+[00:15:02 -> 00:15:04] So in many ways, the onus of being,
+[00:15:04 -> 00:15:06] or the hope that, you know,
+[00:15:06 -> 00:15:08] if anybody can solve this problem,
+[00:15:08 -> 00:15:10] it is through compiler support.
+[00:15:10 -> 00:15:12] And so compilers are indeed
+[00:15:12 -> 00:15:15] one of the most fundamental pieces of system design.
+[00:15:16 -> 00:15:18] If I look at 2010s,
+[00:15:18 -> 00:15:21] there are more languages like TensorFlow,
+[00:15:21 -> 00:15:24] DryadLink, WebAssembly, and so on.
+[00:15:24 -> 00:15:27] And you can see that because the applications
+[00:15:27 -> 00:15:29] are becoming more and more complex,
+[00:15:29 -> 00:15:31] for example, you know, AI-based applications.
+[00:15:31 -> 00:15:33] And so we have TensorFlow,
+[00:15:33 -> 00:15:35] and, or we have distributed applications
+[00:15:35 -> 00:15:37] and distributed data management application,
+[00:15:37 -> 00:15:39] that's DryadLink.
+[00:15:39 -> 00:15:40] So as applications and programs
+[00:15:40 -> 00:15:42] become more and more complex,
+[00:15:42 -> 00:15:44] which they are inevitably going to be,
+[00:15:44 -> 00:15:45] in my opinion,
+[00:15:45 -> 00:15:47] programming languages become higher
+[00:15:47 -> 00:15:48] and higher and higher level.
+[00:15:48 -> 00:15:51] And the higher level programming language
+[00:15:51 -> 00:15:53] necessitates better compiler support
+[00:15:53 -> 00:15:55] because the higher level you go,
+[00:15:55 -> 00:15:58] the more removed you are from the machine,
+[00:15:58 -> 00:15:59] the low-level machine.
+[00:15:59 -> 00:16:02] And unless you have good compiler support,
+[00:16:02 -> 00:16:04] your performance is going to be really bad.
+[00:16:04 -> 00:16:06] Okay, so, all right,
+[00:16:06 -> 00:16:08] so that gives us some sense
+[00:16:08 -> 00:16:09] of why compilers are very important
+[00:16:09 -> 00:16:12] from a programming language abstraction standpoint.
+[00:16:13 -> 00:16:15] If I look at, you know,
+[00:16:15 -> 00:16:16] the early adoption of compilers
+[00:16:16 -> 00:16:18] and how, you know,
+[00:16:19 -> 00:16:22] you know, some history of how compilers
+[00:16:22 -> 00:16:23] kind of got adopted,
+[00:16:23 -> 00:16:25] it is interesting to note that, you know,
+[00:16:25 -> 00:16:27] while the first language and compiler
+[00:16:27 -> 00:16:30] were accredited to John Bacchus,
+[00:16:30 -> 00:16:34] who was the designer of the Fortran language,
+[00:16:35 -> 00:16:39] the initial reaction by expert programmers
+[00:16:39 -> 00:16:41] at that time was that this is too slow
+[00:16:41 -> 00:16:43] and this is not going to work.
+[00:16:43 -> 00:16:46] And they were so used to programming in assembly
+[00:16:46 -> 00:16:48] that they scoffed at the idea
+[00:16:48 -> 00:16:49] that you write high-level code
+[00:16:49 -> 00:16:51] and they kind of believed,
+[00:16:51 -> 00:16:52] and those, you know,
+[00:16:52 -> 00:16:56] there were strong arguments made
+[00:16:56 -> 00:17:00] that compiled code would never have the same performance
+[00:17:00 -> 00:17:03] as handwritten code.
+[00:17:03 -> 00:17:05] Well, you know,
+[00:17:06 -> 00:17:08] we know that compilers actually gained
+[00:17:08 -> 00:17:11] tremendous adoption by 1958,
+[00:17:11 -> 00:17:12] even though, you know,
+[00:17:12 -> 00:17:15] the performance was perhaps not exactly
+[00:17:15 -> 00:17:18] the best possible in compiled code.
+[00:17:18 -> 00:17:20] And ever since,
+[00:17:20 -> 00:17:22] compilers have been super popular
+[00:17:22 -> 00:17:24] and it's not that, you know,
+[00:17:24 -> 00:17:27] assembly programmers are really very common.
+[00:17:28 -> 00:17:32] And most programs are actually written in languages
+[00:17:32 -> 00:17:33] that are either compiled or interpreted,
+[00:17:33 -> 00:17:35] depending on whether you care about performance,
+[00:17:35 -> 00:17:37] but very few programs are actually written
+[00:17:37 -> 00:17:39] in assembly language.
+[00:17:39 -> 00:17:40] And so,
+[00:17:42 -> 00:17:43] similarly, you know,
+[00:17:43 -> 00:17:45] compilers have really improved.
+[00:17:45 -> 00:17:47] And in fact,
+[00:17:47 -> 00:17:50] usually I find that the code generated by compilers
+[00:17:50 -> 00:17:52] is far superior than code
+[00:17:52 -> 00:17:55] that even an expert assembly writer
+[00:17:55 -> 00:17:57] would have ever been able to write
+[00:17:57 -> 00:17:58] for a given piece of logic.
+[00:17:59 -> 00:18:02] So, clearly, you know,
+[00:18:02 -> 00:18:05] it shows that, you know,
+[00:18:05 -> 00:18:07] there's something to learn from these experiences
+[00:18:07 -> 00:18:11] and the different views of people in history.
+[00:18:13 -> 00:18:13] All right.
+[00:18:13 -> 00:18:16] So to understand the evolution of compilers,
+[00:18:16 -> 00:18:18] let's look at some of the popular compilers.
+[00:18:18 -> 00:18:19] And in this chart,
+[00:18:19 -> 00:18:21] I'm showing GCC.
+[00:18:21 -> 00:18:25] And to understand how GCC has evolved
+[00:18:25 -> 00:18:27] over the years,
+[00:18:27 -> 00:18:30] I did a small study.
+[00:18:30 -> 00:18:34] I just plotted the number of lines of code,
+[00:18:34 -> 00:18:38] source lines of code in GCC over time,
+[00:18:38 -> 00:18:40] starting from 1988,
+[00:18:40 -> 00:18:42] which was the earliest, you know,
+[00:18:44 -> 00:18:47] commit that I found in the Git repository,
+[00:18:47 -> 00:18:49] and all the way to 2019,
+[00:18:49 -> 00:18:51] the latest commit last year.
+[00:18:52 -> 00:18:55] And you can see that the number of lines of code
+[00:18:55 -> 00:18:58] in GCC has increased
+[00:18:58 -> 00:19:01] almost at a linear pace, right?
+[00:19:01 -> 00:19:05] And while in 1988,
+[00:19:05 -> 00:19:06] it was something like,
+[00:19:06 -> 00:19:11] something between 10 or 100,000 lines long.
+[00:19:11 -> 00:19:12] By the way,
+[00:19:12 -> 00:19:15] the y-axis is the source lines of code into 1,000, right?
+[00:19:15 -> 00:19:19] So while in 1988,
+[00:19:19 -> 00:19:21] the number of lines of code in GCC
+[00:19:21 -> 00:19:22] was maybe around, you know,
+[00:19:22 -> 00:19:24] 10 to 100,000 lines of code,
+[00:19:24 -> 00:19:26] source lines of code.
+[00:19:26 -> 00:19:28] In 2019,
+[00:19:28 -> 00:19:32] there is more than 16 million lines of code in GCC.
+[00:19:32 -> 00:19:34] Now 16 million lines of code,
+[00:19:34 -> 00:19:35] I mean,
+[00:19:36 -> 00:19:38] it actually seems,
+[00:19:53 -> 00:19:55] now 16 million lines of code
+[00:19:55 -> 00:19:58] is a lot of complexity for a compiler.
+[00:19:59 -> 00:20:02] And indeed, this is a big problem,
+[00:20:02 -> 00:20:03] and one of the bottlenecks
+[00:20:03 -> 00:20:06] why we are not able to make our compilers,
+[00:20:06 -> 00:20:08] you know, arbitrarily more powerful.
+[00:20:10 -> 00:20:12] And this problem is not just with GCC.
+[00:20:12 -> 00:20:13] In fact, you know,
+[00:20:13 -> 00:20:14] people are aware of this kind of problem
+[00:20:14 -> 00:20:17] of the complexity of a compiler,
+[00:20:17 -> 00:20:18] and people have tried to solve it
+[00:20:18 -> 00:20:20] using software engineering methods.
+[00:20:21 -> 00:20:24] And one of those attempts
+[00:20:24 -> 00:20:26] has been the LLVM ecosystem.
+[00:20:26 -> 00:20:29] So LLVM is another open source compiler
+[00:20:29 -> 00:20:31] with a slightly different license,
+[00:20:32 -> 00:20:35] kind of a friendly competitor to GCC,
+[00:20:35 -> 00:20:38] and started in around 2001.
+[00:20:38 -> 00:20:41] And if you look at its evolution over time,
+[00:20:41 -> 00:20:43] you would find that even LLVM's complexity
+[00:20:43 -> 00:20:45] in terms of the source lines of code
+[00:20:45 -> 00:20:47] has increased linearly starting
+[00:20:47 -> 00:20:49] ever since it was founded,
+[00:20:49 -> 00:20:51] and has been growing at a steady rate.
+[00:20:51 -> 00:20:52] Now I should point out that,
+[00:20:53 -> 00:20:56] you know, ideally we would have liked the compiler
+[00:20:56 -> 00:20:59] to do much more than what it is doing today.
+[00:20:59 -> 00:21:03] And really the bottleneck is the complexity
+[00:21:03 -> 00:21:07] as it's shown, as it's kind of evident in these graphs.

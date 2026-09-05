@@ -1,0 +1,607 @@
+Title: Compiler Design Module 3 : Introduction to Optimizations
+Video ID: oIxK9HMeuLE
+Detected language: en
+------------------------------------------------------------
+
+[00:00:01 -> 00:00:05] Okay, so today we'll talk about compiler design,
+[00:00:07 -> 00:00:09] which is also the name of the course.
+[00:00:10 -> 00:00:13] All right, so in the first lecture,
+[00:00:13 -> 00:00:15] we learned that an executable
+[00:00:15 -> 00:00:18] is a partially evaluated interpreter
+[00:00:18 -> 00:00:20] on the program source code, all right?
+[00:00:21 -> 00:00:24] But this partial evaluation of the interpreter
+[00:00:24 -> 00:00:26] on the program source code,
+[00:00:27 -> 00:00:29] the result of the partial evaluation,
+[00:00:29 -> 00:00:31] which is also called the executable,
+[00:00:31 -> 00:00:34] should ideally be faster or in some way better,
+[00:00:34 -> 00:00:39] maybe shorter than executing the original interpreter
+[00:00:39 -> 00:00:42] on the original program source code,
+[00:00:42 -> 00:00:45] because otherwise there was no advantage
+[00:00:45 -> 00:00:49] of doing the partial evaluation upfront, right?
+[00:00:49 -> 00:00:54] So the improvement that we get
+[00:00:54 -> 00:00:57] by doing this partial evaluation upfront
+[00:00:57 -> 00:01:02] is can be thought of as a quality of the compilation.
+[00:01:02 -> 00:01:04] And you can imagine that a trivial compilation
+[00:01:04 -> 00:01:08] would involve just storing the interpreter
+[00:01:08 -> 00:01:11] with the program source code as a tuple, right?
+[00:01:11 -> 00:01:13] So in this case, the executable would just be
+[00:01:13 -> 00:01:17] the interpreter's code pasted
+[00:01:17 -> 00:01:19] along with the program source code.
+[00:01:19 -> 00:01:21] And when we invoke the executable,
+[00:01:21 -> 00:01:23] it just runs the interpreter,
+[00:01:23 -> 00:01:26] supplying the program source code as the first input,
+[00:01:26 -> 00:01:29] so the program input, okay?
+[00:01:29 -> 00:01:31] But this is a trivial compilation
+[00:01:31 -> 00:01:35] and the quality of compilation is nothing to speak about
+[00:01:35 -> 00:01:36] in this case.
+[00:01:38 -> 00:01:39] You can do something smarter,
+[00:01:39 -> 00:01:42] and one of the easiest things to do
+[00:01:42 -> 00:01:46] is to substitute the input program source code
+[00:01:46 -> 00:01:49] into the interpreter's implementation.
+[00:01:49 -> 00:01:51] This is, as we're gonna learn later,
+[00:01:51 -> 00:01:55] this is somewhat like constant propagation.
+[00:01:55 -> 00:02:00] So imagine that you have a program
+[00:02:00 -> 00:02:03] and it's supposed to execute on some inputs
+[00:02:03 -> 00:02:07] and you have two inputs that you already know.
+[00:02:07 -> 00:02:08] Then what you can do,
+[00:02:08 -> 00:02:10] so let's say the inputs were x, y, and z,
+[00:02:10 -> 00:02:12] and of which you already knew x and y
+[00:02:12 -> 00:02:14] to be, let's say, two and three.
+[00:02:14 -> 00:02:18] So you can just substitute all occurrences of x with two
+[00:02:18 -> 00:02:21] and y with three, right?
+[00:02:21 -> 00:02:23] And this is something
+[00:02:23 -> 00:02:25] it's also called as constant propagation.
+[00:02:25 -> 00:02:29] You kind of propagate the constant value across the program.
+[00:02:30 -> 00:02:31] And so in this case,
+[00:02:31 -> 00:02:34] you could substitute the program source code
+[00:02:34 -> 00:02:38] into the interpreter code implementation.
+[00:02:39 -> 00:02:40] So in this case, for example,
+[00:02:40 -> 00:02:41] if the original interpreter
+[00:02:41 -> 00:02:44] was something like the following on the left,
+[00:02:45 -> 00:02:48] here you have a function called interpret
+[00:02:48 -> 00:02:51] that takes two arguments, prod and data.
+[00:02:51 -> 00:02:56] And let's say it uses a loop for statement in prod,
+[00:02:56 -> 00:03:00] data equals eval statement, data.
+[00:03:00 -> 00:03:05] And this loop continues until the statement says finish.
+[00:03:06 -> 00:03:08] And when the statement says finish,
+[00:03:08 -> 00:03:10] the interpreter will come out of the loop
+[00:03:10 -> 00:03:12] and then it'll return the final value of data.
+[00:03:13 -> 00:03:17] Notice that here, this function called eval
+[00:03:18 -> 00:03:22] is something that the interpreter implements internally.
+[00:03:22 -> 00:03:24] And this eval function
+[00:03:24 -> 00:03:26] is what understands the high level instructions
+[00:03:26 -> 00:03:30] and kind of simulates them on the actual machine.
+[00:03:30 -> 00:03:35] All right, so now we know the program.
+[00:03:35 -> 00:03:37] And let's say the program was statement one,
+[00:03:37 -> 00:03:38] statement two, statement three,
+[00:03:38 -> 00:03:41] statement four, dot, dot, dot, statement n.
+[00:03:41 -> 00:03:43] Let's say it's a program of n statements.
+[00:03:43 -> 00:03:45] So then I can specialize
+[00:03:45 -> 00:03:50] or partially evaluate the interpreter on that program,
+[00:03:50 -> 00:03:51] something like the following, right?
+[00:03:51 -> 00:03:54] So we get a new executable.
+[00:03:54 -> 00:03:55] And now this time,
+[00:03:55 -> 00:03:57] the executable is just going to execute on data
+[00:03:57 -> 00:04:01] because the program has already been substituted
+[00:04:01 -> 00:04:02] inside the interpreter.
+[00:04:02 -> 00:04:05] And here, what I've done
+[00:04:05 -> 00:04:08] is instead of calling the original function eval
+[00:04:08 -> 00:04:10] on statement, comma, data,
+[00:04:10 -> 00:04:13] I have partially evaluated the eval function
+[00:04:13 -> 00:04:17] and on different statements.
+[00:04:17 -> 00:04:19] So for example, when I partially evaluated eval
+[00:04:19 -> 00:04:23] on statement one, I got the function eval statement one,
+[00:04:23 -> 00:04:25] and then I partially evaluated eval on statement two
+[00:04:25 -> 00:04:28] and so on, till statement n,
+[00:04:28 -> 00:04:30] and then I returned data.
+[00:04:30 -> 00:04:32] Now there are two things that are happening here.
+[00:04:32 -> 00:04:36] First, I am partially evaluating eval on statement one
+[00:04:36 -> 00:04:39] and statement n, dot, dot, dot, statement n,
+[00:04:39 -> 00:04:42] which means that I'm substituting statement one
+[00:04:42 -> 00:04:44] into the logic or implementation of eval,
+[00:04:44 -> 00:04:47] just like I'm substituting the program
+[00:04:47 -> 00:04:51] into the implementation of the whole interpreter.
+[00:04:51 -> 00:04:53] And so that should make the execution
+[00:04:53 -> 00:04:56] of each eval call slightly faster
+[00:04:56 -> 00:05:00] because we don't have to actually understand
+[00:05:00 -> 00:05:01] what is statement one.
+[00:05:01 -> 00:05:04] It's already substituted inside the specialized program.
+[00:05:04 -> 00:05:06] And the second thing here is that
+[00:05:06 -> 00:05:08] I completely got rid of the for loop, right?
+[00:05:08 -> 00:05:12] So I don't need to have any for loop here.
+[00:05:13 -> 00:05:16] And I can just zip through all the statements
+[00:05:16 -> 00:05:17] one after another.
+[00:05:17 -> 00:05:18] Notice that I'm assuming here
+[00:05:18 -> 00:05:21] that these statements are kind of,
+[00:05:21 -> 00:05:23] there's no loop in the source code and things like that.
+[00:05:23 -> 00:05:26] And so it was possible to do something like this.
+[00:05:26 -> 00:05:28] All right, this is an improvement
+[00:05:28 -> 00:05:30] over the trivial compilation
+[00:05:30 -> 00:05:31] because A, I have removed the loop
+[00:05:31 -> 00:05:33] and B, I have specialized the eval function
+[00:05:33 -> 00:05:35] for each of the statements.
+[00:05:36 -> 00:05:38] All right, but we can do better.
+[00:05:38 -> 00:05:40] And one idea here is that
+[00:05:40 -> 00:05:43] let's do local optimizations.
+[00:05:43 -> 00:05:45] So we've already talked about specializing
+[00:05:46 -> 00:05:50] the evaluate statement, I, for each I.
+[00:05:52 -> 00:05:54] And that would be called a local optimization.
+[00:05:54 -> 00:05:56] So why do I call it a local optimization?
+[00:05:56 -> 00:05:58] Well, any optimization that is
+[00:06:00 -> 00:06:04] particular to a single statement or a part of it
+[00:06:04 -> 00:06:07] would, you know, I'm calling a local optimization.
+[00:06:07 -> 00:06:09] And later I'm going to call any optimization
+[00:06:09 -> 00:06:12] that considers two or more statements
+[00:06:12 -> 00:06:14] a global optimization, all right.
+[00:06:14 -> 00:06:18] So in this case, specializing statement I for,
+[00:06:18 -> 00:06:21] specializing eval for each statement I,
+[00:06:21 -> 00:06:25] for I from one to N, is a local optimization.
+[00:06:26 -> 00:06:29] Similarly, I could cache the generated
+[00:06:29 -> 00:06:31] or specialized code, all right.
+[00:06:31 -> 00:06:36] Now, so for example, let's say I specialized statement one
+[00:06:37 -> 00:06:40] and I specialize fit statement two and so on.
+[00:06:40 -> 00:06:45] And then let's say there was a loop in the source program.
+[00:06:45 -> 00:06:47] So now again, I'm supposed to go back
+[00:06:47 -> 00:06:50] and specialize statement one.
+[00:06:50 -> 00:06:53] Now, maybe I, you know, if I know that the loop
+[00:06:53 -> 00:06:56] is going to execute in the source code for 10 times,
+[00:06:56 -> 00:07:00] then maybe I could specialize each statement 10 times,
+[00:07:00 -> 00:07:02] you know, in their correct order.
+[00:07:02 -> 00:07:04] So let's say there were, the program was
+[00:07:04 -> 00:07:07] statement one dot dot N and the entire program
+[00:07:07 -> 00:07:09] had an outer loop, which is going to execute
+[00:07:09 -> 00:07:10] all these statements 10 times.
+[00:07:10 -> 00:07:13] Then I would have 10 into N,
+[00:07:14 -> 00:07:17] I would generate a program or code
+[00:07:17 -> 00:07:20] of size 10 into N, right, for eval statement one,
+[00:07:20 -> 00:07:22] two, three, four, to N.
+[00:07:22 -> 00:07:24] And then again, eval statement one,
+[00:07:24 -> 00:07:26] two, three, four, and so on.
+[00:07:26 -> 00:07:27] Now I can do better than that.
+[00:07:27 -> 00:07:28] What can I do?
+[00:07:28 -> 00:07:31] Well, I don't need to generate the code
+[00:07:31 -> 00:07:34] for every instruction again and again.
+[00:07:34 -> 00:07:36] Because it is the same instruction
+[00:07:36 -> 00:07:40] that is being evaluated in different iterations,
+[00:07:40 -> 00:07:45] I can cache the partially evaluated eval function
+[00:07:45 -> 00:07:47] for a given instruction, for a given statement.
+[00:07:47 -> 00:07:49] And then I can keep jumping to that
+[00:07:49 -> 00:07:51] whenever I need to, right?
+[00:07:51 -> 00:07:53] So in this example, for, you know,
+[00:07:53 -> 00:07:57] I could just have a program which evaluates statements,
+[00:07:57 -> 00:08:00] which partially evaluates eval
+[00:08:00 -> 00:08:03] on each of the statements one dot dot N only once.
+[00:08:03 -> 00:08:05] And then for the second iteration,
+[00:08:05 -> 00:08:07] I'm just going to jump back
+[00:08:07 -> 00:08:11] to the partially evaluated implementation
+[00:08:12 -> 00:08:14] of the first iteration, all right?
+[00:08:14 -> 00:08:19] Now, what is the advantage that this would entail?
+[00:08:19 -> 00:08:21] Well, one thing is I have reduced the code size,
+[00:08:21 -> 00:08:22] all right?
+[00:08:22 -> 00:08:25] And code size, reducing code size also means
+[00:08:25 -> 00:08:27] that I have reduced the running time often
+[00:08:27 -> 00:08:31] because code is also stored in memory.
+[00:08:31 -> 00:08:34] And so getting the code from memory
+[00:08:34 -> 00:08:38] so that you can execute it takes some time, right?
+[00:08:38 -> 00:08:40] And if you have reduced the code size,
+[00:08:40 -> 00:08:42] you have to get less code from memory,
+[00:08:42 -> 00:08:44] and so you have made your program faster.
+[00:08:44 -> 00:08:47] All right, okay, all right.
+[00:08:48 -> 00:08:51] Actually, caching and reuse of generated code
+[00:08:51 -> 00:08:54] is the most basic optimization.
+[00:08:54 -> 00:08:59] In reality, a statement in a long-running program,
+[00:09:00 -> 00:09:02] for example, let's say you write a program
+[00:09:02 -> 00:09:05] in high-level language like C or Java,
+[00:09:05 -> 00:09:08] a statement in your program is likely to execute
+[00:09:08 -> 00:09:12] for millions or billions of times,
+[00:09:12 -> 00:09:14] or maybe even trillions of times, right?
+[00:09:14 -> 00:09:16] And if it's going to execute, let's say,
+[00:09:16 -> 00:09:20] billions of times, then it doesn't make sense
+[00:09:20 -> 00:09:24] to generate a billion specializations
+[00:09:24 -> 00:09:26] of your instruction during compile time.
+[00:09:26 -> 00:09:30] And you would just generate one specialization,
+[00:09:30 -> 00:09:33] and then whenever that instruction is executed again,
+[00:09:33 -> 00:09:35] you're going to jump to the same place
+[00:09:35 -> 00:09:38] so that you can execute that specialization again.
+[00:09:38 -> 00:09:40] And this is such a basic optimization
+[00:09:40 -> 00:09:41] that it's not even called an optimization.
+[00:09:41 -> 00:09:43] And when we talk about compilation,
+[00:09:43 -> 00:09:45] we just kind of assume that this is given
+[00:09:45 -> 00:09:49] that for every static instruction in the source code,
+[00:09:49 -> 00:09:53] we generate a static assembly set of instructions
+[00:09:54 -> 00:09:56] in a one-to-one correspondence.
+[00:09:56 -> 00:09:58] And then whenever that particular statement
+[00:09:58 -> 00:10:00] is executed in the source code,
+[00:10:00 -> 00:10:03] the corresponding statement gets executed
+[00:10:03 -> 00:10:05] in the assembly code.
+[00:10:05 -> 00:10:07] And we take that for granted.
+[00:10:07 -> 00:10:10] But notice that this is actually an optimization.
+[00:10:11 -> 00:10:15] All right, now before I move forward,
+[00:10:15 -> 00:10:17] I should say that there are two modes of compilation.
+[00:10:17 -> 00:10:19] All right, so recall that I said
+[00:10:19 -> 00:10:22] that compilation is the partial evaluation
+[00:10:22 -> 00:10:26] of the interpreter on the program source code.
+[00:10:26 -> 00:10:29] And that's true for all languages,
+[00:10:29 -> 00:10:33] C, Java, Python, Perl, and so on.
+[00:10:33 -> 00:10:35] Now, we are generally familiar
+[00:10:35 -> 00:10:36] with some of these languages
+[00:10:36 -> 00:10:38] being called interpreted languages,
+[00:10:38 -> 00:10:41] and while others are called compiled languages.
+[00:10:41 -> 00:10:44] For example, often Java and Python
+[00:10:44 -> 00:10:46] are called interpreted languages,
+[00:10:46 -> 00:10:49] while C and C++ are usually called compiled languages.
+[00:10:50 -> 00:10:55] But I don't think this distinction is very accurate.
+[00:10:56 -> 00:11:00] And actually, there is no such distinction
+[00:11:00 -> 00:11:02] because any language could be an interpreted language,
+[00:11:02 -> 00:11:04] and any language could be a compiled language.
+[00:11:04 -> 00:11:07] For example, there exist C and C++ interpreters.
+[00:11:07 -> 00:11:11] Conversely, there exist compilers for Java and Python.
+[00:11:11 -> 00:11:14] All right, so there's nothing fundamental
+[00:11:14 -> 00:11:16] about what mode you choose to run,
+[00:11:16 -> 00:11:18] whether you run it in interpreted mode
+[00:11:18 -> 00:11:20] or whether you run it in compiled mode.
+[00:11:20 -> 00:11:23] That has nothing to do with the language itself.
+[00:11:24 -> 00:11:26] It's just a matter of engineering choice
+[00:11:26 -> 00:11:28] by the designers of that language,
+[00:11:28 -> 00:11:31] or the ease of implementation
+[00:11:31 -> 00:11:33] that the designers of the language chose, right?
+[00:11:33 -> 00:11:35] So, for example, C and C++
+[00:11:35 -> 00:11:38] are generally considered performance-sensitive languages,
+[00:11:38 -> 00:11:40] and so their designers basically said that we have the,
+[00:11:40 -> 00:11:42] I mean, and so, you know,
+[00:11:42 -> 00:11:45] compilation is the dominant way of using those languages.
+[00:11:45 -> 00:11:48] Similarly, Java and Python are languages
+[00:11:49 -> 00:11:50] that are kind of more concerned with safety
+[00:11:50 -> 00:11:52] and less concerned with performance,
+[00:11:52 -> 00:11:56] at least historically, that's no longer true today.
+[00:11:56 -> 00:11:59] And so the initial implementations of these languages
+[00:11:59 -> 00:12:01] at least were through an interpreter.
+[00:12:01 -> 00:12:03] In either case, you know,
+[00:12:03 -> 00:12:04] neither of these languages today
+[00:12:04 -> 00:12:06] are purely compiled or purely interpreted.
+[00:12:06 -> 00:12:09] And so I just wanted to kind of break this myth
+[00:12:09 -> 00:12:11] that some languages are purely interpreted languages
+[00:12:11 -> 00:12:13] and others are purely compiled languages.
+[00:12:14 -> 00:12:17] How, compilation is just interpretation
+[00:12:19 -> 00:12:21] which is partially evaluated
+[00:12:21 -> 00:12:24] before the actual execution, all right?
+[00:12:24 -> 00:12:26] Compilation is a process of partial evaluation
+[00:12:26 -> 00:12:28] of an interpreter on a program source code.
+[00:12:28 -> 00:12:30] Yeah, we should always remember that.
+[00:12:30 -> 00:12:31] Now, the question is,
+[00:12:31 -> 00:12:34] when is the compilation actually taking place?
+[00:12:34 -> 00:12:36] Option one, this partial evaluation
+[00:12:36 -> 00:12:40] or this compilation process is done ahead of time
+[00:12:40 -> 00:12:42] in an offline phase
+[00:12:42 -> 00:12:45] so that you can run this program
+[00:12:45 -> 00:12:47] without worrying about compilation.
+[00:12:47 -> 00:12:49] And this is called static compilation
+[00:12:49 -> 00:12:51] or ahead of time compilation.
+[00:12:51 -> 00:12:53] This is the kind of compilation we're usually used to
+[00:12:53 -> 00:12:56] doing when we use our C and C++ programs
+[00:12:56 -> 00:12:59] and we use compilers like GCC, all right?
+[00:12:59 -> 00:13:03] We just compile and store the result ahead of time.
+[00:13:03 -> 00:13:05] And then we can execute the result,
+[00:13:05 -> 00:13:08] which is executable any number of times
+[00:13:08 -> 00:13:09] on different inputs.
+[00:13:10 -> 00:13:12] Now, there's another type of compilation
+[00:13:12 -> 00:13:15] which is dynamic compilation or just-in-time compilation.
+[00:13:15 -> 00:13:19] Here, we don't compile the source code ahead of time.
+[00:13:20 -> 00:13:24] When we start running that program source code,
+[00:13:24 -> 00:13:25] in other words,
+[00:13:25 -> 00:13:27] when we start interpreting that program source code,
+[00:13:27 -> 00:13:29] during this interpretation,
+[00:13:29 -> 00:13:30] we decide that we are going to
+[00:13:30 -> 00:13:32] partially evaluate the interpreter
+[00:13:32 -> 00:13:33] or we are going to partial,
+[00:13:33 -> 00:13:35] we're going to start compiling the executable
+[00:13:35 -> 00:13:37] as it starts running, right?
+[00:13:37 -> 00:13:39] So we are going to start compiling the program source code
+[00:13:39 -> 00:13:41] to generate the executable.
+[00:13:41 -> 00:13:43] And this is just-in-time compilation.
+[00:13:43 -> 00:13:48] Now, examples of just-in-time compilation are,
+[00:13:48 -> 00:13:51] for example, Java made just-in-time compilation
+[00:13:51 -> 00:13:54] very popular and there are just-in-time compilers
+[00:13:54 -> 00:13:59] for other languages like Python and Perl and so on, okay?
+[00:13:59 -> 00:14:02] So notice, and so in the implementation scheme
+[00:14:02 -> 00:14:05] of languages, on one hand,
+[00:14:05 -> 00:14:09] we have statically compiled frameworks
+[00:14:09 -> 00:14:11] or static compilation frameworks
+[00:14:12 -> 00:14:13] and then on the other hand,
+[00:14:13 -> 00:14:13] we have purely interpreted frameworks
+[00:14:13 -> 00:14:15] where we don't make any pretence
+[00:14:15 -> 00:14:17] of trying to partially evaluate the interpreter
+[00:14:17 -> 00:14:19] on the program source code.
+[00:14:19 -> 00:14:22] And then somewhere in the middle is just-in-time compiler
+[00:14:22 -> 00:14:24] which would start by interpreting,
+[00:14:24 -> 00:14:27] but in the middle, we'll decide that, okay,
+[00:14:27 -> 00:14:28] I want to, I mean,
+[00:14:28 -> 00:14:32] this part of the board is really executed a lot
+[00:14:32 -> 00:14:34] and interpreting is really slow.
+[00:14:34 -> 00:14:37] So let's compile it on the fly, right?
+[00:14:37 -> 00:14:39] As I'm running it.
+[00:14:39 -> 00:14:43] And so because we are just compiling the program
+[00:14:43 -> 00:14:45] on the fly at the time of running,
+[00:14:45 -> 00:14:47] we call it just-in-time compilation,
+[00:14:47 -> 00:14:49] just-in-time of execution.
+[00:14:50 -> 00:14:51] All right, so what are the trade-offs
+[00:14:51 -> 00:14:54] of doing ahead-of-time versus just-in-time?
+[00:14:54 -> 00:14:55] Well, first of all,
+[00:14:55 -> 00:14:58] static ahead-of-time compilation has no runtime cost.
+[00:14:58 -> 00:15:00] You're doing it in an offline phase
+[00:15:00 -> 00:15:02] and usually it doesn't get counted
+[00:15:02 -> 00:15:04] on the actual execution of a program.
+[00:15:04 -> 00:15:05] So think about it.
+[00:15:05 -> 00:15:08] Let's say you're running a web server.
+[00:15:08 -> 00:15:08] Then the web server,
+[00:15:08 -> 00:15:10] if it has been compiled ahead of time,
+[00:15:10 -> 00:15:13] it doesn't matter how long it took to compile, right?
+[00:15:13 -> 00:15:14] Because the web server is going to serve
+[00:15:14 -> 00:15:16] billions of requests
+[00:15:16 -> 00:15:19] and each request that gets served
+[00:15:19 -> 00:15:21] has nothing to do with the time taken
+[00:15:21 -> 00:15:23] by each request to get served
+[00:15:23 -> 00:15:25] has nothing to do with the amount of time
+[00:15:25 -> 00:15:29] it took to compile the web server, all right?
+[00:15:29 -> 00:15:32] However, there are some problems.
+[00:15:32 -> 00:15:34] One of the problems is
+[00:15:34 -> 00:15:37] that although the running of the executable is fast,
+[00:15:38 -> 00:15:40] the total, which is compile plus run,
+[00:15:40 -> 00:15:43] may actually be slower than just-in-time compilation
+[00:15:43 -> 00:15:45] or even interpretation, all right?
+[00:15:45 -> 00:15:47] So sometimes it may make sense
+[00:15:47 -> 00:15:48] to look at both of these together.
+[00:15:48 -> 00:15:50] For example, some programs are only executed
+[00:15:50 -> 00:15:53] a few times and if that's true,
+[00:15:53 -> 00:15:57] then compilation costs should be considered.
+[00:15:57 -> 00:16:00] A much more serious problem with static compilation
+[00:16:00 -> 00:16:05] is that at the time of static compilation,
+[00:16:05 -> 00:16:08] you don't know what part of a program
+[00:16:08 -> 00:16:09] is going to be executed more
+[00:16:09 -> 00:16:10] and which part of the program
+[00:16:10 -> 00:16:12] is going to be executed less.
+[00:16:12 -> 00:16:16] You also don't know what is the typical nature
+[00:16:16 -> 00:16:19] of the inputs that this program is executing on.
+[00:16:19 -> 00:16:21] Now, all this lack of information
+[00:16:21 -> 00:16:23] basically means that the compiler
+[00:16:23 -> 00:16:25] should just make some guesses
+[00:16:25 -> 00:16:26] and generate some code
+[00:16:26 -> 00:16:30] and those guesses may be actually proved incorrect
+[00:16:30 -> 00:16:31] at the time of running,
+[00:16:31 -> 00:16:35] in which case your program will run slower than optimal.
+[00:16:36 -> 00:16:37] And so this is a serious con
+[00:16:37 -> 00:16:40] of static ahead-of-time compilation,
+[00:16:40 -> 00:16:42] that not enough information is available
+[00:16:42 -> 00:16:44] during compilation.
+[00:16:44 -> 00:16:47] Let's look at dynamic just-in-time compilation.
+[00:16:47 -> 00:16:50] So in this, you generate machine code at runtime
+[00:16:50 -> 00:16:52] as we just discussed, all right?
+[00:16:52 -> 00:16:54] And the other important part
+[00:16:54 -> 00:16:56] of dynamic just-in-time compilation
+[00:16:56 -> 00:16:58] is that you cache the generated code.
+[00:16:58 -> 00:17:01] Now, this is a very important optimization
+[00:17:01 -> 00:17:03] for just-in-time compilation
+[00:17:05 -> 00:17:07] if you partially evaluated the interpreter
+[00:17:07 -> 00:17:09] on some part of your program,
+[00:17:09 -> 00:17:12] then you want to store the result
+[00:17:12 -> 00:17:14] of that partial evaluation
+[00:17:14 -> 00:17:16] so that the next time that part of the program executes,
+[00:17:16 -> 00:17:19] you don't have to redo the partial evaluation.
+[00:17:19 -> 00:17:21] Now, unless you do this caching,
+[00:17:21 -> 00:17:25] the idea of just-in-time compilation is meaningless
+[00:17:25 -> 00:17:28] because that would mean too much overhead of compilation
+[00:17:28 -> 00:17:30] because if the same part of the code
+[00:17:30 -> 00:17:32] is executing a billion times
+[00:17:32 -> 00:17:35] and you have to do this compilation a billion times,
+[00:17:35 -> 00:17:39] then it's kind of not a very good scheme.
+[00:17:39 -> 00:17:43] On the other hand, if you cache the compilation
+[00:17:43 -> 00:17:44] the first time it executes,
+[00:17:44 -> 00:17:47] the rest of billion minus one times,
+[00:17:47 -> 00:17:49] you don't have to compile it
+[00:17:49 -> 00:17:52] and you get the compiled code for free.
+[00:17:52 -> 00:17:53] And so that's a great thing
+[00:17:53 -> 00:17:55] about just-in-time compilation.
+[00:17:55 -> 00:17:57] And caching is very important there.
+[00:17:57 -> 00:18:00] Just like ahead-of-time compilation,
+[00:18:00 -> 00:18:02] we are also, we are actually caching.
+[00:18:03 -> 00:18:04] All right, so the good things
+[00:18:04 -> 00:18:06] about just-in-time compilation
+[00:18:06 -> 00:18:08] is that there is a lot of runtime information
+[00:18:08 -> 00:18:08] during the compilation.
+[00:18:08 -> 00:18:10] For example, you know, the interpret,
+[00:18:10 -> 00:18:12] because the program is already running
+[00:18:12 -> 00:18:15] and maybe it has already run 10 times or 100 times,
+[00:18:15 -> 00:18:18] you already know what is typically running,
+[00:18:18 -> 00:18:21] what are the typical nature of inputs,
+[00:18:21 -> 00:18:23] what is the typical paths
+[00:18:23 -> 00:18:25] that this program is taking and so on.
+[00:18:25 -> 00:18:27] And so you can make better decisions,
+[00:18:27 -> 00:18:28] optimization decisions.
+[00:18:29 -> 00:18:33] Similarly, you only need to compile relevant portions.
+[00:18:33 -> 00:18:35] So let's assume that your program is really large.
+[00:18:35 -> 00:18:37] Let's say, you know, your program is as large
+[00:18:37 -> 00:18:39] as the GCC compiler,
+[00:18:39 -> 00:18:41] but, or the Linux kernel.
+[00:18:42 -> 00:18:44] Now compiling these programs,
+[00:18:44 -> 00:18:47] these large programs like the GCC compiler
+[00:18:47 -> 00:18:49] and the Linux kernel takes hours.
+[00:18:50 -> 00:18:51] But if it's going,
+[00:18:51 -> 00:18:53] if only a portion of these programs
+[00:18:53 -> 00:18:55] is going to get executed
+[00:18:55 -> 00:18:57] or is getting executed while, you know,
+[00:18:58 -> 00:18:59] while the interpretation is happening,
+[00:18:59 -> 00:19:00] then only those portions,
+[00:19:00 -> 00:19:02] only those relevant portions need to be compiled
+[00:19:02 -> 00:19:04] and that saves a lot of compilation time.
+[00:19:04 -> 00:19:09] And that's also a big pro of just-in-time compilation.
+[00:19:09 -> 00:19:12] Of course, the big con or the big disadvantage
+[00:19:12 -> 00:19:13] of doing just-in-time compilation
+[00:19:13 -> 00:19:16] is that you have to pay runtime compilation cost.
+[00:19:16 -> 00:19:19] Now, one thing that is, you know,
+[00:19:19 -> 00:19:21] that people do to manage the cost
+[00:19:21 -> 00:19:24] of dynamic just-in-time compilation
+[00:19:24 -> 00:19:27] is A, you do caching, which we just discussed.
+[00:19:27 -> 00:19:30] In this case, the compile cost is paid only once
+[00:19:30 -> 00:19:32] for a fragment that would probably execute
+[00:19:32 -> 00:19:33] millions or billions of times,
+[00:19:33 -> 00:19:35] in which case the cost of compilation
+[00:19:35 -> 00:19:38] gets amortized over that many times,
+[00:19:38 -> 00:19:40] which usually is a good trade-off.
+[00:19:40 -> 00:19:41] And the other thing is that
+[00:19:41 -> 00:19:45] because you have multi-core processors today
+[00:19:45 -> 00:19:48] and some of those processors are usually lying idle,
+[00:19:48 -> 00:19:50] it, you know, just-in-time compilation
+[00:19:50 -> 00:19:52] makes more sense in modern hardware environments
+[00:19:52 -> 00:19:54] because you can dedicate one core
+[00:19:54 -> 00:19:56] to doing this just-in-time compilation
+[00:19:56 -> 00:19:59] without affecting the speed of the rest of your program.
+[00:20:00 -> 00:20:04] Often, I would say advantages are much more than cost
+[00:20:04 -> 00:20:06] for, especially for long-running programs
+[00:20:06 -> 00:20:08] of just-in-time compilation.
+[00:20:08 -> 00:20:10] However, just-in-time compilation
+[00:20:10 -> 00:20:13] is more prone to programming errors
+[00:20:13 -> 00:20:15] because it is more, a more complex system
+[00:20:15 -> 00:20:18] than a static ahead-of-time compilation system.
+[00:20:21 -> 00:20:24] Okay, now we discussed some local optimization,
+[00:20:24 -> 00:20:27] such as substitution and caching,
+[00:20:27 -> 00:20:29] but now let's take some more examples
+[00:20:29 -> 00:20:31] of what more optimizations I could do
+[00:20:31 -> 00:20:32] during this partial evaluation
+[00:20:32 -> 00:20:34] of the interpreter on the source code.
+[00:20:34 -> 00:20:37] So global optimization span multiple statements
+[00:20:37 -> 00:20:39] or program fragments.
+[00:20:39 -> 00:20:41] And why would there be an opportunity
+[00:20:41 -> 00:20:43] to do global optimizations?
+[00:20:43 -> 00:20:45] Well, one reason is because the programmer
+[00:20:45 -> 00:20:47] wrote suboptimal code to begin with.
+[00:20:47 -> 00:20:50] So for example, the programmer wrote x equals one,
+[00:20:50 -> 00:20:53] x plus plus, now the optimizer can easily optimize this
+[00:20:53 -> 00:20:55] to saying x equals two.
+[00:20:55 -> 00:20:58] Now, why would the programmer write suboptimal code?
+[00:20:58 -> 00:21:00] There are many reasons that the programmer
+[00:21:00 -> 00:21:03] may want to write code that has lots of abstractions,
+[00:21:05 -> 00:21:07] for example, due to debug flags
+[00:21:07 -> 00:21:10] or due to function calls and things like that.
+[00:21:10 -> 00:21:14] And so things that actually get together
+[00:21:14 -> 00:21:16] are not kind of obvious in the source code.
+[00:21:16 -> 00:21:18] And sometimes the programmers are just lazy
+[00:21:18 -> 00:21:20] and they're not worried about optimization
+[00:21:20 -> 00:21:23] and in which case the compiler can come to your rescue.
+[00:21:23 -> 00:21:25] All right, that's one reason
+[00:21:25 -> 00:21:28] why there may be an opportunity to do global optimizations.
+[00:21:29 -> 00:21:32] Another reason is because low-level syntax
+[00:21:32 -> 00:21:34] is sometimes richer.
+[00:21:34 -> 00:21:37] The assembly-level, machine-level syntax
+[00:21:37 -> 00:21:40] could be richer and have more opportunities
+[00:21:40 -> 00:21:43] or more instructions or more opcodes
+[00:21:43 -> 00:21:44] than the high-level syntax.
+[00:21:44 -> 00:21:46] So here's an example.
+[00:21:46 -> 00:21:49] Let's say in the C language,
+[00:21:49 -> 00:21:51] we have the multiply and the add operator
+[00:21:51 -> 00:21:53] and the assignment operator.
+[00:21:53 -> 00:21:54] So let's say in the C language,
+[00:21:54 -> 00:21:58] I wrote this code, T, which represents a temporary,
+[00:21:58 -> 00:22:00] equals X into Y.
+[00:22:00 -> 00:22:03] And then I wrote Z equals T plus A.
+[00:22:03 -> 00:22:08] Now on the hardware, let's say x86 hardware machine,
+[00:22:08 -> 00:22:12] you have an instruction which just does multiply and add
+[00:22:12 -> 00:22:14] in one go, all right?
+[00:22:14 -> 00:22:18] But there's no such operator in the high-level language,
+[00:22:18 -> 00:22:20] for example, C.
+[00:22:20 -> 00:22:23] And so the only way I can expect
+[00:22:23 -> 00:22:25] that the program will use this instruction
+[00:22:25 -> 00:22:29] called multiply add is because the compiler
+[00:22:29 -> 00:22:32] would have converted sequences of multiply and add
+[00:22:32 -> 00:22:34] with this single instruction, right?
+[00:22:34 -> 00:22:36] And so these kinds of optimizations are important
+[00:22:36 -> 00:22:40] and to be able to use the full power of the machine.
+[00:22:40 -> 00:22:41] In fact, in the last lecture,
+[00:22:41 -> 00:22:44] I talked about vectorization and I said
+[00:22:44 -> 00:22:47] that high-level languages don't have vector instructions,
+[00:22:47 -> 00:22:50] but low-level machines do have vector instructions.
+[00:22:50 -> 00:22:53] And so the onus of being able to, you know,
+[00:22:53 -> 00:22:55] use the vector instruction in hardware
+[00:22:55 -> 00:22:59] lies with the compiler, all right?
+[00:23:01 -> 00:23:03] Now there's another reason why global optimizations
+[00:23:03 -> 00:23:04] may get enabled.
+[00:23:04 -> 00:23:07] And this is because some optimizations
+[00:23:07 -> 00:23:10] enable more optimizations, all right?
+[00:23:10 -> 00:23:12] So here's an example.
+[00:23:12 -> 00:23:14] Let's say X equals one, Y equals X plus two,
+[00:23:14 -> 00:23:16] Z equals X pi plus three.
+[00:23:16 -> 00:23:18] Now if I look at Y and Z here,
+[00:23:18 -> 00:23:21] they look like perfectly a good piece of code
+[00:23:21 -> 00:23:23] and I don't need to optimize it any further.
+[00:23:23 -> 00:23:27] But then when I look at X and Y,
+[00:23:27 -> 00:23:28] the first two statements,
+[00:23:28 -> 00:23:32] then I can see that I can replace X plus two
+[00:23:32 -> 00:23:36] with just three.
+[00:23:36 -> 00:23:38] And then again, when I look at
+[00:23:38 -> 00:23:40] the second and third statement,
+[00:23:40 -> 00:23:43] I can see that Z can be replaced by Z equals six.
+[00:23:43 -> 00:23:46] And that's what I get on my right.
+[00:23:46 -> 00:23:47] And what happened here was
+[00:23:47 -> 00:23:49] because of one optimization,
+[00:23:49 -> 00:23:50] another optimization got triggered.
+[00:23:50 -> 00:23:55] And this is a very common thing in compilers.
+[00:23:55 -> 00:23:56] On the other hand, it is also common
+[00:23:56 -> 00:23:58] for one optimization to preclude
+[00:23:58 -> 00:24:01] or thwart another optimization, all right?
+[00:24:01 -> 00:24:04] So because one optimization triggered,
+[00:24:04 -> 00:24:06] the other optimization can no longer trigger, all right?
+[00:24:06 -> 00:24:08] This is also a very common phenomenon.
+[00:24:08 -> 00:24:13] And this is a big problem in compiler design
+[00:24:13 -> 00:24:14] and causes complexity.
+[00:24:14 -> 00:24:16] So here's an example.
+[00:24:16 -> 00:24:18] Let's say I have T equals X into two
+[00:24:18 -> 00:24:20] and Y equals X plus eight.
+[00:24:20 -> 00:24:22] Now the compiler has some logic
+[00:24:22 -> 00:24:25] that says that whenever you see a multiply operator
+[00:24:25 -> 00:24:26] followed by an add operator,
+[00:24:26 -> 00:24:31] you can convert it to the mull add operator, right?
+[00:24:31 -> 00:24:35] This is something that we saw a couple of slides back.
+[00:24:35 -> 00:24:37] But then there is another rule in the compiler
+[00:24:37 -> 00:24:41] which says anytime you see multiplication by two,
+[00:24:41 -> 00:24:45] then you can convert this to a left shift by one,
+[00:24:45 -> 00:24:46] all right?
+[00:24:46 -> 00:24:49] So here you're removing the multiply
+[00:24:49 -> 00:24:53] and replacing it with a faster left shift operation.
+[00:24:53 -> 00:24:55] Now this is all good, except that
+[00:24:57 -> 00:24:58] if you do the first one,
+[00:24:58 -> 00:25:03] which is conversion of multiply to left shift,
+[00:25:03 -> 00:25:08] then you cannot grow from the first one
+[00:25:08 -> 00:25:08] to the second one,
+[00:25:08 -> 00:25:09] because the compiler has no rule
+[00:25:09 -> 00:25:12] which says that if you left shift and then add,
+[00:25:12 -> 00:25:15] then you can replace it with mull add, all right?
+[00:25:15 -> 00:25:17] So this becomes a problem.
+[00:25:17 -> 00:25:21] And this kind of a problem
+[00:25:21 -> 00:25:24] where you want to decide which optimization to apply
+[00:25:24 -> 00:25:27] so that you don't thwart other optimizations
+[00:25:27 -> 00:25:28] because some optimizations
+[00:25:28 -> 00:25:30] will enable some other optimizations.
+[00:25:30 -> 00:25:33] On the other hand, some optimizations may preclude
+[00:25:33 -> 00:25:34] or thwart the other optimizations
+[00:25:34 -> 00:25:36] and this becomes a big problem.
+[00:25:36 -> 00:25:39] And this is a well-known problem in compiler design
+[00:25:39 -> 00:25:44] and is popularly known as the phase ordering problem.
+[00:25:44 -> 00:25:45] And we are going to learn more about this
+[00:25:45 -> 00:25:51] as we go along in the course, okay?
+[00:25:53 -> 00:25:56] Theoretically, what is a compiler supposed to do?
+[00:25:56 -> 00:25:59] A compiler is supposed to take as input
+[00:25:59 -> 00:26:02] a program source code and an instruction set architecture.
+[00:26:02 -> 00:26:05] For example, it could take a C program
+[00:26:05 -> 00:26:09] and an instruction set architecture like the x86.
+[00:26:09 -> 00:26:12] And it's supposed to generate the optimal,
+[00:26:12 -> 00:26:14] the ideal compiler is supposed to generate
+[00:26:14 -> 00:26:17] the optimal machine code for that source code
+[00:26:17 -> 00:26:20] and a given instruction set architecture.
+[00:26:20 -> 00:26:23] Now it turns out that this is an undecidable problem.
+[00:26:23 -> 00:26:26] All right, so this is an undecidable problem.
+[00:26:26 -> 00:26:31] And so, except in certain special situations
+[00:26:31 -> 00:26:33] where the programs are really small,
+[00:26:33 -> 00:26:35] one cannot solve this problem.
+[00:26:35 -> 00:26:37] And so what compilers are doing
+[00:26:37 -> 00:26:39] is they are doing the best effort.
+[00:26:39 -> 00:26:41] Things are improving year by year,
+[00:26:41 -> 00:26:45] but we are nowhere close to what could be the optimal.

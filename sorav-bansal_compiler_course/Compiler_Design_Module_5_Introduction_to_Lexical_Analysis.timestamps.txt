@@ -1,0 +1,226 @@
+Title: Compiler Design Module 5 : Introduction to Lexical Analysis
+Video ID: VLf_wGD5bBU
+Detected language: en
+------------------------------------------------------------
+
+[00:00:00 -> 00:00:04] Okay, so today we're going to discuss about lexical analysis
+[00:00:05 -> 00:00:12] We already got introduced to lexical analysis lexical analysis or lexing converts a stream of characters to a stream of tokens
+[00:00:13 -> 00:00:17] Now consider this example if X is greater than equal to Y
+[00:00:18 -> 00:00:22] Z then Z equals one semicolon else a equals Z
+[00:00:24 -> 00:00:26] now to a computer
+[00:00:26 -> 00:00:29] This program looks like a stream of characters
+[00:00:29 -> 00:00:35] So it looks something like what I what's shown in blue here, you know where backslash T represents
+[00:00:35 -> 00:00:37] the tab character and
+[00:00:39 -> 00:00:46] Backslash N represents the end line character and then there are spaces in the middle
+[00:00:47 -> 00:00:51] All right, and the job is to convert this into a
+[00:00:52 -> 00:00:59] Stream of tokens. So what is the stream of tokens? Well, basically we want to insert delimiters
+[00:01:00 -> 00:01:11] such that they distinguish one token from another so here for example if is
+[00:01:12 -> 00:01:19] One token and recall that tokens are of different types and in this case if is a keyword token
+[00:01:20 -> 00:01:22] similarly X is an
+[00:01:22 -> 00:01:24] Identifier token and so on
+[00:01:26 -> 00:01:28] Also notice that there are
+[00:01:28 -> 00:01:35] White space tokens. All right, so backslash and backslash T or space for that matter
+[00:01:35 -> 00:01:37] kind of come in
+[00:01:39 -> 00:01:41] White space tokens
+[00:01:42 -> 00:01:44] All right. So
+[00:01:44 -> 00:01:48] So before we understand how we get tokens, let's understand
+[00:01:48 -> 00:01:55] What's a token class a token class is basically, you know, for example, the keyword is a token class and identifies the token class
+[00:01:55 -> 00:01:59] So more formally a token class corresponds to a set of strings
+[00:02:00 -> 00:02:03] for example an identifier is a token class and
+[00:02:04 -> 00:02:09] Here it is a string of letters or digits that start with the letter
+[00:02:09 -> 00:02:12] All right, so I can say that any token or any
+[00:02:14 -> 00:02:22] Any token that has a string that contains letters and digits as it starts with a letter is an identifier
+[00:02:23 -> 00:02:25] Belongs to the identifier class
+[00:02:25 -> 00:02:30] similarly an integer token class could be a string of digits or a keyword token class could be
+[00:02:31 -> 00:02:39] Special strings like if then while else for and so on and then there could be a white space token class
+[00:02:39 -> 00:02:45] Which could say that if it's a sequence of blanks new lines or tabs or any other types of white space
+[00:02:45 -> 00:02:51] Then that would belong to the white those strings would belong to the white space token class
+[00:02:52 -> 00:02:54] So what's a lexical analyzer? Well
+[00:02:55 -> 00:02:58] You know, you can think of the lexical analyzer or lexer as a function
+[00:02:59 -> 00:03:06] that takes a string what which is just nothing but a sequence of characters and it turns a
+[00:03:08 -> 00:03:09] sequence of tokens
+[00:03:09 -> 00:03:11] All right
+[00:03:11 -> 00:03:14] And what is a token a token is basically a tuple
+[00:03:15 -> 00:03:21] Which I'd indicates the class of that token and the string that forms that token
+[00:03:22 -> 00:03:24] Alright, so let's take an example
+[00:03:25 -> 00:03:27] So here is a string
+[00:03:28 -> 00:03:33] foo equals 42 and there is white space between equals and
+[00:03:33 -> 00:03:35] 42 and equals in foo and
+[00:03:36 -> 00:03:38] We would
+[00:03:38 -> 00:03:40] You know the lexer would
+[00:03:40 -> 00:03:43] convert this
+[00:03:43 -> 00:03:48] What would the lexer convert this to well it would say it is a stream of tokens
+[00:03:48 -> 00:03:50] so the first token is going to be foo and
+[00:03:51 -> 00:04:02] Was the token class the token class is identified the second token
+[00:04:03 -> 00:04:04] operator
+[00:04:04 -> 00:04:05] equals
+[00:04:05 -> 00:04:08] Was the third token maybe constant?
+[00:04:10 -> 00:04:12] 42
+[00:04:12 -> 00:04:13] right
+[00:04:13 -> 00:04:19] So depending on the language you may want to choose different to know the token classes may be different
+[00:04:21 -> 00:04:25] Also the strings that belong to each token class may be different
+[00:04:25 -> 00:04:31] In this case we have we have lexed foo equals 42 into these three tokens
+[00:04:32 -> 00:04:34] identifier operator and constant
+[00:04:35 -> 00:04:39] And let's take a more complicated example like the one that we showed on the first slide
+[00:04:40 -> 00:04:42] now here
+[00:04:42 -> 00:04:44] We are going to
+[00:04:44 -> 00:04:46] Say okay
+[00:04:46 -> 00:04:48] Backslash T is just white space
+[00:04:48 -> 00:04:55] So I'm going to omit the white space tokens. The first token here is a keyword. So it's a keyword if
+[00:04:56 -> 00:04:58] This is the first token
+[00:04:59 -> 00:05:01] the second token is
+[00:05:02 -> 00:05:05] The left parenthesis, so I'm going to say
+[00:05:06 -> 00:05:11] Let's say maybe the left parenthesis itself is the token class and say left parenthesis
+[00:05:11 -> 00:05:15] L parent and say this is a string that corresponds to this token
+[00:05:16 -> 00:05:17] then
+[00:05:17 -> 00:05:19] identifier
+[00:05:19 -> 00:05:21] X
+[00:05:21 -> 00:05:23] Would be the next token
+[00:05:23 -> 00:05:34] Now it's now the next token here is greater than equal to so, you know
+[00:05:35 -> 00:05:41] We could potentially say that the greater than sign is a separate token and the equal to sign is a separate token
+[00:05:41 -> 00:05:43] Because they both mean something
+[00:05:44 -> 00:05:47] And then leave it to the parser to figure out that they are occurring together
+[00:05:47 -> 00:05:53] And then we can say that this is a greater than equal to operator or we could resolve this at lexing time
+[00:05:53 -> 00:05:57] And so in this example, I'm going to assume that the lexer is able to figure this out
+[00:05:58 -> 00:06:04] And so it constructs a single string from greater than equal to and then says this is of token class operator
+[00:06:05 -> 00:06:15] All right, and then we have the right parentheses. Let's say okay. This is the right parenthesis
+[00:06:18 -> 00:06:20] After that we have some white space
+[00:06:20 -> 00:06:26] I'm going to ignore the white space but could potentially the lexer could have white space tokens as well
+[00:06:26 -> 00:06:28] Notice that a language like C
+[00:06:28 -> 00:06:32] Completely kind of ignores white space between different tokens
+[00:06:33 -> 00:06:40] But there are some languages for example like Python where indentation matters in the program semantics in which case you may want to preserve
+[00:06:40 -> 00:06:45] The white space tokens as well, but in this example, I'm going to omit the white space tokens
+[00:06:46 -> 00:06:50] The next token here is Z. So I'm going to say ID
+[00:06:51 -> 00:06:54] Z
+[00:06:54 -> 00:06:58] Then the operator the assignment operator. So I'm say operator equals
+[00:07:00 -> 00:07:02] Then constant one
+[00:07:08 -> 00:07:10] delimiter semicolon
+[00:07:15 -> 00:07:26] keyword else
+[00:07:26 -> 00:07:28] identifier a
+[00:07:31 -> 00:07:33] operator equals
+[00:07:39 -> 00:07:53] Identifier Z and finally the delimiter semicolon. So what have I done?
+[00:07:54 -> 00:07:59] Just converted the stream of characters to a stream or sequence of tokens
+[00:07:59 -> 00:08:07] All right. So so how what is the lexical analyzer and how do and how does it work?
+[00:08:07 -> 00:08:09] Well, it recognizes substrings
+[00:08:10 -> 00:08:16] Corresponding to tokens just like we did in the example before and these substrings are also called lexemes
+[00:08:16 -> 00:08:18] Alright, so in the previous example
+[00:08:18 -> 00:08:20] the string E L S E L
+[00:08:21 -> 00:08:23] would be called a lexeme or
+[00:08:24 -> 00:08:30] The string greater than equal to would be called a lexeme because they get grouped into a single string while
+[00:08:31 -> 00:08:33] identifying the identification of a token
+[00:08:34 -> 00:08:41] Similarly, we recognize a token class for each lexeme to obtain the tuple token class comma lexeme
+[00:08:41 -> 00:08:43] So after we have figured out what is the lexeme?
+[00:08:45 -> 00:08:51] We figure out what is the token class corresponding to lexeme now, I think I know you must be thinking how do I know?
+[00:08:51 -> 00:08:53] What is the lexeme for example?
+[00:08:53 -> 00:08:57] when I have greater than equal to should I consider greater than as
+[00:08:58 -> 00:09:03] Standalone lexeme or should I wait for to get equal to to get the next lexeme?
+[00:09:03 -> 00:09:05] Well to understand this
+[00:09:06 -> 00:09:12] Let's let me take a more difficult example actually from the Fortran language in Fortran
+[00:09:12 -> 00:09:17] It turns out that white space is insignificant. All right completely insignificant
+[00:09:18 -> 00:09:24] Unlike see where white space can be any amount of white space can be present between different tokens in
+[00:09:24 -> 00:09:29] Fortran white space can even be present within a token. All right, so for example an
+[00:09:29 -> 00:09:35] Identifier var1 can be written as va space
+[00:09:36 -> 00:09:38] r1 and it would still mean var1
+[00:09:39 -> 00:09:45] Okay, and and and so once again, I mean it's similar to the problem that we had earlier
+[00:09:45 -> 00:09:47] How do I know when I am lexing the string?
+[00:09:48 -> 00:09:50] va r1
+[00:09:51 -> 00:09:56] That should I say that va is a separate identifier and then r1 is a separate identifier
+[00:09:56 -> 00:10:03] So should I generate two tokens each of type identifier or should I consider this a single token var1?
+[00:10:04 -> 00:10:08] Now it turns out that doing this in general is a little bit hard
+[00:10:08 -> 00:10:14] And and so the language should be designed in such a way such that it becomes possible to understand whether I should
+[00:10:15 -> 00:10:17] you know
+[00:10:17 -> 00:10:20] include the following characters into the current lexeme or should I
+[00:10:21 -> 00:10:27] Close the current lexeme. Here's an example that motivates this further
+[00:10:27 -> 00:10:31] So in Fortran consider this statement do
+[00:10:32 -> 00:10:34] 5 I
+[00:10:34 -> 00:10:40] Equals 1 comma 25 now, you may not be familiar with Fortran syntax neither am I but it turns out that this
+[00:10:41 -> 00:10:48] Statement here basically is like a loop. It says do 5 do the following statement
+[00:10:50 -> 00:10:52] You know
+[00:10:52 -> 00:10:58] Execute the statements till statement 5 in a loop. All right, that's what it means
+[00:10:59 -> 00:11:01] on the other hand the second state
+[00:11:02 -> 00:11:09] String here is all completely identical except that comma in the first one is replaced by a
+[00:11:10 -> 00:11:12] dot in the second one and
+[00:11:12 -> 00:11:20] Here this is supposed to mean that the variable do 5 I so do 5 I is a single variable
+[00:11:20 -> 00:11:25] Is being just assigned a value 1.25. And so this is just a
+[00:11:26 -> 00:11:28] constant
+[00:11:28 -> 00:11:30] And this is just an identifier
+[00:11:30 -> 00:11:38] All right, so just a change of a single character that too pretty late in the string
+[00:11:39 -> 00:11:45] Completely changes the lexing output of this particular example. All right, so so, okay
+[00:11:46 -> 00:11:49] So let's understand what is lexing supposed to do
+[00:11:49 -> 00:11:55] It's supposed to partition the string using those red bars that I showed you in the previous thing or delimiters
+[00:11:55 -> 00:11:59] It's supposed to do this reading left to right. Well, this is not a rule
+[00:11:59 -> 00:12:02] But this is the general convention that you read just like we read
+[00:12:03 -> 00:12:12] Natural language left to right the compiler reads the program string left to right while deciding where to draw the partition
+[00:12:12 -> 00:12:13] delimiters and
+[00:12:13 -> 00:12:17] It recognizes one token at a time. All right, so
+[00:12:19 -> 00:12:21] Currently has one lexing that it's kind of
+[00:12:22 -> 00:12:27] Accumulating and it needs to know whether it needs to close the current lexing or it needs to keep accumulating
+[00:12:27 -> 00:12:33] All right, and to know whether to close the current lexing or whether to keep accumulating it requires look ahead
+[00:12:35 -> 00:12:41] So it needs to know a little bit in future what's coming. All right, so in the example that I showed earlier
+[00:12:42 -> 00:12:48] If I kind of if the lexer was looking a little bit in the future and seeing that there is a foot dot or
+[00:12:48 -> 00:12:51] Comma it would have been able to make a decision whether do is a separate
+[00:12:52 -> 00:12:58] Lexing and token or is it a part of a larger lexing do 5i
+[00:12:59 -> 00:13:00] similarly
+[00:13:00 -> 00:13:03] When I'm looking at the greater than equal to operator
+[00:13:03 -> 00:13:07] I can look ahead one character and see whether I have more
+[00:13:08 -> 00:13:12] Something else coming after greater than if not then greater than can be thought
+[00:13:13 -> 00:13:19] Emitted as a single lexing if it is if there is an equal to after greater than equal to then the whole greater than equal to
+[00:13:19 -> 00:13:25] Can be emitted as a single lexing because it is also a distinct operator distinct from greater than
+[00:13:26 -> 00:13:31] All right. So every lexer needs some look ahead and the question is how much look ahead do you need?
+[00:13:31 -> 00:13:37] Well, the amount of look ahead that you need depends on how easy is the language to lex. All right
+[00:13:37 -> 00:13:41] So typically the language should be designed so that it's easy to kind of
+[00:13:41 -> 00:13:48] Understand what it means and and so it should be possible for an automatic program to just look ahead a little bit to figure out
+[00:13:48 -> 00:13:54] What it needs to do, but every lexer would need some type of look ahead in any case as we saw in the current examples
+[00:13:55 -> 00:13:57] all right, so
+[00:13:58 -> 00:14:01] So to kind of show this with examples
+[00:14:02 -> 00:14:06] Some languages are harder to lex than others. So for example, take the example of C++
+[00:14:07 -> 00:14:12] Now here I have foo is less than foo less than operator and bar
+[00:14:14 -> 00:14:15] now
+[00:14:15 -> 00:14:20] This would be interpreted as a relational expression where foo is being compared
+[00:14:21 -> 00:14:25] Against bar, but the moment I put an other greater than sign
+[00:14:25 -> 00:14:27] So let's you know a matching
+[00:14:28 -> 00:14:34] Angle brackets after bar this thing means completely different. This is a template expression
+[00:14:35 -> 00:14:39] Right which says that
+[00:14:39 -> 00:14:42] foo is
+[00:14:42 -> 00:14:50] Specialized with bar with foo is a template and bar is kind of the template argument to foo and this means completely something completely different
+[00:14:51 -> 00:14:53] similarly, I could potentially have
+[00:14:54 -> 00:14:56] You know foo bar
+[00:14:56 -> 00:14:58] baz
+[00:14:59 -> 00:15:02] This is a deeper template expression right here
+[00:15:03 -> 00:15:07] here bar is
+[00:15:07 -> 00:15:12] Bar has a template argument baz and foo has a template argument bar baz
+[00:15:13 -> 00:15:15] All right. So so this is a deeper
+[00:15:16 -> 00:15:18] But now think look at this
+[00:15:19 -> 00:15:21] particular sequence of
+[00:15:22 -> 00:15:25] characters greater than greater than two angle brackets, right
+[00:15:27 -> 00:15:33] Now C++ also has a stream operator, which is which is some which is looks exactly the same and for example
+[00:15:33 -> 00:15:35] You could use it to stream
+[00:15:36 -> 00:15:40] Things from so for example, if you want to read from standard input you would say C in
+[00:15:41 -> 00:15:47] Angle brackets two angle brackets greater than greater than var which would mean that read the variable var
+[00:15:48 -> 00:15:50] Read the standard input into the variable var
+[00:15:51 -> 00:15:56] Now, how do I know whether you know this angle brackets in the first case?
+[00:15:56 -> 00:16:02] I would basically want to generate different tokens for each of the angle brackets because they represent
+[00:16:02 -> 00:16:04] Different things right so in
+[00:16:05 -> 00:16:10] This particular angle bracket is matching with its counterpart while the outer one is matching with its counterpart
+[00:16:11 -> 00:16:17] Whereas in the second case, I would want to have a single leg zine for the two angle brackets together
+[00:16:18 -> 00:16:26] This is just to motivate that some languages are harder to legs than others
+[00:16:26 -> 00:16:31] and you know, this is this was actually a problem in C++ for a long time because
+[00:16:32 -> 00:16:39] C++ mandated that if you are using it in the first form in this templatized form and it if here you have a situation
+[00:16:39 -> 00:16:41] We have two angle brackets have to appear together
+[00:16:41 -> 00:16:46] There must be a space in the middle. Otherwise, it would kind of result in a syntax error
+[00:16:47 -> 00:16:52] This has been fixed in more recent versions of the compiler of C++ compiler
+[00:16:55 -> 00:16:59] Okay, here's another example of an old language that has similar problems
+[00:16:59 -> 00:17:03] Now PL1 was a language where the designers decided that
+[00:17:03 -> 00:17:08] There is no reason why identifiers cannot have the same names as the language keywords
+[00:17:08 -> 00:17:15] So it's possible to have so PL1 has identifiers like if then else but it also allowed the programmer to specify
+[00:17:15 -> 00:17:16] Identifiers that had the same name
+[00:17:16 -> 00:17:20] For example, you could have an identifier in your program called then or else
+[00:17:20 -> 00:17:21] All right
+[00:17:21 -> 00:17:26] and once you have that then you know, the lecture becomes a little bit harder to do because you need
+[00:17:27 -> 00:17:32] Look at this program if else then then equals else else else equals then now
+[00:17:32 -> 00:17:35] How do I know whether this else is an identifier or a keyword?
+[00:17:36 -> 00:17:42] Okay, and similarly for the other ones and once again the answer is we need some look ahead to figure out
+[00:17:42 -> 00:17:45] What is the context in which this spring is appearing?
+[00:17:47 -> 00:17:52] Notice that if the PL1 designers did not decide I mean did not allow
+[00:17:53 -> 00:17:58] Keywords to have the same name as identifiers this problem wouldn't have a reason. Okay
+[00:17:58 -> 00:18:00] you

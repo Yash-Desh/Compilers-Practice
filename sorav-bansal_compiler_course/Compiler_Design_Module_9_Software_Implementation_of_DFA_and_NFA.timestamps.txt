@@ -1,0 +1,78 @@
+Title: Compiler Design Module 9 : Software Implementation of DFA and NFA
+Video ID: KFOYQkFIxPo
+Detected language: en
+------------------------------------------------------------
+
+[00:00:00 -> 00:00:06] So, today I am going to discuss how we could easily implement a DFA in software.
+[00:00:06 -> 00:00:11] So let's say there is, one way to do it is that we could have a table which has rows
+[00:00:11 -> 00:00:19] and columns, a two-dimensional table and let's say the rows are all the states s0.sn and
+[00:00:19 -> 00:00:23] the columns are all the possible inputs that belong to your character set sigma.
+[00:00:23 -> 00:00:32] Now, the table is formed as follows that if the DFA transitions to state s2 on input x2
+[00:00:32 -> 00:00:40] when it was at state s0, then I just write s2 in the corresponding set, right?
+[00:00:40 -> 00:00:52] So let's say if I am in s1 and I get input x2 and then I go to s0, then that's what
+[00:00:53 -> 00:00:57] this particular entry here represents and so on.
+[00:00:57 -> 00:01:03] So basically, the entry stored in the table in the two-dimensional array is basically represents
+[00:01:03 -> 00:01:10] the next state for that particular state, input character pair, right?
+[00:01:10 -> 00:01:15] With this representation of a DFA, it's easy to write a DFA execution code.
+[00:01:15 -> 00:01:24] I will start my counter i which indicates how many input characters I have already consumed.
+[00:01:24 -> 00:01:30] I am going to start my initial state, in this case I assume that s0 is the initial
+[00:01:30 -> 00:01:31] state.
+[00:01:31 -> 00:01:40] So I start my initial state at s0 and then I just consume characters while input i state
+[00:01:40 -> 00:01:52] equals t which is a table and it looks at the state, input i-th element in that state
+[00:01:52 -> 00:01:55] and that and just update state with that, right?
+[00:01:55 -> 00:02:00] So let's say I started with state s0 and I got input x2, then I am going to say
+[00:02:00 -> 00:02:09] state equals t x0 s2 and recall what was t s0 x2, it was s2, so state will become
+[00:02:09 -> 00:02:14] s2 and in my next entry I am going to say what is state s2 and what will be the next
+[00:02:14 -> 00:02:15] input and so on.
+[00:02:15 -> 00:02:19] And I will keep doing this until there is input i, so I am assuming that when input
+[00:02:19 -> 00:02:25] i is 0 or the null character then I am done with the input, so it's string of
+[00:02:25 -> 00:02:27] inputs, right?
+[00:02:27 -> 00:02:28] String of input characters.
+[00:02:28 -> 00:02:32] Alright, so this is a very simple way of implementing a DFA in software.
+[00:02:32 -> 00:02:37] This is linear time in the size of the input.
+[00:02:37 -> 00:02:43] It requires two memory accesses, one to read the input and the other two actually read
+[00:02:43 -> 00:02:44] the table.
+[00:02:44 -> 00:02:51] There are, you know, but there is one problem with this, potential problem with this implementation,
+[00:02:51 -> 00:02:52] it's the size of the table.
+[00:02:52 -> 00:02:55] So if the number of states in your DFA is very large or if the input character
+[00:02:55 -> 00:02:59] set is very large, then the size of the table can become really large as well.
+[00:02:59 -> 00:03:03] And there are some optimizations that you could perform here, for example you could
+[00:03:03 -> 00:03:09] deduplicate identical rows, that could, that's actually usually a very significant optimization
+[00:03:09 -> 00:03:13] when we are talking about DFA's that are used to lex inputs, because most, because
+[00:03:13 -> 00:03:18] some states are going to do identical things or offer identical inputs and things like
+[00:03:18 -> 00:03:19] that.
+[00:03:19 -> 00:03:23] Alright, so that's the DFA execution code.
+[00:03:23 -> 00:03:27] There is also another possibility that instead of using a DFA execution code, you could
+[00:03:27 -> 00:03:32] have used an NFA execution code, which means that instead of representing your state
+[00:03:32 -> 00:03:37] machine as a DFA, you could have represented it as an NFA.
+[00:03:37 -> 00:03:45] Recall that a DFA could be larger than an NFA, recall that a DFA, state in a DFA
+[00:03:45 -> 00:03:49] was formed by taking a subset of the states in the NFA.
+[00:03:49 -> 00:03:52] And so it also means that a DFA could be exponentially larger in the number of
+[00:03:52 -> 00:03:59] states than the original NFA, which represented the lexing logic, right?
+[00:03:59 -> 00:04:04] Because there are, there's an exponentially, there's an exponential number of subsets
+[00:04:04 -> 00:04:06] for a given set of states, right?
+[00:04:06 -> 00:04:11] And so a DFA, the size of a DFA could be at most exponentially large compared to
+[00:04:11 -> 00:04:15] an NFA, although in practice it is, it's much smaller than exponential blow up.
+[00:04:15 -> 00:04:23] In any case, it is possible to also simulate an NFA in software in a similar way.
+[00:04:23 -> 00:04:28] If it is an NFA, then it is possible that on a single, when you are on a state,
+[00:04:28 -> 00:04:32] it is possible that for the same input, you can be in either of the other states.
+[00:04:32 -> 00:04:36] So because it's non deterministic and to represent that, you could have a table
+[00:04:36 -> 00:04:43] which says, which does not store, which stores a list or a set of next possible
+[00:04:43 -> 00:04:45] next states.
+[00:04:45 -> 00:04:50] And so the loop in this case is just going to maintain not just a single state,
+[00:04:50 -> 00:04:53] but a set of possible states that the NFA could be in.
+[00:04:53 -> 00:04:58] And then it's going to look up the corresponding table entries for every input
+[00:04:58 -> 00:05:00] to decide what are the next set of states and so on.
+[00:05:00 -> 00:05:04] This is just like, it's almost like saying that we are converting the NFA
+[00:05:04 -> 00:05:08] to a DFA on the fly, but in a very input specific way.
+[00:05:08 -> 00:05:12] And in this particular implementation, it is typically more space efficient
+[00:05:12 -> 00:05:16] because the NFA number of states would be smaller than the number of states
+[00:05:16 -> 00:05:17] in the DFA.
+[00:05:17 -> 00:05:20] So it will be more space efficient, but it will take slightly more time
+[00:05:20 -> 00:05:24] because you have to maintain now a list of states rather than a set of states
+[00:05:24 -> 00:05:27] rather than a single state as it was possible to do for the DFA
+[00:05:27 -> 00:05:29] implementation.
+[00:05:29 -> 00:05:34] In practice, lexers or lexical analysis tools give the user the choice
+[00:05:34 -> 00:05:38] to choose between a DFA implementation and the NFA implementation.
+[00:05:38 -> 00:05:42] And the user can pick one of them depending on whether space
+[00:05:42 -> 00:05:44] is more important or time is more important.

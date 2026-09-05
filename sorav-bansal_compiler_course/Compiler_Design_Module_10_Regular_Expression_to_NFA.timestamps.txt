@@ -1,0 +1,131 @@
+Title: Compiler Design Module 10 : Regular Expression to NFA
+Video ID: sVt8awRXRqg
+Detected language: en
+------------------------------------------------------------
+
+[00:00:00 -> 00:00:04] Okay, so today we are going to discuss about the conversion of a regular expression to
+[00:00:04 -> 00:00:05] an NFA.
+[00:00:05 -> 00:00:10] Recall that we said that any language that can be accepted by a regular expression can
+[00:00:10 -> 00:00:16] also be accepted by an NFA and can also be accepted by a DFA.
+[00:00:16 -> 00:00:21] So today we are going to see an algorithm which is going to, given a regular expression,
+[00:00:21 -> 00:00:23] is going to construct an NFA for it.
+[00:00:23 -> 00:00:28] And we already know how to convert an NFA to a DFA and we also know how to implement
+[00:00:28 -> 00:00:29] that.
+[00:00:29 -> 00:00:36] So here are the five different constructors for the regular expression that we have studied.
+[00:00:36 -> 00:00:43] This is the single character C, we assume that C belongs to sigma, the alphabet, epsilon
+[00:00:43 -> 00:00:49] which represents the empty string and then assuming that A is a regular expression and
+[00:00:49 -> 00:00:53] B is a regular expression then A plus B is also a regular expression.
+[00:00:53 -> 00:00:58] Similarly AB which is a concatenation is a regular expression and then A star
+[00:00:58 -> 00:00:59] is a regular expression.
+[00:00:59 -> 00:01:02] A plus B represents union if you recall.
+[00:01:02 -> 00:01:10] Alright, so we are going to develop an algorithm that is going to construct a regular,
+[00:01:10 -> 00:01:13] given a regular expression, an arbitrary regular expression, something like let's
+[00:01:13 -> 00:01:25] say C plus D plus epsilon, you know, star and so on, right?
+[00:01:25 -> 00:01:31] So I could construct any arbitrary regular expression and then we want to know, given
+[00:01:31 -> 00:01:35] a regular expression we want to construct a corresponding NFA.
+[00:01:35 -> 00:01:39] So we are going to construct the NFA, to construct the NFA we are going to do the
+[00:01:39 -> 00:01:42] same recursive method.
+[00:01:42 -> 00:01:46] So we are going to say let's first construct, to construct an NFA for the whole expression,
+[00:01:46 -> 00:01:51] let's first construct an NFA for the smaller expression on the left, similarly
+[00:01:51 -> 00:01:55] let's construct a regular expression for the smaller expression on the right and
+[00:01:55 -> 00:01:59] then keep doing that and so once we, until we reach the base case and then once
+[00:01:59 -> 00:02:04] we have the NFA for the base case then we can from that construct the NFAs for
+[00:02:04 -> 00:02:06] the larger and larger expressions, right?
+[00:02:06 -> 00:02:11] So we are going to do this inductive construction of the NFA.
+[00:02:11 -> 00:02:15] To do this we are going to assume that, you know, we are going to have some
+[00:02:15 -> 00:02:19] shape of an NFA but it's a very simple shape.
+[00:02:19 -> 00:02:23] You have one start state, we assume that the NFA has only, let's say one
+[00:02:23 -> 00:02:27] start state, if it has more than one start state we can always add one
+[00:02:27 -> 00:02:31] unique start state and have epsilon moves from this unique start state from
+[00:02:31 -> 00:02:36] the, from the unique start state to all the original start states.
+[00:02:36 -> 00:02:42] Similarly we assume that we have a unique accepting state, right?
+[00:02:42 -> 00:02:46] Once again if there are, if there were more than one accepting state we can
+[00:02:46 -> 00:02:50] always convert it to an NFA which has a unique accepting state through
+[00:02:50 -> 00:02:52] epsilon transitions.
+[00:02:52 -> 00:02:56] Alright, so with that let's look at the base cases.
+[00:02:56 -> 00:03:01] So what would be an NFA that accepts the single character C?
+[00:03:01 -> 00:03:02] Well, it's easy.
+[00:03:02 -> 00:03:04] Let's do this with a blue pen.
+[00:03:04 -> 00:03:13] So this is my start state and on receiving the single character C,
+[00:03:13 -> 00:03:17] it's going to end up in an accepting state.
+[00:03:17 -> 00:03:22] And so this is the NFA that accepts C and does not accept any other string.
+[00:03:23 -> 00:03:27] Similarly, what is an NFA that accepts the empty string epsilon?
+[00:03:28 -> 00:03:30] This is also easy.
+[00:03:30 -> 00:03:32] Let's say this is a start state.
+[00:03:32 -> 00:03:39] Then I just make an epsilon transition and I reach my accepting state, alright?
+[00:03:39 -> 00:03:44] And this, this particular NFA accepts the empty string and
+[00:03:44 -> 00:03:48] does not accept any other string, alright?
+[00:03:48 -> 00:03:53] Now let's look at the higher level operators, the inductive operators.
+[00:03:53 -> 00:03:55] So A plus B, which is the union operator.
+[00:03:55 -> 00:03:59] So let's assume that for A, we have already constructed an NFA,
+[00:03:59 -> 00:04:04] which looks like the diagram shown on the slide.
+[00:04:04 -> 00:04:06] Similarly, for B, we have constructed an NFA.
+[00:04:06 -> 00:04:10] We are now interested in constructing an NFA for A plus B.
+[00:04:10 -> 00:04:11] So how do we do that?
+[00:04:11 -> 00:04:14] Recall that A plus B indicates the union operator,
+[00:04:14 -> 00:04:20] which means that a string is accepted if it is accepted by either A or B.
+[00:04:21 -> 00:04:23] So if you want to represent the same fact in an NFA,
+[00:04:23 -> 00:04:26] what are we going to do?
+[00:04:26 -> 00:04:31] Well, we're going to just put the NFAs in parallel and say that if it
+[00:04:31 -> 00:04:35] accepts any of them, if the string is accepted by any of them,
+[00:04:35 -> 00:04:37] then it's accepted by the larger NFA.
+[00:04:37 -> 00:04:44] So to do this, we're going to have a start state.
+[00:04:44 -> 00:04:50] And then we're going to put these two NFAs, A and B.
+[00:04:50 -> 00:04:54] So this is the A NFA and this is the B NFA.
+[00:04:54 -> 00:04:59] Notice that in this drawing, I'm not putting a concentric circle on the final
+[00:04:59 -> 00:05:04] state of A because the final state of the whole NFA is going to be different
+[00:05:04 -> 00:05:09] from the final state, the accepting state of A or B, right?
+[00:05:09 -> 00:05:16] But these circles within the A automaton NFA is exactly the same,
+[00:05:16 -> 00:05:20] is exactly the accepting state of A, all right?
+[00:05:20 -> 00:05:25] And then we have a final state, our own final state, okay?
+[00:05:25 -> 00:05:31] So now, if we want to have an NFA that accepts strings from both,
+[00:05:31 -> 00:05:34] that would have been accepted by either A or B.
+[00:05:34 -> 00:05:40] Well, we just connect this to A, the start state of A.
+[00:05:40 -> 00:05:44] And similarly, the start state of B through epsilon transitions.
+[00:05:44 -> 00:05:47] So we can non-deterministically go into either of the NFAs.
+[00:05:47 -> 00:05:52] And if either of those NFAs accepts, then we are also going to accept.
+[00:05:52 -> 00:05:56] And to represent that, I'm just going to draw epsilon edges from their
+[00:05:56 -> 00:06:02] accepting states to the larger final accepting state, okay?
+[00:06:02 -> 00:06:06] And so this particular NFA represents the NFA for
+[00:06:06 -> 00:06:09] A plus B given individual NFAs of A and B.
+[00:06:09 -> 00:06:12] Similarly, let's look at the concatenation operator.
+[00:06:12 -> 00:06:15] So once again, let's assume that we already have the NFAs for A and B, and
+[00:06:15 -> 00:06:18] we are interested in finding the NFA for AB.
+[00:06:18 -> 00:06:20] So once again, this is not very difficult.
+[00:06:20 -> 00:06:23] We're going to construct a start state.
+[00:06:23 -> 00:06:28] And then we are going to put A after this, and
+[00:06:28 -> 00:06:36] then we're going to connect the accepting state of A to the start state of B.
+[00:06:36 -> 00:06:40] Which means that the string is accepted if one part of it is accepted,
+[00:06:40 -> 00:06:43] but the first part of it is accepted by A.
+[00:06:43 -> 00:06:47] And then with an epsilon transition, but these are epsilon transitions.
+[00:06:47 -> 00:06:51] So with an epsilon transition, we enter the automaton B, and
+[00:06:51 -> 00:06:55] then the rest of the string is accepted by B, and
+[00:06:55 -> 00:07:01] then we make an epsilon transition to our own final state.
+[00:07:01 -> 00:07:07] And this would be the NFA for the regular expression AB,
+[00:07:07 -> 00:07:12] given the NFAs for individual regular expressions A and B.
+[00:07:13 -> 00:07:16] Now finally, let's look at the iteration constructor,
+[00:07:16 -> 00:07:18] the last remaining constructor of the regular expressions.
+[00:07:18 -> 00:07:22] So let's say we have, once again, we have the NFA for A, and
+[00:07:22 -> 00:07:25] we are interested in constructing an NFA for A star.
+[00:07:25 -> 00:07:30] So once again, we'll have a start state, and we'll have an accepting state.
+[00:07:32 -> 00:07:34] And then, what do we need to do?
+[00:07:34 -> 00:07:37] We want to say that, what does A star accept?
+[00:07:37 -> 00:07:41] Well, one of the things that A star accepts is the empty string.
+[00:07:41 -> 00:07:42] So we're going to come to that.
+[00:07:42 -> 00:07:48] It also accepts A, or any number of repetitions of A, right?
+[00:07:48 -> 00:07:54] So let's say this is A, and this is the final state of A.
+[00:07:54 -> 00:07:56] So what I'm going to do is I'm going to say that,
+[00:07:56 -> 00:07:59] once I reach the final state of A, I can go back.
+[00:08:01 -> 00:08:02] These are all epsilon edges.
+[00:08:04 -> 00:08:08] I can go back to the, non-deterministically go back to the start state.
+[00:08:08 -> 00:08:14] Or I could non-deterministically decide to go to the accepting state, right?
+[00:08:14 -> 00:08:16] So what does this automaton accept?
+[00:08:16 -> 00:08:24] It accepts one or more occurrences of A concatenated with each other, okay?
+[00:08:24 -> 00:08:29] Because I can non-determinously choose to do one A, two A's, three A's,
+[00:08:29 -> 00:08:31] and four A's before I move, and so on,
+[00:08:31 -> 00:08:33] before I move to the final accepting state.
+[00:08:33 -> 00:08:34] There's one thing missing here,
+[00:08:34 -> 00:08:37] we also want to allow zero occurrences of A,
+[00:08:37 -> 00:08:41] in which case, to model that, we just add one more epsilon edge
+[00:08:41 -> 00:08:44] from our start state to the final accepting state.
+[00:08:44 -> 00:08:45] And so this is the iteration constructor.

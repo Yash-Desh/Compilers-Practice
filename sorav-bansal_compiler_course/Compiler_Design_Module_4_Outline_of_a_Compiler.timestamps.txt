@@ -1,0 +1,227 @@
+Title: Compiler Design Module 4 : Outline of a Compiler
+Video ID: HzCAHoQyWpA
+Detected language: en
+------------------------------------------------------------
+
+[00:00:00 -> 00:00:05] okay so now today we are going to discuss the outline of a compiler or what are the
+[00:00:05 -> 00:00:14] different steps or stages of compilation so you know broadly there are five different stages of
+[00:00:14 -> 00:00:21] compilation the first is called lexical analysis the second is called parsing the third is called
+[00:00:21 -> 00:00:30] semantic analysis which includes identifying types scopes and checking them the fourth
+[00:00:30 -> 00:00:34] stage is optimization and the fifth stage is code generation or translation
+[00:00:34 -> 00:00:41] and we're going to discuss each of them in more detail so so i'm going to explain these different
+[00:00:41 -> 00:00:48] stages by using an analogy to understanding a natural language now lexical analysis is kind
+[00:00:48 -> 00:00:57] of similar to recognizing words or tokens in compiler lingo so just think about it let's say
+[00:00:57 -> 00:01:04] there's this in sentence called computing requires energy now when we read the sentence
+[00:01:04 -> 00:01:10] you know the sentence has lots of characters in it co and so on and then there's a space
+[00:01:10 -> 00:01:16] then req and so on the moment we look at it the first thing we do is we separate these
+[00:01:16 -> 00:01:25] characters into words right and and so for example if i just write the sentence a little
+[00:01:25 -> 00:01:32] bit differently it would be much harder to read isn't it so for example you know in this red ink
+[00:01:32 -> 00:01:37] i have written the same sentence but put the delimiters word delimiters differently
+[00:01:39 -> 00:01:47] it makes much less sense so a compiler is kind of similar it takes an input a stream of
+[00:01:47 -> 00:01:54] characters the first thing it does is it recognizes words or tokens in compiler technical
+[00:01:54 -> 00:02:02] language so it so in other words a lexical analyzer is supposed to take in a stream of
+[00:02:02 -> 00:02:08] characters and it outputs a stream of tokens where each token is formed by one or more
+[00:02:08 -> 00:02:15] characters right so it basically groups characters all right so so let's take an
+[00:02:15 -> 00:02:21] example of programming language so here is a programming sentence or a statement
+[00:02:22 -> 00:02:30] if foo is less than equal to two then bar brackets so it's a function call else x equals five
+[00:02:30 -> 00:02:41] semicolon now this string of characters looks like you know looks like a program
+[00:02:42 -> 00:02:53] and we can kind of identify in this the words that make sense right so if then and else these
+[00:02:53 -> 00:03:00] are words or tokens and these are the tokens which are kind of special tokens of the class
+[00:03:00 -> 00:03:05] keywords all right so even within tokens we will basically categorize token and say that
+[00:03:05 -> 00:03:10] these tokens are meant to represent keywords other tokens are meant to represent identifiers
+[00:03:10 -> 00:03:16] and so on and so if then and is our programming language keywords which means they have a
+[00:03:16 -> 00:03:25] special meaning inside the programming language okay then we identify identifiers all right so
+[00:03:25 -> 00:03:33] the identifiers are basically tokens that represent variable names function names etc
+[00:03:33 -> 00:03:43] in this case foo bar x look like identifiers constants so constants in this case are formed
+[00:03:43 -> 00:03:51] by strings of digits so two and five or they could have been large longer strings of
+[00:03:51 -> 00:03:59] digits like 20 or 53 or something like that and then operators so less than equal to
+[00:03:59 -> 00:04:08] the function call operator left bracket parenthesis and right parenthesis the assignment operator
+[00:04:08 -> 00:04:12] right so we can see three different operators notice that some operators are formed by a
+[00:04:12 -> 00:04:17] single character while other operators would be formed by more than one characters all right
+[00:04:17 -> 00:04:23] and this is actually true for all different types of token classes and then there is
+[00:04:23 -> 00:04:28] the semicolon or which in this case forms a delimiter right so delimiters are basically
+[00:04:28 -> 00:04:34] telling you separating one statement one programming state from the other all right
+[00:04:35 -> 00:04:43] so what is lexical lexical analysis or lexing for short it takes as input a stream of
+[00:04:43 -> 00:04:47] characters and generates as output a stream of tokens so in essentially it generates
+[00:04:47 -> 00:04:55] tokens from characters all right now let's look at parsing well parsing can be thought
+[00:04:55 -> 00:05:02] of as diagramming sentences as trees so for example if there's a sentence like fast computers
+[00:05:02 -> 00:05:08] are more energy efficient so recall that the first step in trying to pass the sentence would
+[00:05:08 -> 00:05:15] be to lex it all right which means identifying tokens from the stream of characters but once
+[00:05:15 -> 00:05:20] we are done with that we would want to understand the structure of the sentence
+[00:05:20 -> 00:05:25] right and in this case in the english language what we are going to do is we are going to say
+[00:05:25 -> 00:05:37] that okay where is the verb so in this case r is the verb and so we can see that this
+[00:05:37 -> 00:05:46] verb is describing what the noun on the left does right a characteristic of the noun on the
+[00:05:46 -> 00:05:53] left so we can we can we can think of it as though it it's a tree it's you know we can
+[00:05:53 -> 00:05:58] represent the structure of the sentence as a tree and on the left hand side of the tree so
+[00:05:58 -> 00:06:03] the root of the tree is the verb on which the entire sentence hinges and on the left hand
+[00:06:03 -> 00:06:10] side of this node r we have the noun and the noun itself is divided into an adjective
+[00:06:10 -> 00:06:19] and a noun right so fast computers and and then the right hand side we have also more
+[00:06:19 -> 00:06:25] energy efficient right so also is an adverb more is an adverb and energy efficient is
+[00:06:25 -> 00:06:32] yet another adjective all right so so you know we learn these kind of rules in english
+[00:06:32 -> 00:06:39] language grammar and we kind of use these rules to identify and parse sentences it is
+[00:06:39 -> 00:06:45] not very different in computers or programming languages so here is a sentence a programming
+[00:06:45 -> 00:06:52] sentence or a statement in in a language like c if foo is less than equal to two then bar
+[00:06:52 -> 00:06:58] else x equals five now after we have identified the tokens which we have done in the last step
+[00:06:58 -> 00:07:02] we would like to understand the structure of the sentence and in this case the structure
+[00:07:02 -> 00:07:07] looks something like this the top level here is the if then else construct right so
+[00:07:08 -> 00:07:16] so the whole statement is basically an if then a statement right and and and the other things
+[00:07:16 -> 00:07:22] are kind of filling in parts of the statement so the root node of the statement is if then
+[00:07:22 -> 00:07:30] else in the diagram and this root node has three different parts to it the first part is
+[00:07:30 -> 00:07:35] the condition which goes with if the second part is the statement that goes with then
+[00:07:36 -> 00:07:39] and the third part is the statement that goes with the else clause
+[00:07:41 -> 00:07:48] okay so now the condition itself is supposed to be an expression that evaluates to a boolean
+[00:07:48 -> 00:07:54] value in this case that is represented by this sub tree foo is less than equal to two right
+[00:07:54 -> 00:08:02] so so less than equal to two is the operator that generates the boolean value and it compares
+[00:08:02 -> 00:08:08] two parts of two expressions the left part and the right part and in this case both those left
+[00:08:08 -> 00:08:14] and right expressions happen to be leaf nodes one of them is an identifier and the other is
+[00:08:14 -> 00:08:21] a constant similarly in the then clause the the next level is a function call and the
+[00:08:21 -> 00:08:27] function call basically has its own operands in this case it only has one operand which is
+[00:08:27 -> 00:08:32] the name of the function if the function call was making a call using more than one
+[00:08:32 -> 00:08:37] zero operands then it would have had you know maybe one or two so if the function
+[00:08:37 -> 00:08:43] call was had one argument then the function call operator would have had two children
+[00:08:43 -> 00:08:49] right and so on similarly the else clause involves a statement and in this case it's
+[00:08:49 -> 00:08:54] an assignment statement so the root node is an assignment operator equals and the left and right
+[00:08:55 -> 00:09:03] nodes represent what is assigned to what all right so this process of converting this
+[00:09:03 -> 00:09:12] stream this linear stream of tokens into a structured tree or diagram that represents
+[00:09:13 -> 00:09:20] the structure of the program is the process of parsing all right the third step of
+[00:09:20 -> 00:09:26] compilation is semantic analysis and here we are more interested in understanding the meaning
+[00:09:26 -> 00:09:31] of the sentence we've already kind of identified the structure of the sentence and
+[00:09:32 -> 00:09:35] but now we want to understand the meaning of the sentence now what is the meaning of a
+[00:09:35 -> 00:09:40] sentence i mean that's a very fuzzy statement actually the meaning of sentence would mean what
+[00:09:40 -> 00:09:45] is the program actually doing and that is a very difficult problem and you know theoretically
+[00:09:45 -> 00:09:50] speaking it's an undecidable problem and similar to saying whether you know this program is
+[00:09:50 -> 00:09:55] equivalent to something else so can you can you see can the compiler look at a program and say
+[00:09:55 -> 00:10:00] that oh it is actually going to produce a sorted output or it is a quick sort function or
+[00:10:00 -> 00:10:05] something like that well something like that is pretty difficult to do instead what semantic
+[00:10:05 -> 00:10:10] analysis does is it does it just does some basic checking right for example it would check
+[00:10:10 -> 00:10:17] inconsistencies like a variable is defined before it is used or that things are not
+[00:10:18 -> 00:10:23] used outside the scope or it's going to provide bindings for things within the scope or it's
+[00:10:23 -> 00:10:28] going to check whether things are being used things are used consistently with the
+[00:10:28 -> 00:10:34] types of those objects so so so these are called catch inconsistencies and these this
+[00:10:34 -> 00:10:41] kind of catching inconsistencies is faster than than actually doing a full understanding
+[00:10:41 -> 00:10:47] of what is the meaning of the sentence which compilers would not do not tend to so there's
+[00:10:47 -> 00:10:51] no effort by the compiler to understand the actual meaning but at least there are some
+[00:10:51 -> 00:10:55] inconsistency checks that can be done by the compiler and this part is called the semantic
+[00:10:55 -> 00:10:59] analysis so here's an example of semantic analysis for the natural language once again
+[00:10:59 -> 00:11:04] taking an analogy from the natural language so let's say there's a sentence called the
+[00:11:04 -> 00:11:14] compiler generates an executable and it prints nothing when it runs now here when i look at
+[00:11:15 -> 00:11:23] it there are two parts of it so first of all this sentence looks like a linear sequence of
+[00:11:23 -> 00:11:28] characters or string of characters which can which after the little analysis pass is going
+[00:11:28 -> 00:11:35] to give us a linear stream of tokens which after the parsing pass is going to give us
+[00:11:36 -> 00:11:43] a sentence tree structure right so for example it's going to say you know the the maybe the
+[00:11:43 -> 00:11:48] top node of the sentence structure is going to be the and node which is the conjunction
+[00:11:48 -> 00:11:53] conjunctive operator and the left part of it is saying something and the right part of it
+[00:11:53 -> 00:11:57] is doing some saying something and so on right so we're not going to look at the parsing part
+[00:11:57 -> 00:12:02] but now once the parsing has been done we want to understand whether you know we want
+[00:12:02 -> 00:12:07] to check whether there's some some things which are consistent here so for example here we say
+[00:12:08 -> 00:12:16] it prints nothing when it runs what is it is it the compiler or is it the executable also
+[00:12:16 -> 00:12:21] there are two it's are the two it's referring to the same entity maybe both of them are
+[00:12:21 -> 00:12:26] referring to the compiler or are they referring to different entities for example the first it
+[00:12:26 -> 00:12:31] is referring to the executable and maybe the second it is referring to the compiler
+[00:12:31 -> 00:12:35] so all these things are basically under the purview of the semantic analysis
+[00:12:35 -> 00:12:42] now in this case actually it is a bit ambiguous frankly what does it refer to and this is this
+[00:12:42 -> 00:12:48] can be called an ambiguity in the in the natural language of english and similar ambiguities
+[00:12:48 -> 00:12:52] may be present in a programming language but because the programming language is more technical
+[00:12:52 -> 00:12:56] we should always have rules to resolve ambiguities and in the end there should not
+[00:12:56 -> 00:13:05] be any ambiguities all right so okay so this is similar i mean this example where i'm saying
+[00:13:05 -> 00:13:09] you know what does it refer to this this example is kind of similar to scoping rules in
+[00:13:09 -> 00:13:14] programming language so consider consider an object oriented language where let's say there's
+[00:13:14 -> 00:13:20] a class foo and within the class foo there's another class bar encapsulated within class
+[00:13:20 -> 00:13:26] foo and then i use this keyword called this now assume this is something like c plus plus
+[00:13:26 -> 00:13:32] for example so now where does what does this mean does this mean bar or does this mean foo
+[00:13:33 -> 00:13:39] now you know c plus plus would have very clear rules that this would basically bind to the
+[00:13:39 -> 00:13:46] closest context in which it is being defined so in this case this would mean bar right so
+[00:13:46 -> 00:13:52] so so this kind of analysis and checks is basically being done by the semantic analysis
+[00:13:52 -> 00:13:56] phase notice notice that apart from doing checking it is also basically
+[00:13:57 -> 00:14:01] you know identifying the meaning so for example it's identifying the meaning of this
+[00:14:01 -> 00:14:11] in this case this refers to an object of type bar okay the other part is checking right so
+[00:14:11 -> 00:14:15] here is another example of an activity that a semantic analysis phase is supposed to do it's
+[00:14:16 -> 00:14:24] supposed to check types so the compiler generates an executable and it print nothing when they
+[00:14:24 -> 00:14:30] runs now in english this is an illegal sentence and the parser won't be able to
+[00:14:30 -> 00:14:37] catch it because it's still the same structure but notice that it is a singular you know
+[00:14:37 -> 00:14:43] singular it is singular whereas print print should have and so the print should have had
+[00:14:43 -> 00:14:50] an s here right and that's missing and that looks like a type error all right so print can't
+[00:14:50 -> 00:14:57] be used with it and similarly when they runs so they and runs don't go well together and you
+[00:14:57 -> 00:15:01] know what does it mean like it print when nothing when they run so sometimes we're talking
+[00:15:01 -> 00:15:06] about it and sometimes we're talking about they now is it is it actually i mean is it actually
+[00:15:06 -> 00:15:10] consistent does it make sense this is what a semantic analysis phase is supposed to check
+[00:15:11 -> 00:15:17] now in a programming language you know taking in a taking i mean coming back to the programming
+[00:15:17 -> 00:15:26] language world let's say i have char star p and then i say q equals p multiplied by five now
+[00:15:26 -> 00:15:32] this is a type error because a pointer cannot be multiplied with anything else right and so this
+[00:15:32 -> 00:15:37] is similar to a type error and something a type error like this is also identified during
+[00:15:37 -> 00:15:42] the semantic analysis phase now is it a coincidence that there is so much similarity between the
+[00:15:42 -> 00:15:48] natural language processor and programming language processor a compiler well i don't
+[00:15:48 -> 00:15:55] think so in fact programming languages are sort of in many ways modeled on natural languages
+[00:15:55 -> 00:16:00] because you know the whole point of doing a programming language is language is to make it
+[00:16:00 -> 00:16:05] easy for humans and humans are good already good at doing natural languages all right
+[00:16:06 -> 00:16:11] the next phase of a compiler is optimization where a compiler modifies the program without
+[00:16:11 -> 00:16:15] changing the meaning right so that's important without changing the meaning
+[00:16:17 -> 00:16:21] okay because if it changes the meaning that would be an incorrect compilation
+[00:16:21 -> 00:16:25] and why does it modify the program well there could be you know either because the modified
+[00:16:25 -> 00:16:31] program runs faster or it uses less memory or it reduces the power consumption of the program
+[00:16:31 -> 00:16:35] or reduce the network messages reduces risk access and so on but there could be depending
+[00:16:35 -> 00:16:40] on the environment different metrics and a compiler may want to modify the program to
+[00:16:40 -> 00:16:46] optimize for that particular metric now this is a major part of a compiler as we discussed
+[00:16:46 -> 00:16:54] last time and and and probably this doesn't have too much of a counterpart in natural
+[00:16:54 -> 00:16:59] language processing as well you know you can think of optimization as editing except that
+[00:16:59 -> 00:17:03] you know optimization is much more heavyweight process than what editing is for a natural language
+[00:17:05 -> 00:17:13] in the context of natural languages all right also it is important to know that
+[00:17:13 -> 00:17:19] optimization needs to be very careful about preserving meanings and and preserving meanings
+[00:17:19 -> 00:17:25] typically requires careful semantic modeling so think consider this expression two into i by two
+[00:17:26 -> 00:17:33] can i replace this expression by i in a language like c assuming i was an integer a c integer
+[00:17:33 -> 00:17:42] well the answer is actually no all right and why is it a no because imagine if i was a
+[00:17:44 -> 00:17:52] a quantity that was larger than half of the maximum value that can be stored in an
+[00:17:52 -> 00:18:00] c integer in which case two into i would overflow and depending on the semantics it
+[00:18:00 -> 00:18:05] may happen that you know the last the topmost bit is lost because of two into i and so the
+[00:18:05 -> 00:18:10] value of in that case of two into i by two would be different from the original value of i
+[00:18:11 -> 00:18:15] all right it would probably be something that has you know the last the topmost bit
+[00:18:16 -> 00:18:22] uh removed turned to zero okay so so so you can't do these kind of things and
+[00:18:22 -> 00:18:25] we're basically pointing out that optimization requires precise semantic modeling
+[00:18:26 -> 00:18:32] here's another example let's say i have a variable of type float and let's say i'm
+[00:18:32 -> 00:18:37] you know initializing y which is a float variable in different ways and then i have
+[00:18:37 -> 00:18:46] this expression called z equals y into zero now because of the peculiarities of a floating
+[00:18:46 -> 00:18:55] point arithmetic it is not okay to convert y into zero to zero because y into zero could
+[00:18:55 -> 00:18:59] be something other than zero all right and also there is the notion of negative and
+[00:18:59 -> 00:19:03] positive zero and floating point so one needs to be careful about making these
+[00:19:04 -> 00:19:10] transformations in fact something like this is illegal all right here's another example
+[00:19:10 -> 00:19:16] let's say i have a loop so let's say in this case i have you know in this first fall in
+[00:19:16 -> 00:19:24] this example i'm considering the c language and let's say in the c language i have a variable
+[00:19:24 -> 00:19:30] i of type unsigned and then i have this loop for i equals zero i is less than n plus one
+[00:19:30 -> 00:19:37] i plus plus and then i do something is it okay to convert i is less than n plus one to i is less
+[00:19:37 -> 00:19:45] than equal to n all right in fact it turns out that this is not okay in this program all right
+[00:19:46 -> 00:19:56] this is sorry this is not okay in this program so this is not okay why well because you know
+[00:19:56 -> 00:20:03] it is possible that n was maybe you know the largest possible unsigned integer in which case
+[00:20:03 -> 00:20:10] n plus one would wrap around and overflow and in which case this loop should never execute
+[00:20:10 -> 00:20:15] right because it will become i equals zero and i is less than wrapped around value and typically
+[00:20:15 -> 00:20:19] with the largest value when it wraps around an unsigned value will wrap around to let's say
+[00:20:19 -> 00:20:23] zero and so it would become i is equal to zero i is less than zero and so this becomes false
+[00:20:23 -> 00:20:28] and the loop will never get and will never enter on the other hand the program on the right if
+[00:20:28 -> 00:20:36] n was the largest unsigned value would execute for forever actually because it's going to be
+[00:20:36 -> 00:20:43] always less than equal to that because i is actually an unsigned integer and and because
+[00:20:43 -> 00:20:47] it's an unsigned integer it will always be less than equal to the largest integer ever
+[00:20:47 -> 00:20:53] right so this transformation is wrong all right so this transformation is wrong but it turns out
+[00:20:54 -> 00:21:01] that if i replace the type unsigned with the signed integer right so if i instead have a signed
+[00:21:01 -> 00:21:08] integer so in c an int is supposed to be a signed integer if you do this then this becomes okay
+[00:21:08 -> 00:21:16] all right this is okay now now why is this okay and why is the previous transformation not
+[00:21:16 -> 00:21:22] okay how does it make a difference whether i was an unsigned or an signed integer now for
+[00:21:22 -> 00:21:26] this we need to be understand the deep semantics of the c language that i'm not going through in
+[00:21:26 -> 00:21:30] this lecture but we'll go we will probably get a chance to discuss this later in the course
+[00:21:32 -> 00:21:37] all right and then the final phase of a compiler compiler is code generation or translation
+[00:21:37 -> 00:21:42] now this is the instruction set architecture of where phase so you need to know about the isa
+[00:21:42 -> 00:21:49] and then you basically translate patterns of instructions in the
+[00:21:49 -> 00:21:56] uh optimized program to the low level instructions that the machine can actually implement and in
+[00:21:56 -> 00:22:02] fact this is not usually the only phase that is isa aware some optimization phases also need
+[00:22:02 -> 00:22:08] to be isa aware so that you know we basically come to this stage where the best possible
+[00:22:08 -> 00:22:15] instructions are chosen to be executed on on the hardware and so code generation phase
+[00:22:15 -> 00:22:21] usually also includes optimization and optimizers also usually are need to be isa aware so these
+[00:22:21 -> 00:22:26] things actually while i'm kind of showing them as separate phases they usually depend on each
+[00:22:26 -> 00:22:33] other for good quality for generation of good quality code all right here's a rough division
+[00:22:33 -> 00:22:40] of compiler complexity so if i look at a modern compiler like gcc or llvm how much
+[00:22:40 -> 00:22:47] of the complexity is due to which part of the compiler well it turns out that things
+[00:22:47 -> 00:22:52] like lexing and parsing are relatively well understood and you know they don't they're
+[00:22:52 -> 00:22:58] relatively pretty simple so for example consider gcc or llvm which are into the millions of lines
+[00:22:58 -> 00:23:03] of code complexity you know a lexer and a parser would only be you know less than maybe a
+[00:23:03 -> 00:23:08] hundred or two hundred thousand lines of code semantic analysis is also relatively well
+[00:23:08 -> 00:23:13] understood it may be slightly more complicated than parsing but uh but but but a small
+[00:23:13 -> 00:23:20] fraction of the overall complexity optimization and code generation are by far the biggest
+[00:23:21 -> 00:23:28] contributors to a compiler complexity and of which optimization takes the major share
