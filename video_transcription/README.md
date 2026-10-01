@@ -13,6 +13,8 @@ taking notes by hand is too slow to keep up.
 - **No GPU required** — runs on CPU with int8 quantization, using all cores.
 - Works on a single video, several videos, or a whole playlist.
 - Works on YouTube and on other hosts (e.g. university Kaltura/MediaSpace sites).
+- **Also transcribes local audio/video files**, or a whole directory of them —
+  useful for recordings you already have on disk.
 
 ---
 
@@ -168,11 +170,32 @@ uv run transcribe.py "https://vod.video.cornell.edu/media/1_abcd1234" \
 uv run transcribe.py "https://youtu.be/VIDEO_ID" --output-dir ~/notes/my_course
 ```
 
+### Local audio files
+
+Any argument that names an existing file or directory is read straight from disk
+instead of being fetched, so recordings you already have work the same way:
+
+```bash
+# A single local recording (mp3, m4a, mp4, wav, flac, ogg, opus, mkv, ...)
+uv run transcribe.py ~/audio/lecture_03.m4a --model medium --timestamps
+
+# An entire directory — every media file in it, sorted naturally (Lec2 before Lec10)
+uv run transcribe.py ~/audio/ECE752_audio --model medium --timestamps --skip-existing
+
+# Mixing local files and URLs in one run is fine
+uv run transcribe.py ~/audio/lecture_03.m4a "https://youtu.be/VIDEO_ID" --model medium
+```
+
+Local sources are never modified, moved, or deleted. Transcripts are named after
+the filename stem (`lecture_03.m4a` → `lecture_03.txt`), and the header records
+`Source file:` in place of the `Video ID:` used for downloads. `--keep-audio` is
+ignored for local input, since the audio already lives on disk.
+
 ### All options
 
 | Flag | Default | Description |
 |---|---|---|
-| `url ...` | — | One or more video/playlist URLs, transcribed in order |
+| `URL_OR_PATH ...` | — | Video/playlist URLs, local media files, or directories — processed in order |
 | `-m`, `--model` | `small` | `tiny`, `base`, `small`, `medium`, `large-v3` |
 | `-o`, `--output-dir` | `transcripts` | Where to write output files |
 | `-l`, `--language` | auto-detect | Force a language code, e.g. `en` (slightly faster and more reliable) |
